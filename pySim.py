@@ -344,6 +344,9 @@ class Card(object):
 		"""Converts integer MCC/MNC into 6 bytes for EF"""
 		return swap_nibbles(lpad('%d' % mcc, 3) + lpad('%d' % mnc, 3))
 
+	def reset(self):
+		self._sl.reset_card()
+
 
 class _MagicSimBase(Card):
 	"""
@@ -775,6 +778,7 @@ if __name__ == '__main__':
 			card = kls.autodetect(sl)
 			if card:
 				print "Autodetected card type %s" % card.name
+				card.reset()
 				break
 
 		if card is None:
@@ -792,6 +796,7 @@ if __name__ == '__main__':
 	if opts.erase:
 		print "Formatting ..."
 		card.erase()
+		card.reset()
 
 	# Program it
 	print "Programming ..."
