@@ -406,26 +406,32 @@ class _MagicSimBase(Card):
 		hplmn = self._e_plmn(p['mcc'], p['mnc'])
 
 		# Operator name ( 3f00/7f4d/8f0c )
-		self._sl.update_record('8f0c', 2,
+		self._sl.update_record(self._files['name'][0], 2,
 			rpad(b2h(p['name']), 32)  + ('%02x' % len(p['name'])) + '01'
 		)
 
 		# ICCID/IMSI/Ki/HPLMN ( 3f00/7f4d/8f0d )
-		self._sl.update_record('8f0d', 1,
-			rpad(
-				# ICCID
-				'3f00' + '2fe2' + '0a' + self._e_iccid(p['iccid']) +
+		v = ''
 
-				# IMSI
-				'7f20' + '6f07' + '09' + self._e_imsi(p['imsi']) +
+			# inline Ki
+		if self._ki_file is None:
+			v += p['ki']
 
-				# Ki
-				'6f1b' + '10' + p['ki'] +
+			# ICCID
+		v += '3f00' + '2fe2' + '0a' + self._e_iccid(p['iccid'])
 
-				# PLMN_Sel
-				'6f30' + '18' +  rpad(hplmn, 36)
+			# IMSI
+		v += '7f20' + '6f07' + '09' + self._e_imsi(p['imsi'])
 
-			, self._files['b_ef'][1]*2)
+			# Ki
+		if self._ki_file:
+			v += self._ki_file + '10' + p['ki']
+
+			# PLMN_Sel
+		v+= '6f30' + '18' +  rpad(hplmn, 36)
+
+		self._sl.update_record(self._files['b_ef'][0], 1,
+			rpad(v, self._files['b_ef'][1]*2)
 		)
 
 		# SMSP ( 3f00/7f4d/8f0e )
@@ -465,6 +471,8 @@ class SuperSim(_MagicSimBase):
 		'r_ef' : ('8f0e', 50, True),
 	}
 
+	_ki_file = None
+
 
 class MagicSim(_MagicSimBase):
 
@@ -475,6 +483,8 @@ class MagicSim(_MagicSimBase):
 		'b_ef' : ('8f0d', 130, True),
 		'r_ef' : ('8f0e', 102, False),
 	}
+
+	_ki_file = '6f1b'
 
 
 class FakeMagicSim(Card):
