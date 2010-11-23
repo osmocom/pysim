@@ -8,6 +8,7 @@
 #
 #
 # Copyright (C) 2009  Sylvain Munaut <tnt@246tNt.com>
+# Copyright (C) 2010  Harald Welte <laforge@gnumonks.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,6 +28,11 @@ import time
 import serial
 import sys
 
+from smartcard.Exceptions import NoCardException
+from smartcard.System import readers
+from smartcard.CardConnectionObserver import ConsoleCardConnectionObserver
+from smartcard.util import toBytes
+
 
 # ----------------------------------------------------------------------------
 # Utils
@@ -37,6 +43,9 @@ def h2b(s):
 
 def b2h(s):
 	return ''.join(['%02x'%ord(x) for x in s])
+
+def i2h(s):
+	return ''.join(['%02x'%(x) for x in s])
 
 def swap_nibbles(s):
 	return ''.join([x+y for x,y in zip(s[1::2], s[0::2])])
@@ -52,7 +61,7 @@ def scan_all(base, start=0, end=65536):
 	s.select_file(base)
 	for v in range(start, end):
 		try:
-			data, sw = s.send_apdu('a0a4000002%04x' % v)
+			data, sw = s._tp.send_apdu('a0a4000002%04x' % v)
 			if sw == '9000':
 				rv.append( (v, data, sw) )
 				s.select_file(base)
@@ -66,7 +75,7 @@ def scan_all(base, start=0, end=65536):
 
 
 # ----------------------------------------------------------------------------
-# Main serial communication
+# Transport Link for serial (RS232) based readers included with simcard
 # -------------------------------------------------------------------------{{{
 
 import exceptions
@@ -78,7 +87,6 @@ class ProtocolError(exceptions.Exception):
 
 
 class SerialSimLink(object):
-
 	def __init__(self, device='/dev/ttyUSB0', baudrate=9600, rst='-rts', debug=False):
 		self._sl = serial.Serial(
 				port = device,
@@ -260,10 +268,98 @@ class SerialSimLink(object):
 			raise RuntimeError("SW match failed ! Expected %s and got %s." % (sw.lower(), rv[1]))
 		return rv
 
+# }}}
+
+# ----------------------------------------------------------------------------
+# Transport Link for a standard PC/SC reader
+# -------------------------------------------------------------------------{{{
+
+class PcscSimLink(object):
+	def __init__(self, reader_number=0, observer=0):
+		r = readers();
+		try:
+			self._con = r[reader_number].createConnection()
+			if (observer):
+			    observer = ConsoleCardConnectionObserver()
+			    self._con.addObserver(observer)
+			self._con.connect()
+			#print r[reader_number], b2h(self._con.getATR())
+		except NoCardException:
+			raise NoCardError()
+
+	def __del__(self):
+		self._con.disconnect()
+		return
+
+	def reset_card(self):
+		self._con.disconnect()
+		try:
+			self._con.connect()
+		except NoCardException:
+			raise NoCardError()
+		return 1
+
+	def send_apdu_raw(self, pdu):
+		"""send_apdu_raw(pdu): Sends an APDU with minimal processing
+
+		   pdu    : string of hexadecimal characters (ex. "A0A40000023F00")
+		   return : tuple(data, sw), where
+		            data : string (in hex) of returned data (ex. "074F4EFFFF")
+		            sw   : string (in hex) of status word (ex. "9000")
+		"""
+		apdu = toBytes(pdu)
+
+		data, sw1, sw2 = self._con.transmit(apdu)
+
+		sw = [sw1, sw2]
+
+		# Return value
+		return i2h(data), i2h(sw)
+
+	def send_apdu(self, pdu):
+		"""send_apdu(pdu): Sends an APDU and auto fetch response data
+
+		   pdu    : string of hexadecimal characters (ex. "A0A40000023F00")
+		   return : tuple(data, sw), where
+		            data : string (in hex) of returned data (ex. "074F4EFFFF")
+		            sw   : string (in hex) of status word (ex. "9000")
+		"""
+		data, sw = self.send_apdu_raw(pdu)
+
+		if (sw is not None) and (sw[0:2] == '9f'):
+			pdu_gr = pdu[0:2] + 'c00000' + sw[2:4]
+			data, sw = self.send_apdu_raw(pdu_gr)
+
+		return data, sw
+
+	def send_apdu_checksw(self, pdu, sw="9000"):
+		"""send_apdu_checksw(pdu,sw): Sends an APDU and check returned SW
+
+		   pdu    : string of hexadecimal characters (ex. "A0A40000023F00")
+		   sw     : string of 4 hexadecimal characters (ex. "9000")
+		   return : tuple(data, sw), where
+		            data : string (in hex) of returned data (ex. "074F4EFFFF")
+		            sw   : string (in hex) of status word (ex. "9000")
+		"""
+		rv = self.send_apdu(pdu)
+		if sw.lower() != rv[1]:
+			raise RuntimeError("SW match failed ! Expected %s and got %s." % (sw.lower(), rv[1]))
+		return rv
+
+# }}}
+
+# ----------------------------------------------------------------------------
+# SIM Card commands according to ISO 7816-4 and TS 11.11
+# -------------------------------------------------------------------------{{{
+
+class SimCardCommands(object):
+	def __init__(self, transport):
+		self._tp = transport;
+
 	def select_file(self, dir_list):
 		rv = []
 		for i in dir_list:
-			data, sw = self.send_apdu_checksw("a0a4000002" + i)
+			data, sw = self._tp.send_apdu_checksw("a0a4000002" + i)
 			rv.append(data)
 		return rv
 
@@ -274,14 +370,14 @@ class SerialSimLink(object):
 		if length is None:
 			length = int(r[-1][4:8], 16) - offset
 		pdu = 'a0b0%04x%02x' % (offset, (min(256, length) & 0xff))
-		return self.send_apdu(pdu)
+		return self._tp.send_apdu(pdu)
 
 	def update_binary(self, ef, data, offset=0):
 		if not hasattr(type(ef), '__iter__'):
 			ef = [ef]
 		self.select_file(ef)
 		pdu = 'a0d6%04x%02x' % (offset, len(data)/2) + data
-		return self.send_apdu(pdu)
+		return self._tp.send_apdu(pdu)
 
 	def read_record(self, ef, rec_no):
 		if not hasattr(type(ef), '__iter__'):
@@ -289,7 +385,7 @@ class SerialSimLink(object):
 		r = self.select_file(ef)
 		rec_length = int(r[-1][28:30], 16)
 		pdu = 'a0b2%02x04%02x' % (rec_no, rec_length)
-		return self.send_apdu(pdu)
+		return self._tp.send_apdu(pdu)
 
 	def update_record(self, ef, rec_no, data, force_len=False):
 		if not hasattr(type(ef), '__iter__'):
@@ -302,7 +398,7 @@ class SerialSimLink(object):
 		else:
 			rec_length = len(data)/2
 		pdu = ('a0dc%02x04%02x' % (rec_no, rec_length)) + data
-		return self.send_apdu(pdu)
+		return self._tp.send_apdu(pdu)
 
 	def record_size(self, ef):
 		r = self.select_file(ef)
@@ -316,8 +412,10 @@ class SerialSimLink(object):
 		if len(rand) != 32:
 			raise ValueError('Invalid rand')
 		self.select_file(['3f00', '7f20'])
-		return self.send_apdu('a088000010' + rand)
+		return self._tp.send_apdu('a088000010' + rand)
 
+	def reset_card(self):
+		return self._tp.reset_card()
 # }}}
 
 
@@ -327,8 +425,8 @@ class SerialSimLink(object):
 
 class Card(object):
 
-	def __init__(self, sl):
-		self._sl = sl
+	def __init__(self, scc):
+		self._scc = scc
 
 	def _e_iccid(self, iccid):
 		return swap_nibbles(iccid)
@@ -345,7 +443,7 @@ class Card(object):
 		return swap_nibbles(lpad('%d' % mcc, 3) + lpad('%d' % mnc, 3))
 
 	def reset(self):
-		self._sl.reset_card()
+		self._scc.reset_card()
 
 
 class _MagicSimBase(Card):
@@ -369,17 +467,17 @@ class _MagicSimBase(Card):
 	"""
 
 	@classmethod
-	def autodetect(kls, sl):
+	def autodetect(kls, scc):
 		try:
 			for p, l, t in kls._files.values():
 				if not t:
 					continue
-				if sl.record_size(['3f00', '7f4d', p]) != l:
+				if scc.record_size(['3f00', '7f4d', p]) != l:
 					return None
 		except:
 			return None
 
-		return kls(sl)
+		return kls(scc)
 
 	def _get_count(self):
 		"""
@@ -388,7 +486,7 @@ class _MagicSimBase(Card):
 		"""
 		f = self._files['name']
 
-		r = self._sl.select_file(['3f00', '7f4d', f[0]])
+		r = self._scc.select_file(['3f00', '7f4d', f[0]])
 		rec_len = int(r[-1][28:30], 16)
 		tlen = int(r[-1][4:8],16)
 		rec_cnt = (tlen / rec_len) - 1;
@@ -400,13 +498,13 @@ class _MagicSimBase(Card):
 
 	def program(self, p):
 		# Go to dir
-		self._sl.select_file(['3f00', '7f4d'])
+		self._scc.select_file(['3f00', '7f4d'])
 
 		# Home PLMN in PLMN_Sel format
 		hplmn = self._e_plmn(p['mcc'], p['mnc'])
 
 		# Operator name ( 3f00/7f4d/8f0c )
-		self._sl.update_record(self._files['name'][0], 2,
+		self._scc.update_record(self._files['name'][0], 2,
 			rpad(b2h(p['name']), 32)  + ('%02x' % len(p['name'])) + '01'
 		)
 
@@ -430,7 +528,7 @@ class _MagicSimBase(Card):
 			# PLMN_Sel
 		v+= '6f30' + '18' +  rpad(hplmn, 36)
 
-		self._sl.update_record(self._files['b_ef'][0], 1,
+		self._scc.update_record(self._files['b_ef'][0], 1,
 			rpad(v, self._files['b_ef'][1]*2)
 		)
 
@@ -438,11 +536,11 @@ class _MagicSimBase(Card):
 			# FIXME
 
 		# Write PLMN_Sel forcefully as well
-		r = self._sl.select_file(['3f00', '7f20', '6f30'])
+		r = self._scc.select_file(['3f00', '7f20', '6f30'])
 		tl = int(r[-1][4:8], 16)
 
 		hplmn = self._e_plmn(p['mcc'], p['mnc'])
-		self._sl.update_binary('6f30', hplmn + 'ff' * (tl-3))
+		self._scc.update_binary('6f30', hplmn + 'ff' * (tl-3))
 
 	def erase(self):
 		# Dummy
@@ -458,7 +556,7 @@ class _MagicSimBase(Card):
 		# Write
 		for n in range(0,self._get_count()):
 			for k, (msg, ofs) in df.iteritems():
-				self._sl.update_record(['3f00', '7f4d', k], n + ofs, msg)
+				self._scc.update_record(['3f00', '7f4d', k], n + ofs, msg)
 
 
 class SuperSim(_MagicSimBase):
@@ -497,14 +595,14 @@ class FakeMagicSim(Card):
 	name = 'fakemagicsim'
 
 	@classmethod
-	def autodetect(kls, sl):
+	def autodetect(kls, scc):
 		try:
-			if sl.record_size(['3f00', '000c']) != 0x5a:
+			if scc.record_size(['3f00', '000c']) != 0x5a:
 				return None
 		except:
 			return None
 
-		return kls(sl)
+		return kls(scc)
 
 	def _get_infos(self):
 		"""
@@ -512,7 +610,7 @@ class FakeMagicSim(Card):
 		and entry size
 		"""
 
-		r = self._sl.select_file(['3f00', '000c'])
+		r = self._scc.select_file(['3f00', '000c'])
 		rec_len = int(r[-1][28:30], 16)
 		tlen = int(r[-1][4:8],16)
 		rec_cnt = (tlen / rec_len) - 1;
@@ -524,11 +622,11 @@ class FakeMagicSim(Card):
 
 	def program(self, p):
 		# Home PLMN
-		r = self._sl.select_file(['3f00', '7f20', '6f30'])
+		r = self._scc.select_file(['3f00', '7f20', '6f30'])
 		tl = int(r[-1][4:8], 16)
 
 		hplmn = self._e_plmn(p['mcc'], p['mnc'])
-		self._sl.update_binary('6f30', hplmn + 'ff' * (tl-3))
+		self._scc.update_binary('6f30', hplmn + 'ff' * (tl-3))
 
 		# Get total number of entries and entry size
 		rec_cnt, rec_len = self._get_infos()
@@ -544,7 +642,7 @@ class FakeMagicSim(Card):
 			rpad(p['smsp'], 20) +				# 10b  SMSP (padded with ff if needed)
 			10*'f'								#  5b  (unknown ...)
 		)
-		self._sl.update_record('000c', 1, entry)
+		self._scc.update_record('000c', 1, entry)
 
 	def erase(self):
 		# Get total number of entries and entry size
@@ -553,7 +651,7 @@ class FakeMagicSim(Card):
 		# Erase all entries
 		entry = 'ff' * rec_len
 		for i in range(0, rec_cnt):
-			self._sl.update_record('000c', 1+i, entry)
+			self._scc.update_record('000c', 1+i, entry)
 
 
 	# In order for autodetection ...
@@ -579,6 +677,10 @@ def parse_options():
 	parser.add_option("-d", "--device", dest="device", metavar="DEV",
 			help="Serial Device for SIM access [default: %default]",
 			default="/dev/ttyUSB0",
+		)
+	parser.add_option("-p", "--pcsc-device", dest="pcsc_dev", metavar="PCSC",
+			help="Which PC/SC reader number for SIM access",
+			default=None,
 		)
 	parser.add_option("-b", "--baud", dest="baudrate", type="int", metavar="BAUD",
 			help="Baudrate used for SIM access [default: %default]",
@@ -777,7 +879,11 @@ if __name__ == '__main__':
 	print_parameters(cp)
 
 	# Connect to the card
-	sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
+	if opts.pcsc_dev is None:
+		sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
+	else:
+		sl = PcscSimLink(0, observer=0)
+	scc = SimCardCommands(transport=sl)
 
 	# Detect type if needed
 	card = None
@@ -785,7 +891,7 @@ if __name__ == '__main__':
 
 	if opts.type == "auto":
 		for kls in _cards_classes:
-			card = kls.autodetect(sl)
+			card = kls.autodetect(scc)
 			if card:
 				print "Autodetected card type %s" % card.name
 				card.reset()
@@ -796,7 +902,7 @@ if __name__ == '__main__':
 			sys.exit(-1)
 
 	elif opts.type in ctypes:
-		card = ctypes[opts.type](sl)
+		card = ctypes[opts.type](scc)
 
 	else:
 		print "Unknown card type %s" % opts.type
