@@ -4,12 +4,12 @@ This utility allows to :
 
   - one where you specify every parameter manually :
 
-./pySim.py -n 26C3 -c 49 -x 262 -y 42 -i <IMSI> -s <ICCID>
+./pySim-prog.py -n 26C3 -c 49 -x 262 -y 42 -i <IMSI> -s <ICCID>
 
 
   - one where they are generated from some minimal set :
 
-./pySim.py -n 26C3 -c 49 -x 262 -y 42 -z <random_string_of_choice> -j <card_num>
+./pySim-prog.py -n 26C3 -c 49 -x 262 -y 42 -z <random_string_of_choice> -j <card_num>
 
     With <random_string_of_choice> and <card_num>, the soft will generate
     'predictable' IMSI and ICCID, so make sure you choose them so as not to
@@ -23,9 +23,14 @@ This utility allows to :
 
  * Interact with SIMs from a python interactive shell (ipython for eg :)
 
-import pySim
-sl = pySim.SerialSimLink(device='/dev/ttyUSB0', baudrate=9600)
-print sl.read_binary(['3f00', '7f20', '6f07']) # Print IMSI
-print sl.run_gsm('00112233445566778899aabbccddeeff') # Run A3/A8
+from pySim.transport.serial import SerialSimLink
+from pySim.commands import SimCardCommands
 
+sl = SerialSimLink(device='/dev/ttyUSB0', baudrate=9600)
+sc = SimCardCommands(sl)
 
+	# Print IMSI
+print sc.read_binary(['3f00', '7f20', '6f07'])
+
+	# Run A3/A8
+print sc.run_gsm('00112233445566778899aabbccddeeff')
