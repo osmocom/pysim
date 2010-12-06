@@ -416,6 +416,11 @@ class SimCardCommands(object):
 
 	def reset_card(self):
 		return self._tp.reset_card()
+
+	def verify_chv(self, chv_no, code):
+		fc = rpad(b2h(code), 16)
+		return self.send_apdu('a02000' + ('%02x' % chv_no) + '08' + fc)
+
 # }}}
 
 
