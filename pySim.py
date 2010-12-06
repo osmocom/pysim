@@ -31,7 +31,6 @@ import sys
 from smartcard.Exceptions import NoCardException
 from smartcard.System import readers
 from smartcard.CardConnectionObserver import ConsoleCardConnectionObserver
-from smartcard.util import toBytes
 
 
 # ----------------------------------------------------------------------------
@@ -43,6 +42,9 @@ def h2b(s):
 
 def b2h(s):
 	return ''.join(['%02x'%ord(x) for x in s])
+
+def h2i(s):
+	return [(int(x,16)<<4)+int(y,16) for x,y in zip(s[0::2], s[1::2])]
 
 def i2h(s):
 	return ''.join(['%02x'%(x) for x in s])
@@ -307,7 +309,7 @@ class PcscSimLink(object):
 		            data : string (in hex) of returned data (ex. "074F4EFFFF")
 		            sw   : string (in hex) of status word (ex. "9000")
 		"""
-		apdu = toBytes(pdu)
+		apdu = h2i(pdu)
 
 		data, sw1, sw2 = self._con.transmit(apdu)
 
