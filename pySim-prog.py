@@ -42,13 +42,13 @@ def parse_options():
 			help="Serial Device for SIM access [default: %default]",
 			default="/dev/ttyUSB0",
 		)
-	parser.add_option("-p", "--pcsc-device", dest="pcsc_dev", metavar="PCSC",
-			help="Which PC/SC reader number for SIM access",
-			default=None,
-		)
 	parser.add_option("-b", "--baud", dest="baudrate", type="int", metavar="BAUD",
 			help="Baudrate used for SIM access [default: %default]",
 			default=9600,
+		)
+	parser.add_option("-p", "--pcsc-device", dest="pcsc_dev", metavar="PCSC",
+			help="Which PC/SC reader number for SIM access",
+			default=None,
 		)
 	parser.add_option("-t", "--type", dest="type",
 			help="Card type (user -t list to view) [default: %default]",
