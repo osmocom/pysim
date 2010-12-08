@@ -32,6 +32,7 @@ import sys
 
 from pySim.commands import SimCardCommands
 from pySim.cards import _cards_classes
+from pySim.utils import h2b
 
 
 def parse_options():
@@ -94,6 +95,13 @@ def parse_options():
 		)
 	parser.add_option("-j", "--num", dest="num", type=int,
 			help="Card # used for ICCID/IMSI autogen",
+		)
+
+	parser.add_option("--write-csv", dest="write_csv", metavar="FILE",
+			help="Append generated parameters in CSV file",
+		)
+	parser.add_option("--write-hlr", dest="write_hlr", metavar="FILE",
+			help="Append generated parameters to OpenBSC HLR sqlite3",
 		)
 
 	(options, args) = parser.parse_args()
@@ -235,12 +243,55 @@ def print_parameters(params):
 """	% params
 
 
+def write_parameters(opts, params):
+	# CSV
+	if opts.write_csv:
+		import csv
+		row = ['name', 'iccid', 'mcc', 'mnc', 'imsi', 'smsp', 'ki']
+		f = open(opts.write_csv, 'a')
+		cw = csv.writer(f)
+		cw.writerow([params[x] for x in row])
+		f.close()
+
+	# SQLite3 OpenBSC HLR
+	if opts.write_hlr:
+		import sqlite3
+		conn = sqlite3.connect(opts.write_hlr)
+
+		c = conn.execute(
+			'INSERT INTO Subscriber ' +
+			'(imsi, name, extension, authorized, created, updated) ' +
+			'VALUES ' +
+			'(?,?,?,1,datetime(\'now\'),datetime(\'now\'));',
+			[
+				params['imsi'],
+				params['name'],
+				'9' + params['iccid'][-5:]
+			],
+		)
+		sub_id = c.lastrowid
+		c.close()
+
+		c = conn.execute(
+			'INSERT INTO AuthKeys ' +
+			'(subscriber_id, algorithm_id, a3a8_ki)' +
+			'VALUES ' +
+			'(?,?,?)',
+			[ sub_id, 2, sqlite3.Binary(h2b(params['ki'])) ],
+		)
+
+		conn.commit()
+		conn.close()
+
+
+
 if __name__ == '__main__':
 
 	# Get/Gen the parameters
 	opts = parse_options()
 	cp = gen_parameters(opts)
 	print_parameters(cp)
+	write_parameters(opts, cp)
 
 	# Connect to the card
 	if opts.pcsc_dev is None:
