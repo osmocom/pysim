@@ -47,7 +47,7 @@ def parse_options():
 			help="Baudrate used for SIM access [default: %default]",
 			default=9600,
 		)
-	parser.add_option("-p", "--pcsc-device", dest="pcsc_dev", metavar="PCSC",
+	parser.add_option("-p", "--pcsc-device", dest="pcsc_dev", type='int', metavar="PCSC",
 			help="Which PC/SC reader number for SIM access",
 			default=None,
 		)
@@ -299,7 +299,7 @@ if __name__ == '__main__':
 		sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
 	else:
 		from pySim.transport.pcsc import PcscSimLink
-		sl = PcscSimLink(0, observer=0)
+		sl = PcscSimLink(opts.pcsc_dev)
 	scc = SimCardCommands(transport=sl)
 
 	# Detect type if needed
