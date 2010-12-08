@@ -24,7 +24,6 @@
 
 from smartcard.Exceptions import NoCardException
 from smartcard.System import readers
-from smartcard.CardConnectionObserver import ConsoleCardConnectionObserver
 
 from pySim.exceptions import NoCardError
 from pySim.transport import LinkBase
@@ -33,15 +32,11 @@ from pySim.utils import h2i, i2h
 
 class PcscSimLink(LinkBase):
 
-	def __init__(self, reader_number=0, observer=0):
+	def __init__(self, reader_number=0):
 		r = readers();
 		try:
 			self._con = r[reader_number].createConnection()
-			if (observer):
-			    observer = ConsoleCardConnectionObserver()
-			    self._con.addObserver(observer)
 			self._con.connect()
-			#print r[reader_number], b2h(self._con.getATR())
 		except NoCardException:
 			raise NoCardError()
 
