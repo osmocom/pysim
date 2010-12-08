@@ -72,7 +72,7 @@ def parse_options():
 			default=901,
 		)
 	parser.add_option("-y", "--mnc", dest="mnc", type="int",
-			help="Mobile Network Code",
+			help="Mobile Network Code [default: %default]",
 			default=55,
 		)
 	parser.add_option("-m", "--smsp", dest="smsp",
