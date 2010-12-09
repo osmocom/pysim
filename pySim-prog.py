@@ -26,9 +26,16 @@
 
 import hashlib
 from optparse import OptionParser
+import os
 import random
 import re
 import sys
+
+try:
+	import json
+except Importerror:
+	# Python < 2.5
+	import simplejson as json
 
 from pySim.commands import SimCardCommands
 from pySim.cards import _cards_classes
@@ -96,6 +103,13 @@ def parse_options():
 	parser.add_option("-j", "--num", dest="num", type=int,
 			help="Card # used for ICCID/IMSI autogen",
 		)
+	parser.add_option("--batch", dest="batch_mode",
+			help="Enable batch mode [default: %default]",
+			default=False, action='store_true',
+		)
+	parser.add_option("--batch-state", dest="batch_state", metavar="FILE",
+			help="Optional batch state file",
+		)
 
 	parser.add_option("--write-csv", dest="write_csv", metavar="FILE",
 			help="Append generated parameters in CSV file",
@@ -110,6 +124,9 @@ def parse_options():
 		for kls in _cards_classes:
 			print kls.name
 		sys.exit(0)
+
+	if (options.batch_mode) and (options.num is None):
+		options.num = 0
 
 	if ((options.imsi is None) or (options.iccid is None)) and (options.num is None):
 		parser.error("If either IMSI or ICCID isn't specified, num is required")
@@ -284,32 +301,54 @@ def write_parameters(opts, params):
 		conn.close()
 
 
+BATCH_STATE = [ 'name', 'country', 'mcc', 'mnc', 'smsp', 'secret', 'num' ]
+BATCH_INCOMPATIBLE = ['iccid', 'imsi', 'ki']
 
-if __name__ == '__main__':
+def init_batch(opts):
+	# Need to do something ?
+	if not opts.batch_mode:
+		return
 
-	# Get/Gen the parameters
-	opts = parse_options()
-	cp = gen_parameters(opts)
-	print_parameters(cp)
-	write_parameters(opts, cp)
+	for k in BATCH_INCOMPATIBLE:
+		if getattr(opts, k):
+			print "Incompatible option with batch_state: %s" % (k,)
+			sys.exit(-1)
 
-	# Connect to the card
-	if opts.pcsc_dev is None:
-		from pySim.transport.serial import SerialSimLink
-		sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
-	else:
-		from pySim.transport.pcsc import PcscSimLink
-		sl = PcscSimLink(opts.pcsc_dev)
-	scc = SimCardCommands(transport=sl)
+	# Don't load state if there is none ...
+	if not opts.batch_state:
+		return
 
-	print "Insert Card now"
-	sl.wait_for_card()
+	if not os.path.isfile(opts.batch_state):
+		print "No state file yet"
+		return
+
+	# Get stored data
+	fh = open(opts.batch_state)
+	d = json.loads(fh.read())
+	fh.close()
+
+	for k,v in d.iteritems():
+		setattr(opts, k, v)
+
+
+def save_batch(opts):
+	# Need to do something ?
+	if not opts.batch_mode or not opts.batch_state:
+		return
+
+	d = json.dumps(dict([(k,getattr(opts,k)) for k in BATCH_STATE]))
+	fh = open(opts.batch_state, 'w')
+	fh.write(d)
+	fh.close()
+
+
+def card_detect(opts, scc):
 
 	# Detect type if needed
 	card = None
 	ctypes = dict([(kls.name, kls) for kls in _cards_classes])
 
-	if opts.type == "auto":
+	if opts.type in ("auto", "auto_once"):
 		for kls in _cards_classes:
 			card = kls.autodetect(scc)
 			if card:
@@ -319,24 +358,85 @@ if __name__ == '__main__':
 
 		if card is None:
 			print "Autodetection failed"
-			sys.exit(-1)
+			return
+
+		if opts.type == "auto_once":
+			opts.type = card.name
 
 	elif opts.type in ctypes:
 		card = ctypes[opts.type](scc)
 
 	else:
-		print "Unknown card type %s" % opts.type
-		sys.exit(-1)
+		raise ValueError("Unknown card type %s" % opts.type)
 
-	# Erase it if asked
-	if opts.erase:
-		print "Formatting ..."
-		card.erase()
-		card.reset()
+	return card
 
-	# Program it
-	print "Programming ..."
-	card.program(cp)
 
-	print "Done !"
+if __name__ == '__main__':
+
+	# Parse options
+	opts = parse_options()
+
+	# Connect to the card
+	if opts.pcsc_dev is None:
+		from pySim.transport.serial import SerialSimLink
+		sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
+	else:
+		from pySim.transport.pcsc import PcscSimLink
+		sl = PcscSimLink(opts.pcsc_dev)
+
+	# Create command layer
+	scc = SimCardCommands(transport=sl)
+
+	# Batch mode init
+	init_batch(opts)
+
+	# Iterate
+	done = False
+	first = True
+	card = None
+ 
+	while not done:
+		# Connect transport
+		print "Insert card now (or CTRL-C to cancel)"
+		sl.wait_for_card(newcardonly=not first)
+
+		# Not the first anymore !
+		first = False
+
+		# Get card
+		card = card_detect(opts, scc)
+		if card is None:
+			if opts.batch_mode:
+				first = False
+				continue
+			else:
+				sys.exit(-1)
+
+		# Erase if requested
+		if opts.erase:
+			print "Formatting ..."
+			card.erase()
+			card.reset()
+
+		# Generate parameters
+		cp = gen_parameters(opts)
+		print_parameters(cp)
+
+		# Program the card
+		print "Programming ..."
+		card.program(cp)
+
+		# Write parameters permanently
+		write_parameters(opts, cp)
+
+		# Batch mode state update and save
+		opts.num += 1
+		save_batch(opts)
+
+		# Done for this card and maybe for everything ?
+		print "Done !\n"
+
+		if not opts.batch_mode:
+			done = True
 
