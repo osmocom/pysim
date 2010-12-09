@@ -23,6 +23,25 @@
 
 class LinkBase(object):
 
+	def wait_for_card(self, timeout=None, newcardonly=False):
+		"""wait_for_card(): Wait for a card and connect to it
+
+		   timeout     : Maximum wait time (None=no timeout)
+		   newcardonly : Should we wait for a new card, or an already
+		                 inserted one ?
+		"""
+		pass
+
+	def connect(self):
+		"""connect(): Connect to a card immediately
+		"""
+		pass
+
+	def disconnect(self):
+		"""disconnect(): Disconnect from card
+		"""
+		pass
+
 	def reset_card(self):
 		"""reset_card(): Resets the card (power down/up)
 		"""

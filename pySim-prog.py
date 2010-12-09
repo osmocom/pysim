@@ -302,6 +302,9 @@ if __name__ == '__main__':
 		sl = PcscSimLink(opts.pcsc_dev)
 	scc = SimCardCommands(transport=sl)
 
+	print "Insert Card now"
+	sl.wait_for_card()
+
 	# Detect type if needed
 	card = None
 	ctypes = dict([(kls.name, kls) for kls in _cards_classes])

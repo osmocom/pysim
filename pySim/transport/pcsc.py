@@ -22,7 +22,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from smartcard.Exceptions import NoCardException
+from smartcard.CardRequest import CardRequest
+from smartcard.Exceptions import NoCardException, CardRequestTimeoutException
 from smartcard.System import readers
 
 from pySim.exceptions import NoCardError
@@ -34,15 +35,29 @@ class PcscSimLink(LinkBase):
 
 	def __init__(self, reader_number=0):
 		r = readers();
-		try:
-			self._con = r[reader_number].createConnection()
-			self._con.connect()
-		except NoCardException:
-			raise NoCardError()
+		self._reader = r[reader_number]
+		self._con = self._reader.createConnection()
 
 	def __del__(self):
 		self._con.disconnect()
 		return
+
+	def wait_for_card(self, timeout=None, newcardonly=False):
+		cr = CardRequest(readers=[self._reader], timeout=timeout, newcardonly=newcardonly)
+		try:
+			cr.waitforcard()
+		except CardRequestTimeoutException:
+			raise NoCardError()
+		self.connect()
+
+	def connect(self):
+		try:
+			self._con.connect()
+		except NoCardException:
+			raise NoCardError()
+
+	def disconnect(self):
+		self._con.disconnect()
 
 	def reset_card(self):
 		self._con.disconnect()

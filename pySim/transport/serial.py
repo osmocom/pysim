@@ -47,16 +47,61 @@ class SerialSimLink(LinkBase):
 		self._rst_pin = rst
 		self._debug = debug
 
-		rv = self.reset_card()
+	def __del__(self):
+		self._sl.close()
+
+	def wait_for_card(self, timeout=None, newcardonly=False):
+		# Direct try
+		existing = False
+
+		try:
+			self.reset_card()
+			if not newcardonly:
+				return
+			else:
+				existing = True
+		except NoCardError:
+			pass
+
+		# Poll ...
+		mt = time.time() + timeout if timeout is not None else None
+		pe = 0
+
+		while (mt is None) or (time.time() < mt):
+			try:
+				time.sleep(0.5)
+				self.reset_card()
+				if not existing:
+					return
+			except NoCardError:
+				existing = False
+			except ProtocolError:
+				if existing:
+					existing = False
+				else:
+					# Tolerate a couple of protocol error ... can happen if
+					# we try when the card is 'half' inserted
+					pe += 1
+					if (pe > 2):
+						raise
+
+		# Timed out ...
+		raise NoCardError()
+
+	def connect(self):
+		self.reset_card()
+
+	def disconnect(self):
+		pass # Nothing to do really ...
+
+	def reset_card(self):
+		rv = self._reset_card()
 		if rv == 0:
 			raise NoCardError()
 		elif rv < 0:
 			raise ProtocolError()
 
-	def __del__(self):
-		self._sl.close()
-
-	def reset_card(self):
+	def _reset_card(self):
 		rst_meth_map = {
 			'rts': self._sl.setRTS,
 			'dtr': self._sl.setDTR,
