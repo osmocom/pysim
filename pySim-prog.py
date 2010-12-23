@@ -128,6 +128,10 @@ def parse_options():
 	if (options.batch_mode) and (options.num is None):
 		options.num = 0
 
+	if (options.batch_mode):
+		if (options.imsi is not None) or (options.iccid is not None):
+			parser.error("Can't give ICCID/IMSI for batch mode, need to use automatic parameters ! see --num and --secret for more informations")
+
 	if ((options.imsi is None) or (options.iccid is None)) and (options.num is None):
 		parser.error("If either IMSI or ICCID isn't specified, num is required")
 
