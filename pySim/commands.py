@@ -22,6 +22,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from pySim.utils import rpad, b2h
+
 
 class SimCardCommands(object):
 	def __init__(self, transport):
@@ -90,4 +92,4 @@ class SimCardCommands(object):
 
 	def verify_chv(self, chv_no, code):
 		fc = rpad(b2h(code), 16)
-		return self.send_apdu('a02000' + ('%02x' % chv_no) + '08' + fc)
+		return self._tp.send_apdu('a02000' + ('%02x' % chv_no) + '08' + fc)
