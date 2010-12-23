@@ -156,6 +156,39 @@ def _isnum(s, l=-1):
 	return s.isdigit() and ((l== -1) or (len(s) == l))
 
 
+def _dbi_binary_quote(s):
+	# Count usage of each char
+	cnt = {}
+	for c in s:
+		cnt[c] = cnt.get(c, 0) + 1
+
+	# Find best offset
+	e = 0
+	m = len(s)
+	for i in range(1, 256):
+		if i == 39:
+			continue
+		sum_ = cnt.get(i, 0) + cnt.get((i+1)&0xff, 0) + cnt.get((i+39)&0xff, 0)
+		if sum_ < m:
+			m = sum_
+			e = i
+			if m == 0:	# No overhead ? use this !
+				break;
+	
+	# Generate output
+	out = []
+	out.append( chr(e) )	# Offset
+	for c in s:
+		x = (256 + ord(c) - e) % 256
+		if x in (0, 1, 39):
+			out.append('\x01')
+			out.append(chr(x+1))
+		else:
+			out.append(chr(x))
+
+	return ''.join(out)
+
+
 def gen_parameters(opts):
 	"""Generates Name, ICCID, MCC, MNC, IMSI, SMSP, Ki from the
 	options given by the user"""
@@ -298,7 +331,7 @@ def write_parameters(opts, params):
 			'(subscriber_id, algorithm_id, a3a8_ki)' +
 			'VALUES ' +
 			'(?,?,?)',
-			[ sub_id, 2, sqlite3.Binary(h2b(params['ki'])) ],
+			[ sub_id, 2, sqlite3.Binary(_dbi_binary_quote(h2b(params['ki']))) ],
 		)
 
 		conn.commit()
