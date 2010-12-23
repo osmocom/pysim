@@ -435,7 +435,8 @@ if __name__ == '__main__':
 		write_parameters(opts, cp)
 
 		# Batch mode state update and save
-		opts.num += 1
+		if opts.num is not None:
+			opts.num += 1
 		save_batch(opts)
 
 		# Done for this card and maybe for everything ?
