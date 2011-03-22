@@ -50,7 +50,7 @@ class SimCardCommands(object):
 			ef = [ef]
 		self.select_file(ef)
 		pdu = 'a0d6%04x%02x' % (offset, len(data)/2) + data
-		return self._tp.send_apdu(pdu)
+		return self._tp.send_apdu_checksw(pdu)
 
 	def read_record(self, ef, rec_no):
 		if not hasattr(type(ef), '__iter__'):
@@ -71,7 +71,7 @@ class SimCardCommands(object):
 		else:
 			rec_length = len(data)/2
 		pdu = ('a0dc%02x04%02x' % (rec_no, rec_length)) + data
-		return self._tp.send_apdu(pdu)
+		return self._tp.send_apdu_checksw(pdu)
 
 	def record_size(self, ef):
 		r = self.select_file(ef)
@@ -92,4 +92,4 @@ class SimCardCommands(object):
 
 	def verify_chv(self, chv_no, code):
 		fc = rpad(b2h(code), 16)
-		return self._tp.send_apdu('a02000' + ('%02x' % chv_no) + '08' + fc)
+		return self._tp.send_apdu_checksw('a02000' + ('%02x' % chv_no) + '08' + fc)
