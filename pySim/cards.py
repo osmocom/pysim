@@ -6,6 +6,7 @@
 
 #
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
+# Copyright (C) 2011  Harald Welte <laforge@gnumonks.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pySim.utils import b2h, swap_nibbles, rpad, lpad
+from pySim.utils import b2h, h2b, swap_nibbles, rpad, lpad
 
 
 class Card(object):
@@ -254,6 +255,61 @@ class FakeMagicSim(Card):
 		for i in range(0, rec_cnt):
 			self._scc.update_record('000c', 1+i, entry)
 
+class GrcardSim(Card):
+	"""
+	Greencard (grcard.cn) HZCOS GSM SIM
+	These cards have a much more regular ISO 7816-4 / TS 11.11 structure,
+	and use standard UPDATE RECORD / UPDATE BINARY commands except for Ki.
+	"""
+
+	name = 'grcardsim'
+
+	@classmethod
+	def autodetect(kls, scc):
+		return None
+
+	def program(self, p):
+		# We don't really know yet what ADM PIN 4 is about
+		#self._scc.verify_chv(4, h2b("4444444444444444"))
+
+		# Authenticate using ADM PIN 5
+		self._scc.verify_chv(5, h2b("4444444444444444"))
+
+		# EF.ICCID
+		r = self._scc.select_file(['3f00', '2fe2'])
+		data, sw = self._scc.update_binary('2fe2', self._e_iccid(p['iccid']))
+
+		# EF.IMSI
+		r = self._scc.select_file(['3f00', '7f20', '6f07'])
+		data, sw = self._scc.update_binary('6f07', self._e_imsi(p['imsi']))
+
+		# EF.ACC
+		#r = self._scc.select_file(['3f00', '7f20', '6f78'])
+		#self._scc.update_binary('6f78', self._e_imsi(p['imsi'])
+
+		# EF.SMSP
+		r = self._scc.select_file(['3f00', '7f10', '6f42'])
+		data, sw = self._scc.update_record('6f42', 1, rpad(p['smsp'], 80))
+
+		# Set the Ki using proprietary command
+		pdu = '80d4020010' + p['ki']
+		data, sw = self._scc._tp.send_apdu(pdu)
+
+		# EF.HPLMN
+		r = self._scc.select_file(['3f00', '7f20', '6f30'])
+		size = int(r[-1][4:8], 16)
+		hplmn = self._e_plmn(p['mcc'], p['mnc'])
+		self._scc.update_binary('6f30', hplmn + 'ff' * (size-3))
+
+		# EF.SPN (Service Provider Name)
+		r = self._scc.select_file(['3f00', '7f20', '6f30'])
+		size = int(r[-1][4:8], 16)
+		# FIXME
+
+		# FIXME: EF.MSISDN
+
+	def erase(self):
+		return
 
 	# In order for autodetection ...
-_cards_classes = [ FakeMagicSim, SuperSim, MagicSim ]
+_cards_classes = [ FakeMagicSim, SuperSim, MagicSim, GrcardSim ]
