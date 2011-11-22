@@ -33,7 +33,7 @@ import sys
 
 try:
 	import json
-except Importerror:
+except ImportError:
 	# Python < 2.5
 	import simplejson as json
 
