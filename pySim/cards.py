@@ -31,7 +31,7 @@ class Card(object):
 		self._scc = scc
 
 	def _e_iccid(self, iccid):
-		return swap_nibbles(iccid)
+		return swap_nibbles(rpad(iccid, 20))
 
 	def _e_imsi(self, imsi):
 		"""Converts a string imsi into the value of the EF"""

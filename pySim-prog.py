@@ -188,6 +188,10 @@ def _dbi_binary_quote(s):
 
 	return ''.join(out)
 
+def calculate_luhn(cc):
+	num = map(int, str(cc))
+	check_digit = 10 - sum(num[-2::-2] + [sum(divmod(d * 2, 10)) for d in num[::-2]]) % 10
+	return 0 if check_digit == 10 else check_digit
 
 def gen_parameters(opts):
 	"""Generates Name, ICCID, MCC, MNC, IMSI, SMSP, Ki from the
@@ -206,11 +210,11 @@ def gen_parameters(opts):
 	# Digitize MCC/MNC (5 or 6 digits)
 	plmn_digits = _mcc_mnc_digits(mcc, mnc)
 
-	# ICCID (20 digits)
+	# ICCID (19 digits, E.118), though some phase1 vendors use 20 :(
 	if opts.iccid is not None:
 		iccid = opts.iccid
-		if not _isnum(iccid, 20):
-			raise ValueError('ICCID must be 20 digits !');
+		if not _isnum(iccid, 19):
+			raise ValueError('ICCID must be 19 digits !');
 
 	else:
 		if opts.num is None:
@@ -222,7 +226,7 @@ def gen_parameters(opts):
 			plmn_digits 	# MCC/MNC on 5/6 digits
 		)
 
-		ml = 20 - len(iccid)
+		ml = 18 - len(iccid)
 
 		if opts.secret is None:
 			# The raw number
@@ -230,6 +234,9 @@ def gen_parameters(opts):
 		else:
 			# Randomized digits
 			iccid += _digits(opts.secret, 'ccid', ml, opts.num)
+
+		# Add checksum digit
+		iccid += ('%1d' % calculate_luhn(iccid))
 
 	# IMSI (15 digits usually)
 	if opts.imsi is not None:
