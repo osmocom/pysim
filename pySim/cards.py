@@ -311,5 +311,14 @@ class GrcardSim(Card):
 	def erase(self):
 		return
 
+class SysmoSIMgr1(GrcardSim):
+	"""
+	sysmocom sysmoSIM-GR1
+	These cards have a much more regular ISO 7816-4 / TS 11.11 structure,
+	and use standard UPDATE RECORD / UPDATE BINARY commands except for Ki.
+	"""
+	name = 'sysmosim-gr1'
+
 	# In order for autodetection ...
-_cards_classes = [ FakeMagicSim, SuperSim, MagicSim, GrcardSim ]
+_cards_classes = [ FakeMagicSim, SuperSim, MagicSim, GrcardSim,
+		   SysmoSIMgr1 ]
