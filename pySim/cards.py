@@ -240,9 +240,7 @@ class FakeMagicSim(Card):
 			self._e_iccid(p['iccid']) +			# 10b  ICCID
 			self._e_imsi(p['imsi']) +			#  9b  IMSI_len + id_type(9) + IMSI
 			p['ki'] +							# 16b  Ki
-			24*'f' + 'fd' + 24*'f' +			# 25b  (unknown ...)
-			rpad(p['smsp'], 20) +				# 10b  SMSP (padded with ff if needed)
-			10*'f'								#  5b  (unknown ...)
+			rpad(p['smsp'], 80)					# 40b  SMSP (padded with ff if needed)
 		)
 		self._scc.update_record('000c', 1, entry)
 

@@ -39,7 +39,7 @@ except ImportError:
 
 from pySim.commands import SimCardCommands
 from pySim.cards import _cards_classes
-from pySim.utils import h2b
+from pySim.utils import h2b, swap_nibbles, rpad
 
 
 def parse_options():
@@ -83,8 +83,11 @@ def parse_options():
 			help="Mobile Network Code [default: %default]",
 			default=55,
 		)
-	parser.add_option("-m", "--smsp", dest="smsp",
+	parser.add_option("-m", "--smsc", dest="smsc",
 			help="SMSP [default: '00 + country code + 5555']",
+		)
+	parser.add_option("-M", "--smsp", dest="smsp",
+			help="Raw SMSP content in hex [default: auto from SMSC]",
 		)
 
 	parser.add_option("-s", "--iccid", dest="iccid", metavar="ID",
@@ -154,6 +157,10 @@ def _cc_digits(cc):
 
 def _isnum(s, l=-1):
 	return s.isdigit() and ((l== -1) or (len(s) == l))
+
+def _ishex(s, l=-1):
+	hc = '0123456789abcdef'
+	return all([x in hc for x in s.lower()]) and ((l== -1) or (len(s) == l))
 
 
 def _dbi_binary_quote(s):
@@ -265,11 +272,29 @@ def gen_parameters(opts):
 	# SMSP
 	if opts.smsp is not None:
 		smsp = opts.smsp
-		if not _isnum(smsp):
-			raise ValueError('SMSP must be digits only !')
+		if not _ishex(smsp):
+			raise ValueError('SMSP must be hex digits only !')
+		if len(smsp) < 28*2:
+			raise ValueError('SMSP must be at least 28 bytes')
 
 	else:
-		smsp = '00%d' % opts.country + '5555'	# Hack ...
+		if opts.smsc is not None:
+			smsc = opts.smsc
+			if not _isnum(smsc):
+				raise ValueError('SMSC must be digits only !')
+		else:
+			smsc = '00%d' % opts.country + '5555'	# Hack ...
+
+		smsc = '%02d' % ((len(smsc) + 3)//2,) + "80" + swap_nibbles(rpad(smsc, 20))
+
+		smsp = (
+			'e1' +			# Parameters indicator
+			'ff' * 12 +		# TP-Destination address
+			smsc +			# TP-Service Centre Address
+			'00' +			# TP-Protocol identifier
+			'00' +			# TP-Data coding scheme
+			'00'			# TP-Validity period
+		)
 
 	# Ki (random)
 	if opts.ki is not None:
