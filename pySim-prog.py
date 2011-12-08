@@ -174,7 +174,7 @@ def _dbi_binary_quote(s):
 			e = i
 			if m == 0:	# No overhead ? use this !
 				break;
-	
+
 	# Generate output
 	out = []
 	out.append( chr(e) )	# Offset
@@ -439,7 +439,7 @@ if __name__ == '__main__':
 	done = False
 	first = True
 	card = None
- 
+
 	while not done:
 		# Connect transport
 		print "Insert card now (or CTRL-C to cancel)"
