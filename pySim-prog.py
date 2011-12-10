@@ -285,7 +285,7 @@ def gen_parameters(opts):
 		else:
 			smsc = '00%d' % opts.country + '5555'	# Hack ...
 
-		smsc = '%02d' % ((len(smsc) + 3)//2,) + "80" + swap_nibbles(rpad(smsc, 20))
+		smsc = '%02d' % ((len(smsc) + 3)//2,) + "81" + swap_nibbles(rpad(smsc, 20))
 
 		smsp = (
 			'e1' +			# Parameters indicator
