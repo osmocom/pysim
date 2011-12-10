@@ -240,7 +240,7 @@ class FakeMagicSim(Card):
 			self._e_iccid(p['iccid']) +			# 10b  ICCID
 			self._e_imsi(p['imsi']) +			#  9b  IMSI_len + id_type(9) + IMSI
 			p['ki'] +							# 16b  Ki
-			rpad(p['smsp'], 80)					# 40b  SMSP (padded with ff if needed)
+			lpad(p['smsp'], 80)					# 40b  SMSP (padded with ff if needed)
 		)
 		self._scc.update_record('000c', 1, entry)
 
@@ -287,7 +287,7 @@ class GrcardSim(Card):
 
 		# EF.SMSP
 		r = self._scc.select_file(['3f00', '7f10', '6f42'])
-		data, sw = self._scc.update_record('6f42', 1, rpad(p['smsp'], 80))
+		data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 80))
 
 		# Set the Ki using proprietary command
 		pdu = '80d4020010' + p['ki']
