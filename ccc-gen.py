@@ -23,7 +23,7 @@
 from optparse import OptionParser
 
 from ccc import StateManager, CardParametersGenerator, isnum
-from pySim.utils import h2b
+from pySim.utils import h2b, swap_nibbles, rpad
 
 
 #
@@ -134,8 +134,11 @@ def parse_options():
 			help="Mobile Network Code [default: %default]",
 			default=42,
 		)
-	parser.add_option("-m", "--smsp", dest="smsp",
+	parser.add_option("-m", "--smsc", dest="smsc",
 			help="SMSP [default: '00 + country code + 5555']",
+		)
+	parser.add_option("-M", "--smsp", dest="smsp",
+			help="Raw SMSP content in hex [default: auto from SMSC]",
 		)
 
 	# Autogen
@@ -175,11 +178,32 @@ def parse_options():
 	if 0 < options.mnc > 999:
 		parser.error("Invalid Mobile Network Code (MNC)")
 
+	# SMSP
 	if options.smsp is not None:
-		if not isnum(options.smsp):
-			parser.error("Invalid SMSP Number")
+		smsp = options.smsp
+		if not _ishex(smsp):
+			raise ValueError('SMSP must be hex digits only !')
+		if len(smsp) < 28*2:
+			raise ValueError('SMSP must be at least 28 bytes')
+
 	else:
-		options.smsp = '00%d' % options.country + '5555'
+		if options.smsc is not None:
+			smsc = options.smsc
+			if not _isnum(smsc):
+				raise ValueError('SMSC must be digits only !')
+		else:
+			smsc = '00%d' % options.country + '5555'	# Hack ...
+
+		smsc = '%02d' % ((len(smsc) + 3)//2,) + "81" + swap_nibbles(rpad(smsc, 20))
+
+		options.smsp = (
+			'e1' +			# Parameters indicator
+			'ff' * 12 +		# TP-Destination address
+			smsc +			# TP-Service Centre Address
+			'00' +			# TP-Protocol identifier
+			'00' +			# TP-Data coding scheme
+			'00'			# TP-Validity period
+		)
 
 	return options
 
