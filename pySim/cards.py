@@ -318,5 +318,35 @@ class SysmoSIMgr1(GrcardSim):
 	name = 'sysmosim-gr1'
 
 	# In order for autodetection ...
+
+class SysmoUSIMgr1(Card):
+	"""
+	sysmocom sysmoUSIM-GR1
+	"""
+	name = 'sysmoUSIM-GR1'
+
+	@classmethod
+	def autodetect(kls, scc):
+		# TODO: Access the ATR
+		return None
+
+	def program(self, p):
+		# TODO: check if verify_chv could be used or what it needs
+		# self._scc.verify_chv(0x0A, [0x33,0x32,0x32,0x31,0x33,0x32,0x33,0x32])
+		# Unlock the card..
+		data, sw = self._scc._tp.send_apdu_checksw("0020000A083332323133323332")
+
+		# TODO: move into SimCardCommands
+		# TODO: Add OPC support support to pySIM
+		par = ( p['ki'] +			# 16b  K
+			32*"F" +			# 32b  OPC
+			self._e_iccid(p['iccid']) +	# 10b  ICCID
+			self._e_imsi(p['imsi'])		#  9b  IMSI_len + id_type(9) + IMSI
+			)
+		data, sw = self._scc._tp.send_apdu_checksw("0099000033" + par)
+
+	def erase(self):
+		return
+
 _cards_classes = [ FakeMagicSim, SuperSim, MagicSim, GrcardSim,
-		   SysmoSIMgr1 ]
+		   SysmoSIMgr1, SysmoUSIMgr1 ]
