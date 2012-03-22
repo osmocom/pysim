@@ -99,6 +99,10 @@ def parse_options():
 	parser.add_option("-k", "--ki", dest="ki",
 			help="Ki (default is to randomize)",
 		)
+	parser.add_option("-o", "--opc", dest="opc",
+			help="OPC (default is to randomize)",
+		)
+
 
 	parser.add_option("-z", "--secret", dest="secret", metavar="STR",
 			help="Secret used for ICCID/IMSI autogen",
@@ -305,6 +309,16 @@ def gen_parameters(opts):
 	else:
 		ki = ''.join(['%02x' % random.randrange(0,256) for i in range(16)])
 
+	# Ki (random)
+	if opts.opc is not None:
+		opc = opts.opc
+		if not re.match('^[0-9a-fA-F]{32}$', opc):
+			raise ValueError('OPC needs to be 128 bits, in hex format')
+
+	else:
+		opc = ''.join(['%02x' % random.randrange(0,256) for i in range(16)])
+
+
 	# Return that
 	return {
 		'name'	: opts.name,
@@ -314,6 +328,7 @@ def gen_parameters(opts):
 		'imsi'	: imsi,
 		'smsp'	: smsp,
 		'ki'	: ki,
+		'opc'	: opc,
 	}
 
 
@@ -326,6 +341,7 @@ def print_parameters(params):
  > MCC/MNC : %(mcc)d/%(mnc)d
  > IMSI    : %(imsi)s
  > Ki      : %(ki)s
+ > OPC     : %(opc)s
 """	% params
 
 
@@ -333,7 +349,7 @@ def write_parameters(opts, params):
 	# CSV
 	if opts.write_csv:
 		import csv
-		row = ['name', 'iccid', 'mcc', 'mnc', 'imsi', 'smsp', 'ki']
+		row = ['name', 'iccid', 'mcc', 'mnc', 'imsi', 'smsp', 'ki', 'opc']
 		f = open(opts.write_csv, 'a')
 		cw = csv.writer(f)
 		cw.writerow([params[x] for x in row])
