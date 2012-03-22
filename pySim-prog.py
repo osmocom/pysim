@@ -102,6 +102,9 @@ def parse_options():
 	parser.add_option("-o", "--opc", dest="opc",
 			help="OPC (default is to randomize)",
 		)
+	parser.add_option("--op", dest="op",
+			help="Set OP to derive OPC from OP and KI",
+		)
 
 
 	parser.add_option("-z", "--secret", dest="secret", metavar="STR",
@@ -204,6 +207,19 @@ def calculate_luhn(cc):
 	check_digit = 10 - sum(num[-2::-2] + [sum(divmod(d * 2, 10)) for d in num[::-2]]) % 10
 	return 0 if check_digit == 10 else check_digit
 
+def derive_milenage_opc(ki_hex, op_hex):
+	"""
+	Run the milenage algorithm.
+	"""
+	from Crypto.Cipher import AES
+	from Crypto.Util.strxor import strxor
+	from pySim.utils import b2h
+
+	# We pass in hex string and now need to work on bytes
+	aes = AES.new(h2b(ki_hex))
+	opc_bytes = aes.encrypt(h2b(op_hex))
+	return b2h(strxor(opc_bytes, h2b(op_hex)))
+
 def gen_parameters(opts):
 	"""Generates Name, ICCID, MCC, MNC, IMSI, SMSP, Ki from the
 	options given by the user"""
@@ -305,7 +321,6 @@ def gen_parameters(opts):
 		ki = opts.ki
 		if not re.match('^[0-9a-fA-F]{32}$', ki):
 			raise ValueError('Ki needs to be 128 bits, in hex format')
-
 	else:
 		ki = ''.join(['%02x' % random.randrange(0,256) for i in range(16)])
 
@@ -315,6 +330,8 @@ def gen_parameters(opts):
 		if not re.match('^[0-9a-fA-F]{32}$', opc):
 			raise ValueError('OPC needs to be 128 bits, in hex format')
 
+	elif opts.op is not None:
+		opc = derive_milenage_opc(ki, opts.op)
 	else:
 		opc = ''.join(['%02x' % random.randrange(0,256) for i in range(16)])
 
