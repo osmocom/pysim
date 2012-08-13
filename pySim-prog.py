@@ -378,8 +378,8 @@ def print_parameters(params):
 """	% params
 
 
-def write_parameters(opts, params):
-	# CSV
+def write_params_csv(opts, params):
+	# csv
 	if opts.write_csv:
 		import csv
 		row = ['name', 'iccid', 'mcc', 'mnc', 'imsi', 'smsp', 'ki', 'opc']
@@ -388,6 +388,7 @@ def write_parameters(opts, params):
 		cw.writerow([params[x] for x in row])
 		f.close()
 
+def write_params_hlr(opts, params):
 	# SQLite3 OpenBSC HLR
 	if opts.write_hlr:
 		import sqlite3
@@ -417,6 +418,10 @@ def write_parameters(opts, params):
 
 		conn.commit()
 		conn.close()
+
+def write_parameters(opts, params):
+	write_params_csv(opts, params)
+	write_params_hldr(opts, params)
 
 
 BATCH_STATE = [ 'name', 'country', 'mcc', 'mnc', 'smsp', 'secret', 'num' ]
