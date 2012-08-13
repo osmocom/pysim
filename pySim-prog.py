@@ -67,6 +67,12 @@ def parse_options():
 			default=False,
 		)
 
+	parser.add_option("-S", "--source", dest="source",
+			help="Data Source[default: %default]",
+			default="cmdline",
+		)
+
+	# if mode is "cmdline"
 	parser.add_option("-n", "--name", dest="name",
 			help="Operator name [default: %default]",
 			default="Magic",
@@ -124,6 +130,11 @@ def parse_options():
 			help="Optional batch state file",
 		)
 
+	# if mode is "csv"
+	parser.add_option("--read-csv", dest="read_csv", metavar="FILE",
+			help="Read parameters from CSV file rather than command line")
+
+
 	parser.add_option("--write-csv", dest="write_csv", metavar="FILE",
 			help="Append generated parameters in CSV file",
 		)
@@ -138,15 +149,26 @@ def parse_options():
 			print kls.name
 		sys.exit(0)
 
+	if options.source == 'csv':
+		if (options.imsi is None) and (options.batch_mode is False):
+			parser.error("CSV mode needs either an IMSI or batch mode")
+		if options.read_csv is None:
+			parser.error("CSV mode requires a CSV input file")
+	elif options.source == 'cmdline':
+		if ((options.imsi is None) or (options.iccid is None)) and (options.num is None):
+			parser.error("If either IMSI or ICCID isn't specified, num is required")
+	else:
+		parser.error("Only `cmdline' and `csv' sources supported")
+
+	if (options.read_csv is not None) and (options.source != 'csv'):
+		parser.error("You cannot specify a CSV input file in source != csv")
+
 	if (options.batch_mode) and (options.num is None):
 		options.num = 0
 
 	if (options.batch_mode):
 		if (options.imsi is not None) or (options.iccid is not None):
 			parser.error("Can't give ICCID/IMSI for batch mode, need to use automatic parameters ! see --num and --secret for more informations")
-
-	if ((options.imsi is None) or (options.iccid is None)) and (options.num is None):
-		parser.error("If either IMSI or ICCID isn't specified, num is required")
 
 	if args:
 		parser.error("Extraneous arguments")
@@ -388,6 +410,27 @@ def write_params_csv(opts, params):
 		cw.writerow([params[x] for x in row])
 		f.close()
 
+def read_params_csv(opts, imsi):
+	import csv
+	row = ['name', 'iccid', 'mcc', 'mnc', 'imsi', 'smsp', 'ki', 'opc']
+	f = open(opts.read_csv, 'r')
+	cr = csv.DictReader(f, row)
+	i = 0
+	for row in cr:
+		if opts.num is not None:
+			i += 1
+			if opts.num == i:
+				break
+		if row['imsi'] == imsi:
+			break
+
+	if row:
+		row['mcc'] = int(row['mcc'])
+		row['mnc'] = int(row['mnc'])
+
+	f.close()
+	return row
+
 def write_params_hlr(opts, params):
 	# SQLite3 OpenBSC HLR
 	if opts.write_hlr:
@@ -421,7 +464,7 @@ def write_params_hlr(opts, params):
 
 def write_parameters(opts, params):
 	write_params_csv(opts, params)
-	write_params_hldr(opts, params)
+	write_params_hlr(opts, params)
 
 
 BATCH_STATE = [ 'name', 'country', 'mcc', 'mnc', 'smsp', 'secret', 'num' ]
@@ -543,7 +586,13 @@ if __name__ == '__main__':
 			card.reset()
 
 		# Generate parameters
-		cp = gen_parameters(opts)
+		if opts.source == 'cmdline':
+			cp = gen_parameters(opts)
+		elif opts.source == 'csv':
+			cp = read_params_csv(opts, opts.imsi)
+		if cp is None:
+			print "Error reading parameters\n"
+			sys.exit(2)
 		print_parameters(cp)
 
 		# Program the card
