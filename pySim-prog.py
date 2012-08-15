@@ -141,6 +141,9 @@ def parse_options():
 	parser.add_option("--write-hlr", dest="write_hlr", metavar="FILE",
 			help="Append generated parameters to OpenBSC HLR sqlite3",
 		)
+	parser.add_option("--dry-run", dest="dry_run",
+			help="Perform a 'dry run', don't actually program the card",
+			default=False, action="store_true")
 
 	(options, args) = parser.parse_args()
 
@@ -451,7 +454,7 @@ def write_params_hlr(opts, params):
 			[
 				params['imsi'],
 				params['name'],
-				'9' + params['iccid'][-5:]
+				'9' + params['iccid'][-5:-1]
 			],
 		)
 		sub_id = c.lastrowid
@@ -569,27 +572,30 @@ if __name__ == '__main__':
 	card = None
 
 	while not done:
-		# Connect transport
-		print "Insert card now (or CTRL-C to cancel)"
-		sl.wait_for_card(newcardonly=not first)
+
+		if opts.dry_run is False:
+			# Connect transport
+			print "Insert card now (or CTRL-C to cancel)"
+			sl.wait_for_card(newcardonly=not first)
 
 		# Not the first anymore !
 		first = False
 
-		# Get card
-		card = card_detect(opts, scc)
-		if card is None:
-			if opts.batch_mode:
-				first = False
-				continue
-			else:
-				sys.exit(-1)
+		if opts.dry_run is False:
+			# Get card
+			card = card_detect(opts, scc)
+			if card is None:
+				if opts.batch_mode:
+					first = False
+					continue
+				else:
+					sys.exit(-1)
 
-		# Erase if requested
-		if opts.erase:
-			print "Formatting ..."
-			card.erase()
-			card.reset()
+			# Erase if requested
+			if opts.erase:
+				print "Formatting ..."
+				card.erase()
+				card.reset()
 
 		# Generate parameters
 		if opts.source == 'cmdline':
@@ -601,9 +607,13 @@ if __name__ == '__main__':
 			sys.exit(2)
 		print_parameters(cp)
 
-		# Program the card
-		print "Programming ..."
-		card.program(cp)
+		if opts.dry_run is False:
+			# Program the card
+			print "Programming ..."
+			if opts.dry_run is not True:
+				card.program(cp)
+		else:
+			print "Dry Run: NOT PROGRAMMING!"
 
 		# Write parameters permanently
 		write_parameters(opts, cp)
