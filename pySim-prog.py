@@ -111,6 +111,9 @@ def parse_options():
 	parser.add_option("--op", dest="op",
 			help="Set OP to derive OPC from OP and KI",
 		)
+	parser.add_option("--read-imsi", dest="read_imsi", action="store_true",
+			help="Read the IMSI from the CARD", default=False
+		)
 
 
 	parser.add_option("-z", "--secret", dest="secret", metavar="STR",
@@ -150,8 +153,8 @@ def parse_options():
 		sys.exit(0)
 
 	if options.source == 'csv':
-		if (options.imsi is None) and (options.batch_mode is False):
-			parser.error("CSV mode needs either an IMSI or batch mode")
+		if (options.imsi is None) and (options.batch_mode is False) and (options.read_imsi is False):
+			parser.error("CSV mode needs either an IMSI, --read-imsi or batch mode")
 		if options.read_csv is None:
 			parser.error("CSV mode requires a CSV input file")
 	elif options.source == 'cmdline':
@@ -404,7 +407,7 @@ def _read_params_csv(opts, imsi):
 	cr = csv.DictReader(f, row)
 	i = 0
 	for row in cr:
-		if opts.num is not None:
+		if opts.num is not None and opts.read_imsi is False:
 			if opts.num == i:
 				f.close()
 				return row;
@@ -585,7 +588,16 @@ if __name__ == '__main__':
 		if opts.source == 'cmdline':
 			cp = gen_parameters(opts)
 		elif opts.source == 'csv':
-			cp = read_params_csv(opts, opts.imsi)
+			if opts.read_imsi:
+				if opts.dry_run:
+					# Connect transport
+					print "Insert card now (or CTRL-C to cancel)"
+					sl.wait_for_card(newcardonly=not first)
+				(res,_) = scc.read_binary(['3f00', '7f20', '6f07'])
+				imsi = swap_nibbles(res)[3:]
+			else:
+				imsi = opts.imsi
+			cp = read_params_csv(opts, imsi)
 		if cp is None:
 			print "Error reading parameters\n"
 			sys.exit(2)
