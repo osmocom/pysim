@@ -410,7 +410,7 @@ def write_params_csv(opts, params):
 		cw.writerow([params[x] for x in row])
 		f.close()
 
-def read_params_csv(opts, imsi):
+def _read_params_csv(opts, imsi):
 	import csv
 	row = ['name', 'iccid', 'mcc', 'mnc', 'imsi', 'smsp', 'ki', 'opc']
 	f = open(opts.read_csv, 'r')
@@ -418,18 +418,24 @@ def read_params_csv(opts, imsi):
 	i = 0
 	for row in cr:
 		if opts.num is not None:
-			i += 1
 			if opts.num == i:
-				break
+				f.close()
+				return row;
+			i += 1
 		if row['imsi'] == imsi:
-			break
-
-	if row:
-		row['mcc'] = int(row['mcc'])
-		row['mnc'] = int(row['mnc'])
+			f.close()
+			return row;
 
 	f.close()
+	return None
+
+def read_params_csv(opts, imsi):
+	row = _read_params_csv(opts, imsi)
+	if row is not None:
+		row['mcc'] = int(row['mcc'])
+		row['mnc'] = int(row['mnc'])
 	return row
+
 
 def write_params_hlr(opts, params):
 	# SQLite3 OpenBSC HLR
