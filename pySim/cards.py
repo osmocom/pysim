@@ -253,6 +253,7 @@ class FakeMagicSim(Card):
 		for i in range(0, rec_cnt):
 			self._scc.update_record('000c', 1+i, entry)
 
+
 class GrcardSim(Card):
 	"""
 	Greencard (grcard.cn) HZCOS GSM SIM
@@ -309,6 +310,7 @@ class GrcardSim(Card):
 	def erase(self):
 		return
 
+
 class SysmoSIMgr1(GrcardSim):
 	"""
 	sysmocom sysmoSIM-GR1
@@ -316,6 +318,7 @@ class SysmoSIMgr1(GrcardSim):
 	and use standard UPDATE RECORD / UPDATE BINARY commands except for Ki.
 	"""
 	name = 'sysmosim-gr1'
+
 
 class SysmoUSIMgr1(Card):
 	"""
