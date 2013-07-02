@@ -130,6 +130,12 @@ class _MagicSimBase(Card):
 			# PLMN_Sel
 		v+= '6f30' + '18' +  rpad(hplmn, 36)
 
+			# ACC
+			# This doesn't work with "fake" SuperSIM cards,
+			# but will hopefully work with real SuperSIMs.
+		if p.get('acc') is not None:
+			v+= '6f78' + '02' + lpad(p['acc'], 4)
+
 		self._scc.update_record(self._files['b_ef'][0], 1,
 			rpad(v, self._files['b_ef'][1]*2)
 		)
@@ -283,8 +289,8 @@ class GrcardSim(Card):
 		data, sw = self._scc.update_binary('6f07', self._e_imsi(p['imsi']))
 
 		# EF.ACC
-		#r = self._scc.select_file(['3f00', '7f20', '6f78'])
-		#self._scc.update_binary('6f78', self._e_imsi(p['imsi'])
+		if p.get('acc') is not None:
+			data, sw = self._scc.update_binary('6f78', lpad(p['acc'], 4))
 
 		# EF.SMSP
 		r = self._scc.select_file(['3f00', '7f10', '6f42'])

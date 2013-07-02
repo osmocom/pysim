@@ -105,6 +105,9 @@ def parse_options():
 	parser.add_option("--op", dest="op",
 			help="Set OP to derive OPC from OP and KI",
 		)
+	parser.add_option("--acc", dest="acc",
+			help="Set ACC bits (Access Control Code). not all card types are supported",
+		)
 
 
 	parser.add_option("-z", "--secret", dest="secret", metavar="STR",
@@ -316,6 +319,17 @@ def gen_parameters(opts):
 			'00'			# TP-Validity period
 		)
 
+	# ACC
+	if opts.acc is not None:
+		acc = opts.acc
+		if not _ishex(acc):
+			raise ValueError('ACC must be hex digits only !')
+		if len(acc) != 2*2:
+			raise ValueError('ACC must be exactly 2 bytes')
+
+	else:
+		acc = None
+
 	# Ki (random)
 	if opts.ki is not None:
 		ki = opts.ki
@@ -346,6 +360,7 @@ def gen_parameters(opts):
 		'smsp'	: smsp,
 		'ki'	: ki,
 		'opc'	: opc,
+		'acc'	: acc,
 	}
 
 
@@ -359,6 +374,7 @@ def print_parameters(params):
  > IMSI    : %(imsi)s
  > Ki      : %(ki)s
  > OPC     : %(opc)s
+ > ACC     : %(acc)s
 """	% params
 
 
