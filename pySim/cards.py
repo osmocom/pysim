@@ -317,8 +317,6 @@ class SysmoSIMgr1(GrcardSim):
 	"""
 	name = 'sysmosim-gr1'
 
-	# In order for autodetection ...
-
 class SysmoUSIMgr1(Card):
 	"""
 	sysmocom sysmoUSIM-GR1
@@ -347,5 +345,7 @@ class SysmoUSIMgr1(Card):
 	def erase(self):
 		return
 
+
+	# In order for autodetection ...
 _cards_classes = [ FakeMagicSim, SuperSim, MagicSim, GrcardSim,
 		   SysmoSIMgr1, SysmoUSIMgr1 ]
