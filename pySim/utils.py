@@ -42,3 +42,20 @@ def rpad(s, l, c='f'):
 
 def lpad(s, l, c='f'):
 	return c * (l - len(s)) + s
+
+def dec_imsi(ef):
+	"""Converts an EF value to the imsi string representation"""
+	if len(ef) < 4:
+		return None
+	l = int(ef[0:2]) * 2			# Length of the IMSI string
+	swapped = swap_nibbles(ef[2:])
+	oe = (int(swapped[0])>>3) & 1	# Odd (1) / Even (0)
+	if oe:
+		l = l-1
+	if l+1 > len(swapped):
+		return None
+	imsi = swapped[1:l+2]
+	return imsi
+
+def dec_iccid(ef):
+	return swap_nibbles(ef).strip('f')
