@@ -22,27 +22,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pySim.utils import b2h, h2b, swap_nibbles, rpad, lpad
+from pySim.utils import b2h, h2b, swap_nibbles, rpad, lpad, enc_imsi, enc_iccid, enc_plmn
 
 
 class Card(object):
 
 	def __init__(self, scc):
 		self._scc = scc
-
-	def _e_iccid(self, iccid):
-		return swap_nibbles(rpad(iccid, 20))
-
-	def _e_imsi(self, imsi):
-		"""Converts a string imsi into the value of the EF"""
-		l = (len(imsi) + 1) // 2	# Required bytes
-		oe = len(imsi) & 1			# Odd (1) / Even (0)
-		ei = '%02x' % l + swap_nibbles(lpad('%01x%s' % ((oe<<3)|1, imsi), 16))
-		return ei
-
-	def _e_plmn(self, mcc, mnc):
-		"""Converts integer MCC/MNC into 6 bytes for EF"""
-		return swap_nibbles(lpad('%d' % mcc, 3) + lpad('%d' % mnc, 3))
 
 	def reset(self):
 		self._scc.reset_card()
@@ -103,7 +89,7 @@ class _MagicSimBase(Card):
 		self._scc.select_file(['3f00', '7f4d'])
 
 		# Home PLMN in PLMN_Sel format
-		hplmn = self._e_plmn(p['mcc'], p['mnc'])
+		hplmn = enc_plmn(p['mcc'], p['mnc'])
 
 		# Operator name ( 3f00/7f4d/8f0c )
 		self._scc.update_record(self._files['name'][0], 2,
@@ -118,10 +104,10 @@ class _MagicSimBase(Card):
 			v += p['ki']
 
 			# ICCID
-		v += '3f00' + '2fe2' + '0a' + self._e_iccid(p['iccid'])
+		v += '3f00' + '2fe2' + '0a' + enc_iccid(p['iccid'])
 
 			# IMSI
-		v += '7f20' + '6f07' + '09' + self._e_imsi(p['imsi'])
+		v += '7f20' + '6f07' + '09' + enc_imsi(p['imsi'])
 
 			# Ki
 		if self._ki_file:
@@ -147,7 +133,7 @@ class _MagicSimBase(Card):
 		r = self._scc.select_file(['3f00', '7f20', '6f30'])
 		tl = int(r[-1][4:8], 16)
 
-		hplmn = self._e_plmn(p['mcc'], p['mnc'])
+		hplmn = enc_plmn(p['mcc'], p['mnc'])
 		self._scc.update_binary('6f30', hplmn + 'ff' * (tl-3))
 
 	def erase(self):
@@ -233,7 +219,7 @@ class FakeMagicSim(Card):
 		r = self._scc.select_file(['3f00', '7f20', '6f30'])
 		tl = int(r[-1][4:8], 16)
 
-		hplmn = self._e_plmn(p['mcc'], p['mnc'])
+		hplmn = enc_plmn(p['mcc'], p['mnc'])
 		self._scc.update_binary('6f30', hplmn + 'ff' * (tl-3))
 
 		# Get total number of entries and entry size
@@ -243,8 +229,8 @@ class FakeMagicSim(Card):
 		entry = (
 			'81' +								#  1b  Status: Valid & Active
 			rpad(b2h(p['name'][0:14]), 28) +	# 14b  Entry Name
-			self._e_iccid(p['iccid']) +			# 10b  ICCID
-			self._e_imsi(p['imsi']) +			#  9b  IMSI_len + id_type(9) + IMSI
+			enc_iccid(p['iccid']) +				# 10b  ICCID
+			enc_imsi(p['imsi']) +				#  9b  IMSI_len + id_type(9) + IMSI
 			p['ki'] +							# 16b  Ki
 			lpad(p['smsp'], 80)					# 40b  SMSP (padded with ff if needed)
 		)
@@ -282,11 +268,11 @@ class GrcardSim(Card):
 
 		# EF.ICCID
 		r = self._scc.select_file(['3f00', '2fe2'])
-		data, sw = self._scc.update_binary('2fe2', self._e_iccid(p['iccid']))
+		data, sw = self._scc.update_binary('2fe2', enc_iccid(p['iccid']))
 
 		# EF.IMSI
 		r = self._scc.select_file(['3f00', '7f20', '6f07'])
-		data, sw = self._scc.update_binary('6f07', self._e_imsi(p['imsi']))
+		data, sw = self._scc.update_binary('6f07', enc_imsi(p['imsi']))
 
 		# EF.ACC
 		if p.get('acc') is not None:
@@ -303,7 +289,7 @@ class GrcardSim(Card):
 		# EF.HPLMN
 		r = self._scc.select_file(['3f00', '7f20', '6f30'])
 		size = int(r[-1][4:8], 16)
-		hplmn = self._e_plmn(p['mcc'], p['mnc'])
+		hplmn = enc_plmn(p['mcc'], p['mnc'])
 		self._scc.update_binary('6f30', hplmn + 'ff' * (size-3))
 
 		# EF.SPN (Service Provider Name)
@@ -345,9 +331,9 @@ class SysmoUSIMgr1(Card):
 
 		# TODO: move into SimCardCommands
 		par = ( p['ki'] +			# 16b  K
-			p['opc'] +			# 32b  OPC
-			self._e_iccid(p['iccid']) +	# 10b  ICCID
-			self._e_imsi(p['imsi'])		#  9b  IMSI_len + id_type(9) + IMSI
+			p['opc'] +				# 32b  OPC
+			enc_iccid(p['iccid']) +	# 10b  ICCID
+			enc_imsi(p['imsi'])		#  9b  IMSI_len + id_type(9) + IMSI
 			)
 		data, sw = self._scc._tp.send_apdu_checksw("0099000033" + par)
 

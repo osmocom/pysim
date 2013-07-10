@@ -43,6 +43,13 @@ def rpad(s, l, c='f'):
 def lpad(s, l, c='f'):
 	return c * (l - len(s)) + s
 
+def enc_imsi(imsi):
+	"""Converts a string imsi into the value of the EF"""
+	l = (len(imsi) + 1) // 2	# Required bytes
+	oe = len(imsi) & 1			# Odd (1) / Even (0)
+	ei = '%02x' % l + swap_nibbles(lpad('%01x%s' % ((oe<<3)|1, imsi), 16))
+	return ei
+
 def dec_imsi(ef):
 	"""Converts an EF value to the imsi string representation"""
 	if len(ef) < 4:
@@ -59,3 +66,10 @@ def dec_imsi(ef):
 
 def dec_iccid(ef):
 	return swap_nibbles(ef).strip('f')
+
+def enc_iccid(iccid):
+	return swap_nibbles(rpad(iccid, 20))
+
+def enc_plmn(mcc, mnc):
+	"""Converts integer MCC/MNC into 6 bytes for EF"""
+	return swap_nibbles(lpad('%d' % mcc, 3) + lpad('%d' % mnc, 3))
