@@ -124,15 +124,18 @@ if __name__ == '__main__':
 		print("ACC: Can't read, response code = %s" % (sw,))
 
 	# EF.MSISDN
-#	print(scc.record_size(['3f00', '7f10', '6f40']))
-	(res, sw) = scc.read_record(['3f00', '7f10', '6f40'], 1)
-	if sw == '9000':
-		if res[1] != 'f':
-			print("MSISDN: %s" % (res,))
+	try:
+	#	print(scc.record_size(['3f00', '7f10', '6f40']))
+		(res, sw) = scc.read_record(['3f00', '7f10', '6f40'], 1)
+		if sw == '9000':
+			if res[1] != 'f':
+				print("MSISDN: %s" % (res,))
+			else:
+				print("MSISDN: Not available")
 		else:
-			print("MSISDN: Not available")
-	else:
-		print("MSISDN: Can't read, response code = %s" % (sw,))
+			print("MSISDN: Can't read, response code = %s" % (sw,))
+	except:
+		print "MSISDN: Can't read. Probably not existing file"
 
 	# Done for this card and maybe for everything ?
 	print "Done !\n"
