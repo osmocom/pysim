@@ -302,7 +302,6 @@ class GrcardSim(Card):
 	def erase(self):
 		return
 
-
 class SysmoSIMgr1(GrcardSim):
 	"""
 	sysmocom sysmoSIM-GR1
@@ -341,6 +340,72 @@ class SysmoUSIMgr1(Card):
 		return
 
 
+class SysmoSIMgr2(Card):
+	"""
+	sysmocom sysmoSIM-GR2
+	"""
+
+	name = 'sysmoSIM-GR2'
+
+	@classmethod
+	def autodetect(kls, scc):
+		# TODO: look for ATR 3B 7D 94 00 00 55 55 53 0A 74 86 93 0B 24 7C 4D 54 68
+		return None
+
+	def program(self, p):
+
+		# select MF 
+		r = self._scc.select_file(['3f00'])
+		
+		# authenticate as SUPER ADM using default key
+		self._scc.verify_chv(0x0b, h2b("3838383838383838"))
+
+		# set ADM pin using proprietary command
+		# INS: D4
+		# P1: 3A for PIN, 3B for PUK
+		# P2: CHV number, as in VERIFY CHV for PIN, and as in UNBLOCK CHV for PUK
+		# P3: 08, CHV length (curiously the PUK is also 08 length, instead of 10)
+		pdu = 'A0D43A0508' + "4444444444444444"
+		data, sw = self._scc._tp.send_apdu(pdu)
+		
+		# authenticate as ADM (enough to write file, and can set PINs)
+		self._scc.verify_chv(0x05, h2b("4444444444444444"))
+
+		# write EF.ICCID
+		data, sw = self._scc.update_binary('2fe2', enc_iccid(p['iccid']))
+
+		# select DF_GSM
+		r = self._scc.select_file(['7f20'])
+		
+		# write EF.IMSI
+		data, sw = self._scc.update_binary('6f07', enc_imsi(p['imsi']))
+
+		# write EF.ACC
+		if p.get('acc') is not None:
+			data, sw = self._scc.update_binary('6f78', lpad(p['acc'], 4))
+
+		# get size and write EF.HPLMN
+		r = self._scc.select_file(['6f30'])
+		size = int(r[-1][4:8], 16)
+		hplmn = enc_plmn(p['mcc'], p['mnc'])
+		self._scc.update_binary('6f30', hplmn + 'ff' * (size-3))
+
+		# set COMP128 version 0 in proprietary file
+		data, sw = self._scc.update_binary('0001', '001000')
+
+		# set Ki in proprietary file
+		data, sw = self._scc.update_binary('0001', p['ki'], 3)
+
+		# select DF_TELECOM
+		r = self._scc.select_file(['3f00', '7f10'])
+		
+		# write EF.SMSP
+		data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 80))
+
+	def erase(self):
+		return
+
+
 	# In order for autodetection ...
 _cards_classes = [ FakeMagicSim, SuperSim, MagicSim, GrcardSim,
-		   SysmoSIMgr1, SysmoUSIMgr1 ]
+		   SysmoSIMgr1, SysmoSIMgr2, SysmoUSIMgr1 ]
