@@ -415,7 +415,56 @@ class SysmoSIMgr2(Card):
 	def erase(self):
 		return
 
+class SysmoUSIMSJS1(Card):
+	"""
+	sysmocom sysmoUSIM-SJS1
+	"""
+
+	name = 'sysmoUSIM-SJS1'
+
+	def __init__(self, ssc):
+		super(SysmoUSIMSJS1, self).__init__(ssc)
+		self._scc.cla_byte = "00"
+
+	@classmethod
+	def autodetect(kls, scc):
+		# TODO: look for ATR 3B 9F 96 80 1F C7 80 31 A0 73 BE 21 13 67 43 20 07 18 00 00 01 A5
+		return None
+
+	def program(self, p):
+
+
+		# select MF
+		r = self._scc.select_file(['3f00'])
+
+		# select DF_GSM
+		r = self._scc.select_file(['7f20'])
+
+		# authenticate as ADM using default key (written on the card..)
+		if not p['pin_adm']:
+			raise ValueError("Please provide a PIN-ADM as there is no default one")
+
+		self._scc.verify_chv(0x0A, h2b(p['pin_adm']))
+
+
+		# set Ki in proprietary file
+		data, sw = self._scc.update_binary('00FF', p['ki'])
+
+		# set Ki in proprietary file
+		content = "01" + p['opc']
+		data, sw = self._scc.update_binary('00F7', content)
+
+
+		# write EF.IMSI
+		data, sw = self._scc.update_binary('6f07', enc_imsi(p['imsi']))
+
+
+
+	def erase(self):
+		return
+
+
 
 	# In order for autodetection ...
 _cards_classes = [ FakeMagicSim, SuperSim, MagicSim, GrcardSim,
-		   SysmoSIMgr1, SysmoSIMgr2, SysmoUSIMgr1 ]
+		   SysmoSIMgr1, SysmoSIMgr2, SysmoUSIMgr1, SysmoUSIMSJS1 ]
