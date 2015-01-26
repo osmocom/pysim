@@ -41,7 +41,7 @@ class SimCardCommands(object):
 	def select_file(self, dir_list):
 		rv = []
 		for i in dir_list:
-			data, sw = self._tp.send_apdu_checksw(self.cla_byte + "a4000002" + i)
+			data, sw = self._tp.send_apdu_checksw(self.cla_byte + "a4000C02" + i)
 			rv.append(data)
 		return rv
 
