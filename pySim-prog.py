@@ -62,6 +62,9 @@ def parse_options():
 			help="Card type (user -t list to view) [default: %default]",
 			default="auto",
 		)
+	parser.add_option("-a", "--pin-adm", dest="pin_adm",
+			help="ADM PIN used for provisioning (overwrites default)",
+		)
 	parser.add_option("-e", "--erase", dest="erase", action='store_true',
 			help="Erase beforehand [default: %default]",
 			default=False,
@@ -249,7 +252,7 @@ def derive_milenage_opc(ki_hex, op_hex):
 	return b2h(strxor(opc_bytes, h2b(op_hex)))
 
 def gen_parameters(opts):
-	"""Generates Name, ICCID, MCC, MNC, IMSI, SMSP, Ki from the
+	"""Generates Name, ICCID, MCC, MNC, IMSI, SMSP, Ki, PIN-ADM from the
 	options given by the user"""
 
 	# MCC/MNC
@@ -374,6 +377,14 @@ def gen_parameters(opts):
 	else:
 		opc = ''.join(['%02x' % random.randrange(0,256) for i in range(16)])
 
+	if opts.pin_adm is not None:
+		if len(opts.pin_adm) > 8:
+			raise ValueError("PIN-ADM needs to be <=8 digits")
+		pin_adm = ''.join(['%02x'%(ord(x)) for x in opts.pin_adm])
+		pin_adm = rpad(pin_adm, 16)
+	else:
+		pin_adm = None
+
 
 	# Return that
 	return {
@@ -386,6 +397,7 @@ def gen_parameters(opts):
 		'ki'	: ki,
 		'opc'	: opc,
 		'acc'	: acc,
+		'pin_adm' : pin_adm,
 	}
 
 

@@ -264,7 +264,11 @@ class GrcardSim(Card):
 		#self._scc.verify_chv(4, h2b("4444444444444444"))
 
 		# Authenticate using ADM PIN 5
-		self._scc.verify_chv(5, h2b("4444444444444444"))
+		if p['pin_adm']:
+			pin = p['pin_adm']
+		else:
+			pin = h2b("4444444444444444")
+		self._scc.verify_chv(5, pin)
 
 		# EF.ICCID
 		r = self._scc.select_file(['3f00', '2fe2'])
@@ -365,11 +369,17 @@ class SysmoSIMgr2(Card):
 		# P1: 3A for PIN, 3B for PUK
 		# P2: CHV number, as in VERIFY CHV for PIN, and as in UNBLOCK CHV for PUK
 		# P3: 08, CHV length (curiously the PUK is also 08 length, instead of 10)
-		pdu = 'A0D43A0508' + "4444444444444444"
+		if p['pin_adm']:
+			pin = p['pin_adm']
+		else:
+			pin = h2b("4444444444444444")
+
+		pdu = 'A0D43A0508' + b2h(pin)
 		data, sw = self._scc._tp.send_apdu(pdu)
 		
 		# authenticate as ADM (enough to write file, and can set PINs)
-		self._scc.verify_chv(0x05, h2b("4444444444444444"))
+
+		self._scc.verify_chv(0x05, pin)
 
 		# write EF.ICCID
 		data, sw = self._scc.update_binary('2fe2', enc_iccid(p['iccid']))
