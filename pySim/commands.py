@@ -28,11 +28,20 @@ from pySim.utils import rpad, b2h
 class SimCardCommands(object):
 	def __init__(self, transport):
 		self._tp = transport;
+		self._cla_byte = "a0"
+
+	@property
+	def cla_byte(self):
+		return self._cla_byte
+	@cla_byte.setter
+	def cla_byte(self, value):
+		self._cla_byte = value
+
 
 	def select_file(self, dir_list):
 		rv = []
 		for i in dir_list:
-			data, sw = self._tp.send_apdu_checksw("a0a4000002" + i)
+			data, sw = self._tp.send_apdu_checksw(self.cla_byte + "a4000002" + i)
 			rv.append(data)
 		return rv
 
@@ -42,14 +51,14 @@ class SimCardCommands(object):
 		r = self.select_file(ef)
 		if length is None:
 			length = int(r[-1][4:8], 16) - offset
-		pdu = 'a0b0%04x%02x' % (offset, (min(256, length) & 0xff))
+		pdu = self.cla_byte + 'b0%04x%02x' % (offset, (min(256, length) & 0xff))
 		return self._tp.send_apdu(pdu)
 
 	def update_binary(self, ef, data, offset=0):
 		if not hasattr(type(ef), '__iter__'):
 			ef = [ef]
 		self.select_file(ef)
-		pdu = 'a0d6%04x%02x' % (offset, len(data)/2) + data
+		pdu = self.cla_byte + 'd6%04x%02x' % (offset, len(data)/2) + data
 		return self._tp.send_apdu_checksw(pdu)
 
 	def read_record(self, ef, rec_no):
@@ -57,7 +66,7 @@ class SimCardCommands(object):
 			ef = [ef]
 		r = self.select_file(ef)
 		rec_length = int(r[-1][28:30], 16)
-		pdu = 'a0b2%02x04%02x' % (rec_no, rec_length)
+		pdu = self.cla_byte + 'b2%02x04%02x' % (rec_no, rec_length)
 		return self._tp.send_apdu(pdu)
 
 	def update_record(self, ef, rec_no, data, force_len=False):
@@ -70,7 +79,7 @@ class SimCardCommands(object):
 				raise ValueError('Invalid data length (expected %d, got %d)' % (rec_length, len(data)/2))
 		else:
 			rec_length = len(data)/2
-		pdu = ('a0dc%02x04%02x' % (rec_no, rec_length)) + data
+		pdu = (self.cla_byte + 'dc%02x04%02x' % (rec_no, rec_length)) + data
 		return self._tp.send_apdu_checksw(pdu)
 
 	def record_size(self, ef):
@@ -85,11 +94,11 @@ class SimCardCommands(object):
 		if len(rand) != 32:
 			raise ValueError('Invalid rand')
 		self.select_file(['3f00', '7f20'])
-		return self._tp.send_apdu('a088000010' + rand)
+		return self._tp.send_apdu(self.cla_byte + '88000010' + rand)
 
 	def reset_card(self):
 		return self._tp.reset_card()
 
 	def verify_chv(self, chv_no, code):
 		fc = rpad(b2h(code), 16)
-		return self._tp.send_apdu_checksw('a02000' + ('%02x' % chv_no) + '08' + fc)
+		return self._tp.send_apdu_checksw(self.cla_byte + '2000' + ('%02X' % chv_no) + '08' + fc)
