@@ -454,9 +454,13 @@ class SysmoUSIMSJS1(Card):
 		content = "01" + p['opc']
 		data, sw = self._scc.update_binary('00F7', content)
 
-
 		# write EF.IMSI
 		data, sw = self._scc.update_binary('6f07', enc_imsi(p['imsi']))
+
+		# write EF.AUTH
+		content = "0101"
+		r = self._scc.select_file(['7FCC', '6f00'])
+		data, sw = self._scc.update_binary('6f00', content)
 
 
 
