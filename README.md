@@ -17,7 +17,7 @@ Homepage
 --------
 
 The official homepage of the project is
-http://osmocom.org/projects/pysim/wiki
+<http://osmocom.org/projects/pysim/wiki>
 
 GIT Repository
 --------------
@@ -26,7 +26,7 @@ You can clone from the official libosmocore.git repository using
 
 	git clone git://git.osmocom.org/pysim.git
 
-There is a cgit interface at http://git.osmocom.org/pysim/
+There is a cgit interface at <http://git.osmocom.org/pysim/>
 
 Mailing List
 ------------
@@ -34,7 +34,7 @@ Mailing List
 There is no separate mailing list for this project.  However,
 discussions related to pysim-prog are happening on the
 openbsc@lists.osmocom.org mailing list, please see
-https://lists.osmocom.org/mailman/listinfo/openbsc for subscription
+<https://lists.osmocom.org/mailman/listinfo/openbsc> for subscription
 options and the list archive.
 
 Please observe the [Osmocom Mailing List
@@ -45,7 +45,7 @@ Contributing
 ------------
 
 Our coding standards are described at
-https://osmocom.org/projects/cellular-infrastructure/wiki/Coding_standards
+<https://osmocom.org/projects/cellular-infrastructure/wiki/Coding_standards>
 
 We are currently accepting patches by e-mail to the above-mentioned
 mailing list.
