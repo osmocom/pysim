@@ -434,19 +434,19 @@ class SysmoUSIMSJS1(Card):
 
 	def program(self, p):
 
+		# authenticate as ADM using default key (written on the card..)
+		if not p['pin_adm']:
+			raise ValueError("Please provide a PIN-ADM as there is no default one")
+		self._scc.verify_chv(0x0A, h2b(p['pin_adm']))
 
 		# select MF
 		r = self._scc.select_file(['3f00'])
 
+		# write EF.ICCID
+		data, sw = self._scc.update_binary('2fe2', enc_iccid(p['iccid']))
+
 		# select DF_GSM
 		r = self._scc.select_file(['7f20'])
-
-		# authenticate as ADM using default key (written on the card..)
-		if not p['pin_adm']:
-			raise ValueError("Please provide a PIN-ADM as there is no default one")
-
-		self._scc.verify_chv(0x0A, h2b(p['pin_adm']))
-
 
 		# set Ki in proprietary file
 		data, sw = self._scc.update_binary('00FF', p['ki'])
