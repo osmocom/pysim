@@ -425,6 +425,7 @@ class SysmoUSIMSJS1(Card):
 	def __init__(self, ssc):
 		super(SysmoUSIMSJS1, self).__init__(ssc)
 		self._scc.cla_byte = "00"
+		self._scc.sel_ctrl = "000C"
 
 	@classmethod
 	def autodetect(kls, scc):

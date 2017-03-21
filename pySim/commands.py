@@ -29,6 +29,7 @@ class SimCardCommands(object):
 	def __init__(self, transport):
 		self._tp = transport;
 		self._cla_byte = "a0"
+		self.sel_ctrl = "0000"
 
 	@property
 	def cla_byte(self):
@@ -37,11 +38,17 @@ class SimCardCommands(object):
 	def cla_byte(self, value):
 		self._cla_byte = value
 
+	@property
+	def sel_ctrl(self):
+		return self._sel_ctrl
+	@sel_ctrl.setter
+	def sel_ctrl(self, value):
+		self._sel_ctrl = value
 
 	def select_file(self, dir_list):
 		rv = []
 		for i in dir_list:
-			data, sw = self._tp.send_apdu_checksw(self.cla_byte + "a4000002" + i)
+			data, sw = self._tp.send_apdu_checksw(self.cla_byte + "a4" + self.sel_ctrl + "02" + i)
 			rv.append(data)
 		return rv
 
