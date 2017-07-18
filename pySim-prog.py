@@ -367,7 +367,7 @@ def gen_parameters(opts):
 	else:
 		ki = ''.join(['%02x' % random.randrange(0,256) for i in range(16)])
 
-	# Ki (random)
+	# OPC (random)
 	if opts.opc is not None:
 		opc = opts.opc
 		if not re.match('^[0-9a-fA-F]{32}$', opc):
