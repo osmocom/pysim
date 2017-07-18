@@ -31,6 +31,9 @@ class SimCardCommands(object):
 		self._cla_byte = "a0"
 		self.sel_ctrl = "0000"
 
+	def get_atr(self):
+		return self._tp.get_atr()
+
 	@property
 	def cla_byte(self):
 		return self._cla_byte

@@ -46,6 +46,7 @@ class SerialSimLink(LinkBase):
 			)
 		self._rst_pin = rst
 		self._debug = debug
+		self._atr = None
 
 	def __del__(self):
 		self._sl.close()
@@ -91,6 +92,9 @@ class SerialSimLink(LinkBase):
 	def connect(self):
 		self.reset_card()
 
+	def get_atr(self):
+		return self._atr
+
 	def disconnect(self):
 		pass # Nothing to do really ...
 
@@ -102,6 +106,7 @@ class SerialSimLink(LinkBase):
 			raise ProtocolError()
 
 	def _reset_card(self):
+		self._atr = None
 		rst_meth_map = {
 			'rts': self._sl.setRTS,
 			'dtr': self._sl.setDTR,
@@ -133,18 +138,24 @@ class SerialSimLink(LinkBase):
 			return -1
 		t0 = ord(b)
 		self._dbg_print("T0: 0x%x" % t0)
+		self._atr = [0x3b, ord(b)]
 
 		for i in range(4):
 			if t0 & (0x10 << i):
-				self._dbg_print("T%si = %x" % (chr(ord('A')+i), ord(self._rx_byte())))
+				b = self._rx_byte()
+				self._atr.apend(ord(b))
+				self._dbg_print("T%si = %x" % (chr(ord('A')+i), ord(b)))
 
 		for i in range(0, t0 & 0xf):
-			self._dbg_print("Historical = %x" % ord(self._rx_byte()))
+			b = self._rx_byte()
+			self._atr.apend(ord(b))
+			self._dbg_print("Historical = %x" % ord(b))
 
 		while True:
 			x = self._rx_byte()
 			if not x:
 				break
+			self._atr.apend(ord(x))
 			self._dbg_print("Extra: %x" % ord(x))
 
 		return 1
