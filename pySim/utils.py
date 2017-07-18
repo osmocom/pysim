@@ -34,6 +34,12 @@ def h2i(s):
 def i2h(s):
 	return ''.join(['%02x'%(x) for x in s])
 
+def h2s(s):
+	return ''.join([chr((int(x,16)<<4)+int(y,16)) for x,y in zip(s[0::2], s[1::2]) if not (x == 'f' and y == 'f') ])
+
+def s2h(s):
+	return b2h(s)
+
 def swap_nibbles(s):
 	return ''.join([x+y for x,y in zip(s[1::2], s[0::2])])
 
@@ -73,3 +79,16 @@ def enc_iccid(iccid):
 def enc_plmn(mcc, mnc):
 	"""Converts integer MCC/MNC into 6 bytes for EF"""
 	return swap_nibbles(lpad('%d' % mcc, 3) + lpad('%d' % mnc, 3))
+
+def dec_spn(ef):
+	byte1 = int(ef[0:2])
+	hplmn_disp = (byte1&0x01 == 0x01)
+	oplmn_disp = (byte1&0x02 == 0x02)
+	name = h2s(ef[2:])
+	return (name, hplmn_disp, oplmn_disp)
+
+def enc_spn(name, hplmn_disp=False, oplmn_disp=False):
+	byte1 = 0x00
+	if hplmn_disp: byte1 = byte1|0x01
+	if oplmn_disp: byte1 = byte1|0x02
+	return i2h([byte1])+s2h(name)
