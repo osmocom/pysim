@@ -7,6 +7,7 @@
 #
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
 # Copyright (C) 2011  Harald Welte <laforge@gnumonks.org>
+# Copyright (C) 2017 Alexander.Chemeris <Alexander.Chemeris@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,16 +23,80 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pySim.utils import b2h, h2b, swap_nibbles, rpad, lpad, enc_imsi, enc_iccid, enc_plmn
-
+from pySim.ts_51_011 import EF, DF
+from pySim.utils import *
 
 class Card(object):
 
 	def __init__(self, scc):
 		self._scc = scc
+		self._adm_chv_num = 4
 
 	def reset(self):
 		self._scc.reset_card()
+
+	def verify_adm(self, key):
+		'''
+		Authenticate with ADM key
+		'''
+		(res, sw) = self._scc.verify_chv(self._adm_chv_num, key)
+		return sw
+
+	def read_iccid(self):
+		(res, sw) = self._scc.read_binary(EF['ICCID'])
+		if sw == '9000':
+			return (dec_iccid(res), sw)
+		else:
+			return (None, sw)
+
+	def read_imsi(self):
+		(res, sw) = self._scc.read_binary(EF['IMSI'])
+		if sw == '9000':
+			return (dec_imsi(res), sw)
+		else:
+			return (None, sw)
+
+	def update_imsi(self, imsi):
+		data, sw = self._scc.update_binary(EF['IMSI'], enc_imsi(imsi))
+		return sw
+
+	def update_acc(self, acc):
+		data, sw = self._scc.update_binary(EF['ACC'], lpad(acc, 4))
+		return sw
+
+	def update_hplmn_act(self, mcc, mnc, access_tech='FFFF'):
+		"""
+		Update Home PLMN with access technology bit-field
+
+		See Section "10.3.37 EFHPLMNwAcT (HPLMN Selector with Access Technology)"
+		in ETSI TS 151 011 for the details of the access_tech field coding.
+		Some common values:
+		access_tech = '0080' # Only GSM is selected
+		access_tech = 'FFFF' # All technologues selected, even Reserved for Future Use ones
+		"""
+		# get size and write EF.HPLMNwAcT
+		r = self._scc.select_file(EF['HPLMNwAcT'])
+		size = int(r[-1][4:8], 16)
+		hplmn = enc_plmn(mcc, mnc)
+		content = hplmn + access_tech
+		data, sw = self._scc.update_binary(EF['HPLMNwAcT'], content + 'ffffff0000' * (size/5-1))
+		return sw
+
+	def update_smsp(self, smsp):
+		data, sw = self._scc.update_record(EF['SMSP'], 1, rpad(smsp, 84))
+		return sw
+
+	def read_spn(self):
+		(spn, sw) = self._scc.read_binary(EF['SPN'])
+		if sw == '9000':
+			return (dec_spn(spn), sw)
+		else:
+			return (None, sw)
+
+	def update_spn(self, name, hplmn_disp=False, oplmn_disp=False):
+		content = enc_spn(name, hplmn_disp, oplmn_disp)
+		data, sw = self._scc.update_binary(EF['SPN'], rpad(content, 32))
+		return sw
 
 
 class _MagicSimBase(Card):
