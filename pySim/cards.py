@@ -459,6 +459,9 @@ class SysmoUSIMSJS1(Card):
 		# write EF.IMSI
 		data, sw = self._scc.update_binary('6f07', enc_imsi(p['imsi']))
 
+		# EF.SMSP
+		r = self._scc.select_file(['3f00', '7f10'])
+		data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 104), force_len=True)
 
 
 	def erase(self):
