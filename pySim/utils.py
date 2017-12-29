@@ -54,7 +54,7 @@ def dec_imsi(ef):
 	"""Converts an EF value to the imsi string representation"""
 	if len(ef) < 4:
 		return None
-	l = int(ef[0:2]) * 2			# Length of the IMSI string
+	l = int(ef[0:2], 16) * 2		# Length of the IMSI string
 	swapped = swap_nibbles(ef[2:])
 	oe = (int(swapped[0])>>3) & 1	# Odd (1) / Even (0)
 	if oe:
