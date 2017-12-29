@@ -650,4 +650,3 @@ if __name__ == '__main__':
 
 		if not opts.batch_mode:
 			done = True
-
