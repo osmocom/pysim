@@ -539,15 +539,158 @@ class SysmoUSIMSJS1(Card):
 		r = self._scc.select_file(['3f00', '7f10'])
 		data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 104), force_len=True)
 
+	def erase(self):
+		return
+
+
+class FairwavesSIM(Card):
+	"""
+	FairwavesSIM
+
+	The SIM card is operating according to the standard.
+	For Ki/OP/OPC programming the following files are additionally open for writing:
+		3F00/7F20/FF01 – OP/OPC:
+		byte 1 = 0x01, bytes 2-17: OPC;
+		byte 1 = 0x00, bytes 2-17: OP;
+		3F00/7F20/FF02: Ki
+	"""
+
+	name = 'Fairwaves SIM'
+	# Propriatary files
+	_EF_num = {
+	'Ki': 'FF02',
+	'OP/OPC': 'FF01',
+	}
+	_EF = {
+	'Ki':     DF['GSM']+[_EF_num['Ki']],
+	'OP/OPC': DF['GSM']+[_EF_num['OP/OPC']],
+	}
+
+	def __init__(self, ssc):
+		super(FairwavesSIM, self).__init__(ssc)
+		self._adm_chv_num = 0x11
+		self._adm2_chv_num = 0x12
+
+
+	@classmethod
+	def autodetect(kls, scc):
+		try:
+			# Look for ATR
+			if scc.get_atr() == toBytes("3B 9F 96 80 1F C7 80 31 A0 73 BE 21 13 67 44 22 06 10 00 00 01 A9"):
+				return kls(scc)
+		except:
+			return None
+		return None
+
+
+	def verify_adm2(self, key):
+		'''
+		Authenticate with ADM2 key.
+
+		Fairwaves SIM cards support hierarchical key structure and ADM2 key
+		is a key which has access to proprietary files (Ki and OP/OPC).
+		That said, ADM key inherits permissions of ADM2 key and thus we rarely
+		need ADM2 key per se.
+		'''
+		(res, sw) = self._scc.verify_chv(self._adm2_chv_num, key)
+		return sw
+
+
+	def read_ki(self):
+		"""
+		Read Ki in proprietary file.
+
+		Requires ADM1 access level
+		"""
+		return self._scc.read_binary(self._EF['Ki'])
+
+
+	def update_ki(self, ki):
+		"""
+		Set Ki in proprietary file.
+
+		Requires ADM1 access level
+		"""
+		data, sw = self._scc.update_binary(self._EF['Ki'], ki)
+		return sw
+
+
+	def read_op_opc(self):
+		"""
+		Read Ki in proprietary file.
+
+		Requires ADM1 access level
+		"""
+		(ef, sw) = self._scc.read_binary(self._EF['OP/OPC'])
+		type = 'OP' if ef[0:2] == '00' else 'OPC'
+		return ((type, ef[2:]), sw)
+
+
+	def update_op(self, op):
+		"""
+		Set OP in proprietary file.
+
+		Requires ADM1 access level
+		"""
+		content = '00' + op
+		data, sw = self._scc.update_binary(self._EF['OP/OPC'], content)
+		return sw
+
+
+	def update_opc(self, opc):
+		"""
+		Set OPC in proprietary file.
+
+		Requires ADM1 access level
+		"""
+		content = '01' + opc
+		data, sw = self._scc.update_binary(self._EF['OP/OPC'], content)
+		return sw
+
+
+	def program(self, p):
+		# authenticate as ADM1
+		if not p['pin_adm']:
+			raise ValueError("Please provide a PIN-ADM as there is no default one")
+		sw = self.verify_adm(h2b(p['pin_adm']))
+		if sw != '9000':
+			raise RuntimeError('Failed to authenticate with ADM key %s'%(p['pin_adm'],))
+
+		# TODO: Set operator name
+		if p.get('smsp') is not None:
+			sw = self.update_smsp(p['smsp'])
+			if sw != '9000':
+				print("Programming SMSP failed with code %s"%sw)
+		# This SIM doesn't support changing ICCID
+		if p.get('mcc') is not None and p.get('mnc') is not None:
+			sw = self.update_hplmn_act(p['mcc'], p['mnc'])
+			if sw != '9000':
+				print("Programming MCC/MNC failed with code %s"%sw)
+		if p.get('imsi') is not None:
+			sw = self.update_imsi(p['imsi'])
+			if sw != '9000':
+				print("Programming IMSI failed with code %s"%sw)
+		if p.get('ki') is not None:
+			sw = self.update_ki(p['ki'])
+			if sw != '9000':
+				print("Programming Ki failed with code %s"%sw)
+		if p.get('opc') is not None:
+			sw = self.update_opc(p['opc'])
+			if sw != '9000':
+				print("Programming OPC failed with code %s"%sw)
+		if p.get('acc') is not None:
+			sw = self.update_acc(p['acc'])
+			if sw != '9000':
+				print("Programming ACC failed with code %s"%sw)
 
 	def erase(self):
 		return
 
 
-
 	# In order for autodetection ...
 _cards_classes = [ FakeMagicSim, SuperSim, MagicSim, GrcardSim,
-		   SysmoSIMgr1, SysmoSIMgr2, SysmoUSIMgr1, SysmoUSIMSJS1 ]
+		   SysmoSIMgr1, SysmoSIMgr2, SysmoUSIMgr1, SysmoUSIMSJS1,
+		   FairwavesSIM ]
 
 def card_autodetect(scc):
 	for kls in _cards_classes:
