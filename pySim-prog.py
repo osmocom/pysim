@@ -379,10 +379,9 @@ def gen_parameters(opts):
 		opc = ''.join(['%02x' % random.randrange(0,256) for i in range(16)])
 
 	if opts.pin_adm is not None:
-		if len(opts.pin_adm) > 8:
-			raise ValueError("PIN-ADM needs to be <=8 digits")
-		pin_adm = ''.join(['%02x'%(ord(x)) for x in opts.pin_adm])
-		pin_adm = rpad(pin_adm, 16)
+		pin_adm = opts.pin_adm
+		if not re.match('^([0-9a-fA-F][0-9a-fA-F])+$', pin_adm):
+			raise ValueError('ADM pin needs to be in hex format (even number of hex digits)')
 	else:
 		pin_adm = None
 
