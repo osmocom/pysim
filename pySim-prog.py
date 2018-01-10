@@ -618,7 +618,7 @@ if __name__ == '__main__':
 					# Connect transport
 					print "Insert card now (or CTRL-C to cancel)"
 					sl.wait_for_card(newcardonly=not first)
-				(res,_) = scc.read_binary(['3f00', '7f20', '6f07'])
+				(res,_) = scc.read_binary(EF['IMSI'])
 				imsi = swap_nibbles(res)[3:]
 			else:
 				imsi = opts.imsi
