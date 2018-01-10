@@ -25,6 +25,7 @@
 
 from pySim.ts_51_011 import EF, DF
 from pySim.utils import *
+from smartcard.util import toBytes
 
 class Card(object):
 
@@ -418,7 +419,12 @@ class SysmoSIMgr2(Card):
 
 	@classmethod
 	def autodetect(kls, scc):
-		# TODO: look for ATR 3B 7D 94 00 00 55 55 53 0A 74 86 93 0B 24 7C 4D 54 68
+		try:
+			# Look for ATR
+			if scc.get_atr() == toBytes("3B 7D 94 00 00 55 55 53 0A 74 86 93 0B 24 7C 4D 54 68"):
+				return kls(scc)
+		except:
+			return None
 		return None
 
 	def program(self, p):
@@ -494,7 +500,12 @@ class SysmoUSIMSJS1(Card):
 
 	@classmethod
 	def autodetect(kls, scc):
-		# TODO: look for ATR 3B 9F 96 80 1F C7 80 31 A0 73 BE 21 13 67 43 20 07 18 00 00 01 A5
+		try:
+			# Look for ATR
+			if scc.get_atr() == toBytes("3B 9F 96 80 1F C7 80 31 A0 73 BE 21 13 67 43 20 07 18 00 00 01 A5"):
+				return kls(scc)
+		except:
+			return None
 		return None
 
 	def program(self, p):
@@ -537,3 +548,11 @@ class SysmoUSIMSJS1(Card):
 	# In order for autodetection ...
 _cards_classes = [ FakeMagicSim, SuperSim, MagicSim, GrcardSim,
 		   SysmoSIMgr1, SysmoSIMgr2, SysmoUSIMgr1, SysmoUSIMSJS1 ]
+
+def card_autodetect(scc):
+	for kls in _cards_classes:
+		card = kls.autodetect(scc)
+		if card is not None:
+			card.reset()
+			return card
+	return None
