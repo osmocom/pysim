@@ -39,7 +39,7 @@ except ImportError:
 
 from pySim.commands import SimCardCommands
 from pySim.cards import _cards_classes
-from pySim.utils import h2b, swap_nibbles, rpad
+from pySim.utils import h2b, swap_nibbles, rpad, derive_milenage_opc, calculate_luhn
 
 
 def parse_options():
@@ -233,24 +233,6 @@ def _dbi_binary_quote(s):
 			out.append(chr(x))
 
 	return ''.join(out)
-
-def calculate_luhn(cc):
-	num = map(int, str(cc))
-	check_digit = 10 - sum(num[-2::-2] + [sum(divmod(d * 2, 10)) for d in num[::-2]]) % 10
-	return 0 if check_digit == 10 else check_digit
-
-def derive_milenage_opc(ki_hex, op_hex):
-	"""
-	Run the milenage algorithm.
-	"""
-	from Crypto.Cipher import AES
-	from Crypto.Util.strxor import strxor
-	from pySim.utils import b2h
-
-	# We pass in hex string and now need to work on bytes
-	aes = AES.new(h2b(ki_hex))
-	opc_bytes = aes.encrypt(h2b(op_hex))
-	return b2h(strxor(opc_bytes, h2b(op_hex)))
 
 def gen_parameters(opts):
 	"""Generates Name, ICCID, MCC, MNC, IMSI, SMSP, Ki, PIN-ADM from the

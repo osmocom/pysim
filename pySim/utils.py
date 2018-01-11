@@ -92,3 +92,24 @@ def enc_spn(name, hplmn_disp=False, oplmn_disp=False):
 	if hplmn_disp: byte1 = byte1|0x01
 	if oplmn_disp: byte1 = byte1|0x02
 	return i2h([byte1])+s2h(name)
+
+def derive_milenage_opc(ki_hex, op_hex):
+	"""
+	Run the milenage algorithm to calculate OPC from Ki and OP
+	"""
+	from Crypto.Cipher import AES
+	from Crypto.Util.strxor import strxor
+	from pySim.utils import b2h
+
+	# We pass in hex string and now need to work on bytes
+	aes = AES.new(h2b(ki_hex))
+	opc_bytes = aes.encrypt(h2b(op_hex))
+	return b2h(strxor(opc_bytes, h2b(op_hex)))
+
+def calculate_luhn(cc):
+	"""
+	Calculate Luhn checksum used in e.g. ICCID and IMEI
+	"""
+	num = map(int, str(cc))
+	check_digit = 10 - sum(num[-2::-2] + [sum(divmod(d * 2, 10)) for d in num[::-2]]) % 10
+	return 0 if check_digit == 10 else check_digit
