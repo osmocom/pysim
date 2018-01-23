@@ -143,19 +143,19 @@ class SerialSimLink(LinkBase):
 		for i in range(4):
 			if t0 & (0x10 << i):
 				b = self._rx_byte()
-				self._atr.apend(ord(b))
+				self._atr.append(ord(b))
 				self._dbg_print("T%si = %x" % (chr(ord('A')+i), ord(b)))
 
 		for i in range(0, t0 & 0xf):
 			b = self._rx_byte()
-			self._atr.apend(ord(b))
+			self._atr.append(ord(b))
 			self._dbg_print("Historical = %x" % ord(b))
 
 		while True:
 			x = self._rx_byte()
 			if not x:
 				break
-			self._atr.apend(ord(x))
+			self._atr.append(ord(x))
 			self._dbg_print("Extra: %x" % ord(x))
 
 		return 1
