@@ -553,6 +553,14 @@ class FairwavesSIM(Card):
 		  byte 1 = 0x01, bytes 2-17: OPC;
 		  byte 1 = 0x00, bytes 2-17: OP;
 		3F00/7F20/FF02: Ki
+		3F00/7F20/FF03: 2G/3G auth algorithm
+		  byte 1 = GSM SIM A3/A8 algorithm selection
+		  byte 2 = USIM A3/A8 algorithm selection
+		  Algorithms:
+		    0x01 = Milenage
+		    0x03 = COMP128v1
+		    0x06 = COMP128v2
+		    0x07 = COMP128v3
 	"""
 
 	name = 'Fairwaves SIM'
@@ -560,10 +568,12 @@ class FairwavesSIM(Card):
 	_EF_num = {
 	'Ki': 'FF02',
 	'OP/OPC': 'FF01',
+	'A3A8': 'FF03',
 	}
 	_EF = {
 	'Ki':     DF['GSM']+[_EF_num['Ki']],
 	'OP/OPC': DF['GSM']+[_EF_num['OP/OPC']],
+	'A3A8':   DF['GSM']+[_EF_num['A3A8']],
 	}
 
 	def __init__(self, ssc):
@@ -646,6 +656,14 @@ class FairwavesSIM(Card):
 		content = '01' + opc
 		data, sw = self._scc.update_binary(self._EF['OP/OPC'], content)
 		return sw
+
+	def read_a3a8(self):
+		(ef, sw) = self._scc.read_binary(self._EF['A3A8'])
+		return (ef, sw)
+
+	def update_a3a8(self, content):
+		(ef, sw) = self._scc.update_binary(self._EF['A3A8'], content)
+		return (ef, sw)
 
 
 	def program(self, p):
