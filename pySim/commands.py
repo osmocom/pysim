@@ -55,14 +55,17 @@ class SimCardCommands(object):
 			rv.append(data)
 		return rv
 
+	def read_binary_selected(self, length, offset=0):
+		pdu = self.cla_byte + 'b0%04x%02x' % (offset, (min(256, length) & 0xff))
+		return self._tp.send_apdu(pdu)
+
 	def read_binary(self, ef, length=None, offset=0):
 		if not hasattr(type(ef), '__iter__'):
 			ef = [ef]
 		r = self.select_file(ef)
 		if length is None:
 			length = int(r[-1][4:8], 16) - offset
-		pdu = self.cla_byte + 'b0%04x%02x' % (offset, (min(256, length) & 0xff))
-		return self._tp.send_apdu(pdu)
+		return self.read_binary_selected(length, offset)
 
 	def update_binary(self, ef, data, offset=0):
 		if not hasattr(type(ef), '__iter__'):
@@ -71,13 +74,16 @@ class SimCardCommands(object):
 		pdu = self.cla_byte + 'd6%04x%02x' % (offset, len(data)/2) + data
 		return self._tp.send_apdu_checksw(pdu)
 
+	def read_record_selected(self, rec_length, rec_no):
+		pdu = self.cla_byte + 'b2%02x04%02x' % (rec_no, rec_length)
+		return self._tp.send_apdu(pdu)
+
 	def read_record(self, ef, rec_no):
 		if not hasattr(type(ef), '__iter__'):
 			ef = [ef]
 		r = self.select_file(ef)
 		rec_length = int(r[-1][28:30], 16)
-		pdu = self.cla_byte + 'b2%02x04%02x' % (rec_no, rec_length)
-		return self._tp.send_apdu(pdu)
+		return self.read_record_selected(rec_length, rec_no)
 
 	def update_record(self, ef, rec_no, data, force_len=False):
 		if not hasattr(type(ef), '__iter__'):
