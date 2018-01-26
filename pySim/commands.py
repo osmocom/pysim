@@ -100,11 +100,25 @@ class SimCardCommands(object):
 		r = self.select_file(ef)
 		return int(r[-1][4:8], 16) // int(r[-1][28:30], 16)
 
-	def run_gsm(self, rand):
+	def run_gsm_raw(self, rand):
+		'''
+		A3/A8 algorithm in the SIM card using the given RAND.
+		This function returns a raw result tuple.
+		'''
 		if len(rand) != 32:
 			raise ValueError('Invalid rand')
 		self.select_file(['3f00', '7f20'])
 		return self._tp.send_apdu(self.cla_byte + '88000010' + rand)
+
+	def run_gsm(self, rand):
+		'''
+		A3/A8 algorithm in the SIM card using the given RAND.
+		This function returns a parsed ((SRES, Kc), sw) tuple.
+		'''
+		(res, sw) = self.run_gsm_raw(rand)
+		if sw != '9000':
+			return (res, sw)
+		return ((res[0:8], res[8:]), sw)
 
 	def reset_card(self):
 		return self._tp.reset_card()
