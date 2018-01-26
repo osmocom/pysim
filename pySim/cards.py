@@ -550,8 +550,8 @@ class FairwavesSIM(Card):
 	The SIM card is operating according to the standard.
 	For Ki/OP/OPC programming the following files are additionally open for writing:
 		3F00/7F20/FF01 – OP/OPC:
-		byte 1 = 0x01, bytes 2-17: OPC;
-		byte 1 = 0x00, bytes 2-17: OP;
+		  byte 1 = 0x01, bytes 2-17: OPC;
+		  byte 1 = 0x00, bytes 2-17: OP;
 		3F00/7F20/FF02: Ki
 	"""
 
