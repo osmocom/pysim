@@ -113,16 +113,18 @@ def program_sim_card(card, sim_db, opts):
 		sys.exit(1)
 
 	# Update Ki
-	ki = ''.join(['%02x' % random.randrange(0,256) for i in range(16)]).upper()
-	sim_keys[8] = ki
+	ki = sim_keys[8]
+#	ki = ''.join(['%02x' % random.randrange(0,256) for i in range(16)]).upper()
+#	sim_keys[8] = ki
 	sw = card.update_ki(sim_keys[8])
 	if sw != '9000':
 		print("Ki: Fail to update with result = %s" % (sw,))
 		sys.exit(1)
 
 	# Update OPC
-	op_opc = derive_milenage_opc(ki, opts.op).upper()
-	sim_keys[9] = '01' + op_opc
+	op_opc = sim_keys[9][2:]
+#	op_opc = derive_milenage_opc(ki, opts.op).upper()
+#	sim_keys[9] = '01' + op_opc
 	sw = card.update_opc(sim_keys[9][2:])
 	if sw != '9000':
 		print("OPC: Fail to update with result = %s" % (sw,))
@@ -135,7 +137,9 @@ def program_sim_card(card, sim_db, opts):
 		sys.exit(1)
 
 	# Update IMSI
-	imsi = "%03d%02d%s" % (opts.mcc, opts.mnc, imsi[5:])
+	imsi = sim_keys[1]
+#	imsi = "%03d%02d%s" % (opts.mcc, opts.mnc, imsi[5:])
+#	sim_keys[1] = imsi
 	sw = card.update_imsi(imsi)
 	if sw != '9000':
 		print("IMSI: Fail to update with result = %s" % (sw,))
