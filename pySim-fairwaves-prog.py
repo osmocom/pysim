@@ -104,6 +104,13 @@ def program_sim_card(card, sim_db, opts):
 	else:
 		print("Ki: Can't read, response code = %s" % (sw,))
 
+	# Read EF.A3A8
+	(a3a8, sw) = card.read_a3a8()
+	if sw == '9000':
+		print("A3/A8:                   %s" % (a3a8,))
+	else:
+		print("A3/A8: Can't read, response code = %s" % (sw,))
+
 	print("Programming...")
 
 	# Update SPN
