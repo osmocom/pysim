@@ -24,6 +24,7 @@ import os
 import sys
 import csv
 import random
+import subprocess
 
 from pySim.commands import SimCardCommands
 from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, derive_milenage_opc
@@ -208,6 +209,9 @@ def parse_options():
 			help="Process SIM cards in batch mode - don't exit after programming and wait for the next SIM card to be inserted.",
 			default=False, action="store_true",
 		)
+	parser.add_option("--sound", dest="sound_file", type='string', metavar="SOUND_FILE",
+			help="Only in the batch mode. Play the given sound file on successful SIM programming",
+		)
 	parser.add_option("-n", "--name", dest="name",
 			help="Operator name [default: %default]",
 			default="Fairwaves",
@@ -270,3 +274,5 @@ if __name__ == '__main__':
 
 		sim_keys = program_sim_card(card, sim_db, opts)
 		write_params_csv(opts.out_db_filename, sim_keys)
+		if opts.sound_file is not None and opts.sound_file != "":
+			subprocess.call(["paplay", opts.sound_file])
