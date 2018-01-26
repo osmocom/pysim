@@ -229,7 +229,7 @@ EF = {
 'SUME':   DF['GSM']+[EF_num['SUME']],
 'PLMNwAcT': DF['GSM']+[EF_num['PLMNwAcT']],
 'OPLMNwAcT': DF['GSM']+[EF_num['OPLMNwAcT']],
-# Figure 8 names it HPLMNAcT, but in the text it's names it HPLMNwAcT
+# Figure 8 names it HPLMNAcT, but in the text it's named HPLMNwAcT
 'HPLMNAcT': DF['GSM']+[EF_num['HPLMNAcT']],
 'HPLMNwAcT': DF['GSM']+[EF_num['HPLMNAcT']],
 'CPBCCH': DF['GSM']+[EF_num['CPBCCH']],
