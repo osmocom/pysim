@@ -37,7 +37,7 @@ except ImportError:
 
 from pySim.commands import SimCardCommands
 from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid
-
+from pySim.ts_51_011 import EF, DF
 
 def parse_options():
 
@@ -107,13 +107,20 @@ if __name__ == '__main__':
 	else:
 		print("SMSP: Can't read, response code = %s" % (sw,))
 
+	# EF.SPN
+	(res, sw) = scc.read_binary(EF['SPN'])
+	if sw == '9000':
+		print("SPN: %s" % (res,))
+	else:
+		print("SPN: Can't read, response code = %s" % (sw,))
+
 	# EF.HPLMN
-#	(res, sw) = scc.read_binary(['3f00', '7f20', '6f30'])
-#	if sw == '9000':
-#		print("HPLMN: %s" % (res))
+	(res, sw) = scc.read_binary(EF['PLMNsel'])
+	if sw == '9000':
+		print("HPLMN: %s" % (res))
 #		print("HPLMN: %s" % (dec_hplmn(res),))
-#	else:
-#		print("HPLMN: Can't read, response code = %s" % (sw,))
+	else:
+		print("HPLMN: Can't read, response code = %s" % (sw,))
 	# FIXME
 
 	# EF.ACC
@@ -125,13 +132,13 @@ if __name__ == '__main__':
 
 	# EF.MSISDN
 	try:
-	#	print(scc.record_size(['3f00', '7f10', '6f40']))
-		(res, sw) = scc.read_record(['3f00', '7f10', '6f40'], 1)
+	#	print(scc.record_size(EF['MSISDN']))
+		(res, sw) = scc.read_record(EF['MSISDN'], 1)
 		if sw == '9000':
 			if res[1] != 'f':
 				print("MSISDN: %s" % (res,))
 			else:
-				print("MSISDN: Not available")
+				print("MSISDN: %s (Not available)" % (res,))
 		else:
 			print("MSISDN: Can't read, response code = %s" % (sw,))
 	except:
