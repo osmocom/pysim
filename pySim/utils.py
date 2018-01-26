@@ -113,3 +113,22 @@ def calculate_luhn(cc):
 	num = map(int, str(cc))
 	check_digit = 10 - sum(num[-2::-2] + [sum(divmod(d * 2, 10)) for d in num[::-2]]) % 10
 	return 0 if check_digit == 10 else check_digit
+
+def dec_select_ef_response(response):
+	'''
+	As defined in the TS 151.011 9.2.1 SELECT
+	'''
+
+	length = int(response[4:8], 16)
+	file_id = response[8:12]
+	file_type = response[12:14]
+	increase_cmd = response[14:16]
+	access_cond = response[16:22]
+	file_status = response[22:24]
+	data_len = int(response[24:26], 16)
+	ef_struct = response[26:28]
+	if len(response) >= 30:
+		record_len = int(response[28:30], 16)
+	else:
+		record_len = 0
+	return (length, file_id, file_type, increase_cmd, access_cond, file_status, data_len, ef_struct, record_len)
