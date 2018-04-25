@@ -254,8 +254,8 @@ def gen_parameters(opts):
 	# ICCID (19 digits, E.118), though some phase1 vendors use 20 :(
 	if opts.iccid is not None:
 		iccid = opts.iccid
-		if not _isnum(iccid, 19):
-			raise ValueError('ICCID must be 19 digits !');
+		if not _isnum(iccid, 19) and not _isnum(iccid, 20):
+			raise ValueError('ICCID must be 19 or 20 digits !');
 
 	else:
 		if opts.num is None:

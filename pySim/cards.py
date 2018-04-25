@@ -687,10 +687,60 @@ class FairwavesSIM(Card):
 		return
 
 
-	# In order for autodetection ...
+class OpenCellsSim(Card):
+	"""
+	OpenCellsSim
+
+	"""
+
+	name = 'OpenCells SIM'
+
+	def __init__(self, ssc):
+		super(OpenCellsSim, self).__init__(ssc)
+		self._adm_chv_num = 0x0A
+
+
+	@classmethod
+	def autodetect(kls, scc):
+		try:
+			# Look for ATR
+			if scc.get_atr() == toBytes("3B 9F 95 80 1F C3 80 31 E0 73 FE 21 13 57 86 81 02 86 98 44 18 A8"):
+				return kls(scc)
+		except:
+			return None
+		return None
+
+
+	def program(self, p):
+		if not p['pin_adm']:
+			raise ValueError("Please provide a PIN-ADM as there is no default one")
+		self._scc.verify_chv(0x0A, h2b(p['pin_adm']))
+
+		# select MF
+		r = self._scc.select_file(['3f00'])
+
+		# write EF.ICCID
+		data, sw = self._scc.update_binary('2fe2', enc_iccid(p['iccid']))
+
+		r = self._scc.select_file(['7ff0'])
+
+		# set Ki in proprietary file
+		data, sw = self._scc.update_binary('FF02', p['ki'])
+
+		# set OPC in proprietary file
+		data, sw = self._scc.update_binary('FF01', p['opc'])
+
+		# select DF_GSM
+		r = self._scc.select_file(['7f20'])
+
+		# write EF.IMSI
+		data, sw = self._scc.update_binary('6f07', enc_imsi(p['imsi']))
+
+
+# In order for autodetection ...
 _cards_classes = [ FakeMagicSim, SuperSim, MagicSim, GrcardSim,
 		   SysmoSIMgr1, SysmoSIMgr2, SysmoUSIMgr1, SysmoUSIMSJS1,
-		   FairwavesSIM ]
+		   FairwavesSIM, OpenCellsSim ]
 
 def card_autodetect(scc):
 	for kls in _cards_classes:
