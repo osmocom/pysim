@@ -40,7 +40,7 @@ except ImportError:
 from pySim.commands import SimCardCommands
 from pySim.cards import _cards_classes
 from pySim.utils import h2b, swap_nibbles, rpad, derive_milenage_opc, calculate_luhn
-
+from pySim.ts_51_011 import EF
 
 def parse_options():
 
