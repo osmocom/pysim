@@ -67,7 +67,13 @@ class LinkBase(object):
 		"""
 		data, sw = self.send_apdu_raw(pdu)
 
-		if (sw is not None) and (sw[0:2] == '9f'):
+		# When whe have sent the first APDU, the SW may indicate that there are response bytes
+		# available. There are two SWs commonly used for this 9fxx (sim) and 61xx (usim), where
+		# xx is the number of response bytes available.
+		# See also:
+		# SW1=9F: 3GPP TS 51.011 9.4.1, Responses to commands which are correctly executed
+		# SW1=61: ISO/IEC 7816-4, Table 5 — General meaning of the interindustry values of SW1-SW2
+		if (sw is not None) and ((sw[0:2] == '9f') or (sw[0:2] == '61')):
 			pdu_gr = pdu[0:2] + 'c00000' + sw[2:4]
 			data, sw = self.send_apdu_raw(pdu_gr)
 
