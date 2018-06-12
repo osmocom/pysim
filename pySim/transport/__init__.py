@@ -77,12 +77,23 @@ class LinkBase(object):
 		"""send_apdu_checksw(pdu,sw): Sends an APDU and check returned SW
 
 		   pdu    : string of hexadecimal characters (ex. "A0A40000023F00")
-		   sw     : string of 4 hexadecimal characters (ex. "9000")
+		   sw     : string of 4 hexadecimal characters (ex. "9000"). The
+		            user may mask out certain digits using a '?' to add some
+		            ambiguity if needed.
 		   return : tuple(data, sw), where
 		            data : string (in hex) of returned data (ex. "074F4EFFFF")
 		            sw   : string (in hex) of status word (ex. "9000")
 		"""
 		rv = self.send_apdu(pdu)
-		if sw.lower() != rv[1]:
+
+                # Create a masked version of the returned status word
+		sw_masked = ""
+		for i in range(0, 4):
+			if sw.lower()[i] == '?':
+				sw_masked = sw_masked + '?'
+			else:
+				sw_masked = sw_masked + rv[1][i].lower()
+
+		if sw.lower() != sw_masked:
 			raise RuntimeError("SW match failed ! Expected %s and got %s." % (sw.lower(), rv[1]))
 		return rv
