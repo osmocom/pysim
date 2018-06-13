@@ -361,10 +361,13 @@ def gen_parameters(opts):
 		opc = ''.join(['%02x' % random.randrange(0,256) for i in range(16)])
 
 	if opts.pin_adm is not None:
-		if len(opts.pin_adm) > 8:
-			raise ValueError("PIN-ADM needs to be <=8 digits")
-		pin_adm = ''.join(['%02x'%(ord(x)) for x in opts.pin_adm])
-		pin_adm = rpad(pin_adm, 16)
+		if len(opts.pin_adm) <= 8:
+			pin_adm = ''.join(['%02x'%(ord(x)) for x in opts.pin_adm])
+			pin_adm = rpad(pin_adm, 16)
+		elif len(opts.pin_adm) == 16:
+			pin_adm = opts.pin_adm
+		else:
+			raise ValueError("PIN-ADM needs to be <=8 digits (ascii) or exactly 16 digits (raw hex)")
 	else:
 		pin_adm = None
 
