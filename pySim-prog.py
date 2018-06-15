@@ -405,17 +405,20 @@ def gen_parameters(opts):
 
 def print_parameters(params):
 
-	print """Generated card parameters :
- > Name     : %(name)s
- > SMSP     : %(smsp)s
- > ICCID    : %(iccid)s
- > MCC/MNC  : %(mcc)d/%(mnc)d
- > IMSI     : %(imsi)s
- > Ki       : %(ki)s
- > OPC      : %(opc)s
- > ACC      : %(acc)s
- > ADM1(hex): %(pin_adm)s
-"""	% params
+	s = ["Generated card parameters :"]
+	if 'name' in params:
+		s.append(" > Name     : %(name)s")
+	if 'smsp' in params:
+		s.append(" > SMSP     : %(smsp)s")
+	s.append(" > ICCID    : %(iccid)s")
+	s.append(" > MCC/MNC  : %(mcc)d/%(mnc)d")
+	s.append(" > IMSI     : %(imsi)s")
+	s.append(" > Ki       : %(ki)s")
+	s.append(" > OPC      : %(opc)s")
+	if 'acc' in params:
+		s.append(" > ACC      : %(acc)s")
+	s.append(" > ADM1(hex): %(pin_adm)s")
+	print("\n".join(s) % params)
 
 
 def write_params_csv(opts, params):
@@ -430,10 +433,11 @@ def write_params_csv(opts, params):
 
 def _read_params_csv(opts, imsi):
 	import csv
-	row = ['name', 'iccid', 'mcc', 'mnc', 'imsi', 'smsp', 'ki', 'opc']
 	f = open(opts.read_csv, 'r')
-	cr = csv.DictReader(f, row)
+	cr = csv.DictReader(f)
 	i = 0
+        if not 'iccid' in cr.fieldnames:
+            raise Exception("CSV file in wrong format!")
 	for row in cr:
 		if opts.num is not None and opts.read_imsi is False:
 			if opts.num == i:
@@ -450,8 +454,17 @@ def _read_params_csv(opts, imsi):
 def read_params_csv(opts, imsi):
 	row = _read_params_csv(opts, imsi)
 	if row is not None:
-		row['mcc'] = int(row['mcc'])
-		row['mnc'] = int(row['mnc'])
+		row['mcc'] = int(row.get('mcc', row['imsi'][0:3]))
+		row['mnc'] = int(row.get('mnc', row['imsi'][3:5]))
+		pin_adm = None
+		# We need to escape the pin_adm we get from the csv
+		if 'pin_adm' in row:
+			pin_adm = ''.join(['%02x'%(ord(x)) for x in row['pin_adm']])
+		# Stay compatible to the odoo csv format
+		elif 'adm1' in row:
+			pin_adm = ''.join(['%02x'%(ord(x)) for x in row['adm1']])
+		if pin_adm:
+			row['pin_adm'] = rpad(pin_adm, 16)
 	return row
 
 

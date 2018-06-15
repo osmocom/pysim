@@ -1,0 +1,16 @@
+This file aims to describe the format of the CSV file pySim uses.
+
+The first line contains the fieldnames which will be used by pySim. This
+avoids having a specific order.
+
+The field names are the following:
+
+iccid: ICCID of the card. Used to identify the cards (with --read-iccid)
+imsi: IMSI of the card
+mcc: Mobile Country Code (optional)
+mnc: Mobile Network Code (optional)
+smsp: MSISDN of the SMSC (optional)
+ki: Ki
+opc: OPc
+acc: Access class of the SIM (optional)
+pin_adm: Admin PIN of the SIM. Needed to reprogram various files
