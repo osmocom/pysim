@@ -496,7 +496,7 @@ class SysmoSIMgr2(Card):
 		# P2: CHV number, as in VERIFY CHV for PIN, and as in UNBLOCK CHV for PUK
 		# P3: 08, CHV length (curiously the PUK is also 08 length, instead of 10)
 		if p['pin_adm']:
-			pin = p['pin_adm']
+			pin = h2b(p['pin_adm'])
 		else:
 			pin = h2b("4444444444444444")
 

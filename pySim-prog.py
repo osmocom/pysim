@@ -406,14 +406,15 @@ def gen_parameters(opts):
 def print_parameters(params):
 
 	print """Generated card parameters :
- > Name    : %(name)s
- > SMSP    : %(smsp)s
- > ICCID   : %(iccid)s
- > MCC/MNC : %(mcc)d/%(mnc)d
- > IMSI    : %(imsi)s
- > Ki      : %(ki)s
- > OPC     : %(opc)s
- > ACC     : %(acc)s
+ > Name     : %(name)s
+ > SMSP     : %(smsp)s
+ > ICCID    : %(iccid)s
+ > MCC/MNC  : %(mcc)d/%(mnc)d
+ > IMSI     : %(imsi)s
+ > Ki       : %(ki)s
+ > OPC      : %(opc)s
+ > ACC      : %(acc)s
+ > ADM1(hex): %(pin_adm)s
 """	% params
 
 
