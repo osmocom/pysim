@@ -39,7 +39,7 @@ except ImportError:
 
 from pySim.commands import SimCardCommands
 from pySim.cards import _cards_classes
-from pySim.utils import h2b, swap_nibbles, rpad, derive_milenage_opc, calculate_luhn
+from pySim.utils import h2b, swap_nibbles, rpad, derive_milenage_opc, calculate_luhn, dec_iccid
 from pySim.ts_51_011 import EF
 
 def parse_options():
@@ -128,6 +128,9 @@ def parse_options():
 	parser.add_option("--read-imsi", dest="read_imsi", action="store_true",
 			help="Read the IMSI from the CARD", default=False
 		)
+	parser.add_option("--read-iccid", dest="read_iccid", action="store_true",
+			help="Read the ICCID from the CARD", default=False
+		)
 	parser.add_option("-z", "--secret", dest="secret", metavar="STR",
 			help="Secret used for ICCID/IMSI autogen",
 		)
@@ -168,8 +171,8 @@ def parse_options():
                 return options
 
 	if options.source == 'csv':
-		if (options.imsi is None) and (options.batch_mode is False) and (options.read_imsi is False):
-			parser.error("CSV mode needs either an IMSI, --read-imsi or batch mode")
+		if (options.imsi is None) and (options.batch_mode is False) and (options.read_imsi is False) and (options.read_iccid is False):
+			parser.error("CSV mode needs either an IMSI, --read-imsi, --read-iccid or batch mode")
 		if options.read_csv is None:
 			parser.error("CSV mode requires a CSV input file")
 	elif options.source == 'cmdline':
@@ -436,7 +439,7 @@ def _read_params_csv(opts, iccid=None, imsi=None):
         if not 'iccid' in cr.fieldnames:
             raise Exception("CSV file in wrong format!")
 	for row in cr:
-		if opts.num is not None and opts.read_imsi is False:
+		if opts.num is not None and opts.read_iccid is False and opts.read_imsi is False:
 			if opts.num == i:
 				f.close()
 				return row;
@@ -636,7 +639,15 @@ if __name__ == '__main__':
 		elif opts.source == 'csv':
                         imsi = None
                         iccid = None
-                        if opts.read_imsi:
+			if opts.read_iccid:
+				if opts.dry_run:
+					# Connect transport
+					print "Insert card now (or CTRL-C to cancel)"
+					sl.wait_for_card(newcardonly=not first)
+				(res,_) = scc.read_binary(['3f00', '2fe2'], length=10)
+				iccid = dec_iccid(res)
+                                print iccid
+                        elif opts.read_imsi:
 				if opts.dry_run:
 					# Connect transport
 					print "Insert card now (or CTRL-C to cancel)"
