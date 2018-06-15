@@ -156,9 +156,14 @@ function run_test {
 	OPC=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 	IMSI=001010000000001
 	ADM=00000000
+	ADM_OPT="-a"
 
-	. "$CARD_NAME.data"
-	python $PYSIM_PROG -p $I -t $CARD_NAME -o $OPC -k $KI -x $MCC -y $MNC -i $IMSI -s $ICCID -a $ADM
+	source "$CARD_NAME.data"
+	if [ -n "$ADM_HEX" ]; then
+		ADM_OPT="-A"
+		ADM=$ADM_HEX
+	fi
+	python $PYSIM_PROG -p $I -t $CARD_NAME -o $OPC -k $KI -x $MCC -y $MNC -i $IMSI -s $ICCID $ADM_OPT $ADM
 	check_card $I $CARD_NAME
 	echo ""
     done
