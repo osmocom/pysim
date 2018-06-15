@@ -375,8 +375,8 @@ class GrcardSim(Card):
 		#self._scc.verify_chv(4, h2b("4444444444444444"))
 
 		# Authenticate using ADM PIN 5
-		if p['pin_adm']:
-			pin = h2b(p['pin_adm'])
+		if p['adm1']:
+			pin = h2b(p['adm1'])
 		else:
 			pin = h2b("4444444444444444")
 		self._scc.verify_chv(5, pin)
@@ -495,8 +495,8 @@ class SysmoSIMgr2(Card):
 		# P1: 3A for PIN, 3B for PUK
 		# P2: CHV number, as in VERIFY CHV for PIN, and as in UNBLOCK CHV for PUK
 		# P3: 08, CHV length (curiously the PUK is also 08 length, instead of 10)
-		if p['pin_adm']:
-			pin = p['pin_adm']
+		if p['adm1']:
+			pin = p['adm1']
 		else:
 			pin = h2b("4444444444444444")
 
@@ -567,9 +567,9 @@ class SysmoUSIMSJS1(Card):
 	def program(self, p):
 
 		# authenticate as ADM using default key (written on the card..)
-		if not p['pin_adm']:
+		if not p['adm1']:
 			raise ValueError("Please provide a PIN-ADM as there is no default one")
-		self._scc.verify_chv(0x0A, h2b(p['pin_adm']))
+		self._scc.verify_chv(0x0A, p['adm1'])
 
 		# select MF
 		r = self._scc.select_file(['3f00'])

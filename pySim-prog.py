@@ -399,7 +399,7 @@ def gen_parameters(opts):
 		'ki'	: ki,
 		'opc'	: opc,
 		'acc'	: acc,
-		'pin_adm' : pin_adm,
+		'adm1' : pin_adm,
 	}
 
 
@@ -414,6 +414,7 @@ def print_parameters(params):
  > Ki      : %(ki)s
  > OPC     : %(opc)s
  > ACC     : %(acc)s
+ > ADM1    : %(adm1)s
 """	% params
 
 
@@ -427,18 +428,23 @@ def write_params_csv(opts, params):
 		cw.writerow([params[x] for x in row])
 		f.close()
 
-def _read_params_csv(opts, imsi):
+def _read_params_csv(opts, iccid=None, imsi=None):
 	import csv
-	row = ['name', 'iccid', 'mcc', 'mnc', 'imsi', 'smsp', 'ki', 'opc']
 	f = open(opts.read_csv, 'r')
-	cr = csv.DictReader(f, row)
+	cr = csv.DictReader(f)
 	i = 0
+        if not 'iccid' in cr.fieldnames:
+            raise Exception("CSV file in wrong format!")
 	for row in cr:
 		if opts.num is not None and opts.read_imsi is False:
 			if opts.num == i:
 				f.close()
 				return row;
 			i += 1
+		if row['iccid'] == iccid:
+			f.close()
+			return row;
+
 		if row['imsi'] == imsi:
 			f.close()
 			return row;
@@ -446,8 +452,8 @@ def _read_params_csv(opts, imsi):
 	f.close()
 	return None
 
-def read_params_csv(opts, imsi):
-	row = _read_params_csv(opts, imsi)
+def read_params_csv(opts, imsi=None, iccid=None):
+	row = _read_params_csv(opts, iccid=iccid, imsi=imsi)
 	if row is not None:
 		row['mcc'] = int(row['mcc'])
 		row['mnc'] = int(row['mnc'])
@@ -628,7 +634,9 @@ if __name__ == '__main__':
 		if opts.source == 'cmdline':
 			cp = gen_parameters(opts)
 		elif opts.source == 'csv':
-			if opts.read_imsi:
+                        imsi = None
+                        iccid = None
+                        if opts.read_imsi:
 				if opts.dry_run:
 					# Connect transport
 					print "Insert card now (or CTRL-C to cancel)"
@@ -637,7 +645,7 @@ if __name__ == '__main__':
 				imsi = swap_nibbles(res)[3:]
 			else:
 				imsi = opts.imsi
-			cp = read_params_csv(opts, imsi)
+			cp = read_params_csv(opts, imsi=imsi, iccid=iccid)
 		if cp is None:
 			print "Error reading parameters\n"
 			sys.exit(2)
