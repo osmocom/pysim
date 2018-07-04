@@ -62,6 +62,10 @@ def parse_options():
 			help="Card type (user -t list to view) [default: %default]",
 			default="auto",
 		)
+	parser.add_option("-T", "--probe", dest="probe",
+			help="Determine card type",
+			default=False, action="store_true"
+		)
 	parser.add_option("-a", "--pin-adm", dest="pin_adm",
 			help="ADM PIN used for provisioning (overwrites default)",
 		)
@@ -155,6 +159,9 @@ def parse_options():
 		for kls in _cards_classes:
 			print kls.name
 		sys.exit(0)
+
+        if options.probe:
+                return options
 
 	if options.source == 'csv':
 		if (options.imsi is None) and (options.batch_mode is False) and (options.read_imsi is False):
@@ -525,7 +532,7 @@ def card_detect(opts, scc):
 		for kls in _cards_classes:
 			card = kls.autodetect(scc)
 			if card:
-				print "Autodetected card type %s" % card.name
+				print "Autodetected card type: %s" % card.name
 				card.reset()
 				break
 
@@ -540,7 +547,7 @@ def card_detect(opts, scc):
 		card = ctypes[opts.type](scc)
 
 	else:
-		raise ValueError("Unknown card type %s" % opts.type)
+		raise ValueError("Unknown card type: %s" % opts.type)
 
 	return card
 
@@ -588,6 +595,10 @@ if __name__ == '__main__':
 					continue
 				else:
 					sys.exit(-1)
+
+                        # Probe only
+                        if opts.probe:
+                                break;
 
 			# Erase if requested
 			if opts.erase:
