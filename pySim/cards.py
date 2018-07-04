@@ -83,6 +83,30 @@ class Card(object):
 		data, sw = self._scc.update_binary(EF['HPLMNwAcT'], content + 'ffffff0000' * (size/5-1))
 		return sw
 
+	def update_oplmn_act(self, mcc, mnc, access_tech='FFFF'):
+		"""
+                See note in update_hplmn_act()
+		"""
+		# get size and write EF.OPLMNwAcT
+	        data = self._scc.read_binary(EF['OPLMNwAcT'], length=None, offset=0)
+                size = len(data[0])/2
+		hplmn = enc_plmn(mcc, mnc)
+		content = hplmn + access_tech
+		data, sw = self._scc.update_binary(EF['OPLMNwAcT'], content + 'ffffff0000' * (size/5-1))
+		return sw
+
+	def update_plmn_act(self, mcc, mnc, access_tech='FFFF'):
+		"""
+                See note in update_hplmn_act()
+		"""
+		# get size and write EF.PLMNwAcT
+	        data = self._scc.read_binary(EF['PLMNwAcT'], length=None, offset=0)
+                size = len(data[0])/2
+		hplmn = enc_plmn(mcc, mnc)
+		content = hplmn + access_tech
+		data, sw = self._scc.update_binary(EF['PLMNwAcT'], content + 'ffffff0000' * (size/5-1))
+		return sw
+
         def update_plmnsel(self, mcc, mnc):
 	        data = self._scc.read_binary(EF['PLMNsel'], length=None, offset=0)
                 size = len(data[0])/2
@@ -752,11 +776,98 @@ class OpenCellsSim(Card):
 		# write EF.IMSI
 		data, sw = self._scc.update_binary('6f07', enc_imsi(p['imsi']))
 
+class WavemobileSim(Card):
+	"""
+	WavemobileSim
+
+	"""
+
+	name = 'Wavemobile-SIM'
+
+	def __init__(self, ssc):
+		super(WavemobileSim, self).__init__(ssc)
+		self._adm_chv_num = 0x0A
+		self._scc.cla_byte = "00"
+		self._scc.sel_ctrl = "0004" #request an FCP
+
+	@classmethod
+	def autodetect(kls, scc):
+		try:
+			# Look for ATR
+			if scc.get_atr() == toBytes("3B 9F 95 80 1F C7 80 31 E0 73 F6 21 13 67 4D 45 16 00 43 01 00 8F"):
+				return kls(scc)
+		except:
+			return None
+		return None
+
+	def program(self, p):
+		if not p['pin_adm']:
+			raise ValueError("Please provide a PIN-ADM as there is no default one")
+		sw = self.verify_adm(h2b(p['pin_adm']))
+		if sw != '9000':
+			raise RuntimeError('Failed to authenticate with ADM key %s'%(p['pin_adm'],))
+
+                # EF.ICCID
+                # TODO: Add programming of the ICCID
+                if p.get('iccid'):
+			print("Warning: Programming of the ICCID is not implemented for this type of card.")
+
+                # KI (Presumably a propritary file)
+                # TODO: Add programming of KI
+                if p.get('ki'):
+			print("Warning: Programming of the KI is not implemented for this type of card.")
+
+                # OPc (Presumably a propritary file)
+                # TODO: Add programming of OPc
+                if p.get('opc'):
+			print("Warning: Programming of the OPc is not implemented for this type of card.")
+
+                # EF.SMSP
+		if p.get('smsp'):
+			sw = self.update_smsp(p['smsp'])
+			if sw != '9000':
+				print("Programming SMSP failed with code %s"%sw)
+
+                # EF.IMSI
+		if p.get('imsi'):
+			sw = self.update_imsi(p['imsi'])
+			if sw != '9000':
+				print("Programming IMSI failed with code %s"%sw)
+
+		# EF.ACC
+		if p.get('acc'):
+			sw = self.update_acc(p['acc'])
+			if sw != '9000':
+				print("Programming ACC failed with code %s"%sw)
+
+		# EF.PLMNsel
+                if p.get('mcc') and p.get('mnc'):
+                        sw = self.update_plmnsel(p['mcc'], p['mnc'])
+                        if sw != '9000':
+				print("Programming PLMNsel failed with code %s"%sw)
+
+                # EF.PLMNwAcT
+                if p.get('mcc') and p.get('mnc'):
+			sw = self.update_plmn_act(p['mcc'], p['mnc'])
+			if sw != '9000':
+				print("Programming PLMNwAcT failed with code %s"%sw)
+
+                # EF.OPLMNwAcT
+                if p.get('mcc') and p.get('mnc'):
+			sw = self.update_oplmn_act(p['mcc'], p['mnc'])
+			if sw != '9000':
+				print("Programming OPLMNwAcT failed with code %s"%sw)
+
+                return None
+
+	def erase(self):
+		return
+
 
 # In order for autodetection ...
 _cards_classes = [ FakeMagicSim, SuperSim, MagicSim, GrcardSim,
 		   SysmoSIMgr1, SysmoSIMgr2, SysmoUSIMgr1, SysmoUSIMSJS1,
-		   FairwavesSIM, OpenCellsSim ]
+		   FairwavesSIM, OpenCellsSim, WavemobileSim ]
 
 def card_autodetect(scc):
 	for kls in _cards_classes:
