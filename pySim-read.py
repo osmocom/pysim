@@ -28,6 +28,7 @@ import os
 import random
 import re
 import sys
+from pySim.ts_51_011 import EF, DF
 
 try:
 	import json
@@ -107,14 +108,45 @@ if __name__ == '__main__':
 	else:
 		print("SMSP: Can't read, response code = %s" % (sw,))
 
-	# EF.HPLMN
-#	(res, sw) = scc.read_binary(['3f00', '7f20', '6f30'])
-#	if sw == '9000':
-#		print("HPLMN: %s" % (res))
-#		print("HPLMN: %s" % (dec_hplmn(res),))
-#	else:
-#		print("HPLMN: Can't read, response code = %s" % (sw,))
-	# FIXME
+	# EF.PLMNsel
+	try:
+	        (res, sw) = scc.read_binary(EF['PLMNsel'])
+	        if sw == '9000':
+		        print("PLMNsel: %s" % (res))
+	        else:
+		        print("PLMNsel: Can't read, response code = %s" % (sw,))
+	except Exception as e:
+		print "HPLMNAcT: Can't read file -- " + str(e)
+
+	# EF.PLMNwAcT
+        try:
+	        (res, sw) = scc.read_binary(EF['PLMNwAcT'])
+	        if sw == '9000':
+		        print("PLMNwAcT: %s" % (res))
+	        else:
+		        print("PLMNwAcT: Can't read, response code = %s" % (sw,))
+	except Exception as e:
+		print "PLMNwAcT: Can't read file -- " + str(e)
+
+	# EF.OPLMNwAcT
+        try:
+	        (res, sw) = scc.read_binary(EF['OPLMNwAcT'])
+	        if sw == '9000':
+		        print("OPLMNwAcT: %s" % (res))
+	        else:
+		        print("OPLMNwAcT: Can't read, response code = %s" % (sw,))
+	except Exception as e:
+		print "OPLMNwAcT: Can't read file -- " + str(e)
+
+	# EF.HPLMNAcT
+        try:
+	        (res, sw) = scc.read_binary(EF['HPLMNAcT'])
+	        if sw == '9000':
+		        print("HPLMNAcT: %s" % (res))
+	        else:
+		        print("HPLMNAcT: Can't read, response code = %s" % (sw,))
+	except Exception as e:
+		print "HPLMNAcT: Can't read file -- " + str(e)
 
 	# EF.ACC
 	(res, sw) = scc.read_binary(['3f00', '7f20', '6f78'])
