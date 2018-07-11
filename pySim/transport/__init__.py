@@ -101,5 +101,5 @@ class LinkBase(object):
 				sw_masked = sw_masked + rv[1][i].lower()
 
 		if sw.lower() != sw_masked:
-			raise RuntimeError("SW match failed ! Expected %s and got %s." % (sw.lower(), rv[1]))
+			raise RuntimeError("SW match failed! Expected %s and got %s." % (sw.lower(), rv[1]))
 		return rv
