@@ -87,7 +87,8 @@ class Card(object):
 	        data = self._scc.read_binary(EF['PLMNsel'], length=None, offset=0)
                 size = len(data[0])/2
 		hplmn = enc_plmn(mcc, mnc)
-		self._scc.update_binary(EF['PLMNsel'], hplmn + 'ff' * (size-3))
+		data, sw = self._scc.update_binary(EF['PLMNsel'], hplmn + 'ff' * (size-3))
+		return sw
 
 	def update_smsp(self, smsp):
 		data, sw = self._scc.update_record(EF['SMSP'], 1, rpad(smsp, 84))
