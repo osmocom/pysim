@@ -28,6 +28,15 @@ You can clone from the official libosmocore.git repository using
 
 There is a cgit interface at <http://git.osmocom.org/pysim/>
 
+
+Dependencies
+------------
+pysim requires pyscard and pytlv. Both can be installed using python-pip:
+
+pip install pytlv
+pip install pyscard
+
+
 Mailing List
 ------------
 
