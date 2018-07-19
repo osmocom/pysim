@@ -31,10 +31,17 @@ There is a cgit interface at <http://git.osmocom.org/pysim/>
 
 Dependencies
 ------------
-pysim requires pyscard and pytlv. Both can be installed using python-pip:
 
-pip install pytlv
-pip install pyscard
+pysim requires:
+
+- pyscard
+- serial
+- pytlv (for specific card types)
+
+Example for Debian:
+
+	apt-get install python-pyscard python-serial python-pip
+	pip install pytlv
 
 
 Mailing List
