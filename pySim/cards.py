@@ -338,7 +338,7 @@ class GrcardSim(Card):
 
 		# Authenticate using ADM PIN 5
 		if p['pin_adm']:
-			pin = p['pin_adm']
+			pin = h2b(p['pin_adm'])
 		else:
 			pin = h2b("4444444444444444")
 		self._scc.verify_chv(5, pin)
