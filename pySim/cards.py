@@ -387,6 +387,15 @@ class SysmoSIMgr1(GrcardSim):
 	"""
 	name = 'sysmosim-gr1'
 
+        @classmethod
+	def autodetect(kls, scc):
+		try:
+			# Look for ATR
+			if scc.get_atr() == toBytes("3B 99 18 00 11 88 22 33 44 55 66 77 60"):
+				return kls(scc)
+		except:
+			return None
+		return None
 
 class SysmoUSIMgr1(Card):
 	"""
