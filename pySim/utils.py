@@ -49,11 +49,29 @@ def rpad(s, l, c='f'):
 def lpad(s, l, c='f'):
 	return c * (l - len(s)) + s
 
+def half_round_up(n):
+	return (n + 1)//2
+
+# IMSI encoded format:
+# For IMSI 0123456789ABCDE:
+#
+# |     byte 1      | 2 upper | 2 lower  | 3 upper | 3 lower | ... | 9 upper | 9 lower |
+# | length in bytes |    0    | odd/even |    2    |    1    | ... |    E    |    D    |
+#
+# If the IMSI is less than 15 characters, it should be padded with 'f' from the end.
+#
+# The length is the total number of bytes used to encoded the IMSI. This includes the odd/even
+# parity bit. E.g. an IMSI of length 14 is 8 bytes long, not 7, as it uses bytes 2 to 9 to
+# encode itself.
+#
+# Because of this, an odd length IMSI fits exactly into len(imsi) + 1 // 2 bytes, whereas an
+# even length IMSI only uses half of the last byte.
+
 def enc_imsi(imsi):
 	"""Converts a string imsi into the value of the EF"""
-	l = (len(imsi) + 1) // 2	# Required bytes
+	l = half_round_up(len(imsi) + 1)	# Required bytes - include space for odd/even indicator
 	oe = len(imsi) & 1			# Odd (1) / Even (0)
-	ei = '%02x' % l + swap_nibbles(lpad('%01x%s' % ((oe<<3)|1, imsi), 16))
+	ei = '%02x' % l + swap_nibbles('%01x%s' % ((oe<<3)|1, rpad(imsi, 15)))
 	return ei
 
 def dec_imsi(ef):
@@ -61,13 +79,15 @@ def dec_imsi(ef):
 	if len(ef) < 4:
 		return None
 	l = int(ef[0:2], 16) * 2		# Length of the IMSI string
-	swapped = swap_nibbles(ef[2:])
+	l = l - 1						# Encoded length byte includes oe nibble
+	swapped = swap_nibbles(ef[2:]).rstrip('f')
 	oe = (int(swapped[0])>>3) & 1	# Odd (1) / Even (0)
-	if oe:
+	if not oe:
+		# if even, only half of last byte was used
 		l = l-1
-	if l+1 > len(swapped):
+	if l != len(swapped) - 1:
 		return None
-	imsi = swapped[1:l+2]
+	imsi = swapped[1:]
 	return imsi
 
 def dec_iccid(ef):
