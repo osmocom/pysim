@@ -97,7 +97,7 @@ def parse_options():
 			default=55,
 		)
 	parser.add_option("-m", "--smsc", dest="smsc",
-			help="SMSP [default: '00 + country code + 5555']",
+			help="SMSC number (Start with + for international no.) [default: '00 + country code + 5555']",
 		)
 	parser.add_option("-M", "--smsp", dest="smsp",
 			help="Raw SMSP content in hex [default: auto from SMSC]",
@@ -319,14 +319,19 @@ def gen_parameters(opts):
 			raise ValueError('SMSP must be at least 28 bytes')
 
 	else:
+		ton = "81"
 		if opts.smsc is not None:
 			smsc = opts.smsc
+			if smsc[0] == '+':
+				ton = "91"
+				smsc = smsc[1:]
 			if not _isnum(smsc):
-				raise ValueError('SMSC must be digits only !')
+				raise ValueError('SMSC must be digits only!\n \
+					Start with \'+\' for international numbers')
 		else:
 			smsc = '00%d' % opts.country + '5555'	# Hack ...
 
-		smsc = '%02d' % ((len(smsc) + 3)//2,) + "81" + swap_nibbles(rpad(smsc, 20))
+		smsc = '%02d' % ((len(smsc) + 3)//2,) + ton + swap_nibbles(rpad(smsc, 20))
 
 		smsp = (
 			'e1' +			# Parameters indicator
