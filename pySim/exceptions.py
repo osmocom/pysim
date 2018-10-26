@@ -31,3 +31,6 @@ class NoCardError(exceptions.Exception):
 
 class ProtocolError(exceptions.Exception):
 	pass
+
+class ReaderError(exceptions.Exception):
+	pass
