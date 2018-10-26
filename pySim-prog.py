@@ -562,13 +562,13 @@ if __name__ == '__main__':
 	# Parse options
 	opts = parse_options()
 
-	# Connect to the card
-	if opts.pcsc_dev is None:
-		from pySim.transport.serial import SerialSimLink
-		sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
-	else:
+	# Init card reader driver
+	if opts.pcsc_dev is not None:
 		from pySim.transport.pcsc import PcscSimLink
 		sl = PcscSimLink(opts.pcsc_dev)
+	else: # Serial reader is default
+		from pySim.transport.serial import SerialSimLink
+		sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
 
 	# Create command layer
 	scc = SimCardCommands(transport=sl)
