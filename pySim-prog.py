@@ -58,6 +58,10 @@ def parse_options():
 			help="Which PC/SC reader number for SIM access",
 			default=None,
 		)
+	parser.add_option("--osmocon", dest="osmocon_sock", metavar="PATH",
+			help="Socket path for Calypso (e.g. Motorola C1XX) based reader (via OsmocomBB)",
+			default=None,
+		)
 	parser.add_option("-t", "--type", dest="type",
 			help="Card type (user -t list to view) [default: %default]",
 			default="auto",
@@ -566,6 +570,9 @@ if __name__ == '__main__':
 	if opts.pcsc_dev is not None:
 		from pySim.transport.pcsc import PcscSimLink
 		sl = PcscSimLink(opts.pcsc_dev)
+	elif opts.osmocon_sock is not None:
+		from pySim.transport.calypso import CalypsoSimLink
+		sl = CalypsoSimLink(sock_path=opts.osmocon_sock)
 	else: # Serial reader is default
 		from pySim.transport.serial import SerialSimLink
 		sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
