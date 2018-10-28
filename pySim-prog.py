@@ -568,12 +568,18 @@ if __name__ == '__main__':
 
 	# Init card reader driver
 	if opts.pcsc_dev is not None:
+		print("Using PC/SC reader (dev=%d) interface"
+			% opts.pcsc_dev)
 		from pySim.transport.pcsc import PcscSimLink
 		sl = PcscSimLink(opts.pcsc_dev)
 	elif opts.osmocon_sock is not None:
+		print("Using Calypso-based (OsmocomBB, sock=%s) reader interface"
+			% opts.osmocon_sock)
 		from pySim.transport.calypso import CalypsoSimLink
 		sl = CalypsoSimLink(sock_path=opts.osmocon_sock)
 	else: # Serial reader is default
+		print("Using serial reader (port=%s, baudrate=%d) interface"
+			% (opts.device, opts.baudrate))
 		from pySim.transport.serial import SerialSimLink
 		sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
 
