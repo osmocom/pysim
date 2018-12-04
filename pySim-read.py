@@ -37,7 +37,7 @@ except ImportError:
 	import simplejson as json
 
 from pySim.commands import SimCardCommands
-from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid
+from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, format_xplmn_w_act
 
 
 def parse_options():
@@ -129,7 +129,7 @@ if __name__ == '__main__':
         try:
 	        (res, sw) = scc.read_binary(EF['PLMNwAcT'])
 	        if sw == '9000':
-		        print("PLMNwAcT: %s" % (res))
+		        print("PLMNwAcT:\n%s" % (format_xplmn_w_act(res)))
 	        else:
 		        print("PLMNwAcT: Can't read, response code = %s" % (sw,))
 	except Exception as e:
@@ -139,7 +139,7 @@ if __name__ == '__main__':
         try:
 	        (res, sw) = scc.read_binary(EF['OPLMNwAcT'])
 	        if sw == '9000':
-		        print("OPLMNwAcT: %s" % (res))
+		        print("OPLMNwAcT:\n%s" % (format_xplmn_w_act(res)))
 	        else:
 		        print("OPLMNwAcT: Can't read, response code = %s" % (sw,))
 	except Exception as e:
@@ -149,7 +149,7 @@ if __name__ == '__main__':
         try:
 	        (res, sw) = scc.read_binary(EF['HPLMNAcT'])
 	        if sw == '9000':
-		        print("HPLMNAcT: %s" % (res))
+		        print("HPLMNAcT:\n%s" % (format_xplmn_w_act(res)))
 	        else:
 		        print("HPLMNAcT: Can't read, response code = %s" % (sw,))
 	except Exception as e:

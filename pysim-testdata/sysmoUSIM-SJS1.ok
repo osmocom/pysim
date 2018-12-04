@@ -3,9 +3,48 @@ ICCID: 1122334455667788990
 IMSI: 001010000000102
 SMSP: ffffffffffffffffffffffffffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff000000
 PLMNsel: fff11fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-PLMNwAcT: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-OPLMNwAcT: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-HPLMNAcT: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+PLMNwAcT:
+	fff11fffff # MCC: 1651 MNC: 151 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+
+OPLMNwAcT:
+	fff11fffff # MCC: 1651 MNC: 151 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+
+HPLMNAcT:
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+	ffffffffff # unused
+
 ACC: 0008
 MSISDN: Not available
 AD: 00000002
