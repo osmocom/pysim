@@ -109,6 +109,8 @@ class SimCardCommands(object):
 		if not hasattr(type(ef), '__iter__'):
 			ef = [ef]
 		r = self.select_file(ef)
+		if len(r[-1]) == 0:
+			return (None, None)
 		if length is None:
 			length = self.__len(r) - offset
 		pdu = self.cla_byte + 'b0%04x%02x' % (offset, (min(256, length) & 0xff))
