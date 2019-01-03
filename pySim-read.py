@@ -95,7 +95,7 @@ if __name__ == '__main__':
 	print("Reading ...")
 
 	# EF.ICCID
-	(res, sw) = scc.read_binary(['3f00', '2fe2'])
+	(res, sw) = scc.read_binary(EF['ICCID'])
 	if sw == '9000':
 		print("ICCID: %s" % (dec_iccid(res),))
 	else:
