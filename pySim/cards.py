@@ -536,7 +536,7 @@ class SysmoUSIMSJS1(Card):
 	def __init__(self, ssc):
 		super(SysmoUSIMSJS1, self).__init__(ssc)
 		self._scc.cla_byte = "00"
-		self._scc.sel_ctrl = "000C"
+		self._scc.sel_ctrl = "0004" #request an FCP
 
 	@classmethod
 	def autodetect(kls, scc):
@@ -574,6 +574,25 @@ class SysmoUSIMSJS1(Card):
 
 		# write EF.IMSI
 		data, sw = self._scc.update_binary('6f07', enc_imsi(p['imsi']))
+
+		# EF.PLMNsel
+                if p.get('mcc') and p.get('mnc'):
+                        sw = self.update_plmnsel(p['mcc'], p['mnc'])
+                        if sw != '9000':
+				print("Programming PLMNsel failed with code %s"%sw)
+
+                # EF.PLMNwAcT
+                if p.get('mcc') and p.get('mnc'):
+			sw = self.update_plmn_act(p['mcc'], p['mnc'])
+			if sw != '9000':
+				print("Programming PLMNwAcT failed with code %s"%sw)
+
+                # EF.OPLMNwAcT
+                if p.get('mcc') and p.get('mnc'):
+			sw = self.update_oplmn_act(p['mcc'], p['mnc'])
+			if sw != '9000':
+				print("Programming OPLMNwAcT failed with code %s"%sw)
+
 
 		# EF.SMSP
 		r = self._scc.select_file(['3f00', '7f10'])
