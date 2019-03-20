@@ -35,7 +35,7 @@ class SimCardCommands(object):
 		# see also: ETSI TS 102 221, chapter 11.1.1.3.1 Response for MF,
 		# DF or ADF
                 from pytlv.TLV import TLV
-		tlvparser = TLV(['82', '83', '84', 'A5', '8a', '8b', '8c', '80', 'ab', 'c6', '81', '88'])
+		tlvparser = TLV(['82', '83', '84', 'a5', '8a', '8b', '8c', '80', 'ab', 'c6', '81', '88'])
 
 		# pytlv is case sensitive!
 		fcp = fcp.lower()
