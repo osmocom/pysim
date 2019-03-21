@@ -176,5 +176,12 @@ if __name__ == '__main__':
 	except Exception as e:
 		print "MSISDN: Can't read file -- " + str(e)
 
+	# EF.AD
+	(res, sw) = scc.read_binary(['3f00', '7f20', '6fad'])
+	if sw == '9000':
+		print("AD: %s" % (res,))
+	else:
+		print("AD: Can't read, response code = %s" % (sw,))
+
 	# Done for this card and maybe for everything ?
 	print "Done !\n"

@@ -118,6 +118,20 @@ class Card(object):
 		data, sw = self._scc.update_record(EF['SMSP'], 1, rpad(smsp, 84))
 		return sw
 
+	def update_ad(self, mnc):
+                #See also: 3GPP TS 31.102, chapter 4.2.18
+                mnclen = len(str(mnc))
+                if mnclen == 1:
+                        mnclen = 2
+                if mnclen > 3:
+			raise RuntimeError('unable to calculate proper mnclen')
+
+	        data = self._scc.read_binary(EF['AD'], length=None, offset=0)
+                size = len(data[0])/2
+                content = data[0][0:6] + "%02X" % mnclen
+		data, sw = self._scc.update_binary(EF['AD'], content)
+		return sw
+
 	def read_spn(self):
 		(spn, sw) = self._scc.read_binary(EF['SPN'])
 		if sw == '9000':
@@ -593,6 +607,11 @@ class SysmoUSIMSJS1(Card):
 			if sw != '9000':
 				print("Programming OPLMNwAcT failed with code %s"%sw)
 
+                # EF.AD
+                if p.get('mcc') and p.get('mnc'):
+			sw = self.update_ad(p['mnc'])
+			if sw != '9000':
+				print("Programming AD failed with code %s"%sw)
 
 		# EF.SMSP
 		r = self._scc.select_file(['3f00', '7f10'])
