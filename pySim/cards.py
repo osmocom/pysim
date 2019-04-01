@@ -896,6 +896,12 @@ class WavemobileSim(Card):
 			if sw != '9000':
 				print("Programming OPLMNwAcT failed with code %s"%sw)
 
+                # EF.AD
+                if p.get('mcc') and p.get('mnc'):
+			sw = self.update_ad(p['mnc'])
+			if sw != '9000':
+				print("Programming AD failed with code %s"%sw)
+
                 return None
 
 	def erase(self):
