@@ -1,0 +1,13 @@
+Reading ...
+ICCID: 1122334455667788990
+IMSI: 001010000000102
+SMSP: ffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff000000
+PLMNsel: fff11fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+PLMNwAcT: Can't read file -- SW match failed! Expected 9000 and got 9404.
+OPLMNwAcT: Can't read file -- SW match failed! Expected 9000 and got 9404.
+HPLMNAcT: Can't read file -- SW match failed! Expected 9000 and got 9404.
+ACC: 0008
+MSISDN: Not available
+AD: 000000
+Done !
+
