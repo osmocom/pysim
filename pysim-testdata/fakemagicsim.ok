@@ -3,6 +3,9 @@ Reading ...
 ICCID: 1122334455667788990
 IMSI: 001010000000102
 SMSP: ffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff000000
+SPN: Magic
+Display HPLMN: True
+Display OPLMN: False
 PLMNsel: fff11fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 PLMNwAcT: Can't read file -- SW match failed! Expected 9000 and got 9404.
 OPLMNwAcT: Can't read file -- SW match failed! Expected 9000 and got 9404.

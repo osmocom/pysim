@@ -3,6 +3,9 @@ Reading ...
 ICCID: 1122334455667788990
 IMSI: 001010000000102
 SMSP: ffffffffffffffffffffffffffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff000000
+SPN: 
+Display HPLMN: False
+Display OPLMN: False
 PLMNsel: fff11fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 PLMNwAcT:
 	fff11fffff # MCC: 1651 MNC: 151 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT

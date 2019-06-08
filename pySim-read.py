@@ -37,7 +37,7 @@ except ImportError:
 	import simplejson as json
 
 from pySim.commands import SimCardCommands
-from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, format_xplmn_w_act
+from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, format_xplmn_w_act, dec_spn
 
 
 def parse_options():
@@ -120,6 +120,17 @@ if __name__ == '__main__':
 		print("SMSP: %s" % (res,))
 	else:
 		print("SMSP: Can't read, response code = %s" % (sw,))
+
+	# EF.SPN
+	try:
+		(res, sw) = scc.read_binary(EF['SPN'])
+		if sw == '9000':
+			spn_res = dec_spn(res)
+			print("SPN: %s\nDisplay HPLMN: %s\nDisplay OPLMN: %s" % (spn_res[0], spn_res[1], spn_res[2],))
+		else:
+			print("SPN: Can't read, response code = %s" % (sw,))
+	except Exception as e:
+		print("SPN: Can't read file -- %s" % (str(e),))
 
 	# EF.PLMNsel
 	try:
