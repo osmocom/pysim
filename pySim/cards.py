@@ -612,6 +612,10 @@ class SysmoUSIMSJS1(Card):
 			content = "01" + p['opc']
 			data, sw = self._scc.update_binary('00F7', content)
 
+		# set Service Provider Name
+		content = enc_spn(p['name'], True, True)
+		data, sw = self._scc.update_binary('6F46', rpad(content, 32))
+
 		# write EF.IMSI
 		data, sw = self._scc.update_binary('6f07', enc_imsi(p['imsi']))
 
