@@ -394,8 +394,9 @@ class GrcardSim(Card):
 			data, sw = self._scc.update_binary('6f78', lpad(p['acc'], 4))
 
 		# EF.SMSP
-		r = self._scc.select_file(['3f00', '7f10', '6f42'])
-		data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 80))
+                if p.get('smsp'):
+			r = self._scc.select_file(['3f00', '7f10', '6f42'])
+			data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 80))
 
 		# Set the Ki using proprietary command
 		pdu = '80d4020010' + p['ki']
@@ -535,7 +536,8 @@ class SysmoSIMgr2(Card):
 		r = self._scc.select_file(['3f00', '7f10'])
 		
 		# write EF.SMSP
-		data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 80))
+                if p.get('smsp'):
+			data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 80))
 
 	def erase(self):
 		return
@@ -614,8 +616,9 @@ class SysmoUSIMSJS1(Card):
 				print("Programming AD failed with code %s"%sw)
 
 		# EF.SMSP
-		r = self._scc.select_file(['3f00', '7f10'])
-		data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 104), force_len=True)
+		if p.get('smsp'):
+			r = self._scc.select_file(['3f00', '7f10'])
+			data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 104), force_len=True)
 
 	def erase(self):
 		return
