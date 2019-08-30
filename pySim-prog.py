@@ -30,6 +30,7 @@ import os
 import random
 import re
 import sys
+import traceback
 
 try:
 	import json
@@ -41,6 +42,7 @@ from pySim.commands import SimCardCommands
 from pySim.cards import _cards_classes
 from pySim.utils import h2b, swap_nibbles, rpad, derive_milenage_opc, calculate_luhn, dec_iccid
 from pySim.ts_51_011 import EF
+from pySim.card_handler import *
 
 def parse_options():
 
@@ -162,6 +164,9 @@ def parse_options():
 	parser.add_option("--dry-run", dest="dry_run",
 			help="Perform a 'dry run', don't actually program the card",
 			default=False, action="store_true")
+
+	parser.add_option("--card_handler", dest="card_handler", metavar="FILE",
+			help="Use automatic card handling machine")
 
 	(options, args) = parser.parse_args()
 
@@ -610,6 +615,74 @@ def card_detect(opts, scc):
 	return card
 
 
+def process_card(opts, first, card_handler):
+
+	if opts.dry_run is False:
+		# Connect transport
+		card_handler.get(first)
+
+	if opts.dry_run is False:
+		# Get card
+		card = card_detect(opts, scc)
+		if card is None:
+			print "No card detected!"
+			return -1
+
+		# Probe only
+		if opts.probe:
+			return 0
+
+		# Erase if requested
+		if opts.erase:
+			print "Formatting ..."
+			card.erase()
+			card.reset()
+
+	# Generate parameters
+	if opts.source == 'cmdline':
+		cp = gen_parameters(opts)
+	elif opts.source == 'csv':
+		imsi = None
+		iccid = None
+		if opts.read_iccid:
+			if opts.dry_run:
+				# Connect transport
+				card_handler.get(false)
+			(res,_) = scc.read_binary(['3f00', '2fe2'], length=10)
+			iccid = dec_iccid(res)
+		elif opts.read_imsi:
+			if opts.dry_run:
+				# Connect transport
+				card_handler.get(false)
+			(res,_) = scc.read_binary(EF['IMSI'])
+			imsi = swap_nibbles(res)[3:]
+		else:
+			imsi = opts.imsi
+		cp = read_params_csv(opts, imsi=imsi, iccid=iccid)
+	if cp is None:
+		print "Error reading parameters\n"
+		return 2
+	print_parameters(cp)
+
+	if opts.dry_run is False:
+		# Program the card
+		print "Programming ..."
+		card.program(cp)
+	else:
+		print "Dry Run: NOT PROGRAMMING!"
+
+	# Write parameters permanently
+	write_parameters(opts, cp)
+
+	# Batch mode state update and save
+	if opts.num is not None:
+		opts.num += 1
+	save_batch(opts)
+
+	card_handler.done()
+	return 0
+
+
 if __name__ == '__main__':
 
 	# Parse options
@@ -638,88 +711,42 @@ if __name__ == '__main__':
 	# Batch mode init
 	init_batch(opts)
 
+	if opts.card_handler:
+		card_handler = card_handler_auto(sl, opts.card_handler)
+        else:
+		card_handler = card_handler(sl)
+
 	# Iterate
-	done = False
 	first = True
 	card = None
 
-	while not done:
+	while 1:
+		try:
+			rc = process_card(opts, first, card_handler)
+		except (KeyboardInterrupt):
+			print ""
+			print "Terminated by user!"
+			sys.exit(0)
+		except (SystemExit):
+			raise
+		except:
+			print ""
+			print "Card programming failed with an execption:"
+			print "---------------------8<---------------------"
+			traceback.print_exc()
+			print "---------------------8<---------------------"
+			print ""
+			rc = -1
 
-		if opts.dry_run is False:
-			# Connect transport
-			print "Insert card now (or CTRL-C to cancel)"
-			sl.wait_for_card(newcardonly=not first)
+		# Something did not work as well as expected, however, lets
+		# make sure the card is pulled from the reader.
+		if rc != 0:
+			card_handler.error()
 
-		# Not the first anymore !
+		# If we are not in batch mode we are done in any case, so lets
+		# exit here.
+		if not opts.batch_mode:
+			sys.exit(rc)
+
 		first = False
 
-		if opts.dry_run is False:
-			# Get card
-			card = card_detect(opts, scc)
-			if card is None:
-				if opts.batch_mode:
-					first = False
-					continue
-				else:
-					sys.exit(-1)
-
-                        # Probe only
-                        if opts.probe:
-                                break;
-
-			# Erase if requested
-			if opts.erase:
-				print "Formatting ..."
-				card.erase()
-				card.reset()
-
-		# Generate parameters
-		if opts.source == 'cmdline':
-			cp = gen_parameters(opts)
-		elif opts.source == 'csv':
-                        imsi = None
-                        iccid = None
-			if opts.read_iccid:
-				if opts.dry_run:
-					# Connect transport
-					print "Insert card now (or CTRL-C to cancel)"
-					sl.wait_for_card(newcardonly=not first)
-				(res,_) = scc.read_binary(['3f00', '2fe2'], length=10)
-				iccid = dec_iccid(res)
-                                print iccid
-                        elif opts.read_imsi:
-				if opts.dry_run:
-					# Connect transport
-					print "Insert card now (or CTRL-C to cancel)"
-					sl.wait_for_card(newcardonly=not first)
-				(res,_) = scc.read_binary(EF['IMSI'])
-				imsi = swap_nibbles(res)[3:]
-			else:
-				imsi = opts.imsi
-			cp = read_params_csv(opts, imsi=imsi, iccid=iccid)
-		if cp is None:
-			print "Error reading parameters\n"
-			sys.exit(2)
-		print_parameters(cp)
-
-		if opts.dry_run is False:
-			# Program the card
-			print "Programming ..."
-			if opts.dry_run is not True:
-				card.program(cp)
-		else:
-			print "Dry Run: NOT PROGRAMMING!"
-
-		# Write parameters permanently
-		write_parameters(opts, cp)
-
-		# Batch mode state update and save
-		if opts.num is not None:
-			opts.num += 1
-		save_batch(opts)
-
-		# Done for this card and maybe for everything ?
-		print "Done !\n"
-
-		if not opts.batch_mode:
-			done = True
