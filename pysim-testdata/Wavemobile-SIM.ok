@@ -1,0 +1,48 @@
+Using PC/SC reader (dev=3) interface
+Reading ...
+ICCID: 89445310150011013678
+IMSI: 001010000000102
+SMSP: e1ffffffffffffffffffffffff0581005155f5ffffffffffff000000ffffffffffffffffffffffffffff
+PLMNsel: fff11fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+PLMNwAcT:
+	fff11fffff # MCC: 1651 MNC: 151 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+
+OPLMNwAcT:
+	fff11fffff # MCC: 1651 MNC: 151 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+
+HPLMNAcT: Can't read file -- SW match failed! Expected 9000 and got 9404.
+ACC: abce
+MSISDN: Not available
+AD: 00ffff02
+Done !
+
