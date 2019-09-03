@@ -39,7 +39,7 @@ except ImportError:
 
 from pySim.commands import SimCardCommands
 from pySim.cards import _cards_classes
-from pySim.utils import h2b, swap_nibbles, rpad, derive_milenage_opc, calculate_luhn
+from pySim.utils import h2b, swap_nibbles, rpad, derive_milenage_opc, calculate_luhn, dec_iccid
 from pySim.ts_51_011 import EF
 
 def parse_options():
@@ -131,6 +131,9 @@ def parse_options():
 	parser.add_option("--read-imsi", dest="read_imsi", action="store_true",
 			help="Read the IMSI from the CARD", default=False
 		)
+	parser.add_option("--read-iccid", dest="read_iccid", action="store_true",
+			help="Read the ICCID from the CARD", default=False
+		)
 	parser.add_option("-z", "--secret", dest="secret", metavar="STR",
 			help="Secret used for ICCID/IMSI autogen",
 		)
@@ -171,8 +174,8 @@ def parse_options():
                 return options
 
 	if options.source == 'csv':
-		if (options.imsi is None) and (options.batch_mode is False) and (options.read_imsi is False):
-			parser.error("CSV mode needs either an IMSI, --read-imsi or batch mode")
+		if (options.imsi is None) and (options.batch_mode is False) and (options.read_imsi is False) and (options.read_iccid is False):
+			parser.error("CSV mode needs either an IMSI, --read-imsi, --read-iccid or batch mode")
 		if options.read_csv is None:
 			parser.error("CSV mode requires a CSV input file")
 	elif options.source == 'cmdline':
@@ -444,7 +447,7 @@ def write_params_csv(opts, params):
 		cw.writerow([params[x] for x in row])
 		f.close()
 
-def _read_params_csv(opts, imsi):
+def _read_params_csv(opts, iccid=None, imsi=None):
 	import csv
 	f = open(opts.read_csv, 'r')
 	cr = csv.DictReader(f)
@@ -452,11 +455,15 @@ def _read_params_csv(opts, imsi):
         if not 'iccid' in cr.fieldnames:
             raise Exception("CSV file in wrong format!")
 	for row in cr:
-		if opts.num is not None and opts.read_imsi is False:
+		if opts.num is not None and opts.read_iccid is False and opts.read_imsi is False:
 			if opts.num == i:
 				f.close()
 				return row;
 			i += 1
+		if row['iccid'] == iccid:
+			f.close()
+			return row;
+
 		if row['imsi'] == imsi:
 			f.close()
 			return row;
@@ -464,8 +471,8 @@ def _read_params_csv(opts, imsi):
 	f.close()
 	return None
 
-def read_params_csv(opts, imsi):
-	row = _read_params_csv(opts, imsi)
+def read_params_csv(opts, imsi=None, iccid=None):
+	row = _read_params_csv(opts, iccid=iccid, imsi=imsi)
 	if row is not None:
 		row['mcc'] = int(row.get('mcc', row['imsi'][0:3]))
 		row['mnc'] = int(row.get('mnc', row['imsi'][3:5]))
@@ -655,7 +662,17 @@ if __name__ == '__main__':
 		if opts.source == 'cmdline':
 			cp = gen_parameters(opts)
 		elif opts.source == 'csv':
-			if opts.read_imsi:
+                        imsi = None
+                        iccid = None
+			if opts.read_iccid:
+				if opts.dry_run:
+					# Connect transport
+					print "Insert card now (or CTRL-C to cancel)"
+					sl.wait_for_card(newcardonly=not first)
+				(res,_) = scc.read_binary(['3f00', '2fe2'], length=10)
+				iccid = dec_iccid(res)
+                                print iccid
+                        elif opts.read_imsi:
 				if opts.dry_run:
 					# Connect transport
 					print "Insert card now (or CTRL-C to cancel)"
@@ -664,7 +681,7 @@ if __name__ == '__main__':
 				imsi = swap_nibbles(res)[3:]
 			else:
 				imsi = opts.imsi
-			cp = read_params_csv(opts, imsi)
+			cp = read_params_csv(opts, imsi=imsi, iccid=iccid)
 		if cp is None:
 			print "Error reading parameters\n"
 			sys.exit(2)
