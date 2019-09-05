@@ -485,6 +485,21 @@ def read_params_csv(opts, imsi=None, iccid=None):
 			pin_adm = ''.join(['%02x'%(ord(x)) for x in row['adm1']])
 		if pin_adm:
 			row['pin_adm'] = rpad(pin_adm, 16)
+
+		# If the CSV-File defines a pin_adm_hex field use this field to
+		# generate pin_adm from that.
+		pin_adm_hex = row.get('pin_adm_hex')
+		if pin_adm_hex:
+			if len(pin_adm_hex) == 16:
+				row['pin_adm'] = pin_adm_hex
+				# Ensure that it's hex-encoded
+				try:
+					try_encode = h2b(pin_adm)
+				except ValueError:
+					raise ValueError("pin_adm_hex needs to be hex encoded using this option")
+			else:
+				raise ValueError("pin_adm_hex needs to be exactly 16 digits (hex encoded)")
+
 	return row
 
 
