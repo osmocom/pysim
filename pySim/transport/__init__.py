@@ -28,7 +28,7 @@ class LinkBase(object):
 
 		   timeout     : Maximum wait time (None=no timeout)
 		   newcardonly : Should we wait for a new card, or an already
-		                 inserted one ?
+				 inserted one ?
 		"""
 		pass
 
@@ -52,8 +52,8 @@ class LinkBase(object):
 
 		   pdu    : string of hexadecimal characters (ex. "A0A40000023F00")
 		   return : tuple(data, sw), where
-		            data : string (in hex) of returned data (ex. "074F4EFFFF")
-		            sw   : string (in hex) of status word (ex. "9000")
+			    data : string (in hex) of returned data (ex. "074F4EFFFF")
+			    sw   : string (in hex) of status word (ex. "9000")
 		"""
 		pass
 
@@ -62,8 +62,8 @@ class LinkBase(object):
 
 		   pdu    : string of hexadecimal characters (ex. "A0A40000023F00")
 		   return : tuple(data, sw), where
-		            data : string (in hex) of returned data (ex. "074F4EFFFF")
-		            sw   : string (in hex) of status word (ex. "9000")
+			    data : string (in hex) of returned data (ex. "074F4EFFFF")
+			    sw   : string (in hex) of status word (ex. "9000")
 		"""
 		data, sw = self.send_apdu_raw(pdu)
 
@@ -84,15 +84,15 @@ class LinkBase(object):
 
 		   pdu    : string of hexadecimal characters (ex. "A0A40000023F00")
 		   sw     : string of 4 hexadecimal characters (ex. "9000"). The
-		            user may mask out certain digits using a '?' to add some
-		            ambiguity if needed.
+			    user may mask out certain digits using a '?' to add some
+			    ambiguity if needed.
 		   return : tuple(data, sw), where
-		            data : string (in hex) of returned data (ex. "074F4EFFFF")
-		            sw   : string (in hex) of status word (ex. "9000")
+			    data : string (in hex) of returned data (ex. "074F4EFFFF")
+			    sw   : string (in hex) of status word (ex. "9000")
 		"""
 		rv = self.send_apdu(pdu)
 
-                # Create a masked version of the returned status word
+		# Create a masked version of the returned status word
 		sw_masked = ""
 		for i in range(0, 4):
 			if sw.lower()[i] == '?':

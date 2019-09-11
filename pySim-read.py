@@ -123,41 +123,41 @@ if __name__ == '__main__':
 
 	# EF.PLMNsel
 	try:
-	        (res, sw) = scc.read_binary(EF['PLMNsel'])
-	        if sw == '9000':
-		        print("PLMNsel: %s" % (res))
-	        else:
-		        print("PLMNsel: Can't read, response code = %s" % (sw,))
+		(res, sw) = scc.read_binary(EF['PLMNsel'])
+		if sw == '9000':
+			print("PLMNsel: %s" % (res))
+		else:
+			print("PLMNsel: Can't read, response code = %s" % (sw,))
 	except Exception as e:
 		print "HPLMNAcT: Can't read file -- " + str(e)
 
 	# EF.PLMNwAcT
-        try:
-	        (res, sw) = scc.read_binary(EF['PLMNwAcT'])
-	        if sw == '9000':
-		        print("PLMNwAcT:\n%s" % (format_xplmn_w_act(res)))
-	        else:
-		        print("PLMNwAcT: Can't read, response code = %s" % (sw,))
+	try:
+		(res, sw) = scc.read_binary(EF['PLMNwAcT'])
+		if sw == '9000':
+			print("PLMNwAcT:\n%s" % (format_xplmn_w_act(res)))
+		else:
+			print("PLMNwAcT: Can't read, response code = %s" % (sw,))
 	except Exception as e:
 		print "PLMNwAcT: Can't read file -- " + str(e)
 
 	# EF.OPLMNwAcT
-        try:
-	        (res, sw) = scc.read_binary(EF['OPLMNwAcT'])
-	        if sw == '9000':
-		        print("OPLMNwAcT:\n%s" % (format_xplmn_w_act(res)))
-	        else:
-		        print("OPLMNwAcT: Can't read, response code = %s" % (sw,))
+	try:
+		(res, sw) = scc.read_binary(EF['OPLMNwAcT'])
+		if sw == '9000':
+			print("OPLMNwAcT:\n%s" % (format_xplmn_w_act(res)))
+		else:
+			print("OPLMNwAcT: Can't read, response code = %s" % (sw,))
 	except Exception as e:
 		print "OPLMNwAcT: Can't read file -- " + str(e)
 
 	# EF.HPLMNAcT
-        try:
-	        (res, sw) = scc.read_binary(EF['HPLMNAcT'])
-	        if sw == '9000':
-		        print("HPLMNAcT:\n%s" % (format_xplmn_w_act(res)))
-	        else:
-		        print("HPLMNAcT: Can't read, response code = %s" % (sw,))
+	try:
+		(res, sw) = scc.read_binary(EF['HPLMNAcT'])
+		if sw == '9000':
+			print("HPLMNAcT:\n%s" % (format_xplmn_w_act(res)))
+		else:
+			print("HPLMNAcT: Can't read, response code = %s" % (sw,))
 	except Exception as e:
 		print "HPLMNAcT: Can't read file -- " + str(e)
 

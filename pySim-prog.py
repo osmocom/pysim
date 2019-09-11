@@ -130,7 +130,7 @@ def parse_options():
 		)
 	parser.add_option("--acc", dest="acc",
 			help="Set ACC bits (Access Control Code). not all card types are supported",
-                )
+		)
 	parser.add_option("--read-imsi", dest="read_imsi", action="store_true",
 			help="Read the IMSI from the CARD", default=False
 		)
@@ -176,8 +176,8 @@ def parse_options():
 			print kls.name
 		sys.exit(0)
 
-        if options.probe:
-                return options
+	if options.probe:
+		return options
 
 	if options.source == 'csv':
 		if (options.imsi is None) and (options.batch_mode is False) and (options.read_imsi is False) and (options.read_iccid is False):
@@ -287,7 +287,7 @@ def gen_parameters(opts):
 		iccid = (
 			'89' +			# Common prefix (telecom)
 			cc_digits +		# Country Code on 2/3 digits
-			plmn_digits 	# MCC/MNC on 5/6 digits
+			plmn_digits 		# MCC/MNC on 5/6 digits
 		)
 
 		ml = 18 - len(iccid)
@@ -399,14 +399,14 @@ def gen_parameters(opts):
 		else:
 			raise ValueError("PIN-ADM needs to be <=8 digits (ascii)")
 
-        if opts.pin_adm_hex is not None:
+	if opts.pin_adm_hex is not None:
 		if len(opts.pin_adm_hex) == 16:
 			pin_adm = opts.pin_adm_hex
 			# Ensure that it's hex-encoded
 			try:
 				try_encode = h2b(pin_adm)
 			except ValueError:
-			    raise ValueError("PIN-ADM needs to be hex encoded using this option")
+				raise ValueError("PIN-ADM needs to be hex encoded using this option")
 		else:
 			raise ValueError("PIN-ADM needs to be exactly 16 digits (hex encoded)")
 
@@ -462,8 +462,8 @@ def _read_params_csv(opts, iccid=None, imsi=None):
 	cr.fieldnames = [ field.lower() for field in cr.fieldnames ]
 
 	i = 0
-        if not 'iccid' in cr.fieldnames:
-            raise Exception("CSV file in wrong format!")
+	if not 'iccid' in cr.fieldnames:
+		raise Exception("CSV file in wrong format!")
 	for row in cr:
 		if opts.num is not None and opts.read_iccid is False and opts.read_imsi is False:
 			if opts.num == i:
@@ -726,7 +726,7 @@ if __name__ == '__main__':
 
 	if opts.card_handler:
 		card_handler = card_handler_auto(sl, opts.card_handler)
-        else:
+	else:
 		card_handler = card_handler(sl)
 
 	# Iterate
@@ -762,4 +762,3 @@ if __name__ == '__main__':
 			sys.exit(rc)
 
 		first = False
-

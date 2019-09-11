@@ -85,11 +85,11 @@ class Card(object):
 
 	def update_oplmn_act(self, mcc, mnc, access_tech='FFFF'):
 		"""
-                See note in update_hplmn_act()
+		See note in update_hplmn_act()
 		"""
 		# get size and write EF.OPLMNwAcT
-	        data = self._scc.read_binary(EF['OPLMNwAcT'], length=None, offset=0)
-                size = len(data[0])/2
+		data = self._scc.read_binary(EF['OPLMNwAcT'], length=None, offset=0)
+		size = len(data[0])/2
 		hplmn = enc_plmn(mcc, mnc)
 		content = hplmn + access_tech
 		data, sw = self._scc.update_binary(EF['OPLMNwAcT'], content + 'ffffff0000' * (size/5-1))
@@ -97,19 +97,19 @@ class Card(object):
 
 	def update_plmn_act(self, mcc, mnc, access_tech='FFFF'):
 		"""
-                See note in update_hplmn_act()
+		See note in update_hplmn_act()
 		"""
 		# get size and write EF.PLMNwAcT
-	        data = self._scc.read_binary(EF['PLMNwAcT'], length=None, offset=0)
-                size = len(data[0])/2
+		data = self._scc.read_binary(EF['PLMNwAcT'], length=None, offset=0)
+		size = len(data[0])/2
 		hplmn = enc_plmn(mcc, mnc)
 		content = hplmn + access_tech
 		data, sw = self._scc.update_binary(EF['PLMNwAcT'], content + 'ffffff0000' * (size/5-1))
 		return sw
 
-        def update_plmnsel(self, mcc, mnc):
-	        data = self._scc.read_binary(EF['PLMNsel'], length=None, offset=0)
-                size = len(data[0])/2
+	def update_plmnsel(self, mcc, mnc):
+		data = self._scc.read_binary(EF['PLMNsel'], length=None, offset=0)
+		size = len(data[0])/2
 		hplmn = enc_plmn(mcc, mnc)
 		data, sw = self._scc.update_binary(EF['PLMNsel'], hplmn + 'ff' * (size-3))
 		return sw
@@ -119,16 +119,16 @@ class Card(object):
 		return sw
 
 	def update_ad(self, mnc):
-                #See also: 3GPP TS 31.102, chapter 4.2.18
-                mnclen = len(str(mnc))
-                if mnclen == 1:
-                        mnclen = 2
-                if mnclen > 3:
+		#See also: 3GPP TS 31.102, chapter 4.2.18
+		mnclen = len(str(mnc))
+		if mnclen == 1:
+			mnclen = 2
+		if mnclen > 3:
 			raise RuntimeError('unable to calculate proper mnclen')
 
-	        data = self._scc.read_binary(EF['AD'], length=None, offset=0)
-                size = len(data[0])/2
-                content = data[0][0:6] + "%02X" % mnclen
+		data = self._scc.read_binary(EF['AD'], length=None, offset=0)
+		size = len(data[0])/2
+		content = data[0][0:6] + "%02X" % mnclen
 		data, sw = self._scc.update_binary(EF['AD'], content)
 		return sw
 
@@ -394,7 +394,7 @@ class GrcardSim(Card):
 			data, sw = self._scc.update_binary('6f78', lpad(p['acc'], 4))
 
 		# EF.SMSP
-                if p.get('smsp'):
+		if p.get('smsp'):
 			r = self._scc.select_file(['3f00', '7f10', '6f42'])
 			data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 80))
 
@@ -426,7 +426,7 @@ class SysmoSIMgr1(GrcardSim):
 	"""
 	name = 'sysmosim-gr1'
 
-        @classmethod
+	@classmethod
 	def autodetect(kls, scc):
 		try:
 			# Look for ATR
@@ -536,7 +536,7 @@ class SysmoSIMgr2(Card):
 		r = self._scc.select_file(['3f00', '7f10'])
 		
 		# write EF.SMSP
-                if p.get('smsp'):
+		if p.get('smsp'):
 			data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 80))
 
 	def erase(self):
@@ -592,25 +592,25 @@ class SysmoUSIMSJS1(Card):
 		data, sw = self._scc.update_binary('6f07', enc_imsi(p['imsi']))
 
 		# EF.PLMNsel
-                if p.get('mcc') and p.get('mnc'):
-                        sw = self.update_plmnsel(p['mcc'], p['mnc'])
-                        if sw != '9000':
+		if p.get('mcc') and p.get('mnc'):
+			sw = self.update_plmnsel(p['mcc'], p['mnc'])
+			if sw != '9000':
 				print("Programming PLMNsel failed with code %s"%sw)
 
-                # EF.PLMNwAcT
-                if p.get('mcc') and p.get('mnc'):
+		# EF.PLMNwAcT
+		if p.get('mcc') and p.get('mnc'):
 			sw = self.update_plmn_act(p['mcc'], p['mnc'])
 			if sw != '9000':
 				print("Programming PLMNwAcT failed with code %s"%sw)
 
-                # EF.OPLMNwAcT
-                if p.get('mcc') and p.get('mnc'):
+		# EF.OPLMNwAcT
+		if p.get('mcc') and p.get('mnc'):
 			sw = self.update_oplmn_act(p['mcc'], p['mnc'])
 			if sw != '9000':
 				print("Programming OPLMNwAcT failed with code %s"%sw)
 
-                # EF.AD
-                if p.get('mcc') and p.get('mnc'):
+		# EF.AD
+		if p.get('mcc') and p.get('mnc'):
 			sw = self.update_ad(p['mnc'])
 			if sw != '9000':
 				print("Programming AD failed with code %s"%sw)
@@ -848,28 +848,28 @@ class WavemobileSim(Card):
 		if sw != '9000':
 			raise RuntimeError('Failed to authenticate with ADM key %s'%(p['pin_adm'],))
 
-                # EF.ICCID
-                # TODO: Add programming of the ICCID
-                if p.get('iccid'):
+		# EF.ICCID
+		# TODO: Add programming of the ICCID
+		if p.get('iccid'):
 			print("Warning: Programming of the ICCID is not implemented for this type of card.")
 
-                # KI (Presumably a propritary file)
-                # TODO: Add programming of KI
-                if p.get('ki'):
+		# KI (Presumably a propritary file)
+		# TODO: Add programming of KI
+		if p.get('ki'):
 			print("Warning: Programming of the KI is not implemented for this type of card.")
 
-                # OPc (Presumably a propritary file)
-                # TODO: Add programming of OPc
-                if p.get('opc'):
+		# OPc (Presumably a propritary file)
+		# TODO: Add programming of OPc
+		if p.get('opc'):
 			print("Warning: Programming of the OPc is not implemented for this type of card.")
 
-                # EF.SMSP
+		# EF.SMSP
 		if p.get('smsp'):
 			sw = self.update_smsp(p['smsp'])
 			if sw != '9000':
 				print("Programming SMSP failed with code %s"%sw)
 
-                # EF.IMSI
+		# EF.IMSI
 		if p.get('imsi'):
 			sw = self.update_imsi(p['imsi'])
 			if sw != '9000':
@@ -882,30 +882,30 @@ class WavemobileSim(Card):
 				print("Programming ACC failed with code %s"%sw)
 
 		# EF.PLMNsel
-                if p.get('mcc') and p.get('mnc'):
-                        sw = self.update_plmnsel(p['mcc'], p['mnc'])
-                        if sw != '9000':
+		if p.get('mcc') and p.get('mnc'):
+			sw = self.update_plmnsel(p['mcc'], p['mnc'])
+			if sw != '9000':
 				print("Programming PLMNsel failed with code %s"%sw)
 
-                # EF.PLMNwAcT
-                if p.get('mcc') and p.get('mnc'):
+		# EF.PLMNwAcT
+		if p.get('mcc') and p.get('mnc'):
 			sw = self.update_plmn_act(p['mcc'], p['mnc'])
 			if sw != '9000':
 				print("Programming PLMNwAcT failed with code %s"%sw)
 
-                # EF.OPLMNwAcT
-                if p.get('mcc') and p.get('mnc'):
+		# EF.OPLMNwAcT
+		if p.get('mcc') and p.get('mnc'):
 			sw = self.update_oplmn_act(p['mcc'], p['mnc'])
 			if sw != '9000':
 				print("Programming OPLMNwAcT failed with code %s"%sw)
 
-                # EF.AD
-                if p.get('mcc') and p.get('mnc'):
+		# EF.AD
+		if p.get('mcc') and p.get('mnc'):
 			sw = self.update_ad(p['mnc'])
 			if sw != '9000':
 				print("Programming AD failed with code %s"%sw)
 
-                return None
+		return None
 
 	def erase(self):
 		return

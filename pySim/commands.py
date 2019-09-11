@@ -34,7 +34,7 @@ class SimCardCommands(object):
 	def __get_len_from_tlv(self, fcp):
 		# see also: ETSI TS 102 221, chapter 11.1.1.3.1 Response for MF,
 		# DF or ADF
-                from pytlv.TLV import TLV
+		from pytlv.TLV import TLV
 		tlvparser = TLV(['82', '83', '84', 'a5', '8a', '8b', '8c', '80', 'ab', 'c6', '81', '88'])
 
 		# pytlv is case sensitive!
@@ -62,24 +62,24 @@ class SimCardCommands(object):
 
 		return int(tlv_parsed['80'], 16)
 
-        # Tell the length of a record by the card response
-        # USIMs respond with an FCP template, which is different
-        # from what SIMs responds. See also:
-        # USIM: ETSI TS 102 221, chapter 11.1.1.3 Response Data
-        # SIM: GSM 11.11, chapter 9.2.1 SELECT
+	# Tell the length of a record by the card response
+	# USIMs respond with an FCP template, which is different
+	# from what SIMs responds. See also:
+	# USIM: ETSI TS 102 221, chapter 11.1.1.3 Response Data
+	# SIM: GSM 11.11, chapter 9.2.1 SELECT
 	def __record_len(self, r):
-                if self.sel_ctrl == "0004":
-                        return self.__get_len_from_tlv(r[-1])
-                else:
-                        return int(r[-1][28:30], 16)
+		if self.sel_ctrl == "0004":
+			return self.__get_len_from_tlv(r[-1])
+		else:
+			return int(r[-1][28:30], 16)
 
-        # Tell the length of a binary file. See also comment
-        # above.
+	# Tell the length of a binary file. See also comment
+	# above.
 	def __len(self, r):
-                if self.sel_ctrl == "0004":
-                        return self.__get_len_from_tlv(r[-1])
-                else:
-                        return int(r[-1][4:8], 16)
+		if self.sel_ctrl == "0004":
+			return self.__get_len_from_tlv(r[-1])
+		else:
+			return int(r[-1][4:8], 16)
 
 	def get_atr(self):
 		return self._tp.get_atr()
