@@ -23,14 +23,17 @@
 
 from __future__ import absolute_import
 
-import exceptions
-
-
-class NoCardError(exceptions.Exception):
+try:
+	# This is for compatibility with python 2 and 3
+	from exceptions import Exception
+except:
 	pass
 
-class ProtocolError(exceptions.Exception):
+class NoCardError(Exception):
 	pass
 
-class ReaderError(exceptions.Exception):
+class ProtocolError(Exception):
+	pass
+
+class ReaderError(Exception):
 	pass
