@@ -660,7 +660,7 @@ def process_card(opts, first, card_handler):
 			imsi = opts.imsi
 		cp = read_params_csv(opts, imsi=imsi, iccid=iccid)
 	if cp is None:
-		print "Error reading parameters\n"
+		print "Error reading parameters from CSV file!\n"
 		return 2
 	print_parameters(cp)
 
