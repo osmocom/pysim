@@ -432,7 +432,7 @@ def print_parameters(params):
 	if 'smsp' in params:
 		s.append(" > SMSP     : %(smsp)s")
 	s.append(" > ICCID    : %(iccid)s")
-	s.append(" > MCC/MNC  : %(mcc)d/%(mnc)d")
+	s.append(" > MCC/MNC  : %(mcc)s/%(mnc)s")
 	s.append(" > IMSI     : %(imsi)s")
 	s.append(" > Ki       : %(ki)s")
 	s.append(" > OPC      : %(opc)s")
@@ -483,8 +483,8 @@ def _read_params_csv(opts, iccid=None, imsi=None):
 def read_params_csv(opts, imsi=None, iccid=None):
 	row = _read_params_csv(opts, iccid=iccid, imsi=imsi)
 	if row is not None:
-		row['mcc'] = int(row.get('mcc', row['imsi'][0:3]))
-		row['mnc'] = int(row.get('mnc', row['imsi'][3:5]))
+		row['mcc'] = row.get('mcc', row['imsi'][0:3])
+		row['mnc'] = row.get('mnc', row['imsi'][3:5])
 		pin_adm = None
 		# We need to escape the pin_adm we get from the csv
 		if 'pin_adm' in row:
