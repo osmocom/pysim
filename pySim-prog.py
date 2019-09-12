@@ -456,6 +456,10 @@ def _read_params_csv(opts, iccid=None, imsi=None):
 	import csv
 	f = open(opts.read_csv, 'r')
 	cr = csv.DictReader(f)
+
+	# Lower-case fieldnames
+	cr.fieldnames = [ field.lower() for field in cr.fieldnames ]
+
 	i = 0
         if not 'iccid' in cr.fieldnames:
             raise Exception("CSV file in wrong format!")
