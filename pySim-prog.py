@@ -712,6 +712,13 @@ if __name__ == '__main__':
 	# Create command layer
 	scc = SimCardCommands(transport=sl)
 
+	# If we use a CSV file as data input, check if the CSV file exists.
+	if opts.source == 'csv':
+		print "Using CSV file as data input: " + str(opts.read_csv)
+		if not os.path.isfile(opts.read_csv):
+			print "CSV file not found!"
+			sys.exit(1)
+
 	# Batch mode init
 	init_batch(opts)
 
