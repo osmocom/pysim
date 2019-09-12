@@ -206,3 +206,30 @@ def calculate_luhn(cc):
 	num = map(int, str(cc))
 	check_digit = 10 - sum(num[-2::-2] + [sum(divmod(d * 2, 10)) for d in num[::-2]]) % 10
 	return 0 if check_digit == 10 else check_digit
+
+def mcc_from_imsi(imsi):
+	"""
+	Derive the MCC (Mobile Country Code) from the first three digits of an IMSI
+	"""
+	if imsi == None:
+		return None
+
+	if len(imsi) > 3:
+		return imsi[:3]
+	else:
+		return None
+
+def mnc_from_imsi(imsi, long=False):
+	"""
+	Derive the MNC (Mobile Country Code) from the 4th to 6th digit of an IMSI
+	"""
+	if imsi == None:
+		return None
+
+	if len(imsi) > 3:
+		if long:
+			return imsi[3:6]
+		else:
+			return imsi[3:5]
+	else:
+		return None
