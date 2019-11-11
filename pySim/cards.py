@@ -636,7 +636,7 @@ class FairwavesSIM(Card):
 		3F00/7F20/FF02: Ki
 	"""
 
-	name = 'Fairwaves SIM'
+	name = 'Fairwaves-SIM'
 	# Propriatary files
 	_EF_num = {
 	'Ki': 'FF02',
@@ -774,7 +774,7 @@ class OpenCellsSim(Card):
 
 	"""
 
-	name = 'OpenCells SIM'
+	name = 'OpenCells-SIM'
 
 	def __init__(self, ssc):
 		super(OpenCellsSim, self).__init__(ssc)
