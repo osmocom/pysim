@@ -76,8 +76,8 @@ class Card(object):
 		access_tech = 'FFFF' # All technologues selected, even Reserved for Future Use ones
 		"""
 		# get size and write EF.HPLMNwAcT
-		r = self._scc.select_file(EF['HPLMNwAcT'])
-		size = int(r[-1][4:8], 16)
+		data = self._scc.read_binary(EF['HPLMNwAcT'], length=None, offset=0)
+		size = len(data[0])/2
 		hplmn = enc_plmn(mcc, mnc)
 		content = hplmn + access_tech
 		data, sw = self._scc.update_binary(EF['HPLMNwAcT'], content + 'ffffff0000' * (size/5-1))
