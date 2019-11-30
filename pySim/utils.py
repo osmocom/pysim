@@ -124,10 +124,7 @@ def dec_mcc_from_plmn(plmn):
 	digit3 = ia[1] & 0x0F		# 2nd byte, LSB
 	if digit3 == 0xF and digit2 == 0xF and digit1 == 0xF:
 		return 0xFFF # 4095
-	mcc = digit1 * 100
-	mcc += digit2 * 10
-	mcc += digit3
-	return mcc
+	return derive_mcc(digit1, digit2, digit3)
 
 def dec_mnc_from_plmn(plmn):
 	ia = h2i(plmn)
@@ -136,16 +133,7 @@ def dec_mnc_from_plmn(plmn):
 	digit3 = (ia[1] & 0xF0) >> 4	# 2nd byte, MSB
 	if digit3 == 0xF and digit2 == 0xF and digit1 == 0xF:
 		return 0xFFF # 4095
-	mnc = 0
-	# signifies two digit MNC
-	if digit3 == 0xF:
-		mnc += digit1 * 10
-		mnc += digit2
-	else:
-		mnc += digit1 * 100
-		mnc += digit2 * 10
-		mnc += digit3
-	return mnc
+	return derive_mnc(digit1, digit2, digit3)
 
 def dec_act(twohexbytes):
 	act_list = [
@@ -182,7 +170,7 @@ def format_xplmn_w_act(hexstr):
 		if rec_info['mcc'] == 0xFFF and rec_info['mnc'] == 0xFFF:
 			rec_str = "unused"
 		else:
-			rec_str = "MCC: %3s MNC: %3s AcT: %s" % (rec_info['mcc'], rec_info['mnc'], ", ".join(rec_info['act']))
+			rec_str = "MCC: %03d MNC: %03d AcT: %s" % (rec_info['mcc'], rec_info['mnc'], ", ".join(rec_info['act']))
 		s += "\t%s # %s\n" % (rec_data, rec_str)
 	return s
 
@@ -233,3 +221,40 @@ def mnc_from_imsi(imsi, long=False):
 			return imsi[3:5]
 	else:
 		return None
+
+def derive_mcc(digit1, digit2, digit3):
+	"""
+	Derive decimal representation of the MCC (Mobile Country Code)
+	from three given digits.
+	"""
+
+	mcc = 0
+
+	if digit1 != 0x0f:
+		mcc += digit1 * 100
+	if digit2 != 0x0f:
+		mcc += digit2 * 10
+	if digit3 != 0x0f:
+		mcc += digit3
+
+	return mcc
+
+def derive_mnc(digit1, digit2, digit3=0x0f):
+	"""
+	Derive decimal representation of the MNC (Mobile Network Code)
+	from two or (optionally) three given digits.
+	"""
+
+	mnc = 0
+
+	# 3-rd digit is optional for the MNC. If present
+	# the algorythm is the same as for the MCC.
+	if digit3 != 0x0f:
+		return derive_mcc(digit1, digit2, digit3)
+
+	if digit1 != 0x0f:
+		mnc += digit1 * 10
+	if digit2 != 0x0f:
+		mnc += digit2
+
+	return mnc

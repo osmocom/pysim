@@ -8,7 +8,7 @@ Display HPLMN: False
 Display OPLMN: False
 PLMNsel: fff11fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 PLMNwAcT:
-	fff11fffff # MCC: 1651 MNC: 151 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
+	fff11fffff # MCC: 001 MNC: 001 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
 	ffffff0000 # unused
 	ffffff0000 # unused
 	ffffff0000 # unused
@@ -26,7 +26,7 @@ PLMNwAcT:
 	ffffff0000 # unused
 
 OPLMNwAcT:
-	fff11fffff # MCC: 1651 MNC: 151 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
+	fff11fffff # MCC: 001 MNC: 001 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
 	ffffff0000 # unused
 	ffffff0000 # unused
 	ffffff0000 # unused
