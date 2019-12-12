@@ -78,7 +78,11 @@ function check_card {
     stat ./$CARD_NAME.ok > /dev/null
     python $PYSIM_READ -p $TERMINAL > $TEMPFILE
     set +e
-    CARD_DIFF=$(diff $TEMPFILE ./$CARD_NAME.ok)
+    # Note: We ignore the first line of output in the diff because here
+    # pysim would print the device number of the reader and we do not
+    # want the test to fail just because the card is put into a different
+    # reader device.
+    CARD_DIFF=$(diff + 1 $TEMPFILE ./$CARD_NAME.ok)
     set -e
 
     if [ "$CARD_DIFF" != "" ]; then
@@ -156,6 +160,7 @@ function run_test {
 	OPC=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 	IMSI=001010000000001
 	ADM=00000000
+	ADM_HEX=""
 	ADM_OPT="-a"
 
 	source "$CARD_NAME.data"
