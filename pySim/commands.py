@@ -30,8 +30,8 @@ class SimCardCommands(object):
 		self._cla_byte = "a0"
 		self.sel_ctrl = "0000"
 
-	# Get file size from FCP
-	def __get_len_from_tlv(self, fcp):
+	# Extract a single FCP item from TLV
+	def __parse_fcp(self, fcp):
 		# see also: ETSI TS 102 221, chapter 11.1.1.3.1 Response for MF,
 		# DF or ADF
 		from pytlv.TLV import TLV
@@ -58,9 +58,7 @@ class SimCardCommands(object):
 
 		# Skip FCP tag and length
 		tlv = fcp[skip:]
-		tlv_parsed = tlvparser.parse(tlv)
-
-		return int(tlv_parsed['80'], 16)
+		return tlvparser.parse(tlv)
 
 	# Tell the length of a record by the card response
 	# USIMs respond with an FCP template, which is different
@@ -69,7 +67,10 @@ class SimCardCommands(object):
 	# SIM: GSM 11.11, chapter 9.2.1 SELECT
 	def __record_len(self, r):
 		if self.sel_ctrl == "0004":
-			return self.__get_len_from_tlv(r[-1])
+			tlv_parsed = self.__parse_fcp(r[-1])
+			file_descriptor = tlv_parsed['82']
+			# See also ETSI TS 102 221, chapter 11.1.1.4.3 File Descriptor
+			return int(file_descriptor[4:8], 16)
 		else:
 			return int(r[-1][28:30], 16)
 
@@ -77,7 +78,8 @@ class SimCardCommands(object):
 	# above.
 	def __len(self, r):
 		if self.sel_ctrl == "0004":
-			return self.__get_len_from_tlv(r[-1])
+			tlv_parsed = self.__parse_fcp(r[-1])
+			return int(tlv_parsed['80'], 16)
 		else:
 			return int(r[-1][4:8], 16)
 
