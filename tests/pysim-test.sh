@@ -162,6 +162,7 @@ function run_test {
 	KI=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 	OPC=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 	IMSI=001010000000001
+	MSISDN=6766266
 	ADM=00000000
 	ADM_HEX=""
 	ADM_OPT="-a"
@@ -171,7 +172,7 @@ function run_test {
 		ADM_OPT="-A"
 		ADM=$ADM_HEX
 	fi
-	python $PYSIM_PROG -p $I -t $CARD_NAME -o $OPC -k $KI -x $MCC -y $MNC -i $IMSI -s $ICCID $ADM_OPT $ADM
+	python $PYSIM_PROG -p $I -t $CARD_NAME -o $OPC -k $KI -x $MCC -y $MNC -i $IMSI -s $ICCID --msisdn $MSISDN $ADM_OPT $ADM
 	check_card $I $CARD_NAME
 	echo ""
     done

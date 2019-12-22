@@ -119,6 +119,9 @@ def parse_options():
 	parser.add_option("-i", "--imsi", dest="imsi",
 			help="International Mobile Subscriber Identity",
 		)
+	parser.add_option("--msisdn", dest="msisdn",
+			help="Mobile Subscriber Integrated Services Digital Number",
+		)
 	parser.add_option("-k", "--ki", dest="ki",
 			help="Ki (default is to randomize)",
 		)
@@ -165,7 +168,6 @@ def parse_options():
 	parser.add_option("--dry-run", dest="dry_run",
 			help="Perform a 'dry run', don't actually program the card",
 			default=False, action="store_true")
-
 	parser.add_option("--card_handler", dest="card_handler", metavar="FILE",
 			help="Use automatic card handling machine")
 
@@ -277,6 +279,17 @@ def gen_parameters(opts):
 	if opts.name is not None:
 		if len(opts.name) > 16:
 			raise ValueError('Service Provider Name must max 16 characters!');
+
+	if opts.msisdn is not None:
+		msisdn = opts.msisdn
+		if msisdn[0] == '+':
+			msisdn = msisdn[1:]
+		if not msisdn.isdigit():
+			raise ValueError('MSISDN must be digits only! '
+					 'Start with \'+\' for international numbers.')
+		if len(msisdn) > 10 * 2:
+			# TODO: Support MSISDN of length > 20 (10 Bytes)
+			raise ValueError('MSISDNs longer than 20 digits are not (yet) supported.')
 
 	# ICCID (19 digits, E.118), though some phase1 vendors use 20 :(
 	if opts.iccid is not None:
@@ -426,6 +439,7 @@ def gen_parameters(opts):
 		'opc'	: opc,
 		'acc'	: acc,
 		'pin_adm' : pin_adm,
+		'msisdn' : opts.msisdn,
 	}
 
 

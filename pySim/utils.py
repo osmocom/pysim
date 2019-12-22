@@ -299,3 +299,29 @@ def dec_msisdn(ef_msisdn):
 		msisdn = '+' + msisdn
 
 	return (npi, ton, msisdn)
+
+def enc_msisdn(msisdn, npi=0x01, ton=0x03):
+	"""
+	Encode MSISDN as LHV so it can be stored to EF.MSISDN.
+	See 3GPP TS 31.102, section 4.2.26 and 4.4.2.3.
+
+	Default NPI / ToN values:
+	  - NPI: ISDN / telephony numbering plan (E.164 / E.163),
+	  - ToN: network specific or international number (if starts with '+').
+	"""
+
+	# Leading '+' indicates International Number
+	if msisdn[0] == '+':
+		msisdn = msisdn[1:]
+		ton = 0x01
+
+	# Append 'f' padding if number of digits is odd
+	if len(msisdn) % 2 > 0:
+		msisdn += 'f'
+
+	# BCD length also includes NPI/ToN header
+	bcd_len = len(msisdn) // 2 + 1
+	npi_ton = (npi & 0x0f) | ((ton & 0x07) << 4) | 0x80
+	bcd = rpad(swap_nibbles(msisdn), 10 * 2) # pad to 10 octets
+
+	return ('%02x' % bcd_len) + ('%02x' % npi_ton) + bcd
