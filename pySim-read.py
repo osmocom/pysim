@@ -37,7 +37,7 @@ except ImportError:
 	import simplejson as json
 
 from pySim.commands import SimCardCommands
-from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, format_xplmn_w_act, dec_spn
+from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn, format_xplmn_w_act, dec_spn
 
 
 def parse_options():
@@ -186,8 +186,10 @@ if __name__ == '__main__':
 	#	print(scc.record_size(['3f00', '7f10', '6f40']))
 		(res, sw) = scc.read_record(['3f00', '7f10', '6f40'], 1)
 		if sw == '9000':
-			if res[1] != 'f':
-				print("MSISDN: %s" % (res,))
+			res_dec = dec_msisdn(res)
+			if res_dec is not None:
+				# (npi, ton, msisdn) = res_dec
+				print("MSISDN (NPI=%d ToN=%d): %s" % res_dec)
 			else:
 				print("MSISDN: Not available")
 		else:

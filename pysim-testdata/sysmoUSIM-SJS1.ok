@@ -50,7 +50,7 @@ HPLMNAcT:
 	ffffff0000 # unused
 
 ACC: 0008
-MSISDN: Not available
+MSISDN: Can't read file -- Length of MSISDN (136 bytes) is out of range
 AD: 00000002
 Done !
 

@@ -50,7 +50,7 @@ HPLMNAcT:
 	ffffff0000 # unused
 
 ACC: 0001
-MSISDN: Not available
+MSISDN (NPI=1 ToN=1): +1234
 AD: 00000002
 Done !
 

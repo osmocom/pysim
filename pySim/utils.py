@@ -258,3 +258,44 @@ def derive_mnc(digit1, digit2, digit3=0x0f):
 		mnc += digit2
 
 	return mnc
+
+def dec_msisdn(ef_msisdn):
+	"""
+	Decode MSISDN from EF.MSISDN or EF.ADN (same structure).
+	See 3GPP TS 31.102, section 4.2.26 and 4.4.2.3.
+	"""
+
+	# Convert from str to (kind of) 'bytes'
+	ef_msisdn = h2b(ef_msisdn)
+
+	# Make sure mandatory fields are present
+	if len(ef_msisdn) < 14:
+		raise ValueError("EF.MSISDN is too short")
+
+	# Skip optional Alpha Identifier
+	xlen = len(ef_msisdn) - 14
+	msisdn_lhv = ef_msisdn[xlen:]
+
+	# Parse the length (in bytes) of the BCD encoded number
+	bcd_len = ord(msisdn_lhv[0])
+	# BCD length = length of dial num (max. 10 bytes) + 1 byte ToN and NPI
+	if bcd_len == 0xff:
+		return None
+	elif bcd_len > 11 or bcd_len < 1:
+		raise ValueError("Length of MSISDN (%d bytes) is out of range" % bcd_len)
+
+	# Parse ToN / NPI
+	ton = (ord(msisdn_lhv[1]) >> 4) & 0x07
+	npi = ord(msisdn_lhv[1]) & 0x0f
+	bcd_len -= 1
+
+	# No MSISDN?
+	if not bcd_len:
+		return (npi, ton, None)
+
+	msisdn = swap_nibbles(b2h(msisdn_lhv[2:][:bcd_len])).rstrip('f')
+	# International number 10.5.118/3GPP TS 24.008
+	if (ton & 0x01) == 0x01:
+		msisdn = '+' + msisdn
+
+	return (npi, ton, msisdn)
