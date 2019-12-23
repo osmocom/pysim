@@ -617,6 +617,9 @@ class SysmoUSIMSJS1(Card):
 			content = enc_spn(p['name'], True, True)
 			data, sw = self._scc.update_binary('6F46', rpad(content, 32))
 
+		if p.get('acc') is not None:
+			self.update_acc(p['acc'])
+
 		# write EF.IMSI
 		data, sw = self._scc.update_binary('6f07', enc_imsi(p['imsi']))
 
