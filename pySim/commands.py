@@ -107,6 +107,10 @@ class SimCardCommands(object):
 			rv.append(data)
 		return rv
 
+	def select_adf(self, aid):
+		aidlen = ("0" + format(len(aid)/2, 'x'))[-2:]
+		return self._tp.send_apdu_checksw(self.cla_byte + "a4" + "0404" + aidlen + aid)
+
 	def read_binary(self, ef, length=None, offset=0):
 		if not hasattr(type(ef), '__iter__'):
 			ef = [ef]
