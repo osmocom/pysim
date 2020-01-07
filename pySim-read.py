@@ -129,7 +129,7 @@ if __name__ == '__main__':
 		else:
 			print("PLMNsel: Can't read, response code = %s" % (sw,))
 	except Exception as e:
-		print "HPLMNAcT: Can't read file -- " + str(e)
+		print("HPLMNAcT: Can't read file -- " + str(e))
 
 	# EF.PLMNwAcT
 	try:
@@ -139,7 +139,7 @@ if __name__ == '__main__':
 		else:
 			print("PLMNwAcT: Can't read, response code = %s" % (sw,))
 	except Exception as e:
-		print "PLMNwAcT: Can't read file -- " + str(e)
+		print("PLMNwAcT: Can't read file -- " + str(e))
 
 	# EF.OPLMNwAcT
 	try:
@@ -149,7 +149,7 @@ if __name__ == '__main__':
 		else:
 			print("OPLMNwAcT: Can't read, response code = %s" % (sw,))
 	except Exception as e:
-		print "OPLMNwAcT: Can't read file -- " + str(e)
+		print("OPLMNwAcT: Can't read file -- " + str(e))
 
 	# EF.HPLMNAcT
 	try:
@@ -159,7 +159,7 @@ if __name__ == '__main__':
 		else:
 			print("HPLMNAcT: Can't read, response code = %s" % (sw,))
 	except Exception as e:
-		print "HPLMNAcT: Can't read file -- " + str(e)
+		print("HPLMNAcT: Can't read file -- " + str(e))
 
 	# EF.ACC
 	(res, sw) = scc.read_binary(['3f00', '7f20', '6f78'])
@@ -180,7 +180,7 @@ if __name__ == '__main__':
 		else:
 			print("MSISDN: Can't read, response code = %s" % (sw,))
 	except Exception as e:
-		print "MSISDN: Can't read file -- " + str(e)
+		print("MSISDN: Can't read file -- " + str(e))
 
 	# EF.AD
 	(res, sw) = scc.read_binary(['3f00', '7f20', '6fad'])
@@ -190,4 +190,4 @@ if __name__ == '__main__':
 		print("AD: Can't read, response code = %s" % (sw,))
 
 	# Done for this card and maybe for everything ?
-	print "Done !\n"
+	print("Done !\n")
