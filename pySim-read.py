@@ -126,7 +126,9 @@ if __name__ == '__main__':
 		(res, sw) = scc.read_binary(EF['SPN'])
 		if sw == '9000':
 			spn_res = dec_spn(res)
-			print("SPN: %s\nDisplay HPLMN: %s\nDisplay OPLMN: %s" % (spn_res[0], spn_res[1], spn_res[2],))
+			print("SPN: %s" % (spn_res[0] or "Not available"))
+			print("Display HPLMN: %s" % (spn_res[1],))
+			print("Display OPLMN: %s" % (spn_res[2],))
 		else:
 			print("SPN: Can't read, response code = %s" % (sw,))
 	except Exception as e:
