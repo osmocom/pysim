@@ -175,7 +175,7 @@ class _MagicSimBase(Card):
 	each possible provider uses a specific record number in each EF. The
 	indexes used are ( where N is the number of providers supported ) :
 	 - [2 .. N+1] for the operator name
-     - [1 .. N] for the programable EFs
+	 - [1 .. N] for the programable EFs
 
 	* 3f00/7f4d/8f0c : Operator Name
 
