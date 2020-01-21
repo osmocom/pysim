@@ -274,6 +274,10 @@ def gen_parameters(opts):
 	# Digitize MCC/MNC (5 or 6 digits)
 	plmn_digits = _mcc_mnc_digits(mcc, mnc)
 
+	if opts.name is not None:
+		if len(opts.name) > 16:
+			raise ValueError('Service Provider Name must max 16 characters!');
+
 	# ICCID (19 digits, E.118), though some phase1 vendors use 20 :(
 	if opts.iccid is not None:
 		iccid = opts.iccid
