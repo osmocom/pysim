@@ -36,16 +36,16 @@ class card_handler:
 		self.sl = sl
 
 	def get(self, first = False):
-		print "Ready for Programming: Insert card now (or CTRL-C to cancel)"
+		print("Ready for Programming: Insert card now (or CTRL-C to cancel)")
 		self.sl.wait_for_card(newcardonly=not first)
 
 	def error(self):
-		print "Programming failed: Remove card from reader"
-		print ""
+		print("Programming failed: Remove card from reader")
+		print("")
 
 	def done(self):
-		print "Programming successful: Remove card from reader"
-		print ""
+		print("Programming successful: Remove card from reader")
+		print("")
 
 # Automatic card handler: A machine is used to handle the cards.
 class card_handler_auto:
@@ -55,7 +55,7 @@ class card_handler_auto:
 	verbose = True
 
 	def __init__(self, sl, config_file):
-		print "Card handler Config-file: " + str(config_file)
+		print("Card handler Config-file: " + str(config_file))
 		self.sl = sl
 		with open(config_file) as cfg:
 			self.cmds = yaml.load(cfg, Loader=yaml.FullLoader)
@@ -63,22 +63,22 @@ class card_handler_auto:
 		self.verbose = (self.cmds.get('verbose') == True)
 
 	def __print_outout(self,out):
-		print ""
-		print "Card handler output:"
-		print "---------------------8<---------------------"
+		print("")
+		print("Card handler output:")
+		print("---------------------8<---------------------")
 		stdout = out[0].strip()
 		if len(stdout) > 0:
-			print "stdout:"
-			print stdout
+			print("stdout:")
+			print(stdout)
 		stderr = out[1].strip()
 		if len(stderr) > 0:
-			print "stderr:"
-			print stderr
-		print "---------------------8<---------------------"
-		print ""
+			print("stderr:")
+			print(stderr)
+		print("---------------------8<---------------------")
+		print("")
 
 	def __exec_cmd(self, command):
-		print "Card handler Commandline: " + str(command)
+		print("Card handler Commandline: " + str(command))
 
 		proc = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 		out = proc.communicate()
@@ -88,21 +88,21 @@ class card_handler_auto:
 			self.__print_outout(out)
 
 		if rc != 0:
-			print ""
-			print "Error: Card handler failure! (rc=" + str(rc) + ")"
+			print("")
+			print("Error: Card handler failure! (rc=" + str(rc) + ")")
 			sys.exit(rc)
 
 	def get(self, first = False):
-		print "Ready for Programming: Transporting card into the reader-bay..."
+		print("Ready for Programming: Transporting card into the reader-bay...")
 		self.__exec_cmd(self.cmds['get'])
 		self.sl.connect()
 
 	def error(self):
-		print "Programming failed: Transporting card to the error-bin..."
+		print("Programming failed: Transporting card to the error-bin...")
 		self.__exec_cmd(self.cmds['error'])
-		print ""
+		print("")
 
 	def done(self):
-		print "Programming successful: Transporting card into the collector bin..."
+		print("Programming successful: Transporting card into the collector bin...")
 		self.__exec_cmd(self.cmds['done'])
-		print ""
+		print("")

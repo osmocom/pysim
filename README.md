@@ -101,7 +101,7 @@ sc = SimCardCommands(sl)
 sl.wait_for_card()
 
 	# Print IMSI
-print sc.read_binary(['3f00', '7f20', '6f07'])
+print(sc.read_binary(['3f00', '7f20', '6f07']))
 
 	# Run A3/A8
-print sc.run_gsm('00112233445566778899aabbccddeeff')
+print(sc.run_gsm('00112233445566778899aabbccddeeff'))

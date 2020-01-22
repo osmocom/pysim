@@ -173,7 +173,7 @@ def parse_options():
 
 	if options.type == 'list':
 		for kls in _cards_classes:
-			print kls.name
+			print(kls.name)
 		sys.exit(0)
 
 	if options.probe:
@@ -560,7 +560,7 @@ def init_batch(opts):
 
 	for k in BATCH_INCOMPATIBLE:
 		if getattr(opts, k):
-			print "Incompatible option with batch_state: %s" % (k,)
+			print("Incompatible option with batch_state: %s" % (k,))
 			sys.exit(-1)
 
 	# Don't load state if there is none ...
@@ -568,7 +568,7 @@ def init_batch(opts):
 		return
 
 	if not os.path.isfile(opts.batch_state):
-		print "No state file yet"
+		print("No state file yet")
 		return
 
 	# Get stored data
@@ -601,12 +601,12 @@ def card_detect(opts, scc):
 		for kls in _cards_classes:
 			card = kls.autodetect(scc)
 			if card:
-				print "Autodetected card type: %s" % card.name
+				print("Autodetected card type: %s" % card.name)
 				card.reset()
 				break
 
 		if card is None:
-			print "Autodetection failed"
+			print("Autodetection failed")
 			return
 
 		if opts.type == "auto_once":
@@ -631,7 +631,7 @@ def process_card(opts, first, card_handler):
 		# Get card
 		card = card_detect(opts, scc)
 		if card is None:
-			print "No card detected!"
+			print("No card detected!")
 			return -1
 
 		# Probe only
@@ -640,7 +640,7 @@ def process_card(opts, first, card_handler):
 
 		# Erase if requested
 		if opts.erase:
-			print "Formatting ..."
+			print("Formatting ...")
 			card.erase()
 			card.reset()
 
@@ -666,16 +666,16 @@ def process_card(opts, first, card_handler):
 			imsi = opts.imsi
 		cp = read_params_csv(opts, imsi=imsi, iccid=iccid)
 	if cp is None:
-		print "Error reading parameters from CSV file!\n"
+		print("Error reading parameters from CSV file!\n")
 		return 2
 	print_parameters(cp)
 
 	if opts.dry_run is False:
 		# Program the card
-		print "Programming ..."
+		print("Programming ...")
 		card.program(cp)
 	else:
-		print "Dry Run: NOT PROGRAMMING!"
+		print("Dry Run: NOT PROGRAMMING!")
 
 	# Write parameters permanently
 	write_parameters(opts, cp)
@@ -716,9 +716,9 @@ if __name__ == '__main__':
 
 	# If we use a CSV file as data input, check if the CSV file exists.
 	if opts.source == 'csv':
-		print "Using CSV file as data input: " + str(opts.read_csv)
+		print("Using CSV file as data input: " + str(opts.read_csv))
 		if not os.path.isfile(opts.read_csv):
-			print "CSV file not found!"
+			print("CSV file not found!")
 			sys.exit(1)
 
 	# Batch mode init
@@ -737,18 +737,18 @@ if __name__ == '__main__':
 		try:
 			rc = process_card(opts, first, card_handler)
 		except (KeyboardInterrupt):
-			print ""
-			print "Terminated by user!"
+			print("")
+			print("Terminated by user!")
 			sys.exit(0)
 		except (SystemExit):
 			raise
 		except:
-			print ""
-			print "Card programming failed with an execption:"
-			print "---------------------8<---------------------"
+			print("")
+			print("Card programming failed with an execption:")
+			print("---------------------8<---------------------")
 			traceback.print_exc()
-			print "---------------------8<---------------------"
-			print ""
+			print("---------------------8<---------------------")
+			print("")
 			rc = -1
 
 		# Something did not work as well as expected, however, lets

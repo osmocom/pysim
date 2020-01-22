@@ -162,7 +162,7 @@ class SerialSimLink(LinkBase):
 
 	def _dbg_print(self, s):
 		if self._debug:
-			print s
+			print(s)
 
 	def _tx_byte(self, b):
 		self._sl.write(b)
