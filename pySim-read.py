@@ -140,7 +140,7 @@ if __name__ == '__main__':
 		else:
 			print("PLMNsel: Can't read, response code = %s" % (sw,))
 	except Exception as e:
-		print("HPLMNAcT: Can't read file -- " + str(e))
+		print("PLMNsel: Can't read file -- " + str(e))
 
 	# EF.PLMNwAcT
 	try:
