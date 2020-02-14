@@ -30,12 +30,6 @@ import re
 import sys
 from pySim.ts_51_011 import EF, DF
 
-try:
-	import json
-except ImportError:
-	# Python < 2.5
-	import simplejson as json
-
 from pySim.commands import SimCardCommands
 from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn, format_xplmn_w_act, dec_spn
 
