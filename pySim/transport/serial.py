@@ -213,7 +213,7 @@ class SerialSimLink(LinkBase):
 			self._tx_string(pdu[5:])
 
 		# Receive data (including SW !)
-		#  length = [P3 - tx_data (=len(pdu)-len(hdr)) + 2 (SW1/2) ]
+		#  length = [P3 - tx_data (=len(pdu)-len(hdr)) + 2 (SW1//2) ]
 		to_recv = data_len - len(pdu) + 5 + 2
 
 		data = ''

@@ -89,7 +89,7 @@ class Card(object):
 		"""
 		# get size and write EF.OPLMNwAcT
 		data = self._scc.read_binary(EF['OPLMNwAcT'], length=None, offset=0)
-		size = len(data[0])/2
+		size = len(data[0]) // 2
 		hplmn = enc_plmn(mcc, mnc)
 		content = hplmn + access_tech
 		data, sw = self._scc.update_binary(EF['OPLMNwAcT'], content + 'ffffff0000' * (size/5-1))
@@ -101,7 +101,7 @@ class Card(object):
 		"""
 		# get size and write EF.PLMNwAcT
 		data = self._scc.read_binary(EF['PLMNwAcT'], length=None, offset=0)
-		size = len(data[0])/2
+		size = len(data[0]) // 2
 		hplmn = enc_plmn(mcc, mnc)
 		content = hplmn + access_tech
 		data, sw = self._scc.update_binary(EF['PLMNwAcT'], content + 'ffffff0000' * (size/5-1))
@@ -109,7 +109,7 @@ class Card(object):
 
 	def update_plmnsel(self, mcc, mnc):
 		data = self._scc.read_binary(EF['PLMNsel'], length=None, offset=0)
-		size = len(data[0])/2
+		size = len(data[0]) // 2
 		hplmn = enc_plmn(mcc, mnc)
 		data, sw = self._scc.update_binary(EF['PLMNsel'], hplmn + 'ff' * (size-3))
 		return sw
@@ -127,7 +127,7 @@ class Card(object):
 			raise RuntimeError('unable to calculate proper mnclen')
 
 		data = self._scc.read_binary(EF['AD'], length=None, offset=0)
-		size = len(data[0])/2
+		size = len(data[0]) // 2
 		content = data[0][0:6] + "%02X" % mnclen
 		data, sw = self._scc.update_binary(EF['AD'], content)
 		return sw

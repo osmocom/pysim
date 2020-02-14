@@ -49,11 +49,11 @@ class SimCardCommands(object):
 		# what we get in the length field.
 		# See also ETSI TS 102 221, chapter 11.1.1.3.0 Base coding.
 		exp_tlv_len = int(fcp[2:4], 16)
-		if len(fcp[4:])/2 == exp_tlv_len:
+		if len(fcp[4:]) // 2 == exp_tlv_len:
 			skip = 4
 		else:
 			exp_tlv_len = int(fcp[2:6], 16)
-			if len(fcp[4:])/2 == exp_tlv_len:
+			if len(fcp[4:]) // 2 == exp_tlv_len:
 				skip = 6
 
 		# Skip FCP tag and length
@@ -108,7 +108,7 @@ class SimCardCommands(object):
 		return rv
 
 	def select_adf(self, aid):
-		aidlen = ("0" + format(len(aid)/2, 'x'))[-2:]
+		aidlen = ("0" + format(len(aid) // 2, 'x'))[-2:]
 		return self._tp.send_apdu_checksw(self.cla_byte + "a4" + "0404" + aidlen + aid)
 
 	def read_binary(self, ef, length=None, offset=0):
@@ -126,7 +126,7 @@ class SimCardCommands(object):
 		if not hasattr(type(ef), '__iter__'):
 			ef = [ef]
 		self.select_file(ef)
-		pdu = self.cla_byte + 'd6%04x%02x' % (offset, len(data)/2) + data
+		pdu = self.cla_byte + 'd6%04x%02x' % (offset, len(data) // 2) + data
 		return self._tp.send_apdu_checksw(pdu)
 
 	def read_record(self, ef, rec_no):
@@ -143,10 +143,10 @@ class SimCardCommands(object):
 		r = self.select_file(ef)
 		if not force_len:
 			rec_length = self.__record_len(r)
-			if (len(data)/2 != rec_length):
-				raise ValueError('Invalid data length (expected %d, got %d)' % (rec_length, len(data)/2))
+			if (len(data) // 2 != rec_length):
+				raise ValueError('Invalid data length (expected %d, got %d)' % (rec_length, len(data) // 2))
 		else:
-			rec_length = len(data)/2
+			rec_length = len(data) // 2
 		pdu = (self.cla_byte + 'dc%02x04%02x' % (rec_no, rec_length)) + data
 		return self._tp.send_apdu_checksw(pdu)
 
