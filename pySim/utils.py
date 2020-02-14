@@ -720,20 +720,13 @@ def get_addr_type(addr):
 	if not len(addr):
 		return None
 
-	import sys
-	# Handle python3 and python2 - unicode
-	if sys.version_info[0] < 3:
-		addr_str = unicode(addr)
-	else:
-		addr_str = addr
-
 	addr_list = addr.split('.')
 
 	# Check for IPv4/IPv6
 	try:
 		import ipaddress
 		# Throws ValueError if addr is not correct
-		ipa = ipaddress.ip_address(addr_str)
+		ipa = ipaddress.ip_address(addr)
 
 		if ipa.version == 4:
 			return 0x01

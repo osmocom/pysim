@@ -31,12 +31,7 @@ import random
 import re
 import sys
 import traceback
-
-try:
-	import json
-except ImportError:
-	# Python < 2.5
-	import simplejson as json
+import json
 
 from pySim.commands import SimCardCommands
 from pySim.cards import _cards_classes, card_detect

@@ -23,6 +23,7 @@
 PYSIM_PROG=../pySim-prog.py
 PYSIM_READ=../pySim-read.py
 TEMPFILE=temp.tmp
+PYTHON=python3
 
 set -e
 
@@ -76,7 +77,7 @@ function check_card {
     CARD_NAME=$2
     echo "Verifying card ..."
     stat ./$CARD_NAME.ok > /dev/null
-    python $PYSIM_READ -p $TERMINAL > $TEMPFILE
+    $PYTHON $PYSIM_READ -p $TERMINAL > $TEMPFILE
     set +e
     CARD_DIFF=$(diff $TEMPFILE ./$CARD_NAME.ok)
     set -e
@@ -106,7 +107,7 @@ function check_card {
 function gen_ok_file {
     TERMINAL=$1
     CARD_NAME=$2
-    python $PYSIM_READ -p $TERMINAL > "$CARD_NAME.ok"
+    $PYTHON $PYSIM_READ -p $TERMINAL > "$CARD_NAME.ok"
     echo "Generated file: $CARD_NAME.ok"
     echo "------------8<------------"
     cat "$CARD_NAME.ok"
@@ -166,7 +167,7 @@ function run_test {
 		ADM_OPT="-A"
 		ADM=$ADM_HEX
 	fi
-	python $PYSIM_PROG -p $I -t $CARD_NAME -o $OPC -k $KI -x $MCC -y $MNC -i $IMSI -s $ICCID --msisdn $MSISDN $ADM_OPT $ADM
+	$PYTHON $PYSIM_PROG -p $I -t $CARD_NAME -o $OPC -k $KI -x $MCC -y $MNC -i $IMSI -s $ICCID --msisdn $MSISDN $ADM_OPT $ADM
 	check_card $I $CARD_NAME
 	echo ""
     done
