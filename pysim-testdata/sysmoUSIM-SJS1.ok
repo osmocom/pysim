@@ -36,18 +36,18 @@ OPLMNwAcT:
 	ffffff0000 # unused
 
 HPLMNAcT:
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
+	fff11fffff # MCC: 1651 MNC: 151 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
 
 ACC: 0008
 MSISDN: Not available
