@@ -39,7 +39,11 @@ class PcscSimLink(LinkBase):
 		self._con = self._reader.createConnection()
 
 	def __del__(self):
-		self._con.disconnect()
+		try:
+			# FIXME: this causes multiple warnings in Python 3.5.3
+			self._con.disconnect()
+		except:
+			pass
 		return
 
 	def wait_for_card(self, timeout=None, newcardonly=False):
