@@ -22,6 +22,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from smartcard.CardConnection import CardConnection
 from smartcard.CardRequest import CardRequest
 from smartcard.Exceptions import NoCardException, CardRequestTimeoutException
 from smartcard.System import readers
@@ -52,7 +53,10 @@ class PcscSimLink(LinkBase):
 
 	def connect(self):
 		try:
-			self._con.connect()
+			# Explicitly select T=0 communication protocol
+			self._con.connect(CardConnection.T0_protocol)
+		except CardConnectionException:
+			raise ProtocolError()
 		except NoCardException:
 			raise NoCardError()
 
