@@ -63,11 +63,8 @@ class PcscSimLink(LinkBase):
 		self._con.disconnect()
 
 	def reset_card(self):
-		self._con.disconnect()
-		try:
-			self._con.connect()
-		except NoCardException:
-			raise NoCardError()
+		self.disconnect()
+		self.connect()
 		return 1
 
 	def send_apdu_raw(self, pdu):
