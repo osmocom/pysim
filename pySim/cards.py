@@ -77,10 +77,10 @@ class Card(object):
 		"""
 		# get size and write EF.HPLMNwAcT
 		data = self._scc.read_binary(EF['HPLMNwAcT'], length=None, offset=0)
-		size = len(data[0])/2
+		size = len(data[0]) // 2
 		hplmn = enc_plmn(mcc, mnc)
 		content = hplmn + access_tech
-		data, sw = self._scc.update_binary(EF['HPLMNwAcT'], content + 'ffffff0000' * (size/5-1))
+		data, sw = self._scc.update_binary(EF['HPLMNwAcT'], content + 'ffffff0000' * (size // 5 - 1))
 		return sw
 
 	def update_oplmn_act(self, mcc, mnc, access_tech='FFFF'):
@@ -92,7 +92,7 @@ class Card(object):
 		size = len(data[0]) // 2
 		hplmn = enc_plmn(mcc, mnc)
 		content = hplmn + access_tech
-		data, sw = self._scc.update_binary(EF['OPLMNwAcT'], content + 'ffffff0000' * (size/5-1))
+		data, sw = self._scc.update_binary(EF['OPLMNwAcT'], content + 'ffffff0000' * (size // 5 - 1))
 		return sw
 
 	def update_plmn_act(self, mcc, mnc, access_tech='FFFF'):
@@ -104,7 +104,7 @@ class Card(object):
 		size = len(data[0]) // 2
 		hplmn = enc_plmn(mcc, mnc)
 		content = hplmn + access_tech
-		data, sw = self._scc.update_binary(EF['PLMNwAcT'], content + 'ffffff0000' * (size/5-1))
+		data, sw = self._scc.update_binary(EF['PLMNwAcT'], content + 'ffffff0000' * (size // 5 - 1))
 		return sw
 
 	def update_plmnsel(self, mcc, mnc):
