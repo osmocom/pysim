@@ -295,7 +295,7 @@ def dec_msisdn(ef_msisdn):
 
 	msisdn = swap_nibbles(b2h(msisdn_lhv[2:][:bcd_len])).rstrip('f')
 	# International number 10.5.118/3GPP TS 24.008
-	if (ton & 0x01) == 0x01:
+	if ton == 0x01:
 		msisdn = '+' + msisdn
 
 	return (npi, ton, msisdn)
