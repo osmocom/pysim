@@ -3,6 +3,7 @@ Reading ...
 ICCID: 1122334455667788990
 IMSI: 001010000000102
 GID1: ffffffffffffffffffff
+GID2: ffffffffffffffffffff
 SMSP: ffffffffffffffffffffffffffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff000000
 SPN: Magic
 Display HPLMN: True

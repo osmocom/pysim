@@ -118,6 +118,16 @@ if __name__ == '__main__':
 	except Exception as e:
 		print("GID1: Can't read file -- %s" % (str(e),))
 
+	# EF.GID2
+	try:
+		(res, sw) = scc.read_binary(EF['GID2'])
+		if sw == '9000':
+			print("GID2: %s" % (res,))
+		else:
+			print("GID2: Can't read, response code = %s" % (sw,))
+	except Exception as e:
+		print("GID2: Can't read file -- %s" % (str(e),))
+
 	# EF.SMSP
 	(res, sw) = scc.read_record(['3f00', '7f10', '6f42'], 1)
 	if sw == '9000':
