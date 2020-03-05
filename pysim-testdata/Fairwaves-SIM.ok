@@ -2,6 +2,7 @@ Using PC/SC reader (dev=0) interface
 Reading ...
 ICCID: 8988219000000117833
 IMSI: 001010000000111
+GID1: ffffffffffffffff
 SMSP: e1ffffffffffffffffffffffff0581005155f5ffffffffffff000000ffffffffffffffffffffffffffff
 SPN: Fairwaves
 Display HPLMN: False

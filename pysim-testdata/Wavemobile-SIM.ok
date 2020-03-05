@@ -2,6 +2,7 @@ Using PC/SC reader (dev=4) interface
 Reading ...
 ICCID: 89445310150011013678
 IMSI: 001010000000102
+GID1: Can't read file -- SW match failed! Expected 9000 and got 9404.
 SMSP: e1ffffffffffffffffffffffff0581005155f5ffffffffffff000000ffffffffffffffffffffffffffff
 SPN: wavemobile
 Display HPLMN: False
