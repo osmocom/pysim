@@ -1054,20 +1054,22 @@ class SysmoISIMSJA2(Card):
 		# update EF-USIM_AUTH_KEY in ADF.ISIM
 		self._scc.select_file(['3f00'])
 		aid = self.read_aid(isim = True)
-		self._scc.select_adf(aid)
-		if p.get('ki'):
-			self._scc.update_binary('af20', p['ki'], 1)
-		if p.get('opc'):
-			self._scc.update_binary('af20', p['opc'], 17)
+		if (aid):
+			self._scc.select_adf(aid)
+			if p.get('ki'):
+				self._scc.update_binary('af20', p['ki'], 1)
+			if p.get('opc'):
+				self._scc.update_binary('af20', p['opc'], 17)
 
 		# update EF-USIM_AUTH_KEY in ADF.USIM
 		self._scc.select_file(['3f00'])
 		aid = self.read_aid()
-		self._scc.select_adf(aid)
-		if p.get('ki'):
-			self._scc.update_binary('af20', p['ki'], 1)
-		if p.get('opc'):
-			self._scc.update_binary('af20', p['opc'], 17)
+		if (aid):
+			self._scc.select_adf(aid)
+			if p.get('ki'):
+				self._scc.update_binary('af20', p['ki'], 1)
+			if p.get('opc'):
+				self._scc.update_binary('af20', p['opc'], 17)
 
 		return
 
