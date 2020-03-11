@@ -984,6 +984,11 @@ class SysmoISIMSJA2(Card):
 			atr = "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 4C 75 31 33 02 51 B2"
 			if scc.get_atr() == toBytes(atr):
 				return kls(scc)
+
+			# Try card model #3
+			atr = "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 4C 52 75 31 04 51 D5"
+			if scc.get_atr() == toBytes(atr):
+				return kls(scc)
 		except:
 			return None
 		return None
