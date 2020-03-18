@@ -99,9 +99,9 @@ if __name__ == '__main__':
 	card = card_detect("auto", scc) or Card(scc)
 
 	# EF.ICCID
-	(res, sw) = scc.read_binary(EF['ICCID'])
+	(res, sw) = card.read_iccid()
 	if sw == '9000':
-		print("ICCID: %s" % (dec_iccid(res),))
+		print("ICCID: %s" % (res,))
 	else:
 		print("ICCID: Can't read, response code = %s" % (sw,))
 
