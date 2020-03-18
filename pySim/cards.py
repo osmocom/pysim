@@ -32,6 +32,7 @@ class Card(object):
 	def __init__(self, scc):
 		self._scc = scc
 		self._adm_chv_num = 4
+		self._aids = []
 
 	def reset(self):
 		self._scc.reset_card()
@@ -167,6 +168,20 @@ class Card(object):
 				return record[0][8:8 + aid_len * 2]
 
 		return None
+
+	# Fetch all the AIDs present on UICC
+	def read_aids(self):
+		try:
+			# Find out how many records the EF.DIR has
+			# and store all the AIDs in the UICC
+			rec_cnt = self._scc.record_count(['3f00', '2f00'])
+			for i in range(0, rec_cnt):
+				rec = self._scc.read_record(['3f00', '2f00'], i + 1)
+				if (rec[0][0:2], rec[0][4:6]) == ('61', '4f') and len(rec[0]) > 12 \
+				and rec[0][8:8 + int(rec[0][6:8], 16) * 2] not in self._aids:
+					self._aids.append(rec[0][8:8 + int(rec[0][6:8], 16) * 2])
+		except Exception as e:
+			print("Can't read AIDs from SIM -- %s" % (str(e),))
 
 
 class _MagicSimBase(Card):
