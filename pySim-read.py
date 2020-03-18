@@ -106,9 +106,9 @@ if __name__ == '__main__':
 		print("ICCID: Can't read, response code = %s" % (sw,))
 
 	# EF.IMSI
-	(res, sw) = scc.read_binary(['3f00', '7f20', '6f07'])
+	(res, sw) = card.read_imsi()
 	if sw == '9000':
-		print("IMSI: %s" % (dec_imsi(res),))
+		print("IMSI: %s" % (res,))
 	else:
 		print("IMSI: Can't read, response code = %s" % (sw,))
 
