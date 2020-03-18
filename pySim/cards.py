@@ -1104,3 +1104,31 @@ def card_autodetect(scc):
 			card.reset()
 			return card
 	return None
+
+def card_detect(ctype, scc):
+	# Detect type if needed
+	card = None
+	ctypes = dict([(kls.name, kls) for kls in _cards_classes])
+
+	if ctype in ("auto", "auto_once"):
+		for kls in _cards_classes:
+			card = kls.autodetect(scc)
+			if card:
+				print("Autodetected card type: %s" % card.name)
+				card.reset()
+				break
+
+		if card is None:
+			print("Autodetection failed")
+			return None
+
+		if ctype == "auto_once":
+			ctype = card.name
+
+	elif ctype in ctypes:
+		card = ctypes[ctype](scc)
+
+	else:
+		raise ValueError("Unknown card type: %s" % ctype)
+
+	return card

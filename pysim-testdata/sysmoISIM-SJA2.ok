@@ -1,5 +1,6 @@
 Using PC/SC reader (dev=0) interface
 Reading ...
+Autodetected card type: sysmoISIM-SJA2
 ICCID: 8988211900000000004
 IMSI: 001010000000102
 GID1: ffffffffffffffffffff

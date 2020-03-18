@@ -1,9 +1,10 @@
-Using PC/SC reader (dev=4) interface
+Using PC/SC reader (dev=3) interface
 Reading ...
+Autodetected card type: Wavemobile-SIM
 ICCID: 89445310150011013678
 IMSI: 001010000000102
-GID1: Can't read file -- SW match failed! Expected 9000 and got 9404.
-GID2: Can't read file -- SW match failed! Expected 9000 and got 9404.
+GID1: Can't read file -- SW match failed! Expected 9000 and got 6a82.
+GID2: Can't read file -- SW match failed! Expected 9000 and got 6a82.
 SMSP: e1ffffffffffffffffffffffff0581005155f5ffffffffffff000000ffffffffffffffffffffffffffff
 SPN: wavemobile
 Display HPLMN: False
@@ -45,7 +46,7 @@ OPLMNwAcT:
 	ffffff0000 # unused
 	ffffff0000 # unused
 
-HPLMNAcT: Can't read file -- SW match failed! Expected 9000 and got 9404.
+HPLMNAcT: Can't read file -- SW match failed! Expected 9000 and got 6a82.
 ACC: abce
 MSISDN: Not available
 AD: 00ffff02

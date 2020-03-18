@@ -31,6 +31,7 @@ import sys
 from pySim.ts_51_011 import EF, DF
 
 from pySim.commands import SimCardCommands
+from pySim.cards import card_detect, Card
 from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn, format_xplmn_w_act, dec_spn
 
 
@@ -93,6 +94,9 @@ if __name__ == '__main__':
 
 	# Program the card
 	print("Reading ...")
+
+	# Initialize Card object by auto detecting the card
+	card = card_detect("auto", scc) or Card(scc)
 
 	# EF.ICCID
 	(res, sw) = scc.read_binary(EF['ICCID'])

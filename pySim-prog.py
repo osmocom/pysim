@@ -39,7 +39,7 @@ except ImportError:
 	import simplejson as json
 
 from pySim.commands import SimCardCommands
-from pySim.cards import _cards_classes
+from pySim.cards import _cards_classes, card_detect
 from pySim.utils import h2b, swap_nibbles, rpad, derive_milenage_opc, calculate_luhn, dec_iccid
 from pySim.ts_51_011 import EF
 from pySim.card_handler import *
@@ -609,36 +609,6 @@ def save_batch(opts):
 	fh.close()
 
 
-def card_detect(opts, scc):
-
-	# Detect type if needed
-	card = None
-	ctypes = dict([(kls.name, kls) for kls in _cards_classes])
-
-	if opts.type in ("auto", "auto_once"):
-		for kls in _cards_classes:
-			card = kls.autodetect(scc)
-			if card:
-				print("Autodetected card type: %s" % card.name)
-				card.reset()
-				break
-
-		if card is None:
-			print("Autodetection failed")
-			return
-
-		if opts.type == "auto_once":
-			opts.type = card.name
-
-	elif opts.type in ctypes:
-		card = ctypes[opts.type](scc)
-
-	else:
-		raise ValueError("Unknown card type: %s" % opts.type)
-
-	return card
-
-
 def process_card(opts, first, card_handler):
 
 	if opts.dry_run is False:
@@ -647,7 +617,7 @@ def process_card(opts, first, card_handler):
 
 	if opts.dry_run is False:
 		# Get card
-		card = card_detect(opts, scc)
+		card = card_detect(opts.type, scc)
 		if card is None:
 			print("No card detected!")
 			return -1

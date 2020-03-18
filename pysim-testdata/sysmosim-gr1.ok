@@ -1,5 +1,6 @@
 Using PC/SC reader (dev=3) interface
 Reading ...
+Autodetected card type: sysmosim-gr1
 ICCID: 1122334455667788990
 IMSI: 001010000000102
 GID1: Can't read file -- SW match failed! Expected 9000 and got 9404.
