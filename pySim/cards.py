@@ -84,6 +84,13 @@ class Card(object):
 		data, sw = self._scc.update_binary(EF['HPLMNwAcT'], content + 'ffffff0000' * (size // 5 - 1))
 		return sw
 
+	def read_oplmn_act(self):
+		(res, sw) = self._scc.read_binary(EF['OPLMNwAcT'])
+		if sw == '9000':
+			return (format_xplmn_w_act(res), sw)
+		else:
+			return (None, sw)
+
 	def update_oplmn_act(self, mcc, mnc, access_tech='FFFF'):
 		"""
 		See note in update_hplmn_act()
