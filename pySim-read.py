@@ -124,7 +124,7 @@ if __name__ == '__main__':
 
 	# EF.GID2
 	try:
-		(res, sw) = scc.read_binary(EF['GID2'])
+		(res, sw) = card.read_gid2()
 		if sw == '9000':
 			print("GID2: %s" % (res,))
 		else:

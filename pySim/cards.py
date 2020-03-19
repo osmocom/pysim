@@ -152,6 +152,13 @@ class Card(object):
 		else:
 			return (None, sw)
 
+	def read_gid2(self):
+		(res, sw) = self._scc.read_binary(EF['GID2'])
+		if sw == '9000':
+			return (res, sw)
+		else:
+			return (None, sw)
+
 	# Read the (full) AID for either ISIM or USIM application
 	def read_aid(self, isim = False):
 
