@@ -66,6 +66,13 @@ class Card(object):
 		data, sw = self._scc.update_binary(EF['ACC'], lpad(acc, 4))
 		return sw
 
+	def read_hplmn_act(self):
+		(res, sw) = self._scc.read_binary(EF['HPLMNAcT'])
+		if sw == '9000':
+			return (format_xplmn_w_act(res), sw)
+		else:
+			return (None, sw)
+
 	def update_hplmn_act(self, mcc, mnc, access_tech='FFFF'):
 		"""
 		Update Home PLMN with access technology bit-field

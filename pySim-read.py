@@ -183,9 +183,9 @@ if __name__ == '__main__':
 
 	# EF.HPLMNAcT
 	try:
-		(res, sw) = scc.read_binary(EF['HPLMNAcT'])
+		(res, sw) = card.read_hplmn_act()
 		if sw == '9000':
-			print("HPLMNAcT:\n%s" % (format_xplmn_w_act(res)))
+			print("HPLMNAcT:\n%s" % (res))
 		else:
 			print("HPLMNAcT: Can't read, response code = %s" % (sw,))
 	except Exception as e:
