@@ -181,6 +181,13 @@ class Card(object):
 		else:
 			return (None, sw)
 
+	def read_msisdn(self):
+		(res, sw) = self._scc.read_record(EF['MSISDN'], 1)
+		if sw == '9000':
+			return (dec_msisdn(res), sw)
+		else:
+			return (None, sw)
+
 	# Read the (full) AID for either ISIM or USIM application
 	def read_aid(self, isim = False):
 

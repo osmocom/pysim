@@ -200,13 +200,11 @@ if __name__ == '__main__':
 
 	# EF.MSISDN
 	try:
-	#	print(scc.record_size(['3f00', '7f10', '6f40']))
-		(res, sw) = scc.read_record(['3f00', '7f10', '6f40'], 1)
+		(res, sw) = card.read_msisdn()
 		if sw == '9000':
-			res_dec = dec_msisdn(res)
-			if res_dec is not None:
-				# (npi, ton, msisdn) = res_dec
-				print("MSISDN (NPI=%d ToN=%d): %s" % res_dec)
+			# (npi, ton, msisdn) = res
+			if res is not None:
+				print("MSISDN (NPI=%d ToN=%d): %s" % res)
 			else:
 				print("MSISDN: Not available")
 		else:
