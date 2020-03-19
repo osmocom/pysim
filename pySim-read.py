@@ -133,7 +133,7 @@ if __name__ == '__main__':
 		print("GID2: Can't read file -- %s" % (str(e),))
 
 	# EF.SMSP
-	(res, sw) = scc.read_record(['3f00', '7f10', '6f42'], 1)
+	(res, sw) = card.read_record('SMSP', 1)
 	if sw == '9000':
 		print("SMSP: %s" % (res,))
 	else:
