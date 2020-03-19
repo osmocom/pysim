@@ -213,7 +213,7 @@ if __name__ == '__main__':
 		print("MSISDN: Can't read file -- " + str(e))
 
 	# EF.AD
-	(res, sw) = scc.read_binary(['3f00', '7f20', '6fad'])
+	(res, sw) = card.read_binary('AD')
 	if sw == '9000':
 		print("AD: %s" % (res,))
 	else:
