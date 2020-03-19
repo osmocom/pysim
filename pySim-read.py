@@ -141,12 +141,11 @@ if __name__ == '__main__':
 
 	# EF.SPN
 	try:
-		(res, sw) = scc.read_binary(EF['SPN'])
+		(res, sw) = card.read_spn()
 		if sw == '9000':
-			spn_res = dec_spn(res)
-			print("SPN: %s" % (spn_res[0] or "Not available"))
-			print("Display HPLMN: %s" % (spn_res[1],))
-			print("Display OPLMN: %s" % (spn_res[2],))
+			print("SPN: %s" % (res[0] or "Not available"))
+			print("Display HPLMN: %s" % (res[1],))
+			print("Display OPLMN: %s" % (res[2],))
 		else:
 			print("SPN: Can't read, response code = %s" % (sw,))
 	except Exception as e:
