@@ -153,7 +153,7 @@ if __name__ == '__main__':
 
 	# EF.PLMNsel
 	try:
-		(res, sw) = scc.read_binary(EF['PLMNsel'])
+		(res, sw) = card.read_binary('PLMNsel')
 		if sw == '9000':
 			print("PLMNsel: %s" % (res))
 		else:
