@@ -192,7 +192,7 @@ if __name__ == '__main__':
 		print("HPLMNAcT: Can't read file -- " + str(e))
 
 	# EF.ACC
-	(res, sw) = scc.read_binary(['3f00', '7f20', '6f78'])
+	(res, sw) = card.read_binary('ACC')
 	if sw == '9000':
 		print("ACC: %s" % (res,))
 	else:
