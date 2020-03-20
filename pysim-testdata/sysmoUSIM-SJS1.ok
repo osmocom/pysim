@@ -55,5 +55,51 @@ HPLMNAcT:
 ACC: 0008
 MSISDN (NPI=1 ToN=1): +77776336143
 AD: 00000002
+SIM Service Table: ff3fffff3f003f1ff00c00c0f00000
+	Service 1 - CHV1 disable function: True
+	Service 2 - Abbreviated Dialling Numbers (ADN): True
+	Service 3 - Fixed Dialling Numbers (FDN): True
+	Service 4 - Short Message Storage (SMS): True
+	Service 5 - Advice of Charge (AoC): True
+	Service 6 - Capability Configuration Parameters (CCP): True
+	Service 7 - PLMN selector: True
+	Service 8 - RFU: True
+	Service 9 - MSISDN: True
+	Service 10 - Extension1: True
+	Service 11 - Extension2: True
+	Service 12 - SMS Parameters: True
+	Service 13 - Last Number Dialled (LND): True
+	Service 14 - Cell Broadcast Message Identifier: True
+	Service 17 - Service Provider Name: True
+	Service 18 - Service Dialling Numbers (SDN): True
+	Service 19 - Extension3: True
+	Service 20 - RFU: True
+	Service 21 - VGCS Group Identifier List (EFVGCS and EFVGCSS): True
+	Service 22 - VBS Group Identifier List (EFVBS and EFVBSS): True
+	Service 23 - enhanced Multi-Level Precedence and Pre-emption Service: True
+	Service 24 - Automatic Answer for eMLPP: True
+	Service 25 - Data download via SMS-CB: True
+	Service 26 - Data download via SMS-PP: True
+	Service 27 - Menu selection: True
+	Service 28 - Call control: True
+	Service 29 - Proactive SIM: True
+	Service 30 - Cell Broadcast Message Identifier Ranges: True
+	Service 31 - Barred Dialling Numbers (BDN): True
+	Service 32 - Extension4: True
+	Service 33 - De-personalization Control Keys: True
+	Service 34 - Co-operative Network List: True
+	Service 35 - Short Message Status Reports: True
+	Service 36 - Network's indication of alerting in the MS: True
+	Service 37 - Mobile Originated Short Message control by SIM: True
+	Service 38 - GPRS: True
+	Service 49 - MExE: True
+	Service 50 - Reserved and shall be ignored: True
+	Service 51 - PLMN Network Name: True
+	Service 52 - Operator PLMN List: True
+	Service 53 - Mailbox Dialling Numbers: True
+	Service 54 - Message Waiting Indication Status: True
+	Service 57 - Multimedia Messaging Service (MMS): True
+	Service 58 - Extension 8: True
+	Service 59 - MMS User Connectivity Parameters: True
 Done !
 

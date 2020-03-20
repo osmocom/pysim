@@ -28,7 +28,7 @@ import os
 import random
 import re
 import sys
-from pySim.ts_51_011 import EF, DF
+from pySim.ts_51_011 import EF, DF, EF_SST_map
 
 from pySim.commands import SimCardCommands
 from pySim.cards import card_detect, Card
@@ -218,6 +218,20 @@ if __name__ == '__main__':
 		print("AD: %s" % (res,))
 	else:
 		print("AD: Can't read, response code = %s" % (sw,))
+
+	# EF.SST
+	(res, sw) = card.read_sst()
+	if sw == '9000':
+		# (st_hex, avail_src_list) = res
+		# st_hex - Service Table in hex format
+		# avail_src_list - List of services available
+		print("SIM Service Table: %s" % res[0])
+		# Print those which are available
+		for s in res[1]:
+			if s in EF_SST_map:
+				print('\tService %d - %s: %s' % (s, EF_SST_map[s], s in res[1]))
+	else:
+		print("SIM Service Table: Can't read, response code = %s" % (sw,))
 
 	# Done for this card and maybe for everything ?
 	print("Done !\n")
