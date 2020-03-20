@@ -98,6 +98,9 @@ if __name__ == '__main__':
 	# Initialize Card object by auto detecting the card
 	card = card_detect("auto", scc) or Card(scc)
 
+	# Read all AIDs on the UICC
+	card.read_aids()
+
 	# EF.ICCID
 	(res, sw) = card.read_iccid()
 	if sw == '9000':
