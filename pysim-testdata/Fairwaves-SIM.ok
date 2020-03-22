@@ -86,5 +86,33 @@ SIM Service Table: ff3cc3ff030fff0f000fff03f0c0
 	Service 58 - Extension 8
 	Service 59 - MMS User Connectivity Parameters
 
+USIM Service Table: 01ea1ffc21360480010000
+	Service 1 - Local Phone Book
+	Service 10 - Short Message Storage (SMS)
+	Service 12 - Short Message Service Parameters (SMSP)
+	Service 14 - Capability Configuration Parameters 2 (CCP2)
+	Service 15 - Cell Broadcast Message Identifier
+	Service 16 - Cell Broadcast Message Identifier Ranges
+	Service 17 - Group Identifier Level 1
+	Service 18 - Group Identifier Level 2
+	Service 19 - Service Provider Name
+	Service 20 - User controlled PLMN selector with Access Technology
+	Service 21 - MSISDN
+	Service 27 - GSM Access
+	Service 28 - Data download via SMS-PP
+	Service 29 - Data download via SMS-CB
+	Service 30 - Call Control by USIM
+	Service 31 - MO-SMS Control by USIM
+	Service 32 - RUN AT COMMAND command
+	Service 33 - shall be set to 1
+	Service 38 - GSM security context
+	Service 42 - Operator controlled PLMN selector with Access Technology
+	Service 43 - HPLMN selector with Access Technology
+	Service 45 - PLMN Network Name
+	Service 46 - Operator PLMN List
+	Service 51 - Service Provider Display Information
+	Service 64 - VGCS security
+	Service 65 - VBS security
+
 Done !
 

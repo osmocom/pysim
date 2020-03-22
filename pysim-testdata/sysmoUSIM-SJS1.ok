@@ -102,5 +102,41 @@ SIM Service Table: ff3fffff3f003f1ff00c00c0f00000
 	Service 58 - Extension 8
 	Service 59 - MMS User Connectivity Parameters
 
+USIM Service Table: 9e6b1dfc67f6580000
+	Service 2 - Fixed Dialling Numbers (FDN)
+	Service 3 - Extension 2
+	Service 4 - Service Dialling Numbers (SDN)
+	Service 5 - Extension3
+	Service 8 - Outgoing Call Information (OCI and OCT)
+	Service 9 - Incoming Call Information (ICI and ICT)
+	Service 10 - Short Message Storage (SMS)
+	Service 12 - Short Message Service Parameters (SMSP)
+	Service 14 - Capability Configuration Parameters 2 (CCP2)
+	Service 15 - Cell Broadcast Message Identifier
+	Service 17 - Group Identifier Level 1
+	Service 19 - Service Provider Name
+	Service 20 - User controlled PLMN selector with Access Technology
+	Service 21 - MSISDN
+	Service 27 - GSM Access
+	Service 28 - Data download via SMS-PP
+	Service 29 - Data download via SMS-CB
+	Service 30 - Call Control by USIM
+	Service 31 - MO-SMS Control by USIM
+	Service 32 - RUN AT COMMAND command
+	Service 33 - shall be set to 1
+	Service 34 - Enabled Services Table
+	Service 35 - APN Control List (ACL)
+	Service 38 - GSM security context
+	Service 39 - CPBCCH Information
+	Service 42 - Operator controlled PLMN selector with Access Technology
+	Service 43 - HPLMN selector with Access Technology
+	Service 45 - PLMN Network Name
+	Service 46 - Operator PLMN List
+	Service 47 - Mailbox Dialling Numbers
+	Service 48 - Message Waiting Indication Status
+	Service 52 - Multimedia Messaging Service (MMS)
+	Service 53 - Extension 8
+	Service 55 - MMS User Connectivity Parameters
+
 Done !
 
