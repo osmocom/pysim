@@ -30,6 +30,7 @@ import re
 import sys
 from pySim.ts_51_011 import EF, DF, EF_SST_map
 from pySim.ts_31_102 import EF_UST_map
+from pySim.ts_31_103 import EF_IST_map
 
 from pySim.commands import SimCardCommands
 from pySim.cards import card_detect, Card
@@ -254,6 +255,18 @@ if __name__ == '__main__':
 			print("%s" % dec_st(res, table="usim"))
 		else:
 			print("USIM Service Table: Can't read, response code = %s" % (sw,))
+
+	# Check whether we have th AID of ISIM, if so select it by its AID
+	# EF.IST - File Id in ADF ISIM : 6f07
+	if '9000' == card.select_adf_by_aid(adf="isim"):
+		# EF.IST
+		(res, sw) = card.read_binary('6f07')
+		if sw == '9000':
+			print("ISIM Service Table: %s" % res)
+			# Print those which are available
+			print("%s" % dec_st(res, table="isim"))
+		else:
+			print("ISIM Service Table: Can't read, response code = %s" % (sw,))
 
 	# Done for this card and maybe for everything ?
 	print("Done !\n")
