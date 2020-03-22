@@ -402,3 +402,37 @@ def TLV_parser(bytelist):
 		else:
 			bytelist = bytelist[ L+2 : ]
 	return ret
+
+def dec_epdgid(hexstr):
+	"""
+	Decode ePDG Id to get EF.ePDGId or EF.ePDGIdEm.
+	See 3GPP TS 31.102 version 13.4.0 Release 13, section 4.2.102 and 4.2.104.
+	"""
+
+	# Convert from hex str to int bytes list
+	epdgid_bytes = h2i(hexstr)
+
+	s = ""
+
+	# Get list of tuples containing parsed TLVs
+	tlvs = TLV_parser(epdgid_bytes)
+
+	for tlv in tlvs:
+		# tlv = (T, L, [V])
+		# T = Tag
+		# L = Length
+		# [V] = List of value
+
+		# Invalid Tag value scenario
+		if tlv[0] != 0x80:
+			continue
+
+		# First byte in the value has the address type
+		addr_type = tlv[2][0]
+		# TODO: Support parsing of IPv4 and IPv6
+		if addr_type == 0x00: #FQDN
+			# Skip address tye byte i.e. first byte in value list
+			content = tlv[2][1:]
+			s += "\t%s # %s\n" % (i2h(content), i2s(content))
+
+	return s
