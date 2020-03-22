@@ -236,5 +236,6 @@ if __name__ == '__main__':
 	else:
 		print("SIM Service Table: Can't read, response code = %s" % (sw,))
 
+
 	# Done for this card and maybe for everything ?
 	print("Done !\n")

@@ -234,6 +234,24 @@ class Card(object):
 		except Exception as e:
 			print("Can't read AIDs from SIM -- %s" % (str(e),))
 
+	# Select ADF.U/ISIM in the Card using its full AID
+	def select_adf_by_aid(self, adf="usim"):
+		# Check for valid ADF name
+		if adf not in ["usim", "isim"]:
+			return None
+
+		# First (known) halves of the U/ISIM AID
+		aid_map = {}
+		aid_map["usim"] = "a0000000871002"
+		aid_map["isim"] = "a0000000871004"
+
+		for aid in self._aids:
+			if aid_map[adf] in aid:
+				(res, sw) = self._scc.select_adf(aid)
+				return sw
+
+		return None
+
 
 class _MagicSimBase(Card):
 	"""
