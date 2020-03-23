@@ -92,6 +92,17 @@ if __name__ == '__main__':
 	# Wait for SIM card
 	sl.wait_for_card()
 
+	# Assuming UICC SIM
+	scc.cla_byte = "00"
+	scc.sel_ctrl = "0004"
+
+	# Testing for Classic SIM or UICC
+	(res, sw) = sl.send_apdu(scc.cla_byte + "a4" + scc.sel_ctrl + "02" + "3f00")
+	if sw == '6e00':
+		# Just a Classic SIM
+		scc.cla_byte = "a0"
+		scc.sel_ctrl = "0000"
+
 	# Program the card
 	print("Reading ...")
 
@@ -235,7 +246,6 @@ if __name__ == '__main__':
 				print('\tService %d - %s: %s' % (s, EF_SST_map[s], s in res[1]))
 	else:
 		print("SIM Service Table: Can't read, response code = %s" % (sw,))
-
 
 	# Done for this card and maybe for everything ?
 	print("Done !\n")
