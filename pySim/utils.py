@@ -476,6 +476,24 @@ def dec_epdgid(hexstr):
 
 	return s
 
+def enc_epdgid(epdg_addr, addr_type='00'):
+	"""
+	Encode ePDG Id so it can be stored to EF.ePDGId or EF.ePDGIdEm.
+	See 3GPP TS 31.102 version 13.4.0 Release 13, section 4.2.102 and 4.2.104.
+
+	Default values:
+	  - addr_type: 00 - FQDN format of ePDG Address
+	"""
+
+	s = ""
+
+	# TODO: Encoding of IPv4 and IPv6 address
+	if addr_type == '00':
+		hex_str = s2h(epdg_addr)
+		s += '80' + ('%02x' % ((len(hex_str)//2)+1)) + '00' + hex_str
+
+	return s
+
 def sanitize_pin_adm(opts):
 	"""
 	The ADM pin can be supplied either in its hexadecimal form or as
