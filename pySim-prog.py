@@ -147,6 +147,9 @@ def parse_options():
 	parser.add_option("--acc", dest="acc",
 			help="Set ACC bits (Access Control Code). not all card types are supported",
 		)
+	parser.add_option("--epdgid", dest="epdgid",
+			help="Set Home Evolved Packet Data Gateway (ePDG) Identifier. (Only FQDN format supported)",
+		)
 	parser.add_option("--read-imsi", dest="read_imsi", action="store_true",
 			help="Read the IMSI from the CARD", default=False
 		)
@@ -442,6 +445,7 @@ def gen_parameters(opts):
 		'acc'	: acc,
 		'pin_adm' : pin_adm,
 		'msisdn' : opts.msisdn,
+		'epdgid' : opts.epdgid,
 	}
 
 

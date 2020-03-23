@@ -1160,6 +1160,15 @@ class SysmoISIMSJA2(UsimCard):
 					sw = self.update_ehplmn(p['mcc'], p['mnc'])
 					if sw != '9000':
 						print("Programming EHPLMN failed with code %s"%sw)
+
+			# update EF.ePDGId in ADF.USIM
+			if self.file_exists(EF_USIM_ADF_map['ePDGId']):
+				if p.get('epdgid'):
+					sw = self._scc.update_binary(
+						EF_USIM_ADF_map['ePDGId'], enc_epdgid(p['epdgid']))
+					if sw != '9000':
+						print("Programming ePDGId failed with code %s"%sw)
+
 		return
 
 
