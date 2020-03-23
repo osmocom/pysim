@@ -1152,6 +1152,9 @@ class SysmoISIMSJA2(UsimCard):
 			r = self._scc.select_file(['3f00', '7f10'])
 			data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 104), force_len=True)
 
+		# Populate AIDs
+		self.read_aids()
+
 		# update EF-SIM_AUTH_KEY (and EF-USIM_AUTH_KEY_2G, which is
 		# hard linked to EF-USIM_AUTH_KEY)
 		self._scc.select_file(['3f00'])
