@@ -500,19 +500,19 @@ def enc_st(st, service, state=1):
 
 	return s
 
-def dec_epdgid(hexstr):
+def dec_addr_tlv(hexstr):
 	"""
-	Decode ePDG Id to get EF.ePDGId or EF.ePDGIdEm.
-	See 3GPP TS 31.102 version 13.4.0 Release 13, section 4.2.102 and 4.2.104.
+	Decode hex string to get EF.P-CSCF Address or EF.ePDGId or EF.ePDGIdEm.
+	See 3GPP TS 31.102 version 13.4.0 Release 13, section 4.2.8, 4.2.102 and 4.2.104.
 	"""
 
 	# Convert from hex str to int bytes list
-	epdgid_bytes = h2i(hexstr)
+	addr_tlv_bytes = h2i(hexstr)
 
 	s = ""
 
 	# Get list of tuples containing parsed TLVs
-	tlvs = TLV_parser(epdgid_bytes)
+	tlvs = TLV_parser(addr_tlv_bytes)
 
 	for tlv in tlvs:
 		# tlv = (T, L, [V])
@@ -531,6 +531,7 @@ def dec_epdgid(hexstr):
 		# First byte in the value has the address type
 		addr_type = tlv[2][0]
 		# TODO: Support parsing of IPv4 and IPv6
+		# Address Type: 0x00 (FQDN), 0x01 (IPv4), 0x02 (IPv6), other (Reserved)
 		if addr_type == 0x00: #FQDN
 			# Skip address tye byte i.e. first byte in value list
 			content = tlv[2][1:]
@@ -538,20 +539,20 @@ def dec_epdgid(hexstr):
 
 	return s
 
-def enc_epdgid(epdg_addr, addr_type='00'):
+def enc_addr_tlv(addr, addr_type='00'):
 	"""
-	Encode ePDG Id so it can be stored to EF.ePDGId or EF.ePDGIdEm.
-	See 3GPP TS 31.102 version 13.4.0 Release 13, section 4.2.102 and 4.2.104.
+	Encode address TLV object used in EF.P-CSCF Address, EF.ePDGId and EF.ePDGIdEm.
+	See 3GPP TS 31.102 version 13.4.0 Release 13, section 4.2.8, 4.2.102 and 4.2.104.
 
 	Default values:
-	  - addr_type: 00 - FQDN format of ePDG Address
+	  - addr_type: 00 - FQDN format of Address
 	"""
 
 	s = ""
 
 	# TODO: Encoding of IPv4 and IPv6 address
 	if addr_type == '00':
-		hex_str = s2h(epdg_addr)
+		hex_str = s2h(addr)
 		s += '80' + ('%02x' % ((len(hex_str)//2)+1)) + '00' + hex_str
 
 	return s
