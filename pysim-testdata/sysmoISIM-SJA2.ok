@@ -155,6 +155,10 @@ USIM Service Table: beff9f9de73e0408400170730000002e00000000
 	Service 93 - Communication Control for IMS by USIM
 	Service 94 - Extended Terminal Applications
 	Service 95 - Support of UICC access to IMS
+	Service 122 - 5GS Mobility Management Information
+	Service 123 - 5G Security Parameters
+	Service 124 - Subscription identifier privacy support
+	Service 126 - UAC Access Identities support
 
 ePDGId:
 	Not available

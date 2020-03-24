@@ -135,6 +135,23 @@ EF_UST_map = {
 	109: 'MCPTT',
 	110: 'ePDG configuration Information for Emergency Service support',
 	111: 'ePDG configuration Information for Emergency Service configured',
+	112: 'eCall Data over IMS',
+	113: 'URI support for SMS-PP DOWNLOAD as defined in 3GPP TS 31.111 [12]',
+	114: 'From Preferred',
+	115: 'IMS configuration data',
+	116: 'TV configuration',
+	117: '3GPP PS Data Off',
+	118: '3GPP PS Data Off Service List',
+	119: 'V2X',
+	120: 'XCAP Configuration Data',
+	121: 'EARFCN list for MTC/NB-IOT UEs',
+	122: '5GS Mobility Management Information',
+	123: '5G Security Parameters',
+	124: 'Subscription identifier privacy support',
+	125: 'SUCI calculation by the USIM',
+	126: 'UAC Access Identities support',
+	127: 'Expect control plane-based Steering of Roaming information during initial registration in VPLMN',
+	128: 'Call control on PDU Session by USIM',
 }
 
 LOCI_STATUS_map = {
