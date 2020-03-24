@@ -284,6 +284,16 @@ class UsimCard(Card):
 		else:
 			return (None, sw)
 
+	def update_ePDGSelection(self, mcc, mnc):
+		(res, sw) = self._scc.read_binary(EF_USIM_ADF_map['ePDGSelection'], length=None, offset=0)
+		if sw == '9000' and (len(mcc) == 0 or len(mnc) == 0):
+			# Reset contents
+			# 80 - Tag value
+			(res, sw) = self._scc.update_binary(EF_USIM_ADF_map['ePDGSelection'], rpad('', len(res)))
+		elif sw == '9000':
+			(res, sw) = self._scc.update_binary(EF_USIM_ADF_map['ePDGSelection'], enc_ePDGSelection(res, mcc, mnc))
+		return sw
+
 	def read_ust(self):
 		(res, sw) = self._scc.read_binary(EF_USIM_ADF_map['UST'])
 		if sw == '9000':
@@ -1194,6 +1204,17 @@ class SysmoISIMSJA2(UsimCard):
 					sw = self.update_epdgid(p['epdgid'])
 					if sw != '9000':
 						print("Programming ePDGId failed with code %s"%sw)
+
+			# update EF.ePDGSelection in ADF.USIM
+			if self.file_exists(EF_USIM_ADF_map['ePDGSelection']):
+				if p.get('epdgSelection'):
+					epdg_plmn = p['epdgSelection']
+					sw = self.update_ePDGSelection(epdg_plmn[:3], epdg_plmn[3:])
+				else:
+					sw = self.update_ePDGSelection("", "")
+				if sw != '9000':
+					print("Programming ePDGSelection failed with code %s"%sw)
+
 
 		return
 

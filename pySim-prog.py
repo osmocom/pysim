@@ -150,6 +150,9 @@ def parse_options():
 	parser.add_option("--epdgid", dest="epdgid",
 			help="Set Home Evolved Packet Data Gateway (ePDG) Identifier. (Only FQDN format supported)",
 		)
+	parser.add_option("--epdgSelection", dest="epdgSelection",
+			help="Set PLMN for ePDG Selection Information. (Only Operator Identifier FQDN format supported)",
+		)
 	parser.add_option("--read-imsi", dest="read_imsi", action="store_true",
 			help="Read the IMSI from the CARD", default=False
 		)
@@ -433,6 +436,15 @@ def gen_parameters(opts):
 
 	pin_adm = sanitize_pin_adm(opts)
 
+	# ePDG Selection Information
+	if opts.epdgSelection:
+		if len(opts.epdgSelection) < 5 or len(opts.epdgSelection) > 6:
+			raise ValueError('ePDG Selection Information is not valid')
+		epdg_mcc = opts.epdgSelection[:3]
+		epdg_mnc = opts.epdgSelection[3:]
+		if not epdg_mcc.isdigit() or not epdg_mnc.isdigit():
+			raise ValueError('PLMN for ePDG Selection must only contain decimal digits')
+
 	# Return that
 	return {
 		'name'	: opts.name,
@@ -447,6 +459,7 @@ def gen_parameters(opts):
 		'pin_adm' : pin_adm,
 		'msisdn' : opts.msisdn,
 		'epdgid' : opts.epdgid,
+		'epdgSelection' : opts.epdgSelection,
 	}
 
 
