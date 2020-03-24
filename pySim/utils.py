@@ -609,3 +609,57 @@ def init_reader(opts):
 		sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
 
 	return sl
+
+def dec_ePDGSelection(sixhexbytes):
+	"""
+	Decode ePDGSelection to get EF.ePDGSelection or EF.ePDGSelectionEm.
+	See 3GPP TS 31.102 version 15.2.0 Release 15, section 4.2.104 and 4.2.106.
+	"""
+
+	res = {'mcc': 0, 'mnc': 0, 'epdg_priority': 0, 'epdg_fqdn_format': ''}
+	plmn_chars = 6
+	epdg_priority_chars = 4
+	epdg_fqdn_format_chars = 2
+	# first three bytes (six ascii hex chars)
+	plmn_str = sixhexbytes[:plmn_chars]
+	# two bytes after first three bytes
+	epdg_priority_str = sixhexbytes[plmn_chars:plmn_chars + epdg_priority_chars]
+	# one byte after first five bytes
+	epdg_fqdn_format_str = sixhexbytes[plmn_chars + epdg_priority_chars:plmn_chars + epdg_priority_chars + epdg_fqdn_format_chars]
+	res['mcc'] = dec_mcc_from_plmn(plmn_str)
+	res['mnc'] = dec_mnc_from_plmn(plmn_str)
+	res['epdg_priority'] = epdg_priority_str
+	res['epdg_fqdn_format'] = epdg_fqdn_format_str == '00' and 'Operator Identifier FQDN' or 'Location based FQDN'
+	return res
+
+def format_ePDGSelection(hexstr):
+	ePDGSelection_info_tag_chars = 2
+	ePDGSelection_info_tag_str = hexstr[:2]
+	# Minimum length
+	len_chars = 2
+	# TODO: Need to determine length properly - definite length support only
+	# Inconsistency in spec: 3GPP TS 31.102 version 15.2.0 Release 15, 4.2.104
+	# As per spec, length is 5n, n - number of PLMNs
+	# But, each PLMN entry is made of PLMN (3 Bytes) + ePDG Priority (2 Bytes) + ePDG FQDN format (1 Byte)
+	# Totalling to 6 Bytes, maybe length should be 6n
+	len_str = hexstr[ePDGSelection_info_tag_chars:ePDGSelection_info_tag_chars+len_chars]
+	if len_str[0] == '8':
+		# The bits 7 to 1 denotes the number of length octets if length > 127
+		if int(len_str[1]) > 0:
+			# Update number of length octets
+			len_chars = len_chars * int(len_str[1])
+			len_str = hexstr[ePDGSelection_info_tag_chars:len_chars]
+
+	content_str = hexstr[ePDGSelection_info_tag_chars+len_chars:]
+	# Right pad to prevent index out of range - multiple of 6 bytes
+	content_str = rpad(content_str, len(content_str) + (12 - (len(content_str) % 12)))
+	s = ""
+	for rec_data in hexstr_to_Nbytearr(content_str, 6):
+		rec_info = dec_ePDGSelection(rec_data)
+		if rec_info['mcc'] == 0xFFF and rec_info['mnc'] == 0xFFF:
+			rec_str = "unused"
+		else:
+			rec_str = "MCC: %03d MNC: %03d ePDG Priority: %s ePDG FQDN format: %s" % \
+					(rec_info['mcc'], rec_info['mnc'], rec_info['epdg_priority'], rec_info['epdg_fqdn_format'])
+		s += "\t%s # %s\n" % (rec_data, rec_str)
+	return s
