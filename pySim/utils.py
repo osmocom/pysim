@@ -610,6 +610,22 @@ def init_reader(opts):
 
 	return sl
 
+def enc_ePDGSelection(hexstr, mcc, mnc, epdg_priority='0001', epdg_fqdn_format='00'):
+	"""
+	Encode ePDGSelection so it can be stored at EF.ePDGSelection or EF.ePDGSelectionEm.
+	See 3GPP TS 31.102 version 15.2.0 Release 15, section 4.2.104 and 4.2.106.
+
+	Default values:
+		- epdg_priority: '0001' - 1st Priority
+		- epdg_fqdn_format: '00' - Operator Identifier FQDN
+	"""
+
+	plmn1 = enc_plmn(mcc, mnc) + epdg_priority + epdg_fqdn_format
+	# TODO: Handle encoding of Length field for length more than 127 Bytes
+	content = '80' + ('%02x' % (len(plmn1)//2)) + plmn1
+	content = rpad(content, len(hexstr))
+	return content
+
 def dec_ePDGSelection(sixhexbytes):
 	"""
 	Decode ePDGSelection to get EF.ePDGSelection or EF.ePDGSelectionEm.
