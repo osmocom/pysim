@@ -30,7 +30,7 @@ import re
 import sys
 from pySim.ts_51_011 import EF, DF, EF_SST_map, EF_AD_mode_map
 from pySim.ts_31_102 import EF_UST_map, EF_USIM_ADF_map
-from pySim.ts_31_103 import EF_IST_map
+from pySim.ts_31_103 import EF_IST_map, EF_ISIM_ADF_map
 
 from pySim.commands import SimCardCommands
 from pySim.cards import card_detect, Card
@@ -293,6 +293,16 @@ if __name__ == '__main__':
 					print("ePDGSelection: Can't read, response code = %s" % (sw,))
 		except Exception as e:
 			print("ePDGSelection: Can't read file -- " + str(e))
+
+	# Select ISIM application by its AID
+	if '9000' == card.select_adf_by_aid(adf="isim"):
+		#EF.P-CSCF - P-CSCF Address
+		try:
+			if card.file_exists(EF_ISIM_ADF_map['PCSCF']):
+				res = card.read_pcscf()
+				print("P-CSCF:\n%s" % (len(res) and res or '\tNot available\n',))
+		except Exception as e:
+			print("P-CSCF: Can't read file -- " + str(e))
 
 	# Check whether we have th AID of ISIM, if so select it by its AID
 	# EF.IST - File Id in ADF ISIM : 6f07

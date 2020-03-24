@@ -25,6 +25,7 @@
 
 from pySim.ts_51_011 import EF, DF
 from pySim.ts_31_102 import EF_USIM_ADF_map
+from pySim.ts_31_103 import EF_ISIM_ADF_map
 from pySim.utils import *
 from smartcard.util import toBytes
 
@@ -312,6 +313,18 @@ class UsimCard(Card):
 class IsimCard(Card):
 	def __init__(self, ssc):
 		super(IsimCard, self).__init__(ssc)
+
+	def read_pcscf(self):
+		rec_cnt = self._scc.record_count(EF_ISIM_ADF_map['PCSCF'])
+		pcscf_recs = ""
+		for i in range(0, rec_cnt):
+			(res, sw) = self._scc.read_record(EF_ISIM_ADF_map['PCSCF'], i + 1)
+			if sw == '9000':
+				content = dec_addr_tlv(res)
+				pcscf_recs += "%s" % (len(content) and content or '\tNot available\n')
+			else:
+				pcscf_recs += "\tP-CSCF: Can't read, response code = %s\n" % (sw)
+		return pcscf_recs
 
 
 class _MagicSimBase(Card):

@@ -172,6 +172,16 @@ ePDGSelection:
 	ffffffffffff # unused
 	ffffffffffff # unused
 
+P-CSCF:
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+
 ISIM Service Table: 190200
 	Service 1 - P-CSCF address
 	Service 4 - GBA-based Local Key Establishment Mechanism
