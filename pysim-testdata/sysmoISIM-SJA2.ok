@@ -165,6 +165,12 @@ USIM Service Table: beff9f9de73e0408400170730000002e00000000
 ePDGId:
 	Not available
 
+ePDGSelection:
+	ffffffffffff # unused
+	ffffffffffff # unused
+	ffffffffffff # unused
+	ffffffffffff # unused
+
 ISIM Service Table: 190200
 	Service 1 - P-CSCF address
 	Service 4 - GBA-based Local Key Establishment Mechanism

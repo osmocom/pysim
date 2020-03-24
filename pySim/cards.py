@@ -277,6 +277,13 @@ class UsimCard(Card):
 						EF_USIM_ADF_map['ePDGId'], epdgid_tlv)
 		return sw
 
+	def read_ePDGSelection(self):
+		(res, sw) = self._scc.read_binary(EF_USIM_ADF_map['ePDGSelection'])
+		if sw == '9000':
+			return (format_ePDGSelection(res), sw)
+		else:
+			return (None, sw)
+
 	def read_ust(self):
 		(res, sw) = self._scc.read_binary(EF_USIM_ADF_map['UST'])
 		if sw == '9000':

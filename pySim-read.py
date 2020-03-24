@@ -36,6 +36,7 @@ from pySim.commands import SimCardCommands
 from pySim.cards import card_detect, Card
 from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn
 from pySim.utils import format_xplmn_w_act, dec_spn, dec_st, init_reader, dec_epdgid
+from pySim.utils import h2s, format_ePDGSelection
 
 def parse_options():
 
@@ -281,6 +282,17 @@ if __name__ == '__main__':
 					print("ePDGId: Can't read, response code = %s" % (sw,))
 		except Exception as e:
 			print("ePDGId: Can't read file -- " + str(e))
+
+		#EF.ePDGSelection - ePDG Selection Information
+		try:
+			if card.file_exists(EF_USIM_ADF_map['ePDGSelection']):
+				(res, sw) = card.read_ePDGSelection()
+				if sw == '9000':
+					print("ePDGSelection:\n%s" % (res,))
+				else:
+					print("ePDGSelection: Can't read, response code = %s" % (sw,))
+		except Exception as e:
+			print("ePDGSelection: Can't read file -- " + str(e))
 
 	# Check whether we have th AID of ISIM, if so select it by its AID
 	# EF.IST - File Id in ADF ISIM : 6f07
