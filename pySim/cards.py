@@ -302,6 +302,13 @@ class UsimCard(Card):
 		else:
 			return ([None, None], sw)
 
+	def update_ust(self, service, bit=1):
+		(res, sw) = self._scc.read_binary(EF_USIM_ADF_map['UST'])
+		if sw == '9000':
+			content = enc_st(res, service, bit)
+			(res, sw) = self._scc.update_binary(EF_USIM_ADF_map['UST'], content)
+		return sw
+
 
 class _MagicSimBase(Card):
 	"""
@@ -1215,6 +1222,17 @@ class SysmoISIMSJA2(UsimCard):
 				if sw != '9000':
 					print("Programming ePDGSelection failed with code %s"%sw)
 
+
+			# After successfully programming EF.ePDGId and EF.ePDGSelection,
+			# Set service 106 and 107 as available in EF.UST
+			if self.file_exists(EF_USIM_ADF_map['UST']):
+				if p.get('epdgSelection') and p.get('epdgid'):
+					sw = self.update_ust(106, 1)
+					if sw != '9000':
+						print("Programming UST failed with code %s"%sw)
+					sw = self.update_ust(107, 1)
+					if sw != '9000':
+						print("Programming UST failed with code %s"%sw)
 
 		return
 
