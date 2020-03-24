@@ -326,6 +326,16 @@ class IsimCard(Card):
 				pcscf_recs += "\tP-CSCF: Can't read, response code = %s\n" % (sw)
 		return pcscf_recs
 
+	def update_pcscf(self, pcscf):
+		if len(pcscf) > 0:
+			content = enc_addr_tlv(pcscf)
+		else:
+			# Just the tag value
+			content = '80'
+		rec_size_bytes = self._scc.record_size(EF_ISIM_ADF_map['PCSCF'])
+		data, sw = self._scc.update_record(EF_ISIM_ADF_map['PCSCF'], 1, rpad(content, rec_size_bytes*2))
+		return sw
+
 
 class _MagicSimBase(Card):
 	"""
@@ -1207,6 +1217,16 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 				self._scc.update_binary('af20', p['ki'], 1)
 			if p.get('opc'):
 				self._scc.update_binary('af20', p['opc'], 17)
+
+			# update EF.P-CSCF in ADF.ISIM
+			if self.file_exists(EF_ISIM_ADF_map['PCSCF']):
+				if p.get('pcscf'):
+					sw = self.update_pcscf(p['pcscf'])
+				else:
+					sw = self.update_pcscf("")
+				if sw != '9000':
+					print("Programming P-CSCF failed with code %s"%sw)
+
 
 		if '9000' == self.select_adf_by_aid():
 			# update EF-USIM_AUTH_KEY in ADF.USIM

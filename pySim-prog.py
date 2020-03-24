@@ -153,6 +153,9 @@ def parse_options():
 	parser.add_option("--epdgSelection", dest="epdgSelection",
 			help="Set PLMN for ePDG Selection Information. (Only Operator Identifier FQDN format supported)",
 		)
+	parser.add_option("--pcscf", dest="pcscf",
+			help="Set Proxy Call Session Control Function (P-CSCF) Address. (Only FQDN format supported)",
+		)
 	parser.add_option("--read-imsi", dest="read_imsi", action="store_true",
 			help="Read the IMSI from the CARD", default=False
 		)
@@ -460,6 +463,7 @@ def gen_parameters(opts):
 		'msisdn' : opts.msisdn,
 		'epdgid' : opts.epdgid,
 		'epdgSelection' : opts.epdgSelection,
+		'pcscf' : opts.pcscf,
 	}
 
 
