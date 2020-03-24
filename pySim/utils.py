@@ -460,6 +460,49 @@ def TLV_parser(bytelist):
 			bytelist = bytelist[ L+2 : ]
 	return ret
 
+def enc_st(st, service, state=1):
+	"""
+	Encodes the EF S/U/IST/EST and returns the updated Service Table
+
+	Parameters:
+		st - Current value of SIM/USIM/ISIM Service Table
+		service - Service Number to encode as activated/de-activated
+		state - 1 mean activate, 0 means de-activate
+
+	Returns:
+		s - Modified value of SIM/USIM/ISIM Service Table
+
+	Default values:
+		- state: 1 - Sets the particular Service bit to 1
+	"""
+	st_bytes = [st[i:i+2] for i in range(0, len(st), 2) ]
+
+	s = ""
+	# Check whether the requested service is present in each byte
+	for i in range(0, len(st_bytes)):
+		# Byte i contains info about Services num (8i+1) to num (8i+8)
+		if service in range((8*i) + 1, (8*i) + 9):
+			byte = int(st_bytes[i], 16)
+			# Services in each byte are in order MSB to LSB
+			# MSB - Service (8i+8)
+			# LSB - Service (8i+1)
+			mod_byte = 0x00
+			# Copy bit by bit contents of byte to mod_byte with modified bit
+			# for requested service
+			for j in range(1, 9):
+				mod_byte = mod_byte >> 1
+				if service == (8*i) + j:
+					mod_byte = state == 1 and mod_byte|0x80 or mod_byte&0x7f
+				else:
+					mod_byte = byte&0x01 == 0x01 and mod_byte|0x80 or mod_byte&0x7f
+				byte = byte >> 1
+
+			s += ('%02x' % (mod_byte))
+		else:
+			s += st_bytes[i]
+
+	return s
+
 def dec_epdgid(hexstr):
 	"""
 	Decode ePDG Id to get EF.ePDGId or EF.ePDGIdEm.
