@@ -128,6 +128,9 @@ def hexstr_to_fivebytearr(s):
 def hexstr_to_threebytearr(s):
 	return [s[i:i+6] for i in range(0, len(s), 6) ]
 
+def hexstr_to_Nbytearr(s, nbytes):
+	return [s[i:i+(nbytes*2)] for i in range(0, len(s), (nbytes*2)) ]
+
 # Accepts hex string representing three bytes
 def dec_mcc_from_plmn(plmn):
 	ia = h2i(plmn)
