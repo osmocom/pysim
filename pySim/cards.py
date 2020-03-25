@@ -276,7 +276,10 @@ class UsimCard(Card):
 	def update_epdgid(self, epdgid):
 		size = self._scc.binary_size(EF_USIM_ADF_map['ePDGId']) * 2
 		if len(epdgid) > 0:
-			epdgid_tlv = rpad(enc_addr_tlv(epdgid), size)
+			addr_type = get_addr_type(epdgid)
+			if addr_type == None:
+				raise ValueError("Unknown ePDG Id address type or invalid address provided")
+			epdgid_tlv = rpad(enc_addr_tlv(epdgid, ('%02x' % addr_type)), size)
 		else:
 			epdgid_tlv = rpad('ff', size)
 		data, sw = self._scc.update_binary(
