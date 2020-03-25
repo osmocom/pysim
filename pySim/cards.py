@@ -1272,6 +1272,7 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 
 			# After successfully programming EF.ePDGId and EF.ePDGSelection,
 			# Set service 106 and 107 as available in EF.UST
+			# Disable service 95, 99, 115 if ISIM application is present
 			if self.file_exists(EF_USIM_ADF_map['UST']):
 				if p.get('epdgSelection') and p.get('epdgid'):
 					sw = self.update_ust(106, 1)
@@ -1280,6 +1281,16 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 					sw = self.update_ust(107, 1)
 					if sw != '9000':
 						print("Programming UST failed with code %s"%sw)
+
+				sw = self.update_ust(95, 0)
+				if sw != '9000':
+					print("Programming UST failed with code %s"%sw)
+				sw = self.update_ust(99, 0)
+				if sw != '9000':
+					print("Programming UST failed with code %s"%sw)
+				sw = self.update_ust(115, 0)
+				if sw != '9000':
+					print("Programming UST failed with code %s"%sw)
 
 		return
 
