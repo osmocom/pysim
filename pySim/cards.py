@@ -28,6 +28,7 @@ from pySim.ts_31_102 import EF_USIM_ADF_map
 from pySim.ts_31_103 import EF_ISIM_ADF_map
 from pySim.utils import *
 from smartcard.util import toBytes
+from pytlv.TLV import *
 
 class Card(object):
 
@@ -345,6 +346,23 @@ class IsimCard(Card):
 			return (content, sw)
 		else:
 			return (None, sw)
+
+	def update_domain(self, domain=None, mcc=None, mnc=None):
+		hex_str = ""
+		if domain:
+			hex_str = s2h(domain)
+		elif mcc and mnc:
+			# MCC and MNC always has 3 digits in domain form
+			plmn_str = 'mnc' + lpad(mnc, 3, "0") + '.mcc' + lpad(mcc, 3, "0")
+			hex_str = s2h('ims.' + plmn_str + '.3gppnetwork.org')
+
+		# Build TLV
+		tlv = TLV(['80'])
+		content = tlv.build({'80': hex_str})
+
+		bin_size_bytes = self._scc.binary_size(EF_ISIM_ADF_map['DOMAIN'])
+		data, sw = self._scc.update_binary(EF_ISIM_ADF_map['DOMAIN'], rpad(content, bin_size_bytes*2))
+		return sw
 
 
 class _MagicSimBase(Card):
@@ -1237,6 +1255,16 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 				if sw != '9000':
 					print("Programming P-CSCF failed with code %s"%sw)
 
+
+			# update EF.DOMAIN in ADF.ISIM
+			if self.file_exists(EF_ISIM_ADF_map['DOMAIN']):
+				if p.get('ims_hdomain'):
+					sw = self.update_domain(domain=p['ims_hdomain'])
+				else:
+					sw = self.update_domain()
+
+				if sw != '9000':
+					print("Programming Home Network Domain Name failed with code %s"%sw)
 
 		if '9000' == self.select_adf_by_aid():
 			# update EF-USIM_AUTH_KEY in ADF.USIM
