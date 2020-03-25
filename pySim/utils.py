@@ -550,10 +550,19 @@ def enc_addr_tlv(addr, addr_type='00'):
 
 	s = ""
 
-	# TODO: Encoding of IPv4 and IPv6 address
-	if addr_type == '00':
+	# TODO: Encoding of IPv6 address
+	if addr_type == '00': #FQDN
 		hex_str = s2h(addr)
 		s += '80' + ('%02x' % ((len(hex_str)//2)+1)) + '00' + hex_str
+	elif addr_type == '01': #IPv4
+		ipv4_list = addr.split('.')
+		ipv4_str = ""
+		for i in ipv4_list:
+			ipv4_str += ('%02x' % (int(i)))
+
+		# Unused bytes shall be set to 'ff'. i.e 4th Octet after Address Type is not used
+		# IPv4 Address is in octet 5 to octet 8 of the TLV data object
+		s += '80' + ('%02x' % ((len(ipv4_str)//2)+2)) + '01' + 'ff' + ipv4_str
 
 	return s
 
