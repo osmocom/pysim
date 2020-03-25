@@ -530,12 +530,18 @@ def dec_addr_tlv(hexstr):
 
 		# First byte in the value has the address type
 		addr_type = tlv[2][0]
-		# TODO: Support parsing of IPv4 and IPv6
+		# TODO: Support parsing of IPv6
 		# Address Type: 0x00 (FQDN), 0x01 (IPv4), 0x02 (IPv6), other (Reserved)
 		if addr_type == 0x00: #FQDN
 			# Skip address tye byte i.e. first byte in value list
 			content = tlv[2][1:]
 			s += "\t%s # %s\n" % (i2h(content), i2s(content))
+		elif addr_type == 0x01: #IPv4
+			# Skip address tye byte i.e. first byte in value list
+			# Skip the unused byte in Octect 4 after address type byte as per 3GPP TS 31.102
+			ipv4 = tlv[2][2:]
+			content = '.'.join(str(x) for x in ipv4)
+			s += "\t%s # %s\n" % (i2h(ipv4), content)
 
 	return s
 
