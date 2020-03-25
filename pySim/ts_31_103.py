@@ -42,7 +42,8 @@ EF_IST_map = {
 	16: 'URI support for SMS-PP DOWNLOAD as defined in 3GPP TS 31.111 [31]',
 	17: 'From Preferred',
 	18: 'IMS configuration data',
-	19: 'XCAP Configuration Data'
+	19: 'XCAP Configuration Data',
+	20: 'WebRTC URI',
 }
 
 EF_ISIM_ADF_map = {
