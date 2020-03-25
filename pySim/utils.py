@@ -685,3 +685,61 @@ def format_ePDGSelection(hexstr):
 					(rec_info['mcc'], rec_info['mnc'], rec_info['epdg_priority'], rec_info['epdg_fqdn_format'])
 		s += "\t%s # %s\n" % (rec_data, rec_str)
 	return s
+
+def get_addr_type(addr):
+	"""
+	Validates the given address and returns it's type (FQDN or IPv4 or IPv6)
+	Return: 0x00 (FQDN), 0x01 (IPv4), 0x02 (IPv6), None (Bad address argument given)
+
+	TODO: Handle IPv6
+	"""
+
+	# Empty address string
+	if not len(addr):
+		return None
+
+	import sys
+	# Handle python3 and python2 - unicode
+	if sys.version_info[0] < 3:
+		addr_str = unicode(addr)
+	else:
+		addr_str = addr
+
+	addr_list = addr.split('.')
+
+	# Check for IPv4/IPv6
+	try:
+		import ipaddress
+		# Throws ValueError if addr is not correct
+		ipa = ipaddress.ip_address(addr_str)
+
+		if ipa.version == 4:
+			return 0x01
+		elif ipa.version == 6:
+			return 0x02
+	except Exception as e:
+		invalid_ipv4 = True
+		for i in addr_list:
+			# Invalid IPv4 may qualify for a valid FQDN, so make check here
+			# e.g. 172.24.15.300
+			import re
+			if not re.match('^[0-9_]+$', i):
+				invalid_ipv4 = False
+				break
+
+		if invalid_ipv4:
+			return None
+
+	fqdn_flag = True
+	for i in addr_list:
+		# Only Alpha-numeric characters and hyphen - RFC 1035
+		import re
+		if not re.match("^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)?$", i):
+			fqdn_flag = False
+			break
+
+	# FQDN
+	if fqdn_flag:
+		return 0x00
+
+	return None
