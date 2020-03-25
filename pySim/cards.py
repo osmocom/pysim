@@ -274,7 +274,11 @@ class UsimCard(Card):
 			return (None, sw)
 
 	def update_epdgid(self, epdgid):
-		epdgid_tlv = enc_addr_tlv(epdgid)
+		size = self._scc.binary_size(EF_USIM_ADF_map['ePDGId']) * 2
+		if len(epdgid) > 0:
+			epdgid_tlv = rpad(enc_addr_tlv(epdgid), size)
+		else:
+			epdgid_tlv = rpad('ff', size)
 		data, sw = self._scc.update_binary(
 						EF_USIM_ADF_map['ePDGId'], epdgid_tlv)
 		return sw
@@ -1284,8 +1288,10 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 			if self.file_exists(EF_USIM_ADF_map['ePDGId']):
 				if p.get('epdgid'):
 					sw = self.update_epdgid(p['epdgid'])
-					if sw != '9000':
-						print("Programming ePDGId failed with code %s"%sw)
+				else:
+					sw = self.update_epdgid("")
+				if sw != '9000':
+					print("Programming ePDGId failed with code %s"%sw)
 
 			# update EF.ePDGSelection in ADF.USIM
 			if self.file_exists(EF_USIM_ADF_map['ePDGSelection']):
