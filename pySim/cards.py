@@ -336,6 +336,16 @@ class IsimCard(Card):
 		data, sw = self._scc.update_record(EF_ISIM_ADF_map['PCSCF'], 1, rpad(content, rec_size_bytes*2))
 		return sw
 
+	def read_domain(self):
+		(res, sw) = self._scc.read_binary(EF_ISIM_ADF_map['DOMAIN'])
+		if sw == '9000':
+			# Skip the inital tag value ('80') byte and get length of contents
+			length = int(res[2:4], 16)
+			content = h2s(res[4:4+(length*2)])
+			return (content, sw)
+		else:
+			return (None, sw)
+
 
 class _MagicSimBase(Card):
 	"""

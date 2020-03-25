@@ -304,6 +304,17 @@ if __name__ == '__main__':
 		except Exception as e:
 			print("P-CSCF: Can't read file -- " + str(e))
 
+		# EF.DOMAIN - Home Network Domain Name e.g. ims.mncXXX.mccXXX.3gppnetwork.org
+		try:
+			if card.file_exists(EF_ISIM_ADF_map['DOMAIN']):
+				(res, sw) = card.read_domain()
+				if sw == '9000':
+					print("Home Network Domain Name: %s" % (len(res) and res or 'Not available',))
+				else:
+					print("Home Network Domain Name: Can't read, response code = %s" % (sw,))
+		except Exception as e:
+			print("Home Network Domain Name: Can't read file -- " + str(e))
+
 	# Check whether we have th AID of ISIM, if so select it by its AID
 	# EF.IST - File Id in ADF ISIM : 6f07
 	if '9000' == card.select_adf_by_aid(adf="isim"):
