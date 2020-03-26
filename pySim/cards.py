@@ -411,6 +411,19 @@ class IsimCard(Card):
 				impu_recs += "IMS public user identity: Can't read, response code = %s\n" % (sw)
 		return impu_recs
 
+	def update_impu(self, impu=None):
+		hex_str = ""
+		if impu:
+			hex_str = s2h(impu)
+		# Build TLV
+		tlv = TLV(['80'])
+		content = tlv.build({'80': hex_str})
+
+		rec_size_bytes = self._scc.record_size(EF_ISIM_ADF_map['IMPU'])
+		impu_tlv = rpad(content, rec_size_bytes*2)
+		data, sw = self._scc.update_record(EF_ISIM_ADF_map['IMPU'], 1, impu_tlv)
+		return sw
+
 
 class _MagicSimBase(Card):
 	"""
@@ -1322,6 +1335,17 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 					sw = self.update_impi()
 				if sw != '9000':
 					print("Programming IMPI failed with code %s"%sw)
+
+			# update EF.IMPU in ADF.ISIM
+			# TODO: Validate IMPU input
+			# Support multiple IMPU if there is enough space
+			if self.file_exists(EF_ISIM_ADF_map['IMPU']):
+				if p.get('impu'):
+					sw = self.update_impu(p['impu'])
+				else:
+					sw = self.update_impu()
+				if sw != '9000':
+					print("Programming IMPU failed with code %s"%sw)
 
 		if '9000' == self.select_adf_by_aid():
 			# update EF-USIM_AUTH_KEY in ADF.USIM
