@@ -326,6 +326,14 @@ if __name__ == '__main__':
 		except Exception as e:
 			print("IMS private user identity: Can't read file -- " + str(e))
 
+		# EF.IMPU - IMS public user identity
+		try:
+			if card.file_exists(EF_ISIM_ADF_map['IMPU']):
+				res = card.read_impu()
+				print("IMS public user identity:\n%s" % (len(res) and res or '\tNot available\n',))
+		except Exception as e:
+			print("IMS public user identity: Can't read file -- " + str(e))
+
 	# Check whether we have th AID of ISIM, if so select it by its AID
 	# EF.IST - File Id in ADF ISIM : 6f07
 	if '9000' == card.select_adf_by_aid(adf="isim"):

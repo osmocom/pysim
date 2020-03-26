@@ -385,6 +385,20 @@ class IsimCard(Card):
 		else:
 			return (None, sw)
 
+	def read_impu(self):
+		rec_cnt = self._scc.record_count(EF_ISIM_ADF_map['IMPU'])
+		impu_recs = ""
+		for i in range(0, rec_cnt):
+			(res, sw) = self._scc.read_record(EF_ISIM_ADF_map['IMPU'], i + 1)
+			if sw == '9000':
+				# Skip the inital tag value ('80') byte and get length of contents
+				length = int(res[2:4], 16)
+				content = h2s(res[4:4+(length*2)])
+				impu_recs += "\t%s\n" % (len(content) and content or 'Not available')
+			else:
+				impu_recs += "IMS public user identity: Can't read, response code = %s\n" % (sw)
+		return impu_recs
+
 
 class _MagicSimBase(Card):
 	"""
