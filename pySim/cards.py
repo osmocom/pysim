@@ -1298,6 +1298,12 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 			r = self._scc.select_file(['3f00', '7f10'])
 			data, sw = self._scc.update_record('6F40', 1, content, force_len=True)
 
+		# EF.ACC
+		if p.get('acc'):
+			sw = self.update_acc(p['acc'])
+			if sw != '9000':
+				print("Programming ACC failed with code %s"%sw)
+
 		# Populate AIDs
 		self.read_aids()
 
