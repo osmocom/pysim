@@ -53,7 +53,7 @@ HPLMNAcT:
 	ffffff0000 # unused
 
 ACC: 0200
-MSISDN: Not available
+MSISDN (NPI=1 ToN=3): 6766266
 Administrative data: 00000002
 	MS operation mode: normal operation
 	Ciphering Indicator: disabled

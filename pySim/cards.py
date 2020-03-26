@@ -1287,6 +1287,17 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 			r = self._scc.select_file(['3f00', '7f10'])
 			data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 104), force_len=True)
 
+		# EF.MSISDN
+		# TODO: Alpha Identifier (currently 'ff'O * 20)
+		# TODO: Capability/Configuration1 Record Identifier
+		# TODO: Extension1 Record Identifier
+		if p.get('msisdn') is not None:
+			msisdn = enc_msisdn(p['msisdn'])
+			content = 'ff' * 20 + msisdn + 'ff' * 2
+
+			r = self._scc.select_file(['3f00', '7f10'])
+			data, sw = self._scc.update_record('6F40', 1, content, force_len=True)
+
 		# Populate AIDs
 		self.read_aids()
 
