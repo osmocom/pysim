@@ -385,6 +385,18 @@ class IsimCard(Card):
 		else:
 			return (None, sw)
 
+	def update_impi(self, impi=None):
+		hex_str = ""
+		if impi:
+			hex_str = s2h(impi)
+		# Build TLV
+		tlv = TLV(['80'])
+		content = tlv.build({'80': hex_str})
+
+		bin_size_bytes = self._scc.binary_size(EF_ISIM_ADF_map['IMPI'])
+		data, sw = self._scc.update_binary(EF_ISIM_ADF_map['IMPI'], rpad(content, bin_size_bytes*2))
+		return sw
+
 	def read_impu(self):
 		rec_cnt = self._scc.record_count(EF_ISIM_ADF_map['IMPU'])
 		impu_recs = ""
@@ -1300,6 +1312,16 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 
 				if sw != '9000':
 					print("Programming Home Network Domain Name failed with code %s"%sw)
+
+			# update EF.IMPI in ADF.ISIM
+			# TODO: Validate IMPI input
+			if self.file_exists(EF_ISIM_ADF_map['IMPI']):
+				if p.get('impi'):
+					sw = self.update_impi(p['impi'])
+				else:
+					sw = self.update_impi()
+				if sw != '9000':
+					print("Programming IMPI failed with code %s"%sw)
 
 		if '9000' == self.select_adf_by_aid():
 			# update EF-USIM_AUTH_KEY in ADF.USIM

@@ -159,6 +159,9 @@ def parse_options():
 	parser.add_option("--ims-hdomain", dest="ims_hdomain",
 			help="Set IMS Home Network Domain Name in FQDN format",
 		)
+	parser.add_option("--impi", dest="impi",
+			help="Set IMS private user identity",
+		)
 	parser.add_option("--read-imsi", dest="read_imsi", action="store_true",
 			help="Read the IMSI from the CARD", default=False
 		)
@@ -468,6 +471,7 @@ def gen_parameters(opts):
 		'epdgSelection' : opts.epdgSelection,
 		'pcscf' : opts.pcscf,
 		'ims_hdomain': opts.ims_hdomain,
+		'impi' : opts.impi
 	}
 
 
