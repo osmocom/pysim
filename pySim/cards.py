@@ -149,6 +149,10 @@ class Card(object):
 		ef_path = ef in EF and EF[ef] or ef
 		return self._scc.read_binary(ef_path, length, offset)
 
+	def read_record(self, ef, rec_no):
+		ef_path = ef in EF and EF[ef] or ef
+		return self._scc.read_record(ef_path, rec_no)
+
 	def read_gid1(self):
 		(res, sw) = self._scc.read_binary(EF['GID1'])
 		if sw == '9000':
