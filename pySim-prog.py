@@ -324,6 +324,8 @@ def gen_parameters(opts):
 		imsi = opts.imsi
 		if not _isnum(imsi):
 			raise ValueError('IMSI must be digits only !')
+		if not imsi.startswith(plmn_digits):
+			raise ValueError('IMSI mismatches with PLMN !')
 
 	else:
 		if opts.num is None:
