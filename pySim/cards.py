@@ -145,6 +145,10 @@ class Card(object):
 		data, sw = self._scc.update_binary(EF['SPN'], rpad(content, 32))
 		return sw
 
+	def read_binary(self, ef, length=None, offset=0):
+		ef_path = ef in EF and EF[ef] or ef
+		return self._scc.read_binary(ef_path, length, offset)
+
 	def read_gid1(self):
 		(res, sw) = self._scc.read_binary(EF['GID1'])
 		if sw == '9000':
