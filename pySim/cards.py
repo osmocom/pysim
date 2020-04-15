@@ -23,7 +23,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pySim.ts_51_011 import EF, DF
+from pySim.ts_31_011 import EF, DF, EF_SST_map
 from pySim.utils import *
 from smartcard.util import toBytes
 
@@ -226,6 +226,30 @@ class Card(object):
 		except Exception as e:
 			print("Can't read AIDs from SIM -- %s" % (str(e),))
 
+	def read_sst_raw(self):
+		try:
+			(res, sw) = self._scc.read_binary(EF['SST'])
+			if sw == '9000':
+				return (res, sw)
+			else:
+				return (None, sw)
+		except Exception as e:
+			print("Can't read AIDs from SIM -- %s" % (str(e),))
+
+	def read_sst(self):
+		(res, sw) = self.read_sst_raw()
+		if sw == '9000':
+			res_mapped = []
+			supported_services=''
+			for i in range(len(res)/2):
+				bitmask ='{0:08b}'.format(int(res[2*i:2*i+2],16))
+				supported_services += bitmask[::-1]
+
+			res_mapped = [ "Service #{0:03d} - {1}".format(i,service) 
+							for i, service in EF_SST_map.items() if supported_services[i] == '1']
+			return (res_mapped, sw)
+		else:
+			return (None, sw)
 
 class _MagicSimBase(Card):
 	"""
