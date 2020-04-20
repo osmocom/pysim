@@ -326,28 +326,6 @@ def enc_msisdn(msisdn, npi=0x01, ton=0x03):
 
 	return ('%02x' % bcd_len) + ('%02x' % npi_ton) + bcd
 
-def parse_st(st):
-	"""
-	Parses the EF S/U/IST and returns available/supported services
-	"""
-	st_bytes = [st[i:i+2] for i in range(0, len(st), 2) ]
-	avail_srvc = []
-	# Get each byte and check for available services
-	for i in range(0, len(st_bytes)):
-		# Byte i contains info about Services num (8i+1) to num (8i+8)
-		byte = int(st_bytes[i], 16)
-		# Services in each byte are in order MSB to LSB
-		# MSB - Service (8i+8)
-		# LSB - Service (8i+1)
-		for j in range(1, 9):
-			if byte&0x01 == 0x01:
-				# Byte X contains info about Services num (8X-7) to num (8X)
-				# bit = 1: service available
-				# bit = 0: service not available
-				avail_srvc.append((8*i) + j)
-			byte = byte >> 1
-	return avail_srvc
-
 def dec_st(st, table="sim"):
 	"""
 	Parses the EF S/U/IST and prints the list of available services in EF S/U/IST

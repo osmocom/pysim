@@ -188,14 +188,6 @@ class Card(object):
 		else:
 			return (None, sw)
 
-	# Read SIM Service table
-	def read_sst(self):
-		(res, sw) = self._scc.read_binary(EF['SST'])
-		if sw == '9000':
-			return ((res, parse_st(res)), sw)
-		else:
-			return (None, sw)
-
 	# Read the (full) AID for either ISIM or USIM or ISIM application
 	def read_aid(self, isim = False):
 
