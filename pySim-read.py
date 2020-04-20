@@ -32,7 +32,7 @@ from pySim.ts_51_011 import EF, DF, EF_SST_map
 
 from pySim.commands import SimCardCommands
 from pySim.cards import card_detect, Card
-from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn, format_xplmn_w_act, dec_spn
+from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn, format_xplmn_w_act, dec_spn, dec_st
 
 
 def parse_options():
@@ -234,16 +234,11 @@ if __name__ == '__main__':
 		print("AD: Can't read, response code = %s" % (sw,))
 
 	# EF.SST
-	(res, sw) = card.read_sst()
+	(res, sw) = card.read_binary('SST')
 	if sw == '9000':
-		# (st_hex, avail_src_list) = res
-		# st_hex - Service Table in hex format
-		# avail_src_list - List of services available
-		print("SIM Service Table: %s" % res[0])
+		print("SIM Service Table: %s" % res)
 		# Print those which are available
-		for s in res[1]:
-			if s in EF_SST_map:
-				print('\tService %d - %s: %s' % (s, EF_SST_map[s], s in res[1]))
+		print("%s" % dec_st(res))
 	else:
 		print("SIM Service Table: Can't read, response code = %s" % (sw,))
 

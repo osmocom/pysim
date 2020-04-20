@@ -44,46 +44,47 @@ ACC: 0008
 MSISDN: Not available
 AD: 00000002
 SIM Service Table: ff3cc3ff030fff0f000fff03f0c0
-	Service 1 - CHV1 disable function: True
-	Service 2 - Abbreviated Dialling Numbers (ADN): True
-	Service 3 - Fixed Dialling Numbers (FDN): True
-	Service 4 - Short Message Storage (SMS): True
-	Service 5 - Advice of Charge (AoC): True
-	Service 6 - Capability Configuration Parameters (CCP): True
-	Service 7 - PLMN selector: True
-	Service 8 - RFU: True
-	Service 11 - Extension2: True
-	Service 12 - SMS Parameters: True
-	Service 13 - Last Number Dialled (LND): True
-	Service 14 - Cell Broadcast Message Identifier: True
-	Service 17 - Service Provider Name: True
-	Service 18 - Service Dialling Numbers (SDN): True
-	Service 23 - enhanced Multi-Level Precedence and Pre-emption Service: True
-	Service 24 - Automatic Answer for eMLPP: True
-	Service 25 - Data download via SMS-CB: True
-	Service 26 - Data download via SMS-PP: True
-	Service 27 - Menu selection: True
-	Service 28 - Call control: True
-	Service 29 - Proactive SIM: True
-	Service 30 - Cell Broadcast Message Identifier Ranges: True
-	Service 31 - Barred Dialling Numbers (BDN): True
-	Service 32 - Extension4: True
-	Service 33 - De-personalization Control Keys: True
-	Service 34 - Co-operative Network List: True
-	Service 41 - USSD string data object supported in Call Control: True
-	Service 42 - RUN AT COMMAND command: True
-	Service 43 - User controlled PLMN Selector with Access Technology: True
-	Service 44 - Operator controlled PLMN Selector with Access Technology: True
-	Service 49 - MExE: True
-	Service 50 - Reserved and shall be ignored: True
-	Service 51 - PLMN Network Name: True
-	Service 52 - Operator PLMN List: True
-	Service 53 - Mailbox Dialling Numbers: True
-	Service 54 - Message Waiting Indication Status: True
-	Service 55 - Call Forwarding Indication Status: True
-	Service 56 - Service Provider Display Information: True
-	Service 57 - Multimedia Messaging Service (MMS): True
-	Service 58 - Extension 8: True
-	Service 59 - MMS User Connectivity Parameters: True
+	Service 1 - CHV1 disable function
+	Service 2 - Abbreviated Dialling Numbers (ADN)
+	Service 3 - Fixed Dialling Numbers (FDN)
+	Service 4 - Short Message Storage (SMS)
+	Service 5 - Advice of Charge (AoC)
+	Service 6 - Capability Configuration Parameters (CCP)
+	Service 7 - PLMN selector
+	Service 8 - RFU
+	Service 11 - Extension2
+	Service 12 - SMS Parameters
+	Service 13 - Last Number Dialled (LND)
+	Service 14 - Cell Broadcast Message Identifier
+	Service 17 - Service Provider Name
+	Service 18 - Service Dialling Numbers (SDN)
+	Service 23 - enhanced Multi-Level Precedence and Pre-emption Service
+	Service 24 - Automatic Answer for eMLPP
+	Service 25 - Data download via SMS-CB
+	Service 26 - Data download via SMS-PP
+	Service 27 - Menu selection
+	Service 28 - Call control
+	Service 29 - Proactive SIM
+	Service 30 - Cell Broadcast Message Identifier Ranges
+	Service 31 - Barred Dialling Numbers (BDN)
+	Service 32 - Extension4
+	Service 33 - De-personalization Control Keys
+	Service 34 - Co-operative Network List
+	Service 41 - USSD string data object supported in Call Control
+	Service 42 - RUN AT COMMAND command
+	Service 43 - User controlled PLMN Selector with Access Technology
+	Service 44 - Operator controlled PLMN Selector with Access Technology
+	Service 49 - MExE
+	Service 50 - Reserved and shall be ignored
+	Service 51 - PLMN Network Name
+	Service 52 - Operator PLMN List
+	Service 53 - Mailbox Dialling Numbers
+	Service 54 - Message Waiting Indication Status
+	Service 55 - Call Forwarding Indication Status
+	Service 56 - Service Provider Display Information
+	Service 57 - Multimedia Messaging Service (MMS)
+	Service 58 - Extension 8
+	Service 59 - MMS User Connectivity Parameters
+
 Done !
 

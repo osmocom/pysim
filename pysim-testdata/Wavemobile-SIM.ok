@@ -51,44 +51,45 @@ ACC: abce
 MSISDN: Not available
 AD: 00ffff02
 SIM Service Table: ff33ff0f3c00ff0f000cf0c0f0030000
-	Service 1 - CHV1 disable function: True
-	Service 2 - Abbreviated Dialling Numbers (ADN): True
-	Service 3 - Fixed Dialling Numbers (FDN): True
-	Service 4 - Short Message Storage (SMS): True
-	Service 5 - Advice of Charge (AoC): True
-	Service 6 - Capability Configuration Parameters (CCP): True
-	Service 7 - PLMN selector: True
-	Service 8 - RFU: True
-	Service 9 - MSISDN: True
-	Service 10 - Extension1: True
-	Service 13 - Last Number Dialled (LND): True
-	Service 14 - Cell Broadcast Message Identifier: True
-	Service 17 - Service Provider Name: True
-	Service 18 - Service Dialling Numbers (SDN): True
-	Service 19 - Extension3: True
-	Service 20 - RFU: True
-	Service 21 - VGCS Group Identifier List (EFVGCS and EFVGCSS): True
-	Service 22 - VBS Group Identifier List (EFVBS and EFVBSS): True
-	Service 23 - enhanced Multi-Level Precedence and Pre-emption Service: True
-	Service 24 - Automatic Answer for eMLPP: True
-	Service 25 - Data download via SMS-CB: True
-	Service 26 - Data download via SMS-PP: True
-	Service 27 - Menu selection: True
-	Service 28 - Call control: True
-	Service 35 - Short Message Status Reports: True
-	Service 36 - Network's indication of alerting in the MS: True
-	Service 37 - Mobile Originated Short Message control by SIM: True
-	Service 38 - GPRS: True
-	Service 49 - MExE: True
-	Service 50 - Reserved and shall be ignored: True
-	Service 51 - PLMN Network Name: True
-	Service 52 - Operator PLMN List: True
-	Service 53 - Mailbox Dialling Numbers: True
-	Service 54 - Message Waiting Indication Status: True
-	Service 55 - Call Forwarding Indication Status: True
-	Service 56 - Service Provider Display Information: True
-	Service 57 - Multimedia Messaging Service (MMS): True
-	Service 58 - Extension 8: True
-	Service 59 - MMS User Connectivity Parameters: True
+	Service 1 - CHV1 disable function
+	Service 2 - Abbreviated Dialling Numbers (ADN)
+	Service 3 - Fixed Dialling Numbers (FDN)
+	Service 4 - Short Message Storage (SMS)
+	Service 5 - Advice of Charge (AoC)
+	Service 6 - Capability Configuration Parameters (CCP)
+	Service 7 - PLMN selector
+	Service 8 - RFU
+	Service 9 - MSISDN
+	Service 10 - Extension1
+	Service 13 - Last Number Dialled (LND)
+	Service 14 - Cell Broadcast Message Identifier
+	Service 17 - Service Provider Name
+	Service 18 - Service Dialling Numbers (SDN)
+	Service 19 - Extension3
+	Service 20 - RFU
+	Service 21 - VGCS Group Identifier List (EFVGCS and EFVGCSS)
+	Service 22 - VBS Group Identifier List (EFVBS and EFVBSS)
+	Service 23 - enhanced Multi-Level Precedence and Pre-emption Service
+	Service 24 - Automatic Answer for eMLPP
+	Service 25 - Data download via SMS-CB
+	Service 26 - Data download via SMS-PP
+	Service 27 - Menu selection
+	Service 28 - Call control
+	Service 35 - Short Message Status Reports
+	Service 36 - Network's indication of alerting in the MS
+	Service 37 - Mobile Originated Short Message control by SIM
+	Service 38 - GPRS
+	Service 49 - MExE
+	Service 50 - Reserved and shall be ignored
+	Service 51 - PLMN Network Name
+	Service 52 - Operator PLMN List
+	Service 53 - Mailbox Dialling Numbers
+	Service 54 - Message Waiting Indication Status
+	Service 55 - Call Forwarding Indication Status
+	Service 56 - Service Provider Display Information
+	Service 57 - Multimedia Messaging Service (MMS)
+	Service 58 - Extension 8
+	Service 59 - MMS User Connectivity Parameters
+
 Done !
 
