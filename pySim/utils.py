@@ -347,3 +347,34 @@ def parse_st(st):
 				avail_srvc.append((8*i) + j)
 			byte = byte >> 1
 	return avail_srvc
+
+def dec_st(st, table="sim"):
+	"""
+	Parses the EF S/U/IST and prints the list of available services in EF S/U/IST
+	"""
+
+	if table == "usim":
+		from pySim.ts_31_102 import EF_UST_map
+		lookup_map = EF_UST_map
+	else:
+		from pySim.ts_51_011 import EF_SST_map
+		lookup_map = EF_SST_map
+
+	st_bytes = [st[i:i+2] for i in range(0, len(st), 2) ]
+
+	avail_st = ""
+	# Get each byte and check for available services
+	for i in range(0, len(st_bytes)):
+		# Byte i contains info about Services num (8i+1) to num (8i+8)
+		byte = int(st_bytes[i], 16)
+		# Services in each byte are in order MSB to LSB
+		# MSB - Service (8i+8)
+		# LSB - Service (8i+1)
+		for j in range(1, 9):
+			if byte&0x01 == 0x01 and ((8*i) + j in lookup_map):
+				# Byte X contains info about Services num (8X-7) to num (8X)
+				# bit = 1: service available
+				# bit = 0: service not available
+				avail_st += '\tService %d - %s\n' % ((8*i) + j, lookup_map[(8*i) + j])
+			byte = byte >> 1
+	return avail_st
