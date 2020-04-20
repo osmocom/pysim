@@ -331,7 +331,10 @@ def dec_st(st, table="sim"):
 	Parses the EF S/U/IST and prints the list of available services in EF S/U/IST
 	"""
 
-	if table == "usim":
+	if table == "isim":
+		from pySim.ts_31_103 import EF_IST_map
+		lookup_map = EF_IST_map
+	elif table == "usim":
 		from pySim.ts_31_102 import EF_UST_map
 		lookup_map = EF_UST_map
 	else:
