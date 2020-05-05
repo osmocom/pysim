@@ -1107,6 +1107,12 @@ class SysmoISIMSJA2(Card):
 			if sw != '9000':
 				print("Programming OPLMNwAcT failed with code %s"%sw)
 
+		# EF.HPLMNwAcT
+		if p.get('mcc') and p.get('mnc'):
+			sw = self.update_hplmn_act(p['mcc'], p['mnc'])
+			if sw != '9000':
+				print("Programming HPLMNwAcT failed with code %s"%sw)
+
 		# EF.AD
 		if p.get('mcc') and p.get('mnc'):
 			sw = self.update_ad(p['mnc'])

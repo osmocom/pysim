@@ -1,4 +1,4 @@
-Using PC/SC reader (dev=0) interface
+Using PC/SC reader (dev=4) interface
 Reading ...
 Autodetected card type: sysmoISIM-SJA2
 ICCID: 8988211900000000004
@@ -39,17 +39,17 @@ OPLMNwAcT:
 	ffffff0000 # unused
 
 HPLMNAcT:
+	fff11fffff # MCC: 001 MNC: 001 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
 	ffffff0000 # unused
 	ffffff0000 # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
-	ffffffffff # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
 	ffffff0000 # unused
 
 ACC: 0001
