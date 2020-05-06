@@ -106,6 +106,11 @@ def parse_options():
 			help="Mobile Network Code [default: %default]",
 			default=55,
 		)
+	parser.add_option("--mnclen", dest="mnclen", type="choice",
+			help="Length of Mobile Network Code [default: %default]",
+			default=2,
+			choices=[2, 3],
+		)
 	parser.add_option("-m", "--smsc", dest="smsc",
 			help="SMSC number (Start with + for international no.) [default: '00 + country code + 5555']",
 		)
