@@ -485,6 +485,10 @@ def init_reader(opts):
 		print("Using Calypso-based (OsmocomBB) reader interface")
 		from pySim.transport.calypso import CalypsoSimLink
 		sl = CalypsoSimLink(sock_path=opts.osmocon_sock)
+	elif opts.modem_dev is not None:
+		print("Using modem for Generic SIM Access (3GPP TS 27.007)")
+		from pySim.transport.modem_atcmd import ModemATCommandLink
+		sl = ModemATCommandLink(device=opts.modem_dev, baudrate=opts.modem_baud)
 	else: # Serial reader is default
 		print("Using serial reader interface")
 		from pySim.transport.serial import SerialSimLink

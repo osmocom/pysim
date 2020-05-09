@@ -53,6 +53,14 @@ def parse_options():
 			help="Which PC/SC reader number for SIM access",
 			default=None,
 		)
+	parser.add_option("--modem-device", dest="modem_dev", metavar="DEV",
+			help="Serial port of modem for Generic SIM Access (3GPP TS 27.007)",
+			default=None,
+		)
+	parser.add_option("--modem-baud", dest="modem_baud", type="int", metavar="BAUD",
+			help="Baudrate used for modem's port [default: %default]",
+			default=115200,
+		)
 	parser.add_option("--osmocon", dest="osmocon_sock", metavar="PATH",
 			help="Socket path for Calypso (e.g. Motorola C1XX) based reader (via OsmocomBB)",
 			default=None,
