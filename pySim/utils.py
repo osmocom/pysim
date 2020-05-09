@@ -35,7 +35,8 @@ def i2h(s):
 	return ''.join(['%02x'%(x) for x in s])
 
 def h2s(s):
-	return ''.join([chr((int(x,16)<<4)+int(y,16)) for x,y in zip(s[0::2], s[1::2]) if not (x == 'f' and y == 'f') ])
+	return ''.join([chr((int(x,16)<<4)+int(y,16)) for x,y in zip(s[0::2], s[1::2])
+						      if int(x + y, 16) != 0xff])
 
 def s2h(s):
 	return b2h(s)
