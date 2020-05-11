@@ -439,6 +439,37 @@ def dec_epdgid(hexstr):
 
 	return s
 
+def sanitize_pin_adm(opts):
+	"""
+	The ADM pin can be supplied either in its hexadecimal form or as
+	ascii string. This function checks the supplied opts parameter and
+	returns the pin_adm as hex encoded string, regardles in which form
+	it was originally supplied by the user
+	"""
+
+	pin_adm = None
+
+	if opts.pin_adm is not None:
+		if len(opts.pin_adm) <= 8:
+			pin_adm = ''.join(['%02x'%(ord(x)) for x in opts.pin_adm])
+			pin_adm = rpad(pin_adm, 16)
+
+		else:
+			raise ValueError("PIN-ADM needs to be <=8 digits (ascii)")
+
+	if opts.pin_adm_hex is not None:
+		if len(opts.pin_adm_hex) == 16:
+			pin_adm = opts.pin_adm_hex
+			# Ensure that it's hex-encoded
+			try:
+				try_encode = h2b(pin_adm)
+			except ValueError:
+				raise ValueError("PIN-ADM needs to be hex encoded using this option")
+		else:
+			raise ValueError("PIN-ADM needs to be exactly 16 digits (hex encoded)")
+
+	return pin_adm
+
 def init_reader(opts):
 	"""
 	Init card reader driver

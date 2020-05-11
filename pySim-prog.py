@@ -419,27 +419,7 @@ def gen_parameters(opts):
 	else:
 		opc = ''.join(['%02x' % random.randrange(0,256) for i in range(16)])
 
-
-	pin_adm = None
-
-	if opts.pin_adm is not None:
-		if len(opts.pin_adm) <= 8:
-			pin_adm = ''.join(['%02x'%(ord(x)) for x in opts.pin_adm])
-			pin_adm = rpad(pin_adm, 16)
-
-		else:
-			raise ValueError("PIN-ADM needs to be <=8 digits (ascii)")
-
-	if opts.pin_adm_hex is not None:
-		if len(opts.pin_adm_hex) == 16:
-			pin_adm = opts.pin_adm_hex
-			# Ensure that it's hex-encoded
-			try:
-				try_encode = h2b(pin_adm)
-			except ValueError:
-				raise ValueError("PIN-ADM needs to be hex encoded using this option")
-		else:
-			raise ValueError("PIN-ADM needs to be exactly 16 digits (hex encoded)")
+	pin_adm = sanitize_pin_adm(opts)
 
 	# Return that
 	return {
