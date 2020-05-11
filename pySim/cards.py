@@ -148,8 +148,13 @@ class Card(object):
 		if mnclen > 3:
 			raise RuntimeError('unable to calculate proper mnclen')
 
-		data = self._scc.read_binary(EF['AD'], length=None, offset=0)
-		content = data[0][0:6] + "%02X" % mnclen
+		data, sw = self._scc.read_binary(EF['AD'], length=None, offset=0)
+
+		# Reset contents to EF.AD in case the file is uninintalized
+		if data.lower() == "ffffffff":
+			data = "00000000"
+
+		content = data[0:6] + "%02X" % mnclen
 		data, sw = self._scc.update_binary(EF['AD'], content)
 		return sw
 
