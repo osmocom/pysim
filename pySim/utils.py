@@ -85,6 +85,8 @@ def dec_imsi(ef):
 	l = int(ef[0:2], 16) * 2		# Length of the IMSI string
 	l = l - 1						# Encoded length byte includes oe nibble
 	swapped = swap_nibbles(ef[2:]).rstrip('f')
+	if len(swapped) < 1:
+		return None
 	oe = (int(swapped[0])>>3) & 1	# Odd (1) / Even (0)
 	if not oe:
 		# if even, only half of last byte was used
