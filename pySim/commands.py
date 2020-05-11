@@ -122,10 +122,18 @@ class SimCardCommands(object):
 		pdu = self.cla_byte + 'b0%04x%02x' % (offset, (min(256, length) & 0xff))
 		return self._tp.send_apdu(pdu)
 
-	def update_binary(self, ef, data, offset=0):
+	def update_binary(self, ef, data, offset=0, verify=False):
 		self.select_file(ef)
 		pdu = self.cla_byte + 'd6%04x%02x' % (offset, len(data) // 2) + data
-		return self._tp.send_apdu_checksw(pdu)
+		res = self._tp.send_apdu_checksw(pdu)
+		if verify:
+			self.verify_binary(ef, data, offset)
+		return res
+
+	def verify_binary(self, ef, data, offset=0):
+		res = self.read_binary(ef, len(data) // 2, offset)
+		if res[0].lower() != data.lower():
+			raise ValueError('Binary verification failed (expected %s, got %s)' % (data.lower(), res[0].lower()))
 
 	def read_record(self, ef, rec_no):
 		r = self.select_file(ef)
@@ -133,7 +141,7 @@ class SimCardCommands(object):
 		pdu = self.cla_byte + 'b2%02x04%02x' % (rec_no, rec_length)
 		return self._tp.send_apdu(pdu)
 
-	def update_record(self, ef, rec_no, data, force_len=False):
+	def update_record(self, ef, rec_no, data, force_len=False, verify=False):
 		r = self.select_file(ef)
 		if not force_len:
 			rec_length = self.__record_len(r)
@@ -142,7 +150,15 @@ class SimCardCommands(object):
 		else:
 			rec_length = len(data) // 2
 		pdu = (self.cla_byte + 'dc%02x04%02x' % (rec_no, rec_length)) + data
-		return self._tp.send_apdu_checksw(pdu)
+		res = self._tp.send_apdu_checksw(pdu)
+		if verify:
+			self.verify_record(ef, rec_no, data)
+		return res
+
+	def verify_record(self, ef, rec_no, data):
+		res = self.read_record(ef, rec_no)
+		if res[0].lower() != data.lower():
+			raise ValueError('Record verification failed (expected %s, got %s)' % (data.lower(), res[0].lower()))
 
 	def record_size(self, ef):
 		r = self.select_file(ef)
