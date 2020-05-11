@@ -359,3 +359,42 @@ def dec_st(st, table="sim"):
 				avail_st += '\tService %d - %s\n' % ((8*i) + j, lookup_map[(8*i) + j])
 			byte = byte >> 1
 	return avail_st
+
+def first_TLV_parser(bytelist):
+	'''
+	first_TLV_parser([0xAA, 0x02, 0xAB, 0xCD, 0xFF, 0x00]) -> (170, 2, [171, 205])
+
+	parses first TLV format record in a list of bytelist
+	returns a 3-Tuple: Tag, Length, Value
+	Value is a list of bytes
+	parsing of length is ETSI'style 101.220
+	'''
+	Tag = bytelist[0]
+	if bytelist[1] == 0xFF:
+		Len = bytelist[2]*256 + bytelist[3]
+		Val = bytelist[4:4+Len]
+	else:
+		Len = bytelist[1]
+		Val = bytelist[2:2+Len]
+	return (Tag, Len, Val)
+
+def TLV_parser(bytelist):
+	'''
+	TLV_parser([0xAA, ..., 0xFF]) -> [(T, L, [V]), (T, L, [V]), ...]
+
+	loops on the input list of bytes with the "first_TLV_parser()" function
+	returns a list of 3-Tuples
+	'''
+	ret = []
+	while len(bytelist) > 0:
+		T, L, V = first_TLV_parser(bytelist)
+		if T == 0xFF:
+			# padding bytes
+			break
+		ret.append( (T, L, V) )
+		# need to manage length of L
+		if L > 0xFE:
+			bytelist = bytelist[ L+4 : ]
+		else:
+			bytelist = bytelist[ L+2 : ]
+	return ret
