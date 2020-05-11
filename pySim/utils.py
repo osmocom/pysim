@@ -40,6 +40,10 @@ def h2s(s):
 def s2h(s):
 	return b2h(s)
 
+# List of bytes to string
+def i2s(s):
+	return ''.join([chr(x) for x in s])
+
 def swap_nibbles(s):
 	return ''.join([x+y for x,y in zip(s[1::2], s[0::2])])
 
