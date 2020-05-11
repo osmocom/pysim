@@ -149,7 +149,6 @@ class Card(object):
 			raise RuntimeError('unable to calculate proper mnclen')
 
 		data = self._scc.read_binary(EF['AD'], length=None, offset=0)
-		size = len(data[0]) // 2
 		content = data[0][0:6] + "%02X" % mnclen
 		data, sw = self._scc.update_binary(EF['AD'], content)
 		return sw
