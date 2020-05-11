@@ -152,6 +152,10 @@ class SimCardCommands(object):
 		r = self.select_file(ef)
 		return self.__len(r) // self.__record_len(r)
 
+	def binary_size(self, ef):
+		r = self.select_file(ef)
+		return self.__len(r)
+
 	def run_gsm(self, rand):
 		if len(rand) != 32:
 			raise ValueError('Invalid rand')
