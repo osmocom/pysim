@@ -102,7 +102,9 @@ def enc_iccid(iccid):
 
 def enc_plmn(mcc, mnc):
 	"""Converts integer MCC/MNC into 3 bytes for EF"""
-	return swap_nibbles(lpad('%d' % int(mcc), 3) + lpad('%d' % int(mnc), 3))
+	if len(mnc) == 2:
+		mnc = "F%s" % mnc
+	return swap_nibbles("%s%s" % (mcc, mnc))
 
 def dec_spn(ef):
 	byte1 = int(ef[0:2])

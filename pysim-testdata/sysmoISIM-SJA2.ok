@@ -9,9 +9,9 @@ SMSP: ffffffffffffffffffffffffffffffffffffffffffffffffe1ffffffffffffffffffffffff
 SPN: Not available
 Display HPLMN: False
 Display OPLMN: False
-PLMNsel: fff11fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+PLMNsel: 00f110ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 PLMNwAcT:
-	fff11fffff # MCC: 001 MNC: 001 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
+	00f110ffff # MCC: 001 MNC: 001 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
 	ffffff0000 # unused
 	ffffff0000 # unused
 	ffffff0000 # unused
@@ -25,7 +25,7 @@ PLMNwAcT:
 	ffffff0000 # unused
 
 OPLMNwAcT:
-	fff11fffff # MCC: 001 MNC: 001 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
+	00f110ffff # MCC: 001 MNC: 001 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
 	ffffff0000 # unused
 	ffffff0000 # unused
 	ffffff0000 # unused
@@ -39,7 +39,7 @@ OPLMNwAcT:
 	ffffff0000 # unused
 
 HPLMNAcT:
-	fff11fffff # MCC: 001 MNC: 001 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
+	00f110ffff # MCC: 001 MNC: 001 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
 	ffffff0000 # unused
 	ffffff0000 # unused
 	ffffff0000 # unused

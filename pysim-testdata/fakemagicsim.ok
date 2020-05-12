@@ -10,7 +10,7 @@ SMSP: ffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff
 SPN: Magic
 Display HPLMN: True
 Display OPLMN: False
-PLMNsel: fff11fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+PLMNsel: 00f110ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 PLMNwAcT: Can't read file -- SW match failed! Expected 9000 and got 9404.
 OPLMNwAcT: Can't read file -- SW match failed! Expected 9000 and got 9404.
 HPLMNAcT: Can't read file -- SW match failed! Expected 9000 and got 9404.

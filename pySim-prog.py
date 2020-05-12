@@ -98,13 +98,13 @@ def parse_options():
 			help="Country code [default: %default]",
 			default=1,
 		)
-	parser.add_option("-x", "--mcc", dest="mcc", type="int",
+	parser.add_option("-x", "--mcc", dest="mcc", type="string",
 			help="Mobile Country Code [default: %default]",
-			default=901,
+			default="901",
 		)
-	parser.add_option("-y", "--mnc", dest="mnc", type="int",
+	parser.add_option("-y", "--mnc", dest="mnc", type="string",
 			help="Mobile Network Code [default: %default]",
-			default=55,
+			default="55",
 		)
 	parser.add_option("--mnclen", dest="mnclen", type="choice",
 			help="Length of Mobile Network Code [default: %default]",
@@ -219,7 +219,7 @@ def _digits(secret, usage, len, num):
 	return d[0:len]
 
 def _mcc_mnc_digits(mcc, mnc):
-	return ('%03d%03d' if mnc > 100 else '%03d%02d') % (mcc, mnc)
+	return '%s%s' % (mcc, mnc)
 
 def _cc_digits(cc):
 	return ('%03d' if cc > 100 else '%02d') % cc
@@ -272,8 +272,17 @@ def gen_parameters(opts):
 	mcc = opts.mcc
 	mnc = opts.mnc
 
-	if not ((0 < mcc < 999) and (0 < mnc < 999)):
-		raise ValueError('mcc & mnc must be between 0 and 999')
+	if not mcc.isdigit() or not mnc.isdigit():
+		raise ValueError('mcc & mnc must only contain decimal digits')
+	if len(mcc) < 1 or len(mcc) > 3:
+		raise ValueError('mcc must be between 1 .. 3 digits')
+	if len(mnc) < 1 or len(mnc) > 3:
+		raise ValueError('mnc must be between 1 .. 3 digits')
+
+	# MCC always has 3 digits
+	mcc = lpad(mcc, 3, "0")
+	# MNC must be at least 2 digits
+	mnc = lpad(mnc, 2, "0")
 
 	# Digitize country code (2 or 3 digits)
 	cc_digits = _cc_digits(opts.country)
