@@ -37,6 +37,10 @@ class Card(object):
 	def reset(self):
 		self._scc.reset_card()
 
+	def erase(self):
+		print("warning: erasing is not supported for specified card type!")
+		return
+
 	def verify_adm(self, key):
 		'''
 		Authenticate with ADM key
@@ -529,8 +533,6 @@ class GrcardSim(Card):
 
 		# FIXME: EF.MSISDN
 
-	def erase(self):
-		return
 
 class SysmoSIMgr1(GrcardSim):
 	"""
@@ -574,9 +576,6 @@ class SysmoUSIMgr1(Card):
 			enc_imsi(p['imsi'])		#  9b  IMSI_len + id_type(9) + IMSI
 			)
 		data, sw = self._scc._tp.send_apdu_checksw("0099000033" + par)
-
-	def erase(self):
-		return
 
 
 class SysmoSIMgr2(Card):
@@ -653,8 +652,6 @@ class SysmoSIMgr2(Card):
 		if p.get('smsp'):
 			data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 80))
 
-	def erase(self):
-		return
 
 class SysmoUSIMSJS1(Card):
 	"""
@@ -758,9 +755,6 @@ class SysmoUSIMSJS1(Card):
 
 			r = self._scc.select_file(['3f00', '7f10'])
 			data, sw = self._scc.update_record('6F40', 1, data, force_len=True)
-
-	def erase(self):
-		return
 
 
 class FairwavesSIM(Card):
@@ -903,10 +897,6 @@ class FairwavesSIM(Card):
 			if sw != '9000':
 				print("Programming ACC failed with code %s"%sw)
 
-	def erase(self):
-		return
-
-
 class OpenCellsSim(Card):
 	"""
 	OpenCellsSim
@@ -1046,9 +1036,6 @@ class WavemobileSim(Card):
 
 		return None
 
-	def erase(self):
-		return
-
 
 class SysmoISIMSJA2(Card):
 	"""
@@ -1167,9 +1154,6 @@ class SysmoISIMSJA2(Card):
 			if p.get('opc'):
 				self._scc.update_binary('af20', p['opc'], 17)
 
-		return
-
-	def erase(self):
 		return
 
 
