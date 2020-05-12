@@ -248,6 +248,16 @@ class Card(object):
 
 		return None
 
+	# Erase the contents of a file
+	def erase_binary(self, ef):
+		len = self._scc.binary_size(ef)
+		self._scc.update_binary(ef, "ff" * len, offset=0, verify=True)
+
+	# Erase the contents of a single record
+	def erase_record(self, ef, rec_no):
+		len = self._scc.record_size(ef)
+		self._scc.update_record(ef, rec_no, "ff" * len, force_len=False, verify=True)
+
 
 class _MagicSimBase(Card):
 	"""
