@@ -1,4 +1,4 @@
-Using PC/SC reader (dev=0) interface
+Using PC/SC reader interface
 Reading ...
 Autodetected card type: sysmosim-gr1
 Can't read AIDs from SIM -- SW match failed! Expected 9000 and got 9404.

@@ -78,13 +78,7 @@ function check_card {
     stat ./$CARD_NAME.ok > /dev/null
     python $PYSIM_READ -p $TERMINAL > $TEMPFILE
     set +e
-    # Note: We ignore the first line of output in the diff because here
-    # pysim would print the device number of the reader and we do not
-    # want the test to fail just because the card is put into a different
-    # reader device.
-    tail -n +2 $CARD_NAME.ok > $CARD_NAME.ok.tmp
-    tail -n +2 $TEMPFILE > $CARD_NAME.chk.tmp
-    CARD_DIFF=$(diff $CARD_NAME.chk.tmp $CARD_NAME.ok.tmp)
+    CARD_DIFF=$(diff $TEMPFILE ./$CARD_NAME.ok)
     set -e
 
     if [ "$CARD_DIFF" != "" ]; then
@@ -104,7 +98,7 @@ function check_card {
     inc_card_list $CARD_NAME
 
     echo "Card contents match the test data -- success!"
-    rm *.tmp
+    rm $TEMPFILE
 }
 
 # Read out the card using pysim-read and store the result as .ok file. This

@@ -40,7 +40,7 @@ except ImportError:
 
 from pySim.commands import SimCardCommands
 from pySim.cards import _cards_classes, card_detect
-from pySim.utils import h2b, swap_nibbles, rpad, derive_milenage_opc, calculate_luhn, dec_iccid
+from pySim.utils import h2b, swap_nibbles, rpad, derive_milenage_opc, calculate_luhn, dec_iccid, init_reader
 from pySim.ts_51_011 import EF
 from pySim.card_handler import *
 from pySim.utils import *
@@ -688,21 +688,7 @@ if __name__ == '__main__':
 	opts = parse_options()
 
 	# Init card reader driver
-	if opts.pcsc_dev is not None:
-		print("Using PC/SC reader (dev=%d) interface"
-			% opts.pcsc_dev)
-		from pySim.transport.pcsc import PcscSimLink
-		sl = PcscSimLink(opts.pcsc_dev)
-	elif opts.osmocon_sock is not None:
-		print("Using Calypso-based (OsmocomBB, sock=%s) reader interface"
-			% opts.osmocon_sock)
-		from pySim.transport.calypso import CalypsoSimLink
-		sl = CalypsoSimLink(sock_path=opts.osmocon_sock)
-	else: # Serial reader is default
-		print("Using serial reader (port=%s, baudrate=%d) interface"
-			% (opts.device, opts.baudrate))
-		from pySim.transport.serial import SerialSimLink
-		sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
+	sl = init_reader(opts)
 
 	# Create command layer
 	scc = SimCardCommands(transport=sl)
