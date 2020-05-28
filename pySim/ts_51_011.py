@@ -48,6 +48,7 @@ EF_num = {
 # MF
 'ICCID': '2FE2',
 'ELP': '2F05',
+'DIR': '2F00',
 
 # DF_TELECOM
 'ADN': '6F3A',
@@ -164,6 +165,7 @@ DF = {
 EF = {
 'ICCID':  [MF_num, EF_num['ICCID']],
 'ELP':    [MF_num, EF_num['ELP']],
+'DIR':    [MF_num, EF_num['DIR']],
 
 'ADN':    DF['TELECOM']+[EF_num['ADN']],
 'FDN':    DF['TELECOM']+[EF_num['FDN']],

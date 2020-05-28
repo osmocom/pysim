@@ -29,7 +29,7 @@ import random
 import re
 import sys
 from pySim.ts_51_011 import EF, DF, EF_SST_map
-from pySim.ts_31_102 import EF_UST_map
+from pySim.ts_31_102 import EF_UST_map, EF_USIM_ADF_map
 from pySim.ts_31_103 import EF_IST_map
 
 from pySim.commands import SimCardCommands
@@ -242,7 +242,7 @@ if __name__ == '__main__':
 	# EF.UST - File Id in ADF USIM : 6f38
 	if '9000' == card.select_adf_by_aid():
 		# EF.UST
-		(res, sw) = card.read_binary('6f38')
+		(res, sw) = card.read_binary(EF_USIM_ADF_map['UST'])
 		if sw == '9000':
 			print("USIM Service Table: %s" % res)
 			# Print those which are available

@@ -225,9 +225,9 @@ class Card(object):
 		try:
 			# Find out how many records the EF.DIR has
 			# and store all the AIDs in the UICC
-			rec_cnt = self._scc.record_count(['3f00', '2f00'])
+			rec_cnt = self._scc.record_count(EF['DIR'])
 			for i in range(0, rec_cnt):
-				rec = self._scc.read_record(['3f00', '2f00'], i + 1)
+				rec = self._scc.read_record(EF['DIR'], i + 1)
 				if (rec[0][0:2], rec[0][4:6]) == ('61', '4f') and len(rec[0]) > 12 \
 				and rec[0][8:8 + int(rec[0][6:8], 16) * 2] not in self._aids:
 					self._aids.append(rec[0][8:8 + int(rec[0][6:8], 16) * 2])
