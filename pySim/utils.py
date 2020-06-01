@@ -462,6 +462,10 @@ def dec_epdgid(hexstr):
 		if tlv[0] != 0x80:
 			continue
 
+		# Empty field - Zero length
+		if tlv[1] == 0:
+			continue
+
 		# First byte in the value has the address type
 		addr_type = tlv[2][0]
 		# TODO: Support parsing of IPv4 and IPv6
