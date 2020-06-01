@@ -334,6 +334,14 @@ if __name__ == '__main__':
 		except Exception as e:
 			print("IMS public user identity: Can't read file -- " + str(e))
 
+		# EF.UICCIARI - UICC IARI
+		try:
+			if card.file_exists(EF_ISIM_ADF_map['UICCIARI']):
+				res = card.read_iari()
+				print("UICC IARI:\n%s" % (len(res) and res or '\tNot available\n',))
+		except Exception as e:
+			print("UICC IARI: Can't read file -- " + str(e))
+
 	# Check whether we have th AID of ISIM, if so select it by its AID
 	# EF.IST - File Id in ADF ISIM : 6f07
 	if '9000' == card.select_adf_by_aid(adf="isim"):
