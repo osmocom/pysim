@@ -137,6 +137,12 @@ EF_UST_map = {
 	111: 'ePDG configuration Information for Emergency Service configured',
 }
 
+LOCI_STATUS_map = {
+	0:	'updated',
+	1:	'not updated',
+	2:	'plmn not allowed',
+	3:	'locatation area not allowed'
+}
 EF_USIM_ADF_map = {
 	'LI': '6F05',
 	'ARR': '6F06',

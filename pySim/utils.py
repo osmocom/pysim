@@ -183,6 +183,36 @@ def format_xplmn_w_act(hexstr):
 		s += "\t%s # %s\n" % (rec_data, rec_str)
 	return s
 
+def dec_loci(hexstr):
+	res = {'tmsi': '',  'mcc': 0, 'mnc': 0, 'lac': '', 'status': 0}
+	res['tmsi'] = hexstr[:8]
+	res['mcc'] = dec_mcc_from_plmn(hexstr[8:14])
+	res['mnc'] = dec_mnc_from_plmn(hexstr[8:14])
+	res['lac'] = hexstr[14:18]
+	res['status'] = h2i(hexstr[20:22])
+	return res
+
+def dec_psloci(hexstr):
+	res = {'p-tmsi': '', 'p-tmsi-sig': '', 'mcc': 0, 'mnc': 0, 'lac': '', 'rac': '', 'status': 0}
+	res['p-tmsi'] = hexstr[:8]
+	res['p-tmsi-sig'] = hexstr[8:14]
+	res['mcc'] = dec_mcc_from_plmn(hexstr[14:20])
+	res['mnc'] = dec_mnc_from_plmn(hexstr[14:20])
+	res['lac'] = hexstr[20:24]
+	res['rac'] = hexstr[24:26]
+	res['status'] = h2i(hexstr[26:28])
+	return res
+
+def dec_epsloci(hexstr):
+	res = {'guti': '', 'mcc': 0, 'mnc': 0, 'tac': '', 'status': 0}
+	res['guti'] = hexstr[:24]
+	res['tai'] = hexstr[24:34]
+	res['mcc'] = dec_mcc_from_plmn(hexstr[24:30])
+	res['mnc'] = dec_mnc_from_plmn(hexstr[24:30])
+	res['tac'] = hexstr[30:34]
+	res['status'] = h2i(hexstr[34:36])
+	return res
+
 def derive_milenage_opc(ki_hex, op_hex):
 	"""
 	Run the milenage algorithm to calculate OPC from Ki and OP
