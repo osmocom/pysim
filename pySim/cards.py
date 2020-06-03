@@ -24,6 +24,7 @@
 #
 
 from pySim.ts_51_011 import EF, DF
+from pySim.ts_31_102 import EF_USIM_ADF_map
 from pySim.utils import *
 from smartcard.util import toBytes
 
@@ -40,6 +41,13 @@ class Card(object):
 	def erase(self):
 		print("warning: erasing is not supported for specified card type!")
 		return
+
+	def file_exists(self, fid):
+		res_arr = self._scc.try_select_file(fid)
+		for res in res_arr:
+		    if res[1] != '9000':
+			return False
+		return True
 
 	def verify_adm(self, key):
 		'''
@@ -261,6 +269,25 @@ class Card(object):
 	def erase_record(self, ef, rec_no):
 		len = self._scc.record_size(ef)
 		self._scc.update_record(ef, rec_no, "ff" * len, force_len=False, verify=True)
+
+class UsimCard(Card):
+	def __init__(self, ssc):
+		super(UsimCard, self).__init__(ssc)
+
+	def read_ehplmn(self):
+		(res, sw) = self._scc.read_binary(EF_USIM_ADF_map['EHPLMN'])
+		if sw == '9000':
+			return (format_xplmn(res), sw)
+		else:
+			return (None, sw)
+
+	def update_ehplmn(self, mcc, mnc):
+		data = self._scc.read_binary(EF_USIM_ADF_map['EHPLMN'], length=None, offset=0)
+		size = len(data[0]) // 2
+		ehplmn = enc_plmn(mcc, mnc)
+		data, sw = self._scc.update_binary(EF_USIM_ADF_map['EHPLMN'], ehplmn)
+		return sw
+
 
 
 class _MagicSimBase(Card):
@@ -552,7 +579,7 @@ class SysmoSIMgr1(GrcardSim):
 			return None
 		return None
 
-class SysmoUSIMgr1(Card):
+class SysmoUSIMgr1(UsimCard):
 	"""
 	sysmocom sysmoUSIM-GR1
 	"""
@@ -653,7 +680,7 @@ class SysmoSIMgr2(Card):
 			data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 80))
 
 
-class SysmoUSIMSJS1(Card):
+class SysmoUSIMSJS1(UsimCard):
 	"""
 	sysmocom sysmoUSIM-SJS1
 	"""
@@ -1037,7 +1064,7 @@ class WavemobileSim(Card):
 		return None
 
 
-class SysmoISIMSJA2(Card):
+class SysmoISIMSJA2(UsimCard):
 	"""
 	sysmocom sysmoISIM-SJA2
 	"""
@@ -1144,16 +1171,22 @@ class SysmoISIMSJA2(Card):
 			if p.get('opc'):
 				self._scc.update_binary('af20', p['opc'], 17)
 
-		# update EF-USIM_AUTH_KEY in ADF.USIM
 		self._scc.select_file(['3f00'])
 		aid = self.read_aid()
 		if (aid):
+			# update EF-USIM_AUTH_KEY in ADF.USIM
 			self._scc.select_adf(aid)
 			if p.get('ki'):
 				self._scc.update_binary('af20', p['ki'], 1)
 			if p.get('opc'):
 				self._scc.update_binary('af20', p['opc'], 17)
 
+			# update EF.EHPLMN in ADF.USIM
+                        if self.file_exists(EF_USIM_ADF_map['EHPLMN']):
+				if p.get('mcc') and p.get('mnc'):
+					sw = self.update_ehplmn(p['mcc'], p['mnc'])
+					if sw != '9000':
+						print("Programming EHPLMN failed with code %s"%sw)
 		return
 
 

@@ -125,6 +125,9 @@ def enc_spn(name, hplmn_disp=False, oplmn_disp=False):
 def hexstr_to_fivebytearr(s):
 	return [s[i:i+10] for i in range(0, len(s), 10) ]
 
+def hexstr_to_threebytearr(s):
+	return [s[i:i+6] for i in range(0, len(s), 6) ]
+
 # Accepts hex string representing three bytes
 def dec_mcc_from_plmn(plmn):
 	ia = h2i(plmn)
@@ -212,6 +215,25 @@ def dec_epsloci(hexstr):
 	res['tac'] = hexstr[30:34]
 	res['status'] = h2i(hexstr[34:36])
 	return res
+
+def dec_xplmn(threehexbytes):
+	res = {'mcc': 0, 'mnc': 0, 'act': []}
+	plmn_chars = 6
+	plmn_str = threehexbytes[:plmn_chars]				# first three bytes (six ascii hex chars)
+	res['mcc'] = dec_mcc_from_plmn(plmn_str)
+	res['mnc'] = dec_mnc_from_plmn(plmn_str)
+	return res
+
+def format_xplmn(hexstr):
+	s = ""
+	for rec_data in hexstr_to_threebytearr(hexstr):
+		rec_info = dec_xplmn(rec_data)
+		if rec_info['mcc'] == 0xFFF and rec_info['mnc'] == 0xFFF:
+			rec_str = "unused"
+		else:
+			rec_str = "MCC: %03d MNC: %03d" % (rec_info['mcc'], rec_info['mnc'])
+		s += "\t%s # %s\n" % (rec_data, rec_str)
+	return s
 
 def derive_milenage_opc(ki_hex, op_hex):
 	"""

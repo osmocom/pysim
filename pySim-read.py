@@ -241,6 +241,13 @@ if __name__ == '__main__':
 	# Check whether we have th AID of USIM, if so select it by its AID
 	# EF.UST - File Id in ADF USIM : 6f38
 	if '9000' == card.select_adf_by_aid():
+		# EF.EHPLMN
+		if card.file_exists(EF_USIM_ADF_map['EHPLMN']):
+			(res, sw) = card.read_ehplmn()
+			if sw == '9000':
+				print("EHPLMN:\n%s" % (res))
+			else:
+				print("EHPLMN: Can't read, response code = %s" % (sw,))
 		# EF.UST
 		(res, sw) = card.read_binary(EF_USIM_ADF_map['UST'])
 		if sw == '9000':

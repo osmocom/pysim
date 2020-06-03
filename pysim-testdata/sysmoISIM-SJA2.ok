@@ -100,6 +100,12 @@ SIM Service Table: ff33ffff3f003f0f300cf0c3f00000
 	Service 58 - Extension 8
 	Service 59 - MMS User Connectivity Parameters
 
+EHPLMN:
+        00f110 # MCC: 001 MNC: 001
+        ffffff # unused
+        ffffff # unused
+        ffffff # unused
+
 USIM Service Table: beff9f9de73e0408400170730000002e00000000
 	Service 2 - Fixed Dialling Numbers (FDN)
 	Service 3 - Extension 2

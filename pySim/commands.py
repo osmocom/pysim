@@ -100,6 +100,17 @@ class SimCardCommands(object):
 	def sel_ctrl(self, value):
 		self._sel_ctrl = value
 
+	def try_select_file(self, dir_list):
+		rv = []
+		if type(dir_list) is not list:
+			dir_list = [dir_list]
+		for i in dir_list:
+			data, sw = self._tp.send_apdu(self.cla_byte + "a4" + self.sel_ctrl + "02" + i)
+			rv.append((data, sw))
+			if sw != '9000':
+				return rv
+		return rv
+
 	def select_file(self, dir_list):
 		rv = []
 		if type(dir_list) is not list:
