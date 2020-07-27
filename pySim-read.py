@@ -28,7 +28,7 @@ import os
 import random
 import re
 import sys
-from pySim.ts_51_011 import EF, DF, EF_SST_map
+from pySim.ts_51_011 import EF, DF, EF_SST_map, EF_AD_mode_map
 from pySim.ts_31_102 import EF_UST_map, EF_USIM_ADF_map
 from pySim.ts_31_103 import EF_IST_map
 
@@ -225,7 +225,15 @@ if __name__ == '__main__':
 	# EF.AD
 	(res, sw) = card.read_binary('AD')
 	if sw == '9000':
-		print("AD: %s" % (res,))
+		print("Administrative data: %s" % (res,))
+		if res[:2] in EF_AD_mode_map:
+			print("\tMS operation mode: %s" % (EF_AD_mode_map[res[:2]],))
+		else:
+			print("\tMS operation mode: (unknown 0x%s)" % (res[:2],))
+		if int(res[4:6], 16) & 0x01:
+			print("\tCiphering Indicator: enabled")
+		else:
+			print("\tCiphering Indicator: disabled")
 	else:
 		print("AD: Can't read, response code = %s" % (sw,))
 

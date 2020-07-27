@@ -16,7 +16,9 @@ OPLMNwAcT: Can't read file -- SW match failed! Expected 9000 and got 9404.
 HPLMNAcT: Can't read file -- SW match failed! Expected 9000 and got 9404.
 ACC: 0008
 MSISDN: Not available
-AD: 000000
+Administrative data: 000000
+	MS operation mode: normal operation
+	Ciphering Indicator: disabled
 SIM Service Table: ff3fff0f0f0000030000
 	Service 1 - CHV1 disable function
 	Service 2 - Abbreviated Dialling Numbers (ADN)

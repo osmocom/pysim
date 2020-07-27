@@ -314,3 +314,13 @@ EF_SST_map = {
 	58: 'Extension 8',
 	59: 'MMS User Connectivity Parameters',
 }
+
+# 10.3.18 "EF.AD (Administrative data) "
+EF_AD_mode_map = {
+	'00' : 'normal operation',
+	'80' : 'type approval operations',
+	'01' : 'normal operation + specific facilities',
+	'81' : 'type approval operations + specific facilities',
+	'02' : 'maintenance (off line)',
+	'04' : 'cell test operation',
+}

@@ -54,7 +54,9 @@ HPLMNAcT:
 
 ACC: 0200
 MSISDN: Not available
-AD: 00000002
+Administrative data: 00000002
+	MS operation mode: normal operation
+	Ciphering Indicator: disabled
 SIM Service Table: ff33ffff3f003f0f300cf0c3f00000
 	Service 1 - CHV1 disable function
 	Service 2 - Abbreviated Dialling Numbers (ADN)
