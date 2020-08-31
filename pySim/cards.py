@@ -45,8 +45,8 @@ class Card(object):
 	def file_exists(self, fid):
 		res_arr = self._scc.try_select_file(fid)
 		for res in res_arr:
-		    if res[1] != '9000':
-			return False
+			if res[1] != '9000':
+				return False
 		return True
 
 	def verify_adm(self, key):
@@ -1182,7 +1182,7 @@ class SysmoISIMSJA2(UsimCard):
 				self._scc.update_binary('af20', p['opc'], 17)
 
 			# update EF.EHPLMN in ADF.USIM
-                        if self.file_exists(EF_USIM_ADF_map['EHPLMN']):
+			if self.file_exists(EF_USIM_ADF_map['EHPLMN']):
 				if p.get('mcc') and p.get('mnc'):
 					sw = self.update_ehplmn(p['mcc'], p['mnc'])
 					if sw != '9000':
