@@ -1,7 +1,7 @@
 Using PC/SC reader interface
 Reading ...
 Autodetected card type: sysmoISIM-SJA2
-ICCID: 8988211900000000004
+ICCID: 8988211900000000025
 IMSI: 001010000000102
 GID1: ffffffffffffffffffff
 GID2: ffffffffffffffffffff
@@ -52,8 +52,8 @@ HPLMNAcT:
 	ffffff0000 # unused
 	ffffff0000 # unused
 
-ACC: 0001
-MSISDN (NPI=1 ToN=1): +1234
+ACC: 0200
+MSISDN: Not available
 AD: 00000002
 SIM Service Table: ff33ffff3f003f0f300cf0c3f00000
 	Service 1 - CHV1 disable function
@@ -101,10 +101,10 @@ SIM Service Table: ff33ffff3f003f0f300cf0c3f00000
 	Service 59 - MMS User Connectivity Parameters
 
 EHPLMN:
-        00f110 # MCC: 001 MNC: 001
-        ffffff # unused
-        ffffff # unused
-        ffffff # unused
+	00f110 # MCC: 001 MNC: 001
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
 
 USIM Service Table: beff9f9de73e0408400170730000002e00000000
 	Service 2 - Fixed Dialling Numbers (FDN)
