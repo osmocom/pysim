@@ -204,30 +204,6 @@ class Card(object):
 		else:
 			return (None, sw)
 
-	# Read the (full) AID for either ISIM or USIM or ISIM application
-	def read_aid(self, isim = False):
-
-		# First (known) halves of the AID
-		aid_usim = "a0000000871002"
-		aid_isim = "a0000000871004"
-
-		# Select which one to look for
-		if isim:
-			aid = aid_isim
-		else:
-			aid = aid_usim
-
-		# Find out how many records the EF.DIR has, then go through
-		# all records and try to find the AID we are looking for
-		aid_record_count = self._scc.record_count(['2F00'])
-		for i in range(0, aid_record_count):
-			record = self._scc.read_record(['2F00'], i + 1)
-			if aid in record[0]:
-				aid_len = int(record[0][6:8], 16)
-				return record[0][8:8 + aid_len * 2]
-
-		return None
-
 	# Fetch all the AIDs present on UICC
 	def read_aids(self):
 		try:
