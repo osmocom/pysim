@@ -1165,20 +1165,14 @@ class SysmoISIMSJA2(UsimCard):
 			self._scc.update_binary('6f20', p['opc'], 17)
 
 		# update EF-USIM_AUTH_KEY in ADF.ISIM
-		self._scc.select_file(['3f00'])
-		aid = self.read_aid(isim = True)
-		if (aid):
-			self._scc.select_adf(aid)
+		if '9000' == self.select_adf_by_aid(adf="isim"):
 			if p.get('ki'):
 				self._scc.update_binary('af20', p['ki'], 1)
 			if p.get('opc'):
 				self._scc.update_binary('af20', p['opc'], 17)
 
-		self._scc.select_file(['3f00'])
-		aid = self.read_aid()
-		if (aid):
+		if '9000' == self.select_adf_by_aid():
 			# update EF-USIM_AUTH_KEY in ADF.USIM
-			self._scc.select_adf(aid)
 			if p.get('ki'):
 				self._scc.update_binary('af20', p['ki'], 1)
 			if p.get('opc'):
