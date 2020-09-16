@@ -160,6 +160,7 @@ LOCI_STATUS_map = {
 	2:	'plmn not allowed',
 	3:	'locatation area not allowed'
 }
+
 EF_USIM_ADF_map = {
 	'LI': '6F05',
 	'ARR': '6F06',
