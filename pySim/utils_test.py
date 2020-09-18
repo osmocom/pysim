@@ -12,7 +12,7 @@ class DecTestCase(unittest.TestCase):
 			"ffffff0002",
 			"ffffff0001",
 		]
-		self.assertEqual(utils.hexstr_to_fivebytearr(input_str), expected)
+		self.assertEqual(utils.hexstr_to_Nbytearr(input_str, 5), expected)
 
 	def testDecMCCfromPLMN(self):
 		self.assertEqual(utils.dec_mcc_from_plmn("92f501"), 295)

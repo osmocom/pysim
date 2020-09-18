@@ -180,7 +180,7 @@ def dec_xplmn_w_act(fivehexbytes):
 
 def format_xplmn_w_act(hexstr):
 	s = ""
-	for rec_data in hexstr_to_fivebytearr(hexstr):
+	for rec_data in hexstr_to_Nbytearr(hexstr, 5):
 		rec_info = dec_xplmn_w_act(rec_data)
 		if rec_info['mcc'] == 0xFFF and rec_info['mnc'] == 0xFFF:
 			rec_str = "unused"
@@ -229,7 +229,7 @@ def dec_xplmn(threehexbytes):
 
 def format_xplmn(hexstr):
 	s = ""
-	for rec_data in hexstr_to_threebytearr(hexstr):
+	for rec_data in hexstr_to_Nbytearr(hexstr, 3):
 		rec_info = dec_xplmn(rec_data)
 		if rec_info['mcc'] == 0xFFF and rec_info['mnc'] == 0xFFF:
 			rec_str = "unused"
