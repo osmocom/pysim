@@ -122,12 +122,6 @@ def enc_spn(name, hplmn_disp=False, oplmn_disp=False):
 	if oplmn_disp: byte1 = byte1|0x02
 	return i2h([byte1])+s2h(name)
 
-def hexstr_to_fivebytearr(s):
-	return [s[i:i+10] for i in range(0, len(s), 10) ]
-
-def hexstr_to_threebytearr(s):
-	return [s[i:i+6] for i in range(0, len(s), 6) ]
-
 def hexstr_to_Nbytearr(s, nbytes):
 	return [s[i:i+(nbytes*2)] for i in range(0, len(s), (nbytes*2)) ]
 
