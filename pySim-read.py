@@ -267,12 +267,12 @@ if __name__ == '__main__':
 
 		#EF.ePDGId - Home ePDG Identifier
 		try:
-			(res, sw) = card.read_binary(EF_USIM_ADF_map['ePDGId'])
-			if sw == '9000':
-				content = dec_epdgid(res)
-				print("ePDGId:\n%s" % (len(content) and content or '\tNot available\n',))
-			else:
-				print("ePDGId: Can't read, response code = %s" % (sw,))
+			if card.file_exists(EF_USIM_ADF_map['ePDGId']):
+				(res, sw) = card.read_epdgid()
+				if sw == '9000':
+					print("ePDGId:\n%s" % (len(res) and res or '\tNot available\n',))
+				else:
+					print("ePDGId: Can't read, response code = %s" % (sw,))
 		except Exception as e:
 			print("ePDGId: Can't read file -- " + str(e))
 

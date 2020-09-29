@@ -116,6 +116,5 @@ USIM Service Table: 01ea1ffc21360480010000
 	Service 64 - VGCS security
 	Service 65 - VBS security
 
-ePDGId: Can't read file -- SW match failed! Expected 9000 and got 6a82.
 Done !
 

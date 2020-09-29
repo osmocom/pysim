@@ -264,6 +264,13 @@ class UsimCard(Card):
 		data, sw = self._scc.update_binary(EF_USIM_ADF_map['EHPLMN'], ehplmn)
 		return sw
 
+	def read_epdgid(self):
+		(res, sw) = self._scc.read_binary(EF_USIM_ADF_map['ePDGId'])
+		if sw == '9000':
+			return (dec_epdgid(res), sw)
+		else:
+			return (None, sw)
+
 	def update_epdgid(self, epdgid):
 		epdgid_tlv = enc_epdgid(epdgid)
 		data, sw = self._scc.update_binary(

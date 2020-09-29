@@ -132,6 +132,5 @@ USIM Service Table: 9eff1b3c37fe5900000000
 	Service 53 - Extension 8
 	Service 55 - MMS User Connectivity Parameters
 
-ePDGId: Can't read file -- SW match failed! Expected 9000 and got 6a82.
 Done !
 
