@@ -264,6 +264,11 @@ class UsimCard(Card):
 		data, sw = self._scc.update_binary(EF_USIM_ADF_map['EHPLMN'], ehplmn)
 		return sw
 
+	def update_epdgid(self, epdgid):
+		epdgid_tlv = enc_epdgid(epdgid)
+		data, sw = self._scc.update_binary(
+						EF_USIM_ADF_map['ePDGId'], epdgid_tlv)
+		return sw
 
 
 class _MagicSimBase(Card):
@@ -1164,8 +1169,7 @@ class SysmoISIMSJA2(UsimCard):
 			# update EF.ePDGId in ADF.USIM
 			if self.file_exists(EF_USIM_ADF_map['ePDGId']):
 				if p.get('epdgid'):
-					sw = self._scc.update_binary(
-						EF_USIM_ADF_map['ePDGId'], enc_epdgid(p['epdgid']))
+					sw = self.update_epdgid(p['epdgid'])
 					if sw != '9000':
 						print("Programming ePDGId failed with code %s"%sw)
 
