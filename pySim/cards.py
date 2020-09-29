@@ -277,6 +277,14 @@ class UsimCard(Card):
 						EF_USIM_ADF_map['ePDGId'], epdgid_tlv)
 		return sw
 
+	def read_ust(self):
+		(res, sw) = self._scc.read_binary(EF_USIM_ADF_map['UST'])
+		if sw == '9000':
+			# Print those which are available
+			return ([res, dec_st(res, table="usim")], sw)
+		else:
+			return ([None, None], sw)
+
 
 class _MagicSimBase(Card):
 	"""
@@ -772,7 +780,7 @@ class SysmoUSIMSJS1(UsimCard):
 			data, sw = self._scc.update_record('6F40', 1, data, force_len=True)
 
 
-class FairwavesSIM(Card):
+class FairwavesSIM(UsimCard):
 	"""
 	FairwavesSIM
 
@@ -961,7 +969,7 @@ class OpenCellsSim(Card):
 		# write EF.IMSI
 		data, sw = self._scc.update_binary('6f07', enc_imsi(p['imsi']))
 
-class WavemobileSim(Card):
+class WavemobileSim(UsimCard):
 	"""
 	WavemobileSim
 

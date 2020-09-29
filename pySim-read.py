@@ -256,14 +256,20 @@ if __name__ == '__main__':
 				print("EHPLMN:\n%s" % (res))
 			else:
 				print("EHPLMN: Can't read, response code = %s" % (sw,))
+
 		# EF.UST
-		(res, sw) = card.read_binary(EF_USIM_ADF_map['UST'])
-		if sw == '9000':
-			print("USIM Service Table: %s" % res)
-			# Print those which are available
-			print("%s" % dec_st(res, table="usim"))
-		else:
-			print("USIM Service Table: Can't read, response code = %s" % (sw,))
+		try:
+			if card.file_exists(EF_USIM_ADF_map['UST']):
+				# res[0] - EF content of UST
+				# res[1] - Human readable format of services marked available in UST
+				(res, sw) = card.read_ust()
+				if sw == '9000':
+					print("USIM Service Table: %s" % res[0])
+					print("%s" % res[1])
+				else:
+					print("USIM Service Table: Can't read, response code = %s" % (sw,))
+		except Exception as e:
+			print("USIM Service Table: Can't read file -- " + str(e))
 
 		#EF.ePDGId - Home ePDG Identifier
 		try:
