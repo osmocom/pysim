@@ -249,7 +249,7 @@ def calculate_luhn(cc):
 	"""
 	Calculate Luhn checksum used in e.g. ICCID and IMEI
 	"""
-	num = map(int, str(cc))
+	num = list(map(int, str(cc)))
 	check_digit = 10 - sum(num[-2::-2] + [sum(divmod(d * 2, 10)) for d in num[::-2]]) % 10
 	return 0 if check_digit == 10 else check_digit
 

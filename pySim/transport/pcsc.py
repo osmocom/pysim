@@ -24,10 +24,10 @@
 
 from smartcard.CardConnection import CardConnection
 from smartcard.CardRequest import CardRequest
-from smartcard.Exceptions import NoCardException, CardRequestTimeoutException
+from smartcard.Exceptions import NoCardException, CardRequestTimeoutException, CardConnectionException
 from smartcard.System import readers
 
-from pySim.exceptions import NoCardError
+from pySim.exceptions import NoCardError, ProtocolError
 from pySim.transport import LinkBase
 from pySim.utils import h2i, i2h
 

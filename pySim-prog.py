@@ -647,13 +647,13 @@ def process_card(opts, first, card_handler):
 		if opts.read_iccid:
 			if opts.dry_run:
 				# Connect transport
-				card_handler.get(false)
+				card_handler.get(False)
 			(res,_) = scc.read_binary(['3f00', '2fe2'], length=10)
 			iccid = dec_iccid(res)
 		elif opts.read_imsi:
 			if opts.dry_run:
 				# Connect transport
-				card_handler.get(false)
+				card_handler.get(False)
 			(res,_) = scc.read_binary(EF['IMSI'])
 			imsi = swap_nibbles(res)[3:]
 		else:
