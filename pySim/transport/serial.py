@@ -117,7 +117,7 @@ class SerialSimLink(LinkBase):
 			rst_meth = rst_meth_map[self._rst_pin[1:]]
 			rst_val  = rst_val_map[self._rst_pin[0]]
 		except:
-			raise ValueError('Invalid reset pin %s' % self._rst_pin);
+			raise ValueError('Invalid reset pin %s' % self._rst_pin)
 
 		rst_meth(rst_val)
 		time.sleep(0.1)  # 100 ms
@@ -128,7 +128,7 @@ class SerialSimLink(LinkBase):
 		if not b:
 			return 0
 		if ord(b) != 0x3b:
-			return -1;
+			return -1
 		self._dbg_print("TS: 0x%x Direct convention" % ord(b))
 
 		while ord(b) == 0x3b:
@@ -222,7 +222,7 @@ class SerialSimLink(LinkBase):
 			if (to_recv == 2) and (b == '\x60'): # Ignore NIL if we have no RX data (hack ?)
 				continue
 			if not b:
-				break;
+				break
 			data += b
 
 		# Split datafield from SW

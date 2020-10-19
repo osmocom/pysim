@@ -260,7 +260,7 @@ def _dbi_binary_quote(s):
 			m = sum_
 			e = i
 			if m == 0:	# No overhead ? use this !
-				break;
+				break
 
 	# Generate output
 	out = []
@@ -303,7 +303,7 @@ def gen_parameters(opts):
 
 	if opts.name is not None:
 		if len(opts.name) > 16:
-			raise ValueError('Service Provider Name must max 16 characters!');
+			raise ValueError('Service Provider Name must max 16 characters!')
 
 	if opts.msisdn is not None:
 		msisdn = opts.msisdn
@@ -320,7 +320,7 @@ def gen_parameters(opts):
 	if opts.iccid is not None:
 		iccid = opts.iccid
 		if not _isnum(iccid, 19) and not _isnum(iccid, 20):
-			raise ValueError('ICCID must be 19 or 20 digits !');
+			raise ValueError('ICCID must be 19 or 20 digits !')
 
 	else:
 		if opts.num is None:
@@ -492,15 +492,15 @@ def _read_params_csv(opts, iccid=None, imsi=None):
 		if opts.num is not None and opts.read_iccid is False and opts.read_imsi is False:
 			if opts.num == i:
 				f.close()
-				return row;
+				return row
 			i += 1
 		if row['iccid'] == iccid:
 			f.close()
-			return row;
+			return row
 
 		if row['imsi'] == imsi:
 			f.close()
-			return row;
+			return row
 
 	f.close()
 	return None

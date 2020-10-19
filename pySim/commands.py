@@ -26,7 +26,7 @@ from pySim.utils import rpad, b2h
 
 class SimCardCommands(object):
 	def __init__(self, transport):
-		self._tp = transport;
+		self._tp = transport
 		self._cla_byte = "a0"
 		self.sel_ctrl = "0000"
 
