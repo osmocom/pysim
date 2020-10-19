@@ -620,9 +620,9 @@ class SysmoSIMgr2(Card):
 
 	def program(self, p):
 
-		# select MF 
+		# select MF
 		r = self._scc.select_file(['3f00'])
-		
+
 		# authenticate as SUPER ADM using default key
 		self._scc.verify_chv(0x0b, h2b("3838383838383838"))
 
@@ -638,7 +638,7 @@ class SysmoSIMgr2(Card):
 
 		pdu = 'A0D43A0508' + b2h(pin)
 		data, sw = self._scc._tp.send_apdu(pdu)
-		
+
 		# authenticate as ADM (enough to write file, and can set PINs)
 
 		self._scc.verify_chv(0x05, pin)
@@ -648,7 +648,7 @@ class SysmoSIMgr2(Card):
 
 		# select DF_GSM
 		r = self._scc.select_file(['7f20'])
-		
+
 		# write EF.IMSI
 		data, sw = self._scc.update_binary('6f07', enc_imsi(p['imsi']))
 
@@ -670,7 +670,7 @@ class SysmoSIMgr2(Card):
 
 		# select DF_TELECOM
 		r = self._scc.select_file(['3f00', '7f10'])
-		
+
 		# write EF.SMSP
 		if p.get('smsp'):
 			data, sw = self._scc.update_record('6f42', 1, lpad(p['smsp'], 80))
