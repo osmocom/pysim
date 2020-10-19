@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 #
 # Utility to deal with sim cards and program the 'magic' ones easily

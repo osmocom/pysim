@@ -9,7 +9,7 @@ if [ ! -d "./pysim-testdata/" ] ; then
 	exit 1
 fi
 
-virtualenv -p python2 venv --system-site-packages
+virtualenv -p python3 venv --system-site-packages
 . venv/bin/activate
 pip install pytlv
 pip install pyyaml
