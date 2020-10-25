@@ -225,8 +225,9 @@ def parse_options():
 
 
 def _digits(secret, usage, len, num):
-	s = hashlib.sha1(secret + usage + '%d' % num)
-	d = ''.join(['%02d'%ord(x) for x in s.digest()])
+	seed = secret + usage + '%d' % num
+	s = hashlib.sha1(seed.encode())
+	d = ''.join(['%02d' % x for x in s.digest()])
 	return d[0:len]
 
 def _mcc_mnc_digits(mcc, mnc):
