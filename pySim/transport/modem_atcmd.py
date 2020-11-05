@@ -35,6 +35,14 @@ from pySim.exceptions import *
 
 class ModemATCommandLink(LinkBase):
 	def __init__(self, device='/dev/ttyUSB0', baudrate=115200):
+     """
+     Initialize a serial device.
+
+     Args:
+         self: (todo): write your description
+         device: (todo): write your description
+         baudrate: (int): write your description
+     """
 		self._sl = serial.Serial(device, baudrate, timeout=5)
 		self._device = device
 		self._atr = None
@@ -43,9 +51,22 @@ class ModemATCommandLink(LinkBase):
 		self.reset_card()
 
 	def __del__(self):
+     """
+     Close the internal close.
+
+     Args:
+         self: (todo): write your description
+     """
 		self._sl.close()
 
 	def send_at_cmd(self, cmd):
+     """
+     Send a command at the device.
+
+     Args:
+         self: (todo): write your description
+         cmd: (str): write your description
+     """
 		# Convert from string to bytes, if needed
 		bcmd = cmd if type(cmd) is bytes else cmd.encode()
 		bcmd += b'\r'
@@ -79,6 +100,12 @@ class ModemATCommandLink(LinkBase):
 		return rsp
 
 	def reset_card(self):
+     """
+     !
+
+     Args:
+         self: (todo): write your description
+     """
 		# Make sure that we can talk to the modem
 		if self.send_at_cmd('AT') != [b'OK']:
 			raise ReaderError('Failed to connect to modem')
@@ -94,15 +121,42 @@ class ModemATCommandLink(LinkBase):
 		log.info('Modem at \'%s\' is ready!' % self._device)
 
 	def connect(self):
+     """
+     Connects to the server.
+
+     Args:
+         self: (todo): write your description
+     """
 		pass # Nothing to do really ...
 
 	def disconnect(self):
+     """
+     Disconnects from the connection.
+
+     Args:
+         self: (todo): write your description
+     """
 		pass # Nothing to do really ...
 
 	def wait_for_card(self, timeout=None, newcardonly=False):
+     """
+     Wait for a card to complete.
+
+     Args:
+         self: (todo): write your description
+         timeout: (float): write your description
+         newcardonly: (todo): write your description
+     """
 		pass # Nothing to do really ...
 
 	def send_apdu_raw(self, pdu):
+     """
+     Send raw raw raw raw raw pdu.
+
+     Args:
+         self: (todo): write your description
+         pdu: (str): write your description
+     """
 		# Prepare the command as described in 8.17
 		cmd = 'AT+CSIM=%d,\"%s\"' % (len(pdu), pdu)
 

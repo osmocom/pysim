@@ -23,38 +23,108 @@
 
 
 def h2b(s):
+    """
+    Convert h2b - bit string.
+
+    Args:
+        s: (int): write your description
+    """
 	return ''.join([chr((int(x,16)<<4)+int(y,16)) for x,y in zip(s[0::2], s[1::2])])
 
 def b2h(s):
+    """
+    Convert a string to a hex string.
+
+    Args:
+        s: (int): write your description
+    """
 	return ''.join(['%02x'%ord(x) for x in s])
 
 def h2i(s):
+    """
+    Convert a 16 bit integer to an integer.
+
+    Args:
+        s: (int): write your description
+    """
 	return [(int(x,16)<<4)+int(y,16) for x,y in zip(s[0::2], s[1::2])]
 
 def i2h(s):
+    """
+    Convert a string to a string.
+
+    Args:
+        s: (int): write your description
+    """
 	return ''.join(['%02x'%(x) for x in s])
 
 def h2s(s):
+    """
+    Convert a 64 - bit string.
+
+    Args:
+        s: (int): write your description
+    """
 	return ''.join([chr((int(x,16)<<4)+int(y,16)) for x,y in zip(s[0::2], s[1::2])
 						      if int(x + y, 16) != 0xff])
 
 def s2h(s):
+    """
+    Convert s2h string s2
+
+    Args:
+        s: (int): write your description
+    """
 	return b2h(s)
 
 # List of bytes to string
 def i2s(s):
+    """
+    Return a string to a string.
+
+    Args:
+        s: (int): write your description
+    """
 	return ''.join([chr(x) for x in s])
 
 def swap_nibbles(s):
+    """
+    Swap nibbles string.
+
+    Args:
+        s: (todo): write your description
+    """
 	return ''.join([x+y for x,y in zip(s[1::2], s[0::2])])
 
 def rpad(s, l, c='f'):
+    """
+    Pad the given string to a given length.
+
+    Args:
+        s: (todo): write your description
+        l: (todo): write your description
+        c: (todo): write your description
+    """
 	return s + c * (l - len(s))
 
 def lpad(s, l, c='f'):
+    """
+    Pad a string to l
+
+    Args:
+        s: (todo): write your description
+        l: (todo): write your description
+        c: (todo): write your description
+    """
 	return c * (l - len(s)) + s
 
 def half_round_up(n):
+    """
+    Finds the number up to n.
+
+    Args:
+        n: (todo): write your description
+    """
 	return (n + 1)//2
 
 # IMSI encoded format:
@@ -98,9 +168,21 @@ def dec_imsi(ef):
 	return imsi
 
 def dec_iccid(ef):
+    """
+    Dec_iccid
+
+    Args:
+        ef: (todo): write your description
+    """
 	return swap_nibbles(ef).strip('f')
 
 def enc_iccid(iccid):
+    """
+    Encap the id.
+
+    Args:
+        iccid: (int): write your description
+    """
 	return swap_nibbles(rpad(iccid, 20))
 
 def enc_plmn(mcc, mnc):
@@ -110,6 +192,12 @@ def enc_plmn(mcc, mnc):
 	return swap_nibbles("%s%s" % (mcc, mnc))
 
 def dec_spn(ef):
+    """
+    Convert a tuple into a tuple )
+
+    Args:
+        ef: (array): write your description
+    """
 	byte1 = int(ef[0:2])
 	hplmn_disp = (byte1&0x01 == 0x01)
 	oplmn_disp = (byte1&0x02 == 0x02)
@@ -117,16 +205,37 @@ def dec_spn(ef):
 	return (name, hplmn_disp, oplmn_disp)
 
 def enc_spn(name, hplmn_disp=False, oplmn_disp=False):
+    """
+    Encrypt a spn file
+
+    Args:
+        name: (str): write your description
+        hplmn_disp: (str): write your description
+        oplmn_disp: (str): write your description
+    """
 	byte1 = 0x00
 	if hplmn_disp: byte1 = byte1|0x01
 	if oplmn_disp: byte1 = byte1|0x02
 	return i2h([byte1])+s2h(name)
 
 def hexstr_to_Nbytearr(s, nbytes):
+    """
+    Convert nbytearray
+
+    Args:
+        s: (todo): write your description
+        nbytes: (todo): write your description
+    """
 	return [s[i:i+(nbytes*2)] for i in range(0, len(s), (nbytes*2)) ]
 
 # Accepts hex string representing three bytes
 def dec_mcc_from_plmn(plmn):
+    """
+    Convert a 3 - tuple of 9 digit.
+
+    Args:
+        plmn: (todo): write your description
+    """
 	ia = h2i(plmn)
 	digit1 = ia[0] & 0x0F		# 1st byte, LSB
 	digit2 = (ia[0] & 0xF0) >> 4	# 1st byte, MSB
@@ -136,6 +245,12 @@ def dec_mcc_from_plmn(plmn):
 	return derive_mcc(digit1, digit2, digit3)
 
 def dec_mnc_from_plmn(plmn):
+    """
+    Determine the msc character to_mnc.
+
+    Args:
+        plmn: (todo): write your description
+    """
 	ia = h2i(plmn)
 	digit1 = ia[2] & 0x0F		# 3rd byte, LSB
 	digit2 = (ia[2] & 0xF0) >> 4	# 3rd byte, MSB
@@ -145,6 +260,12 @@ def dec_mnc_from_plmn(plmn):
 	return derive_mnc(digit1, digit2, digit3)
 
 def dec_act(twohexbytes):
+    """
+    Decode hexadecimal hexadecimal hex string.
+
+    Args:
+        twohexbytes: (todo): write your description
+    """
 	act_list = [
 		{'bit': 15, 'name': "UTRAN"},
 		{'bit': 14, 'name': "E-UTRAN"},
@@ -162,6 +283,12 @@ def dec_act(twohexbytes):
 	return sel
 
 def dec_xplmn_w_act(fivehexbytes):
+    """
+    Dec_xplmn_w_actars_chars )
+
+    Args:
+        fivehexbytes: (str): write your description
+    """
 	res = {'mcc': 0, 'mnc': 0, 'act': []}
 	plmn_chars = 6
 	act_chars = 4
@@ -173,6 +300,12 @@ def dec_xplmn_w_act(fivehexbytes):
 	return res
 
 def format_xplmn_w_act(hexstr):
+    """
+    Format hexadecmn hexstr
+
+    Args:
+        hexstr: (str): write your description
+    """
 	s = ""
 	for rec_data in hexstr_to_Nbytearr(hexstr, 5):
 		rec_info = dec_xplmn_w_act(rec_data)
@@ -184,6 +317,12 @@ def format_xplmn_w_act(hexstr):
 	return s
 
 def dec_loci(hexstr):
+    """
+    Convert hex string to a hexadecimal string.
+
+    Args:
+        hexstr: (str): write your description
+    """
 	res = {'tmsi': '',  'mcc': 0, 'mnc': 0, 'lac': '', 'status': 0}
 	res['tmsi'] = hexstr[:8]
 	res['mcc'] = dec_mcc_from_plmn(hexstr[8:14])
@@ -193,6 +332,12 @@ def dec_loci(hexstr):
 	return res
 
 def dec_psloci(hexstr):
+    """
+    Convert a hexadecimal format.
+
+    Args:
+        hexstr: (str): write your description
+    """
 	res = {'p-tmsi': '', 'p-tmsi-sig': '', 'mcc': 0, 'mnc': 0, 'lac': '', 'rac': '', 'status': 0}
 	res['p-tmsi'] = hexstr[:8]
 	res['p-tmsi-sig'] = hexstr[8:14]
@@ -204,6 +349,12 @@ def dec_psloci(hexstr):
 	return res
 
 def dec_epsloci(hexstr):
+    """
+    Convert hex string to hex string.
+
+    Args:
+        hexstr: (str): write your description
+    """
 	res = {'guti': '', 'mcc': 0, 'mnc': 0, 'tac': '', 'status': 0}
 	res['guti'] = hexstr[:24]
 	res['tai'] = hexstr[24:34]
@@ -214,6 +365,12 @@ def dec_epsloci(hexstr):
 	return res
 
 def dec_xplmn(threehexbytes):
+    """
+    Dec_xplmnbytes ( xplmnbytes.
+
+    Args:
+        threehexbytes: (todo): write your description
+    """
 	res = {'mcc': 0, 'mnc': 0, 'act': []}
 	plmn_chars = 6
 	plmn_str = threehexbytes[:plmn_chars]				# first three bytes (six ascii hex chars)
@@ -222,6 +379,12 @@ def dec_xplmn(threehexbytes):
 	return res
 
 def format_xplmn(hexstr):
+    """
+    Format xplmnmn
+
+    Args:
+        hexstr: (str): write your description
+    """
 	s = ""
 	for rec_data in hexstr_to_Nbytearr(hexstr, 3):
 		rec_info = dec_xplmn(rec_data)
@@ -649,6 +812,12 @@ def dec_ePDGSelection(sixhexbytes):
 	return res
 
 def format_ePDGSelection(hexstr):
+    """
+    Given a hex string return the hex string.
+
+    Args:
+        hexstr: (str): write your description
+    """
 	ePDGSelection_info_tag_chars = 2
 	ePDGSelection_info_tag_str = hexstr[:2]
 	# Minimum length

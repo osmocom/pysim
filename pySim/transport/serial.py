@@ -34,6 +34,16 @@ from pySim.utils import h2b, b2h
 class SerialSimLink(LinkBase):
 
 	def __init__(self, device='/dev/ttyUSB0', baudrate=9600, rst='-rts', debug=False):
+     """
+     Initialize the serial device.
+
+     Args:
+         self: (todo): write your description
+         device: (todo): write your description
+         baudrate: (int): write your description
+         rst: (todo): write your description
+         debug: (bool): write your description
+     """
 		self._sl = serial.Serial(
 				port = device,
 				parity = serial.PARITY_EVEN,
@@ -49,9 +59,23 @@ class SerialSimLink(LinkBase):
 		self._atr = None
 
 	def __del__(self):
+     """
+     Close the internal close.
+
+     Args:
+         self: (todo): write your description
+     """
 		self._sl.close()
 
 	def wait_for_card(self, timeout=None, newcardonly=False):
+     """
+     Waits for card to appear in the card.
+
+     Args:
+         self: (todo): write your description
+         timeout: (float): write your description
+         newcardonly: (todo): write your description
+     """
 		# Direct try
 		existing = False
 
@@ -90,15 +114,39 @@ class SerialSimLink(LinkBase):
 		raise NoCardError()
 
 	def connect(self):
+     """
+     Connect to the card.
+
+     Args:
+         self: (todo): write your description
+     """
 		self.reset_card()
 
 	def get_atr(self):
+     """
+     Get the atr of the node.
+
+     Args:
+         self: (todo): write your description
+     """
 		return self._atr
 
 	def disconnect(self):
+     """
+     Disconnects from the connection.
+
+     Args:
+         self: (todo): write your description
+     """
 		pass # Nothing to do really ...
 
 	def reset_card(self):
+     """
+     Reset the card.
+
+     Args:
+         self: (todo): write your description
+     """
 		rv = self._reset_card()
 		if rv == 0:
 			raise NoCardError()
@@ -106,6 +154,12 @@ class SerialSimLink(LinkBase):
 			raise ProtocolError()
 
 	def _reset_card(self):
+     """
+     !
+
+     Args:
+         self: (todo): write your description
+     """
 		self._atr = None
 		rst_meth_map = {
 			'rts': self._sl.setRTS,
@@ -161,10 +215,24 @@ class SerialSimLink(LinkBase):
 		return 1
 
 	def _dbg_print(self, s):
+     """
+     Prints a string to console.
+
+     Args:
+         self: (todo): write your description
+         s: (int): write your description
+     """
 		if self._debug:
 			print(s)
 
 	def _tx_byte(self, b):
+     """
+     Reads a byte from the byte.
+
+     Args:
+         self: (todo): write your description
+         b: (todo): write your description
+     """
 		self._sl.write(b)
 		r = self._sl.read()
 		if r != b:	# TX and RX are tied, so we must clear the echo
@@ -179,6 +247,12 @@ class SerialSimLink(LinkBase):
 			raise ProtocolError("Bad echo value (Expected: %s, got %s)" % (b2h(s), b2h(r)))
 
 	def _rx_byte(self):
+     """
+     Return the byte of the byte.
+
+     Args:
+         self: (todo): write your description
+     """
 		return self._sl.read()
 
 	def send_apdu_raw(self, pdu):

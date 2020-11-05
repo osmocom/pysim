@@ -31,18 +31,44 @@ from smartcard.util import toBytes
 class Card(object):
 
 	def __init__(self, scc):
+     """
+     Initialize the device.
+
+     Args:
+         self: (todo): write your description
+         scc: (str): write your description
+     """
 		self._scc = scc
 		self._adm_chv_num = 4
 		self._aids = []
 
 	def reset(self):
+     """
+     Reset the card.
+
+     Args:
+         self: (todo): write your description
+     """
 		self._scc.reset_card()
 
 	def erase(self):
+     """
+     Erase the current session.
+
+     Args:
+         self: (todo): write your description
+     """
 		print("warning: erasing is not supported for specified card type!")
 		return
 
 	def file_exists(self, fid):
+     """
+     Check if a file exists
+
+     Args:
+         self: (todo): write your description
+         fid: (str): write your description
+     """
 		res_arr = self._scc.try_select_file(fid)
 		for res in res_arr:
 			if res[1] != '9000':
@@ -57,6 +83,12 @@ class Card(object):
 		return sw
 
 	def read_iccid(self):
+     """
+     Read binary id from the binary.
+
+     Args:
+         self: (todo): write your description
+     """
 		(res, sw) = self._scc.read_binary(EF['ICCID'])
 		if sw == '9000':
 			return (dec_iccid(res), sw)
@@ -64,6 +96,12 @@ class Card(object):
 			return (None, sw)
 
 	def read_imsi(self):
+     """
+     Reads the image as a binary.
+
+     Args:
+         self: (todo): write your description
+     """
 		(res, sw) = self._scc.read_binary(EF['IMSI'])
 		if sw == '9000':
 			return (dec_imsi(res), sw)
@@ -71,14 +109,34 @@ class Card(object):
 			return (None, sw)
 
 	def update_imsi(self, imsi):
+     """
+     Update the dimensions of the image.
+
+     Args:
+         self: (todo): write your description
+         imsi: (int): write your description
+     """
 		data, sw = self._scc.update_binary(EF['IMSI'], enc_imsi(imsi))
 		return sw
 
 	def update_acc(self, acc):
+     """
+     Update acc and returns a list of the accep.
+
+     Args:
+         self: (todo): write your description
+         acc: (todo): write your description
+     """
 		data, sw = self._scc.update_binary(EF['ACC'], lpad(acc, 4))
 		return sw
 
 	def read_hplmn_act(self):
+     """
+     Read hplmn - only.
+
+     Args:
+         self: (todo): write your description
+     """
 		(res, sw) = self._scc.read_binary(EF['HPLMNAcT'])
 		if sw == '9000':
 			return (format_xplmn_w_act(res), sw)
@@ -104,6 +162,12 @@ class Card(object):
 		return sw
 
 	def read_oplmn_act(self):
+     """
+     Reads the binary data from the - packed.
+
+     Args:
+         self: (todo): write your description
+     """
 		(res, sw) = self._scc.read_binary(EF['OPLMNwAcT'])
 		if sw == '9000':
 			return (format_xplmn_w_act(res), sw)
@@ -123,6 +187,12 @@ class Card(object):
 		return sw
 
 	def read_plmn_act(self):
+     """
+     Reads : class : ~ / proc.
+
+     Args:
+         self: (todo): write your description
+     """
 		(res, sw) = self._scc.read_binary(EF['PLMNwAcT'])
 		if sw == '9000':
 			return (format_xplmn_w_act(res), sw)
@@ -142,6 +212,14 @@ class Card(object):
 		return sw
 
 	def update_plmnsel(self, mcc, mnc):
+     """
+     Update plmnselselselsel.
+
+     Args:
+         self: (todo): write your description
+         mcc: (todo): write your description
+         mnc: (todo): write your description
+     """
 		data = self._scc.read_binary(EF['PLMNsel'], length=None, offset=0)
 		size = len(data[0]) // 2
 		hplmn = enc_plmn(mcc, mnc)
@@ -149,10 +227,24 @@ class Card(object):
 		return sw
 
 	def update_smsp(self, smsp):
+     """
+     Update an sms record.
+
+     Args:
+         self: (todo): write your description
+         smsp: (int): write your description
+     """
 		data, sw = self._scc.update_record(EF['SMSP'], 1, rpad(smsp, 84))
 		return sw
 
 	def update_ad(self, mnc):
+     """
+     Update an adcl
+
+     Args:
+         self: (todo): write your description
+         mnc: (int): write your description
+     """
 		#See also: 3GPP TS 31.102, chapter 4.2.18
 		mnclen = len(str(mnc))
 		if mnclen == 1:
@@ -171,6 +263,12 @@ class Card(object):
 		return sw
 
 	def read_spn(self):
+     """
+     Reads the binary string.
+
+     Args:
+         self: (todo): write your description
+     """
 		(spn, sw) = self._scc.read_binary(EF['SPN'])
 		if sw == '9000':
 			return (dec_spn(spn), sw)
@@ -178,19 +276,51 @@ class Card(object):
 			return (None, sw)
 
 	def update_spn(self, name, hplmn_disp=False, oplmn_disp=False):
+     """
+     Update a spnx image.
+
+     Args:
+         self: (todo): write your description
+         name: (str): write your description
+         hplmn_disp: (int): write your description
+         oplmn_disp: (int): write your description
+     """
 		content = enc_spn(name, hplmn_disp, oplmn_disp)
 		data, sw = self._scc.update_binary(EF['SPN'], rpad(content, 32))
 		return sw
 
 	def read_binary(self, ef, length=None, offset=0):
+     """
+     Reads binary data : type assertion.
+
+     Args:
+         self: (todo): write your description
+         ef: (todo): write your description
+         length: (int): write your description
+         offset: (int): write your description
+     """
 		ef_path = ef in EF and EF[ef] or ef
 		return self._scc.read_binary(ef_path, length, offset)
 
 	def read_record(self, ef, rec_no):
+     """
+     Read record.
+
+     Args:
+         self: (todo): write your description
+         ef: (str): write your description
+         rec_no: (str): write your description
+     """
 		ef_path = ef in EF and EF[ef] or ef
 		return self._scc.read_record(ef_path, rec_no)
 
 	def read_gid1(self):
+     """
+     Read the gid from the binary.
+
+     Args:
+         self: (todo): write your description
+     """
 		(res, sw) = self._scc.read_binary(EF['GID1'])
 		if sw == '9000':
 			return (res, sw)
@@ -198,6 +328,12 @@ class Card(object):
 			return (None, sw)
 
 	def read_msisdn(self):
+     """
+     Read a record from the swf file.
+
+     Args:
+         self: (todo): write your description
+     """
 		(res, sw) = self._scc.read_record(EF['MSISDN'], 1)
 		if sw == '9000':
 			return (dec_msisdn(res), sw)
@@ -206,6 +342,12 @@ class Card(object):
 
 	# Fetch all the AIDs present on UICC
 	def read_aids(self):
+     """
+     Read restructured record.
+
+     Args:
+         self: (todo): write your description
+     """
 		try:
 			# Find out how many records the EF.DIR has
 			# and store all the AIDs in the UICC
@@ -220,6 +362,13 @@ class Card(object):
 
 	# Select ADF.U/ISIM in the Card using its full AID
 	def select_adf_by_aid(self, adf="usim"):
+     """
+     Select an adf by adf
+
+     Args:
+         self: (todo): write your description
+         adf: (todo): write your description
+     """
 		# Check for valid ADF name
 		if adf not in ["usim", "isim"]:
 			return None
@@ -238,19 +387,47 @@ class Card(object):
 
 	# Erase the contents of a file
 	def erase_binary(self, ef):
+     """
+     Erase binary data.
+
+     Args:
+         self: (todo): write your description
+         ef: (todo): write your description
+     """
 		len = self._scc.binary_size(ef)
 		self._scc.update_binary(ef, "ff" * len, offset=0, verify=True)
 
 	# Erase the contents of a single record
 	def erase_record(self, ef, rec_no):
+     """
+     Erase record
+
+     Args:
+         self: (todo): write your description
+         ef: (todo): write your description
+         rec_no: (todo): write your description
+     """
 		len = self._scc.record_size(ef)
 		self._scc.update_record(ef, rec_no, "ff" * len, force_len=False, verify=True)
 
 class UsimCard(Card):
 	def __init__(self, ssc):
+     """
+     Initialize the card
+
+     Args:
+         self: (todo): write your description
+         ssc: (todo): write your description
+     """
 		super(UsimCard, self).__init__(ssc)
 
 	def read_ehplmn(self):
+     """
+     Read binary data from binary file.
+
+     Args:
+         self: (todo): write your description
+     """
 		(res, sw) = self._scc.read_binary(EF_USIM_ADF_map['EHPLMN'])
 		if sw == '9000':
 			return (format_xplmn(res), sw)
@@ -258,6 +435,14 @@ class UsimCard(Card):
 			return (None, sw)
 
 	def update_ehplmn(self, mcc, mnc):
+     """
+     Update the binary data.
+
+     Args:
+         self: (todo): write your description
+         mcc: (todo): write your description
+         mnc: (todo): write your description
+     """
 		data = self._scc.read_binary(EF_USIM_ADF_map['EHPLMN'], length=None, offset=0)
 		size = len(data[0]) // 2
 		ehplmn = enc_plmn(mcc, mnc)
@@ -265,6 +450,12 @@ class UsimCard(Card):
 		return sw
 
 	def read_epdgid(self):
+     """
+     Return epdgid of the given epdgid.
+
+     Args:
+         self: (todo): write your description
+     """
 		(res, sw) = self._scc.read_binary(EF_USIM_ADF_map['ePDGId'])
 		if sw == '9000':
 			return (dec_epdgid(res), sw)
@@ -272,12 +463,25 @@ class UsimCard(Card):
 			return (None, sw)
 
 	def update_epdgid(self, epdgid):
+     """
+     Update epdgid
+
+     Args:
+         self: (todo): write your description
+         epdgid: (int): write your description
+     """
 		epdgid_tlv = enc_epdgid(epdgid)
 		data, sw = self._scc.update_binary(
 						EF_USIM_ADF_map['ePDGId'], epdgid_tlv)
 		return sw
 
 	def read_ePDGSelection(self):
+     """
+     Read elem_election
+
+     Args:
+         self: (todo): write your description
+     """
 		(res, sw) = self._scc.read_binary(EF_USIM_ADF_map['ePDGSelection'])
 		if sw == '9000':
 			return (format_ePDGSelection(res), sw)
@@ -285,6 +489,12 @@ class UsimCard(Card):
 			return (None, sw)
 
 	def read_ust(self):
+     """
+     Reads : ref : pysynphot - rsa.
+
+     Args:
+         self: (todo): write your description
+     """
 		(res, sw) = self._scc.read_binary(EF_USIM_ADF_map['UST'])
 		if sw == '9000':
 			# Print those which are available
@@ -315,6 +525,13 @@ class _MagicSimBase(Card):
 
 	@classmethod
 	def autodetect(kls, scc):
+     """
+     Find autodetectet
+
+     Args:
+         kls: (array): write your description
+         scc: (todo): write your description
+     """
 		try:
 			for p, l, t in kls._files.values():
 				if not t:
@@ -344,6 +561,13 @@ class _MagicSimBase(Card):
 		return rec_cnt
 
 	def program(self, p):
+     """
+     Program : p ( p : py : unicode ) description
+
+     Args:
+         self: (todo): write your description
+         p: (dict): write your description
+     """
 		# Go to dir
 		self._scc.select_file(['3f00', '7f4d'])
 
@@ -396,6 +620,12 @@ class _MagicSimBase(Card):
 		self._scc.update_binary('6f30', hplmn + 'ff' * (tl-3))
 
 	def erase(self):
+     """
+     Erase all records
+
+     Args:
+         self: (todo): write your description
+     """
 		# Dummy
 		df = {}
 		for k, v in self._files.iteritems():
@@ -449,6 +679,13 @@ class FakeMagicSim(Card):
 
 	@classmethod
 	def autodetect(kls, scc):
+     """
+     Return autodet size of record
+
+     Args:
+         kls: (array): write your description
+         scc: (todo): write your description
+     """
 		try:
 			if scc.record_size(['3f00', '000c']) != 0x5a:
 				return None
@@ -474,6 +711,13 @@ class FakeMagicSim(Card):
 		return rec_cnt, rec_len
 
 	def program(self, p):
+     """
+     Program :
+
+     Args:
+         self: (todo): write your description
+         p: (array): write your description
+     """
 		# Home PLMN
 		r = self._scc.select_file(['3f00', '7f20', '6f30'])
 		tl = int(r[-1][4:8], 16)
@@ -496,6 +740,12 @@ class FakeMagicSim(Card):
 		self._scc.update_record('000c', 1, entry)
 
 	def erase(self):
+     """
+     Erase infos.
+
+     Args:
+         self: (todo): write your description
+     """
 		# Get total number of entries and entry size
 		rec_cnt, rec_len = self._get_infos()
 
@@ -516,9 +766,23 @@ class GrcardSim(Card):
 
 	@classmethod
 	def autodetect(kls, scc):
+     """
+     Autodetetectet
+
+     Args:
+         kls: (array): write your description
+         scc: (array): write your description
+     """
 		return None
 
 	def program(self, p):
+     """
+     Run a program.
+
+     Args:
+         self: (todo): write your description
+         p: (dict): write your description
+     """
 		# We don't really know yet what ADM PIN 4 is about
 		#self._scc.verify_chv(4, h2b("4444444444444444"))
 
@@ -574,6 +838,13 @@ class SysmoSIMgr1(GrcardSim):
 
 	@classmethod
 	def autodetect(kls, scc):
+     """
+     Autodetectet
+
+     Args:
+         kls: (array): write your description
+         scc: (todo): write your description
+     """
 		try:
 			# Look for ATR
 			if scc.get_atr() == toBytes("3B 99 18 00 11 88 22 33 44 55 66 77 60"):
@@ -590,10 +861,24 @@ class SysmoUSIMgr1(UsimCard):
 
 	@classmethod
 	def autodetect(kls, scc):
+     """
+     Autodetetectet
+
+     Args:
+         kls: (array): write your description
+         scc: (array): write your description
+     """
 		# TODO: Access the ATR
 		return None
 
 	def program(self, p):
+     """
+     Sends checksum.
+
+     Args:
+         self: (todo): write your description
+         p: (array): write your description
+     """
 		# TODO: check if verify_chv could be used or what it needs
 		# self._scc.verify_chv(0x0A, [0x33,0x32,0x32,0x31,0x33,0x32,0x33,0x32])
 		# Unlock the card..
@@ -617,6 +902,13 @@ class SysmoSIMgr2(Card):
 
 	@classmethod
 	def autodetect(kls, scc):
+     """
+     Autodetectet
+
+     Args:
+         kls: (array): write your description
+         scc: (todo): write your description
+     """
 		try:
 			# Look for ATR
 			if scc.get_atr() == toBytes("3B 7D 94 00 00 55 55 53 0A 74 86 93 0B 24 7C 4D 54 68"):
@@ -626,6 +918,13 @@ class SysmoSIMgr2(Card):
 		return None
 
 	def program(self, p):
+     """
+     Run a p = p ( p. p.
+
+     Args:
+         self: (todo): write your description
+         p: (dict): write your description
+     """
 
 		# select MF
 		r = self._scc.select_file(['3f00'])
@@ -691,12 +990,26 @@ class SysmoUSIMSJS1(UsimCard):
 	name = 'sysmoUSIM-SJS1'
 
 	def __init__(self, ssc):
+     """
+     Initialize the class
+
+     Args:
+         self: (todo): write your description
+         ssc: (todo): write your description
+     """
 		super(SysmoUSIMSJS1, self).__init__(ssc)
 		self._scc.cla_byte = "00"
 		self._scc.sel_ctrl = "0004" #request an FCP
 
 	@classmethod
 	def autodetect(kls, scc):
+     """
+     Autodetectet
+
+     Args:
+         kls: (array): write your description
+         scc: (todo): write your description
+     """
 		try:
 			# Look for ATR
 			if scc.get_atr() == toBytes("3B 9F 96 80 1F C7 80 31 A0 73 BE 21 13 67 43 20 07 18 00 00 01 A5"):
@@ -706,6 +1019,13 @@ class SysmoUSIMSJS1(UsimCard):
 		return None
 
 	def program(self, p):
+     """
+     Program :
+
+     Args:
+         self: (todo): write your description
+         p: (dict): write your description
+     """
 
 		# authenticate as ADM using default key (written on the card..)
 		if not p['pin_adm']:
@@ -811,6 +1131,13 @@ class FairwavesSIM(UsimCard):
 	}
 
 	def __init__(self, ssc):
+     """
+     Initialize the underlying adapter.
+
+     Args:
+         self: (todo): write your description
+         ssc: (todo): write your description
+     """
 		super(FairwavesSIM, self).__init__(ssc)
 		self._adm_chv_num = 0x11
 		self._adm2_chv_num = 0x12
@@ -818,6 +1145,13 @@ class FairwavesSIM(UsimCard):
 
 	@classmethod
 	def autodetect(kls, scc):
+     """
+     Autodetectet
+
+     Args:
+         kls: (array): write your description
+         scc: (todo): write your description
+     """
 		try:
 			# Look for ATR
 			if scc.get_atr() == toBytes("3B 9F 96 80 1F C7 80 31 A0 73 BE 21 13 67 44 22 06 10 00 00 01 A9"):
@@ -893,6 +1227,13 @@ class FairwavesSIM(UsimCard):
 
 
 	def program(self, p):
+     """
+     Program : p
+
+     Args:
+         self: (todo): write your description
+         p: (dict): write your description
+     """
 		# authenticate as ADM1
 		if not p['pin_adm']:
 			raise ValueError("Please provide a PIN-ADM as there is no default one")
@@ -936,12 +1277,26 @@ class OpenCellsSim(Card):
 	name = 'OpenCells-SIM'
 
 	def __init__(self, ssc):
+     """
+     Initialize the underlying device.
+
+     Args:
+         self: (todo): write your description
+         ssc: (todo): write your description
+     """
 		super(OpenCellsSim, self).__init__(ssc)
 		self._adm_chv_num = 0x0A
 
 
 	@classmethod
 	def autodetect(kls, scc):
+     """
+     Autodetectet
+
+     Args:
+         kls: (array): write your description
+         scc: (todo): write your description
+     """
 		try:
 			# Look for ATR
 			if scc.get_atr() == toBytes("3B 9F 95 80 1F C3 80 31 E0 73 FE 21 13 57 86 81 02 86 98 44 18 A8"):
@@ -952,6 +1307,13 @@ class OpenCellsSim(Card):
 
 
 	def program(self, p):
+     """
+     Program :
+
+     Args:
+         self: (todo): write your description
+         p: (array): write your description
+     """
 		if not p['pin_adm']:
 			raise ValueError("Please provide a PIN-ADM as there is no default one")
 		self._scc.verify_chv(0x0A, h2b(p['pin_adm']))
@@ -985,6 +1347,13 @@ class WavemobileSim(UsimCard):
 	name = 'Wavemobile-SIM'
 
 	def __init__(self, ssc):
+     """
+     Initialize the class.
+
+     Args:
+         self: (todo): write your description
+         ssc: (todo): write your description
+     """
 		super(WavemobileSim, self).__init__(ssc)
 		self._adm_chv_num = 0x0A
 		self._scc.cla_byte = "00"
@@ -992,6 +1361,13 @@ class WavemobileSim(UsimCard):
 
 	@classmethod
 	def autodetect(kls, scc):
+     """
+     Autodetectet
+
+     Args:
+         kls: (array): write your description
+         scc: (todo): write your description
+     """
 		try:
 			# Look for ATR
 			if scc.get_atr() == toBytes("3B 9F 95 80 1F C7 80 31 E0 73 F6 21 13 67 4D 45 16 00 43 01 00 8F"):
@@ -1001,6 +1377,13 @@ class WavemobileSim(UsimCard):
 		return None
 
 	def program(self, p):
+     """
+     Program : p
+
+     Args:
+         self: (todo): write your description
+         p: (dict): write your description
+     """
 		if not p['pin_adm']:
 			raise ValueError("Please provide a PIN-ADM as there is no default one")
 		sw = self.verify_adm(h2b(p['pin_adm']))
@@ -1075,12 +1458,26 @@ class SysmoISIMSJA2(UsimCard):
 	name = 'sysmoISIM-SJA2'
 
 	def __init__(self, ssc):
+     """
+     Initialize the class
+
+     Args:
+         self: (todo): write your description
+         ssc: (todo): write your description
+     """
 		super(SysmoISIMSJA2, self).__init__(ssc)
 		self._scc.cla_byte = "00"
 		self._scc.sel_ctrl = "0004" #request an FCP
 
 	@classmethod
 	def autodetect(kls, scc):
+     """
+     Try to find autodet
+
+     Args:
+         kls: (array): write your description
+         scc: (todo): write your description
+     """
 		try:
 			# Try card model #1
 			atr = "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 4C 75 30 34 05 4B A9"
@@ -1101,6 +1498,13 @@ class SysmoISIMSJA2(UsimCard):
 		return None
 
 	def program(self, p):
+     """
+     Program : p
+
+     Args:
+         self: (todo): write your description
+         p: (dict): write your description
+     """
 		# authenticate as ADM using default key (written on the card..)
 		if not p['pin_adm']:
 			raise ValueError("Please provide a PIN-ADM as there is no default one")
@@ -1204,6 +1608,12 @@ _cards_classes = [ FakeMagicSim, SuperSim, MagicSim, GrcardSim,
 		   FairwavesSIM, OpenCellsSim, WavemobileSim, SysmoISIMSJA2 ]
 
 def card_autodetect(scc):
+    """
+    Returns a card autodet for a card
+
+    Args:
+        scc: (todo): write your description
+    """
 	for kls in _cards_classes:
 		card = kls.autodetect(scc)
 		if card is not None:
@@ -1212,6 +1622,13 @@ def card_autodetect(scc):
 	return None
 
 def card_detect(ctype, scc):
+    """
+    Detect the card type of ctypes
+
+    Args:
+        ctype: (str): write your description
+        scc: (array): write your description
+    """
 	# Detect type if needed
 	card = None
 	ctypes = dict([(kls.name, kls) for kls in _cards_classes])
