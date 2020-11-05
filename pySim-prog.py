@@ -46,6 +46,11 @@ from pySim.card_handler import *
 from pySim.utils import *
 
 def parse_options():
+    """
+    Parse command line options.
+
+    Args:
+    """
 
 	parser = OptionParser(usage="usage: %prog [options]")
 
@@ -225,26 +230,68 @@ def parse_options():
 
 
 def _digits(secret, usage, len, num):
+    """
+    Compute the number of the number.
+
+    Args:
+        secret: (str): write your description
+        usage: (str): write your description
+        len: (todo): write your description
+        num: (int): write your description
+    """
 	seed = secret + usage + '%d' % num
 	s = hashlib.sha1(seed.encode())
 	d = ''.join(['%02d' % x for x in s.digest()])
 	return d[0:len]
 
 def _mcc_mnc_digits(mcc, mnc):
+    """
+    Returns a digest of the digest.
+
+    Args:
+        mcc: (array): write your description
+        mnc: (todo): write your description
+    """
 	return '%s%s' % (mcc, mnc)
 
 def _cc_digits(cc):
+    """
+    Return the number of digits in the number.
+
+    Args:
+        cc: (array): write your description
+    """
 	return ('%03d' if cc > 100 else '%02d') % cc
 
 def _isnum(s, l=-1):
+    """
+    Return true if s is a number.
+
+    Args:
+        s: (todo): write your description
+        l: (int): write your description
+    """
 	return s.isdigit() and ((l== -1) or (len(s) == l))
 
 def _ishex(s, l=-1):
+    """
+    Check if a string is hex string.
+
+    Args:
+        s: (str): write your description
+        l: (int): write your description
+    """
 	hc = '0123456789abcdef'
 	return all([x in hc for x in s.lower()]) and ((l== -1) or (len(s) == l))
 
 
 def _dbi_binary_quote(s):
+    """
+    Return a string representation of a binary string.
+
+    Args:
+        s: (todo): write your description
+    """
 	# Count usage of each char
 	cnt = {}
 	for c in s:
@@ -451,6 +498,12 @@ def gen_parameters(opts):
 
 
 def print_parameters(params):
+    """
+    Prints the parameters of parameters
+
+    Args:
+        params: (dict): write your description
+    """
 
 	s = ["Generated card parameters :"]
 	if 'name' in params:
@@ -469,6 +522,13 @@ def print_parameters(params):
 
 
 def write_params_csv(opts, params):
+    """
+    Writes params to disk.
+
+    Args:
+        opts: (todo): write your description
+        params: (dict): write your description
+    """
 	# csv
 	if opts.write_csv:
 		import csv
@@ -479,6 +539,14 @@ def write_params_csv(opts, params):
 		f.close()
 
 def _read_params_csv(opts, iccid=None, imsi=None):
+    """
+    Read csv file
+
+    Args:
+        opts: (todo): write your description
+        iccid: (str): write your description
+        imsi: (todo): write your description
+    """
 	import csv
 	f = open(opts.read_csv, 'r')
 	cr = csv.DictReader(f)
@@ -507,6 +575,14 @@ def _read_params_csv(opts, iccid=None, imsi=None):
 	return None
 
 def read_params_csv(opts, imsi=None, iccid=None):
+    """
+    Read csv parameters.
+
+    Args:
+        opts: (todo): write your description
+        imsi: (todo): write your description
+        iccid: (str): write your description
+    """
 	row = _read_params_csv(opts, iccid=iccid, imsi=imsi)
 	if row is not None:
 		row['mcc'] = row.get('mcc', mcc_from_imsi(row.get('imsi')))
@@ -540,6 +616,13 @@ def read_params_csv(opts, imsi=None, iccid=None):
 
 
 def write_params_hlr(opts, params):
+    """
+    Writes hlr params.
+
+    Args:
+        opts: (todo): write your description
+        params: (dict): write your description
+    """
 	# SQLite3 OpenBSC HLR
 	if opts.write_hlr:
 		import sqlite3
@@ -571,6 +654,13 @@ def write_params_hlr(opts, params):
 		conn.close()
 
 def write_parameters(opts, params):
+    """
+    Writes parameters to a file.
+
+    Args:
+        opts: (todo): write your description
+        params: (dict): write your description
+    """
 	write_params_csv(opts, params)
 	write_params_hlr(opts, params)
 
@@ -579,6 +669,12 @@ BATCH_STATE = [ 'name', 'country', 'mcc', 'mnc', 'smsp', 'secret', 'num' ]
 BATCH_INCOMPATIBLE = ['iccid', 'imsi', 'ki']
 
 def init_batch(opts):
+    """
+    Initialize a batch
+
+    Args:
+        opts: (todo): write your description
+    """
 	# Need to do something ?
 	if not opts.batch_mode:
 		return
@@ -606,6 +702,12 @@ def init_batch(opts):
 
 
 def save_batch(opts):
+    """
+    Save a batch to disk
+
+    Args:
+        opts: (todo): write your description
+    """
 	# Need to do something ?
 	if not opts.batch_mode or not opts.batch_state:
 		return
@@ -617,6 +719,14 @@ def save_batch(opts):
 
 
 def process_card(opts, first, card_handler):
+    """
+    Process a card type from a csv file.
+
+    Args:
+        opts: (todo): write your description
+        first: (todo): write your description
+        card_handler: (dict): write your description
+    """
 
 	if opts.dry_run is False:
 		# Connect transport

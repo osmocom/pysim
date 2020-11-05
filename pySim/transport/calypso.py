@@ -43,10 +43,24 @@ class L1CTLMessage(object):
 	#  - ... payload ...
 
 	def __init__(self, msg_type, flags = 0x00):
+     """
+     Create a message.
+
+     Args:
+         self: (todo): write your description
+         msg_type: (str): write your description
+         flags: (int): write your description
+     """
 		# Init L1CTL message header
 		self.data = struct.pack("BBxx", msg_type, flags)
 
 	def gen_msg(self):
+     """
+     Generate a byte string.
+
+     Args:
+         self: (todo): write your description
+     """
 		return struct.pack("!H", len(self.data)) + self.data
 
 class L1CTLMessageReset(L1CTLMessage):
@@ -62,6 +76,14 @@ class L1CTLMessageReset(L1CTLMessage):
 	L1CTL_RES_T_SCHED	= 0x02
 
 	def __init__(self, type = L1CTL_RES_T_FULL):
+     """
+     Initialize data
+
+     Args:
+         self: (todo): write your description
+         type: (str): write your description
+         L1CTL_RES_T_FULL: (todo): write your description
+     """
 		super(L1CTLMessageReset, self).__init__(self.L1CTL_RESET_REQ)
 		self.data += struct.pack("Bxxx", type)
 
@@ -72,12 +94,26 @@ class L1CTLMessageSIM(L1CTLMessage):
 	L1CTL_SIM_CONF		= 0x17
 
 	def __init__(self, pdu):
+     """
+     Initialize the l1i.
+
+     Args:
+         self: (todo): write your description
+         pdu: (todo): write your description
+     """
 		super(L1CTLMessageSIM, self).__init__(self.L1CTL_SIM_REQ)
 		self.data += pdu
 
 class CalypsoSimLink(LinkBase):
 
 	def __init__(self, sock_path = "/tmp/osmocom_l2"):
+     """
+     Connect to a socket.
+
+     Args:
+         self: (todo): write your description
+         sock_path: (str): write your description
+     """
 		# Make sure that a given socket path exists
 		if not os.path.exists(sock_path):
 			raise ReaderError("There is no such ('%s') UNIX socket" % sock_path)
@@ -89,9 +125,22 @@ class CalypsoSimLink(LinkBase):
 		self.sock.connect(sock_path)
 
 	def __del__(self):
+     """
+     Close the socket.
+
+     Args:
+         self: (todo): write your description
+     """
 		self.sock.close()
 
 	def wait_for_rsp(self, exp_len = 128):
+     """
+     Wait for an rsp message to receive.
+
+     Args:
+         self: (todo): write your description
+         exp_len: (int): write your description
+     """
 		# Wait for incoming data (timeout is 3 seconds)
 		s, _, _ = select.select([self.sock], [], [], 3.0)
 		if not s:
@@ -102,6 +151,12 @@ class CalypsoSimLink(LinkBase):
 		return rsp
 
 	def reset_card(self):
+     """
+     Reset the card.
+
+     Args:
+         self: (todo): write your description
+     """
 		# Request FULL reset
 		req_msg = L1CTLMessageReset()
 		self.sock.send(req_msg.gen_msg())
@@ -113,12 +168,32 @@ class CalypsoSimLink(LinkBase):
 			raise ReaderError("Failed to reset Calypso PHY")
 
 	def connect(self):
+     """
+     Connect to the card.
+
+     Args:
+         self: (todo): write your description
+     """
 		self.reset_card()
 
 	def disconnect(self):
+     """
+     Disconnects from the connection.
+
+     Args:
+         self: (todo): write your description
+     """
 		pass # Nothing to do really ...
 
 	def wait_for_card(self, timeout = None, newcardonly = False):
+     """
+     Wait for a card to complete.
+
+     Args:
+         self: (todo): write your description
+         timeout: (float): write your description
+         newcardonly: (todo): write your description
+     """
 		pass # Nothing to do really ...
 
 	def send_apdu_raw(self, pdu):

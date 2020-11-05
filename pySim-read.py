@@ -39,6 +39,11 @@ from pySim.utils import format_xplmn_w_act, dec_spn, dec_st, init_reader, dec_ep
 from pySim.utils import h2s, format_ePDGSelection
 
 def parse_options():
+    """
+    Parse command line arguments.
+
+    Args:
+    """
 
 	parser = OptionParser(usage="usage: %prog [options]")
 

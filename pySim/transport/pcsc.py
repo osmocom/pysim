@@ -35,15 +35,36 @@ from pySim.utils import h2i, i2h
 class PcscSimLink(LinkBase):
 
 	def __init__(self, reader_number=0):
+     """
+     Initialize the reader.
+
+     Args:
+         self: (todo): write your description
+         reader_number: (int): write your description
+     """
 		r = readers()
 		self._reader = r[reader_number]
 		self._con = self._reader.createConnection()
 
 	def __del__(self):
+     """
+     Disconnects a connection
+
+     Args:
+         self: (todo): write your description
+     """
 		self._con.disconnect()
 		return
 
 	def wait_for_card(self, timeout=None, newcardonly=False):
+     """
+     Wait for card card to complete.
+
+     Args:
+         self: (todo): write your description
+         timeout: (float): write your description
+         newcardonly: (todo): write your description
+     """
 		cr = CardRequest(readers=[self._reader], timeout=timeout, newcardonly=newcardonly)
 		try:
 			cr.waitforcard()
@@ -52,6 +73,12 @@ class PcscSimLink(LinkBase):
 		self.connect()
 
 	def connect(self):
+     """
+     Connect to the connection.
+
+     Args:
+         self: (todo): write your description
+     """
 		try:
 			# Explicitly select T=0 communication protocol
 			self._con.connect(CardConnection.T0_protocol)
@@ -61,12 +88,30 @@ class PcscSimLink(LinkBase):
 			raise NoCardError()
 
 	def get_atr(self):
+     """
+     Returns the atr of the atr.
+
+     Args:
+         self: (todo): write your description
+     """
 		return self._con.getATR()
 
 	def disconnect(self):
+     """
+     Disconnects from the server.
+
+     Args:
+         self: (todo): write your description
+     """
 		self._con.disconnect()
 
 	def reset_card(self):
+     """
+     Reset the card.
+
+     Args:
+         self: (todo): write your description
+     """
 		self.disconnect()
 		self.connect()
 		return 1
