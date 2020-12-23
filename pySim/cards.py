@@ -1088,7 +1088,7 @@ class WavemobileSim(UsimCard):
 		return None
 
 
-class SysmoISIMSJA2(UsimCard):
+class SysmoISIMSJA2(UsimCard, IsimCard):
 	"""
 	sysmocom sysmoISIM-SJA2
 	"""
