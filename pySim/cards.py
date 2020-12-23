@@ -309,6 +309,10 @@ class UsimCard(Card):
 			(res, sw) = self._scc.update_binary(EF_USIM_ADF_map['UST'], content)
 		return sw
 
+class IsimCard(Card):
+	def __init__(self, ssc):
+		super(IsimCard, self).__init__(ssc)
+
 
 class _MagicSimBase(Card):
 	"""
