@@ -336,12 +336,16 @@ class IsimCard(Card):
 
 	def update_pcscf(self, pcscf):
 		if len(pcscf) > 0:
-			content = enc_addr_tlv(pcscf)
+			addr_type = get_addr_type(pcscf)
+			if addr_type == None:
+				raise ValueError("Unknown PCSCF address type or invalid address provided")
+			content = enc_addr_tlv(pcscf, ('%02x' % addr_type))
 		else:
 			# Just the tag value
 			content = '80'
 		rec_size_bytes = self._scc.record_size(EF_ISIM_ADF_map['PCSCF'])
-		data, sw = self._scc.update_record(EF_ISIM_ADF_map['PCSCF'], 1, rpad(content, rec_size_bytes*2))
+		pcscf_tlv = rpad(content, rec_size_bytes*2)
+		data, sw = self._scc.update_record(EF_ISIM_ADF_map['PCSCF'], 1, pcscf_tlv)
 		return sw
 
 	def read_domain(self):
