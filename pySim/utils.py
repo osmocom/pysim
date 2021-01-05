@@ -651,6 +651,7 @@ def dec_ePDGSelection(sixhexbytes):
 def format_ePDGSelection(hexstr):
 	ePDGSelection_info_tag_chars = 2
 	ePDGSelection_info_tag_str = hexstr[:2]
+	s = ""
 	# Minimum length
 	len_chars = 2
 	# TODO: Need to determine length properly - definite length support only
@@ -659,6 +660,11 @@ def format_ePDGSelection(hexstr):
 	# But, each PLMN entry is made of PLMN (3 Bytes) + ePDG Priority (2 Bytes) + ePDG FQDN format (1 Byte)
 	# Totalling to 6 Bytes, maybe length should be 6n
 	len_str = hexstr[ePDGSelection_info_tag_chars:ePDGSelection_info_tag_chars+len_chars]
+
+	# Not programmed scenario
+	if int(len_str, 16) == 255 or int(ePDGSelection_info_tag_str, 16) == 255:
+		len_chars = 0
+		ePDGSelection_info_tag_chars = 0
 	if len_str[0] == '8':
 		# The bits 7 to 1 denotes the number of length octets if length > 127
 		if int(len_str[1]) > 0:
@@ -669,7 +675,6 @@ def format_ePDGSelection(hexstr):
 	content_str = hexstr[ePDGSelection_info_tag_chars+len_chars:]
 	# Right pad to prevent index out of range - multiple of 6 bytes
 	content_str = rpad(content_str, len(content_str) + (12 - (len(content_str) % 12)))
-	s = ""
 	for rec_data in hexstr_to_Nbytearr(content_str, 6):
 		rec_info = dec_ePDGSelection(rec_data)
 		if rec_info['mcc'] == 0xFFF and rec_info['mnc'] == 0xFFF:
