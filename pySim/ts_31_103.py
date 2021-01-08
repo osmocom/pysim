@@ -6,6 +6,7 @@ Various constants from ETSI TS 131 103 V14.2.0
 
 #
 # Copyright (C) 2020 Supreeth Herle <herlesupreeth@gmail.com>
+# Copyright (C) 2021 Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +21,11 @@ Various constants from ETSI TS 131 103 V14.2.0
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+from pySim.filesystem import *
+from pySim.utils import *
+from pySim.ts_51_011 import EF_AD
+import pySim.ts_102_221
 
 # Mapping between ISIM Service Number and its description
 EF_IST_map = {
@@ -66,3 +72,130 @@ EF_ISIM_ADF_map = {
 	'XCAPConfigData': '6FFC',
 	'WebRTCURI': '6FFA'
 }
+
+# TS 31.103 Section 4.2.2
+class EF_IMPI(TransparentEF):
+    def __init__(self, fid='6f02', sfid=0x02, name='EF.IMPI', desc='IMS private user identity'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+
+# TS 31.103 Section 4.2.3
+class EF_DOMAIN(TransparentEF):
+    def __init__(self, fid='6f05', sfid=0x05, name='EF.DOMAIN', desc='Home Network Domain Name'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+
+# TS 31.103 Section 4.2.4
+class EF_IMPU(LinFixedEF):
+    def __init__(self, fid='6f04', sfid=0x04, name='EF.IMPU', desc='IMS public user identity'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+
+# TS 31.103 Section 4.2.6
+class EF_ARR(LinFixedEF):
+    def __init__(self, fid='6f06', sfid=0x06, name='EF.ARR', desc='Access Rule Reference'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+
+# TS 31.103 Section 4.2.7
+class EF_IST(TransparentEF):
+    def __init__(self, fid='6f07', sfid=0x07, name='EF.IST', desc='ISIM Service Table'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size={1,4})
+        # add those commands to the general commands of a TransparentEF
+        self.shell_commands += [self.AddlShellCommands()]
+
+    @with_default_category('File-Specific Commands')
+    class AddlShellCommands(CommandSet):
+        def __init__(self):
+            super().__init__()
+
+        def do_ist_service_activate(self, arg):
+            """Activate a service within EF.IST"""
+            self._cmd.card.update_ist(int(arg), 1)
+
+        def do_ist_service_deactivate(self, arg):
+            """Deactivate a service within EF.IST"""
+            self._cmd.card.update_ist(int(arg), 0)
+
+# TS 31.103 Section 4.2.8
+class EF_PCSCF(LinFixedEF):
+    def __init__(self, fid='6f09', sfid=None, name='EF.P-CSCF', desc='P-CSCF Address'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+    def _decode_record_hex(self, raw_hex):
+        # FIXME: this doesn't do JSON output
+        return dec_addr_tlv(raw_hex)
+    def _encode_record_hex(self, json_in):
+        return enc_addr_tlv(json_in)
+
+# TS 31.103 Section 4.2.9
+class EF_GBABP(LinFixedEF):
+    def __init__(self, fid='6fd5', sfid=None, name='EF.GBABP', desc='GBA Bootstrappng'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+
+# TS 31.103 Section 4.2.10
+class EF_GBANL(LinFixedEF):
+    def __init__(self, fid='6fd7', sfid=None, name='EF.GBANL', desc='GBA NAF List'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+
+# TS 31.103 Section 4.2.11
+class EF_NAFKCA(LinFixedEF):
+    def __init__(self, fid='6fdd', sfid=None, name='EF.NAFKCA', desc='NAF Key Centre Address'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+
+# TS 31.103 Section 4.2.16
+class EF_UICCIARI(LinFixedEF):
+    def __init__(self, fid='6fe7', sfid=None, name='EF.UICCIARI', desc='UICC IARI'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+
+# TS 31.103 Section 4.2.18
+class EF_IMSConfigData(TransparentEF):
+    def __init__(self, fid='6ff8', sfid=None, name='EF.IMSConfigData', desc='IMS Configuration Data'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+
+# TS 31.103 Section 4.2.19
+class EF_XCAPConfigData(TransparentEF):
+    def __init__(self, fid='6ffc', sfid=None, name='EF.XCAPConfigData', desc='XCAP Configuration Data'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+
+# TS 31.103 Section 4.2.20
+class EF_WebRTCURI(TransparentEF):
+    def __init__(self, fid='6ffa', sfid=None, name='EF.WebRTCURI', desc='WebRTC URI'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+
+
+class ADF_ISIM(CardADF):
+    def __init__(self, aid='a0000000871004', name='ADF.ISIM', fid=None, sfid=None,
+                 desc='ISIM Application'):
+        super().__init__(aid=aid, fid=fid, sfid=sfid, name=name, desc=desc)
+
+        files = [
+            EF_IMPI(),
+            EF_DOMAIN(),
+            EF_IMPU(),
+            EF_AD(),
+            EF_ARR(),
+            EF_IST(),
+            EF_PCSCF(),
+            EF_GBABP(),
+            EF_GBANL(),
+            EF_NAFKCA(),
+            # SMS
+            # SMSS
+            # SMSR
+            #EF_SMSP(),
+            EF_UICCIARI(),
+            # FromPreferred
+            EF_IMSConfigData(),
+            EF_XCAPConfigData(),
+            EF_WebRTCURI(),
+          ]
+        self.add_files(files)
+
+    def decode_select_response(self, data_hex):
+        return pySim.ts_102_221.decode_select_response(data_hex)
+
+# TS 31.103 Section 7.1
+sw_isim = {
+    'Security management': {
+        '9862': 'Authentication error, incorrect MAC',
+        '9864': 'Authentication error, security context not supported',
+    }
+}
+
+CardApplicationISIM = CardApplication('ISIM', adf=ADF_ISIM(), sw=sw_isim)

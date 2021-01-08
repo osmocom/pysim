@@ -41,8 +41,13 @@ class ReaderError(Exception):
 class SwMatchError(Exception):
 	"""Raised when an operation specifies an expected SW but the actual SW from
 	   the card doesn't match."""
-	def __init__(self, sw_actual, sw_expected):
+	def __init__(self, sw_actual, sw_expected, rs=None):
 		self.sw_actual = sw_actual
 		self.sw_expected = sw_expected
+		self.rs = rs
 	def __str__(self):
+		if self.rs:
+			r = self.rs.interpret_sw(sw_actual)
+			if r:
+				return "SW match failed! Expected %s and got %s: %s - %s" % (self.sw_expected, self.sw_actual, r[0], r[1])
 		return "SW match failed! Expected %s and got %s." % (self.sw_expected, self.sw_actual)

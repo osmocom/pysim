@@ -13,6 +13,7 @@ virtualenv -p python3 venv --system-site-packages
 . venv/bin/activate
 pip install pytlv
 pip install pyyaml
+pip install cmd2
 
 cd pysim-testdata
 ../tests/pysim-test.sh
