@@ -446,7 +446,7 @@ def gen_parameters(opts):
 	else:
 		opc = ''.join(['%02x' % random.randrange(0,256) for i in range(16)])
 
-	pin_adm = sanitize_pin_adm(opts)
+	pin_adm = sanitize_pin_adm(opts.pin_adm, opts.pin_adm_hex)
 
 	# ePDG Selection Information
 	if opts.epdgSelection:

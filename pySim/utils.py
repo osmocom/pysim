@@ -571,7 +571,7 @@ def enc_addr_tlv(addr, addr_type='00'):
 
 	return s
 
-def sanitize_pin_adm(opts):
+def sanitize_pin_adm(pin_adm, pin_adm_hex = None):
 	"""
 	The ADM pin can be supplied either in its hexadecimal form or as
 	ascii string. This function checks the supplied opts parameter and
@@ -579,19 +579,17 @@ def sanitize_pin_adm(opts):
 	it was originally supplied by the user
 	"""
 
-	pin_adm = None
-
-	if opts.pin_adm is not None:
-		if len(opts.pin_adm) <= 8:
-			pin_adm = ''.join(['%02x'%(ord(x)) for x in opts.pin_adm])
+	if pin_adm is not None:
+		if len(pin_adm) <= 8:
+			pin_adm = ''.join(['%02x'%(ord(x)) for x in pin_adm])
 			pin_adm = rpad(pin_adm, 16)
 
 		else:
 			raise ValueError("PIN-ADM needs to be <=8 digits (ascii)")
 
-	if opts.pin_adm_hex is not None:
-		if len(opts.pin_adm_hex) == 16:
-			pin_adm = opts.pin_adm_hex
+	if pin_adm_hex is not None:
+		if len(pin_adm_hex) == 16:
+			pin_adm = pin_adm_hex
 			# Ensure that it's hex-encoded
 			try:
 				try_encode = h2b(pin_adm)
