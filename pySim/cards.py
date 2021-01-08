@@ -849,12 +849,17 @@ class SysmoUSIMSJS1(UsimCard):
 			return None
 		return None
 
-	def program(self, p):
-
+	def verify_adm(self, key):
 		# authenticate as ADM using default key (written on the card..)
-		if not p['pin_adm']:
+		if not key:
 			raise ValueError("Please provide a PIN-ADM as there is no default one")
-		self._scc.verify_chv(0x0A, h2b(p['pin_adm']))
+		(res, sw) = self._scc.verify_chv(0x0A, key)
+		if sw != '9000':
+			raise RuntimeError('Failed to authenticate with ADM key %s'%(key))
+		return sw
+
+	def program(self, p):
+		self.verify_adm(h2b(p['pin_adm']))
 
 		# select MF
 		r = self._scc.select_file(['3f00'])
@@ -1244,11 +1249,17 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 			return None
 		return None
 
-	def program(self, p):
+	def verify_adm(self, key):
 		# authenticate as ADM using default key (written on the card..)
-		if not p['pin_adm']:
+		if not key:
 			raise ValueError("Please provide a PIN-ADM as there is no default one")
-		self._scc.verify_chv(0x0A, h2b(p['pin_adm']))
+		(res, sw) = self._scc.verify_chv(0x0A, key)
+		if sw != '9000':
+			raise RuntimeError('Failed to authenticate with ADM key %s'%(key))
+		return sw
+
+	def program(self, p):
+		self.verify_adm(h2b(p['pin_adm']))
 
 		# This type of card does not allow to reprogram the ICCID.
 		# Reprogramming the ICCID would mess up the card os software
