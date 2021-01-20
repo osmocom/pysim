@@ -40,7 +40,7 @@ pysim requires:
 
 Example for Debian:
 
-	apt-get install python3-pyscard python3-serial python3-pip
+	apt-get install python3-pyscard python3-serial python3-pip python3-yaml
 	pip3 install pytlv
 
 
