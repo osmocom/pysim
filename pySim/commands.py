@@ -115,9 +115,12 @@ class SimCardCommands(object):
 		if type(dir_list) is not list:
 			dir_list = [dir_list]
 		for i in dir_list:
-			data, sw = self._tp.send_apdu_checksw(self.cla_byte + "a4" + self.sel_ctrl + "02" + i)
+			data, sw = self.select_file(i)
 			rv.append(data)
 		return rv
+
+	def select_file(self, fid):
+		return self._tp.send_apdu_checksw(self.cla_byte + "a4" + self.sel_ctrl + "02" + fid)
 
 	def select_adf(self, aid):
 		aidlen = ("0" + format(len(aid) // 2, 'x'))[-2:]
