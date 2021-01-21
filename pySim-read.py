@@ -33,7 +33,7 @@ from pySim.ts_31_102 import EF_UST_map, EF_USIM_ADF_map
 from pySim.ts_31_103 import EF_IST_map, EF_ISIM_ADF_map
 
 from pySim.commands import SimCardCommands
-from pySim.cards import card_detect, Card
+from pySim.cards import card_detect, Card, UsimCard, IsimCard
 from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn
 from pySim.utils import format_xplmn_w_act, dec_spn, dec_st, init_reader, dec_addr_tlv
 from pySim.utils import h2s, format_ePDGSelection
@@ -250,9 +250,12 @@ if __name__ == '__main__':
 	# Check whether we have th AID of USIM, if so select it by its AID
 	# EF.UST - File Id in ADF USIM : 6f38
 	if '9000' == card.select_adf_by_aid():
+		# Select USIM profile
+		usim_card = UsimCard(scc)
+
 		# EF.EHPLMN
-		if card.file_exists(EF_USIM_ADF_map['EHPLMN']):
-			(res, sw) = card.read_ehplmn()
+		if usim_card.file_exists(EF_USIM_ADF_map['EHPLMN']):
+			(res, sw) = usim_card.read_ehplmn()
 			if sw == '9000':
 				print("EHPLMN:\n%s" % (res))
 			else:
@@ -260,10 +263,10 @@ if __name__ == '__main__':
 
 		# EF.UST
 		try:
-			if card.file_exists(EF_USIM_ADF_map['UST']):
+			if usim_card.file_exists(EF_USIM_ADF_map['UST']):
 				# res[0] - EF content of UST
 				# res[1] - Human readable format of services marked available in UST
-				(res, sw) = card.read_ust()
+				(res, sw) = usim_card.read_ust()
 				if sw == '9000':
 					print("USIM Service Table: %s" % res[0])
 					print("%s" % res[1])
@@ -274,8 +277,8 @@ if __name__ == '__main__':
 
 		#EF.ePDGId - Home ePDG Identifier
 		try:
-			if card.file_exists(EF_USIM_ADF_map['ePDGId']):
-				(res, sw) = card.read_epdgid()
+			if usim_card.file_exists(EF_USIM_ADF_map['ePDGId']):
+				(res, sw) = usim_card.read_epdgid()
 				if sw == '9000':
 					print("ePDGId:\n%s" % (len(res) and res or '\tNot available\n',))
 				else:
@@ -285,8 +288,8 @@ if __name__ == '__main__':
 
 		#EF.ePDGSelection - ePDG Selection Information
 		try:
-			if card.file_exists(EF_USIM_ADF_map['ePDGSelection']):
-				(res, sw) = card.read_ePDGSelection()
+			if usim_card.file_exists(EF_USIM_ADF_map['ePDGSelection']):
+				(res, sw) = usim_card.read_ePDGSelection()
 				if sw == '9000':
 					print("ePDGSelection:\n%s" % (res,))
 				else:
@@ -296,18 +299,21 @@ if __name__ == '__main__':
 
 	# Select ISIM application by its AID
 	if '9000' == card.select_adf_by_aid(adf="isim"):
+		# Select USIM profile
+		isim_card = IsimCard(scc)
+
 		#EF.P-CSCF - P-CSCF Address
 		try:
-			if card.file_exists(EF_ISIM_ADF_map['PCSCF']):
-				res = card.read_pcscf()
+			if isim_card.file_exists(EF_ISIM_ADF_map['PCSCF']):
+				res = isim_card.read_pcscf()
 				print("P-CSCF:\n%s" % (len(res) and res or '\tNot available\n',))
 		except Exception as e:
 			print("P-CSCF: Can't read file -- " + str(e))
 
 		# EF.DOMAIN - Home Network Domain Name e.g. ims.mncXXX.mccXXX.3gppnetwork.org
 		try:
-			if card.file_exists(EF_ISIM_ADF_map['DOMAIN']):
-				(res, sw) = card.read_domain()
+			if isim_card.file_exists(EF_ISIM_ADF_map['DOMAIN']):
+				(res, sw) = isim_card.read_domain()
 				if sw == '9000':
 					print("Home Network Domain Name: %s" % (len(res) and res or 'Not available',))
 				else:
@@ -317,8 +323,8 @@ if __name__ == '__main__':
 
 		# EF.IMPI - IMS private user identity
 		try:
-			if card.file_exists(EF_ISIM_ADF_map['IMPI']):
-				(res, sw) = card.read_impi()
+			if isim_card.file_exists(EF_ISIM_ADF_map['IMPI']):
+				(res, sw) = isim_card.read_impi()
 				if sw == '9000':
 					print("IMS private user identity: %s" % (len(res) and res or 'Not available',))
 				else:
@@ -328,16 +334,16 @@ if __name__ == '__main__':
 
 		# EF.IMPU - IMS public user identity
 		try:
-			if card.file_exists(EF_ISIM_ADF_map['IMPU']):
-				res = card.read_impu()
+			if isim_card.file_exists(EF_ISIM_ADF_map['IMPU']):
+				res = isim_card.read_impu()
 				print("IMS public user identity:\n%s" % (len(res) and res or '\tNot available\n',))
 		except Exception as e:
 			print("IMS public user identity: Can't read file -- " + str(e))
 
 		# EF.UICCIARI - UICC IARI
 		try:
-			if card.file_exists(EF_ISIM_ADF_map['UICCIARI']):
-				res = card.read_iari()
+			if isim_card.file_exists(EF_ISIM_ADF_map['UICCIARI']):
+				res = isim_card.read_iari()
 				print("UICC IARI:\n%s" % (len(res) and res or '\tNot available\n',))
 		except Exception as e:
 			print("UICC IARI: Can't read file -- " + str(e))
