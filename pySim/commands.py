@@ -99,7 +99,7 @@ class SimCardCommands(object):
 	def sel_ctrl(self, value):
 		self._sel_ctrl = value
 
-	def try_select_file(self, dir_list):
+	def try_select_path(self, dir_list):
 		rv = []
 		if type(dir_list) is not list:
 			dir_list = [dir_list]
@@ -110,7 +110,7 @@ class SimCardCommands(object):
 				return rv
 		return rv
 
-	def select_file(self, dir_list):
+	def select_path(self, dir_list):
 		rv = []
 		if type(dir_list) is not list:
 			dir_list = [dir_list]
@@ -124,7 +124,7 @@ class SimCardCommands(object):
 		return self._tp.send_apdu_checksw(self.cla_byte + "a4" + "0404" + aidlen + aid)
 
 	def read_binary(self, ef, length=None, offset=0):
-		r = self.select_file(ef)
+		r = self.select_path(ef)
 		if len(r[-1]) == 0:
 			return (None, None)
 		if length is None:
@@ -142,7 +142,7 @@ class SimCardCommands(object):
 		return total_data, sw
 
 	def update_binary(self, ef, data, offset=0, verify=False):
-		self.select_file(ef)
+		self.select_path(ef)
 		pdu = self.cla_byte + 'd6%04x%02x' % (offset, len(data) // 2) + data
 		res = self._tp.send_apdu_checksw(pdu)
 		if verify:
@@ -155,13 +155,13 @@ class SimCardCommands(object):
 			raise ValueError('Binary verification failed (expected %s, got %s)' % (data.lower(), res[0].lower()))
 
 	def read_record(self, ef, rec_no):
-		r = self.select_file(ef)
+		r = self.select_path(ef)
 		rec_length = self.__record_len(r)
 		pdu = self.cla_byte + 'b2%02x04%02x' % (rec_no, rec_length)
 		return self._tp.send_apdu(pdu)
 
 	def update_record(self, ef, rec_no, data, force_len=False, verify=False):
-		r = self.select_file(ef)
+		r = self.select_path(ef)
 		if not force_len:
 			rec_length = self.__record_len(r)
 			if (len(data) // 2 != rec_length):
@@ -180,21 +180,21 @@ class SimCardCommands(object):
 			raise ValueError('Record verification failed (expected %s, got %s)' % (data.lower(), res[0].lower()))
 
 	def record_size(self, ef):
-		r = self.select_file(ef)
+		r = self.select_path(ef)
 		return self.__record_len(r)
 
 	def record_count(self, ef):
-		r = self.select_file(ef)
+		r = self.select_path(ef)
 		return self.__len(r) // self.__record_len(r)
 
 	def binary_size(self, ef):
-		r = self.select_file(ef)
+		r = self.select_path(ef)
 		return self.__len(r)
 
 	def run_gsm(self, rand):
 		if len(rand) != 32:
 			raise ValueError('Invalid rand')
-		self.select_file(['3f00', '7f20'])
+		self.select_path(['3f00', '7f20'])
 		return self._tp.send_apdu(self.cla_byte + '88000010' + rand)
 
 	def reset_card(self):
