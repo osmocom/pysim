@@ -759,3 +759,17 @@ def get_addr_type(addr):
 		return 0x00
 
 	return None
+
+def sw_match(sw, pattern):
+	"""Match given SW against given pattern."""
+	# Create a masked version of the returned status word
+	sw_lower = sw.lower()
+	sw_masked = ""
+	for i in range(0, 4):
+		if sw_lower[i] == '?':
+			sw_masked = sw_masked + '?'
+		elif sw_lower[i] == 'x':
+			sw_masked = sw_masked + 'x'
+		else:
+			sw_masked = sw_masked + sw_lower[i]
+	return sw_masked == pattern

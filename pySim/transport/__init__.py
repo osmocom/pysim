@@ -4,6 +4,7 @@
 """
 
 from pySim.exceptions import *
+from pySim.utils import sw_match
 
 #
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
@@ -93,14 +94,6 @@ class LinkBase(object):
 		"""
 		rv = self.send_apdu(pdu)
 
-		# Create a masked version of the returned status word
-		sw_masked = ""
-		for i in range(0, 4):
-			if sw.lower()[i] == '?':
-				sw_masked = sw_masked + '?'
-			else:
-				sw_masked = sw_masked + rv[1][i].lower()
-
-		if sw.lower() != sw_masked:
+		if not sw_match(rv[1], sw):
 			raise SwMatchError(rv[1], sw.lower())
 		return rv
