@@ -631,7 +631,7 @@ class FakeMagicSim(Card):
 		# Set first entry
 		entry = (
 			'81' +					#  1b  Status: Valid & Active
-			rpad(b2h(p['name'][0:14]), 28) +	# 14b  Entry Name
+			rpad(s2h(p['name'][0:14]), 28) +	# 14b  Entry Name
 			enc_iccid(p['iccid']) +			# 10b  ICCID
 			enc_imsi(p['imsi']) +			#  9b  IMSI_len + id_type(9) + IMSI
 			p['ki'] +				# 16b  Ki
