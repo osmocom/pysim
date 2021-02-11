@@ -137,9 +137,9 @@ def dec_mcc_from_plmn(plmn):
 
 def dec_mnc_from_plmn(plmn):
 	ia = h2i(plmn)
-	digit1 = ia[2] & 0x0F		# 3rd byte, LSB
-	digit2 = (ia[2] & 0xF0) >> 4	# 3rd byte, MSB
-	digit3 = (ia[1] & 0xF0) >> 4	# 2nd byte, MSB
+	digit1 = (ia[1] & 0xF0)	>>4		# 2nd byte, MSB
+	digit2 = ia[2] & 0x0F			# 3rd byte, LSB
+	digit3 = (ia[2] & 0xF0) >> 4	# 3nd byte, MSB
 	if digit3 == 0xF and digit2 == 0xF and digit1 == 0xF:
 		return 0xFFF # 4095
 	return derive_mnc(digit1, digit2, digit3)
