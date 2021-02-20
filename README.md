@@ -80,16 +80,16 @@ Usage
 
         ./pySim-prog.py -n 26C3 -c 49 -x 262 -y 42 -z <random_string_of_choice> -j <card_num>
 
-With <random_string_of_choice> and <card_num>, the soft will generate
-'predictable' IMSI and ICCID, so make sure you choose them so as not to
-conflict with anyone. (for eg. your name as <random_string_of_choice> and
-0 1 2 ... for <card num>).
+    With <random_string_of_choice> and <card_num>, the soft will generate
+    'predictable' IMSI and ICCID, so make sure you choose them so as not to
+    conflict with anyone. (for eg. your name as <random_string_of_choice> and
+    0 1 2 ... for <card num>).
 
-You also need to enter some parameters to select the device :
+    You also need to enter some parameters to select the device :
 
-    -t TYPE : type of card (supersim, magicsim, fakemagicsim or try 'auto')
-    -d DEV  : Serial port device (default /dev/ttyUSB0)
-    -b BAUD : Baudrate (default 9600)
+        -t TYPE : type of card (supersim, magicsim, fakemagicsim or try 'auto')
+        -d DEV  : Serial port device (default /dev/ttyUSB0)
+        -b BAUD : Baudrate (default 9600)
 
 * Interact with SIMs from a python interactive shell (ipython for eg :)
 
