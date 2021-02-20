@@ -93,18 +93,18 @@ Usage
 
 * Interact with SIMs from a python interactive shell (ipython for eg :)
 
-```python
-from pySim.transport.serial import SerialSimLink
-from pySim.commands import SimCardCommands
+    ```python
+    from pySim.transport.serial import SerialSimLink
+    from pySim.commands import SimCardCommands
 
-sl = SerialSimLink(device='/dev/ttyUSB0', baudrate=9600)
-sc = SimCardCommands(sl)
+    sl = SerialSimLink(device='/dev/ttyUSB0', baudrate=9600)
+    sc = SimCardCommands(sl)
 
-sl.wait_for_card()
+    sl.wait_for_card()
 
-# Print IMSI
-print(sc.read_binary(['3f00', '7f20', '6f07']))
+    # Print IMSI
+    print(sc.read_binary(['3f00', '7f20', '6f07']))
 
-# Run A3/A8
-print(sc.run_gsm('00112233445566778899aabbccddeeff'))
-```
+    # Run A3/A8
+    print(sc.run_gsm('00112233445566778899aabbccddeeff'))
+    ```
