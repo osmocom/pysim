@@ -607,24 +607,28 @@ def init_reader(opts):
 	"""
 	Init card reader driver
 	"""
-	if opts.pcsc_dev is not None:
-		print("Using PC/SC reader interface")
-		from pySim.transport.pcsc import PcscSimLink
-		sl = PcscSimLink(opts.pcsc_dev)
-	elif opts.osmocon_sock is not None:
-		print("Using Calypso-based (OsmocomBB) reader interface")
-		from pySim.transport.calypso import CalypsoSimLink
-		sl = CalypsoSimLink(sock_path=opts.osmocon_sock)
-	elif opts.modem_dev is not None:
-		print("Using modem for Generic SIM Access (3GPP TS 27.007)")
-		from pySim.transport.modem_atcmd import ModemATCommandLink
-		sl = ModemATCommandLink(device=opts.modem_dev, baudrate=opts.modem_baud)
-	else: # Serial reader is default
-		print("Using serial reader interface")
-		from pySim.transport.serial import SerialSimLink
-		sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
+	try:
+		if opts.pcsc_dev is not None:
+			print("Using PC/SC reader interface")
+			from pySim.transport.pcsc import PcscSimLink
+			sl = PcscSimLink(opts.pcsc_dev)
+		elif opts.osmocon_sock is not None:
+			print("Using Calypso-based (OsmocomBB) reader interface")
+			from pySim.transport.calypso import CalypsoSimLink
+			sl = CalypsoSimLink(sock_path=opts.osmocon_sock)
+		elif opts.modem_dev is not None:
+			print("Using modem for Generic SIM Access (3GPP TS 27.007)")
+			from pySim.transport.modem_atcmd import ModemATCommandLink
+			sl = ModemATCommandLink(device=opts.modem_dev, baudrate=opts.modem_baud)
+		else: # Serial reader is default
+			print("Using serial reader interface")
+			from pySim.transport.serial import SerialSimLink
+			sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
+		return sl
+	except Exception as e:
+		print("Card reader initialization failed with exception:\n" + str(e))
+		return None
 
-	return sl
 
 def enc_ePDGSelection(hexstr, mcc, mnc, epdg_priority='0001', epdg_fqdn_format='00'):
 	"""
