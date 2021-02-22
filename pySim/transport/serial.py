@@ -52,7 +52,8 @@ class SerialSimLink(LinkBase):
 		self._atr = None
 
 	def __del__(self):
-		self._sl.close()
+		if (hasattr(self, "_sl")):
+			self._sl.close()
 
 	def wait_for_card(self, timeout=None, newcardonly=False):
 		# Direct try
