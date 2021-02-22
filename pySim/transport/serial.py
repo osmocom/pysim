@@ -25,6 +25,7 @@ from __future__ import absolute_import
 
 import serial
 import time
+import os.path
 
 from pySim.exceptions import NoCardError, ProtocolError
 from pySim.transport import LinkBase
@@ -34,6 +35,8 @@ from pySim.utils import h2b, b2h
 class SerialSimLink(LinkBase):
 
 	def __init__(self, device='/dev/ttyUSB0', baudrate=9600, rst='-rts', debug=False):
+		if not os.path.exists(device):
+			raise ValueError("device file %s does not exist -- abort" % device)
 		self._sl = serial.Serial(
 				port = device,
 				parity = serial.PARITY_EVEN,
