@@ -794,3 +794,25 @@ def sw_match(sw, pattern):
 		else:
 			sw_masked = sw_masked + sw_lower[i]
 	return sw_masked == pattern
+
+def tabulate_str_list(str_list, width = 79, hspace = 2, lspace = 1, align_left = True):
+	"""Pretty print a list of strings into a tabulated form"""
+	if str_list == None:
+		return ""
+	if len(str_list) <= 0:
+		return ""
+	longest_str = max(str_list, key=len)
+	cellwith = len(longest_str) + hspace
+	cols = width // cellwith
+	rows = (len(str_list) - 1) // cols + 1
+	table = []
+	for i in iter(range(rows)):
+		str_list_row = str_list[i::rows]
+		if (align_left):
+			format_str_cell = '%%-%ds'
+		else:
+			format_str_cell = '%%%ds'
+		format_str_row = (format_str_cell % cellwith) * len(str_list_row)
+		format_str_row = (" " * lspace) + format_str_row
+		table.append(format_str_row % tuple(str_list_row))
+	return '\n'.join(table)

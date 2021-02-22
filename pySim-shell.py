@@ -38,7 +38,7 @@ from pySim.exceptions import *
 from pySim.commands import SimCardCommands
 from pySim.cards import card_detect, Card
 from pySim.utils import h2b, swap_nibbles, rpad, h2s
-from pySim.utils import dec_st, init_reader, sanitize_pin_adm
+from pySim.utils import dec_st, init_reader, sanitize_pin_adm, tabulate_str_list
 from pySim.card_handler import card_handler
 
 from pySim.filesystem import CardMF, RuntimeState
@@ -112,6 +112,35 @@ class Iso7816Commands(CommandSet):
 		(data, sw) = self._cmd.card._scc.verify_chv(opts.chv_nr, opts.code)
 		self._cmd.poutput(data)
 
+	dir_parser = argparse.ArgumentParser()
+	dir_parser.add_argument('--fids', help='Show file identifiers', action='store_true')
+	dir_parser.add_argument('--names', help='Show file names', action='store_true')
+	dir_parser.add_argument('--apps', help='Show applications', action='store_true')
+	dir_parser.add_argument('--all', help='Show all selectable identifiers and names', action='store_true')
+
+	@cmd2.with_argparser(dir_parser)
+	def do_dir(self, opts):
+		"""Show a listing of files available in currently selected DF or MF"""
+		if opts.all:
+			flags = []
+		elif opts.fids or opts.names or opts.apps:
+			flags = ['PARENT', 'SELF']
+			if opts.fids:
+				flags += ['FIDS', 'AIDS']
+			if opts.names:
+				flags += ['FNAMES', 'ANAMES']
+			if opts.apps:
+				flags += ['ANAMES', 'AIDS']
+		else:
+			flags = ['PARENT', 'SELF', 'FNAMES', 'ANAMES']
+		selectables = list(self._cmd.rs.selected_file.get_selectable_names(flags = flags))
+		directory_str = tabulate_str_list(selectables, width = 79, hspace = 2, lspace = 1, align_left = True)
+		path_list = self._cmd.rs.selected_file.fully_qualified_path(True)
+		self._cmd.poutput('/'.join(path_list))
+		path_list = self._cmd.rs.selected_file.fully_qualified_path(False)
+		self._cmd.poutput('/'.join(path_list))
+		self._cmd.poutput(directory_str)
+		self._cmd.poutput("%d files" % len(selectables))
 
 
 
