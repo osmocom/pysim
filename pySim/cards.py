@@ -167,7 +167,8 @@ class Card(object):
 		if data.lower() == "ffffffff":
 			data = "00000000"
 
-		content = data[0:6] + "%02X" % mnclen
+		# content = data[0:6] + "%02X" % mnclen
+		content = "80" + data[2:6] + "%02X" % mnclen
 		data, sw = self._scc.update_binary(EF['AD'], content)
 		return sw
 
