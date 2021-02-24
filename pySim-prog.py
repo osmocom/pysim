@@ -37,7 +37,7 @@ from pySim.commands import SimCardCommands
 from pySim.transport import init_reader
 from pySim.cards import _cards_classes, card_detect
 from pySim.utils import h2b, swap_nibbles, rpad, derive_milenage_opc, calculate_luhn, dec_iccid
-from pySim.ts_51_011 import EF
+from pySim.ts_51_011 import EF, EF_AD
 from pySim.card_handler import *
 from pySim.utils import *
 
@@ -142,6 +142,11 @@ def parse_options():
 		)
 	parser.add_option("--acc", dest="acc",
 			help="Set ACC bits (Access Control Code). not all card types are supported",
+		)
+	parser.add_option("--opmode", dest="opmode", type="choice",
+			help="Set UE Operation Mode in EF.AD (Administrative Data)",
+			default=None,
+			choices=['{:02X}'.format(m) for m in list(EF_AD.OP_MODE.keys())],
 		)
 	parser.add_option("--epdgid", dest="epdgid",
 			help="Set Home Evolved Packet Data Gateway (ePDG) Identifier. (Only FQDN format supported)",
@@ -472,6 +477,7 @@ def gen_parameters(opts):
 		'ims_hdomain': opts.ims_hdomain,
 		'impi' : opts.impi,
 		'impu' : opts.impu,
+		'opmode': opts.opmode,
 	}
 
 
@@ -490,6 +496,8 @@ def print_parameters(params):
 	if 'acc' in params:
 		s.append(" > ACC      : %(acc)s")
 	s.append(" > ADM1(hex): %(pin_adm)s")
+	if 'opmode' in params:
+		s.append(" > OPMODE   : %(opmode)s")
 	print("\n".join(s) % params)
 
 
