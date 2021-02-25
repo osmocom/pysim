@@ -41,7 +41,7 @@ from pySim.utils import h2b, swap_nibbles, rpad, h2s
 from pySim.utils import dec_st, init_reader, sanitize_pin_adm, tabulate_str_list
 from pySim.card_handler import card_handler
 
-from pySim.filesystem import CardMF, RuntimeState
+from pySim.filesystem import CardMF, RuntimeState, CardDF, CardADF
 from pySim.ts_51_011 import CardProfileSIM, DF_TELECOM, DF_GSM
 from pySim.ts_102_221 import CardProfileUICC
 from pySim.ts_31_102 import ADF_USIM
@@ -141,6 +141,30 @@ class Iso7816Commands(CommandSet):
 		self._cmd.poutput('/'.join(path_list))
 		self._cmd.poutput(directory_str)
 		self._cmd.poutput("%d files" % len(selectables))
+
+	def walk(self, indent = 0, action = None, context = None):
+		"""Recursively walk through the file system, starting at the currently selected DF"""
+		files = self._cmd.rs.selected_file.get_selectables(flags = ['FNAMES', 'ANAMES'])
+		for f in files:
+			if not action:
+				output_str = "  " * indent + str(f) + (" " * 250)
+				output_str = output_str[0:25]
+				if isinstance(files[f], CardADF):
+					output_str += " " + str(files[f].aid)
+				else:
+					output_str += " " + str(files[f].fid)
+				output_str += " " + str(files[f].desc)
+				self._cmd.poutput(output_str)
+			if isinstance(files[f], CardDF):
+				fcp_dec = self._cmd.rs.select(f, self._cmd)
+				self.walk(indent + 1, action, context)
+				fcp_dec = self._cmd.rs.select("..", self._cmd)
+			elif action:
+				action(f, context)
+
+	def do_tree(self, opts):
+		"""Display a filesystem-tree with all selectable files"""
+		self.walk()
 
 
 
