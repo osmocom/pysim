@@ -86,33 +86,38 @@ class CardFile(object):
             node = node.parent
         return node
 
-    def _get_self_selectables(self, alias=None):
+    def _get_self_selectables(self, alias=None, flags = []):
         """Return a dict of {'identifier': self} tuples"""
         sels = {}
         if alias:
             sels.update({alias: self})
-        if self.fid:
+        if self.fid and (flags == [] or 'FIDS' in flags):
             sels.update({self.fid: self})
-        if self.name:
+        if self.name and (flags == [] or 'NAMES' in flags):
             sels.update({self.name: self})
         return sels
 
-    def get_selectables(self):
+    def get_selectables(self, flags = []):
         """Return a dict of {'identifier': File} that is selectable from the current file."""
+        sels = {}
         # we can always select ourself
-        sels = self._get_self_selectables('.')
+        if flags == [] or 'SELF' in flags:
+            sels = self._get_self_selectables('.', flags)
         # we can always select our parent
-        sels = self.parent._get_self_selectables('..')
+        if flags == [] or 'PARENT' in flags:
+            sels = self.parent._get_self_selectables('..', flags)
         # if we have a MF, we can always select its applications
-        mf = self.get_mf()
-        if mf:
-            sels.update(mf._get_self_selectables())
-            sels.update(mf.get_app_selectables())
+        if flags == [] or 'MF' in flags:
+            mf = self.get_mf()
+            if mf:
+                sels.update(mf._get_self_selectables(flags = flags))
+                if flags == [] or 'APPS' in flags:
+                    sels.update(mf.get_app_selectables(flags))
         return sels
 
-    def get_selectable_names(self):
+    def get_selectable_names(self, flags = []):
         """Return a list of strings for all identifiers that are selectable from the current file."""
-        sels = self.get_selectables()
+        sels = self.get_selectables(flags)
         return sels.keys()
 
     def decode_select_response(self, data_hex):
@@ -158,12 +163,14 @@ class CardDF(CardFile):
         for child in children:
             self.add_file(child, ignore_existing)
 
-    def get_selectables(self):
+    def get_selectables(self, flags = []):
         """Get selectable (DF/EF names) from current DF"""
         # global selectables + our children
-        sels = super().get_selectables()
-        sels.update({x.fid: x for x in self.children.values() if x.fid})
-        sels.update({x.name: x for x in self.children.values() if x.name})
+        sels = super().get_selectables(flags)
+        if flags == [] or 'FIDS' in flags:
+                sels.update({x.fid: x for x in self.children.values() if x.fid})
+        if flags == [] or 'NAMES' in flags:
+                sels.update({x.name: x for x in self.children.values() if x.name})
         return sels
 
     def lookup_file_by_name(self, name):
@@ -216,16 +223,20 @@ class CardMF(CardDF):
         """Get list of completions (AID names)"""
         return [x.name for x in self.applications]
 
-    def get_selectables(self):
+    def get_selectables(self, flags = []):
         """Get list of completions (DF/EF/ADF names) from current DF"""
-        sels = super().get_selectables()
-        sels.update(self.get_app_selectables())
+        sels = super().get_selectables(flags)
+        if flags == [] or 'APPS' in flags:
+                sels.update(self.get_app_selectables(flags))
         return sels
 
-    def get_app_selectables(self):
-        # applications by AID + name
-        sels = {x.aid: x for x in self.applications.values()}
-        sels.update({x.name: x for x in self.applications.values() if x.name})
+    def get_app_selectables(self, flags = []):
+        """Get applications by AID + name"""
+        sels = {}
+        if flags == [] or 'FIDS' in flags:
+                sels.update({x.aid: x for x in self.applications.values()})
+        if flags == [] or 'NAMES' in flags:
+                sels.update({x.name: x for x in self.applications.values() if x.name})
         return sels
 
     def decode_select_response(self, data_hex):
@@ -261,10 +272,10 @@ class CardEF(CardFile):
     def __str__(self):
         return "EF(%s)" % (super().__str__())
 
-    def get_selectables(self):
+    def get_selectables(self, flags = []):
         """Get list of completions (EF names) from current DF"""
         #global selectable names + those of the parent DF
-        sels = super().get_selectables()
+        sels = super().get_selectables(flags)
         sels.update({x.name:x for x in self.parent.children.values() if x != self})
         return sels
 
