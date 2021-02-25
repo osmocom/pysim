@@ -378,11 +378,18 @@ class LinFixedEF(CardEF):
 
         read_rec_parser = argparse.ArgumentParser()
         read_rec_parser.add_argument('record_nr', type=int, help='Number of record to be read')
+        read_rec_parser.add_argument('--count', type=int, default=1, help='Number of records to be read, beginning at record_nr')
         @cmd2.with_argparser(read_rec_parser)
         def do_read_record(self, opts):
-            """Read a record from a record-oriented EF"""
-            (data, sw) = self._cmd.rs.read_record(opts.record_nr)
-            self._cmd.poutput(data)
+            """Read one or multiple records from a record-oriented EF"""
+            for r in range(opts.count):
+                recnr = opts.record_nr + r
+                (data, sw) = self._cmd.rs.read_record(recnr)
+                if (len(data) > 0):
+                   recstr = str(data)
+                else:
+                   recstr = "(empty)"
+                self._cmd.poutput("%03d %s" % (recnr, recstr))
 
         read_rec_dec_parser = argparse.ArgumentParser()
         read_rec_dec_parser.add_argument('record_nr', type=int, help='Number of record to be read')
