@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """ pySim: Transport Link for serial (RS232) based readers included with simcard

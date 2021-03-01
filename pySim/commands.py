@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """ pySim: SIM Card commands according to ISO 7816-4 and TS 11.11

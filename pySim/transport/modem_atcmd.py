@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """ pySim: Transport Link for 3GPP TS 27.007 compliant modems
