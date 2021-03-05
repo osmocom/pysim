@@ -244,9 +244,11 @@ def derive_milenage_opc(ki_hex, op_hex):
 	from pySim.utils import b2h
 
 	# We pass in hex string and now need to work on bytes
-	aes = AES.new(h2b(ki_hex))
-	opc_bytes = aes.encrypt(h2b(op_hex))
-	return b2h(strxor(opc_bytes, h2b(op_hex)))
+	ki_bytes = bytes(h2b(ki_hex))
+	op_bytes = bytes(h2b(op_hex))
+	aes = AES.new(ki_bytes)
+	opc_bytes = aes.encrypt(op_bytes)
+	return b2h(strxor(opc_bytes, op_bytes))
 
 def calculate_luhn(cc):
 	"""
