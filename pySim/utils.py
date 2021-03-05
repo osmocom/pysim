@@ -246,7 +246,7 @@ def derive_milenage_opc(ki_hex, op_hex):
 	# We pass in hex string and now need to work on bytes
 	ki_bytes = bytes(h2b(ki_hex))
 	op_bytes = bytes(h2b(op_hex))
-	aes = AES.new(ki_bytes)
+	aes = AES.new(ki_bytes, AES.MODE_ECB)
 	opc_bytes = aes.encrypt(op_bytes)
 	return b2h(strxor(opc_bytes, op_bytes))
 
