@@ -527,12 +527,10 @@ class EF_xPLMNwAcT(TransRecEF):
         if 'cdma2000 1xRTT' in in_list:
             u16 |= 0x0010
         # E-UTRAN
-        if 'E-UTRAN WB-S1' and 'E-UTRAN NB-S1' in in_list:
-            u16 |= 0x7000   # WB-S1 and NB-S1
-        elif 'E-UTRAN NB-S1' in in_list:
-            u16 |= 0x6000   # only WB-S1
-        elif 'E-UTRAN NB-S1' in in_list:
-            u16 |= 0x5000   # only NB-S1
+        if 'E-UTRAN WB-S1' in in_list:
+            u16 |= 0x6000
+        if 'E-UTRAN NB-S1' in in_list:
+            u16 |= 0x5000
         # GSM mess
         if 'GSM' in in_list and 'EC-GSM-IoT' in in_list:
             u16 |= 0x008C
