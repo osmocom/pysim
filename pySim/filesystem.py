@@ -55,6 +55,10 @@ class CardFile(object):
             self.parent.add_file(self)
         self.shell_commands = []
 
+	# Note: the basic properties (fid, name, ect.) are verified when
+	# the file is attached to a parent file. See method add_file() in
+	# class Card DF
+
     def __str__(self):
         if self.name:
             return self.name
