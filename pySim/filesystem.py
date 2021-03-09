@@ -31,7 +31,7 @@ import cmd2
 from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 
-from pySim.utils import sw_match, h2b, b2h
+from pySim.utils import sw_match, h2b, b2h, is_hex
 from pySim.exceptions import *
 
 class CardFile(object):
@@ -144,6 +144,8 @@ class CardDF(CardFile):
         """Add a child (DF/EF) to this DF"""
         if not isinstance(child, CardFile):
             raise TypeError("Expected a File instance")
+        if not is_hex(child.fid, minlen = 4, maxlen = 4):
+            raise ValueError("File name %s is not a valid fid" % (child.fid))
         if child.name in CardFile.RESERVED_NAMES:
             raise ValueError("File name %s is a reserved name" % (child.name))
         if child.fid in CardFile.RESERVED_FIDS:
