@@ -143,7 +143,7 @@ class CardDF(CardFile):
         if child.name in CardFile.RESERVED_NAMES:
             raise ValueError("File name %s is a reserved name" % (child.name))
         if child.fid in CardFile.RESERVED_FIDS:
-            raise ValueError("File fid %s is a reserved name" % (child.fid))
+            raise ValueError("File fid %s is a reserved fid" % (child.fid))
         if child.fid in self.children:
             if ignore_existing:
                 return
