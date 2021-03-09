@@ -130,12 +130,19 @@ class CardFile(object):
 
 class CardDF(CardFile):
     """DF (Dedicated File) in the smart card filesystem.  Those are basically sub-directories."""
+
+    @with_default_category('DF/ADF Commands')
+    class ShellCommands(CommandSet):
+        def __init__(self):
+            super().__init__()
+
     def __init__(self, **kwargs):
         if not isinstance(self, CardADF):
             if not 'fid' in kwargs:
                 raise TypeError('fid is mandatory for all DF')
         super().__init__(**kwargs)
         self.children = dict()
+        self.shell_commands = [self.ShellCommands()]
 
     def __str__(self):
         return "DF(%s)" % (super().__str__())
@@ -614,17 +621,48 @@ class RuntimeState(object):
         else:
             return self.profile.interpret_sw(sw)
 
+    def probe_file(self, fid, cmd_app=None):
+        """
+	blindly try to select a file and automatically add a matching file
+	object if the file actually exists
+	"""
+        if not is_hex(fid, 4, 4):
+            raise ValueError("Cannot select unknown file by name %s, only hexadecimal 4 digit FID is allowed" % fid)
+
+        try:
+            (data, sw) = self.card._scc.select_file(fid)
+        except SwMatchError as swm:
+            k = self.interpret_sw(swm.sw_actual)
+            if not k:
+                raise(swm)
+            raise RuntimeError("%s: %s - %s" % (swm.sw_actual, k[0], k[1]))
+
+        select_resp = self.selected_file.decode_select_response(data)
+        if (select_resp['file_descriptor']['file_type'] == 'df'):
+            f = CardDF(fid=fid, sfid=None, name="DF." + str(fid).upper(), desc="dedicated file, manually added at runtime")
+        else:
+            if (select_resp['file_descriptor']['structure'] == 'transparent'):
+                f = TransparentEF(fid=fid, sfid=None, name="EF." + str(fid).upper(), desc="elementry file, manually added at runtime")
+            else:
+                f = LinFixedEF(fid=fid, sfid=None, name="EF." + str(fid).upper(), desc="elementry file, manually added at runtime")
+
+        self.selected_file.add_files([f])
+        self.selected_file = f
+        return select_resp
+
     def select(self, name, cmd_app=None):
         """Change current directory"""
         sels = self.selected_file.get_selectables()
         if is_hex(name):
             name = name.lower()
+
+        # unregister commands of old file
+        if cmd_app and self.selected_file.shell_commands:
+            for c in self.selected_file.shell_commands:
+                cmd_app.unregister_command_set(c)
+
         if name in sels:
             f = sels[name]
-            # unregister commands of old file
-            if cmd_app and self.selected_file.shell_commands:
-                for c in self.selected_file.shell_commands:
-                    cmd_app.unregister_command_set(c)
             try:
                 if isinstance(f, CardADF):
                     (data, sw) = self.card._scc.select_adf(f.aid)
@@ -636,14 +674,16 @@ class RuntimeState(object):
                 if not k:
                     raise(swm)
                 raise RuntimeError("%s: %s - %s" % (swm.sw_actual, k[0], k[1]))
-            # register commands of new file
-            if cmd_app and self.selected_file.shell_commands:
-                for c in self.selected_file.shell_commands:
-                    cmd_app.register_command_set(c)
-            return f.decode_select_response(data)
-        #elif looks_like_fid(name):
+            select_resp = f.decode_select_response(data)
         else:
-            raise ValueError("Cannot select unknown %s" % (name))
+            select_resp = self.probe_file(name, cmd_app)
+
+        # register commands of new file
+        if cmd_app and self.selected_file.shell_commands:
+            for c in self.selected_file.shell_commands:
+                cmd_app.register_command_set(c)
+
+        return select_resp
 
     def read_binary(self, length=None, offset=0):
         if not isinstance(self.selected_file, TransparentEF):
