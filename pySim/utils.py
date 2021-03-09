@@ -577,6 +577,28 @@ def enc_addr_tlv(addr, addr_type='00'):
 
 	return s
 
+def is_hex(string, minlen=2, maxlen=None) -> bool:
+	"""
+	Check if a string is a valid hexstring
+	"""
+
+	# Filter obviously bad strings
+	if not string:
+		return False
+	if len(string) < minlen or minlen < 2:
+		return False
+	if len(string) % 2:
+		return False
+	if maxlen and len(string) > maxlen:
+		return False
+
+	# Try actual encoding to be sure
+	try:
+		try_encode = h2b(string)
+		return True
+	except:
+		return False
+
 def sanitize_pin_adm(pin_adm, pin_adm_hex = None):
 	"""
 	The ADM pin can be supplied either in its hexadecimal form or as
