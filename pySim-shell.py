@@ -49,10 +49,10 @@ from pySim.ts_31_103 import ADF_ISIM
 
 class PysimApp(cmd2.Cmd):
 	CUSTOM_CATEGORY = 'pySim Commands'
-	def __init__(self, card, rs):
+	def __init__(self, card, rs, script = None):
 		basic_commands = [Iso7816Commands(), UsimCommands()]
 		super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
-				use_ipython=True, auto_load_commands=False, command_sets=basic_commands)
+				 use_ipython=True, auto_load_commands=False, command_sets=basic_commands, startup_script=script)
 		self.intro = style('Welcome to pySim-shell!', fg=fg.red)
 		self.default_category = 'pySim-shell built-in commands'
 		self.card = card
@@ -212,6 +212,10 @@ def parse_options():
 			help="Socket path for Calypso (e.g. Motorola C1XX) based reader (via OsmocomBB)",
 			default=None,
 		)
+	parser.add_option("--script", dest="script", metavar="PATH",
+			help="script with shell commands to be executed automatically",
+			default=None,
+		)
 
 	parser.add_option("-a", "--pin-adm", dest="pin_adm",
 			help="ADM PIN used for provisioning (overwrites default)",
@@ -261,6 +265,6 @@ if __name__ == '__main__':
 	rs.mf.add_file(DF_TELECOM())
 	rs.mf.add_file(DF_GSM())
 
-	app = PysimApp(card, rs)
+	app = PysimApp(card, rs, opts.script)
 	rs.select('MF', app)
 	app.cmdloop()
