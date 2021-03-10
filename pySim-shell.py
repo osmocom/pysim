@@ -339,4 +339,14 @@ if __name__ == '__main__':
 
 	app = PysimApp(card, rs, opts.script)
 	rs.select('MF', app)
+
+	# If the user supplies an ADM PIN at via commandline args authenticate
+	# immediatley so that the user does not have to use the shell commands
+	pin_adm = sanitize_pin_adm(opts.pin_adm, opts.pin_adm_hex)
+	if pin_adm:
+		try:
+			card.verify_adm(h2b(pin_adm))
+		except Exception as e:
+			print(e)
+
 	app.cmdloop()
