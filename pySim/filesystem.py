@@ -550,10 +550,32 @@ class RuntimeState(object):
         self.selected_file = self.mf
         self.profile = profile
         # add applications + MF-files from profile
-        for a in self.profile.applications:
+        apps = self._match_applications()
+        for a in apps:
             self.mf.add_application(a)
         for f in self.profile.files_in_mf:
             self.mf.add_file(f)
+
+    def _match_applications(self):
+        """match the applications from the profile with applications on the card"""
+        apps_profile = self.profile.applications
+        aids_card = self.card.read_aids()
+        apps_taken = []
+        if aids_card:
+            aids_taken = []
+            print("AIDs on card:")
+            for a in aids_card:
+                for f in apps_profile:
+                    if f.aid in a:
+                        print(" %s: %s" % (f.name, a))
+                        aids_taken.append(a)
+                        apps_taken.append(f)
+            aids_unknown = set(aids_card) - set(aids_taken)
+            for a in aids_unknown:
+                print(" unknown: %s" % a)
+        else:
+            print("error: could not determine card applications")
+        return apps_taken
 
     def get_cwd(self):
         """Obtain the current working directory."""

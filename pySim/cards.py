@@ -207,6 +207,7 @@ class Card(object):
 
 	# Fetch all the AIDs present on UICC
 	def read_aids(self):
+		self._aids = []
 		try:
 			# Find out how many records the EF.DIR has
 			# and store all the AIDs in the UICC
@@ -218,6 +219,8 @@ class Card(object):
 					self._aids.append(rec[0][8:8 + int(rec[0][6:8], 16) * 2])
 		except Exception as e:
 			print("Can't read AIDs from SIM -- %s" % (str(e),))
+			self._aids = []
+		return self._aids
 
 	# Select ADF.U/ISIM in the Card using its full AID
 	def select_adf_by_aid(self, adf="usim"):
