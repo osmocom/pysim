@@ -486,7 +486,6 @@ class ADF_USIM(CardADF):
     def __init__(self, aid='a0000000871002', name='ADF.USIM', fid=None, sfid=None,
                  desc='USIM Application'):
         super().__init__(aid=aid, fid=fid, sfid=sfid, name=name, desc=desc)
-        self.shell_commands = [self.ShellCommands()]
 
         files = [
           EF_LI(sfid=0x02),
@@ -517,12 +516,6 @@ class ADF_USIM(CardADF):
 
     def decode_select_response(self, data_hex):
         return pySim.ts_102_221.decode_select_response(data_hex)
-
-    @with_default_category('File-Specific Commands')
-    class ShellCommands(CommandSet):
-        def __init__(self):
-            super().__init__()
-
 
 # TS 31.102 Section 7.3
 sw_usim = {
