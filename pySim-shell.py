@@ -90,6 +90,12 @@ class Iso7816Commands(CommandSet):
 
 	def do_select(self, opts):
 		"""SELECT a File (ADF/DF/EF)"""
+		if len(opts.arg_list) == 0:
+			path_list = self._cmd.rs.selected_file.fully_qualified_path(True)
+			path_list_fid = self._cmd.rs.selected_file.fully_qualified_path(False)
+			self._cmd.poutput("currently selected file: " + '/'.join(path_list) + " (" + '/'.join(path_list_fid) + ")")
+			return
+
 		path = opts.arg_list[0]
 		fcp_dec = self._cmd.rs.select(path, self._cmd)
 		self._cmd.update_prompt()
