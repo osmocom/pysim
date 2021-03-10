@@ -717,21 +717,3 @@ class CardProfile(object):
         """Interpret a given status word within the profile.  Returns tuple of
            two strings"""
         return interpret_sw(self.sw, sw)
-
-
-######################################################################
-
-if __name__ == '__main__':
-    mf = CardMF()
-
-    adf_usim = ADF('a0000000871002', name='ADF_USIM')
-    mf.add_application(adf_usim)
-    df_pb = CardDF('5f3a', name='DF.PHONEBOOK')
-    adf_usim.add_file(df_pb)
-    adf_usim.add_file(TransparentEF('6f05', name='EF.LI', size={2,16}))
-    adf_usim.add_file(TransparentEF('6f07', name='EF.IMSI', size={9,9}))
-
-    rss = RuntimeState(mf, None)
-
-    interp = code.InteractiveConsole(locals={'mf':mf, 'rss':rss})
-    interp.interact()
