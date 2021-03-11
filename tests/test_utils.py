@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import unittest
-import utils 
+import pySim.utils as utils
 
 class DecTestCase(unittest.TestCase):
 
