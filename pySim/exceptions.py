@@ -21,14 +21,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import absolute_import
-
-try:
-	# This is for compatibility with python 2 and 3
-	from exceptions import Exception
-except:
-	pass
-
 class NoCardError(Exception):
 	pass
 
