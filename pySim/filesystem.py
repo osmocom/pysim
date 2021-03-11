@@ -313,7 +313,8 @@ class TransparentEF(CardEF):
         def do_update_binary(self, opts):
             """Update (Write) data of a transparent EF"""
             (data, sw) = self._cmd.rs.update_binary(opts.data, opts.offset)
-            self._cmd.poutput(data)
+            if data:
+                self._cmd.poutput(data)
 
         upd_bin_dec_parser = argparse.ArgumentParser()
         upd_bin_dec_parser.add_argument('data', help='Abstract data (JSON format) to write')
@@ -322,7 +323,8 @@ class TransparentEF(CardEF):
             """Encode + Update (Write) data of a transparent EF"""
             data_json = json.loads(opts.data)
             (data, sw) = self._cmd.rs.update_binary_dec(data_json)
-            self._cmd.poutput(json.dumps(data, indent=4))
+            if data:
+                self._cmd.poutput(json.dumps(data, indent=4))
 
     def __init__(self, fid, sfid=None, name=None, desc=None, parent=None, size={1,None}):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent)
@@ -410,7 +412,8 @@ class LinFixedEF(CardEF):
         def do_update_record(self, opts):
             """Update (write) data to a record-oriented EF"""
             (data, sw) = self._cmd.rs.update_record(opts.record_nr, opts.data)
-            self._cmd.poutput(data)
+            if data:
+                self._cmd.poutput(data)
 
         upd_rec_dec_parser = argparse.ArgumentParser()
         upd_rec_dec_parser.add_argument('record_nr', type=int, help='Number of record to be read')
@@ -419,7 +422,8 @@ class LinFixedEF(CardEF):
         def do_update_record_decoded(self, opts):
             """Encode + Update (write) data to a record-oriented EF"""
             (data, sw) = self._cmd.rs.update_record_dec(opts.record_nr, opts.data)
-            self._cmd.poutput(data)
+            if data:
+                self._cmd.poutput(data)
 
     def __init__(self, fid, sfid=None, name=None, desc=None, parent=None, rec_len={1,None}):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent)
