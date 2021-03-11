@@ -29,6 +29,16 @@ class DecTestCase(unittest.TestCase):
 	def testDecMNCfromPLMN_unused(self):
 		self.assertEqual(utils.dec_mnc_from_plmn("00f0ff"), 4095)
 
+	def test_enc_plmn(self):
+		with self.subTest("2-digit MCC"):
+			self.assertEqual(utils.enc_plmn("001", "01F"), "00F110")
+			self.assertEqual(utils.enc_plmn("001", "01"), "00F110")
+			self.assertEqual(utils.enc_plmn("295", "10"), "92F501")
+
+		with self.subTest("3-digit MCC"):
+			self.assertEqual(utils.enc_plmn("001", "001"), "001100")
+			self.assertEqual(utils.enc_plmn("302", "361"), "031263")
+
 	def testDecAct_noneSet(self):
 		self.assertEqual(utils.dec_act("0000"), [])
 
