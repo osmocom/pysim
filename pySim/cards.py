@@ -224,21 +224,21 @@ class Card(object):
 
 	# Select ADF.U/ISIM in the Card using its full AID
 	def select_adf_by_aid(self, adf="usim"):
-		# Check for valid ADF name
-		if adf not in ["usim", "isim"]:
-			return None
-
-		# First (known) halves of the U/ISIM AID
-		aid_map = {}
-		aid_map["usim"] = "a0000000871002"
-		aid_map["isim"] = "a0000000871004"
-
-		for aid in self._aids:
-			if aid_map[adf] in aid:
-				(res, sw) = self._scc.select_adf(aid)
-				return sw
-
-		return None
+		# Find full AID by partial AID:
+		if is_hex(adf):
+			for aid in self._aids:
+				if len(aid) >= len(adf) and adf == aid[0:len(adf)]:
+					return self._scc.select_adf(aid)
+		# Find full AID by application name:
+		elif adf in ["usim", "isim"]:
+			# First (known) halves of the U/ISIM AID
+			aid_map = {}
+			aid_map["usim"] = "a0000000871002"
+			aid_map["isim"] = "a0000000871004"
+			for aid in self._aids:
+				if aid_map[adf] in aid:
+					return self._scc.select_adf(aid)
+		return (None, None)
 
 	# Erase the contents of a file
 	def erase_binary(self, ef):
@@ -1335,7 +1335,8 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 			self._scc.update_binary('6f20', p['opc'], 17)
 
 		# update EF-USIM_AUTH_KEY in ADF.ISIM
-		if '9000' == self.select_adf_by_aid(adf="isim"):
+		data, sw = self.select_adf_by_aid(adf="isim")
+		if sw == '9000':
 			if p.get('ki'):
 				self._scc.update_binary('af20', p['ki'], 1)
 			if p.get('opc'):
@@ -1382,7 +1383,8 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 				if sw != '9000':
 					print("Programming IMPU failed with code %s"%sw)
 
-		if '9000' == self.select_adf_by_aid():
+		data, sw = self.select_adf_by_aid(adf="usim")
+		if sw == '9000':
 			# update EF-USIM_AUTH_KEY in ADF.USIM
 			if p.get('ki'):
 				self._scc.update_binary('af20', p['ki'], 1)

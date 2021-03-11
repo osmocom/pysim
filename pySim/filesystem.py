@@ -665,7 +665,7 @@ class RuntimeState(object):
             f = sels[name]
             try:
                 if isinstance(f, CardADF):
-                    (data, sw) = self.card._scc.select_adf(f.aid)
+                    (data, sw) = self.card.select_adf_by_aid(f.aid)
                 else:
                     (data, sw) = self.card._scc.select_file(f.fid)
                 self.selected_file = f

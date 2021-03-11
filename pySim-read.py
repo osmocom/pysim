@@ -251,7 +251,8 @@ if __name__ == '__main__':
 
 	# Check whether we have th AID of USIM, if so select it by its AID
 	# EF.UST - File Id in ADF USIM : 6f38
-	if '9000' == card.select_adf_by_aid():
+	data, sw = card.select_adf_by_aid(adf="usim")
+	if sw == '9000':
 		# Select USIM profile
 		usim_card = UsimCard(scc)
 
@@ -300,7 +301,8 @@ if __name__ == '__main__':
 			print("ePDGSelection: Can't read file -- " + str(e))
 
 	# Select ISIM application by its AID
-	if '9000' == card.select_adf_by_aid(adf="isim"):
+	data, sw = card.select_adf_by_aid(adf="isim")
+	if sw == '9000':
 		# Select USIM profile
 		isim_card = IsimCard(scc)
 
@@ -352,7 +354,8 @@ if __name__ == '__main__':
 
 	# Check whether we have th AID of ISIM, if so select it by its AID
 	# EF.IST - File Id in ADF ISIM : 6f07
-	if '9000' == card.select_adf_by_aid(adf="isim"):
+	data, sw = card.select_adf_by_aid(adf="isim")
+	if sw == '9000':
 		# EF.IST
 		(res, sw) = card.read_binary('6f07')
 		if sw == '9000':
