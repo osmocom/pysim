@@ -1,4 +1,4 @@
-#!/usr/bin/pyton
+#!/usr/bin/env python3
 
 import unittest
 import utils 
