@@ -205,4 +205,7 @@ class SimCardCommands(object):
 
 	def verify_chv(self, chv_no, code):
 		fc = rpad(b2h(code), 16)
-		return self._tp.send_apdu_checksw(self.cla_byte + '2000' + ('%02X' % chv_no) + '08' + fc)
+		data, sw = self._tp.send_apdu(self.cla_byte + '2000' + ('%02X' % chv_no) + '08' + fc)
+		if (sw != '9000'):
+			raise RuntimeError('Failed to authenticate with ADM key %s, %i tries left.' % (code, int(sw[3])))
+		return (data,sw)
