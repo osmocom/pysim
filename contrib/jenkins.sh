@@ -16,8 +16,7 @@ pip install pyyaml
 pip install cmd2
 
 # Execute automatically discovered unit tests first
-# TODO: uncomment once all tests are passing
-# python -m unittest discover -v -s tests/
+python -m unittest discover -v -s tests/
 
 cd pysim-testdata
 ../tests/pysim-test.sh
