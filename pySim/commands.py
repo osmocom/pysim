@@ -144,9 +144,17 @@ class SimCardCommands(object):
 				raise ValueError('Failed to read (offset %d)' % (offset))
 		return total_data, sw
 
-	def update_binary(self, ef, data, offset=0, verify=False):
+	def update_binary(self, ef, data, offset=0, verify=False, conserve=False):
+		data_length = len(data) // 2
+
+		# Save write cycles by reading+comparing before write
+		if conserve:
+			data_current, sw = self.read_binary(ef, data_length, offset)
+			if data_current == data:
+				return None, sw
+
 		self.select_path(ef)
-		pdu = self.cla_byte + 'd6%04x%02x' % (offset, len(data) // 2) + data
+		pdu = self.cla_byte + 'd6%04x%02x' % (offset, data_length) + data
 		res = self._tp.send_apdu_checksw(pdu)
 		if verify:
 			self.verify_binary(ef, data, offset)
@@ -163,7 +171,7 @@ class SimCardCommands(object):
 		pdu = self.cla_byte + 'b2%02x04%02x' % (rec_no, rec_length)
 		return self._tp.send_apdu(pdu)
 
-	def update_record(self, ef, rec_no, data, force_len=False, verify=False):
+	def update_record(self, ef, rec_no, data, force_len=False, verify=False, conserve=False):
 		r = self.select_path(ef)
 		if not force_len:
 			rec_length = self.__record_len(r)
@@ -171,6 +179,14 @@ class SimCardCommands(object):
 				raise ValueError('Invalid data length (expected %d, got %d)' % (rec_length, len(data) // 2))
 		else:
 			rec_length = len(data) // 2
+
+		# Save write cycles by reading+comparing before write
+		if conserve:
+			data_current, sw = self.read_record(ef, rec_no)
+			data_current = data_current[0:rec_length*2]
+			if data_current == data:
+				return None, sw
+
 		pdu = (self.cla_byte + 'dc%02x04%02x' % (rec_no, rec_length)) + data
 		res = self._tp.send_apdu_checksw(pdu)
 		if verify:

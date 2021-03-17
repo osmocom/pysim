@@ -67,10 +67,16 @@ class PysimApp(cmd2.Cmd):
 		self.numeric_path = False
 		self.add_settable(cmd2.Settable('numeric_path', bool, 'Print File IDs instead of names',
 						  onchange_cb=self._onchange_numeric_path))
+		self.conserve_write = True
+		self.add_settable(cmd2.Settable('conserve_write', bool, 'Read and compare before write',
+						  onchange_cb=self._onchange_conserve_write))
 		self.update_prompt()
 
 	def _onchange_numeric_path(self, param_name, old, new):
 		self.update_prompt()
+
+	def _onchange_conserve_write(self, param_name, old, new):
+		self.rs.conserve_write = new
 
 	def update_prompt(self):
 		path_list = self.rs.selected_file.fully_qualified_path(not self.numeric_path)

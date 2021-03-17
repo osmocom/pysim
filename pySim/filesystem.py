@@ -566,6 +566,7 @@ class RuntimeState(object):
             self.mf.add_application(a)
         for f in self.profile.files_in_mf:
             self.mf.add_file(f)
+        self.conserve_write = True
 
     def _match_applications(self):
         """match the applications from the profile with applications on the card"""
@@ -699,7 +700,7 @@ class RuntimeState(object):
     def update_binary(self, data_hex, offset=0):
         if not isinstance(self.selected_file, TransparentEF):
             raise TypeError("Only works with TransparentEF")
-        return self.card._scc.update_binary(self.selected_file.fid, data_hex, offset)
+        return self.card._scc.update_binary(self.selected_file.fid, data_hex, offset, conserve=self.conserve_write)
 
     def update_binary_dec(self, data):
         data_hex = self.selected_file.encode_hex(data)
@@ -719,7 +720,7 @@ class RuntimeState(object):
     def update_record(self, rec_nr, data_hex):
         if not isinstance(self.selected_file, LinFixedEF):
             raise TypeError("Only works with Linear Fixed EF")
-        return self.card._scc.update_record(self.selected_file.fid, rec_nr, data_hex)
+        return self.card._scc.update_record(self.selected_file.fid, rec_nr, data_hex, conserve=self.conserve_write)
 
     def update_record_dec(self, rec_nr, data):
         hex_data = self.selected_file.encode_record_hex(data)
