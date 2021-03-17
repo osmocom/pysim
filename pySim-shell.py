@@ -29,6 +29,7 @@ import argparse
 import os
 import sys
 from optparse import OptionParser
+from pathlib import Path
 
 from pySim.ts_51_011 import EF, DF, EF_SST_map, EF_AD_mode_map
 from pySim.ts_31_102 import EF_UST_map, EF_USIM_ADF_map
@@ -47,6 +48,9 @@ from pySim.ts_102_221 import CardProfileUICC
 from pySim.ts_31_102 import ADF_USIM
 from pySim.ts_31_103 import ADF_ISIM
 
+from pySim.card_data import CardDataCsv, card_data_register, card_data_get_field
+
+
 class PysimApp(cmd2.Cmd):
 	CUSTOM_CATEGORY = 'pySim Commands'
 	def __init__(self, card, rs, script = None):
@@ -56,6 +60,8 @@ class PysimApp(cmd2.Cmd):
 		self.intro = style('Welcome to pySim-shell!', fg=fg.red)
 		self.default_category = 'pySim-shell built-in commands'
 		self.card = card
+		iccid, sw = self.card.read_iccid()
+		self.iccid = iccid
 		self.rs = rs
 		self.py_locals = { 'card': self.card, 'rs' : self.rs }
 		self.numeric_path = False
@@ -78,8 +84,20 @@ class PysimApp(cmd2.Cmd):
 	@cmd2.with_category(CUSTOM_CATEGORY)
 	def do_verify_adm(self, arg):
 		"""VERIFY the ADM1 PIN"""
-		pin_adm = sanitize_pin_adm(arg)
-		self.card.verify_adm(h2b(pin_adm))
+		if arg:
+			# use specified ADM-PIN
+			pin_adm = sanitize_pin_adm(arg)
+		else:
+			# try to find an ADM-PIN if none is specified
+			result = card_data_get_field('ADM1', key='ICCID', value=self.iccid)
+			pin_adm = sanitize_pin_adm(result)
+			if pin_adm:
+				self.poutput("found adm-pin '%s' for ICCID '%s'" % (result, self.iccid))
+
+		if pin_adm:
+			self.card.verify_adm(h2b(pin_adm))
+		else:
+			self.poutput("error: cannot authenticate, no adm-pin!")
 
 	@cmd2.with_category(CUSTOM_CATEGORY)
 	def do_desc(self, opts):
@@ -289,6 +307,11 @@ def parse_options():
 			default=None,
 		)
 
+	parser.add_option("--csv", dest="csv", metavar="FILE",
+			help="Read card data from CSV file",
+			default=None,
+		)
+
 	parser.add_option("-a", "--pin-adm", dest="pin_adm",
 			help="ADM PIN used for provisioning (overwrites default)",
 		)
@@ -339,6 +362,14 @@ if __name__ == '__main__':
 
 	app = PysimApp(card, rs, opts.script)
 	rs.select('MF', app)
+
+	# Register csv-file as card data provider, either from specified CSV
+	# or from CSV file in home directory
+	csv_default = str(Path.home()) + "/.osmocom/pysim/card_data.csv"
+	if opts.csv:
+		card_data_register(CardDataCsv(opts.csv))
+	if os.path.isfile(csv_default):
+		card_data_register(CardDataCsv(csv_default))
 
 	# If the user supplies an ADM PIN at via commandline args authenticate
 	# immediatley so that the user does not have to use the shell commands
