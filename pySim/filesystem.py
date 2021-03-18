@@ -93,7 +93,7 @@ class CardFile(object):
             sels.update({alias: self})
         if self.fid and (flags == [] or 'FIDS' in flags):
             sels.update({self.fid: self})
-        if self.name and (flags == [] or 'NAMES' in flags):
+        if self.name and (flags == [] or 'FNAMES' in flags):
             sels.update({self.name: self})
         return sels
 
@@ -111,8 +111,7 @@ class CardFile(object):
             mf = self.get_mf()
             if mf:
                 sels.update(mf._get_self_selectables(flags = flags))
-                if flags == [] or 'APPS' in flags:
-                    sels.update(mf.get_app_selectables(flags))
+                sels.update(mf.get_app_selectables(flags = flags))
         return sels
 
     def get_selectable_names(self, flags = []):
@@ -169,7 +168,7 @@ class CardDF(CardFile):
         sels = super().get_selectables(flags)
         if flags == [] or 'FIDS' in flags:
                 sels.update({x.fid: x for x in self.children.values() if x.fid})
-        if flags == [] or 'NAMES' in flags:
+        if flags == [] or 'FNAMES' in flags:
                 sels.update({x.name: x for x in self.children.values() if x.name})
         return sels
 
@@ -226,16 +225,15 @@ class CardMF(CardDF):
     def get_selectables(self, flags = []):
         """Get list of completions (DF/EF/ADF names) from current DF"""
         sels = super().get_selectables(flags)
-        if flags == [] or 'APPS' in flags:
-                sels.update(self.get_app_selectables(flags))
+        sels.update(self.get_app_selectables(flags))
         return sels
 
     def get_app_selectables(self, flags = []):
         """Get applications by AID + name"""
         sels = {}
-        if flags == [] or 'FIDS' in flags:
+        if flags == [] or 'AIDS' in flags:
                 sels.update({x.aid: x for x in self.applications.values()})
-        if flags == [] or 'NAMES' in flags:
+        if flags == [] or 'ANAMES' in flags:
                 sels.update({x.name: x for x in self.applications.values() if x.name})
         return sels
 
