@@ -787,12 +787,13 @@ def sw_match(sw, pattern):
 	sw_lower = sw.lower()
 	sw_masked = ""
 	for i in range(0, 4):
-		if sw_lower[i] == '?':
+		if pattern[i] == '?':
 			sw_masked = sw_masked + '?'
-		elif sw_lower[i] == 'x':
+		elif pattern[i] == 'x':
 			sw_masked = sw_masked + 'x'
 		else:
 			sw_masked = sw_masked + sw_lower[i]
+	# Compare the masked version against the pattern
 	return sw_masked == pattern
 
 def tabulate_str_list(str_list, width = 79, hspace = 2, lspace = 1, align_left = True):
