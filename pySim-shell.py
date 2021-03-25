@@ -39,7 +39,7 @@ from pySim.exceptions import *
 from pySim.commands import SimCardCommands
 from pySim.cards import card_detect, Card
 from pySim.utils import h2b, swap_nibbles, rpad, h2s
-from pySim.utils import dec_st, init_reader, sanitize_pin_adm, tabulate_str_list
+from pySim.utils import dec_st, init_reader, sanitize_pin_adm, tabulate_str_list, is_hex
 from pySim.card_handler import card_handler
 
 from pySim.filesystem import CardMF, RuntimeState, CardDF, CardADF
@@ -141,15 +141,79 @@ class Iso7816Commands(CommandSet):
 		index_dict = { 1: self._cmd.rs.selected_file.get_selectable_names() }
 		return self._cmd.index_based_complete(text, line, begidx, endidx, index_dict=index_dict)
 
+	def get_code(self, code):
+		"""Use code either directly or try to get it from external data source"""
+		auto = ('PIN1', 'PIN2', 'PUK1', 'PUK2')
+
+		if str(code).upper() not in auto:
+			return sanitize_pin_adm(code)
+
+		result = card_data_get_field(str(code), key='ICCID', value=self._cmd.iccid)
+		result = sanitize_pin_adm(result)
+		if result:
+			self._cmd.poutput("found %s '%s' for ICCID '%s'" % (code.upper(), result, self._cmd.iccid))
+		else:
+			self._cmd.poutput("cannot find %s for ICCID '%s'" % (code.upper(), self._cmd.iccid))
+		return result
+
 	verify_chv_parser = argparse.ArgumentParser()
-	verify_chv_parser.add_argument('--chv-nr', type=int, default=1, help='CHV Number')
-	verify_chv_parser.add_argument('code', help='CODE/PIN/PUK')
+	verify_chv_parser.add_argument('--pin-nr', type=int, default=1, help='PIN Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
+	verify_chv_parser.add_argument('pin_code', type=str, help='PIN code digits, \"PIN1\" or \"PIN2\" to get PIN code from external data source')
 
 	@cmd2.with_argparser(verify_chv_parser)
 	def do_verify_chv(self, opts):
-		"""Verify (authenticate) using specified CHV (PIN)"""
-		(data, sw) = self._cmd.card._scc.verify_chv(opts.chv_nr, opts.code)
-		self._cmd.poutput(data)
+		"""Verify (authenticate) using specified PIN code"""
+		pin = self.get_code(opts.pin_code)
+		(data, sw) = self._cmd.card._scc.verify_chv(opts.pin_nr, h2b(pin))
+		self._cmd.poutput("CHV verfication successful")
+
+	unblock_chv_parser = argparse.ArgumentParser()
+	unblock_chv_parser.add_argument('--pin-nr', type=int, default=1, help='PUK Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
+	unblock_chv_parser.add_argument('puk_code', type=str, help='PUK code digits \"PUK1\" or \"PUK2\" to get PUK code from external data source')
+	unblock_chv_parser.add_argument('new_pin_code', type=str, help='PIN code digits \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+
+	@cmd2.with_argparser(unblock_chv_parser)
+	def do_unblock_chv(self, opts):
+		"""Unblock PIN code using specified PUK code"""
+		new_pin = self.get_code(opts.new_pin_code)
+		puk = self.get_code(opts.puk_code)
+		(data, sw) = self._cmd.card._scc.unblock_chv(opts.pin_nr, h2b(puk), h2b(new_pin))
+		self._cmd.poutput("CHV unblock successful")
+
+	change_chv_parser = argparse.ArgumentParser()
+	change_chv_parser.add_argument('--pin-nr', type=int, default=1, help='PUK Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
+	change_chv_parser.add_argument('pin_code', type=str, help='PIN code digits \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+	change_chv_parser.add_argument('new_pin_code', type=str, help='PIN code digits \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+
+	@cmd2.with_argparser(change_chv_parser)
+	def do_change_chv(self, opts):
+		"""Change PIN code to a new PIN code"""
+		new_pin = self.get_code(opts.new_pin_code)
+		pin = self.get_code(opts.pin_code)
+		(data, sw) = self._cmd.card._scc.change_chv(opts.pin_nr, h2b(pin), h2b(new_pin))
+		self._cmd.poutput("CHV change successful")
+
+	disable_chv_parser = argparse.ArgumentParser()
+	disable_chv_parser.add_argument('--pin-nr', type=int, default=1, help='PIN Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
+	disable_chv_parser.add_argument('pin_code', type=str, help='PIN code digits, \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+
+	@cmd2.with_argparser(disable_chv_parser)
+	def do_disable_chv(self, opts):
+		"""Disable PIN code using specified PIN code"""
+		pin = self.get_code(opts.pin_code)
+		(data, sw) = self._cmd.card._scc.disable_chv(opts.pin_nr, h2b(pin))
+		self._cmd.poutput("CHV disable successful")
+
+	enable_chv_parser = argparse.ArgumentParser()
+	enable_chv_parser.add_argument('--pin-nr', type=int, default=1, help='PIN Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
+	enable_chv_parser.add_argument('pin_code', type=str, help='PIN code digits, \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+
+	@cmd2.with_argparser(enable_chv_parser)
+	def do_enable_chv(self, opts):
+		"""Enable PIN code using specified PIN code"""
+		pin = self.get_code(opts.pin_code)
+		(data, sw) = self._cmd.card._scc.enable_chv(opts.pin_nr, h2b(pin))
+		self._cmd.poutput("CHV enable successful")
 
 	dir_parser = argparse.ArgumentParser()
 	dir_parser.add_argument('--fids', help='Show file identifiers', action='store_true')

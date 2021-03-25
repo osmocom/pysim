@@ -26,7 +26,7 @@ card_data_provider = []
 
 class CardData(object):
 
-	VALID_FIELD_NAMES = ['ICCID', 'ADM1', 'IMSI']
+	VALID_FIELD_NAMES = ['ICCID', 'ADM1', 'IMSI', 'PIN1', 'PIN2', 'PUK1', 'PUK2']
 
 	# check input parameters, but do nothing concrete yet
 	def get_data(self, fields=[], key='ICCID', value=""):
