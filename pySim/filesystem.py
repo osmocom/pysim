@@ -713,7 +713,7 @@ class CardProfile(object):
         return self.name
 
     def add_application(self, app):
-        self.applications.add(app)
+        self.applications.append(app)
 
     def interpret_sw(self, sw):
         """Interpret a given status word within the profile.  Returns tuple of
