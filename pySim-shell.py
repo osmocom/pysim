@@ -98,7 +98,10 @@ class PysimApp(cmd2.Cmd):
 			result = card_data_get_field('ADM1', key='ICCID', value=self.iccid)
 			pin_adm = sanitize_pin_adm(result)
 			if pin_adm:
-				self.poutput("found adm-pin '%s' for ICCID '%s'" % (result, self.iccid))
+				self.poutput("found ADM-PIN '%s' for ICCID '%s'" % (result, self.iccid))
+			else:
+				self.poutput("cannot find ADM-PIN for ICCID '%s'" % (self._cmd.iccid))
+				return
 
 		if pin_adm:
 			self.card.verify_adm(h2b(pin_adm))
