@@ -706,10 +706,10 @@ def interpret_sw(sw_data, sw):
 class CardApplication(object):
     """A card application is represented by an ADF (with contained hierarchy) and optionally
        some SW definitions."""
-    def __init__(self, name, adf=None, sw={}):
+    def __init__(self, name, adf=None, sw=None):
         self.name = name
         self.adf = adf
-        self.sw = sw
+        self.sw = sw or dict()
 
     def __str__(self):
         return "APP(%s)" % (self.name)
@@ -723,13 +723,13 @@ class CardProfile(object):
     """A Card Profile describes a card, it's filessystem hierarchy, an [initial] list of
        applications as well as profile-specific SW and shell commands.  Every card has
        one card profile, but there may be multiple applications within that profile."""
-    def __init__(self, name, desc=None, files_in_mf=[], sw=[], applications=[], shell_cmdsets=[]):
+    def __init__(self, name, **kw):
         self.name = name
-        self.desc = desc
-        self.files_in_mf = files_in_mf
-        self.sw = sw
-        self.applications = applications
-        self.shell_cmdsets = shell_cmdsets
+        self.desc = kw.get("desc", None)
+        self.files_in_mf = kw.get("files_in_mf", [])
+        self.sw = kw.get("sw", [])
+        self.applications = kw.get("applications", [])
+        self.shell_cmdsets = kw.get("shell_cmdsets", [])
 
     def __str__(self):
         return self.name
