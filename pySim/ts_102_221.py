@@ -294,4 +294,4 @@ class CardProfileUICC(CardProfile):
             },
           }
 
-        super().__init__('UICC', 'ETSI TS 102 221', files, sw)
+        super().__init__('UICC', desc='ETSI TS 102 221', files_in_mf=files, sw=sw)
