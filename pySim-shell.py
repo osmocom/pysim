@@ -263,7 +263,14 @@ class Iso7816Commands(CommandSet):
 				self.walk(indent + 1, action, context)
 				fcp_dec = self._cmd.rs.select("..", self._cmd)
 			elif action:
+				df_before_action = self._cmd.rs.selected_file
 				action(f, context)
+				# When walking through the file system tree the action must not
+				# always restore the currently selected file to the file that
+				# was selected before executing the action() callback.
+				if df_before_action != self._cmd.rs.selected_file:
+					raise RuntimeError("inconsistant walk, %s is currently selected but expecting %s to be selected"
+							   % (str(self._cmd.rs.selected_file), str(df_before_action)))
 
 	def do_tree(self, opts):
 		"""Display a filesystem-tree with all selectable files"""
