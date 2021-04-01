@@ -76,7 +76,8 @@ class Card(object):
 		return sw
 
 	def update_acc(self, acc):
-		data, sw = self._scc.update_binary(EF['ACC'], lpad(acc, 4))
+		#data, sw = self._scc.update_binary(EF['ACC'], lpad(acc, 4))
+		data, sw = self._scc.update_binary(EF['ACC'], lpad(acc, 4, c='0'))
 		return sw
 
 	def read_hplmn_act(self):
