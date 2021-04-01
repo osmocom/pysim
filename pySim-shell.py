@@ -277,28 +277,33 @@ class Iso7816Commands(CommandSet):
 		self.walk()
 
 	def export(self, filename, context):
+		""" Select and export a single file """
 		context['COUNT'] += 1
-		path_list = self._cmd.rs.selected_file.fully_qualified_path(True)
-		path_list_fid = self._cmd.rs.selected_file.fully_qualified_path(False)
+		df = self._cmd.rs.selected_file
+
+		if not isinstance(df, CardDF):
+			raise RuntimeError("currently selected file %s is not a DF or ADF" % str(df))
+
+		df_path_list = df.fully_qualified_path(True)
+		df_path_list_fid = df.fully_qualified_path(False)
 
 		self._cmd.poutput("#" * 80)
-		file_str = '/'.join(path_list) + "/" + str(filename) + " " * 80
+		file_str = '/'.join(df_path_list) + "/" + str(filename) + " " * 80
 		self._cmd.poutput("# " + file_str[0:77] + "#")
 		self._cmd.poutput("#" * 80)
 
-		self._cmd.poutput("# directory: %s (%s)" % ('/'.join(path_list), '/'.join(path_list_fid)))
+		self._cmd.poutput("# directory: %s (%s)" % ('/'.join(df_path_list), '/'.join(df_path_list_fid)))
 		try:
 			fcp_dec = self._cmd.rs.select(filename, self._cmd)
-			path_list = self._cmd.rs.selected_file.fully_qualified_path(True)
-			path_list_fid = self._cmd.rs.selected_file.fully_qualified_path(False)
-			self._cmd.poutput("# file: %s (%s)" % (path_list[-1], path_list_fid[-1]))
+			self._cmd.poutput("# file: %s (%s)" % (self._cmd.rs.selected_file.name, self._cmd.rs.selected_file.fid))
 
 			fd = fcp_dec['file_descriptor']
 			structure = fd['structure']
 			self._cmd.poutput("# structure: %s" % str(structure))
 
-			for f in path_list:
+			for f in df_path_list:
 				self._cmd.poutput("select " + str(f))
+			self._cmd.poutput("select " + self._cmd.rs.selected_file.name)
 
 			if structure == 'transparent':
 				result = self._cmd.rs.read_binary()
@@ -308,12 +313,17 @@ class Iso7816Commands(CommandSet):
 				for r in range(1, num_of_rec + 1):
 					result = self._cmd.rs.read_record(r)
 					self._cmd.poutput("update_record %d %s" % (r, str(result[0])))
-			fcp_dec = self._cmd.rs.select("..", self._cmd)
 		except Exception as e:
-			bad_file_str = '/'.join(path_list) + "/" + str(filename) + ", " + str(e)
+			bad_file_str = '/'.join(df_path_list) + "/" + str(filename) + ", " + str(e)
 			self._cmd.poutput("# bad file: %s" % bad_file_str)
 			context['ERR'] += 1
 			context['BAD'].append(bad_file_str)
+
+		# When reading the file is done, make sure the parent file is
+		# selected again. This will be the usual case, however we need
+		# to check before since we must not select the same DF twice
+		if df != self._cmd.rs.selected_file:
+			self._cmd.rs.select(df.fid or df.aid, self._cmd)
 
 		self._cmd.poutput("#")
 
