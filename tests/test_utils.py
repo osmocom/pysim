@@ -1,9 +1,26 @@
 #!/usr/bin/env python3
 
 import unittest
-import pySim.utils as utils
+from pySim import utils
+from pySim.ts_31_102 import EF_SUCI_Calc_Info
 
 class DecTestCase(unittest.TestCase):
+	# TS33.501 Annex C.4 test keys
+	hnet_pubkey_profile_b = "0272DA71976234CE833A6907425867B82E074D44EF907DFB4B3E21C1C2256EBCD1" # ID 27 in test file
+	hnet_pubkey_profile_a = "5A8D38864820197C3394B92613B20B91633CBD897119273BF8E4A6F4EEC0A650" # ID 30 in test file  
+
+	# TS31.121 4.9.4 EF_SUCI_Calc_Info test file
+	testfile_suci_calc_info = "A006020101020000A14B80011B8121" +hnet_pubkey_profile_b +"80011E8120" +hnet_pubkey_profile_a
+
+	decoded_testfile_suci = {
+		'prot_scheme_id_list': [
+			{'priority': 0, 'identifier': 2, 'key_index': 1},
+			{'priority': 1, 'identifier': 1, 'key_index': 2},
+			{'priority': 2, 'identifier': 0, 'key_index': 0}],
+		'hnet_pubkey_list': [
+			{'hnet_pubkey_identifier': 27, 'hnet_pubkey': hnet_pubkey_profile_b.lower()}, # because h2b/b2h returns all lower-case
+			{'hnet_pubkey_identifier': 30, 'hnet_pubkey': hnet_pubkey_profile_a.lower()}]
+	}
 
 	def testSplitHexStringToListOf5ByteEntries(self):
 		input_str = "ffffff0003ffffff0002ffffff0001"
@@ -80,6 +97,17 @@ class DecTestCase(unittest.TestCase):
 		expected += "\tffffff0000 # unused\n"
 		expected += "\tffffff0000 # unused\n"
 		self.assertEqual(utils.format_xplmn_w_act(input_str), expected)
+
+
+	def testDecodeSuciCalcInfo(self):
+		suci_calc_info = EF_SUCI_Calc_Info()
+		decoded = suci_calc_info._decode_hex(self.testfile_suci_calc_info)
+		self.assertDictEqual(self.decoded_testfile_suci, decoded)
+
+	def testEncodeSuciCalcInfo(self):
+		suci_calc_info = EF_SUCI_Calc_Info()
+		encoded = suci_calc_info._encode_hex(self.decoded_testfile_suci)
+		self.assertEqual(encoded.lower(), self.testfile_suci_calc_info.lower())
 
 if __name__ == "__main__":
 	unittest.main()

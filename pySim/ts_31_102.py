@@ -274,6 +274,126 @@ from pySim.ts_51_011 import EF_CBMID, EF_ECC, EF_CBMIR
 
 import pySim.ts_102_221
 
+# TS 31.102 4.4.11.8
+class EF_SUCI_Calc_Info(TransparentEF):
+    def __init__(self, fid="4f07", sfid=0x07, name='EF.SUCI_Calc_Info', size={2, None},
+        desc='SUCI Calc Info'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+
+    def _encode_prot_scheme_id_list(self, in_list):
+        out_bytes = [0xa0]
+        out_bytes.append(len(in_list)*2) # two byte per entry
+
+        # position in list determines priority; high-priority items (low index) come first
+        for scheme in sorted(in_list, key=lambda item: item["priority"]):
+            out_bytes.append(scheme["identifier"])
+            out_bytes.append(scheme["key_index"])
+
+        return out_bytes
+
+    def _encode_hnet_pubkey_list(self, hnet_pubkey_list):
+        out_bytes = [0xa1] # pubkey list tag
+        out_bytes.append(0x00) # length filled later
+        length = 0
+
+        for key in hnet_pubkey_list:
+            out_bytes.append(0x80) # identifier tag
+            out_bytes.append(0x01) # TODO size, fixed to 1 byte
+            out_bytes.append(key["hnet_pubkey_identifier"])
+            out_bytes.append(0x81) # key tag
+            out_bytes.append(len(key["hnet_pubkey"])//2)
+            length += 5+len(key["hnet_pubkey"])//2
+
+            pubkey_bytes = h2b(key["hnet_pubkey"])
+            out_bytes += pubkey_bytes
+
+        # fill length
+        out_bytes[1] = length
+        return out_bytes
+
+    def _encode_hex(self, in_json):
+        out_bytes = self._encode_prot_scheme_id_list(in_json['prot_scheme_id_list'])
+        out_bytes += self._encode_hnet_pubkey_list(in_json['hnet_pubkey_list'])
+        return "".join(["%02X" % i for i in out_bytes])
+
+    def _decode_prot_scheme_id_list(self, in_bytes):
+        prot_scheme_id_list = []
+        pos = 0
+        # two bytes per entry
+        while pos < len(in_bytes):
+            prot_scheme = {
+                'priority':   pos//2, # first in list: high priority
+                'identifier': in_bytes[pos],
+                'key_index':  in_bytes[pos+1]
+            }
+            pos += 2
+            prot_scheme_id_list.append(prot_scheme)
+        return prot_scheme_id_list
+
+    def _decode_hnet_pubkey_list(self, in_bytes):
+        hnet_pubkey_list = []
+        pos = 0
+        if in_bytes[pos] != 0xa1:
+            print("missing Home Network Public Key List data object")
+            return {}
+        pos += 1
+        hnet_pubkey_list_len = in_bytes[pos]
+        pos += 1
+
+        while pos < hnet_pubkey_list_len:
+            if in_bytes[pos] != 0x80:
+                print("missing Home Network Public Key Identifier tag")
+                return {}
+            pos += 1
+            hnet_pubkey_id_len = in_bytes[pos] # TODO might be more than 1 byte?
+            pos += 1
+            hnet_pubkey_id = in_bytes[pos:pos+hnet_pubkey_id_len][0]
+            pos += hnet_pubkey_id_len
+            if in_bytes[pos] != 0x81:
+                print("missing Home Network Public Key tag")
+                return {}
+            pos += 1
+            hnet_pubkey_len = in_bytes[pos]
+            pos += 1
+            hnet_pubkey = in_bytes[pos:pos+hnet_pubkey_len]
+            pos += hnet_pubkey_len
+
+            hnet_pubkey_list.append({
+                'hnet_pubkey_identifier': hnet_pubkey_id,
+                'hnet_pubkey':            b2h(hnet_pubkey)
+            })
+
+        return hnet_pubkey_list
+
+    def _decode_bin(self, in_bin):
+        return self._decode_hex(b2h(in_hex))
+
+    def _decode_hex(self, in_hex):
+        in_bytes = h2b(in_hex)
+        pos = 0
+
+        if in_bytes[pos] != 0xa0:
+            print("missing Protection Scheme Identifier List data object tag")
+            return {}
+        pos += 1
+
+        prot_scheme_id_list_len = in_bytes[pos] # TODO maybe more than 1 byte
+        pos += 1
+        # decode Protection Scheme Identifier List data object
+        prot_scheme_id_list = self._decode_prot_scheme_id_list(in_bytes[pos:pos+prot_scheme_id_list_len])
+        pos += prot_scheme_id_list_len
+
+        # remaining data holds Home Network Public Key Data Object
+        hnet_pubkey_list = self._decode_hnet_pubkey_list(in_bytes[pos:])
+
+        return {
+            'prot_scheme_id_list': prot_scheme_id_list,
+            'hnet_pubkey_list':    hnet_pubkey_list
+        }
+
+    def _encode_bin(self, in_json):
+        return h2b(self._encode_hex(in_json))
+
 class EF_LI(TransRecEF):
     def __init__(self, fid='6f05', sfid=None, name='EF.LI', size={2,None}, rec_len=2,
                  desc='Language Indication'):
@@ -340,6 +460,27 @@ class EF_UST(TransparentEF):
             """Deactivate a service within EF.UST"""
             self._cmd.card.update_ust(int(arg), 0)
 
+class DF_USIM_5GS(CardDF):
+    def __init__(self, fid='5FC0', name='DF.5GS', desc='5GS related files'):
+        super().__init__(fid=fid, name=name, desc=desc)
+        files = [
+          # I'm looking at 31.102 R15.9
+          TransparentEF('4F01', None, 'EF.5GS3GPPLOCI', '5GS 3GPP location information', size={20,20}),
+          TransparentEF('4F02', None, 'EF.5GSN3GPPLOCI', '5GS non-3GPP location information', size={20,20}),
+          #LinFixedEF('4F03', None, 'EF.5GS3GPPNSC', '5GS 3GPP Access NAS Security Context'),
+          #LinFixedEF('4F04', None, 'EF.5GSN3GPPNSC', '5GS non-3GPP Access NAS Security Context'),
+          TransparentEF('4F05', None, 'EF.5GAUTHKEYS', '5G authentication keys', size={68, None}),
+          TransparentEF('4F06', None, 'EF.UAC_AIC', 'UAC Access Identities Configuration', size={4, 4}),
+          EF_SUCI_Calc_Info(), #TransparentEF('4F07', None, 'EF.SUCI_Calc_Info', 'SUCI Calculation Information', size={2, None}),
+          TransparentEF('4F08', None, 'EF.OPL5G', '5GS Operator PLMN List', size={10, None}),
+          # TransparentEF('4F09', None, 'EF.NSI', 'Network Specific Identifier'), # FFS
+          TransparentEF('4F0A', None, 'EF.Routing_Indicator', 'Routing Indicator', size={4,4}),
+        ]
+
+        self.add_files(files)
+
+    def decode_select_response(self, data_hex):
+        return data_hex
 
 class ADF_USIM(CardADF):
     def __init__(self, aid='a0000000871002', name='ADF.USIM', fid=None, sfid=None,
@@ -370,6 +511,7 @@ class ADF_USIM(CardADF):
           EF_CBMID(sfid=0x0e),
           EF_ECC(sfid=0x01),
           EF_CBMIR(),
+          DF_USIM_5GS(),
           ]
         self.add_files(files)
 
