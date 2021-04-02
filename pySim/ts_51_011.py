@@ -352,8 +352,38 @@ class EF_ADN(LinFixedEF):
                 'dialing_nr': u[2], 'cap_conf_id': u[3], 'ext1_record_id': u[4]}
 
 # TS 51.011 Section 10.5.5
+class EF_SMS(LinFixedEF):
+    def __init__(self, fid='6f3c', sfid=None, name='EF.SMS', desc='Short messages'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len={176,176})
+    def _decode_record_bin(self, raw_bin_data):
+        def decode_status(status):
+            if status & 0x01 == 0x00:
+                return (None, 'free_space')
+            elif status & 0x07 == 0x01:
+                return ('mt', 'message_read')
+            elif status & 0x07 == 0x03:
+                return ('mt', 'message_to_be_read')
+            elif status & 0x07 == 0x07:
+                return ('mo', 'message_to_be_sent')
+            elif status & 0x1f == 0x05:
+                return ('mo', 'sent_status_not_requested')
+            elif status & 0x1f == 0x0d:
+                return ('mo', 'sent_status_req_but_not_received')
+            elif status & 0x1f == 0x15:
+                return ('mo', 'sent_status_req_rx_not_stored_smsr')
+            elif status & 0x1f == 0x1d:
+                return ('mo', 'sent_status_req_rx_stored_smsr')
+            else:
+                return (None, 'rfu')
+
+        status = decode_status(raw_bin_data[0])
+        remainder = raw_bin_data[1:]
+        return {'direction': status[0], 'status': status[1], 'remainder': b2h(remainder)}
+
+
+# TS 51.011 Section 10.5.5
 class EF_MSISDN(LinFixedEF):
-    def __init__(self, fid='6f4f', sfid=None, name='EF.MSISDN', desc='MSISDN'):
+    def __init__(self, fid='6f40', sfid=None, name='EF.MSISDN', desc='MSISDN'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len={15, None})
     def _decode_record_hex(self, raw_hex_data):
         return {'msisdn': dec_msisdn(raw_hex_data)}
@@ -370,10 +400,16 @@ class DF_TELECOM(CardDF):
         super().__init__(fid=fid, name=name, desc=desc)
         files = [
           EF_ADN(),
-          # FDN, SMS, CCP, ECCP
+          EF_ADN(fid='6f3b', name='EF_FDN', desc='Fixed dialling numbers'),
+          EF_SMS(),
+          LinFixedEF(fid='6f3d', name='EF.CCP', desc='Capability Configuration Parameters', rec_len={14,14}),
+          LinFixedEF(fid='6f4f', name='EF.ECCP', desc='Extended Capability Configuration Parameters', rec_len={15,32}),
           EF_MSISDN(),
           EF_SMSP(),
-          # SMSS, LND, SDN, EXT1, EXT2, EXT3, BDN, EXT4, SMSR, CMI
+          TransparentEF(fid='6f43', name='EF.SMSS', desc='SMS status', size={2,8}),
+          # LND, SDN, EXT1, EXT2, EXT3, BDN, EXT4
+          LinFixedEF(fid='6f47', name='EF.SMSR', desc='SMS status reports', rec_len={30,30}),
+          # CMI
           ]
         self.add_files(files)
 
