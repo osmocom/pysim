@@ -284,8 +284,8 @@ class CardMF(CardDF):
     def __str__(self):
         return "MF(%s)" % (self.fid)
 
-    def add_application(self, app:'CardADF'):
-        """Add an ADF (Application Dedicated File) to the MF"""
+    def add_application_df(self, app:'CardADF'):
+        """Add an Application to the MF"""
         if not isinstance(app, CardADF):
             raise TypeError("Expected an ADF instance")
         if app.aid in self.applications:
@@ -334,10 +334,12 @@ class CardADF(CardDF):
     """ADF (Application Dedicated File) in the smart card filesystem"""
     def __init__(self, aid:str, **kwargs):
         super().__init__(**kwargs)
+        # reference to CardApplication may be set from CardApplication constructor
+        self.application:Optional[CardApplication] = None
         self.aid = aid           # Application Identifier
         mf = self.get_mf()
         if mf:
-            mf.add_application(self)
+            mf.add_application_df(self)
 
     def __str__(self):
         return "ADF(%s)" % (self.aid)
@@ -807,12 +809,13 @@ class RuntimeState(object):
         """
         self.mf = CardMF()
         self.card = card
-        self.selected_file = self.mf
+        self.selected_file:CardDF = self.mf
         self.profile = profile
-        # add applications + MF-files from profile
+        # add application ADFs + MF-files from profile
         apps = self._match_applications()
         for a in apps:
-            self.mf.add_application(a)
+            if a.adf:
+                self.mf.add_application_df(a.adf)
         for f in self.profile.files_in_mf:
             self.mf.add_file(f)
         self.conserve_write = True
@@ -849,8 +852,8 @@ class RuntimeState(object):
         else:
             return self.selected_file.parent
 
-    def get_application(self) -> Optional[CardADF]:
-        """Obtain the currently selected application (if any).
+    def get_application_df(self) -> Optional[CardADF]:
+        """Obtain the currently selected application DF (if any).
 
         Returns:
             CardADF() instance or None"""
@@ -872,16 +875,16 @@ class RuntimeState(object):
         Returns:
             Tuple of two strings
         """
-        app = self.get_application()
-        if app:
+        adf = self.get_application_df()
+        if adf:
+            app = adf.application
             # The application either comes with its own interpret_sw
             # method or we will use the interpret_sw method from the
             # card profile.
-            if hasattr(app, "interpret_sw"):
+            if app and hasattr(app, "interpret_sw"):
                 return app.interpret_sw(sw)
             else:
                 return self.profile.interpret_sw(sw)
-            return app.interpret_sw(sw)
         else:
             return self.profile.interpret_sw(sw)
 
@@ -1078,7 +1081,7 @@ def interpret_sw(sw_data:dict, sw:str):
 class CardApplication(object):
     """A card application is represented by an ADF (with contained hierarchy) and optionally
        some SW definitions."""
-    def __init__(self, name, adf:str=None, sw:dict=None):
+    def __init__(self, name, adf:Optional[CardADF]=None, aid:str=None, sw:dict=None):
         """
         Args:
             adf : ADF name
@@ -1087,6 +1090,12 @@ class CardApplication(object):
         self.name = name
         self.adf = adf
         self.sw = sw or dict()
+        # back-reference from ADF to Applicaiton
+        if self.adf:
+            self.aid = aid or self.adf.aid
+            self.adf.application = self
+        else:
+            self.aid = aid
 
     def __str__(self):
         return "APP(%s)" % (self.name)

@@ -45,8 +45,8 @@ from pySim.card_handler import card_handler
 from pySim.filesystem import CardMF, RuntimeState, CardDF, CardADF
 from pySim.ts_51_011 import CardProfileSIM, DF_TELECOM, DF_GSM
 from pySim.ts_102_221 import CardProfileUICC
-from pySim.ts_31_102 import ADF_USIM
-from pySim.ts_31_103 import ADF_ISIM
+from pySim.ts_31_102 import CardApplicationUSIM
+from pySim.ts_31_103 import CardApplicationISIM
 
 from pySim.card_data import CardDataCsv, card_data_register, card_data_get_field
 
@@ -441,8 +441,8 @@ if __name__ == '__main__':
 		sys.exit(2)
 
 	profile = CardProfileUICC()
-	profile.add_application(ADF_USIM())
-	profile.add_application(ADF_ISIM())
+	profile.add_application(CardApplicationUSIM)
+	profile.add_application(CardApplicationISIM)
 
 	rs = RuntimeState(card, profile)
 
