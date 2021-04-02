@@ -875,6 +875,7 @@ class RuntimeState(object):
         Returns:
             Tuple of two strings
         """
+        res = None
         adf = self.get_application_df()
         if adf:
             app = adf.application
@@ -882,11 +883,8 @@ class RuntimeState(object):
             # method or we will use the interpret_sw method from the
             # card profile.
             if app and hasattr(app, "interpret_sw"):
-                return app.interpret_sw(sw)
-            else:
-                return self.profile.interpret_sw(sw)
-        else:
-            return self.profile.interpret_sw(sw)
+                res = app.interpret_sw(sw)
+        return res or self.profile.interpret_sw(sw)
 
     def probe_file(self, fid:str, cmd_app=None):
         """Blindly try to select a file and automatically add a matching file
