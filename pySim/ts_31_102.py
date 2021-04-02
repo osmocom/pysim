@@ -270,7 +270,7 @@ EF_USIM_ADF_map = {
 
 from pySim.filesystem import *
 from pySim.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_PLMNsel, EF_AD
-from pySim.ts_51_011 import EF_CBMID, EF_ECC, EF_CBMIR
+from pySim.ts_51_011 import EF_CBMID, EF_CBMIR
 
 import pySim.ts_102_221
 
@@ -460,6 +460,12 @@ class EF_UST(TransparentEF):
             """Deactivate a service within EF.UST"""
             self._cmd.card.update_ust(int(arg), 0)
 
+# TS 31.103 Section 4.2.7 - *not* the same as DF.GSM/EF.ECC!
+class EF_ECC(LinFixedEF):
+    def __init__(self, fid='6fb7', sfid=0x01, name='EF.ECC',
+                 desc='Emergency Call Codes'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len={4,20})
+
 class DF_USIM_5GS(CardDF):
     def __init__(self, fid='5FC0', name='DF.5GS', desc='5GS related files'):
         super().__init__(fid=fid, name=name, desc=desc)
@@ -472,7 +478,7 @@ class DF_USIM_5GS(CardDF):
           TransparentEF('4F05', None, 'EF.5GAUTHKEYS', '5G authentication keys', size={68, None}),
           TransparentEF('4F06', None, 'EF.UAC_AIC', 'UAC Access Identities Configuration', size={4, 4}),
           EF_SUCI_Calc_Info(), #TransparentEF('4F07', None, 'EF.SUCI_Calc_Info', 'SUCI Calculation Information', size={2, None}),
-          TransparentEF('4F08', None, 'EF.OPL5G', '5GS Operator PLMN List', size={10, None}),
+          LinFixedEF('4F08', None, 'EF.OPL5G', '5GS Operator PLMN List', rec_len={10, None}),
           # TransparentEF('4F09', None, 'EF.NSI', 'Network Specific Identifier'), # FFS
           TransparentEF('4F0A', None, 'EF.Routing_Indicator', 'Routing Indicator', size={4,4}),
         ]
@@ -505,7 +511,7 @@ class ADF_USIM(CardADF):
           TransparentEF('6f7e', 0x0b, 'EF.LOCI', 'Locationn information', size={11,11}),
           EF_AD(sfid=0x03),
           EF_CBMID(sfid=0x0e),
-          EF_ECC(sfid=0x01),
+          EF_ECC(),
           EF_CBMIR(),
           DF_USIM_5GS(),
           ]

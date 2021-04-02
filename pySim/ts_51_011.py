@@ -484,10 +484,11 @@ class EF_CBMID(EF_CBMI):
                  desc='Cell Broadcast Message Identifier for Data Download'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len)
 
-# TS 51.011 Section 10.3.26
-class EF_ECC(LinFixedEF):
-    def __init__(self, fid='6fb7', sfid=None, name='EF.ECC', desc='Emergency Call Codes'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len={4, 20})
+# TS 51.011 Section 10.3.27
+class EF_ECC(TransRecEF):
+    def __init__(self, fid='6fb7', sfid=None, name='EF.ECC', size={3,15}, rec_len=3,
+                 desc='Emergency Call Codes'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len)
 
 # TS 51.011 Section 10.3.28
 class EF_CBMIR(TransRecEF):
