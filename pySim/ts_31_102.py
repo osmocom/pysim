@@ -479,9 +479,6 @@ class DF_USIM_5GS(CardDF):
 
         self.add_files(files)
 
-    def decode_select_response(self, data_hex):
-        return data_hex
-
 class ADF_USIM(CardADF):
     def __init__(self, aid='a0000000871002', name='ADF.USIM', fid=None, sfid=None,
                  desc='USIM Application'):
