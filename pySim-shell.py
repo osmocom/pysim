@@ -54,7 +54,7 @@ from pySim.card_data import CardDataCsv, card_data_register, card_data_get_field
 class PysimApp(cmd2.Cmd):
 	CUSTOM_CATEGORY = 'pySim Commands'
 	def __init__(self, card, rs, script = None):
-		basic_commands = [Iso7816Commands(), UsimCommands()]
+		basic_commands = [Iso7816Commands()]
 		super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
 				 use_ipython=True, auto_load_commands=False, command_sets=basic_commands, startup_script=script)
 		self.intro = style('Welcome to pySim-shell!', fg=fg.red)
@@ -345,24 +345,6 @@ class Iso7816Commands(CommandSet):
 		if context['ERR']:
 			raise RuntimeError("unable to export %i file(s)" % context['ERR'])
 
-
-@with_default_category('USIM Commands')
-class UsimCommands(CommandSet):
-	def __init__(self):
-		super().__init__()
-
-	def do_read_ust(self, _):
-		"""Read + Display the EF.UST"""
-		self._cmd.card.select_adf_by_aid(adf="usim")
-		(res, sw) = self._cmd.card.read_ust()
-		self._cmd.poutput(res[0])
-		self._cmd.poutput(res[1])
-
-	def do_read_ehplmn(self, _):
-		"""Read EF.EHPLMN"""
-		self._cmd.card.select_adf_by_aid(adf="usim")
-		(res, sw) = self._cmd.card.read_ehplmn()
-		self._cmd.poutput(res)
 
 def parse_options():
 
