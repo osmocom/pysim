@@ -31,7 +31,7 @@ import cmd2
 from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 
-from typing import Optional, Iterable, List, Any, Tuple
+from typing import cast, Optional, Iterable, List, Any, Dict, Tuple
 
 from pySim.utils import sw_match, h2b, b2h, is_hex
 from pySim.exceptions import *
@@ -82,17 +82,19 @@ class CardFile(object):
         else:
             return self.fid
 
-    def fully_qualified_path(self, prefer_name:bool=True):
+    def fully_qualified_path(self, prefer_name:bool=True) -> List[str]:
         """Return fully qualified path to file as list of FID or name strings.
 
         Args:
             prefer_name : Preferably build path of names; fall-back to FIDs as required
         """
-        if self.parent != self:
+        if self.parent and self.parent != self:
             ret = self.parent.fully_qualified_path(prefer_name)
         else:
             ret = []
-        ret.append(self._path_element(prefer_name))
+        elem = self._path_element(prefer_name)
+        if elem:
+            ret.append(elem)
         return ret
 
     def get_mf(self) -> Optional['CardMF']:
@@ -101,11 +103,11 @@ class CardFile(object):
             return None
         # iterate towards the top. MF has parent == self
         node = self
-        while node.parent != node:
+        while node.parent and node.parent != node:
             node = node.parent
-        return node
+        return cast(CardMF, node)
 
-    def _get_self_selectables(self, alias:str=None, flags = []) -> dict:
+    def _get_self_selectables(self, alias:str=None, flags = []) -> Dict[str, 'CardFile']:
         """Return a dict of {'identifier': self} tuples.
 
         Args:
@@ -124,7 +126,7 @@ class CardFile(object):
             sels.update({self.name: self})
         return sels
 
-    def get_selectables(self, flags = []) -> dict:
+    def get_selectables(self, flags = []) -> Dict[str, 'CardFile']:
         """Return a dict of {'identifier': File} that is selectable from the current file.
 
         Args:
@@ -140,7 +142,8 @@ class CardFile(object):
             sels = self._get_self_selectables('.', flags)
         # we can always select our parent
         if flags == [] or 'PARENT' in flags:
-            sels = self.parent._get_self_selectables('..', flags)
+            if self.parent:
+                sels = self.parent._get_self_selectables('..', flags)
         # if we have a MF, we can always select its applications
         if flags == [] or 'MF' in flags:
             mf = self.get_mf()
@@ -149,22 +152,22 @@ class CardFile(object):
                 sels.update(mf.get_app_selectables(flags = flags))
         return sels
 
-    def get_selectable_names(self, flags = []) -> dict:
+    def get_selectable_names(self, flags = []) -> List[str]:
         """Return a dict of {'identifier': File} that is selectable from the current file.
 
         Args:
             flags : Specify which selectables to return 'FIDS' and/or 'NAMES';
                     If not specified, all selectables will be returned.
         Returns:
-            dict containing all selectable items. Key is identifier (string), value
-            a reference to a CardFile (or derived class) instance.
+            list containing all selectable names.
         """
         sels = self.get_selectables(flags)
-        return sels.keys()
+        return list(sels.keys())
 
     def decode_select_response(self, data_hex:str):
         """Decode the response to a SELECT command."""
-        return self.parent.decode_select_response(data_hex)
+        if self.parent:
+            return self.parent.decode_select_response(data_hex)
 
 
 class CardDF(CardFile):
@@ -241,7 +244,7 @@ class CardDF(CardFile):
                 sels.update({x.name: x for x in self.children.values() if x.name})
         return sels
 
-    def lookup_file_by_name(self, name:str) -> Optional[CardFile]:
+    def lookup_file_by_name(self, name:Optional[str]) -> Optional[CardFile]:
         """Find a file with given name within current DF."""
         if name == None:
             return None
@@ -250,12 +253,12 @@ class CardDF(CardFile):
                 return i
         return None
 
-    def lookup_file_by_sfid(self, sfid:str) -> Optional[CardFile]:
+    def lookup_file_by_sfid(self, sfid:Optional[str]) -> Optional[CardFile]:
         """Find a file with given short file ID within current DF."""
         if sfid == None:
             return None
         for i in self.children.values():
-            if i.sfid == int(sfid):
+            if i.sfid == int(str(sfid)):
                 return i
         return None
 
@@ -332,8 +335,9 @@ class CardADF(CardDF):
     def __init__(self, aid:str, **kwargs):
         super().__init__(**kwargs)
         self.aid = aid           # Application Identifier
-        if self.parent:
-            self.parent.add_application(self)
+        mf = self.get_mf()
+        if mf:
+            mf.add_application(self)
 
     def __str__(self):
         return "ADF(%s)" % (self.aid)
@@ -644,7 +648,7 @@ class LinFixedEF(CardEF):
         method = getattr(self, '_encode_record_bin', None)
         if callable(method):
             raw_bin_data = method(abstract_data)
-            return h2b(raw_bin_data)
+            return b2h(raw_bin_data)
         raise NotImplementedError
 
     def encode_record_bin(self, abstract_data:dict) -> bytearray:
@@ -683,8 +687,8 @@ class TransRecEF(TransparentEF):
     We add a special class for those, so the user only has to provide encoder/decoder functions
     for a record, while this class takes care of split / merge of records.
     """
-    def __init__(self, fid:str, sfid:str=None, name:str=None, desc:str=None,
-                 parent:Optional[CardDF]=None, rec_len:int=None, size={1,None}):
+    def __init__(self, fid:str, rec_len:int, sfid:str=None, name:str=None, desc:str=None,
+                 parent:Optional[CardDF]=None, size={1,None}):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -757,7 +761,7 @@ class TransRecEF(TransparentEF):
             return method(abstract_data)
         method = getattr(self, '_encode_record_bin', None)
         if callable(method):
-            return h2b(method(abstract_data))
+            return b2h(method(abstract_data))
         raise NotImplementedError
 
     def encode_record_bin(self, abstract_data:dict) -> bytearray:
@@ -1040,8 +1044,8 @@ class RuntimeState(object):
             rec_nr : Record number to read
             data_hex : Abstract data to be written
         """
-        hex_data = self.selected_file.encode_record_hex(data)
-        return self.update_record(self, rec_nr, data_hex)
+        data_hex = self.selected_file.encode_record_hex(data)
+        return self.update_record(rec_nr, data_hex)
 
 
 

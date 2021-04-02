@@ -803,7 +803,7 @@ def get_addr_type(addr):
 
 	return None
 
-def sw_match(sw:str, pattern:str) -> str:
+def sw_match(sw:str, pattern:str) -> bool:
 	"""Match given SW against given pattern."""
 	# Create a masked version of the returned status word
 	sw_lower = sw.lower()
