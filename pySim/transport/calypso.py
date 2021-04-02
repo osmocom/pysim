@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 
-""" pySim: Transport Link for Calypso bases phones
-"""
-
-#
 # Copyright (C) 2018 Vadim Yanitskiy <axilirator@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -73,8 +69,9 @@ class L1CTLMessageSIM(L1CTLMessage):
 		self.data += pdu
 
 class CalypsoSimLink(LinkBase):
+	"""Transport Link for Calypso based phones."""
 
-	def __init__(self, sock_path = "/tmp/osmocom_l2"):
+	def __init__(self, sock_path:str = "/tmp/osmocom_l2"):
 		# Make sure that a given socket path exists
 		if not os.path.exists(sock_path):
 			raise ReaderError("There is no such ('%s') UNIX socket" % sock_path)
@@ -119,7 +116,6 @@ class CalypsoSimLink(LinkBase):
 		pass # Nothing to do really ...
 
 	def send_apdu_raw(self, pdu):
-		"""see LinkBase.send_apdu_raw"""
 
 		# Request FULL reset
 		req_msg = L1CTLMessageSIM(h2b(pdu))

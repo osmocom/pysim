@@ -65,7 +65,7 @@ class SimCardCommands(object):
 	# from what SIMs responds. See also:
 	# USIM: ETSI TS 102 221, chapter 11.1.1.3 Response Data
 	# SIM: GSM 11.11, chapter 9.2.1 SELECT
-	def __record_len(self, r):
+	def __record_len(self, r) -> int:
 		if self.sel_ctrl == "0004":
 			tlv_parsed = self.__parse_fcp(r[-1])
 			file_descriptor = tlv_parsed['82']
@@ -76,14 +76,15 @@ class SimCardCommands(object):
 
 	# Tell the length of a binary file. See also comment
 	# above.
-	def __len(self, r):
+	def __len(self, r) -> int:
 		if self.sel_ctrl == "0004":
 			tlv_parsed = self.__parse_fcp(r[-1])
 			return int(tlv_parsed['80'], 16)
 		else:
 			return int(r[-1][4:8], 16)
 
-	def get_atr(self):
+	def get_atr(self) -> str:
+		"""Return the ATR of the currently inserted card."""
 		return self._tp.get_atr()
 
 	@property
@@ -101,6 +102,7 @@ class SimCardCommands(object):
 		self._sel_ctrl = value
 
 	def try_select_path(self, dir_list):
+		""" Try to select a specified path given as list of hex-string FIDs"""
 		rv = []
 		if type(dir_list) is not list:
 			dir_list = [dir_list]
@@ -112,6 +114,14 @@ class SimCardCommands(object):
 		return rv
 
 	def select_path(self, dir_list):
+		"""Execute SELECT for an entire list/path of FIDs.
+
+		Args:
+			dir_list: list of FIDs representing the path to select
+
+		Returns:
+			list of return values (FCP in hex encoding) for each element of the path
+		"""
 		rv = []
 		if type(dir_list) is not list:
 			dir_list = [dir_list]
@@ -120,14 +130,23 @@ class SimCardCommands(object):
 			rv.append(data)
 		return rv
 
-	def select_file(self, fid):
+	def select_file(self, fid:str):
+		"""Execute SELECT a given file by FID."""
 		return self._tp.send_apdu_checksw(self.cla_byte + "a4" + self.sel_ctrl + "02" + fid)
 
-	def select_adf(self, aid):
+	def select_adf(self, aid:str):
+		"""Execute SELECT a given Applicaiton ADF."""
 		aidlen = ("0" + format(len(aid) // 2, 'x'))[-2:]
 		return self._tp.send_apdu_checksw(self.cla_byte + "a4" + "0404" + aidlen + aid)
 
-	def read_binary(self, ef, length=None, offset=0):
+	def read_binary(self, ef, length:int=None, offset:int=0):
+		"""Execute READD BINARY.
+
+		Args:
+			ef : string or list of strings indicating name or path of transparent EF
+			length : number of bytes to read
+			offset : byte offset in file from which to start reading
+		"""
 		r = self.select_path(ef)
 		if len(r[-1]) == 0:
 			return (None, None)
@@ -145,7 +164,15 @@ class SimCardCommands(object):
 				raise ValueError('Failed to read (offset %d)' % (offset))
 		return total_data, sw
 
-	def update_binary(self, ef, data, offset=0, verify=False, conserve=False):
+	def update_binary(self, ef, data:str, offset:int=0, verify:bool=False, conserve:bool=False):
+		"""Execute UPDATE BINARY.
+
+		Args:
+			ef : string or list of strings indicating name or path of transparent EF
+			data : hex string of data to be written
+			offset : byte offset in file from which to start writing
+			verify : Whether or not to verify data after write
+		"""
 		data_length = len(data) // 2
 
 		# Save write cycles by reading+comparing before write
@@ -161,18 +188,32 @@ class SimCardCommands(object):
 			self.verify_binary(ef, data, offset)
 		return res
 
-	def verify_binary(self, ef, data, offset=0):
+	def verify_binary(self, ef, data:str, offset:int=0):
+		"""Verify contents of transparent EF.
+
+		Args:
+			ef : string or list of strings indicating name or path of transparent EF
+			data : hex string of expected data
+			offset : byte offset in file from which to start verifying
+		"""
 		res = self.read_binary(ef, len(data) // 2, offset)
 		if res[0].lower() != data.lower():
 			raise ValueError('Binary verification failed (expected %s, got %s)' % (data.lower(), res[0].lower()))
 
-	def read_record(self, ef, rec_no):
+	def read_record(self, ef, rec_no:int):
+		"""Execute READ RECORD.
+
+		Args:
+			ef : string or list of strings indicating name or path of linear fixed EF
+			rec_no : record number to read
+		"""
 		r = self.select_path(ef)
 		rec_length = self.__record_len(r)
 		pdu = self.cla_byte + 'b2%02x04%02x' % (rec_no, rec_length)
 		return self._tp.send_apdu(pdu)
 
-	def update_record(self, ef, rec_no, data, force_len=False, verify=False, conserve=False):
+	def update_record(self, ef, rec_no:int, data:str, force_len:bool=False, verify:bool=False,
+					  conserve:bool=False):
 		r = self.select_path(ef)
 		if not force_len:
 			rec_length = self.__record_len(r)
@@ -194,30 +235,47 @@ class SimCardCommands(object):
 			self.verify_record(ef, rec_no, data)
 		return res
 
-	def verify_record(self, ef, rec_no, data):
+	def verify_record(self, ef, rec_no:int, data:str):
 		res = self.read_record(ef, rec_no)
 		if res[0].lower() != data.lower():
 			raise ValueError('Record verification failed (expected %s, got %s)' % (data.lower(), res[0].lower()))
 
 	def record_size(self, ef):
+		"""Determine the record size of given file.
+
+		Args:
+			ef : string or list of strings indicating name or path of linear fixed EF
+		"""
 		r = self.select_path(ef)
 		return self.__record_len(r)
 
 	def record_count(self, ef):
+		"""Determine the number of records in given file.
+
+		Args:
+			ef : string or list of strings indicating name or path of linear fixed EF
+		"""
 		r = self.select_path(ef)
 		return self.__len(r) // self.__record_len(r)
 
 	def binary_size(self, ef):
+		"""Determine the size of given transparent file.
+
+		Args:
+			ef : string or list of strings indicating name or path of transparent EF
+		"""
 		r = self.select_path(ef)
 		return self.__len(r)
 
-	def run_gsm(self, rand):
+	def run_gsm(self, rand:str):
+		"""Execute RUN GSM ALGORITHM."""
 		if len(rand) != 32:
 			raise ValueError('Invalid rand')
 		self.select_path(['3f00', '7f20'])
 		return self._tp.send_apdu(self.cla_byte + '88000010' + rand)
 
 	def reset_card(self):
+		"""Physically reset the card"""
 		return self._tp.reset_card()
 
 	def _chv_process_sw(self, op_name, chv_no, pin_code, sw):
@@ -227,31 +285,36 @@ class SimCardCommands(object):
 		elif (sw != '9000'):
 			raise SwMatchError(sw, '9000')
 
-	def verify_chv(self, chv_no, pin_code):
-		fc = rpad(b2h(pin_code), 16)
+	def verify_chv(self, chv_no:int, code:str):
+		"""Verify a given CHV (Card Holder Verification == PIN)"""
+		fc = rpad(b2h(code), 16)
 		data, sw = self._tp.send_apdu(self.cla_byte + '2000' + ('%02X' % chv_no) + '08' + fc)
-		self._chv_process_sw('verify', chv_no, pin_code, sw)
+		self._chv_process_sw('verify', chv_no, code, sw)
 		return (data, sw)
 
-	def unblock_chv(self, chv_no, puk_code, pin_code):
+	def unblock_chv(self, chv_no:int, puk_code:str, pin_code:str):
+		"""Unblock a given CHV (Card Holder Verification == PIN)"""
 		fc = rpad(b2h(puk_code), 16) + rpad(b2h(pin_code), 16)
 		data, sw = self._tp.send_apdu(self.cla_byte + '2C00' + ('%02X' % chv_no) + '10' + fc)
 		self._chv_process_sw('unblock', chv_no, pin_code, sw)
 		return (data, sw)
 
-	def change_chv(self, chv_no, pin_code, new_pin_code):
+	def change_chv(self, chv_no:int, pin_code:str, new_pin_code:str):
+		"""Change a given CHV (Card Holder Verification == PIN)"""
 		fc = rpad(b2h(pin_code), 16) + rpad(b2h(new_pin_code), 16)
 		data, sw = self._tp.send_apdu(self.cla_byte + '2400' + ('%02X' % chv_no) + '10' + fc)
 		self._chv_process_sw('change', chv_no, pin_code, sw)
 		return (data, sw)
 
-	def disable_chv(self, chv_no, pin_code):
+	def disable_chv(self, chv_no:int, pin_code:str):
+		"""Disable a given CHV (Card Holder Verification == PIN)"""
 		fc = rpad(b2h(pin_code), 16)
 		data, sw = self._tp.send_apdu(self.cla_byte + '2600' + ('%02X' % chv_no) + '08' + fc)
 		self._chv_process_sw('disable', chv_no, pin_code, sw)
 		return (data, sw)
 
-	def enable_chv(self, chv_no, pin_code):
+	def enable_chv(self, chv_no:int, pin_code:str):
+		"""Enable a given CHV (Card Holder Verification == PIN)"""
 		fc = rpad(b2h(pin_code), 16)
 		data, sw = self._tp.send_apdu(self.cla_byte + '2800' + ('%02X' % chv_no) + '08' + fc)
 		self._chv_process_sw('enable', chv_no, pin_code, sw)

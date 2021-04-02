@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 
-""" pySim: PCSC reader transport link
-"""
-
-#
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
 # Copyright (C) 2010  Harald Welte <laforge@gnumonks.org>
 #
@@ -32,8 +28,9 @@ from pySim.utils import h2i, i2h
 
 
 class PcscSimLink(LinkBase):
+	""" pySim: PCSC reader transport link."""
 
-	def __init__(self, reader_number=0):
+	def __init__(self, reader_number:int=0):
 		r = readers()
 		self._reader = r[reader_number]
 		self._con = self._reader.createConnection()
@@ -46,7 +43,7 @@ class PcscSimLink(LinkBase):
 			pass
 		return
 
-	def wait_for_card(self, timeout=None, newcardonly=False):
+	def wait_for_card(self, timeout:int=None, newcardonly:bool=False):
 		cr = CardRequest(readers=[self._reader], timeout=timeout, newcardonly=newcardonly)
 		try:
 			cr.waitforcard()
@@ -75,7 +72,6 @@ class PcscSimLink(LinkBase):
 		return 1
 
 	def send_apdu_raw(self, pdu):
-		"""see LinkBase.send_apdu_raw"""
 
 		apdu = h2i(pdu)
 

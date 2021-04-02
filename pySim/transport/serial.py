@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 
-""" pySim: Transport Link for serial (RS232) based readers included with simcard
-"""
-
-#
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -30,8 +26,10 @@ from pySim.utils import h2b, b2h
 
 
 class SerialSimLink(LinkBase):
+	""" pySim: Transport Link for serial (RS232) based readers included with simcard"""
 
-	def __init__(self, device='/dev/ttyUSB0', baudrate=9600, rst='-rts', debug=False):
+	def __init__(self, device:str='/dev/ttyUSB0', baudrate:int=9600, rst:str='-rts',
+				 debug:bool=False):
 		if not os.path.exists(device):
 			raise ValueError("device file %s does not exist -- abort" % device)
 		self._sl = serial.Serial(
@@ -183,7 +181,6 @@ class SerialSimLink(LinkBase):
 		return self._sl.read()
 
 	def send_apdu_raw(self, pdu):
-		"""see LinkBase.send_apdu_raw"""
 
 		pdu = h2b(pdu)
 		data_len = ord(pdu[4])	# P3

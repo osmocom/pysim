@@ -21,43 +21,65 @@
 #
 
 
-def h2b(s):
+def h2b(s: str) -> bytearray:
 	"""convert from a string of hex nibbles to a sequence of bytes"""
 	return bytearray.fromhex(s)
 
-def b2h(b):
+def b2h(b: bytearray) -> str:
 	"""convert from a sequence of bytes to a string of hex nibbles"""
 	return ''.join(['%02x'%(x) for x in b])
 
-def h2i(s):
+def h2i(s:str):
+	"""convert from a string of hex nibbles to a list of integers"""
 	return [(int(x,16)<<4)+int(y,16) for x,y in zip(s[0::2], s[1::2])]
 
-def i2h(s):
+def i2h(s) -> str:
+	"""convert from a list of integers to a string of hex nibbles"""
 	return ''.join(['%02x'%(x) for x in s])
 
-def h2s(s):
+def h2s(s:str) -> str:
+	"""convert from a string of hex nibbles to an ASCII string"""
 	return ''.join([chr((int(x,16)<<4)+int(y,16)) for x,y in zip(s[0::2], s[1::2])
 						      if int(x + y, 16) != 0xff])
 
-def s2h(s):
+def s2h(s:str) -> str:
+	"""convert from an ASCII string to a string of hex nibbles"""
 	b = bytearray()
 	b.extend(map(ord, s))
 	return b2h(b)
 
 # List of bytes to string
-def i2s(s):
+def i2s(s) -> str:
+	"""convert from a list of integers to an ASCII string"""
 	return ''.join([chr(x) for x in s])
 
-def swap_nibbles(s):
+def swap_nibbles(s:str) -> str:
+	"""swap the nibbles in a hex string"""
 	return ''.join([x+y for x,y in zip(s[1::2], s[0::2])])
 
-def rpad(s, l, c='f'):
+def rpad(s:str, l:int, c='f') -> str:
+	"""pad string on the right side.
+	Args:
+		s : string to pad
+		l : total length to pad to
+		c : padding character
+	Returns:
+		String 's' padded with as many 'c' as needed to reach total length of 'l'
+	"""
 	return s + c * (l - len(s))
 
-def lpad(s, l, c='f'):
+def lpad(s:str, l:int, c='f') -> str:
+	"""pad string on the left side.
+	Args:
+		s : string to pad
+		l : total length to pad to
+		c : padding character
+	Returns:
+		String 's' padded with as many 'c' as needed to reach total length of 'l'
+	"""
 	return c * (l - len(s)) + s
 
-def half_round_up(n):
+def half_round_up(n:int) -> int:
 	return (n + 1)//2
 
 # IMSI encoded format:
@@ -75,8 +97,8 @@ def half_round_up(n):
 # Because of this, an odd length IMSI fits exactly into len(imsi) + 1 // 2 bytes, whereas an
 # even length IMSI only uses half of the last byte.
 
-def enc_imsi(imsi):
-	"""Converts a string imsi into the value of the EF"""
+def enc_imsi(imsi:str):
+	"""Converts a string IMSI into the encoded value of the EF"""
 	l = half_round_up(len(imsi) + 1)	# Required bytes - include space for odd/even indicator
 	oe = len(imsi) & 1			# Odd (1) / Even (0)
 	ei = '%02x' % l + swap_nibbles('%01x%s' % ((oe<<3)|1, rpad(imsi, 15)))
@@ -781,7 +803,7 @@ def get_addr_type(addr):
 
 	return None
 
-def sw_match(sw, pattern):
+def sw_match(sw:str, pattern:str) -> str:
 	"""Match given SW against given pattern."""
 	# Create a masked version of the returned status word
 	sw_lower = sw.lower()
@@ -796,8 +818,18 @@ def sw_match(sw, pattern):
 	# Compare the masked version against the pattern
 	return sw_masked == pattern
 
-def tabulate_str_list(str_list, width = 79, hspace = 2, lspace = 1, align_left = True):
-	"""Pretty print a list of strings into a tabulated form"""
+def tabulate_str_list(str_list, width:int = 79, hspace:int = 2, lspace:int = 1,
+					  align_left:bool = True):
+	"""Pretty print a list of strings into a tabulated form.
+
+	Args:
+		width : total width in characters per line
+		space : horizontal space between cells
+		lspace : number of spaces before row
+		align_lef : Align text to the left side
+	Returns:
+		multi-line string containing formatted table
+	"""
 	if str_list == None:
 		return ""
 	if len(str_list) <= 0:

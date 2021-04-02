@@ -24,48 +24,53 @@ from pySim.utils import sw_match
 #
 
 class LinkBase(object):
+	"""Base class for link/transport to card."""
 
-	def wait_for_card(self, timeout=None, newcardonly=False):
-		"""wait_for_card(): Wait for a card and connect to it
+	def wait_for_card(self, timeout:int=None, newcardonly:bool=False):
+		"""Wait for a card and connect to it
 
-		   timeout     : Maximum wait time (None=no timeout)
-		   newcardonly : Should we wait for a new card, or an already
-				 inserted one ?
+		Args:
+		   timeout : Maximum wait time in seconds (None=no timeout)
+		   newcardonly : Should we wait for a new card, or an already inserted one ?
 		"""
 		pass
 
 	def connect(self):
-		"""connect(): Connect to a card immediately
+		"""Connect to a card immediately
 		"""
 		pass
 
 	def disconnect(self):
-		"""disconnect(): Disconnect from card
+		"""Disconnect from card
 		"""
 		pass
 
 	def reset_card(self):
-		"""reset_card(): Resets the card (power down/up)
+		"""Resets the card (power down/up)
 		"""
 		pass
 
-	def send_apdu_raw(self, pdu):
-		"""send_apdu_raw(pdu): Sends an APDU with minimal processing
+	def send_apdu_raw(self, pdu:str):
+		"""Sends an APDU with minimal processing
 
-		   pdu    : string of hexadecimal characters (ex. "A0A40000023F00")
-		   return : tuple(data, sw), where
-			    data : string (in hex) of returned data (ex. "074F4EFFFF")
-			    sw   : string (in hex) of status word (ex. "9000")
+		Args:
+		   pdu : string of hexadecimal characters (ex. "A0A40000023F00")
+		Returns:
+		   tuple(data, sw), where
+				data : string (in hex) of returned data (ex. "074F4EFFFF")
+				sw   : string (in hex) of status word (ex. "9000")
 		"""
 		pass
 
 	def send_apdu(self, pdu):
-		"""send_apdu(pdu): Sends an APDU and auto fetch response data
+		"""Sends an APDU and auto fetch response data
 
-		   pdu    : string of hexadecimal characters (ex. "A0A40000023F00")
-		   return : tuple(data, sw), where
-			    data : string (in hex) of returned data (ex. "074F4EFFFF")
-			    sw   : string (in hex) of status word (ex. "9000")
+		Args:
+		   pdu : string of hexadecimal characters (ex. "A0A40000023F00")
+		Returns:
+		   tuple(data, sw), where
+				data : string (in hex) of returned data (ex. "074F4EFFFF")
+				sw   : string (in hex) of status word (ex. "9000")
 		"""
 		data, sw = self.send_apdu_raw(pdu)
 
@@ -82,15 +87,16 @@ class LinkBase(object):
 		return data, sw
 
 	def send_apdu_checksw(self, pdu, sw="9000"):
-		"""send_apdu_checksw(pdu,sw): Sends an APDU and check returned SW
+		"""Sends an APDU and check returned SW
 
-		   pdu    : string of hexadecimal characters (ex. "A0A40000023F00")
-		   sw     : string of 4 hexadecimal characters (ex. "9000"). The
-			    user may mask out certain digits using a '?' to add some
-			    ambiguity if needed.
-		   return : tuple(data, sw), where
-			    data : string (in hex) of returned data (ex. "074F4EFFFF")
-			    sw   : string (in hex) of status word (ex. "9000")
+		Args:
+		   pdu : string of hexadecimal characters (ex. "A0A40000023F00")
+		   sw : string of 4 hexadecimal characters (ex. "9000"). The user may mask out certain
+				digits using a '?' to add some ambiguity if needed.
+		Returns:
+			tuple(data, sw), where
+				data : string (in hex) of returned data (ex. "074F4EFFFF")
+				sw   : string (in hex) of status word (ex. "9000")
 		"""
 		rv = self.send_apdu(pdu)
 

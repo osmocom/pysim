@@ -31,6 +31,8 @@ import cmd2
 from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 
+from typing import Optional, Iterable, List, Any, Tuple
+
 from pySim.utils import sw_match, h2b, b2h, is_hex
 from pySim.exceptions import *
 
@@ -41,7 +43,16 @@ class CardFile(object):
     RESERVED_NAMES = ['..', '.', '/', 'MF']
     RESERVED_FIDS = ['3f00']
 
-    def __init__(self, fid=None, sfid=None, name=None, desc=None, parent=None):
+    def __init__(self, fid:str=None, sfid:str=None, name:str=None, desc:str=None,
+                 parent:Optional['CardDF']=None):
+        """
+        Args:
+            fid : File Identifier (4 hex digits)
+            sfid : Short File Identifier (2 hex digits, optional)
+            name : Brief name of the file, lik EF_ICCID
+            desc : Descriptoin of the file
+            parent : Parent CardFile object within filesystem hierarchy
+        """
         if not isinstance(self, CardADF) and fid == None:
             raise ValueError("fid is mandatory")
         if fid:
@@ -53,7 +64,7 @@ class CardFile(object):
         self.parent = parent
         if self.parent and self.parent != self and self.fid:
             self.parent.add_file(self)
-        self.shell_commands = []
+        self.shell_commands: List[CommandSet] = []
 
 	# Note: the basic properties (fid, name, ect.) are verified when
 	# the file is attached to a parent file. See method add_file() in
@@ -65,14 +76,18 @@ class CardFile(object):
         else:
             return self.fid
 
-    def _path_element(self, prefer_name):
+    def _path_element(self, prefer_name:bool) -> Optional[str]:
         if prefer_name and self.name:
             return self.name
         else:
             return self.fid
 
-    def fully_qualified_path(self, prefer_name=True):
-        """Return fully qualified path to file as list of FID or name strings."""
+    def fully_qualified_path(self, prefer_name:bool=True):
+        """Return fully qualified path to file as list of FID or name strings.
+
+        Args:
+            prefer_name : Preferably build path of names; fall-back to FIDs as required
+        """
         if self.parent != self:
             ret = self.parent.fully_qualified_path(prefer_name)
         else:
@@ -80,7 +95,7 @@ class CardFile(object):
         ret.append(self._path_element(prefer_name))
         return ret
 
-    def get_mf(self):
+    def get_mf(self) -> Optional['CardMF']:
         """Return the MF (root) of the file system."""
         if self.parent == None:
             return None
@@ -90,8 +105,16 @@ class CardFile(object):
             node = node.parent
         return node
 
-    def _get_self_selectables(self, alias=None, flags = []):
-        """Return a dict of {'identifier': self} tuples"""
+    def _get_self_selectables(self, alias:str=None, flags = []) -> dict:
+        """Return a dict of {'identifier': self} tuples.
+
+        Args:
+            alias : Add an alias with given name to 'self' 
+            flags : Specify which selectables to return 'FIDS' and/or 'NAMES';
+                    If not specified, all selectables will be returned.
+        Returns:
+            dict containing reference to 'self' for all identifiers.
+        """
         sels = {}
         if alias:
             sels.update({alias: self})
@@ -101,8 +124,16 @@ class CardFile(object):
             sels.update({self.name: self})
         return sels
 
-    def get_selectables(self, flags = []):
-        """Return a dict of {'identifier': File} that is selectable from the current file."""
+    def get_selectables(self, flags = []) -> dict:
+        """Return a dict of {'identifier': File} that is selectable from the current file.
+
+        Args:
+            flags : Specify which selectables to return 'FIDS' and/or 'NAMES';
+                    If not specified, all selectables will be returned.
+        Returns:
+            dict containing all selectable items. Key is identifier (string), value
+            a reference to a CardFile (or derived class) instance.
+        """
         sels = {}
         # we can always select ourself
         if flags == [] or 'SELF' in flags:
@@ -118,12 +149,20 @@ class CardFile(object):
                 sels.update(mf.get_app_selectables(flags = flags))
         return sels
 
-    def get_selectable_names(self, flags = []):
-        """Return a list of strings for all identifiers that are selectable from the current file."""
+    def get_selectable_names(self, flags = []) -> dict:
+        """Return a dict of {'identifier': File} that is selectable from the current file.
+
+        Args:
+            flags : Specify which selectables to return 'FIDS' and/or 'NAMES';
+                    If not specified, all selectables will be returned.
+        Returns:
+            dict containing all selectable items. Key is identifier (string), value
+            a reference to a CardFile (or derived class) instance.
+        """
         sels = self.get_selectables(flags)
         return sels.keys()
 
-    def decode_select_response(self, data_hex):
+    def decode_select_response(self, data_hex:str):
         """Decode the response to a SELECT command."""
         return self.parent.decode_select_response(data_hex)
 
@@ -147,8 +186,12 @@ class CardDF(CardFile):
     def __str__(self):
         return "DF(%s)" % (super().__str__())
 
-    def add_file(self, child, ignore_existing=False):
-        """Add a child (DF/EF) to this DF"""
+    def add_file(self, child:CardFile, ignore_existing:bool=False):
+        """Add a child (DF/EF) to this DF.
+        Args:
+            child: The new DF/EF to be added
+            ignore_existing: Ignore, if file with given FID already exists. Old one will be kept.
+        """
         if not isinstance(child, CardFile):
             raise TypeError("Expected a File instance")
         if not is_hex(child.fid, minlen = 4, maxlen = 4):
@@ -170,13 +213,26 @@ class CardDF(CardFile):
         self.children[child.fid] = child
         child.parent = self
 
-    def add_files(self, children, ignore_existing=False):
-        """Add a list of child (DF/EF) to this DF"""
+    def add_files(self, children:Iterable[CardFile], ignore_existing:bool=False):
+        """Add a list of child (DF/EF) to this DF
+
+        Args:
+            children: List of new DF/EFs to be added
+            ignore_existing: Ignore, if file[s] with given FID already exists. Old one[s] will be kept.
+        """
         for child in children:
             self.add_file(child, ignore_existing)
 
-    def get_selectables(self, flags = []):
-        """Get selectable (DF/EF names) from current DF"""
+    def get_selectables(self, flags = []) -> dict:
+        """Return a dict of {'identifier': File} that is selectable from the current DF.
+
+        Args:
+            flags : Specify which selectables to return 'FIDS' and/or 'NAMES';
+                    If not specified, all selectables will be returned.
+        Returns:
+            dict containing all selectable items. Key is identifier (string), value
+            a reference to a CardFile (or derived class) instance.
+        """
         # global selectables + our children
         sels = super().get_selectables(flags)
         if flags == [] or 'FIDS' in flags:
@@ -185,7 +241,8 @@ class CardDF(CardFile):
                 sels.update({x.name: x for x in self.children.values() if x.name})
         return sels
 
-    def lookup_file_by_name(self, name):
+    def lookup_file_by_name(self, name:str) -> Optional[CardFile]:
+        """Find a file with given name within current DF."""
         if name == None:
             return None
         for i in self.children.values():
@@ -193,7 +250,8 @@ class CardDF(CardFile):
                 return i
         return None
 
-    def lookup_file_by_sfid(self, sfid):
+    def lookup_file_by_sfid(self, sfid:str) -> Optional[CardFile]:
+        """Find a file with given short file ID within current DF."""
         if sfid == None:
             return None
         for i in self.children.values():
@@ -201,7 +259,8 @@ class CardDF(CardFile):
                 return i
         return None
 
-    def lookup_file_by_fid(self, fid):
+    def lookup_file_by_fid(self, fid:str) -> Optional[CardFile]:
+        """Find a file with given file ID within current DF."""
         if fid in self.children:
             return self.children[fid]
         return None
@@ -222,7 +281,7 @@ class CardMF(CardDF):
     def __str__(self):
         return "MF(%s)" % (self.fid)
 
-    def add_application(self, app):
+    def add_application(self, app:'CardADF'):
         """Add an ADF (Application Dedicated File) to the MF"""
         if not isinstance(app, CardADF):
             raise TypeError("Expected an ADF instance")
@@ -235,13 +294,21 @@ class CardMF(CardDF):
         """Get list of completions (AID names)"""
         return [x.name for x in self.applications]
 
-    def get_selectables(self, flags = []):
-        """Get list of completions (DF/EF/ADF names) from current DF"""
+    def get_selectables(self, flags = []) -> dict:
+        """Return a dict of {'identifier': File} that is selectable from the current DF.
+
+        Args:
+            flags : Specify which selectables to return 'FIDS' and/or 'NAMES';
+                    If not specified, all selectables will be returned.
+        Returns:
+            dict containing all selectable items. Key is identifier (string), value
+            a reference to a CardFile (or derived class) instance.
+        """
         sels = super().get_selectables(flags)
         sels.update(self.get_app_selectables(flags))
         return sels
 
-    def get_app_selectables(self, flags = []):
+    def get_app_selectables(self, flags = []) -> dict:
         """Get applications by AID + name"""
         sels = {}
         if flags == [] or 'AIDS' in flags:
@@ -250,15 +317,19 @@ class CardMF(CardDF):
                 sels.update({x.name: x for x in self.applications.values() if x.name})
         return sels
 
-    def decode_select_response(self, data_hex):
-        """Decode the response to a SELECT command."""
+    def decode_select_response(self, data_hex:str) -> Any:
+        """Decode the response to a SELECT command.
+
+        This is the fall-back method which doesn't perform any decoding. It mostly
+        exists so specific derived classes can overload it for actual decoding.
+        """
         return data_hex
 
 
 
 class CardADF(CardDF):
     """ADF (Application Dedicated File) in the smart card filesystem"""
-    def __init__(self, aid, **kwargs):
+    def __init__(self, aid:str, **kwargs):
         super().__init__(**kwargs)
         self.aid = aid           # Application Identifier
         if self.parent:
@@ -267,7 +338,7 @@ class CardADF(CardDF):
     def __str__(self):
         return "ADF(%s)" % (self.aid)
 
-    def _path_element(self, prefer_name):
+    def _path_element(self, prefer_name:bool):
         if self.name and prefer_name:
             return self.name
         else:
@@ -283,8 +354,16 @@ class CardEF(CardFile):
     def __str__(self):
         return "EF(%s)" % (super().__str__())
 
-    def get_selectables(self, flags = []):
-        """Get list of completions (EF names) from current DF"""
+    def get_selectables(self, flags = []) -> dict:
+        """Return a dict of {'identifier': File} that is selectable from the current DF.
+
+        Args:
+            flags : Specify which selectables to return 'FIDS' and/or 'NAMES';
+                    If not specified, all selectables will be returned.
+        Returns:
+            dict containing all selectable items. Key is identifier (string), value
+            a reference to a CardFile (or derived class) instance.
+        """
         #global selectable names + those of the parent DF
         sels = super().get_selectables(flags)
         sels.update({x.name:x for x in self.parent.children.values() if x != self})
@@ -292,10 +371,14 @@ class CardEF(CardFile):
 
 
 class TransparentEF(CardEF):
-    """Transparent EF (Entry File) in the smart card filesystem"""
+    """Transparent EF (Entry File) in the smart card filesystem.
+
+    A Transparent EF is a binary file with no formal structure.  This is contrary to
+    Record based EFs which have [fixed size] records that can be individually read/updated."""
 
     @with_default_category('Transparent EF Commands')
     class ShellCommands(CommandSet):
+        """Shell commands specific for Trransparent EFs."""
         def __init__(self):
             super().__init__()
 
@@ -333,13 +416,33 @@ class TransparentEF(CardEF):
             if data:
                 self._cmd.poutput(json.dumps(data, indent=4))
 
-    def __init__(self, fid, sfid=None, name=None, desc=None, parent=None, size={1,None}):
+    def __init__(self, fid:str, sfid:str=None, name:str=None, desc:str=None, parent:CardDF=None,
+                 size={1,None}):
+        """
+        Args:
+            fid : File Identifier (4 hex digits)
+            sfid : Short File Identifier (2 hex digits, optional)
+            name : Brief name of the file, lik EF_ICCID
+            desc : Descriptoin of the file
+            parent : Parent CardFile object within filesystem hierarchy
+            size : tuple of (minimum_size, recommended_size)
+        """
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent)
         self.size = size
         self.shell_commands = [self.ShellCommands()]
 
-    def decode_bin(self, raw_bin_data):
-        """Decode raw (binary) data into abstract representation. Overloaded by specific classes."""
+    def decode_bin(self, raw_bin_data:bytearray) -> dict:
+        """Decode raw (binary) data into abstract representation.
+
+        A derived class would typically provide a _decode_bin() or _decode_hex() method
+        for implementing this specifically for the given file. This function checks which
+        of the method exists, add calls them (with conversion, as needed).
+
+        Args:
+            raw_bin_data : binary encoded data
+        Returns:
+            abstract_data; dict representing the decoded data
+        """
         method = getattr(self, '_decode_bin', None)
         if callable(method):
             return method(raw_bin_data)
@@ -348,8 +451,18 @@ class TransparentEF(CardEF):
             return method(b2h(raw_bin_data))
         return {'raw': raw_bin_data.hex()}
 
-    def decode_hex(self, raw_hex_data):
-        """Decode raw (hex string) data into abstract representation. Overloaded by specific classes."""
+    def decode_hex(self, raw_hex_data:str) -> dict:
+        """Decode raw (hex string) data into abstract representation.
+
+        A derived class would typically provide a _decode_bin() or _decode_hex() method
+        for implementing this specifically for the given file. This function checks which
+        of the method exists, add calls them (with conversion, as needed).
+
+        Args:
+            raw_hex_data : hex-encoded data
+        Returns:
+            abstract_data; dict representing the decoded data
+        """
         method = getattr(self, '_decode_hex', None)
         if callable(method):
             return method(raw_hex_data)
@@ -359,8 +472,18 @@ class TransparentEF(CardEF):
             return method(raw_bin_data)
         return {'raw': raw_bin_data.hex()}
 
-    def encode_bin(self, abstract_data):
-        """Encode abstract representation into raw (binary) data. Overloaded by specific classes."""
+    def encode_bin(self, abstract_data:dict) -> bytearray:
+        """Encode abstract representation into raw (binary) data.
+
+        A derived class would typically provide an _encode_bin() or _encode_hex() method
+        for implementing this specifically for the given file. This function checks which
+        of the method exists, add calls them (with conversion, as needed).
+
+        Args:
+            abstract_data : dict representing the decoded data
+        Returns:
+            binary encoded data
+        """
         method = getattr(self, '_encode_bin', None)
         if callable(method):
             return method(abstract_data)
@@ -369,8 +492,18 @@ class TransparentEF(CardEF):
             return h2b(method(abstract_data))
         raise NotImplementedError
 
-    def encode_hex(self, abstract_data):
-        """Encode abstract representation into raw (hex string) data. Overloaded by specific classes."""
+    def encode_hex(self, abstract_data:dict) -> str:
+        """Encode abstract representation into raw (hex string) data.
+
+        A derived class would typically provide an _encode_bin() or _encode_hex() method
+        for implementing this specifically for the given file. This function checks which
+        of the method exists, add calls them (with conversion, as needed).
+
+        Args:
+            abstract_data : dict representing the decoded data
+        Returns:
+            hex string encoded data
+        """
         method = getattr(self, '_encode_hex', None)
         if callable(method):
             return method(abstract_data)
@@ -382,10 +515,14 @@ class TransparentEF(CardEF):
 
 
 class LinFixedEF(CardEF):
-    """Linear Fixed EF (Entry File) in the smart card filesystem"""
+    """Linear Fixed EF (Entry File) in the smart card filesystem.
+
+    Linear Fixed EFs are record oriented files.  They consist of a number of fixed-size
+    records.  The records can be individually read/updated."""
 
     @with_default_category('Linear Fixed EF Commands')
     class ShellCommands(CommandSet):
+        """Shell commands specific for Linear Fixed EFs."""
         def __init__(self):
             super().__init__()
 
@@ -432,13 +569,33 @@ class LinFixedEF(CardEF):
             if data:
                 self._cmd.poutput(data)
 
-    def __init__(self, fid, sfid=None, name=None, desc=None, parent=None, rec_len={1,None}):
+    def __init__(self, fid:str, sfid:str=None, name:str=None, desc:str=None,
+                 parent:Optional[CardDF]=None, rec_len={1,None}):
+        """
+        Args:
+            fid : File Identifier (4 hex digits)
+            sfid : Short File Identifier (2 hex digits, optional)
+            name : Brief name of the file, lik EF_ICCID
+            desc : Descriptoin of the file
+            parent : Parent CardFile object within filesystem hierarchy
+            rec_len : tuple of (minimum_length, recommended_length)
+        """
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent)
         self.rec_len = rec_len
         self.shell_commands = [self.ShellCommands()]
 
-    def decode_record_hex(self, raw_hex_data):
-        """Decode raw (hex string) data into abstract representation. Overloaded by specific classes."""
+    def decode_record_hex(self, raw_hex_data:str) -> dict:
+        """Decode raw (hex string) data into abstract representation.
+
+        A derived class would typically provide a _decode_record_bin() or _decode_record_hex()
+        method for implementing this specifically for the given file. This function checks which
+        of the method exists, add calls them (with conversion, as needed).
+
+        Args:
+            raw_hex_data : hex-encoded data
+        Returns:
+            abstract_data; dict representing the decoded data
+        """
         method = getattr(self, '_decode_record_hex', None)
         if callable(method):
             return method(raw_hex_data)
@@ -448,8 +605,18 @@ class LinFixedEF(CardEF):
             return method(raw_bin_data)
         return {'raw': raw_bin_data.hex()}
 
-    def decode_record_bin(self, raw_bin_data):
-        """Decode raw (binary) data into abstract representation. Overloaded by specific classes."""
+    def decode_record_bin(self, raw_bin_data:bytearray) -> dict:
+        """Decode raw (binary) data into abstract representation.
+
+        A derived class would typically provide a _decode_record_bin() or _decode_record_hex()
+        method for implementing this specifically for the given file. This function checks which
+        of the method exists, add calls them (with conversion, as needed).
+
+        Args:
+            raw_bin_data : binary encoded data
+        Returns:
+            abstract_data; dict representing the decoded data
+        """
         method = getattr(self, '_decode_record_bin', None)
         if callable(method):
             return method(raw_bin_data)
@@ -459,47 +626,90 @@ class LinFixedEF(CardEF):
             return method(raw_hex_data)
         return {'raw': raw_hex_data}
 
-    def encode_record_hex(self, abstract_data):
-        """Encode abstract representation into raw (hex string) data. Overloaded by specific classes."""
+    def encode_record_hex(self, abstract_data:dict) -> str:
+        """Encode abstract representation into raw (hex string) data.
+
+        A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
+        method for implementing this specifically for the given file. This function checks which
+        of the method exists, add calls them (with conversion, as needed).
+
+        Args:
+            abstract_data : dict representing the decoded data
+        Returns:
+            hex string encoded data
+        """
         method = getattr(self, '_encode_record_hex', None)
         if callable(method):
             return method(abstract_data)
         method = getattr(self, '_encode_record_bin', None)
         if callable(method):
             raw_bin_data = method(abstract_data)
-            return b2h(raww_bin_data)
+            return h2b(raw_bin_data)
         raise NotImplementedError
 
-    def encode_record_bin(self, abstract_data):
-        """Encode abstract representation into raw (binary) data. Overloaded by specific classes."""
+    def encode_record_bin(self, abstract_data:dict) -> bytearray:
+        """Encode abstract representation into raw (binary) data.
+
+        A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
+        method for implementing this specifically for the given file. This function checks which
+        of the method exists, add calls them (with conversion, as needed).
+
+        Args:
+            abstract_data : dict representing the decoded data
+        Returns:
+            binary encoded data
+        """
         method = getattr(self, '_encode_record_bin', None)
         if callable(method):
             return method(abstract_data)
         method = getattr(self, '_encode_record_hex', None)
         if callable(method):
-            return b2h(method(abstract_data))
+            return h2b(method(abstract_data))
         raise NotImplementedError
 
 class CyclicEF(LinFixedEF):
     """Cyclic EF (Entry File) in the smart card filesystem"""
     # we don't really have any special support for those; just recycling LinFixedEF here
-    def __init__(self, fid, sfid=None, name=None, desc=None, parent=None, rec_len={1,None}):
+    def __init__(self, fid:str, sfid:str=None, name:str=None, desc:str=None, parent:CardDF=None,
+                 rec_len={1,None}):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, rec_len=rec_len)
 
 class TransRecEF(TransparentEF):
     """Transparent EF (Entry File) containing fixed-size records.
+
     These are the real odd-balls and mostly look like mistakes in the specification:
     Specified as 'transparent' EF, but actually containing several fixed-length records
     inside.
     We add a special class for those, so the user only has to provide encoder/decoder functions
     for a record, while this class takes care of split / merge of records.
     """
-    def __init__(self, fid, sfid=None, name=None, desc=None, parent=None, rec_len=None, size={1,None}):
+    def __init__(self, fid:str, sfid:str=None, name:str=None, desc:str=None,
+                 parent:Optional[CardDF]=None, rec_len:int=None, size={1,None}):
+        """
+        Args:
+            fid : File Identifier (4 hex digits)
+            sfid : Short File Identifier (2 hex digits, optional)
+            name : Brief name of the file, lik EF_ICCID
+            desc : Descriptoin of the file
+            parent : Parent CardFile object within filesystem hierarchy
+            rec_len : Length of the fixed-length records within transparent EF
+            size : tuple of (minimum_size, recommended_size)
+        """
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, size=size)
         self.rec_len = rec_len
 
-    def decode_record_hex(self, raw_hex_data):
-        """Decode raw (hex string) data into abstract representation. Overloaded by specific classes."""
+    def decode_record_hex(self, raw_hex_data:str) -> dict:
+        """Decode raw (hex string) data into abstract representation.
+
+        A derived class would typically provide a _decode_record_bin() or _decode_record_hex()
+        method for implementing this specifically for the given file. This function checks which
+        of the method exists, add calls them (with conversion, as needed).
+
+        Args:
+            raw_hex_data : hex-encoded data
+        Returns:
+            abstract_data; dict representing the decoded data
+        """
         method = getattr(self, '_decode_record_hex', None)
         if callable(method):
             return method(raw_hex_data)
@@ -509,8 +719,18 @@ class TransRecEF(TransparentEF):
             return method(raw_bin_data)
         return {'raw': raw_hex_data}
 
-    def decode_record_bin(self, raw_bin_data):
-        """Decode raw (hex string) data into abstract representation. Overloaded by specific classes."""
+    def decode_record_bin(self, raw_bin_data:bytearray) -> dict:
+        """Decode raw (binary) data into abstract representation.
+
+        A derived class would typically provide a _decode_record_bin() or _decode_record_hex()
+        method for implementing this specifically for the given file. This function checks which
+        of the method exists, add calls them (with conversion, as needed).
+
+        Args:
+            raw_bin_data : binary encoded data
+        Returns:
+            abstract_data; dict representing the decoded data
+        """
         method = getattr(self, '_decode_record_bin', None)
         if callable(method):
             return method(raw_bin_data)
@@ -520,8 +740,18 @@ class TransRecEF(TransparentEF):
             return method(raw_hex_data)
         return {'raw': raw_hex_data}
 
-    def encode_record_hex(self, abstract_data):
-        """Encode abstract representation into raw (hex string) data. Overloaded by specific classes."""
+    def encode_record_hex(self, abstract_data:dict) -> str:
+        """Encode abstract representation into raw (hex string) data.
+
+        A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
+        method for implementing this specifically for the given file. This function checks which
+        of the method exists, add calls them (with conversion, as needed).
+
+        Args:
+            abstract_data : dict representing the decoded data
+        Returns:
+            hex string encoded data
+        """
         method = getattr(self, '_encode_record_hex', None)
         if callable(method):
             return method(abstract_data)
@@ -530,8 +760,18 @@ class TransRecEF(TransparentEF):
             return h2b(method(abstract_data))
         raise NotImplementedError
 
-    def encode_record_bin(self, abstract_data):
-        """Encode abstract representation into raw (binary) data. Overloaded by specific classes."""
+    def encode_record_bin(self, abstract_data:dict) -> bytearray:
+        """Encode abstract representation into raw (binary) data.
+
+        A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
+        method for implementing this specifically for the given file. This function checks which
+        of the method exists, add calls them (with conversion, as needed).
+
+        Args:
+            abstract_data : dict representing the decoded data
+        Returns:
+            binary encoded data
+        """
         method = getattr(self, '_encode_record_bin', None)
         if callable(method):
             return method(abstract_data)
@@ -540,11 +780,11 @@ class TransRecEF(TransparentEF):
             return h2b(method(abstract_data))
         raise NotImplementedError
 
-    def _decode_bin(self, raw_bin_data):
+    def _decode_bin(self, raw_bin_data:bytearray):
         chunks = [raw_bin_data[i:i+self.rec_len] for i in range(0, len(raw_bin_data), self.rec_len)]
         return [self.decode_record_bin(x) for x in chunks]
 
-    def _encode_bin(self, abstract_data):
+    def _encode_bin(self, abstract_data) -> bytes:
         chunks = [self.encode_record_bin(x) for x in abstract_data]
         # FIXME: pad to file size
         return b''.join(chunks)
@@ -555,7 +795,12 @@ class TransRecEF(TransparentEF):
 
 class RuntimeState(object):
     """Represent the runtime state of a session with a card."""
-    def __init__(self, card, profile):
+    def __init__(self, card, profile:'CardProfile'):
+        """
+        Args:
+            card : pysim.cards.Card instance
+            profile : CardProfile instance
+        """
         self.mf = CardMF()
         self.card = card
         self.selected_file = self.mf
@@ -589,15 +834,22 @@ class RuntimeState(object):
             print("error: could not determine card applications")
         return apps_taken
 
-    def get_cwd(self):
-        """Obtain the current working directory."""
+    def get_cwd(self) -> CardDF:
+        """Obtain the current working directory.
+
+        Returns:
+            CardDF instance
+        """
         if isinstance(self.selected_file, CardDF):
             return self.selected_file
         else:
             return self.selected_file.parent
 
-    def get_application(self):
-        """Obtain the currently selected application (if any)."""
+    def get_application(self) -> Optional[CardADF]:
+        """Obtain the currently selected application (if any).
+
+        Returns:
+            CardADF() instance or None"""
         # iterate upwards from selected file; check if any is an ADF
         node = self.selected_file
         while node.parent != node:
@@ -606,9 +858,16 @@ class RuntimeState(object):
             node = node.parent
         return None
 
-    def interpret_sw(self, sw):
-        """Interpret the given SW relative to the currently selected Application
-           or the underlying profile."""
+    def interpret_sw(self, sw:str):
+        """Interpret a given status word relative to the currently selected application
+        or the underlying card profile.
+
+        Args:
+            sw : Status word as string of 4 hexd digits
+
+        Returns:
+            Tuple of two strings
+        """
         app = self.get_application()
         if app:
             # The application either comes with its own interpret_sw
@@ -622,11 +881,9 @@ class RuntimeState(object):
         else:
             return self.profile.interpret_sw(sw)
 
-    def probe_file(self, fid, cmd_app=None):
-        """
-	blindly try to select a file and automatically add a matching file
-	object if the file actually exists
-	"""
+    def probe_file(self, fid:str, cmd_app=None):
+        """Blindly try to select a file and automatically add a matching file
+	       object if the file actually exists."""
         if not is_hex(fid, 4, 4):
             raise ValueError("Cannot select unknown file by name %s, only hexadecimal 4 digit FID is allowed" % fid)
 
@@ -651,8 +908,13 @@ class RuntimeState(object):
         self.selected_file = f
         return select_resp
 
-    def select(self, name, cmd_app=None):
-        """Change current directory"""
+    def select(self, name:str, cmd_app=None):
+        """Select a file (EF, DF, ADF, MF, ...).
+
+        Args:
+            name : Name of file to select
+            cmd_app : Command Application State (for unregistering old file commands)
+        """
         sels = self.selected_file.get_selectables()
         if is_hex(name):
             name = name.lower()
@@ -686,43 +948,98 @@ class RuntimeState(object):
 
         return select_resp
 
-    def read_binary(self, length=None, offset=0):
+    def read_binary(self, length:int=None, offset:int=0):
+        """Read [part of] a transparent EF binary data.
+
+        Args:
+            length : Amount of data to read (None: as much as possible)
+            offset : Offset into the file from which to read 'length' bytes
+        Returns:
+            binary data read from the file
+        """
         if not isinstance(self.selected_file, TransparentEF):
             raise TypeError("Only works with TransparentEF")
         return self.card._scc.read_binary(self.selected_file.fid, length, offset)
 
-    def read_binary_dec(self):
+    def read_binary_dec(self) -> dict:
+        """Read [part of] a transparent EF binary data and decode it.
+
+        Args:
+            length : Amount of data to read (None: as much as possible)
+            offset : Offset into the file from which to read 'length' bytes
+        Returns:
+            abstract decode data read from the file
+        """
         (data, sw) = self.read_binary()
         dec_data = self.selected_file.decode_hex(data)
         print("%s: %s -> %s" % (sw, data, dec_data))
         return (dec_data, sw)
 
-    def update_binary(self, data_hex, offset=0):
+    def update_binary(self, data_hex:str, offset:int=0):
+        """Update transparent EF binary data.
+
+        Args:
+            data_hex : hex string of data to be written
+            offset : Offset into the file from which to write 'data_hex'
+        """
         if not isinstance(self.selected_file, TransparentEF):
             raise TypeError("Only works with TransparentEF")
         return self.card._scc.update_binary(self.selected_file.fid, data_hex, offset, conserve=self.conserve_write)
 
-    def update_binary_dec(self, data):
+    def update_binary_dec(self, data:dict):
+        """Update transparent EF from abstract data. Encodes the data to binary and
+        then updates the EF with it.
+
+        Args:
+            data : abstract data which is to be encoded and written
+        """
         data_hex = self.selected_file.encode_hex(data)
         print("%s -> %s" % (data, data_hex))
         return self.update_binary(data_hex)
 
-    def read_record(self, rec_nr=0):
+    def read_record(self, rec_nr:int=0):
+        """Read a record as binary data.
+
+        Args:
+            rec_nr : Record number to read
+        Returns:
+            hex string of binary data contained in record
+        """
         if not isinstance(self.selected_file, LinFixedEF):
             raise TypeError("Only works with Linear Fixed EF")
         # returns a string of hex nibbles
         return self.card._scc.read_record(self.selected_file.fid, rec_nr)
 
-    def read_record_dec(self, rec_nr=0):
+    def read_record_dec(self, rec_nr:int=0) -> Tuple[dict, str]:
+        """Read a record and decode it to abstract data.
+
+        Args:
+            rec_nr : Record number to read
+        Returns:
+            abstract data contained in record
+        """
         (data, sw) = self.read_record(rec_nr)
         return (self.selected_file.decode_record_hex(data), sw)
 
-    def update_record(self, rec_nr, data_hex):
+    def update_record(self, rec_nr:int, data_hex:str):
+        """Update a record with given binary data
+
+        Args:
+            rec_nr : Record number to read
+            data_hex : Hex string binary data to be written
+        """
         if not isinstance(self.selected_file, LinFixedEF):
             raise TypeError("Only works with Linear Fixed EF")
         return self.card._scc.update_record(self.selected_file.fid, rec_nr, data_hex, conserve=self.conserve_write)
 
-    def update_record_dec(self, rec_nr, data):
+    def update_record_dec(self, rec_nr:int, data:dict):
+        """Update a record with given abstract data.  Will encode abstract to binary data
+        and then write it to the given record on the card.
+
+        Args:
+            rec_nr : Record number to read
+            data_hex : Abstract data to be written
+        """
         hex_data = self.selected_file.encode_record_hex(data)
         return self.update_record(self, rec_nr, data_hex)
 
@@ -735,9 +1052,15 @@ class FileData(object):
         self.fcp = None
 
 
-def interpret_sw(sw_data, sw):
-    """Interpret a given status word within the profile.  Returns tuple of
-       two strings"""
+def interpret_sw(sw_data:dict, sw:str):
+    """Interpret a given status word.
+
+    Args:
+        sw_data : Hierarchical dict of status word matches
+        sw : status word to match (string of 4 hex digits)
+    Returns:
+        tuple of two strings (class_string, description)
+    """
     for class_str, swdict in sw_data.items():
         # first try direct match
         if sw in swdict:
@@ -751,7 +1074,12 @@ def interpret_sw(sw_data, sw):
 class CardApplication(object):
     """A card application is represented by an ADF (with contained hierarchy) and optionally
        some SW definitions."""
-    def __init__(self, name, adf=None, sw=None):
+    def __init__(self, name, adf:str=None, sw:dict=None):
+        """
+        Args:
+            adf : ADF name
+            sw : Dict of status word conversions
+        """
         self.name = name
         self.adf = adf
         self.sw = sw or dict()
@@ -760,8 +1088,14 @@ class CardApplication(object):
         return "APP(%s)" % (self.name)
 
     def interpret_sw(self, sw):
-        """Interpret a given status word within the application.  Returns tuple of
-           two strings"""
+        """Interpret a given status word within the application.
+
+        Args:
+            sw : Status word as string of 4 hexd digits
+
+        Returns:
+            Tuple of two strings
+        """
         return interpret_sw(self.sw, sw)
 
 class CardProfile(object):
@@ -769,6 +1103,14 @@ class CardProfile(object):
        applications as well as profile-specific SW and shell commands.  Every card has
        one card profile, but there may be multiple applications within that profile."""
     def __init__(self, name, **kw):
+        """
+        Args:
+            desc (str) : Description
+            files_in_mf : List of CardEF instances present in MF
+            applications : List of CardApplications present on card
+            sw : List of status word definitions
+            shell_cmdsets : List of cmd2 shell command sets of profile-specific commands
+        """
         self.name = name
         self.desc = kw.get("desc", None)
         self.files_in_mf = kw.get("files_in_mf", [])
@@ -779,10 +1121,21 @@ class CardProfile(object):
     def __str__(self):
         return self.name
 
-    def add_application(self, app):
+    def add_application(self, app:CardApplication):
+        """Add an application to a card profile.
+
+        Args:
+            app : CardApplication instance to be added to profile
+        """
         self.applications.append(app)
 
-    def interpret_sw(self, sw):
-        """Interpret a given status word within the profile.  Returns tuple of
-           two strings"""
+    def interpret_sw(self, sw:str):
+        """Interpret a given status word within the profile.
+
+        Args:
+            sw : Status word as string of 4 hexd digits
+
+        Returns:
+            Tuple of two strings
+        """
         return interpret_sw(self.sw, sw)
