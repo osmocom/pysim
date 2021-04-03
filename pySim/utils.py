@@ -625,7 +625,7 @@ def sanitize_pin_adm(pin_adm, pin_adm_hex = None):
 	"""
 	The ADM pin can be supplied either in its hexadecimal form or as
 	ascii string. This function checks the supplied opts parameter and
-	returns the pin_adm as hex encoded string, regardles in which form
+	returns the pin_adm as hex encoded string, regardless in which form
 	it was originally supplied by the user
 	"""
 
