@@ -18,8 +18,8 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'pysim'
-copyright = '2021, Sylvain Munaut, Harald Welte, Philipp Maier'
-author = 'Sylvain Munaut, Harald Welte, Philipp Maier'
+copyright = '2009-2021 by Sylvain Munaut, Harald Welte, Philipp Maier, Supreeth Herle'
+author = 'Sylvain Munaut, Harald Welte, Philipp Maier, Supreeth Herle'
 
 
 # -- General configuration ---------------------------------------------------
