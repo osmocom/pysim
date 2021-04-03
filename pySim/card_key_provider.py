@@ -1,5 +1,14 @@
 # coding=utf-8
-"""Abstraction of card related data that can be queried from external source."""
+"""Obtaining card parameters (mostly key data) from external source.
+
+This module contains a base class and a concrete implementation of
+obtaining card key material (or other card-individual parameters) from
+an external data source.
+
+This is used e.g. to keep PIN/PUK data in some file on disk, avoiding
+the need of manually entering the related card-individual data on every
+operation with pySim-shell.
+"""
 
 # (C) 2021 by Sysmocom s.f.m.c. GmbH
 # All Rights Reserved
@@ -23,16 +32,24 @@ from typing import List, Dict, Optional
 
 import csv
 
-card_key_providers = [] # type: List[CardData]
+card_key_providers = [] # type: List['CardKeyProvider']
 
 class CardKeyProvider(object):
+	"""Base class, not containing any concrete implementation."""
 
 	VALID_FIELD_NAMES = ['ICCID', 'ADM1', 'IMSI', 'PIN1', 'PIN2', 'PUK1', 'PUK2']
 
 	# check input parameters, but do nothing concrete yet
-	def get_data(self, fields:List[str]=[], key:str='ICCID', value:str="") -> Dict[str,str]:
-		"""abstract implementation of get_data that only verifies the function parameters"""
+	def _verify_get_data(self, fields:List[str]=[], key:str='ICCID', value:str="") -> Dict[str,str]:
+		"""Verify multiple fields for identified card.
 
+		Args:
+			fields : list of valid field names such as 'ADM1', 'PIN1', ... which are to be obtained
+			key : look-up key to identify card data, such as 'ICCID'
+			value : value for look-up key to identify card data
+		Returns:
+			dictionary of {field, value} strings for each requested field from 'fields'
+		"""
 		for f in fields:
 			if (f not in self.VALID_FIELD_NAMES):
 				raise ValueError("Requested field name '%s' is not a valid field name, valid field names are: %s" %
@@ -51,23 +68,34 @@ class CardKeyProvider(object):
 		return result.get(field)
 
 	def get(self, fields:List[str], key:str, value:str) -> Dict[str,str]:
-		"""get fields from CSV file using a specified key/value pair"""
+		"""Get multiple card-individual fields for identified card.
+
+		Args:
+			fields : list of valid field names such as 'ADM1', 'PIN1', ... which are to be obtained
+			key : look-up key to identify card data, such as 'ICCID'
+			value : value for look-up key to identify card data
+		Returns:
+			dictionary of {field, value} strings for each requested field from 'fields'
+		"""
 		pass
 
 class CardKeyProviderCsv(CardKeyProvider):
-	"""card data class that allows the user to query against a specified CSV file"""
+	"""Card key provider implementation that allows to query against a specified CSV file"""
 	csv_file = None
 	filename = None
 
 	def __init__(self, filename:str):
+		"""
+		Args:
+			filename : file name (path) of CSV file containing card-individual key/data
+		"""
 		self.csv_file = open(filename, 'r')
 		if not self.csv_file:
-			raise RuntimeError("Could not open CSV-File '%s'" % filename)
+			raise RuntimeError("Could not open CSV file '%s'" % filename)
 		self.filename = filename
 
 	def get(self, fields:List[str], key:str, value:str) -> Dict[str,str]:
-		"""get fields from CSV file using a specified key/value pair"""
-		super().get_data(fields, key, value)
+		super()._verify_get_data(fields, key, value)
 
 		self.csv_file.seek(0)
 		cr = csv.DictReader(self.csv_file)
@@ -88,17 +116,31 @@ class CardKeyProviderCsv(CardKeyProvider):
 
 
 def card_key_provider_register(provider:CardKeyProvider, provider_list=card_key_providers):
-	"""Register a new card data provider"""
+	"""Register a new card key provider.
+
+	Args:
+		provider : the to-be-registered provider
+		provider_list : override the list of providers from the global default
+	"""
 	if not isinstance(provider, CardKeyProvider):
 		raise ValueError("provider is not a card data provier")
 	provider_list.append(provider)
 
 
 def card_key_provider_get(fields, key:str, value:str, provider_list=card_key_providers) -> Dict[str,str]:
-	"""Query all registered card data providers"""
+	"""Query all registered card data providers for card-individual [key] data.
+
+	Args:
+		fields : list of valid field names such as 'ADM1', 'PIN1', ... which are to be obtained
+		key : look-up key to identify card data, such as 'ICCID'
+		value : value for look-up key to identify card data
+		provider_list : override the list of providers from the global default
+	Returns:
+		dictionary of {field, value} strings for each requested field from 'fields'
+	"""
 	for p in provider_list:
 		if not isinstance(p, CardKeyProvider):
-			raise ValueError("provider list contains provider, which is not a card data provier")
+			raise ValueError("provider list contains element which is not a card data provier")
 		result = p.get(fields, key, value)
 		if result:
 			return result
@@ -106,12 +148,20 @@ def card_key_provider_get(fields, key:str, value:str, provider_list=card_key_pro
 
 
 def card_key_provider_get_field(field:str, key:str, value:str, provider_list=card_key_providers) -> Optional[str]:
-	"""Query all registered card data providers for a single field"""
+	"""Query all registered card data providers for a single field.
+
+	Args:
+		field : name valid field such as 'ADM1', 'PIN1', ... which is to be obtained
+		key : look-up key to identify card data, such as 'ICCID'
+		value : value for look-up key to identify card data
+		provider_list : override the list of providers from the global default
+	Returns:
+		dictionary of {field, value} strings for the requested field
+	"""
 	for p in provider_list:
 		if not isinstance(p, CardKeyProvider):
-			raise ValueError("provider list contains provider, which is not a card data provier")
+			raise ValueError("provider list contains element which is not a card data provier")
 		result = p.get_field(field, key, value)
 		if result:
 			return result
 	return None
-

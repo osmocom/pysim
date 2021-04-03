@@ -90,3 +90,9 @@ pySim card_handler
 
 .. automodule:: pySim.card_handler
    :members:
+
+pySim card_key_provider
+-----------------------
+
+.. automodule:: pySim.card_key_provider
+   :members:
