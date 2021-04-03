@@ -966,7 +966,7 @@ class RuntimeState(object):
             raise TypeError("Only works with TransparentEF")
         return self.card._scc.read_binary(self.selected_file.fid, length, offset)
 
-    def read_binary_dec(self) -> dict:
+    def read_binary_dec(self) -> Tuple[dict, str]:
         """Read [part of] a transparent EF binary data and decode it.
 
         Args:
