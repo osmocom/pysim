@@ -18,6 +18,11 @@ pip install cmd2
 # Execute automatically discovered unit tests first
 python -m unittest discover -v -s tests/
 
+# attempt to build documentation
+pip install sphinx
+pip install sphinxcontrib-napoleon
+(cd docs && make html)
+
+# run the test with physical cards
 cd pysim-testdata
 ../tests/pysim-test.sh
-
