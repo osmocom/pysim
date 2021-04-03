@@ -1,35 +1,36 @@
 # coding=utf-8
-"""Abstraction of card data that can be queried from external source
+"""Abstraction of card related data that can be queried from external source."""
 
-(C) 2021 by Sysmocom s.f.m.c. GmbH
-All Rights Reserved
+# (C) 2021 by Sysmocom s.f.m.c. GmbH
+# All Rights Reserved
+#
+# Author: Philipp Maier
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-Author: Philipp Maier
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
+from typing import List, Dict, Optional
 
 import csv
 
-card_data_provider = []
+card_data_provider = [] # type: List[CardData]
 
 class CardData(object):
 
 	VALID_FIELD_NAMES = ['ICCID', 'ADM1', 'IMSI', 'PIN1', 'PIN2', 'PUK1', 'PUK2']
 
 	# check input parameters, but do nothing concrete yet
-	def get_data(self, fields=[], key='ICCID', value=""):
+	def get_data(self, fields:List[str]=[], key:str='ICCID', value:str="") -> Dict[str,str]:
 		"""abstract implementation of get_data that only verifies the function parameters"""
 
 		for f in fields:
@@ -43,25 +44,28 @@ class CardData(object):
 
 		return {}
 
-	def get_field(self, field, key='ICCID', value=""):
+	def get_field(self, field:str, key:str='ICCID', value:str="") -> Optional[str]:
 		"""get a single field from CSV file using a specified key/value pair"""
 		fields = [field]
 		result = self.get(fields, key, value)
 		return result.get(field)
 
+	def get(self, fields:List[str], key:str, value:str) -> Dict[str,str]:
+		"""get fields from CSV file using a specified key/value pair"""
+		pass
 
 class CardDataCsv(CardData):
 	"""card data class that allows the user to query against a specified CSV file"""
 	csv_file = None
 	filename = None
 
-	def __init__(self, filename):
+	def __init__(self, filename:str):
 		self.csv_file = open(filename, 'r')
 		if not self.csv_file:
 			raise RuntimeError("Could not open CSV-File '%s'" % filename)
 		self.filename = filename
 
-	def get(self, fields, key, value):
+	def get(self, fields:List[str], key:str, value:str) -> Dict[str,str]:
 		"""get fields from CSV file using a specified key/value pair"""
 		super().get_data(fields, key, value)
 
@@ -83,14 +87,14 @@ class CardDataCsv(CardData):
 		return rc
 
 
-def card_data_register(provider, provider_list=card_data_provider):
+def card_data_register(provider:CardData, provider_list=card_data_provider):
 	"""Register a new card data provider"""
 	if not isinstance(provider, CardData):
 		raise ValueError("provider is not a card data provier")
 	provider_list.append(provider)
 
 
-def card_data_get(fields, key, value, provider_list=card_data_provider):
+def card_data_get(fields, key:str, value:str, provider_list=card_data_provider) -> Dict[str,str]:
 	"""Query all registered card data providers"""
 	for p in provider_list:
 		if not isinstance(p, CardData):
@@ -101,7 +105,7 @@ def card_data_get(fields, key, value, provider_list=card_data_provider):
 	return {}
 
 
-def card_data_get_field(field, key, value, provider_list=card_data_provider):
+def card_data_get_field(field:str, key:str, value:str, provider_list=card_data_provider) -> Optional[str]:
 	"""Query all registered card data providers for a single field"""
 	for p in provider_list:
 		if not isinstance(p, CardData):
