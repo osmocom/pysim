@@ -48,7 +48,7 @@ from pySim.ts_102_221 import CardProfileUICC
 from pySim.ts_31_102 import CardApplicationUSIM
 from pySim.ts_31_103 import CardApplicationISIM
 
-from pySim.card_data import CardDataCsv, card_data_register, card_data_get_field
+from pySim.card_key_provider import CardKeyProviderCsv, card_key_provider_register, card_key_provider_get_field
 
 
 class PysimApp(cmd2.Cmd):
@@ -95,7 +95,7 @@ class PysimApp(cmd2.Cmd):
 			pin_adm = sanitize_pin_adm(arg)
 		else:
 			# try to find an ADM-PIN if none is specified
-			result = card_data_get_field('ADM1', key='ICCID', value=self.iccid)
+			result = card_key_provider_get_field('ADM1', key='ICCID', value=self.iccid)
 			pin_adm = sanitize_pin_adm(result)
 			if pin_adm:
 				self.poutput("found ADM-PIN '%s' for ICCID '%s'" % (result, self.iccid))
@@ -148,7 +148,7 @@ class Iso7816Commands(CommandSet):
 		if str(code).upper() not in auto:
 			return sanitize_pin_adm(code)
 
-		result = card_data_get_field(str(code), key='ICCID', value=self._cmd.iccid)
+		result = card_key_provider_get_field(str(code), key='ICCID', value=self._cmd.iccid)
 		result = sanitize_pin_adm(result)
 		if result:
 			self._cmd.poutput("found %s '%s' for ICCID '%s'" % (code.upper(), result, self._cmd.iccid))
@@ -439,9 +439,9 @@ if __name__ == '__main__':
 	# or from CSV file in home directory
 	csv_default = str(Path.home()) + "/.osmocom/pysim/card_data.csv"
 	if opts.csv:
-		card_data_register(CardDataCsv(opts.csv))
+		card_key_provider_register(CardKeyProviderCsv(opts.csv))
 	if os.path.isfile(csv_default):
-		card_data_register(CardDataCsv(csv_default))
+		card_key_provider_register(CardKeyProviderCsv(csv_default))
 
 	# If the user supplies an ADM PIN at via commandline args authenticate
 	# immediatley so that the user does not have to use the shell commands

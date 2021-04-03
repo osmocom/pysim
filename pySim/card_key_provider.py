@@ -23,9 +23,9 @@ from typing import List, Dict, Optional
 
 import csv
 
-card_data_provider = [] # type: List[CardData]
+card_key_providers = [] # type: List[CardData]
 
-class CardData(object):
+class CardKeyProvider(object):
 
 	VALID_FIELD_NAMES = ['ICCID', 'ADM1', 'IMSI', 'PIN1', 'PIN2', 'PUK1', 'PUK2']
 
@@ -54,7 +54,7 @@ class CardData(object):
 		"""get fields from CSV file using a specified key/value pair"""
 		pass
 
-class CardDataCsv(CardData):
+class CardKeyProviderCsv(CardKeyProvider):
 	"""card data class that allows the user to query against a specified CSV file"""
 	csv_file = None
 	filename = None
@@ -87,17 +87,17 @@ class CardDataCsv(CardData):
 		return rc
 
 
-def card_data_register(provider:CardData, provider_list=card_data_provider):
+def card_key_provider_register(provider:CardKeyProvider, provider_list=card_key_providers):
 	"""Register a new card data provider"""
-	if not isinstance(provider, CardData):
+	if not isinstance(provider, CardKeyProvider):
 		raise ValueError("provider is not a card data provier")
 	provider_list.append(provider)
 
 
-def card_data_get(fields, key:str, value:str, provider_list=card_data_provider) -> Dict[str,str]:
+def card_key_provider_get(fields, key:str, value:str, provider_list=card_key_providers) -> Dict[str,str]:
 	"""Query all registered card data providers"""
 	for p in provider_list:
-		if not isinstance(p, CardData):
+		if not isinstance(p, CardKeyProvider):
 			raise ValueError("provider list contains provider, which is not a card data provier")
 		result = p.get(fields, key, value)
 		if result:
@@ -105,10 +105,10 @@ def card_data_get(fields, key:str, value:str, provider_list=card_data_provider) 
 	return {}
 
 
-def card_data_get_field(field:str, key:str, value:str, provider_list=card_data_provider) -> Optional[str]:
+def card_key_provider_get_field(field:str, key:str, value:str, provider_list=card_key_providers) -> Optional[str]:
 	"""Query all registered card data providers for a single field"""
 	for p in provider_list:
-		if not isinstance(p, CardData):
+		if not isinstance(p, CardKeyProvider):
 			raise ValueError("provider list contains provider, which is not a card data provier")
 		result = p.get_field(field, key, value)
 		if result:
