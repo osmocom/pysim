@@ -33,9 +33,10 @@ from pySim.ts_31_102 import EF_UST_map, EF_USIM_ADF_map
 from pySim.ts_31_103 import EF_IST_map, EF_ISIM_ADF_map
 
 from pySim.commands import SimCardCommands
+from pySim.transport import init_reader
 from pySim.cards import card_detect, Card, UsimCard, IsimCard
 from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn
-from pySim.utils import format_xplmn_w_act, dec_spn, dec_st, init_reader, dec_addr_tlv
+from pySim.utils import format_xplmn_w_act, dec_spn, dec_st, dec_addr_tlv
 from pySim.utils import h2s, format_ePDGSelection
 
 def parse_options():
