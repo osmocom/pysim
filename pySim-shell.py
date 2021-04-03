@@ -433,6 +433,8 @@ if __name__ == '__main__':
 	profile.add_application(CardApplicationISIM)
 
 	rs = RuntimeState(card, profile)
+	# inform the transport that we can do context-specific SW interpretation
+	sl.set_sw_interpreter(rs)
 
 	# FIXME: do this dynamically
 	rs.mf.add_file(DF_TELECOM())

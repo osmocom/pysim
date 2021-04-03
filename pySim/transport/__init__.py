@@ -28,6 +28,12 @@ from pySim.utils import sw_match
 class LinkBase(object):
 	"""Base class for link/transport to card."""
 
+	sw_interpreter = None
+
+	def set_sw_interpreter(self, interp):
+		"""Set an (optional) status word interpreter."""
+		self.sw_interpreter = interp
+
 	def wait_for_card(self, timeout:int=None, newcardonly:bool=False):
 		"""Wait for a card and connect to it
 
@@ -103,7 +109,7 @@ class LinkBase(object):
 		rv = self.send_apdu(pdu)
 
 		if not sw_match(rv[1], sw):
-			raise SwMatchError(rv[1], sw.lower())
+			raise SwMatchError(rv[1], sw.lower(), self.sw_interpreter)
 		return rv
 
 def init_reader(opts) -> Optional[LinkBase]:
