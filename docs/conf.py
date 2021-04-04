@@ -29,6 +29,7 @@ author = 'Sylvain Munaut, Harald Welte, Philipp Maier, Supreeth Herle'
 # ones.
 extensions = [
         "sphinx.ext.autodoc",
+        "sphinxarg.ext",
         "sphinx.ext.autosectionlabel",
         "sphinx.ext.napoleon"
 ]

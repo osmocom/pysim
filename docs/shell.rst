@@ -85,31 +85,40 @@ This will
 
 change_chv
 ~~~~~~~~~~
-
-This command allows you to change a CHV (PIN).
+.. argparse::
+   :module: pySim-shell
+   :func: Iso7816Commands.change_chv_parser
 
 
 disable_chv
 ~~~~~~~~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: Iso7816Commands.disable_chv_parser
 
-This command allows you to disable a CHV (PIN).
 
 enable_chv
 ~~~~~~~~~~
-
-This command allows you to enable a CHV (PIN).
+.. argparse::
+   :module: pySim-shell
+   :func: Iso7816Commands.enable_chv_parser
 
 
 unblock_chv
 ~~~~~~~~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: Iso7816Commands.unblock_chv_parser
 
-This command allows you to unblock a CHV (PIN) using the PUK.
 
 verify_chv
 ~~~~~~~~~~
-
 This command allows you to verify a CHV (PIN), which is how the specifications call
 it if you authenticate yourself with the said CHV/PIN.
+
+.. argparse::
+   :module: pySim-shell
+   :func: Iso7816Commands.verify_chv_parser
 
 
 
@@ -128,30 +137,26 @@ Display human readable file description for the currently selected file.
 
 dir
 ~~~
-
-::
-
-  usage: dir [-h] [--fids] [--names] [--apps] [--all]
-
-  Show a listing of files available in currently selected DF or MF
-
-  optional arguments:
-    -h, --help  show this help message and exit
-    --fids      Show file identifiers
-    --names     Show file names
-    --apps      Show applications
-    --all       Show all selectable identifiers and names
+.. argparse::
+   :module: pySim-shell
+   :func: PySimCommands.dir_parser
 
 
 export
 ~~~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: PySimCommands.export_parser
+
 
 tree
 ~~~~
+FIXME
+
 
 verify_adm
 ~~~~~~~~~~
-
+FIXME
 
 
 Linear Fixed EF commands
@@ -161,15 +166,30 @@ These commands become enabled only when your currently selected file is of *Line
 
 read_record
 ~~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: LinFixedEF.ShellCommands.read_rec_parser
+
 
 read_record_decoded
 ~~~~~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: LinFixedEF.ShellCommands.read_rec_dec_parser
+
 
 update_record
 ~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: LinFixedEF.ShellCommands.upd_rec_parser
+
 
 update_record_decoded
 ~~~~~~~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: LinFixedEF.ShellCommands.upd_rec_dec_parser
 
 
 
@@ -181,15 +201,30 @@ These commands become enabled only when your currently selected file is of *Tran
 
 read_binary
 ~~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: TransparentEF.ShellCommands.read_bin_parser
+
 
 read_binary_decoded
 ~~~~~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: TransparentEF.ShellCommands.read_bin_dec_parser
+
 
 update_binary
 ~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: TransparentEF.ShellCommands.upd_bin_parser
+
 
 update_binary_decoded
 ~~~~~~~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: TransparentEF.ShellCommands.upd_bin_dec_parser
 
 
 

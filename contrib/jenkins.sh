@@ -21,6 +21,7 @@ python -m unittest discover -v -s tests/
 # attempt to build documentation
 pip install sphinx
 pip install sphinxcontrib-napoleon
+pip3 install -e 'git+https://github.com/osmocom/sphinx-argparse@master#egg=sphinx-argparse'
 (cd docs && make html)
 
 # run the test with physical cards
