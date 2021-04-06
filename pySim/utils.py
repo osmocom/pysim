@@ -137,6 +137,12 @@ def enc_plmn(mcc, mnc):
 		mnc += "F" # pad to 3 digits if needed
 	return (mcc[1] + mcc[0]) + (mnc[2] + mcc[2]) + (mnc[1] + mnc[0])
 
+def dec_plmn(threehexbytes:Hexstr) -> dict:
+	res = {'mcc': 0, 'mnc': 0 }
+	res['mcc'] = dec_mcc_from_plmn(threehexbytes)
+	res['mnc'] = dec_mnc_from_plmn(threehexbytes)
+	return res
+
 def dec_spn(ef):
 	byte1 = int(ef[0:2])
 	hplmn_disp = (byte1&0x01 == 0x01)
