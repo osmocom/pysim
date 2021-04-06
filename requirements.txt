@@ -2,3 +2,4 @@ pyscard
 serial
 pytlv
 cmd2
+jsonpath-ng

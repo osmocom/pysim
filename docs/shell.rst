@@ -226,6 +226,33 @@ update_binary_decoded
    :module: pySim.filesystem
    :func: TransparentEF.ShellCommands.upd_bin_dec_parser
 
+In normal operation, update_binary_decoded needs a JSON document representing the entire file contents as
+input.  This can be inconvenient if you want to keep 99% of the content but just toggle one specific
+parameter.   That's where the JSONpath support comes in handy:  You can specify a JSONpath to an element
+inside the document as well as a new value for tat field:
+
+Th below example demonstrates this by modifying the ofm field within EF.AD:
+
+::
+
+  pySIM-shell (MF/ADF.USIM/EF.AD)> read_binary_decoded
+  {
+      "ms_operation_mode": "normal",
+      "specific_facilities": {
+          "ofm": true
+      },
+      "len_of_mnc_in_imsi": 2
+  }
+  pySIM-shell (MF/ADF.USIM/EF.AD)> update_binary_decoded --json-path specific_facilities.ofm false
+  pySIM-shell (MF/ADF.USIM/EF.AD)> read_binary_decoded
+  {
+      "ms_operation_mode": "normal",
+      "specific_facilities": {
+          "ofm": false
+      },
+      "len_of_mnc_in_imsi": 2
+  }
+
 
 
 cmd2 settable parameters

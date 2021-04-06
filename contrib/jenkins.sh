@@ -14,6 +14,7 @@ virtualenv -p python3 venv --system-site-packages
 pip install pytlv
 pip install pyyaml
 pip install cmd2
+pip install jsonpath-ng
 
 # Execute automatically discovered unit tests first
 python -m unittest discover -v -s tests/

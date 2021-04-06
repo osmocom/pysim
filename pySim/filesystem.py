@@ -35,6 +35,7 @@ from typing import cast, Optional, Iterable, List, Any, Dict, Tuple
 
 from pySim.utils import sw_match, h2b, b2h, is_hex
 from pySim.exceptions import *
+from pySim.jsonpath import js_path_find, js_path_modify
 
 class CardFile(object):
     """Base class for all objects in the smart card filesystem.
@@ -418,10 +419,16 @@ class TransparentEF(CardEF):
 
         upd_bin_dec_parser = argparse.ArgumentParser()
         upd_bin_dec_parser.add_argument('data', help='Abstract data (JSON format) to write')
+        upd_bin_dec_parser.add_argument('--json-path', type=str,
+                                        help='JSON path to modify specific element of file only')
         @cmd2.with_argparser(upd_bin_dec_parser)
         def do_update_binary_decoded(self, opts):
             """Encode + Update (Write) data of a transparent EF"""
-            data_json = json.loads(opts.data)
+            if opts.json_path:
+                (data_json, sw) = self._cmd.rs.read_binary_dec()
+                js_path_modify(data_json, opts.json_path, json.loads(opts.data))
+            else:
+                data_json = json.loads(opts.data)
             (data, sw) = self._cmd.rs.update_binary_dec(data_json)
             if data:
                 self._cmd.poutput_json(data)
@@ -574,10 +581,17 @@ class LinFixedEF(CardEF):
         upd_rec_dec_parser = argparse.ArgumentParser()
         upd_rec_dec_parser.add_argument('record_nr', type=int, help='Number of record to be read')
         upd_rec_dec_parser.add_argument('data', help='Data bytes (hex format) to write')
+        upd_rec_dec_parser.add_argument('--json-path', type=str,
+                                        help='JSON path to modify specific element of record only')
         @cmd2.with_argparser(upd_rec_dec_parser)
         def do_update_record_decoded(self, opts):
             """Encode + Update (write) data to a record-oriented EF"""
-            (data, sw) = self._cmd.rs.update_record_dec(opts.record_nr, opts.data)
+            if opts.json_path:
+                (data_json, sw) = self._cmd.rs.read_record_dec(opts.record_nr)
+                js_path_modify(data_json, opts.json_path, json.loads(opts.data))
+            else:
+                data_json = json.loads(opts.data)
+            (data, sw) = self._cmd.rs.update_record_dec(opts.record_nr, data_json)
             if data:
                 self._cmd.poutput(data)
 
