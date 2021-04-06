@@ -502,17 +502,29 @@ class EF_ACC(TransparentEF):
 # TS 51.011 Section 10.3.18
 class EF_AD(TransparentEF):
     OP_MODE = {
-            0x00: 'normal operation',
-            0x80: 'type approval operations',
-            0x01: 'normal operation + specific facilities',
-            0x81: 'type approval + specific facilities',
-            0x02: 'maintenance (off line)',
-            0x04: 'cell test operation',
+            0x00: 'normal',
+            0x80: 'type_approval',
+            0x01: 'normal_and_specific_facilities',
+            0x81: 'type_approval_and_specific_facilities',
+            0x02: 'maintenance_off_line',
+            0x04: 'cell_test',
         }
+    OP_MODE_reverse = dict(map(reversed, OP_MODE.items()))
     def __init__(self, fid='6fad', sfid=None, name='EF.AD', desc='Administrative Data', size={3,4}):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
     def _decode_bin(self, raw_bin):
         u = unpack('!BH', raw_bin[:3])
+        ofm = True if u[1] & 1 else False
+        res = {'ms_operation_mode': self.OP_MODE.get(u[0], u[0]), 'specific_facilities': { 'ofm': ofm } }
+        if len(raw_bin) > 3:
+            res['len_of_mnc_in_imsi'] = int(raw_bin[3]) & 0xf
+        return res
+    def _encode_bin(self, abstract):
+        op_mode = self.OP_MODE_reverse[abstract['ms_operation_mode']]
+        res = pack('!BH', op_mode, abstract['specific_facilities']['ofm'])
+        if 'len_of_mnc_in_imsi' in abstract:
+            res += pack('!B', abstract['len_of_mnc_in_imsi'])
+        return res
 
 # TS 51.011 Section 10.3.13
 class EF_CBMID(EF_CBMI):
