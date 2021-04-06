@@ -1266,6 +1266,11 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 		# select DF_GSM
 		self._scc.select_path(['7f20'])
 
+		# set Service Provider Name
+		if p.get('name') is not None:
+			content = enc_spn(p['name'], True, True)
+			data, sw = self._scc.update_binary('6F46', rpad(content, 32))
+
 		# write EF.IMSI
 		if p.get('imsi'):
 			self._scc.update_binary('6f07', enc_imsi(p['imsi']))

@@ -6,9 +6,9 @@ IMSI: 001010000000102
 GID1: ffffffffffffffffffff
 GID2: ffffffffffffffffffff
 SMSP: ffffffffffffffffffffffffffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff000000
-SPN: Not available
-Display HPLMN: False
-Display OPLMN: False
+SPN: Magic
+Display HPLMN: True
+Display OPLMN: True
 PLMNsel: 00f110ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 PLMNwAcT:
 	00f110ffff # MCC: 001 MNC: 001 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
