@@ -397,10 +397,18 @@ class TransparentEF(CardEF):
             (data, sw) = self._cmd.rs.read_binary(opts.length, opts.offset)
             self._cmd.poutput(data)
 
+        read_bin_dec_parser = argparse.ArgumentParser()
+        read_bin_dec_parser.add_argument('--oneline', action='store_true',
+                                         help='No JSON pretty-printing, dump as a single line')
+        @cmd2.with_argparser(read_bin_dec_parser)
         def do_read_binary_decoded(self, opts):
             """Read + decode data from a transparent EF"""
             (data, sw) = self._cmd.rs.read_binary_dec()
-            self._cmd.poutput(json.dumps(data, indent=4))
+            if opts.oneline:
+                output = json.dumps(data)
+            else:
+                output = json.dumps(data, indent=4)
+            self._cmd.poutput(output)
 
         upd_bin_parser = argparse.ArgumentParser()
         upd_bin_parser.add_argument('--offset', type=int, default=0, help='Byte offset for start of read')
@@ -549,11 +557,17 @@ class LinFixedEF(CardEF):
 
         read_rec_dec_parser = argparse.ArgumentParser()
         read_rec_dec_parser.add_argument('record_nr', type=int, help='Number of record to be read')
+        read_rec_dec_parser.add_argument('--oneline', action='store_true',
+                                         help='No JSON pretty-printing, dump as a single line')
         @cmd2.with_argparser(read_rec_dec_parser)
         def do_read_record_decoded(self, opts):
             """Read + decode a record from a record-oriented EF"""
             (data, sw) = self._cmd.rs.read_record_dec(opts.record_nr)
-            self._cmd.poutput(json.dumps(data, indent=4))
+            if opts.oneline:
+                output = json.dumps(data)
+            else:
+                output = json.dumps(data, indent=4)
+            self._cmd.poutput(output)
 
         upd_rec_parser = argparse.ArgumentParser()
         upd_rec_parser.add_argument('record_nr', type=int, help='Number of record to be read')
