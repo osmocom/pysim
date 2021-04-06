@@ -72,6 +72,16 @@ class PysimApp(cmd2.Cmd):
 		self.add_settable(cmd2.Settable('conserve_write', bool, 'Read and compare before write',
 						  onchange_cb=self._onchange_conserve_write))
 		self.update_prompt()
+		self.json_pretty_print = True
+		self.add_settable(cmd2.Settable('json_pretty_print', bool, 'Pretty-Print JSON output'))
+
+	def poutput_json(self, data, force_no_pretty = False):
+		"""line cmd2.putput() but for a json serializable dict."""
+		if force_no_pretty or self.json_pretty_print == False:
+			output = json.dumps(data)
+		else:
+			output = json.dumps(data, indent=4)
+		self.poutput(output)
 
 	def _onchange_numeric_path(self, param_name, old, new):
 		self.update_prompt()

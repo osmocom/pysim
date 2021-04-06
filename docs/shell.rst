@@ -208,6 +208,14 @@ Writes will only be performed if the new value is different from the current on-
 
 If disabled, pySim will always write irrespective of the current/new value.
 
+json_pretty_print
+~~~~~~~~~~~~~~~~~
+
+This parameter determines if generated JSON output should (by default) be pretty-printed (multi-line
+output with indent level of 4 spaces) or not.
+
+The default value of this parameter is 'true'.
+
 debug
 ~~~~~
 
