@@ -983,7 +983,6 @@ class RuntimeState(object):
         """
         (data, sw) = self.read_binary()
         dec_data = self.selected_file.decode_hex(data)
-        print("%s: %s -> %s" % (sw, data, dec_data))
         return (dec_data, sw)
 
     def update_binary(self, data_hex:str, offset:int=0):
@@ -1005,7 +1004,6 @@ class RuntimeState(object):
             data : abstract data which is to be encoded and written
         """
         data_hex = self.selected_file.encode_hex(data)
-        print("%s -> %s" % (data, data_hex))
         return self.update_binary(data_hex)
 
     def read_record(self, rec_nr:int=0):
