@@ -111,7 +111,7 @@ class PysimApp(cmd2.Cmd):
 			if pin_adm:
 				self.poutput("found ADM-PIN '%s' for ICCID '%s'" % (result, self.iccid))
 			else:
-				self.poutput("cannot find ADM-PIN for ICCID '%s'" % (self._cmd.iccid))
+				self.poutput("cannot find ADM-PIN for ICCID '%s'" % (self.iccid))
 				return
 
 		if pin_adm:
