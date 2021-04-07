@@ -178,6 +178,20 @@ read_record_decoded
    :func: LinFixedEF.ShellCommands.read_rec_dec_parser
 
 
+read_records
+~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: LinFixedEF.ShellCommands.read_recs_parser
+
+
+read_records_decoded
+~~~~~~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: LinFixedEF.ShellCommands.read_recs_dec_parser
+
+
 update_record
 ~~~~~~~~~~~~~
 .. argparse::

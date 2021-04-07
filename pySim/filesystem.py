@@ -568,6 +568,33 @@ class LinFixedEF(CardEF):
             (data, sw) = self._cmd.rs.read_record_dec(opts.record_nr)
             self._cmd.poutput_json(data, opts.oneline)
 
+        read_recs_parser = argparse.ArgumentParser()
+        @cmd2.with_argparser(read_recs_parser)
+        def do_read_records(self, opts):
+            """Read all records from a record-oriented EF"""
+            num_of_rec = self._cmd.rs.selected_file_fcp['file_descriptor']['num_of_rec']
+            for recnr in range(1, 1 + num_of_rec):
+                (data, sw) = self._cmd.rs.read_record(recnr)
+                if (len(data) > 0):
+                   recstr = str(data)
+                else:
+                   recstr = "(empty)"
+                self._cmd.poutput("%03d %s" % (recnr, recstr))
+
+        read_recs_dec_parser = argparse.ArgumentParser()
+        read_recs_dec_parser.add_argument('--oneline', action='store_true',
+                                         help='No JSON pretty-printing, dump as a single line')
+        @cmd2.with_argparser(read_recs_dec_parser)
+        def do_read_records_decoded(self, opts):
+            """Read + decode all records from a record-oriented EF"""
+            num_of_rec = self._cmd.rs.selected_file_fcp['file_descriptor']['num_of_rec']
+            # collect all results in list so they are rendered as JSON list when printing
+            data_list = []
+            for recnr in range(1, 1 + num_of_rec):
+                (data, sw) = self._cmd.rs.read_record_dec(recnr)
+                data_list.append(data)
+            self._cmd.poutput_json(data_list, opts.oneline)
+
         upd_rec_parser = argparse.ArgumentParser()
         upd_rec_parser.add_argument('record_nr', type=int, help='Number of record to be read')
         upd_rec_parser.add_argument('data', help='Data bytes (hex format) to write')
@@ -965,6 +992,8 @@ class RuntimeState(object):
             select_resp = f.decode_select_response(data)
         else:
             select_resp = self.probe_file(name, cmd_app)
+        # store the decoded FCP for later reference
+        self.selected_file_fcp = select_resp
 
         # register commands of new file
         if cmd_app and self.selected_file.shell_commands:
