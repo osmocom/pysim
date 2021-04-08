@@ -450,6 +450,12 @@ if __name__ == '__main__':
 	rs.mf.add_file(DF_TELECOM())
 	rs.mf.add_file(DF_GSM())
 
+	# If a script file is specified, be sure that it actually exists
+	if opts.script:
+		if not os.access(opts.script, os.R_OK):
+			print("Invalid script file!")
+			sys.exit(2)
+
 	app = PysimApp(card, rs, opts.script)
 	rs.select('MF', app)
 
