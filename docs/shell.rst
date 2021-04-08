@@ -206,6 +206,24 @@ update_record_decoded
    :func: LinFixedEF.ShellCommands.upd_rec_dec_parser
 
 
+edit_record_decoded
+~~~~~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: LinFixedEF.ShellCommands.edit_rec_dec_parser
+
+This command will read the selected record, decode it to its JSON representation, save
+that JSON to a temporary file on your computer, and launch your configured text editor.
+
+You may then perform whatever modifications to the JSON representation, save + leave your
+text editor.
+
+Afterwards, the modified JSON will be re-encoded to the binary format, and the result written
+back to the record on the SIM card.
+
+This allows for easy interactive modification of records.
+
+
 
 Transparent EF commands
 -----------------------
@@ -267,6 +285,19 @@ Th below example demonstrates this by modifying the ofm field within EF.AD:
       "len_of_mnc_in_imsi": 2
   }
 
+
+edit_binary_decoded
+~~~~~~~~~~~~~~~~~~~
+This command will read the selected binary EF, decode it to its JSON representation, save
+that JSON to a temporary file on your computer, and launch your configured text editor.
+
+You may then perform whatever modifications to the JSON representation, save + leave your
+text editor.
+
+Afterwards, the modified JSON will be re-encoded to the binary format, and the result written
+to the SIM card.
+
+This allows for easy interactive modification of file contents.
 
 
 cmd2 settable parameters

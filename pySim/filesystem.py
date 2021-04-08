@@ -25,6 +25,7 @@ not the actual contents / runtime state of interacting with a given smart card.
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import code
+import tempfile
 import json
 
 import cmd2
@@ -433,6 +434,26 @@ class TransparentEF(CardEF):
             if data:
                 self._cmd.poutput_json(data)
 
+        def do_edit_binary_decoded(self, opts):
+            """Edit the JSON representation of the EF contents in an editor."""
+            (orig_json, sw) = self._cmd.rs.read_binary_dec()
+            with tempfile.TemporaryDirectory(prefix='pysim_') as dirname:
+                filename = '%s/file' % dirname
+                # write existing data as JSON to file
+                with open(filename, 'w') as text_file:
+                    json.dump(orig_json, text_file, indent=4)
+                # run a text editor
+                self._cmd._run_editor(filename)
+                with open(filename, 'r') as text_file:
+                    edited_json = json.load(text_file)
+                if edited_json == orig_json:
+                    self._cmd.poutput("Data not modified, skipping write")
+                else:
+                    (data, sw) = self._cmd.rs.update_binary_dec(edited_json)
+                    if data:
+                        self._cmd.poutput_json(data)
+
+
     def __init__(self, fid:str, sfid:str=None, name:str=None, desc:str=None, parent:CardDF=None,
                  size={1,None}):
         """
@@ -621,6 +642,32 @@ class LinFixedEF(CardEF):
             (data, sw) = self._cmd.rs.update_record_dec(opts.record_nr, data_json)
             if data:
                 self._cmd.poutput(data)
+
+        edit_rec_dec_parser = argparse.ArgumentParser()
+        edit_rec_dec_parser.add_argument('record_nr', type=int, help='Number of record to be edited')
+        @cmd2.with_argparser(edit_rec_dec_parser)
+        def do_edit_record_decoded(self, opts):
+            """Edit the JSON representation of one record in an editor."""
+            (orig_json, sw) = self._cmd.rs.read_record_dec(opts.record_nr)
+            dirname = tempfile.mkdtemp(prefix='pysim_')
+            try:
+                filename = '%s/file' % dirname
+                # write existing data as JSON to file
+                with open(filename, 'w') as text_file:
+                    json.dump(orig_json, text_file, indent=4)
+                # run a text editor
+                self._cmd._run_editor(filename)
+                with open(filename, 'r') as text_file:
+                    edited_json = json.load(text_file)
+                if edited_json == orig_json:
+                    self._cmd.poutput("Data not modified, skipping write")
+                else:
+                    (data, sw) = self._cmd.rs.update_record_dec(opts.record_nr, edited_json)
+                    if data:
+                        self._cmd.poutput_json(data)
+            finally:
+                shutil.rmtree(dirname)
+
 
     def __init__(self, fid:str, sfid:str=None, name:str=None, desc:str=None,
                  parent:Optional[CardDF]=None, rec_len={1,None}):
