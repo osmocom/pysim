@@ -65,7 +65,7 @@ class CardFile(object):
         self.parent = parent
         if self.parent and self.parent != self and self.fid:
             self.parent.add_file(self)
-        self.shell_commands: List[CommandSet] = []
+        self.shell_commands = [] # type: List[CommandSet]
 
 	# Note: the basic properties (fid, name, ect.) are verified when
 	# the file is attached to a parent file. See method add_file() in
