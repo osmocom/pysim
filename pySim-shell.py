@@ -176,10 +176,26 @@ class PySimCommands(CommandSet):
 					output_str += " " + str(files[f].fid)
 				output_str += " " + str(files[f].desc)
 				self._cmd.poutput(output_str)
+
 			if isinstance(files[f], CardDF):
-				fcp_dec = self._cmd.rs.select(f, self._cmd)
-				self.walk(indent + 1, action, context)
-				fcp_dec = self._cmd.rs.select("..", self._cmd)
+				skip_df=False
+				try:
+					fcp_dec = self._cmd.rs.select(f, self._cmd)
+				except Exception as e:
+					skip_df=True
+					df = self._cmd.rs.selected_file
+					df_path_list = df.fully_qualified_path(True)
+					df_skip_reason_str = '/'.join(df_path_list) + "/" + str(f) + ", " + str(e)
+					if context:
+						context['DF_SKIP'] += 1
+						context['DF_SKIP_REASON'].append(df_skip_reason_str)
+
+				# If the DF was skipped, we never have entered the directory
+				# below, so we must not move up.
+				if skip_df == False:
+					self.walk(indent + 1, action, context)
+					fcp_dec = self._cmd.rs.select("..", self._cmd)
+
 			elif action:
 				df_before_action = self._cmd.rs.selected_file
 				action(f, context)
@@ -251,7 +267,7 @@ class PySimCommands(CommandSet):
 	@cmd2.with_argparser(export_parser)
 	def do_export(self, opts):
 		"""Export files to script that can be imported back later"""
-		context = {'ERR':0, 'COUNT':0, 'BAD':[]}
+		context = {'ERR':0, 'COUNT':0, 'BAD':[], 'DF_SKIP':0, 'DF_SKIP_REASON':[]}
 		if opts.filename:
 			self.export(opts.filename, context)
 		else:
@@ -260,8 +276,17 @@ class PySimCommands(CommandSet):
 		self._cmd.poutput("# bad files:           %u" % context['ERR'])
 		for b in context['BAD']:
 			self._cmd.poutput("#  " + b)
-		if context['ERR']:
-			raise RuntimeError("unable to export %i file(s)" % context['ERR'])
+
+		self._cmd.poutput("# skipped dedicated files(s): %u" % context['DF_SKIP'])
+		for b in context['DF_SKIP_REASON']:
+			self._cmd.poutput("#  " + b)
+
+		if context['ERR'] and context['DF_SKIP']:
+			raise RuntimeError("unable to export %i elementry file(s) and %i dedicated file(s)" % (context['ERR'], context['DF_SKIP']))
+		elif context['ERR']:
+			raise RuntimeError("unable to export %i elementry file(s)" % context['ERR'])
+		elif context['DF_SKIP']:
+			raise RuntimeError("unable to export %i dedicated files(s)" % context['ERR'])
 
 
 @with_default_category('ISO7816 Commands')
