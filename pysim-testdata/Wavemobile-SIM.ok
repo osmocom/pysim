@@ -49,7 +49,7 @@ OPLMNwAcT:
 HPLMNAcT: Can't read file -- SW match failed! Expected 9000 and got 6a82.
 ACC: abce
 MSISDN: Not available
-Administrative data: 00ffff02
+Administrative data: 00000102
 	MS operation mode: normal operation
 	Ciphering Indicator: enabled
 SIM Service Table: ff33ff0f3c00ff0f000cf0c0f0030000
