@@ -12,7 +12,7 @@ setup(
         "pyscard",
         "serial",
         "pytlv",
-        "cmd2"
+        "cmd2",
         "jsonpath-ng"
     ],
     scripts=[
