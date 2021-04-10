@@ -413,6 +413,23 @@ class Iso7816Commands(CommandSet):
 		fid = self._cmd.rs.selected_file.fid
 		(data, sw) = self._cmd.card._scc.activate_file(fid)
 
+	open_chan_parser = argparse.ArgumentParser()
+	open_chan_parser.add_argument('chan_nr', type=int, default=0, help='Channel Number')
+
+	@cmd2.with_argparser(open_chan_parser)
+	def do_open_channel(self, opts):
+		"""Open a logical channel."""
+		(data, sw) = self._cmd.card._scc.manage_channel(mode='open', lchan_nr=opts.chan_nr)
+
+	close_chan_parser = argparse.ArgumentParser()
+	close_chan_parser.add_argument('chan_nr', type=int, default=0, help='Channel Number')
+
+	@cmd2.with_argparser(close_chan_parser)
+	def do_close_channel(self, opts):
+		"""Close a logical channel."""
+		(data, sw) = self._cmd.card._scc.manage_channel(mode='close', lchan_nr=opts.chan_nr)
+
+
 def parse_options():
 
 	parser = OptionParser(usage="usage: %prog [options]")

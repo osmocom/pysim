@@ -129,6 +129,18 @@ activate_file
 ~~~~~~~~~~~~~
 Activate the currently selected file.  This used to be called REHABILITATE in TS 11.11.
 
+open_channel
+~~~~~~~~~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: Iso7816Commands.open_chan_parser
+
+close_channel
+~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: Iso7816Commands.close_chan_parser
+
 
 pySim commands
 --------------

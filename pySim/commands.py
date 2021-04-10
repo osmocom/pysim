@@ -304,6 +304,15 @@ class SimCardCommands(object):
 		"""Execute ACTIVATE FILE command as per TS 102 221 Section 11.1.15."""
 		return self._tp.send_apdu_constr_checksw(self.cla_byte, '44', '00', '00', None, None, None)
 
+	def manage_channel(self, mode='open', lchan_nr=0):
+		"""Execute MANAGE CHANNEL command as per TS 102 221 Section 11.1.17."""
+		if mode == 'close':
+			p1 = 0x80
+		else:
+			p1 = 0x00
+		pdu = self.cla_byte + '70%02x%02x00' % (p1, lchan_nr)
+		return self._tp.send_apdu_checksw(pdu)
+
 	def reset_card(self):
 		"""Physically reset the card"""
 		return self._tp.reset_card()
