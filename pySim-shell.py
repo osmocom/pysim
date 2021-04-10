@@ -322,7 +322,7 @@ class Iso7816Commands(CommandSet):
 		path = opts.arg_list[0]
 		fcp_dec = self._cmd.rs.select(path, self._cmd)
 		self._cmd.update_prompt()
-		self._cmd.poutput(json.dumps(fcp_dec, indent=4))
+		self._cmd.poutput_json(fcp_dec)
 
 	def complete_select(self, text, line, begidx, endidx) -> List[str]:
 		"""Command Line tab completion for SELECT"""
