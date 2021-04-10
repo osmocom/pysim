@@ -6,10 +6,12 @@
 from typing import Optional
 
 from pySim.exceptions import *
-from pySim.utils import sw_match
+from pySim.construct import filter_dict
+from pySim.utils import sw_match, b2h, h2b, i2h
 
 #
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
+# Copyright (C) 2021 Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -126,6 +128,52 @@ class LinkBase(object):
 		if not sw_match(rv[1], sw):
 			raise SwMatchError(rv[1], sw.lower(), self.sw_interpreter)
 		return rv
+
+	def send_apdu_constr(self, cla, ins, p1, p2, cmd_constr, cmd_data, resp_constr):
+		"""Build and sends an APDU using a 'construct' definition; parses response.
+
+		Args:
+			cla : string (in hex) ISO 7816 class byte
+			ins : string (in hex) ISO 7816 instruction byte
+			p1 : string (in hex) ISO 7116 Parameter 1 byte
+			p2 : string (in hex) ISO 7116 Parameter 2 byte
+			cmd_cosntr : defining how to generate binary APDU command data
+			cmd_data : command data passed to cmd_constr
+			resp_cosntr : defining how to decode  binary APDU response data
+		Returns:
+			Tuple of (decoded_data, sw)
+		"""
+		cmd = cmd_constr.build(cmd_data) if cmd_data else ''
+		p3 = i2h([len(cmd)])
+		pdu = ''.join([cla, ins, p1, p2, p3, b2h(cmd)])
+		(data, sw) = self.send_apdu(pdu)
+		if data:
+			# filter the resulting dict to avoid '_io' members inside
+			rsp = filter_dict(resp_constr.parse(h2b(data)))
+		else:
+			rsp = None
+		return (rsp, sw)
+
+	def send_apdu_constr_checksw(self, cla, ins, p1, p2, cmd_constr, cmd_data, resp_constr,
+								 sw_exp="9000"):
+		"""Build and sends an APDU using a 'construct' definition; parses response.
+
+		Args:
+			cla : string (in hex) ISO 7816 class byte
+			ins : string (in hex) ISO 7816 instruction byte
+			p1 : string (in hex) ISO 7116 Parameter 1 byte
+			p2 : string (in hex) ISO 7116 Parameter 2 byte
+			cmd_cosntr : defining how to generate binary APDU command data
+			cmd_data : command data passed to cmd_constr
+			resp_cosntr : defining how to decode  binary APDU response data
+			exp_sw : string (in hex) of status word (ex. "9000")
+		Returns:
+			Tuple of (decoded_data, sw)
+		"""
+		(rsp, sw) = self.send_apdu_constr(cla, ins, p1, p2, cmd_constr, cmd_data, resp_constr)
+		if not sw_match(sw, sw_exp):
+			raise SwMatchError(sw, sw_exp.lower(), self.sw_interpreter)
+		return (rsp, sw)
 
 def init_reader(opts, **kwargs) -> Optional[LinkBase]:
 	"""

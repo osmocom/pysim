@@ -15,6 +15,7 @@ pip install pytlv
 pip install pyyaml
 pip install cmd2
 pip install jsonpath-ng
+pip install construct
 
 # Execute automatically discovered unit tests first
 python -m unittest discover -v -s tests/

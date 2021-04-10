@@ -13,7 +13,8 @@ setup(
         "serial",
         "pytlv",
         "cmd2",
-        "jsonpath-ng"
+        "jsonpath-ng",
+        "construct",
     ],
     scripts=[
         'pySim-prog.py',

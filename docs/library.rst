@@ -73,6 +73,14 @@ at 9600 bps.  These readers are sometimes called `Phoenix`.
 .. automodule:: pySim.transport.serial
    :members:
 
+
+pySim construct utilities
+-------------------------
+
+.. automodule:: pySim.construct
+   :members:
+
+
 pySim utility functions
 -----------------------
 
