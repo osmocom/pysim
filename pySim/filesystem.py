@@ -336,7 +336,7 @@ class CardADF(CardDF):
     def __init__(self, aid:str, **kwargs):
         super().__init__(**kwargs)
         # reference to CardApplication may be set from CardApplication constructor
-        self.application:Optional[CardApplication] = None
+        self.application = None  # type: Optional[CardApplication]
         self.aid = aid           # Application Identifier
         mf = self.get_mf()
         if mf:
@@ -856,7 +856,7 @@ class RuntimeState(object):
         """
         self.mf = CardMF()
         self.card = card
-        self.selected_file:CardDF = self.mf
+        self.selected_file = self.mf # type: CardDF
         self.profile = profile
         # add application ADFs + MF-files from profile
         apps = self._match_applications()
