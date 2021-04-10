@@ -120,6 +120,14 @@ it if you authenticate yourself with the said CHV/PIN.
    :module: pySim-shell
    :func: Iso7816Commands.verify_chv_parser
 
+deactivate_file
+~~~~~~~~~~~~~~~
+Deactivate the currently selected file.  This used to be called INVALIDATE in TS 11.11.
+
+
+activate_file
+~~~~~~~~~~~~~
+Activate the currently selected file.  This used to be called REHABILITATE in TS 11.11.
 
 
 pySim commands

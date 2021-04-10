@@ -296,6 +296,14 @@ class SimCardCommands(object):
 			ret = {'successful_3g_authentication': data}
 		return (ret, sw)
 
+	def deactivate_file(self):
+		"""Execute DECATIVATE FILE command as per TS 102 221 Section 11.1.14."""
+		return self._tp.send_apdu_constr_checksw(self.cla_byte, '04', '00', '00', None, None, None)
+
+	def activate_file(self):
+		"""Execute ACTIVATE FILE command as per TS 102 221 Section 11.1.15."""
+		return self._tp.send_apdu_constr_checksw(self.cla_byte, '44', '00', '00', None, None, None)
+
 	def reset_card(self):
 		"""Physically reset the card"""
 		return self._tp.reset_card()

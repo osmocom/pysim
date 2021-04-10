@@ -403,6 +403,15 @@ class Iso7816Commands(CommandSet):
 		(data, sw) = self._cmd.card._scc.enable_chv(opts.pin_nr, h2b(pin))
 		self._cmd.poutput("CHV enable successful")
 
+	def do_deactivate_file(self, opts):
+		"""Deactivate the current EF"""
+		fid = self._cmd.rs.selected_file.fid
+		(data, sw) = self._cmd.card._scc.deactivate_file(fid)
+
+	def do_activate_file(self, opts):
+		"""Activate the current EF"""
+		fid = self._cmd.rs.selected_file.fid
+		(data, sw) = self._cmd.card._scc.activate_file(fid)
 
 def parse_options():
 
