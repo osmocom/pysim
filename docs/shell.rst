@@ -300,6 +300,17 @@ to the SIM card.
 This allows for easy interactive modification of file contents.
 
 
+USIM commands
+-------------
+
+authenticate
+~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.ts_31_102
+   :func: ADF_USIM.AddlShellCommands.authenticate_parser
+
+
+
 cmd2 settable parameters
 ------------------------
 

@@ -21,6 +21,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from construct import *
+from pySim.construct import LV
 from pySim.utils import rpad, b2h, sw_match
 from pySim.exceptions import SwMatchError
 
@@ -273,6 +275,26 @@ class SimCardCommands(object):
 			raise ValueError('Invalid rand')
 		self.select_path(['3f00', '7f20'])
 		return self._tp.send_apdu(self.cla_byte + '88000010' + rand)
+
+	def authenticate(self, rand:str, autn:str, context='3g'):
+		"""Execute AUTHENTICATE (USIM/ISIM)."""
+		# 3GPP TS 31.102 Section 7.1.2.1
+		AuthCmd3G = Struct('rand'/LV, 'autn'/Optional(LV))
+		AuthResp3GSyncFail = Struct(Const(b'\xDC'), 'auts'/LV)
+		AuthResp3GSuccess = Struct(Const(b'\xDB'), 'res'/LV, 'ck'/LV, 'ik'/LV, 'kc'/Optional(LV))
+		AuthResp3G = Select(AuthResp3GSyncFail, AuthResp3GSuccess)
+		# build parameters
+		cmd_data = {'rand': rand, 'autn': autn}
+		if context == '3g':
+			p2 = '81'
+		elif context == 'gsm':
+			p2 = '80'
+		(data, sw) = self._tp.send_apdu_constr(self.cla_byte, '88', '00', p2, AuthCmd3G, cmd_data, AuthResp3G)
+		if 'auts' in data:
+			ret = {'synchronisation_failure': data}
+		else:
+			ret = {'successful_3g_authentication': data}
+		return (ret, sw)
 
 	def reset_card(self):
 		"""Physically reset the card"""

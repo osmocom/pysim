@@ -25,6 +25,7 @@ Various constants from ETSI TS 131 103 V14.2.0
 from pySim.filesystem import *
 from pySim.utils import *
 from pySim.ts_51_011 import EF_AD
+from pySim.ts_31_102 import ADF_USIM
 import pySim.ts_102_221
 
 # Mapping between ISIM Service Number and its description
@@ -186,6 +187,8 @@ class ADF_ISIM(CardADF):
             EF_WebRTCURI(),
           ]
         self.add_files(files)
+        # add those commands to the general commands of a TransparentEF
+        self.shell_commands += [ADF_USIM.AddlShellCommands()]
 
     def decode_select_response(self, data_hex):
         return pySim.ts_102_221.decode_select_response(data_hex)
