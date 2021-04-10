@@ -3,9 +3,12 @@
 """ pySim: various utilities
 """
 
+import json
+from io import BytesIO
 from typing import Optional, List, Dict, Any, Tuple
 
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
+# Copyright (C) 2021 Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -831,3 +834,10 @@ def tabulate_str_list(str_list, width:int = 79, hspace:int = 2, lspace:int = 1,
 		format_str_row = (" " * lspace) + format_str_row
 		table.append(format_str_row % tuple(str_list_row))
 	return '\n'.join(table)
+
+class JsonEncoder(json.JSONEncoder):
+    """Extend the standard library JSONEncoder with support for more types."""
+    def default(self, o):
+        if isinstance(o, BytesIO) or isinstance(o, bytes) or isinstance(o, bytearray):
+            return b2h(o)
+        return json.JSONEncoder.default(self, o)

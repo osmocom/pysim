@@ -39,7 +39,7 @@ from pySim.exceptions import *
 from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, ApduTracer
 from pySim.cards import card_detect, Card
-from pySim.utils import h2b, swap_nibbles, rpad, h2s
+from pySim.utils import h2b, swap_nibbles, rpad, h2s, JsonEncoder
 from pySim.utils import dec_st, sanitize_pin_adm, tabulate_str_list, is_hex
 from pySim.card_handler import card_handler
 
@@ -81,9 +81,9 @@ class PysimApp(cmd2.Cmd):
 	def poutput_json(self, data, force_no_pretty = False):
 		"""line cmd2.putput() but for a json serializable dict."""
 		if force_no_pretty or self.json_pretty_print == False:
-			output = json.dumps(data)
+			output = json.dumps(data, cls=JsonEncoder)
 		else:
-			output = json.dumps(data, indent=4)
+			output = json.dumps(data, cls=JsonEncoder, indent=4)
 		self.poutput(output)
 
 	def _onchange_numeric_path(self, param_name, old, new):
