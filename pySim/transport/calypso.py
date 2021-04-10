@@ -71,7 +71,8 @@ class L1CTLMessageSIM(L1CTLMessage):
 class CalypsoSimLink(LinkBase):
 	"""Transport Link for Calypso based phones."""
 
-	def __init__(self, sock_path:str = "/tmp/osmocom_l2"):
+	def __init__(self, sock_path:str = "/tmp/osmocom_l2", **kwargs):
+		super().__init__(**kwargs)
 		# Make sure that a given socket path exists
 		if not os.path.exists(sock_path):
 			raise ReaderError("There is no such ('%s') UNIX socket" % sock_path)

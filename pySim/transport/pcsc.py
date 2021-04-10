@@ -30,7 +30,8 @@ from pySim.utils import h2i, i2h
 class PcscSimLink(LinkBase):
 	""" pySim: PCSC reader transport link."""
 
-	def __init__(self, reader_number:int=0):
+	def __init__(self, reader_number:int=0, **kwargs):
+		super().__init__(**kwargs)
 		r = readers()
 		self._reader = r[reader_number]
 		self._con = self._reader.createConnection()

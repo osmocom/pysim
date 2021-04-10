@@ -29,7 +29,8 @@ class SerialSimLink(LinkBase):
 	""" pySim: Transport Link for serial (RS232) based readers included with simcard"""
 
 	def __init__(self, device:str='/dev/ttyUSB0', baudrate:int=9600, rst:str='-rts',
-				 debug:bool=False):
+				 debug:bool=False, **kwargs):
+		super().__init__(**kwargs)
 		if not os.path.exists(device):
 			raise ValueError("device file %s does not exist -- abort" % device)
 		self._sl = serial.Serial(

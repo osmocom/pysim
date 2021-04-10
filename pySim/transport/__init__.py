@@ -28,7 +28,8 @@ from pySim.utils import sw_match
 class LinkBase(object):
 	"""Base class for link/transport to card."""
 
-	sw_interpreter = None
+	def __init__(self, sw_interpreter=None):
+		self.sw_interpreter = sw_interpreter
 
 	def set_sw_interpreter(self, interp):
 		"""Set an (optional) status word interpreter."""
@@ -112,7 +113,7 @@ class LinkBase(object):
 			raise SwMatchError(rv[1], sw.lower(), self.sw_interpreter)
 		return rv
 
-def init_reader(opts) -> Optional[LinkBase]:
+def init_reader(opts, **kwargs) -> Optional[LinkBase]:
 	"""
 	Init card reader driver
 	"""
@@ -121,19 +122,19 @@ def init_reader(opts) -> Optional[LinkBase]:
 		if opts.pcsc_dev is not None:
 			print("Using PC/SC reader interface")
 			from pySim.transport.pcsc import PcscSimLink
-			sl = PcscSimLink(opts.pcsc_dev)
+			sl = PcscSimLink(opts.pcsc_dev, **kwargs)
 		elif opts.osmocon_sock is not None:
 			print("Using Calypso-based (OsmocomBB) reader interface")
 			from pySim.transport.calypso import CalypsoSimLink
-			sl = CalypsoSimLink(sock_path=opts.osmocon_sock)
+			sl = CalypsoSimLink(sock_path=opts.osmocon_sock, **kwargs)
 		elif opts.modem_dev is not None:
 			print("Using modem for Generic SIM Access (3GPP TS 27.007)")
 			from pySim.transport.modem_atcmd import ModemATCommandLink
-			sl = ModemATCommandLink(device=opts.modem_dev, baudrate=opts.modem_baud)
+			sl = ModemATCommandLink(device=opts.modem_dev, baudrate=opts.modem_baud, **kwargs)
 		else: # Serial reader is default
 			print("Using serial reader interface")
 			from pySim.transport.serial import SerialSimLink
-			sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate)
+			sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate, **kwargs)
 		return sl
 	except Exception as e:
 		print("Card reader initialization failed with exception:\n" + str(e))

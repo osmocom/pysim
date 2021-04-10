@@ -29,7 +29,8 @@ from pySim.exceptions import *
 
 class ModemATCommandLink(LinkBase):
 	"""Transport Link for 3GPP TS 27.007 compliant modems."""
-	def __init__(self, device:str='/dev/ttyUSB0', baudrate:int=115200):
+	def __init__(self, device:str='/dev/ttyUSB0', baudrate:int=115200, **kwargs):
+		super().__init__(**kwargs)
 		self._sl = serial.Serial(device, baudrate, timeout=5)
 		self._device = device
 		self._atr = None
