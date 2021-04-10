@@ -37,7 +37,7 @@ from pySim.ts_31_103 import EF_IST_map, EF_ISIM_ADF_map
 
 from pySim.exceptions import *
 from pySim.commands import SimCardCommands
-from pySim.transport import init_reader
+from pySim.transport import init_reader, ApduTracer
 from pySim.cards import card_detect, Card
 from pySim.utils import h2b, swap_nibbles, rpad, h2s
 from pySim.utils import dec_st, sanitize_pin_adm, tabulate_str_list, is_hex
@@ -74,6 +74,9 @@ class PysimApp(cmd2.Cmd):
 		self.update_prompt()
 		self.json_pretty_print = True
 		self.add_settable(cmd2.Settable('json_pretty_print', bool, 'Pretty-Print JSON output'))
+		self.apdu_trace = False
+		self.add_settable(cmd2.Settable('apdu_trace', bool, 'Trace and display APDUs exchanged with card',
+						  onchange_cb=self._onchange_apdu_trace))
 
 	def poutput_json(self, data, force_no_pretty = False):
 		"""line cmd2.putput() but for a json serializable dict."""
@@ -88,6 +91,20 @@ class PysimApp(cmd2.Cmd):
 
 	def _onchange_conserve_write(self, param_name, old, new):
 		self.rs.conserve_write = new
+
+	def _onchange_apdu_trace(self, param_name, old, new):
+		if new == True:
+			self.card._scc._tp.apdu_tracer = self.Cmd2ApduTracer(self)
+		else:
+			self.card._scc._tp.apdu_tracer = None
+
+	class Cmd2ApduTracer(ApduTracer):
+		def __init__(self, cmd2_app):
+			self.cmd2 = app
+
+		def trace_response(self, cmd, sw, resp):
+			self.cmd2.poutput("-> %s %s" % (cmd[:10], cmd[10:]))
+			self.cmd2.poutput("<- %s: %s" % (sw, resp))
 
 	def update_prompt(self):
 		path_list = self.rs.selected_file.fully_qualified_path(not self.numeric_path)

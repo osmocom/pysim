@@ -328,6 +328,11 @@ debug
 
 If enabled, full python back-traces will be displayed in case of exceptions
 
+apdu_trace
+~~~~~~~~~~
+
+Boolean variable that determines if a hex-dump of the command + response APDU shall be printed.
+
 numeric_path
 ~~~~~~~~~~~~
 

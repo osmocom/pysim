@@ -25,11 +25,20 @@ from pySim.utils import sw_match
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+class ApduTracer:
+	def trace_command(self, cmd):
+		pass
+
+	def trace_response(self, cmd, sw, resp):
+		pass
+
+
 class LinkBase(object):
 	"""Base class for link/transport to card."""
 
-	def __init__(self, sw_interpreter=None):
+	def __init__(self, sw_interpreter=None, apdu_tracer=None):
 		self.sw_interpreter = sw_interpreter
+		self.apdu_tracer = apdu_tracer
 
 	def set_sw_interpreter(self, interp):
 		"""Set an (optional) status word interpreter."""
@@ -69,7 +78,12 @@ class LinkBase(object):
 				data : string (in hex) of returned data (ex. "074F4EFFFF")
 				sw   : string (in hex) of status word (ex. "9000")
 		"""
-		return self._send_apdu_raw(pdu)
+		if self.apdu_tracer:
+			self.apdu_tracer.trace_command(pdu)
+		(data, sw) = self._send_apdu_raw(pdu)
+		if self.apdu_tracer:
+			self.apdu_tracer.trace_response(pdu, sw, data)
+		return (data, sw)
 
 	def send_apdu(self, pdu):
 		"""Sends an APDU and auto fetch response data
