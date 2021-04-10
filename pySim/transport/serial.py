@@ -180,7 +180,7 @@ class SerialSimLink(LinkBase):
 	def _rx_byte(self):
 		return self._sl.read()
 
-	def send_apdu_raw(self, pdu):
+	def _send_apdu_raw(self, pdu):
 
 		pdu = h2b(pdu)
 		data_len = ord(pdu[4])	# P3

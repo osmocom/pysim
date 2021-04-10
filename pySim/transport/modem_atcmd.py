@@ -97,7 +97,7 @@ class ModemATCommandLink(LinkBase):
 	def wait_for_card(self, timeout=None, newcardonly=False):
 		pass # Nothing to do really ...
 
-	def send_apdu_raw(self, pdu):
+	def _send_apdu_raw(self, pdu):
 		# Prepare the command as described in 8.17
 		cmd = 'AT+CSIM=%d,\"%s\"' % (len(pdu), pdu)
 

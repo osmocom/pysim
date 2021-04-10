@@ -115,7 +115,7 @@ class CalypsoSimLink(LinkBase):
 	def wait_for_card(self, timeout = None, newcardonly = False):
 		pass # Nothing to do really ...
 
-	def send_apdu_raw(self, pdu):
+	def _send_apdu_raw(self, pdu):
 
 		# Request FULL reset
 		req_msg = L1CTLMessageSIM(h2b(pdu))

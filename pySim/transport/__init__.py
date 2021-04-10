@@ -68,7 +68,7 @@ class LinkBase(object):
 				data : string (in hex) of returned data (ex. "074F4EFFFF")
 				sw   : string (in hex) of status word (ex. "9000")
 		"""
-		pass
+		return self._send_apdu_raw(pdu)
 
 	def send_apdu(self, pdu):
 		"""Sends an APDU and auto fetch response data

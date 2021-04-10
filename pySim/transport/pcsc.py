@@ -71,7 +71,7 @@ class PcscSimLink(LinkBase):
 		self.connect()
 		return 1
 
-	def send_apdu_raw(self, pdu):
+	def _send_apdu_raw(self, pdu):
 
 		apdu = h2i(pdu)
 
