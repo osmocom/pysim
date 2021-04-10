@@ -35,6 +35,7 @@ import argparse
 from typing import cast, Optional, Iterable, List, Any, Dict, Tuple
 
 from pySim.utils import sw_match, h2b, b2h, is_hex
+from pySim.construct import filter_dict
 from pySim.exceptions import *
 from pySim.jsonpath import js_path_find, js_path_modify
 
@@ -466,6 +467,7 @@ class TransparentEF(CardEF):
             size : tuple of (minimum_size, recommended_size)
         """
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent)
+        self._construct = None
         self.size = size
         self.shell_commands = [self.ShellCommands()]
 
@@ -487,6 +489,8 @@ class TransparentEF(CardEF):
         method = getattr(self, '_decode_hex', None)
         if callable(method):
             return method(b2h(raw_bin_data))
+        if self._construct:
+            return filter_dict(self._construct.parse(raw_bin_data, total_len=len(raw_bin_data)))
         return {'raw': raw_bin_data.hex()}
 
     def decode_hex(self, raw_hex_data:str) -> dict:
@@ -508,6 +512,8 @@ class TransparentEF(CardEF):
         method = getattr(self, '_decode_bin', None)
         if callable(method):
             return method(raw_bin_data)
+        if self._construct:
+            return filter_dict(self._construct.parse(raw_bin_data, total_len=len(raw_bin_data)))
         return {'raw': raw_bin_data.hex()}
 
     def encode_bin(self, abstract_data:dict) -> bytearray:
@@ -528,6 +534,8 @@ class TransparentEF(CardEF):
         method = getattr(self, '_encode_hex', None)
         if callable(method):
             return h2b(method(abstract_data))
+        if self._construct:
+            return self._construct.build(abstract_data)
         raise NotImplementedError
 
     def encode_hex(self, abstract_data:dict) -> str:
@@ -549,6 +557,8 @@ class TransparentEF(CardEF):
         if callable(method):
             raw_bin_data = method(abstract_data)
             return b2h(raw_bin_data)
+        if self._construct:
+            return b2h(self._construct.build(abstract_data))
         raise NotImplementedError
 
 
@@ -683,6 +693,7 @@ class LinFixedEF(CardEF):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent)
         self.rec_len = rec_len
         self.shell_commands = [self.ShellCommands()]
+        self._construct = None
 
     def decode_record_hex(self, raw_hex_data:str) -> dict:
         """Decode raw (hex string) data into abstract representation.
@@ -703,6 +714,8 @@ class LinFixedEF(CardEF):
         method = getattr(self, '_decode_record_bin', None)
         if callable(method):
             return method(raw_bin_data)
+        if self._construct:
+            return filter_dict(self._construct.parse(raw_bin_data, total_len=len(raw_bin_data)))
         return {'raw': raw_bin_data.hex()}
 
     def decode_record_bin(self, raw_bin_data:bytearray) -> dict:
@@ -724,6 +737,8 @@ class LinFixedEF(CardEF):
         method = getattr(self, '_decode_record_hex', None)
         if callable(method):
             return method(raw_hex_data)
+        if self._construct:
+            return filter_dict(self._construct.parse(raw_bin_data, total_len=len(raw_bin_data)))
         return {'raw': raw_hex_data}
 
     def encode_record_hex(self, abstract_data:dict) -> str:
@@ -745,6 +760,8 @@ class LinFixedEF(CardEF):
         if callable(method):
             raw_bin_data = method(abstract_data)
             return b2h(raw_bin_data)
+        if self._construct:
+            return b2h(self._construct.build(abstract_data))
         raise NotImplementedError
 
     def encode_record_bin(self, abstract_data:dict) -> bytearray:
@@ -765,6 +782,8 @@ class LinFixedEF(CardEF):
         method = getattr(self, '_encode_record_hex', None)
         if callable(method):
             return h2b(method(abstract_data))
+        if self._construct:
+            return self._construct.build(abstract_data)
         raise NotImplementedError
 
 class CyclicEF(LinFixedEF):
@@ -813,10 +832,12 @@ class TransRecEF(TransparentEF):
         method = getattr(self, '_decode_record_hex', None)
         if callable(method):
             return method(raw_hex_data)
+        raw_bin_data = h2b(raw_hex_data)
         method = getattr(self, '_decode_record_bin', None)
         if callable(method):
-            raw_bin_data = h2b(raw_hex_data)
             return method(raw_bin_data)
+        if self._construct:
+            return filter_dict(self._construct.parse(raw_bin_data, total_len=len(raw_bin_data)))
         return {'raw': raw_hex_data}
 
     def decode_record_bin(self, raw_bin_data:bytearray) -> dict:
@@ -838,6 +859,8 @@ class TransRecEF(TransparentEF):
         method = getattr(self, '_decode_record_hex', None)
         if callable(method):
             return method(raw_hex_data)
+        if self._construct:
+            return filter_dict(self._construct.parse(raw_bin_data, total_len=len(raw_bin_data)))
         return {'raw': raw_hex_data}
 
     def encode_record_hex(self, abstract_data:dict) -> str:
@@ -858,6 +881,8 @@ class TransRecEF(TransparentEF):
         method = getattr(self, '_encode_record_bin', None)
         if callable(method):
             return b2h(method(abstract_data))
+        if self._construct:
+            return b2h(filter_dict(self._construct.build(abstract_data)))
         raise NotImplementedError
 
     def encode_record_bin(self, abstract_data:dict) -> bytearray:
@@ -878,6 +903,8 @@ class TransRecEF(TransparentEF):
         method = getattr(self, '_encode_record_hex', None)
         if callable(method):
             return h2b(method(abstract_data))
+        if self._construct:
+            return filter_dict(self._construct.build(abstract_data))
         raise NotImplementedError
 
     def _decode_bin(self, raw_bin_data:bytearray):

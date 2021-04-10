@@ -1,5 +1,5 @@
 from construct import *
-from pySim.utils import b2h, h2b
+from pySim.utils import b2h, h2b, swap_nibbles
 
 """Utility code related to the integration of the 'construct' declarative parser."""
 
@@ -25,6 +25,13 @@ class HexAdapter(Adapter):
         return b2h(obj)
     def _encode(self, obj, context, path):
         return h2b(obj)
+
+class BcdAdapter(Adapter):
+    """convert a bytes() type to a string of BCD nibbles."""
+    def _decode(self, obj, context, path):
+        return swap_nibbles(b2h(obj))
+    def _encode(self, obj, context, path):
+        return h2b(swap_nibbles(obj))
 
 def filter_dict(d, exclude_prefix='_'):
     """filter the input dict to ensure no keys starting with 'exclude_prefix' remain."""
