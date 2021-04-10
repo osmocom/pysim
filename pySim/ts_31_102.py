@@ -269,6 +269,8 @@ EF_USIM_ADF_map = {
 ######################################################################
 
 from struct import unpack, pack
+from construct import *
+from pySim.construct import HexAdapter
 from pySim.filesystem import *
 from pySim.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_PLMNsel, EF_AD
 from pySim.ts_51_011 import EF_CBMID, EF_CBMIR
@@ -416,12 +418,7 @@ class EF_Keys(TransparentEF):
     def __init__(self, fid='6f08', sfid=0x08, name='EF.Keys', size={33,33},
                  desc='Ciphering and Integrity Keys'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
-    def _decode_bin(self, in_bin):
-        return {'ksi': in_bin[0],
-                'ck': b2h(in_bin[1:17]),
-                'ik': b2h(in_bin[17:33])}
-    def _encode_bin(self, in_json):
-        return h2b(in_json['ksi']) + h2b(in_json['ck']) + h2b(in_json['ik'])
+        self._construct = Struct('ksi'/Int8ub, 'ck'/HexAdapter(Bytes(16)), 'ik'/HexAdapter(Bytes(16)))
 
 # TS 31.103 Section 4.2.7
 class EF_UST(TransparentEF):
