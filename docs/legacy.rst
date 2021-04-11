@@ -84,18 +84,9 @@ Specifically, pySim-read will dump the following:
  * EF.IST
 
 
-::
+pySim-read usage
+~~~~~~~~~~~~~~~~
 
-  Usage: pySim-read.py [options]
-
-  Options:
-    -h, --help            show this help message and exit
-    -d DEV, --device=DEV  Serial Device for SIM access [default: /dev/ttyUSB0]
-    -b BAUD, --baud=BAUD  Baudrate used for SIM access [default: 9600]
-    -p PCSC, --pcsc-device=PCSC
-                          Which PC/SC reader number for SIM access
-    --modem-device=DEV    Serial port of modem for Generic SIM Access (3GPP TS
-                          27.007)
-    --modem-baud=BAUD     Baudrate used for modem's port [default: 115200]
-    --osmocon=PATH        Socket path for Calypso (e.g. Motorola C1XX) based
-                          reader (via OsmocomBB)
+.. argparse::
+   :module: pySim-read
+   :func: option_parser

@@ -23,7 +23,7 @@
 #
 
 import hashlib
-from optparse import OptionParser
+import argparse
 import os
 import random
 import re
@@ -33,53 +33,21 @@ from pySim.ts_31_102 import EF_UST_map, EF_USIM_ADF_map
 from pySim.ts_31_103 import EF_IST_map, EF_ISIM_ADF_map
 
 from pySim.commands import SimCardCommands
-from pySim.transport import init_reader
+from pySim.transport import init_reader, argparse_add_reader_args
 from pySim.cards import card_detect, Card, UsimCard, IsimCard
 from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn
 from pySim.utils import format_xplmn_w_act, dec_spn, dec_st, dec_addr_tlv
 from pySim.utils import h2s, format_ePDGSelection
 
-def parse_options():
-
-	parser = OptionParser(usage="usage: %prog [options]")
-
-	parser.add_option("-d", "--device", dest="device", metavar="DEV",
-			help="Serial Device for SIM access [default: %default]",
-			default="/dev/ttyUSB0",
-		)
-	parser.add_option("-b", "--baud", dest="baudrate", type="int", metavar="BAUD",
-			help="Baudrate used for SIM access [default: %default]",
-			default=9600,
-		)
-	parser.add_option("-p", "--pcsc-device", dest="pcsc_dev", type='int', metavar="PCSC",
-			help="Which PC/SC reader number for SIM access",
-			default=None,
-		)
-	parser.add_option("--modem-device", dest="modem_dev", metavar="DEV",
-			help="Serial port of modem for Generic SIM Access (3GPP TS 27.007)",
-			default=None,
-		)
-	parser.add_option("--modem-baud", dest="modem_baud", type="int", metavar="BAUD",
-			help="Baudrate used for modem's port [default: %default]",
-			default=115200,
-		)
-	parser.add_option("--osmocon", dest="osmocon_sock", metavar="PATH",
-			help="Socket path for Calypso (e.g. Motorola C1XX) based reader (via OsmocomBB)",
-			default=None,
-		)
-
-	(options, args) = parser.parse_args()
-
-	if args:
-		parser.error("Extraneous arguments")
-
-	return options
-
+option_parser = argparse.ArgumentParser(prog='pySim-read',
+                        description='Legacy tool for reading some parts of a SIM card',
+                        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+argparse_add_reader_args(option_parser)
 
 if __name__ == '__main__':
 
 	# Parse options
-	opts = parse_options()
+	opts = option_parser.parse_args()
 
 	# Init card reader driver
 	sl = init_reader(opts)
