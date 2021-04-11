@@ -69,8 +69,8 @@ Contributing
 Our coding standards are described at
 <https://osmocom.org/projects/cellular-infrastructure/wiki/Coding_standards>
 
-We are currently accepting patches by e-mail to the above-mentioned
-mailing list.
+We are using a gerrit-based patch review process explained at
+<https://osmocom.org/projects/cellular-infrastructure/wiki/Gerrit>
 
 Usage
 -----
