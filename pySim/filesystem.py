@@ -53,7 +53,7 @@ class CardFile(object):
             fid : File Identifier (4 hex digits)
             sfid : Short File Identifier (2 hex digits, optional)
             name : Brief name of the file, lik EF_ICCID
-            desc : Descriptoin of the file
+            desc : Description of the file
             parent : Parent CardFile object within filesystem hierarchy
         """
         if not isinstance(self, CardADF) and fid == None:
@@ -387,7 +387,7 @@ class TransparentEF(CardEF):
 
     @with_default_category('Transparent EF Commands')
     class ShellCommands(CommandSet):
-        """Shell commands specific for Trransparent EFs."""
+        """Shell commands specific for transparent EFs."""
         def __init__(self):
             super().__init__()
 
@@ -462,7 +462,7 @@ class TransparentEF(CardEF):
             fid : File Identifier (4 hex digits)
             sfid : Short File Identifier (2 hex digits, optional)
             name : Brief name of the file, lik EF_ICCID
-            desc : Descriptoin of the file
+            desc : Description of the file
             parent : Parent CardFile object within filesystem hierarchy
             size : tuple of (minimum_size, recommended_size)
         """
@@ -686,7 +686,7 @@ class LinFixedEF(CardEF):
             fid : File Identifier (4 hex digits)
             sfid : Short File Identifier (2 hex digits, optional)
             name : Brief name of the file, lik EF_ICCID
-            desc : Descriptoin of the file
+            desc : Description of the file
             parent : Parent CardFile object within filesystem hierarchy
             rec_len : tuple of (minimum_length, recommended_length)
         """
@@ -808,8 +808,8 @@ class TransRecEF(TransparentEF):
         Args:
             fid : File Identifier (4 hex digits)
             sfid : Short File Identifier (2 hex digits, optional)
-            name : Brief name of the file, lik EF_ICCID
-            desc : Descriptoin of the file
+            name : Brief name of the file, like EF_ICCID
+            desc : Description of the file
             parent : Parent CardFile object within filesystem hierarchy
             rec_len : Length of the fixed-length records within transparent EF
             size : tuple of (minimum_size, recommended_size)
@@ -991,7 +991,7 @@ class RuntimeState(object):
         or the underlying card profile.
 
         Args:
-            sw : Status word as string of 4 hexd digits
+            sw : Status word as string of 4 hex digits
 
         Returns:
             Tuple of two strings
@@ -1026,9 +1026,9 @@ class RuntimeState(object):
             f = CardDF(fid=fid, sfid=None, name="DF." + str(fid).upper(), desc="dedicated file, manually added at runtime")
         else:
             if (select_resp['file_descriptor']['structure'] == 'transparent'):
-                f = TransparentEF(fid=fid, sfid=None, name="EF." + str(fid).upper(), desc="elementry file, manually added at runtime")
+                f = TransparentEF(fid=fid, sfid=None, name="EF." + str(fid).upper(), desc="elementary file, manually added at runtime")
             else:
-                f = LinFixedEF(fid=fid, sfid=None, name="EF." + str(fid).upper(), desc="elementry file, manually added at runtime")
+                f = LinFixedEF(fid=fid, sfid=None, name="EF." + str(fid).upper(), desc="elementary file, manually added at runtime")
 
         self.selected_file.add_files([f])
         self.selected_file = f
@@ -1223,7 +1223,7 @@ class CardApplication(object):
         """Interpret a given status word within the application.
 
         Args:
-            sw : Status word as string of 4 hexd digits
+            sw : Status word as string of 4 hex digits
 
         Returns:
             Tuple of two strings
@@ -1231,7 +1231,7 @@ class CardApplication(object):
         return interpret_sw(self.sw, sw)
 
 class CardProfile(object):
-    """A Card Profile describes a card, it's filessystem hierarchy, an [initial] list of
+    """A Card Profile describes a card, it's filesystem hierarchy, an [initial] list of
        applications as well as profile-specific SW and shell commands.  Every card has
        one card profile, but there may be multiple applications within that profile."""
     def __init__(self, name, **kw):
@@ -1265,7 +1265,7 @@ class CardProfile(object):
         """Interpret a given status word within the profile.
 
         Args:
-            sw : Status word as string of 4 hexd digits
+            sw : Status word as string of 4 hex digits
 
         Returns:
             Tuple of two strings

@@ -423,7 +423,7 @@ class EF_EXT(LinFixedEF):
 # TS 51.011 Section 10.5.16
 class EF_CMI(LinFixedEF):
     def __init__(self, fid='6f58', sfid=None, name='EF.CMI', rec_len={2,21},
-                 desc='Comparison Method Informatoin'):
+                 desc='Comparison Method Information'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
         self._construct = Struct('alpha_id'/Bytes(this._.total_len-1), 'comparison_method_id'/Int8ub)
 
@@ -871,7 +871,7 @@ def decode_select_response(resp_hex):
         ret['file_characteristics'] = b2h(resp_bin[13])
         ret['num_direct_child_df'] = int(resp_bin[14], 16)
         ret['num_direct_child_ef'] = int(resp_bin[15], 16)
-        ret['num_chv_unbkock_adm_codes'] = int(resp_bin[16])
+        ret['num_chv_unblock_adm_codes'] = int(resp_bin[16])
         # CHV / UNBLOCK CHV stats
     elif file_type in ['working_ef']:
         file_struct = struct_of_file_map[resp_bin[13]] if resp_bin[13] in struct_of_file_map else resp_bin[13]

@@ -111,7 +111,7 @@ def enc_imsi(imsi:str):
 	return ei
 
 def dec_imsi(ef:Hexstr) -> Optional[str]:
-	"""Converts an EF value to the imsi string representation"""
+	"""Converts an EF value to the IMSI string representation"""
 	if len(ef) < 4:
 		return None
 	l = int(ef[0:2], 16) * 2		# Length of the IMSI string

@@ -471,14 +471,14 @@ class EF_ECC(LinFixedEF):
 
 # TS 31.102 Section 4.2.17
 class EF_LOCI(TransparentEF):
-    def __init__(self, fid='6f7e', sfid=0x0b, name='EF.LOCI', desc='Locationn information', size={11,11}):
+    def __init__(self, fid='6f7e', sfid=0x0b, name='EF.LOCI', desc='Location information', size={11,11}):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self._construct = Struct('tmsi'/HexAdapter(Bytes(4)), 'lai'/HexAdapter(Bytes(5)), 'rfu'/Int8ub,
                                  'lu_status'/Int8ub)
 
 # TS 31.102 Section 4.2.23
 class EF_PSLOCI(TransparentEF):
-    def __init__(self, fid='6f73', sfid=0x0c, name='EF.PSLOCI', desc='PS Locationn information', size={14,14}):
+    def __init__(self, fid='6f73', sfid=0x0c, name='EF.PSLOCI', desc='PS Location information', size={14,14}):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self._construct = Struct('ptmsi'/HexAdapter(Bytes(4)), 'ptmsi_sig'/HexAdapter(Bytes(3)),
                                  'rai'/HexAdapter(Bytes(6)), 'rau_status'/Int8ub)

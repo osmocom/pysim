@@ -94,7 +94,7 @@ class Card(object):
 		in ETSI TS 151 011 for the details of the access_tech field coding.
 		Some common values:
 		access_tech = '0080' # Only GSM is selected
-		access_tech = 'FFFF' # All technologues selected, even Reserved for Future Use ones
+		access_tech = 'FFFF' # All technologies selected, even Reserved for Future Use ones
 		"""
 		# get size and write EF.HPLMNwAcT
 		data = self._scc.read_binary(EF['HPLMNwAcT'], length=None, offset=0)
@@ -476,7 +476,7 @@ class _MagicSimBase(Card):
 	each possible provider uses a specific record number in each EF. The
 	indexes used are ( where N is the number of providers supported ) :
 	 - [2 .. N+1] for the operator name
-	 - [1 .. N] for the programable EFs
+	 - [1 .. N] for the programmable EFs
 
 	* 3f00/7f4d/8f0c : Operator Name
 
@@ -618,7 +618,7 @@ class MagicSim(_MagicSimBase):
 class FakeMagicSim(Card):
 	"""
 	Theses cards have a record based EF 3f00/000c that contains the provider
-	informations. See the program method for its format. The records go from
+	information. See the program method for its format. The records go from
 	1 to N.
 	"""
 

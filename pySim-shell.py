@@ -79,7 +79,7 @@ class PysimApp(cmd2.Cmd):
 						  onchange_cb=self._onchange_apdu_trace))
 
 	def poutput_json(self, data, force_no_pretty = False):
-		"""line cmd2.putput() but for a json serializable dict."""
+		"""like cmd2.poutput() but for a JSON serializable dict."""
 		if force_no_pretty or self.json_pretty_print == False:
 			output = json.dumps(data, cls=JsonEncoder)
 		else:
@@ -220,7 +220,7 @@ class PySimCommands(CommandSet):
 				# always restore the currently selected file to the file that
 				# was selected before executing the action() callback.
 				if df_before_action != self._cmd.rs.selected_file:
-					raise RuntimeError("inconsistant walk, %s is currently selected but expecting %s to be selected"
+					raise RuntimeError("inconsistent walk, %s is currently selected but expecting %s to be selected"
 							   % (str(self._cmd.rs.selected_file), str(df_before_action)))
 
 	def do_tree(self, opts):
@@ -299,9 +299,9 @@ class PySimCommands(CommandSet):
 			self._cmd.poutput("#  " + b)
 
 		if context['ERR'] and context['DF_SKIP']:
-			raise RuntimeError("unable to export %i elementry file(s) and %i dedicated file(s)" % (context['ERR'], context['DF_SKIP']))
+			raise RuntimeError("unable to export %i elementary file(s) and %i dedicated file(s)" % (context['ERR'], context['DF_SKIP']))
 		elif context['ERR']:
-			raise RuntimeError("unable to export %i elementry file(s)" % context['ERR'])
+			raise RuntimeError("unable to export %i elementary file(s)" % context['ERR'])
 		elif context['DF_SKIP']:
 			raise RuntimeError("unable to export %i dedicated files(s)" % context['ERR'])
 
@@ -353,7 +353,7 @@ class Iso7816Commands(CommandSet):
 		"""Verify (authenticate) using specified PIN code"""
 		pin = self.get_code(opts.pin_code)
 		(data, sw) = self._cmd.card._scc.verify_chv(opts.pin_nr, h2b(pin))
-		self._cmd.poutput("CHV verfication successful")
+		self._cmd.poutput("CHV verification successful")
 
 	unblock_chv_parser = argparse.ArgumentParser()
 	unblock_chv_parser.add_argument('--pin-nr', type=int, default=1, help='PUK Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
@@ -536,7 +536,7 @@ if __name__ == '__main__':
 		card_key_provider_register(CardKeyProviderCsv(csv_default))
 
 	# If the user supplies an ADM PIN at via commandline args authenticate
-	# immediatley so that the user does not have to use the shell commands
+	# immediately so that the user does not have to use the shell commands
 	pin_adm = sanitize_pin_adm(opts.pin_adm, opts.pin_adm_hex)
 	if pin_adm:
 		try:

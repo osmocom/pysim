@@ -33,7 +33,7 @@ Transport base class
 calypso / OsmocomBB transport
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This allows the use of the SIM slot of an an OsmocomBB compatible phone with the TI Calypso chipset,
+This allows the use of the SIM slot of an OsmocomBB compatible phone with the TI Calypso chipset,
 using the L1CTL interface to talk to the layer1.bin firmware on the phone.
 
 .. automodule:: pySim.transport.calypso
@@ -67,7 +67,7 @@ Serial/UART transport
 This transport implements interfacing smart cards via
 very simplistic UART readers.  These readers basically
 wire together the Rx+Tx pins of a RS232 UART, provide
-a fixed crystal oscilator for clock, and operate the UART
+a fixed crystal oscillator for clock, and operate the UART
 at 9600 bps.  These readers are sometimes called `Phoenix`.
 
 .. automodule:: pySim.transport.serial

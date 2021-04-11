@@ -126,7 +126,7 @@ class EF_PCSCF(LinFixedEF):
 
 # TS 31.103 Section 4.2.9
 class EF_GBABP(TransparentEF):
-    def __init__(self, fid='6fd5', sfid=None, name='EF.GBABP', desc='GBA Bootstrappng'):
+    def __init__(self, fid='6fd5', sfid=None, name='EF.GBABP', desc='GBA Bootstrapping'):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
 
 # TS 31.103 Section 4.2.10
