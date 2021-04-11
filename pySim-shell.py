@@ -431,26 +431,38 @@ class Iso7816Commands(CommandSet):
 
 option_parser = argparse.ArgumentParser(prog='pySim-shell', description='interactive SIM card shell',
                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-option_parser.add_argument('-d', '--device', metavar='DEV', default='/dev/ttyUSB0',
-                           help='Serial Device for SIM access')
-option_parser.add_argument('-b', '--baud', dest='baudrate', type=int, metavar='BAUD', default=9600,
-                           help='Baud rate used for SIM access')
-option_parser.add_argument('-p', '--pcsc-device', type=int, dest='pcsc_dev', metavar='PCSC', default=None,
-                           help='PC/SC reader number to use for SIM access')
-option_parser.add_argument('--modem-device', dest='modem_dev', metavar='DEV', default=None,
-                           help='Serial port of modem for Generic SIM Access (3GPP TS 27.007)')
-option_parser.add_argument('--modem-baud', type=int, metavar='BAUD', default=115200,
-                           help='Baud rate used for modem port')
-option_parser.add_argument('--osmocon', dest='osmocon_sock', metavar='PATH', default=None,
+
+serial_group = option_parser.add_argument_group('Serial Reader')
+serial_group.add_argument('-d', '--device', metavar='DEV', default='/dev/ttyUSB0',
+                          help='Serial Device for SIM access')
+serial_group.add_argument('-b', '--baud', dest='baudrate', type=int, metavar='BAUD', default=9600,
+                          help='Baud rate used for SIM access')
+
+pcsc_group = option_parser.add_argument_group('PC/SC Reader')
+pcsc_group.add_argument('-p', '--pcsc-device', type=int, dest='pcsc_dev', metavar='PCSC', default=None,
+                        help='PC/SC reader number to use for SIM access')
+
+modem_group = option_parser.add_argument_group('AT Command Modem Reader')
+modem_group.add_argument('--modem-device', dest='modem_dev', metavar='DEV', default=None,
+                         help='Serial port of modem for Generic SIM Access (3GPP TS 27.007)')
+modem_group.add_argument('--modem-baud', type=int, metavar='BAUD', default=115200,
+                         help='Baud rate used for modem port')
+
+osmobb_group = option_parser.add_argument_group('OsmocomBB Reader')
+osmobb_group.add_argument('--osmocon', dest='osmocon_sock', metavar='PATH', default=None,
                            help='Socket path for Calypso (e.g. Motorola C1XX) based reader (via OsmocomBB)')
-option_parser.add_argument('--script', metavar='PATH', default=None,
+
+global_group = option_parser.add_argument_group('General Options')
+global_group.add_argument('--script', metavar='PATH', default=None,
                            help='script with pySim-shell commands to be executed automatically at start-up')
-option_parser.add_argument('--csv', metavar='FILE', default=None,
+global_group.add_argument('--csv', metavar='FILE', default=None,
                            help='Read card data from CSV file')
-option_parser.add_argument('-a', '--pin-adm', metavar='PIN_ADM1', dest='pin_adm', default=None,
-                           help='ADM PIN used for provisioning (overwrites default)')
-option_parser.add_argument('-A', '--pin-adm-hex', metavar='PIN_ADM1_HEX', dest='pin_adm_hex', default=None,
-                           help='ADM PIN used for provisioning, as hex string (16 characters long)')
+
+adm_group = global_group.add_mutually_exclusive_group()
+adm_group.add_argument('-a', '--pin-adm', metavar='PIN_ADM1', dest='pin_adm', default=None,
+                       help='ADM PIN used for provisioning (overwrites default)')
+adm_group.add_argument('-A', '--pin-adm-hex', metavar='PIN_ADM1_HEX', dest='pin_adm_hex', default=None,
+                       help='ADM PIN used for provisioning, as hex string (16 characters long)')
 
 
 if __name__ == '__main__':
