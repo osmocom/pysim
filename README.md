@@ -36,8 +36,9 @@ pysim requires:
 
 - pyscard
 - serial
-- pytlv (for specific card types)
-- cmd2 (for pySim-shell.py)
+- pytlv
+- cmd2
+- jsonpath-ng
 
 Example for Debian:
 
