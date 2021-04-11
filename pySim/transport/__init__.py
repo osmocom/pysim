@@ -3,6 +3,7 @@
 """ pySim: PCSC reader transport link base
 """
 
+import argparse
 from typing import Optional
 
 from pySim.exceptions import *
@@ -174,6 +175,30 @@ class LinkBase(object):
 		if not sw_match(sw, sw_exp):
 			raise SwMatchError(sw, sw_exp.lower(), self.sw_interpreter)
 		return (rsp, sw)
+
+def argparse_add_reader_args(arg_parser):
+	"""Add all reader related arguments to the given argparse.Argumentparser instance."""
+	serial_group = arg_parser.add_argument_group('Serial Reader')
+	serial_group.add_argument('-d', '--device', metavar='DEV', default='/dev/ttyUSB0',
+							  help='Serial Device for SIM access')
+	serial_group.add_argument('-b', '--baud', dest='baudrate', type=int, metavar='BAUD', default=9600,
+							  help='Baud rate used for SIM access')
+
+	pcsc_group = arg_parser.add_argument_group('PC/SC Reader')
+	pcsc_group.add_argument('-p', '--pcsc-device', type=int, dest='pcsc_dev', metavar='PCSC', default=None,
+							help='PC/SC reader number to use for SIM access')
+
+	modem_group = arg_parser.add_argument_group('AT Command Modem Reader')
+	modem_group.add_argument('--modem-device', dest='modem_dev', metavar='DEV', default=None,
+							 help='Serial port of modem for Generic SIM Access (3GPP TS 27.007)')
+	modem_group.add_argument('--modem-baud', type=int, metavar='BAUD', default=115200,
+							 help='Baud rate used for modem port')
+
+	osmobb_group = arg_parser.add_argument_group('OsmocomBB Reader')
+	osmobb_group.add_argument('--osmocon', dest='osmocon_sock', metavar='PATH', default=None,
+							  help='Socket path for Calypso (e.g. Motorola C1XX) based reader (via OsmocomBB)')
+
+	return arg_parser
 
 def init_reader(opts, **kwargs) -> Optional[LinkBase]:
 	"""

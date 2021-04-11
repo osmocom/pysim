@@ -36,7 +36,7 @@ from pySim.ts_31_103 import EF_IST_map, EF_ISIM_ADF_map
 
 from pySim.exceptions import *
 from pySim.commands import SimCardCommands
-from pySim.transport import init_reader, ApduTracer
+from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args
 from pySim.cards import card_detect, Card
 from pySim.utils import h2b, swap_nibbles, rpad, h2s, JsonEncoder
 from pySim.utils import dec_st, sanitize_pin_adm, tabulate_str_list, is_hex, boxed_heading_str
@@ -432,32 +432,12 @@ class Iso7816Commands(CommandSet):
 
 option_parser = argparse.ArgumentParser(prog='pySim-shell', description='interactive SIM card shell',
                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-serial_group = option_parser.add_argument_group('Serial Reader')
-serial_group.add_argument('-d', '--device', metavar='DEV', default='/dev/ttyUSB0',
-                          help='Serial Device for SIM access')
-serial_group.add_argument('-b', '--baud', dest='baudrate', type=int, metavar='BAUD', default=9600,
-                          help='Baud rate used for SIM access')
-
-pcsc_group = option_parser.add_argument_group('PC/SC Reader')
-pcsc_group.add_argument('-p', '--pcsc-device', type=int, dest='pcsc_dev', metavar='PCSC', default=None,
-                        help='PC/SC reader number to use for SIM access')
-
-modem_group = option_parser.add_argument_group('AT Command Modem Reader')
-modem_group.add_argument('--modem-device', dest='modem_dev', metavar='DEV', default=None,
-                         help='Serial port of modem for Generic SIM Access (3GPP TS 27.007)')
-modem_group.add_argument('--modem-baud', type=int, metavar='BAUD', default=115200,
-                         help='Baud rate used for modem port')
-
-osmobb_group = option_parser.add_argument_group('OsmocomBB Reader')
-osmobb_group.add_argument('--osmocon', dest='osmocon_sock', metavar='PATH', default=None,
-                           help='Socket path for Calypso (e.g. Motorola C1XX) based reader (via OsmocomBB)')
+argparse_add_reader_args(option_parser)
 
 global_group = option_parser.add_argument_group('General Options')
 global_group.add_argument('--script', metavar='PATH', default=None,
-                           help='script with pySim-shell commands to be executed automatically at start-up')
-global_group.add_argument('--csv', metavar='FILE', default=None,
-                           help='Read card data from CSV file')
+                          help='script with pySim-shell commands to be executed automatically at start-up')
+global_group.add_argument('--csv', metavar='FILE', default=None, help='Read card data from CSV file')
 
 adm_group = global_group.add_mutually_exclusive_group()
 adm_group.add_argument('-a', '--pin-adm', metavar='PIN_ADM1', dest='pin_adm', default=None,
