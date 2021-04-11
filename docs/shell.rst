@@ -23,6 +23,20 @@ By means of using the python ``cmd2`` module, various useful features improve us
 * tab completion of commands and SELECT-able files/directories
 * interactive help for all commands
 
+Running pySim-shell
+-------------------
+
+pySim-shell has a variety of command line arguments to control
+
+* which transport to use (how to use a reader to talk to the SIM card)
+* whether to automatically verify an ADM pin (and in which format)
+* whether to execute a start-up script
+
+.. argparse::
+   :module: pySim-shell
+   :func: option_parser
+
+
 
 cmd2 basics
 -----------

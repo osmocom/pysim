@@ -28,7 +28,6 @@ import argparse
 
 import os
 import sys
-from optparse import OptionParser
 from pathlib import Path
 
 from pySim.ts_51_011 import EF, DF, EF_SST_map, EF_AD_mode_map
@@ -430,64 +429,34 @@ class Iso7816Commands(CommandSet):
 		(data, sw) = self._cmd.card._scc.manage_channel(mode='close', lchan_nr=opts.chan_nr)
 
 
-def parse_options():
-
-	parser = OptionParser(usage="usage: %prog [options]")
-
-	parser.add_option("-d", "--device", dest="device", metavar="DEV",
-			help="Serial Device for SIM access [default: %default]",
-			default="/dev/ttyUSB0",
-		)
-	parser.add_option("-b", "--baud", dest="baudrate", type="int", metavar="BAUD",
-			help="Baudrate used for SIM access [default: %default]",
-			default=9600,
-		)
-	parser.add_option("-p", "--pcsc-device", dest="pcsc_dev", type='int', metavar="PCSC",
-			help="Which PC/SC reader number for SIM access",
-			default=None,
-		)
-	parser.add_option("--modem-device", dest="modem_dev", metavar="DEV",
-			help="Serial port of modem for Generic SIM Access (3GPP TS 27.007)",
-			default=None,
-		)
-	parser.add_option("--modem-baud", dest="modem_baud", type="int", metavar="BAUD",
-			help="Baudrate used for modem's port [default: %default]",
-			default=115200,
-		)
-	parser.add_option("--osmocon", dest="osmocon_sock", metavar="PATH",
-			help="Socket path for Calypso (e.g. Motorola C1XX) based reader (via OsmocomBB)",
-			default=None,
-		)
-	parser.add_option("--script", dest="script", metavar="PATH",
-			help="script with shell commands to be executed automatically",
-			default=None,
-		)
-
-	parser.add_option("--csv", dest="csv", metavar="FILE",
-			help="Read card data from CSV file",
-			default=None,
-		)
-
-	parser.add_option("-a", "--pin-adm", dest="pin_adm",
-			help="ADM PIN used for provisioning (overwrites default)",
-		)
-	parser.add_option("-A", "--pin-adm-hex", dest="pin_adm_hex",
-			help="ADM PIN used for provisioning, as hex string (16 characters long",
-		)
-
-	(options, args) = parser.parse_args()
-
-	if args:
-		parser.error("Extraneous arguments")
-
-	return options
-
+option_parser = argparse.ArgumentParser(prog='pySim-shell', description='interactive SIM card shell',
+                                        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+option_parser.add_argument('-d', '--device', metavar='DEV', default='/dev/ttyUSB0',
+                           help='Serial Device for SIM access')
+option_parser.add_argument('-b', '--baud', dest='baudrate', type=int, metavar='BAUD', default=9600,
+                           help='Baud rate used for SIM access')
+option_parser.add_argument('-p', '--pcsc-device', type=int, dest='pcsc_dev', metavar='PCSC', default=None,
+                           help='PC/SC reader number to use for SIM access')
+option_parser.add_argument('--modem-device', dest='modem_dev', metavar='DEV', default=None,
+                           help='Serial port of modem for Generic SIM Access (3GPP TS 27.007)')
+option_parser.add_argument('--modem-baud', type=int, metavar='BAUD', default=115200,
+                           help='Baud rate used for modem port')
+option_parser.add_argument('--osmocon', dest='osmocon_sock', metavar='PATH', default=None,
+                           help='Socket path for Calypso (e.g. Motorola C1XX) based reader (via OsmocomBB)')
+option_parser.add_argument('--script', metavar='PATH', default=None,
+                           help='script with pySim-shell commands to be executed automatically at start-up')
+option_parser.add_argument('--csv', metavar='FILE', default=None,
+                           help='Read card data from CSV file')
+option_parser.add_argument('-a', '--pin-adm', metavar='PIN_ADM1', dest='pin_adm', default=None,
+                           help='ADM PIN used for provisioning (overwrites default)')
+option_parser.add_argument('-A', '--pin-adm-hex', metavar='PIN_ADM1_HEX', dest='pin_adm_hex', default=None,
+                           help='ADM PIN used for provisioning, as hex string (16 characters long)')
 
 
 if __name__ == '__main__':
 
 	# Parse options
-	opts = parse_options()
+	opts = option_parser.parse_args()
 
 	# Init card reader driver
 	sl = init_reader(opts)
