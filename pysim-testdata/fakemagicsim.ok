@@ -17,7 +17,7 @@ HPLMNAcT: Can't read file -- SW match failed! Expected 9000 and got 9404.
 ACC: ffff
 MSISDN: Not available
 Administrative data: 000000
-	MS operation mode: normal operation
+	MS operation mode: normal
 	Ciphering Indicator: disabled
 SIM Service Table: ff3fff0f0300f003000c
 	Service 1 - CHV1 disable function

@@ -47,3 +47,44 @@ def filter_dict(d, exclude_prefix='_'):
 
 # here we collect some shared / common definitions of data types
 LV = Prefixed(Int8ub, HexAdapter(GreedyBytes))
+
+# Default value for Reserved for Future Use (RFU) bits/bytes
+# See TS 31.101 Sec. "3.4 Coding Conventions"
+__RFU_VALUE = 0
+
+# Field that packs Reserved for Future Use (RFU) bit
+FlagRFU = Default(Flag, __RFU_VALUE)
+
+# Field that packs Reserved for Future Use (RFU) byte
+ByteRFU = Default(Byte, __RFU_VALUE)
+
+# Field that packs all remaining Reserved for Future Use (RFU) bytes
+GreedyBytesRFU = Default(GreedyBytes, b'')
+
+def BitsRFU(n=1):
+    '''
+    Field that packs Reserved for Future Use (RFU) bit(s)
+    as defined in TS 31.101 Sec. "3.4 Coding Conventions"
+
+    Use this for (currently) unused/reserved bits whose contents
+    should be initialized automatically but should not be cleared
+    in the future or when restoring read data (unlike padding).
+
+    Parameters:
+        n (Integer): Number of bits (default: 1)
+    '''
+    return Default(BitsInteger(n), __RFU_VALUE)
+
+def BytesRFU(n=1):
+    '''
+    Field that packs Reserved for Future Use (RFU) byte(s)
+    as defined in TS 31.101 Sec. "3.4 Coding Conventions"
+
+    Use this for (currently) unused/reserved bytes whose contents
+    should be initialized automatically but should not be cleared
+    in the future or when restoring read data (unlike padding).
+
+    Parameters:
+        n (Integer): Number of bytes (default: 1)
+    '''
+    return Default(Bytes(n), __RFU_VALUE)

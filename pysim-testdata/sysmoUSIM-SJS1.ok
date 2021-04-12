@@ -55,7 +55,7 @@ HPLMNAcT:
 ACC: 0008
 MSISDN (NPI=1 ToN=1): +77776336143
 Administrative data: 00000002
-	MS operation mode: normal operation
+	MS operation mode: normal
 	Ciphering Indicator: disabled
 SIM Service Table: ff3fffff3f003f1ff00c00c0f00000
 	Service 1 - CHV1 disable function

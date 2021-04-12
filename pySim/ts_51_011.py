@@ -319,22 +319,12 @@ EF_SST_map = {
 	59: 'MMS User Connectivity Parameters',
 }
 
-# 10.3.18 "EF.AD (Administrative data) "
-EF_AD_mode_map = {
-	'00' : 'normal operation',
-	'80' : 'type approval operations',
-	'01' : 'normal operation + specific facilities',
-	'81' : 'type approval operations + specific facilities',
-	'02' : 'maintenance (off line)',
-	'04' : 'cell test operation',
-}
-
-
 from pySim.utils import *
 from struct import pack, unpack
 from construct import *
 from construct import Optional as COptional
-from pySim.construct import HexAdapter, BcdAdapter
+from pySim.construct import HexAdapter, BcdAdapter, FlagRFU, ByteRFU, GreedyBytesRFU, BitsRFU, BytesRFU
+import enum
 
 from pySim.filesystem import *
 import pySim.ts_102_221
@@ -553,30 +543,34 @@ class EF_LOCI(TransparentEF):
 
 # TS 51.011 Section 10.3.18
 class EF_AD(TransparentEF):
-    OP_MODE = {
-            0x00: 'normal',
-            0x80: 'type_approval',
-            0x01: 'normal_and_specific_facilities',
-            0x81: 'type_approval_and_specific_facilities',
-            0x02: 'maintenance_off_line',
-            0x04: 'cell_test',
-        }
-    OP_MODE_reverse = dict(map(reversed, OP_MODE.items()))
+    class OP_MODE(enum.IntEnum):
+        normal                                  = 0x00
+        type_approval                           = 0x80
+        normal_and_specific_facilities          = 0x01
+        type_approval_and_specific_facilities   = 0x81
+        maintenance_off_line                    = 0x02
+        cell_test                               = 0x04
+    #OP_MODE_DICT = {int(v) : str(v) for v in EF_AD.OP_MODE}
+    #OP_MODE_DICT_REVERSED = {str(v) : int(v) for v in EF_AD.OP_MODE}
+
     def __init__(self, fid='6fad', sfid=None, name='EF.AD', desc='Administrative Data', size={3,4}):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
-    def _decode_bin(self, raw_bin):
-        u = unpack('!BH', raw_bin[:3])
-        ofm = True if u[1] & 1 else False
-        res = {'ms_operation_mode': self.OP_MODE.get(u[0], u[0]), 'specific_facilities': { 'ofm': ofm } }
-        if len(raw_bin) > 3:
-            res['len_of_mnc_in_imsi'] = int(raw_bin[3]) & 0xf
-        return res
-    def _encode_bin(self, abstract):
-        op_mode = self.OP_MODE_reverse[abstract['ms_operation_mode']]
-        res = pack('!BH', op_mode, abstract['specific_facilities']['ofm'])
-        if 'len_of_mnc_in_imsi' in abstract:
-            res += pack('!B', abstract['len_of_mnc_in_imsi'])
-        return res
+        self._construct = BitStruct(
+            # Byte 1
+            'ms_operation_mode'/Bytewise(Enum(Byte, EF_AD.OP_MODE)),
+            # Byte 2
+            'rfu1'/Bytewise(ByteRFU),
+            # Byte 3
+            'rfu2'/BitsRFU(7),
+            'ofm'/Flag,
+            # Byte 4 (optional),
+            'extensions'/COptional(Struct(
+                'rfu3'/BitsRFU(4),
+                'mnc_len'/BitsInteger(4),
+                # Byte 5..N-4 (optional, RFU)
+                'extensions'/Bytewise(GreedyBytesRFU)
+            ))
+        )
 
 # TS 51.011 Section 10.3.20 / 10.3.22
 class EF_VGCS(TransRecEF):

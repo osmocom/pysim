@@ -175,29 +175,27 @@ class Card(object):
 
 		# read from card
 		raw_hex_data, sw = self._scc.read_binary(EF['AD'], length=None, offset=0)
-		raw_bin_data = h2b(raw_hex_data)
-		abstract_data = ad.decode_bin(raw_bin_data)
+		abstract_data = ad.decode_hex(raw_hex_data)
 
 		# perform updates
-		if mnc:
+		if mnc and abstract_data['extensions']:
 			mnclen = len(str(mnc))
 			if mnclen == 1:
 				mnclen = 2
 			if mnclen > 3:
 				raise RuntimeError('invalid length of mnc "{}"'.format(mnc))
-			abstract_data['len_of_mnc_in_imsi'] = mnclen
+			abstract_data['extensions']['mnc_len'] = mnclen
 		if opmode:
-			opmode_symb = ad.OP_MODE.get(int(opmode, 16))
-			if opmode_symb:
-				abstract_data['ms_operation_mode'] = opmode_symb
+			opmode_num = int(opmode, 16)
+			if opmode_num in [int(v) for v in EF_AD.OP_MODE]:
+				abstract_data['ms_operation_mode'] = opmode_num
 			else:
 				raise RuntimeError('invalid opmode "{}"'.format(opmode))
 		if ofm:
-			abstract_data['specific_facilities']['ofm'] = bool(int(ofm, 16))
+			abstract_data['ofm'] = bool(int(ofm, 16))
 
 		# write to card
-		raw_bin_data = ad.encode_bin(abstract_data)
-		raw_hex_data = b2h(raw_bin_data)
+		raw_hex_data = ad.encode_hex(abstract_data)
 		data, sw = self._scc.update_binary(EF['AD'], raw_hex_data)
 		return sw
 

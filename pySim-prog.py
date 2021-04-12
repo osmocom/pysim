@@ -146,7 +146,7 @@ def parse_options():
 	parser.add_option("--opmode", dest="opmode", type="choice",
 			help="Set UE Operation Mode in EF.AD (Administrative Data)",
 			default=None,
-			choices=['{:02X}'.format(m) for m in list(EF_AD.OP_MODE.keys())],
+			choices=['{:02X}'.format(int(m)) for m in EF_AD.OP_MODE],
 		)
 	parser.add_option("--epdgid", dest="epdgid",
 			help="Set Home Evolved Packet Data Gateway (ePDG) Identifier. (Only FQDN format supported)",
