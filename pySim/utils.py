@@ -841,3 +841,15 @@ class JsonEncoder(json.JSONEncoder):
         if isinstance(o, BytesIO) or isinstance(o, bytes) or isinstance(o, bytearray):
             return b2h(o)
         return json.JSONEncoder.default(self, o)
+
+def boxed_heading_str(heading, width=80):
+	"""Generate a string that contains a boxed heading."""
+	# Auto-enlarge box if heading exceeds length
+	if len(heading) > width - 4:
+		width = len(heading) + 4
+
+	res = "#" * width
+	fstr = "\n# %-" + str(width - 4) + "s #\n"
+	res += fstr % (heading)
+	res += "#" * width
+	return res

@@ -39,7 +39,7 @@ from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, ApduTracer
 from pySim.cards import card_detect, Card
 from pySim.utils import h2b, swap_nibbles, rpad, h2s, JsonEncoder
-from pySim.utils import dec_st, sanitize_pin_adm, tabulate_str_list, is_hex
+from pySim.utils import dec_st, sanitize_pin_adm, tabulate_str_list, is_hex, boxed_heading_str
 from pySim.card_handler import card_handler
 
 from pySim.filesystem import CardMF, RuntimeState, CardDF, CardADF
@@ -237,10 +237,8 @@ class PySimCommands(CommandSet):
 		df_path_list = df.fully_qualified_path(True)
 		df_path_list_fid = df.fully_qualified_path(False)
 
-		self._cmd.poutput("#" * 80)
-		file_str = '/'.join(df_path_list) + "/" + str(filename) + " " * 80
-		self._cmd.poutput("# " + file_str[0:77] + "#")
-		self._cmd.poutput("#" * 80)
+		file_str = '/'.join(df_path_list) + "/" + str(filename)
+		self._cmd.poutput(boxed_heading_str(file_str))
 
 		self._cmd.poutput("# directory: %s (%s)" % ('/'.join(df_path_list), '/'.join(df_path_list_fid)))
 		try:
@@ -288,6 +286,9 @@ class PySimCommands(CommandSet):
 			self.export(opts.filename, context)
 		else:
 			self.walk(0, self.export, context)
+
+		self._cmd.poutput(boxed_heading_str("Export summary"))
+
 		self._cmd.poutput("# total files visited: %u" % context['COUNT'])
 		self._cmd.poutput("# bad files:           %u" % context['ERR'])
 		for b in context['BAD']:
