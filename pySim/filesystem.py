@@ -638,7 +638,7 @@ class LinFixedEF(CardEF):
 
         upd_rec_dec_parser = argparse.ArgumentParser()
         upd_rec_dec_parser.add_argument('record_nr', type=int, help='Number of record to be read')
-        upd_rec_dec_parser.add_argument('data', help='Data bytes (hex format) to write')
+        upd_rec_dec_parser.add_argument('data', help='Abstract data (JSON format) to write')
         upd_rec_dec_parser.add_argument('--json-path', type=str,
                                         help='JSON path to modify specific element of record only')
         @cmd2.with_argparser(upd_rec_dec_parser)
