@@ -636,6 +636,61 @@ class EF_OPL5G(LinFixedEF):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={10,None})
         self._construct = Struct('tai'/Bytes(9), 'pnn_record_id'/Int8ub)
 
+# TS 31.102 Section 4.4.5
+class DF_WLAN(CardDF):
+    def __init__(self, fid='5f40', name='DF.WLAN', desc='Files for WLAN purpose'):
+        super().__init__(fid=fid, name=name, desc=desc)
+        files = [
+            TransparentEF('4f41', 0x01, 'EF.Pseudo', 'Pseudonym'),
+            TransparentEF('4f42', 0x02, 'EF.UPLMNWLAN', 'User controlled PLMN selector for I-WLAN Access'),
+            TransparentEF('4f43', 0x03, 'EF.OPLMNWLAN', 'Operator controlled PLMN selector for I-WLAN Access'),
+            LinFixedEF('4f44', 0x04, 'EF.UWSIDL', 'User controlled WLAN Specific Identifier List'),
+            LinFixedEF('4f45', 0x05, 'EF.OWSIDL', 'Operator controlled WLAN Specific Identifier List'),
+            TransparentEF('4f46', 0x06, 'EF.WRI', 'WLAN Reauthentication Identity'),
+            LinFixedEF('4f47', 0x07, 'EF.HWSIDL', 'Home I-WLAN Specific Identifier List'),
+            TransparentEF('4f48', 0x08, 'EF.WEHPLMNPI', 'I-WLAN Equivalent HPLMN Presentation Indication'),
+            TransparentEF('4f49', 0x09, 'EF.WHPI', 'I-WLAN HPLMN Priority Indication'),
+            TransparentEF('4f4a', 0x0a, 'EF.WLRPLMN', 'I-WLAN Last Registered PLMN'),
+            TransparentEF('4f4b', 0x0b, 'EF.HPLMNDAI', 'HPLMN Direct Access Indicator'),
+            ]
+        self.add_files(files)
+
+# TS 31.102 Section 4.4.6
+class DF_HNB(CardDF):
+    def __init__(self, fid='5f50', name='DF.HNB', desc='Files for HomeNodeB purpose'):
+        super().__init__(fid=fid, name=name, desc=desc)
+        files = [
+            LinFixedEF('4f01', 0x01, 'EF.ACSGL', 'Allowed CSG Lists'),
+            LinFixedEF('4f02', 0x02, 'EF.CSGTL', 'CSG Types'),
+            LinFixedEF('4f03', 0x03, 'EF.HNBN', 'Home NodeB Name'),
+            LinFixedEF('4f04', 0x04, 'EF.OCSGL', 'Operator CSG Lists'),
+            LinFixedEF('4f05', 0x05, 'EF.OCSGT', 'Operator CSG Type'),
+            LinFixedEF('4f06', 0x06, 'EF.OHNBN', 'Operator Home NodeB Name'),
+            ]
+        self.add_files(files)
+
+# TS 31.102 Section 4.4.8
+class DF_ProSe(CardDF):
+    def __init__(self, fid='5f90', name='DF.ProSe', desc='Files for ProSe purpose'):
+        super().__init__(fid=fid, name=name, desc=desc)
+        files = [
+            LinFixedEF('4f01', 0x01, 'EF.PROSE_MON', 'ProSe Monitoring Parameters'),
+            LinFixedEF('4f02', 0x02, 'EF.PROSE_ANN', 'ProSe Announcing Parameters'),
+            LinFixedEF('4f03', 0x03, 'EF.PROSEFUNC', 'HPLMN ProSe Function'),
+            TransparentEF('4f04', 0x04, 'EF.PROSE_RADIO_COM', 'ProSe Direct Communication Radio Parameters'),
+            TransparentEF('4f05', 0x05, 'EF.PROSE_RADIO_MON', 'ProSe Direct Discovery Monitoring Radio Parameters'),
+            TransparentEF('4f06', 0x06, 'EF.PROSE_RADIO_ANN', 'ProSe Direct Discovery Announcing Radio Parameters'),
+            LinFixedEF('4f07', 0x07, 'EF.PROSE_POLICY', 'ProSe Policy Parameters'),
+            LinFixedEF('4f08', 0x08, 'EF.PROSE_PLMN', 'ProSe PLMN Parameters'),
+            TransparentEF('4f09', 0x09, 'EF.PROSE_GC', 'ProSe Group Counter'),
+            TransparentEF('4f10', 0x10, 'EF.PST', 'ProSe Service Table'),
+            TransparentEF('4f11', 0x11, 'EF.UIRC', 'ProSe UsageInformationReportingConfiguration'),
+            LinFixedEF('4f12', 0x12, 'EF.PROSE_GM_DISCOVERY', 'ProSe Group Member Discovery Parameters'),
+            LinFixedEF('4f13', 0x13, 'EF.PROSE_RELAY', 'ProSe Relay Parameters'),
+            TransparentEF('4f14', 0x14, 'EF.PROSE_RELAY_DISCOVERY', 'ProSe Relay Discovery Parameters'),
+            ]
+        self.add_files(files)
+
 class DF_USIM_5GS(CardDF):
     def __init__(self, fid='5FC0', name='DF.5GS', desc='5GS related files'):
         super().__init__(fid=fid, name=name, desc=desc)
@@ -762,9 +817,9 @@ class ADF_USIM(CardADF):
           # FIXME: DF_SoLSA
           # FIXME: DF_PHONEBOOK
           # FIXME: DF_GSM_ACCESS
-          # FIXME: DF_WLAN
-          # FIXME: DF_HNB
-          # FIXME: DF_ProSe
+          DF_WLAN(),
+          DF_HNB(),
+          DF_ProSe(),
           # FIXME: DF_ACDC
           # FIXME: DF_TV
           DF_USIM_5GS(),
