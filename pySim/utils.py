@@ -400,17 +400,26 @@ def dec_msisdn(ef_msisdn:Hexstr) -> Optional[Tuple[int,int,Optional[str]]]:
 def enc_msisdn(msisdn:str, npi:int=0x01, ton:int=0x03) -> Hexstr:
 	"""
 	Encode MSISDN as LHV so it can be stored to EF.MSISDN.
-	See 3GPP TS 31.102, section 4.2.26 and 4.4.2.3.
+	See 3GPP TS 31.102, section 4.2.26 and 4.4.2.3. (The result
+	will not contain the optional Alpha Identifier at the beginning.)
 
 	Default NPI / ToN values:
 	  - NPI: ISDN / telephony numbering plan (E.164 / E.163),
 	  - ToN: network specific or international number (if starts with '+').
 	"""
 
+	# If no MSISDN is supplied then encode the file contents as all "ff"
+	if msisdn == "" or msisdn == "+":
+		return "ff" * 14
+
 	# Leading '+' indicates International Number
 	if msisdn[0] == '+':
 		msisdn = msisdn[1:]
 		ton = 0x01
+
+	# An MSISDN must not exceed 20 digits
+	if len(msisdn) > 20:
+		raise ValueError("msisdn must not be longer than 20 digits")
 
 	# Append 'f' padding if number of digits is odd
 	if len(msisdn) % 2 > 0:
@@ -421,7 +430,8 @@ def enc_msisdn(msisdn:str, npi:int=0x01, ton:int=0x03) -> Hexstr:
 	npi_ton = (npi & 0x0f) | ((ton & 0x07) << 4) | 0x80
 	bcd = rpad(swap_nibbles(msisdn), 10 * 2) # pad to 10 octets
 
-	return ('%02x' % bcd_len) + ('%02x' % npi_ton) + bcd
+	return ('%02x' % bcd_len) + ('%02x' % npi_ton) + bcd + ("ff" * 2)
+
 
 def dec_st(st, table="sim") -> str:
 	"""

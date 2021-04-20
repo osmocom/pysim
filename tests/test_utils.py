@@ -109,5 +109,33 @@ class DecTestCase(unittest.TestCase):
 		encoded = suci_calc_info._encode_hex(self.decoded_testfile_suci)
 		self.assertEqual(encoded.lower(), self.testfile_suci_calc_info.lower())
 
+	def testEnc_msisdn(self):
+		msisdn_encoded = utils.enc_msisdn("+4916012345678", npi=0x01, ton=0x03)
+		self.assertEqual(msisdn_encoded, "0891946110325476f8ffffffffff")
+		msisdn_encoded = utils.enc_msisdn("123456", npi=0x01, ton=0x03)
+		self.assertEqual(msisdn_encoded, "04b1214365ffffffffffffffffff")
+		msisdn_encoded = utils.enc_msisdn("12345678901234567890", npi=0x01, ton=0x03)
+		self.assertEqual(msisdn_encoded, "0bb121436587092143658709ffff")
+		msisdn_encoded = utils.enc_msisdn("+12345678901234567890", npi=0x01, ton=0x03)
+		self.assertEqual(msisdn_encoded, "0b9121436587092143658709ffff")
+		msisdn_encoded = utils.enc_msisdn("", npi=0x01, ton=0x03)
+		self.assertEqual(msisdn_encoded, "ffffffffffffffffffffffffffff")
+		msisdn_encoded = utils.enc_msisdn("+", npi=0x01, ton=0x03)
+		self.assertEqual(msisdn_encoded, "ffffffffffffffffffffffffffff")
+
+	def testDec_msisdn(self):
+		msisdn_decoded = utils.dec_msisdn("0891946110325476f8ffffffffff")
+		self.assertEqual(msisdn_decoded, (1, 1, "+4916012345678"))
+		msisdn_decoded = utils.dec_msisdn("04b1214365ffffffffffffffffff")
+		self.assertEqual(msisdn_decoded, (1, 3, "123456"))
+		msisdn_decoded = utils.dec_msisdn("0bb121436587092143658709ffff")
+		self.assertEqual(msisdn_decoded, (1, 3, "12345678901234567890"))
+		msisdn_decoded = utils.dec_msisdn("ffffffffffffffffffffffffffff")
+		self.assertEqual(msisdn_decoded, None)
+		msisdn_decoded = utils.dec_msisdn("00112233445566778899AABBCCDDEEFF001122330bb121436587092143658709ffff")
+		self.assertEqual(msisdn_decoded, (1, 3, "12345678901234567890"))
+		msisdn_decoded = utils.dec_msisdn("ffffffffffffffffffffffffffffffffffffffff0bb121436587092143658709ffff")
+		self.assertEqual(msisdn_decoded, (1, 3, "12345678901234567890"))
+
 if __name__ == "__main__":
 	unittest.main()

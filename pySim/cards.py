@@ -963,7 +963,7 @@ class SysmoUSIMSJS1(UsimCard):
 		# TODO: Extension1 Record Identifier
 		if p.get('msisdn') is not None:
 			msisdn = enc_msisdn(p['msisdn'])
-			data = 'ff' * 20 + msisdn + 'ff' * 2
+			data = 'ff' * 20 + msisdn
 
 			r = self._scc.select_path(['3f00', '7f10'])
 			data, sw = self._scc.update_record('6F40', 1, data, force_len=True)
@@ -1356,7 +1356,7 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 		# TODO: Extension1 Record Identifier
 		if p.get('msisdn') is not None:
 			msisdn = enc_msisdn(p['msisdn'])
-			content = 'ff' * 20 + msisdn + 'ff' * 2
+			content = 'ff' * 20 + msisdn
 
 			r = self._scc.select_path(['3f00', '7f10'])
 			data, sw = self._scc.update_record('6F40', 1, content, force_len=True)
