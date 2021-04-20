@@ -688,7 +688,7 @@ class LinFixedEF(CardEF):
             name : Brief name of the file, lik EF_ICCID
             desc : Description of the file
             parent : Parent CardFile object within filesystem hierarchy
-            rec_len : tuple of (minimum_length, recommended_length)
+            rec_len : set of {minimum_length, recommended_length}
         """
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent)
         self.rec_len = rec_len
