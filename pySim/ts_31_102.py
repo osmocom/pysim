@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Various constants from ETSI TS 131 102
+Various constants from 3GPP TS 31.102 V16.6.0
 """
 
 #
@@ -152,6 +152,13 @@ EF_UST_map = {
 	126: 'UAC Access Identities support',
 	127: 'Expect control plane-based Steering of Roaming information during initial registration in VPLMN',
 	128: 'Call control on PDU Session by USIM',
+	129: '5GS Operator PLMN List',
+	130: 'Support for SUPI of type NSI or GLI or GCI',
+	131: '3GPP PS Data Off separate Home and Roaming lists',
+	132: 'Support for URSP by USIM',
+	133: '5G Security Parameters extended',
+	134: 'MuD and MiD configuration data',
+	135: 'Support for Trusted non-3GPP access networks by USIM'
 }
 
 LOCI_STATUS_map = {
@@ -633,7 +640,7 @@ class DF_USIM_5GS(CardDF):
     def __init__(self, fid='5FC0', name='DF.5GS', desc='5GS related files'):
         super().__init__(fid=fid, name=name, desc=desc)
         files = [
-          # I'm looking at 31.102 R15.9
+          # I'm looking at 31.102 R16.6
           EF_5GS3GPPLOCI(),
           EF_5GS3GPPLOCI('4f02', 0x02, 'EF.5GSN3GPPLOCI', '5GS non-3GPP location information'),
           LinFixedEF('4F03', 0x03, 'EF.5GS3GPPNSC', '5GS 3GPP Access NAS Security Context', rec_len={57,None}),
@@ -642,8 +649,10 @@ class DF_USIM_5GS(CardDF):
           EF_UAC_AIC(),
           EF_SUCI_Calc_Info(),
           EF_OPL5G(),
-          TransparentEF('4F09', 0x09, 'EF.NSI', 'Network Specific Identifier'),
+          TransparentEF('4F09', 0x09, 'EF.SUPI_NAI', 'SUPI as Network Access Identifier'),
           TransparentEF('4F0A', 0x0a, 'EF.Routing_Indicator', 'Routing Indicator', size={4,4}),
+          TransparentEF('4F0B', 0x0b, 'EF.URSP', 'UE Route Selector Policies per PLMN'),
+          TransparentEF('4F0C', 0x0c, 'EF.TN3GPPSNN', 'Trusted non-3GPP Serving network names list'),
         ]
         self.add_files(files)
 
