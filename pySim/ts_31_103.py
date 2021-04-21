@@ -25,7 +25,7 @@ Various constants from 3GPP TS 31.103 V16.1.0
 from pySim.filesystem import *
 from pySim.utils import *
 from pySim.ts_51_011 import EF_AD, EF_SMS, EF_SMSS, EF_SMSR, EF_SMSP
-from pySim.ts_31_102 import ADF_USIM
+from pySim.ts_31_102 import ADF_USIM, EF_FromPreferred
 import pySim.ts_102_221
 
 # Mapping between ISIM Service Number and its description
@@ -188,7 +188,7 @@ class ADF_ISIM(CardADF):
             EF_SMSR(),
             EF_SMSP(),
             EF_UICCIARI(),
-            # FromPreferred
+            EF_FromPreferred(),
             EF_IMSConfigData(),
             EF_XCAPConfigData(),
             EF_WebRTCURI(),

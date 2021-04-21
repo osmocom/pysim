@@ -278,7 +278,7 @@ EF_USIM_ADF_map = {
 
 from struct import unpack, pack
 from construct import *
-from pySim.construct import LV, HexAdapter, BcdAdapter
+from pySim.construct import LV, HexAdapter, BcdAdapter, BitsRFU
 from pySim.filesystem import *
 from pySim.ts_102_221 import EF_ARR
 from pySim.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_PLMNsel, EF_AD
@@ -608,6 +608,13 @@ class EF_IPS(CyclicEF):
         self._construct = Struct('status'/PaddedString(2, 'ascii'),
                                  'link_to_ef_ipd'/Int8ub, 'rfu'/Byte)
 
+# TS 31.102 Section 4.2.106
+class EF_FromPreferred(TransparentEF):
+    def __init__(self, fid='6ff7', sfid=None, name='EF.FromPreferred', size={1,1},
+                 desc='From Preferred'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+        self._construct = BitStruct('rfu'/BitsRFU(7), 'from_preferred'/Bit)
+
 ######################################################################
 # DF.5GS
 ######################################################################
@@ -814,6 +821,7 @@ class ADF_USIM(CardADF):
           LinFixedEF('6fef', None, 'EF.SDNURI', 'Service Dialling Numbers URI'),
           EF_IPS(),
           # FIXME: from EF_ePDGid onwards
+          EF_FromPreferred(),
           # FIXME: DF_SoLSA
           # FIXME: DF_PHONEBOOK
           # FIXME: DF_GSM_ACCESS
