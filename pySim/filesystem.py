@@ -209,13 +209,13 @@ class CardDF(CardFile):
         if child.fid in self.children:
             if ignore_existing:
                 return
-            raise ValueError("File with given fid %s already exists" % (child.fid))
+            raise ValueError("File with given fid %s already exists in %s" % (child.fid, self))
         if self.lookup_file_by_sfid(child.sfid):
-            raise ValueError("File with given sfid %s already exists" % (child.sfid))
+            raise ValueError("File with given sfid %s already exists in %s" % (child.sfid, self))
         if self.lookup_file_by_name(child.name):
             if ignore_existing:
                 return
-            raise ValueError("File with given name %s already exists" % (child.name))
+            raise ValueError("File with given name %s already exists in %s" % (child.name, self))
         self.children[child.fid] = child
         child.parent = self
 
