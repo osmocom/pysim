@@ -146,12 +146,12 @@ class EF_UICCIARI(LinFixedEF):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
 
 # TS 31.103 Section 4.2.18
-class EF_IMSConfigData(TransparentEF):
+class EF_IMSConfigData(BerTlvEF):
     def __init__(self, fid='6ff8', sfid=None, name='EF.IMSConfigData', desc='IMS Configuration Data'):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
 
 # TS 31.103 Section 4.2.19
-class EF_XCAPConfigData(TransparentEF):
+class EF_XCAPConfigData(BerTlvEF):
     def __init__(self, fid='6ffc', sfid=None, name='EF.XCAPConfigData', desc='XCAP Configuration Data'):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
 
@@ -161,7 +161,7 @@ class EF_WebRTCURI(TransparentEF):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
 
 # TS 31.103 Section 4.2.21
-class EF_MuDMiDConfigData(TransparentEF):
+class EF_MuDMiDConfigData(BerTlvEF):
     def __init__(self, fid='6ffe', sfid=None, name='EF.MuDMiDConfigData',
                  desc='MuD and MiD Configuration Data'):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)

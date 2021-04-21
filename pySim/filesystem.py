@@ -917,7 +917,13 @@ class TransRecEF(TransparentEF):
         return b''.join(chunks)
 
 
+class BerTlvEF(TransparentEF):
+    """BER-TLV EF (Entry File) in the smart card filesystem.
+    A BER-TLV EF is a binary file with a BER (Basic Encoding Rules) TLV structure
 
+    NOTE: We currently don't really support those, this class is simply a wrapper
+    around TransparentEF as a place-holder, so we can already define EFs of BER-TLV
+    type without fully supporting them."""
 
 
 class RuntimeState(object):
