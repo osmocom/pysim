@@ -334,6 +334,43 @@ to the SIM card.
 This allows for easy interactive modification of file contents.
 
 
+
+BER-TLV EF commands
+-------------------
+
+BER-TLV EFs are files that contain BER-TLV structured data.  Every file can contain any number
+of variable-length IEs (DOs).  The tag within a BER-TLV EF must be unique within the file.
+
+The commands below become enabled only when your currently selected file is of *BER-TLV EF* type.
+
+retrieve_tags
+~~~~~~~~~~~~~
+
+Retrieve a list of all tags present in the currently selected file.
+
+
+retrieve_data
+~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: BerTlvEF.ShellCommands.retrieve_data_parser
+
+
+set_data
+~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: BerTlvEF.ShellCommands.set_data_parser
+
+
+del_data
+~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: BerTlvEF.ShellCommands.del_data_parser
+
+
+
 USIM commands
 -------------
 

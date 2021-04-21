@@ -113,10 +113,14 @@ def interpret_file_descriptor(in_hex):
         1: 'transparent',
         2: 'linear_fixed',
         6: 'cyclic',
+     0x39: 'ber_tlv',
     }
     fdb = in_bin[0]
     ftype = (fdb >> 3) & 7
-    fstruct = fdb & 7
+    if fdb & 0xbf == 0x39:
+        fstruct = 0x39
+    else:
+        fstruct = fdb & 7
     out['shareable'] = True if fdb & 0x40 else False
     out['file_type'] = ft_dict[ftype] if ftype in ft_dict else ftype
     out['structure'] = fs_dict[fstruct] if fstruct in fs_dict else fstruct

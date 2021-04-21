@@ -89,6 +89,85 @@ def lpad(s:str, l:int, c='f') -> str:
 def half_round_up(n:int) -> int:
 	return (n + 1)//2
 
+#########################################################################
+# poor man's BER-TLV decoder. To be a more sophisticated OO library later
+#########################################################################
+
+def bertlv_parse_tag(binary:bytes) -> Tuple[dict, bytes]:
+	"""Parse a single Tag value according to ITU-T X.690 8.1.2
+	Args:
+		binary : binary input data of BER-TLV length field
+	Returns:
+		Tuple of ({class:int, constructed:bool, tag:int}, remainder:bytes)
+	"""
+	cls = binary[0] >> 6
+	constructed = True if binary[0] & 0x20 else False
+	tag = binary[0] & 0x1f
+	if tag <= 30:
+		return ({'class':cls, 'constructed':constructed, 'tag': tag}, binary[1:])
+	else: # multi-byte tag
+		tag = 0
+		i = 1
+		last = False
+		while not last:
+			last = False if binary[i] & 0x80 else True
+			tag <<= 7
+			tag |= binary[i] & 0x7f
+			i += 1
+		return ({'class':cls, 'constructed':constructed, 'tag':tag}, binary[i:])
+
+def bertlv_parse_len(binary:bytes) -> Tuple[int, bytes]:
+	"""Parse a single Length value according to ITU-T X.690 8.1.3;
+	only the definite form is supported here.
+	Args:
+		binary : binary input data of BER-TLV length field
+	Returns:
+		Tuple of (length, remainder)
+	"""
+	if binary[0] < 0x80:
+		return (binary[0], binary[1:])
+	else:
+		num_len_oct = binary[0] & 0x7f
+		length = 0
+		for i in range(1, 1+num_len_oct):
+			length <<= 8
+			length |= binary[i]
+		return (length, binary[num_len_oct:])
+
+def bertlv_encode_len(length:int) -> bytes:
+	"""Encode a single Length value according to ITU-T X.690 8.1.3;
+	only the definite form is supported here.
+	Args:
+		length : length value to be encoded
+	Returns:
+		binary output data of BER-TLV length field
+	"""
+	if length < 0x80:
+		return length.to_bytes(1, 'big')
+	elif length <= 0xff:
+		return b'\x81' + length.to_bytes(1, 'big')
+	elif length <= 0xffff:
+		return b'\x82' + length.to_bytes(2, 'big')
+	elif length <= 0xffffff:
+		return b'\x83' + length.to_bytes(3, 'big')
+	elif length <= 0xffffffff:
+		return b'\x84' + length.to_bytes(4, 'big')
+	else:
+		raise ValueError("Length > 32bits not supported")
+
+def bertlv_parse_one(binary:bytes) -> (dict, int, bytes):
+	"""Parse a single TLV IE at the start of the given binary data.
+	Args:
+		binary : binary input data of BER-TLV length field
+	Returns:
+		Tuple of (tag:dict, len:int, remainder:bytes)
+	"""
+	(tagdict, remainder) = bertlv_parse_tag(binary)
+	(length, remainder) = bertlv_parse_len(remainder)
+	return (tagdict, length, remainder)
+
+
+
 # IMSI encoded format:
 # For IMSI 0123456789ABCDE:
 #
@@ -893,6 +972,10 @@ def tabulate_str_list(str_list, width:int = 79, hspace:int = 2, lspace:int = 1,
 		format_str_row = (" " * lspace) + format_str_row
 		table.append(format_str_row % tuple(str_list_row))
 	return '\n'.join(table)
+
+def auto_int(x):
+    """Helper function for argparse to accept hexadecimal integers."""
+    return int(x, 0)
 
 class JsonEncoder(json.JSONEncoder):
     """Extend the standard library JSONEncoder with support for more types."""

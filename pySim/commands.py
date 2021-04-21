@@ -5,7 +5,7 @@
 
 #
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
-# Copyright (C) 2010       Harald Welte <laforge@gnumonks.org>
+# Copyright (C) 2010-2021  Harald Welte <laforge@gnumonks.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 from construct import *
 from pySim.construct import LV
-from pySim.utils import rpad, b2h, sw_match
+from pySim.utils import rpad, b2h, h2b, sw_match, bertlv_encode_len
 from pySim.exceptions import SwMatchError
 
 class SimCardCommands(object):
@@ -268,6 +268,76 @@ class SimCardCommands(object):
 		"""
 		r = self.select_path(ef)
 		return self.__len(r)
+
+	# TS 102 221 Section 11.3.1 low-level helper
+	def _retrieve_data(self, tag:int, first:bool=True):
+		if first:
+			pdu = '80cb008001%02x' % (tag)
+		else:
+			pdu = '80cb000000'
+		return self._tp.send_apdu_checksw(pdu)
+
+	# TS 102 221 Section 11.3.1
+	def retrieve_data(self, ef, tag:int):
+		"""Execute RETRIEVE DATA.
+
+		Args
+			ef : string or list of strings indicating name or path of transparent EF
+			tag : BER-TLV Tag of value to be retrieved
+		"""
+		r = self.select_path(ef)
+		if len(r[-1]) == 0:
+			return (None, None)
+		total_data = ''
+		# retrieve first block
+		data, sw = self._retrieve_data(tag, first=True)
+		total_data += data
+		while sw == '62f1' or sw == '62f2':
+			data, sw = self._retrieve_data(tag, first=False)
+			total_data += data
+		return total_data, sw
+
+	# TS 102 221 Section 11.3.2 low-level helper
+	def _set_data(self, data:str, first:bool=True):
+		if first:
+			p1 = 0x80
+		else:
+			p1 = 0x00
+		if isinstance(data, bytes) or isinstance(data, bytearray):
+			data = b2h(data)
+		pdu = '80db00%02x%02x%s' % (p1, len(data)//2, data)
+		return self._tp.send_apdu_checksw(pdu)
+
+	def set_data(self, ef, tag:int, value:str, verify:bool=False, conserve:bool=False):
+		"""Execute SET DATA.
+
+		Args
+			ef : string or list of strings indicating name or path of transparent EF
+			tag : BER-TLV Tag of value to be stored
+			value : BER-TLV value to be stored
+		"""
+		r = self.select_path(ef)
+		if len(r[-1]) == 0:
+			return (None, None)
+
+		# in case of deleting the data, we only have 'tag' but no 'value'
+		if not value:
+			return self._set_data('%02x' % tag, first=True)
+
+		# FIXME: proper BER-TLV encode
+		tl = '%02x%s' % (tag, b2h(bertlv_encode_len(len(value)//2)))
+		tlv = tl + value
+		tlv_bin = h2b(tlv)
+
+		first = True
+		total_len = len(tlv_bin)
+		remaining = tlv_bin
+		while len(remaining) > 0:
+			fragment = remaining[:255]
+			rdata, sw = self._set_data(fragment, first=first)
+			first = False
+			remaining = remaining[255:]
+		return rdata, sw
 
 	def run_gsm(self, rand:str):
 		"""Execute RUN GSM ALGORITHM."""

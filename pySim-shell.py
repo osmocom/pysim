@@ -38,7 +38,7 @@ from pySim.exceptions import *
 from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args
 from pySim.cards import card_detect, Card
-from pySim.utils import h2b, swap_nibbles, rpad, h2s, JsonEncoder
+from pySim.utils import h2b, swap_nibbles, rpad, b2h, h2s, JsonEncoder, bertlv_parse_one
 from pySim.utils import dec_st, sanitize_pin_adm, tabulate_str_list, is_hex, boxed_heading_str
 from pySim.card_handler import card_handler
 
@@ -256,11 +256,19 @@ class PySimCommands(CommandSet):
 			if structure == 'transparent':
 				result = self._cmd.rs.read_binary()
 				self._cmd.poutput("update_binary " + str(result[0]))
-			if structure == 'cyclic' or structure == 'linear_fixed':
+			elif structure == 'cyclic' or structure == 'linear_fixed':
 				num_of_rec = fd['num_of_rec']
 				for r in range(1, num_of_rec + 1):
 					result = self._cmd.rs.read_record(r)
 					self._cmd.poutput("update_record %d %s" % (r, str(result[0])))
+			elif structure == 'ber_tlv':
+				tags = self._cmd.rs.retrieve_tags()
+				for t in tags:
+					result = self._cmd.rs.retrieve_data(t)
+					(tag, l, val) = bertlv_parse_one(h2b(result[0]))
+					self._cmd.poutput("set_data 0x%02x %s" % (t, b2h(val)))
+			else:
+				raise RuntimeError('Unsupported structure "%s" of file "%s"' % (structure, filename))
 		except Exception as e:
 			bad_file_str = '/'.join(df_path_list) + "/" + str(filename) + ", " + str(e)
 			self._cmd.poutput("# bad file: %s" % bad_file_str)

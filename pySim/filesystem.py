@@ -34,7 +34,7 @@ import argparse
 
 from typing import cast, Optional, Iterable, List, Any, Dict, Tuple
 
-from pySim.utils import sw_match, h2b, b2h, is_hex
+from pySim.utils import sw_match, h2b, b2h, is_hex, auto_int, bertlv_parse_one
 from pySim.construct import filter_dict
 from pySim.exceptions import *
 from pySim.jsonpath import js_path_find, js_path_modify
@@ -914,13 +914,68 @@ class TransRecEF(TransparentEF):
         return b''.join(chunks)
 
 
-class BerTlvEF(TransparentEF):
+class BerTlvEF(CardEF):
     """BER-TLV EF (Entry File) in the smart card filesystem.
     A BER-TLV EF is a binary file with a BER (Basic Encoding Rules) TLV structure
 
     NOTE: We currently don't really support those, this class is simply a wrapper
     around TransparentEF as a place-holder, so we can already define EFs of BER-TLV
     type without fully supporting them."""
+
+    @with_default_category('BER-TLV EF Commands')
+    class ShellCommands(CommandSet):
+        """Shell commands specific for BER-TLV EFs."""
+        def __init__(self):
+            super().__init__()
+
+        retrieve_data_parser = argparse.ArgumentParser()
+        retrieve_data_parser.add_argument('tag', type=auto_int, help='BER-TLV Tag of value to retrieve')
+        @cmd2.with_argparser(retrieve_data_parser)
+        def do_retrieve_data(self, opts):
+            """Retrieve (Read) data from a BER-TLV EF"""
+            (data, sw) = self._cmd.rs.retrieve_data(opts.tag)
+            self._cmd.poutput(data)
+
+        def do_retrieve_tags(self, opts):
+            """List tags available in a given BER-TLV EF"""
+            tags = self._cmd.rs.retrieve_tags()
+            self._cmd.poutput(tags)
+
+        set_data_parser = argparse.ArgumentParser()
+        set_data_parser.add_argument('tag', type=auto_int, help='BER-TLV Tag of value to set')
+        set_data_parser.add_argument('data', help='Data bytes (hex format) to write')
+        @cmd2.with_argparser(set_data_parser)
+        def do_set_data(self, opts):
+            """Set (Write) data for a given tag in a BER-TLV EF"""
+            (data, sw) = self._cmd.rs.set_data(opts.tag, opts.data)
+            if data:
+                self._cmd.poutput(data)
+
+        del_data_parser = argparse.ArgumentParser()
+        del_data_parser.add_argument('tag', type=auto_int, help='BER-TLV Tag of value to set')
+        @cmd2.with_argparser(del_data_parser)
+        def do_delete_data(self, opts):
+            """Delete  data for a given tag in a BER-TLV EF"""
+            (data, sw) = self._cmd.rs.set_data(opts.tag, None)
+            if data:
+                self._cmd.poutput(data)
+
+
+    def __init__(self, fid:str, sfid:str=None, name:str=None, desc:str=None, parent:CardDF=None,
+                 size={1,None}):
+        """
+        Args:
+            fid : File Identifier (4 hex digits)
+            sfid : Short File Identifier (2 hex digits, optional)
+            name : Brief name of the file, lik EF_ICCID
+            desc : Description of the file
+            parent : Parent CardFile object within filesystem hierarchy
+            size : tuple of (minimum_size, recommended_size)
+        """
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent)
+        self._construct = None
+        self.size = size
+        self.shell_commands = [self.ShellCommands()]
 
 
 class RuntimeState(object):
@@ -1171,6 +1226,43 @@ class RuntimeState(object):
         """
         data_hex = self.selected_file.encode_record_hex(data)
         return self.update_record(rec_nr, data_hex)
+
+    def retrieve_data(self, tag:int=0):
+        """Read a DO/TLV as binary data.
+
+        Args:
+            tag : Tag of TLV/DO to read
+        Returns:
+            hex string of full BER-TLV DO including Tag and Length
+        """
+        if not isinstance(self.selected_file, BerTlvEF):
+            raise TypeError("Only works with BER-TLV EF")
+        # returns a string of hex nibbles
+        return self.card._scc.retrieve_data(self.selected_file.fid, tag)
+
+    def retrieve_tags(self):
+        """Retrieve tags available on BER-TLV EF.
+
+        Returns:
+            list of integer tags contained in EF
+        """
+        if not isinstance(self.selected_file, BerTlvEF):
+            raise TypeError("Only works with BER-TLV EF")
+        data, sw = self.card._scc.retrieve_data(self.selected_file.fid, 0x5c)
+        tag, length, value = bertlv_parse_one(h2b(data))
+        return list(value)
+
+    def set_data(self, tag:int, data_hex:str):
+        """Update a TLV/DO with given binary data
+
+        Args:
+            tag : Tag of TLV/DO to be written
+            data_hex : Hex string binary data to be written (value portion)
+        """
+        if not isinstance(self.selected_file, BerTlvEF):
+            raise TypeError("Only works with BER-TLV EF")
+        return self.card._scc.set_data(self.selected_file.fid, tag, data_hex, conserve=self.conserve_write)
+
 
 
 
