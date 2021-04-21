@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Various constants from ETSI TS 131 103 V14.2.0
+Various constants from 3GPP TS 31.103 V16.1.0
 """
 
 #
@@ -50,6 +50,7 @@ EF_IST_map = {
 	18: 'IMS configuration data',
 	19: 'XCAP Configuration Data',
 	20: 'WebRTC URI',
+	21: 'MuD and MiD configuration data',
 }
 
 EF_ISIM_ADF_map = {
@@ -159,6 +160,12 @@ class EF_WebRTCURI(TransparentEF):
     def __init__(self, fid='6ffa', sfid=None, name='EF.WebRTCURI', desc='WebRTC URI'):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
 
+# TS 31.103 Section 4.2.21
+class EF_MuDMiDConfigData(TransparentEF):
+    def __init__(self, fid='6ffe', sfid=None, name='EF.MuDMiDConfigData',
+                 desc='MuD and MiD Configuration Data'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+
 
 class ADF_ISIM(CardADF):
     def __init__(self, aid='a0000000871004', name='ADF.ISIM', fid=None, sfid=None,
@@ -185,6 +192,7 @@ class ADF_ISIM(CardADF):
             EF_IMSConfigData(),
             EF_XCAPConfigData(),
             EF_WebRTCURI(),
+            EF_MuDMiDConfigData(),
           ]
         self.add_files(files)
         # add those commands to the general commands of a TransparentEF
