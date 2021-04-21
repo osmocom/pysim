@@ -24,7 +24,7 @@ Various constants from ETSI TS 131 103 V14.2.0
 
 from pySim.filesystem import *
 from pySim.utils import *
-from pySim.ts_51_011 import EF_AD
+from pySim.ts_51_011 import EF_AD, EF_SMS, EF_SMSS, EF_SMSR, EF_SMSP
 from pySim.ts_31_102 import ADF_USIM
 import pySim.ts_102_221
 
@@ -176,10 +176,10 @@ class ADF_ISIM(CardADF):
             EF_GBABP(),
             EF_GBANL(),
             EF_NAFKCA(),
-            # SMS
-            # SMSS
-            # SMSR
-            #EF_SMSP(),
+            EF_SMS(),
+            EF_SMSS(),
+            EF_SMSR(),
+            EF_SMSP(),
             EF_UICCIARI(),
             # FromPreferred
             EF_IMSConfigData(),
