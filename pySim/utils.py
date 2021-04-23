@@ -136,14 +136,35 @@ def enc_iccid(iccid:str) -> Hexstr:
 
 def enc_plmn(mcc:Hexstr, mnc:Hexstr) -> Hexstr:
 	"""Converts integer MCC/MNC into 3 bytes for EF"""
-	if len(mnc) == 2:
-		mnc += "F" # pad to 3 digits if needed
+
+	# Make sure there are no excess whitespaces in the input
+	# parameters
+	mcc = mcc.strip()
+	mnc = mnc.strip()
+
+	# Make sure that MCC/MNC are correctly padded with leading
+	# zeros or 'F', depending on the length.
+	if len(mnc) == 0:
+		mnc = "FFF"
+	elif len(mnc) == 1:
+		mnc = "F0" + mnc
+	elif len(mnc) == 2:
+		mnc += "F"
+
+	if len(mcc) == 0:
+		mcc = "FFF"
+	elif len(mcc) == 1:
+		mcc = "00" + mcc
+	elif len(mcc) == 2:
+		mcc = "0" + mcc
+
 	return (mcc[1] + mcc[0]) + (mnc[2] + mcc[2]) + (mnc[1] + mnc[0])
 
 def dec_plmn(threehexbytes:Hexstr) -> dict:
-	res = {'mcc': 0, 'mnc': 0 }
-	res['mcc'] = dec_mcc_from_plmn(threehexbytes)
-	res['mnc'] = dec_mnc_from_plmn(threehexbytes)
+	res = {'mcc': "0", 'mnc': "0" }
+	dec_mcc_from_plmn_str(threehexbytes)
+	res['mcc'] = dec_mcc_from_plmn_str(threehexbytes)
+	res['mnc'] = dec_mnc_from_plmn_str(threehexbytes)
 	return res
 
 def dec_spn(ef):
@@ -172,6 +193,13 @@ def dec_mcc_from_plmn(plmn:Hexstr) -> int:
 		return 0xFFF # 4095
 	return derive_mcc(digit1, digit2, digit3)
 
+def dec_mcc_from_plmn_str(plmn:Hexstr) -> str:
+	digit1 = plmn[1] # 1st byte, LSB
+	digit2 = plmn[0] # 1st byte, MSB
+	digit3 = plmn[3] # 2nd byte, LSB
+	res = digit1 + digit2 + digit3
+	return res.upper().strip("F")
+
 def dec_mnc_from_plmn(plmn:Hexstr) -> int:
 	ia = h2i(plmn)
 	digit1 = ia[2] & 0x0F		# 3rd byte, LSB
@@ -180,6 +208,13 @@ def dec_mnc_from_plmn(plmn:Hexstr) -> int:
 	if digit3 == 0xF and digit2 == 0xF and digit1 == 0xF:
 		return 0xFFF # 4095
 	return derive_mnc(digit1, digit2, digit3)
+
+def dec_mnc_from_plmn_str(plmn:Hexstr) -> str:
+	digit1 = plmn[5] # 3rd byte, LSB
+	digit2 = plmn[4] # 3rd byte, MSB
+	digit3 = plmn[2] # 2nd byte, MSB
+	res = digit1 + digit2 + digit3
+	return res.upper().strip("F")
 
 def dec_act(twohexbytes:Hexstr) -> List[str]:
 	act_list = [
