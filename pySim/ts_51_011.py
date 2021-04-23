@@ -381,7 +381,11 @@ class EF_MSISDN(LinFixedEF):
     def _decode_record_hex(self, raw_hex_data):
         return {'msisdn': dec_msisdn(raw_hex_data)}
     def _encode_record_hex(self, abstract):
-        encoded_msisdn = enc_msisdn(abstract['msisdn'])
+        msisdn = abstract['msisdn']
+        if type(msisdn) == str:
+            encoded_msisdn = enc_msisdn(msisdn)
+        else:
+            encoded_msisdn = enc_msisdn(msisdn[2],msisdn[0],msisdn[1])
         alpha_identifier = (list(self.rec_len)[0] - len(encoded_msisdn) // 2) * "ff"
         return alpha_identifier + encoded_msisdn
 
