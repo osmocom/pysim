@@ -134,7 +134,7 @@ def dec_iccid(ef:Hexstr) -> str:
 def enc_iccid(iccid:str) -> Hexstr:
 	return swap_nibbles(rpad(iccid, 20))
 
-def enc_plmn(mcc, mnc):
+def enc_plmn(mcc:Hexstr, mnc:Hexstr) -> Hexstr:
 	"""Converts integer MCC/MNC into 3 bytes for EF"""
 	if len(mnc) == 2:
 		mnc += "F" # pad to 3 digits if needed
