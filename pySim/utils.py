@@ -234,13 +234,13 @@ def dec_act(twohexbytes:Hexstr) -> List[str]:
 	return sel
 
 def dec_xplmn_w_act(fivehexbytes:Hexstr) -> Dict[str,Any]:
-	res = {'mcc': 0, 'mnc': 0, 'act': []}
+	res = {'mcc': "0", 'mnc': "0", 'act': []}
 	plmn_chars = 6
 	act_chars = 4
 	plmn_str = fivehexbytes[:plmn_chars]				# first three bytes (six ascii hex chars)
 	act_str = fivehexbytes[plmn_chars:plmn_chars + act_chars]	# two bytes after first three bytes
-	res['mcc'] = dec_mcc_from_plmn(plmn_str)
-	res['mnc'] = dec_mnc_from_plmn(plmn_str)
+	res['mcc'] = dec_mcc_from_plmn_str(plmn_str)
+	res['mnc'] = dec_mnc_from_plmn_str(plmn_str)
 	res['act'] = dec_act(act_str)
 	return res
 
@@ -248,10 +248,10 @@ def format_xplmn_w_act(hexstr):
 	s = ""
 	for rec_data in hexstr_to_Nbytearr(hexstr, 5):
 		rec_info = dec_xplmn_w_act(rec_data)
-		if rec_info['mcc'] == 0xFFF and rec_info['mnc'] == 0xFFF:
+		if rec_info['mcc'] == "" and rec_info['mnc'] == "":
 			rec_str = "unused"
 		else:
-			rec_str = "MCC: %03d MNC: %03d AcT: %s" % (rec_info['mcc'], rec_info['mnc'], ", ".join(rec_info['act']))
+			rec_str = "MCC: %s MNC: %s AcT: %s" % (rec_info['mcc'], rec_info['mnc'], ", ".join(rec_info['act']))
 		s += "\t%s # %s\n" % (rec_data, rec_str)
 	return s
 

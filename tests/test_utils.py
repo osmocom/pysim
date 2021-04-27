@@ -96,13 +96,13 @@ class DecTestCase(unittest.TestCase):
 		self.assertEqual(utils.dec_act("ffff"), ["UTRAN", "E-UTRAN", "GSM", "GSM COMPACT", "cdma2000 HRPD", "cdma2000 1xRTT"])
 
 	def testDecxPlmn_w_act(self):
-		expected = {'mcc': 295, 'mnc': 10, 'act': ["UTRAN"]}
+		expected = {'mcc': '295', 'mnc': '10', 'act': ["UTRAN"]}
 		self.assertEqual(utils.dec_xplmn_w_act("92f5018000"), expected)
 
 	def testFormatxPlmn_w_act(self):
 		input_str = "92f501800092f5508000ffffff0000ffffff0000ffffff0000ffffff0000ffffff0000ffffff0000ffffff0000ffffff0000"
-		expected  = "\t92f5018000 # MCC: 295 MNC: 010 AcT: UTRAN\n"
-		expected += "\t92f5508000 # MCC: 295 MNC: 005 AcT: UTRAN\n"
+		expected  = "\t92f5018000 # MCC: 295 MNC: 10 AcT: UTRAN\n"
+		expected += "\t92f5508000 # MCC: 295 MNC: 05 AcT: UTRAN\n"
 		expected += "\tffffff0000 # unused\n"
 		expected += "\tffffff0000 # unused\n"
 		expected += "\tffffff0000 # unused\n"
