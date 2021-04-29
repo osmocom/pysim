@@ -93,7 +93,7 @@ class DecTestCase(unittest.TestCase):
 		self.assertEqual(utils.dec_act("0010"), ["cdma2000 1xRTT"])
 
 	def testDecAct_allSet(self):
-		self.assertEqual(utils.dec_act("ffff"), ["UTRAN", "E-UTRAN", "GSM", "GSM COMPACT", "cdma2000 HRPD", "cdma2000 1xRTT"])
+		self.assertEqual(utils.dec_act("ffff"), ["UTRAN", "E-UTRAN WB-S1", "E-UTRAN NB-S1", "GSM", "GSM COMPACT", "cdma2000 HRPD", "cdma2000 1xRTT"])
 
 	def testDecxPlmn_w_act(self):
 		expected = {'mcc': '295', 'mnc': '10', 'act': ["UTRAN"]}

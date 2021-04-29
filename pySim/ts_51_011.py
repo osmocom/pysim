@@ -707,6 +707,8 @@ class EF_xPLMNwAcT(TransRecEF):
         if 'cdma2000 1xRTT' in in_list:
             u16 |= 0x0010
         # E-UTRAN
+        if 'E-UTRAN' in in_list:
+            u16 |= 0x4000
         if 'E-UTRAN WB-S1' in in_list:
             u16 |= 0x6000
         if 'E-UTRAN NB-S1' in in_list:

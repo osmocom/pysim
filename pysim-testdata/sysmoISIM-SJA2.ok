@@ -11,7 +11,7 @@ Display HPLMN: True
 Display OPLMN: True
 PLMNsel: 00f110ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 PLMNwAcT:
-	00f110ffff # MCC: 001 MNC: 01 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
+	00f110ffff # MCC: 001 MNC: 01 AcT: UTRAN, E-UTRAN WB-S1, E-UTRAN NB-S1, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
 	ffffff0000 # unused
 	ffffff0000 # unused
 	ffffff0000 # unused
@@ -25,7 +25,7 @@ PLMNwAcT:
 	ffffff0000 # unused
 
 OPLMNwAcT:
-	00f110ffff # MCC: 001 MNC: 01 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
+	00f110ffff # MCC: 001 MNC: 01 AcT: UTRAN, E-UTRAN WB-S1, E-UTRAN NB-S1, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
 	ffffff0000 # unused
 	ffffff0000 # unused
 	ffffff0000 # unused
@@ -39,7 +39,7 @@ OPLMNwAcT:
 	ffffff0000 # unused
 
 HPLMNAcT:
-	00f110ffff # MCC: 001 MNC: 01 AcT: UTRAN, E-UTRAN, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
+	00f110ffff # MCC: 001 MNC: 01 AcT: UTRAN, E-UTRAN WB-S1, E-UTRAN NB-S1, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT
 	ffffff0000 # unused
 	ffffff0000 # unused
 	ffffff0000 # unused

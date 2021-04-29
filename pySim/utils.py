@@ -230,7 +230,20 @@ def dec_act(twohexbytes:Hexstr) -> List[str]:
 	sel = []
 	for a in act_list:
 		if u16t & (1 << a['bit']):
-			sel.append(a['name'])
+			if a['name'] == "E-UTRAN":
+				# The Access technology identifier of E-UTRAN
+				# allows a more detailed specification:
+				if u16t & (1 << 13) and u16t & (1 << 12):
+					sel.append("E-UTRAN WB-S1")
+					sel.append("E-UTRAN NB-S1")
+				elif u16t & (1 << 13):
+					sel.append("E-UTRAN WB-S1")
+				elif u16t & (1 << 12):
+					sel.append("E-UTRAN NB-S1")
+				else:
+					sel.append("E-UTRAN")
+			else:
+				sel.append(a['name'])
 	return sel
 
 def dec_xplmn_w_act(fivehexbytes:Hexstr) -> Dict[str,Any]:
