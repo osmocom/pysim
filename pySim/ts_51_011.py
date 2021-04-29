@@ -522,7 +522,8 @@ class EF_SPN(TransparentEF):
     def _decode_hex(self, raw_hex):
         return {'spn': dec_spn(raw_hex)}
     def _encode_hex(self, abstract):
-        return enc_spn(abstract['spn'])
+        spn = abstract['spn']
+        return enc_spn(spn[0], spn[1], spn[2])
 
 # TS 51.011 Section 10.3.13
 class EF_CBMI(TransRecEF):
