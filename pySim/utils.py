@@ -174,7 +174,7 @@ def dec_spn(ef):
 	name = h2s(ef[2:])
 	return (name, hplmn_disp, oplmn_disp)
 
-def enc_spn(name, hplmn_disp=False, oplmn_disp=False):
+def enc_spn(name:str, hplmn_disp=False, oplmn_disp=False):
 	byte1 = 0x00
 	if hplmn_disp: byte1 = byte1|0x01
 	if oplmn_disp: byte1 = byte1|0x02
