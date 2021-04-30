@@ -12,9 +12,9 @@ setup(
         "pyscard",
         "serial",
         "pytlv",
-        "cmd2",
+        "cmd2 >= 1.3.0",
         "jsonpath-ng",
-        "construct",
+        "construct >= 2.9",
     ],
     scripts=[
         'pySim-prog.py',
