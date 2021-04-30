@@ -692,8 +692,6 @@ def dec_addr_tlv(hexstr):
 	# Convert from hex str to int bytes list
 	addr_tlv_bytes = h2i(hexstr)
 
-	s = ""
-
 	# Get list of tuples containing parsed TLVs
 	tlvs = TLV_parser(addr_tlv_bytes)
 
@@ -718,15 +716,18 @@ def dec_addr_tlv(hexstr):
 		if addr_type == 0x00: #FQDN
 			# Skip address tye byte i.e. first byte in value list
 			content = tlv[2][1:]
-			s += "\t%s # %s\n" % (i2h(content), i2s(content))
+			return (i2s(content), '00')
+
 		elif addr_type == 0x01: #IPv4
 			# Skip address tye byte i.e. first byte in value list
 			# Skip the unused byte in Octect 4 after address type byte as per 3GPP TS 31.102
 			ipv4 = tlv[2][2:]
 			content = '.'.join(str(x) for x in ipv4)
-			s += "\t%s # %s\n" % (i2h(ipv4), content)
+			return (content, '01')
+		else:
+			raise ValueError("Invalid address type")
 
-	return s
+	return (None, None)
 
 def enc_addr_tlv(addr, addr_type='00'):
 	"""

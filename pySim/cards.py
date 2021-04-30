@@ -32,6 +32,24 @@ from pySim.utils import *
 from smartcard.util import toBytes
 from pytlv.TLV import *
 
+def format_addr(addr:str, addr_type:str) -> str:
+	"""
+	helper function to format an FQDN (addr_type = '00') or IPv4
+	(addr_type = '01') address string into a printable string that
+	contains the hexadecimal representation and the original address
+	string (addr)
+	"""
+	res = ""
+	if addr_type == '00': #FQDN
+		res += "\t%s # %s\n" % (s2h(addr), addr)
+	elif addr_type == '01': #IPv4
+		octets = addr.split(".")
+		addr_hex = ""
+		for o in octets:
+			addr_hex += ("%02x" % int(o))
+		res += "\t%s # %s\n" % (addr_hex, addr)
+	return res
+
 class Card(object):
 
 	name = 'SIM'
@@ -316,7 +334,12 @@ class UsimCard(Card):
 	def read_epdgid(self):
 		(res, sw) = self._scc.read_binary(EF_USIM_ADF_map['ePDGId'])
 		if sw == '9000':
-			return (dec_addr_tlv(res), sw)
+			try:
+				addr, addr_type = dec_addr_tlv(res)
+			except:
+				addr = None
+				addr_type = None
+			return (format_addr(addr, addr_type), sw)
 		else:
 			return (None, sw)
 
@@ -378,7 +401,12 @@ class IsimCard(Card):
 		for i in range(0, rec_cnt):
 			(res, sw) = self._scc.read_record(EF_ISIM_ADF_map['PCSCF'], i + 1)
 			if sw == '9000':
-				content = dec_addr_tlv(res)
+				try:
+					addr, addr_type = dec_addr_tlv(res)
+				except:
+					addr = None
+					addr_type = None
+				content = format_addr(addr, addr_type)
 				pcscf_recs += "%s" % (len(content) and content or '\tNot available\n')
 			else:
 				pcscf_recs += "\tP-CSCF: Can't read, response code = %s\n" % (sw)
