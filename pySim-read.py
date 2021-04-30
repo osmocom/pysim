@@ -36,7 +36,7 @@ from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, argparse_add_reader_args
 from pySim.cards import card_detect, Card, UsimCard, IsimCard
 from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn
-from pySim.utils import format_xplmn_w_act, dec_st, dec_addr_tlv
+from pySim.utils import format_xplmn_w_act, dec_st
 from pySim.utils import h2s, format_ePDGSelection
 
 option_parser = argparse.ArgumentParser(prog='pySim-read',
