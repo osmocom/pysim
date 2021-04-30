@@ -116,10 +116,12 @@ class EF_PCSCF(LinFixedEF):
     def __init__(self, fid='6f09', sfid=None, name='EF.P-CSCF', desc='P-CSCF Address'):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
     def _decode_record_hex(self, raw_hex):
-        # FIXME: this doesn't do JSON output
-        return dec_addr_tlv(raw_hex)
+        addr, addr_type = dec_addr_tlv(raw_hex)
+        return {"addr": addr, "addr_type": addr_type}
     def _encode_record_hex(self, json_in):
-        return enc_addr_tlv(json_in)
+        addr = json_in['addr']
+        addr_type = json_in['addr_type']
+        return enc_addr_tlv(addr, addr_type)
 
 # TS 31.103 Section 4.2.9
 class EF_GBABP(TransparentEF):
