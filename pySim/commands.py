@@ -216,13 +216,20 @@ class SimCardCommands(object):
 
 	def update_record(self, ef, rec_no:int, data:str, force_len:bool=False, verify:bool=False,
 					  conserve:bool=False):
-		r = self.select_path(ef)
-		if not force_len:
-			rec_length = self.__record_len(r)
-			if (len(data) // 2 != rec_length):
-				raise ValueError('Invalid data length (expected %d, got %d)' % (rec_length, len(data) // 2))
-		else:
+		res = self.select_path(ef)
+
+		if force_len:
+			# enforce the record length by the actual length of the given data input
 			rec_length = len(data) // 2
+		else:
+			# determine the record length from the select response of the file and pad
+			# the input data with 0xFF if necessary. In cases where the input data
+			# exceed we throw an exception.
+			rec_length = self.__record_len(res)
+			if (len(data) // 2 > rec_length):
+				raise ValueError('Data length exceeds record length (expected max %d, got %d)' % (rec_length, len(data) // 2))
+			elif (len(data) // 2 < rec_length):
+				data = rpad(data, rec_length * 2)
 
 		# Save write cycles by reading+comparing before write
 		if conserve:
