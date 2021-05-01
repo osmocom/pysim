@@ -99,6 +99,9 @@ class ModemATCommandLink(LinkBase):
 		pass # Nothing to do really ...
 
 	def _send_apdu_raw(self, pdu):
+		# Make sure pdu has upper case hex digits [A-F]
+		pdu = pdu.upper()
+
 		# Prepare the command as described in 8.17
 		cmd = 'AT+CSIM=%d,\"%s\"' % (len(pdu), pdu)
 
