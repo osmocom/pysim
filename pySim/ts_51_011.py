@@ -649,8 +649,11 @@ class EF_CNL(TransRecEF):
         return res
     def _encode_record_hex(self, in_json):
         plmn = enc_plmn(in_json['mcc'], in_json['mnc'])
-        return b2h(pack('!3sBBB', h2b(plmn), res['network_subset'], res['service_provider_id'],
-                        res['corporate_id']))
+        return b2h(pack('!3sBBB',
+                        h2b(plmn),
+                        in_json['network_subset'],
+                        in_json['service_provider_id'],
+                        in_json['corporate_id']))
 
 # TS 51.011 Section 10.3.31
 class EF_NIA(LinFixedEF):
