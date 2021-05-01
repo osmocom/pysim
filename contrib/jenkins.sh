@@ -26,6 +26,18 @@ pip install construct
 # Execute automatically discovered unit tests first
 python -m unittest discover -v -s tests/
 
+# Run pylint to find potential errors
+# Ignore E1102: not-callable
+#   pySim/filesystem.py: E1102: method is not callable (not-callable)
+# Ignore E0401: import-error
+#   pySim/utils.py:276: E0401: Unable to import 'Crypto.Cipher' (import-error)
+#   pySim/utils.py:277: E0401: Unable to import 'Crypto.Util.strxor' (import-error)
+pip install pylint
+python -m pylint --errors-only \
+	--disable E1102 \
+	--disable E0401 \
+	pySim *.py
+
 # attempt to build documentation
 pip install sphinx
 pip install sphinxcontrib-napoleon
