@@ -30,11 +30,12 @@ operation with pySim-shell.
 
 from typing import List, Dict, Optional
 
+import abc
 import csv
 
 card_key_providers = [] # type: List['CardKeyProvider']
 
-class CardKeyProvider(object):
+class CardKeyProvider(abc.ABC):
 	"""Base class, not containing any concrete implementation."""
 
 	VALID_FIELD_NAMES = ['ICCID', 'ADM1', 'IMSI', 'PIN1', 'PIN2', 'PUK1', 'PUK2']
@@ -67,6 +68,7 @@ class CardKeyProvider(object):
 		result = self.get(fields, key, value)
 		return result.get(field)
 
+	@abc.abstractmethod
 	def get(self, fields:List[str], key:str, value:str) -> Dict[str,str]:
 		"""Get multiple card-individual fields for identified card.
 
@@ -77,7 +79,6 @@ class CardKeyProvider(object):
 		Returns:
 			dictionary of {field, value} strings for each requested field from 'fields'
 		"""
-		pass
 
 class CardKeyProviderCsv(CardKeyProvider):
 	"""Card key provider implementation that allows to query against a specified CSV file"""
