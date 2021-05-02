@@ -3,8 +3,9 @@
 """ pySim: PCSC reader transport link base
 """
 
+import abc
 import argparse
-from typing import Optional
+from typing import Optional, Tuple
 
 from pySim.exceptions import *
 from pySim.construct import filter_dict
@@ -36,12 +37,16 @@ class ApduTracer:
 		pass
 
 
-class LinkBase(object):
+class LinkBase(abc.ABC):
 	"""Base class for link/transport to card."""
 
 	def __init__(self, sw_interpreter=None, apdu_tracer=None):
 		self.sw_interpreter = sw_interpreter
 		self.apdu_tracer = apdu_tracer
+
+	@abc.abstractmethod
+	def _send_apdu_raw(self, pdu:str) -> Tuple[str, str]:
+		"""Implementation specific method for sending the PDU."""
 
 	def set_sw_interpreter(self, interp):
 		"""Set an (optional) status word interpreter."""
