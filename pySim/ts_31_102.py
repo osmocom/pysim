@@ -381,7 +381,7 @@ class EF_SUCI_Calc_Info(TransparentEF):
         return hnet_pubkey_list
 
     def _decode_bin(self, in_bin):
-        return self._decode_hex(b2h(in_hex))
+        return self._decode_hex(b2h(in_bin))
 
     def _decode_hex(self, in_hex):
         in_bytes = h2b(in_hex)
