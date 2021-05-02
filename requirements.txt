@@ -4,3 +4,4 @@ pytlv
 cmd2
 jsonpath-ng
 construct
+bidict

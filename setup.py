@@ -15,6 +15,7 @@ setup(
         "cmd2 >= 1.3.0",
         "jsonpath-ng",
         "construct >= 2.9",
+        "bidict",
     ],
     scripts=[
         'pySim-prog.py',

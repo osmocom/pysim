@@ -21,6 +21,52 @@ from pytlv.TLV import *
 from struct import pack, unpack
 from pySim.utils import *
 from pySim.filesystem import *
+from bidict import bidict
+
+ts_102_22x_cmdset = CardCommandSet('TS 102 22x', [
+    # TS 102 221 Section 10.1.2 Table 10.5 "Coding of Instruction Byte"
+    CardCommand('SELECT',                   0xA4, ['0X', '4X', '6X']),
+    CardCommand('STATUS',                   0xF2, ['8X', 'CX', 'EX']),
+    CardCommand('READ BINARY',              0xB0, ['0X', '4X', '6X']),
+    CardCommand('UPDATE BINARY',            0xD6, ['0X', '4X', '6X']),
+    CardCommand('READ RECORD',              0xB2, ['0X', '4X', '6X']),
+    CardCommand('UPDATE RECORD',            0xDC, ['0X', '4X', '6X']),
+    CardCommand('SEARCH RECORD',            0xA2, ['0X', '4X', '6X']),
+    CardCommand('INCREASE',                 0x32, ['8X', 'CX', 'EX']),
+    CardCommand('RETRIEVE DATA',            0xCB, ['8X', 'CX', 'EX']),
+    CardCommand('SET DATA',                 0xDB, ['8X', 'CX', 'EX']),
+    CardCommand('VERIFY PIN',               0x20, ['0X', '4X', '6X']),
+    CardCommand('CHANGE PIN',               0x24, ['0X', '4X', '6X']),
+    CardCommand('DISABLE PIN',              0x26, ['0X', '4X', '6X']),
+    CardCommand('ENABLE PIN',               0x28, ['0X', '4X', '6X']),
+    CardCommand('UNBLOCK PIN',              0x2C, ['0X', '4X', '6X']),
+    CardCommand('DEACTIVATE FILE',          0x04, ['0X', '4X', '6X']),
+    CardCommand('ACTIVATE FILE',            0x44, ['0X', '4X', '6X']),
+    CardCommand('AUTHENTICATE',             0x88, ['0X', '4X', '6X']),
+    CardCommand('AUTHENTICATE',             0x89, ['0X', '4X', '6X']),
+    CardCommand('GET CHALLENGE',            0x84, ['0X', '4X', '6X']),
+    CardCommand('TERMINAL CAPABILITY',      0xAA, ['8X', 'CX', 'EX']),
+    CardCommand('TERMINAL PROFILE',         0x10, ['80']),
+    CardCommand('ENVELOPE',                 0xC2, ['80']),
+    CardCommand('FETCH',                    0x12, ['80']),
+    CardCommand('TERMINAL RESPONSE',        0x14, ['80']),
+    CardCommand('MANAGE CHANNEL',           0x70, ['0X', '4X', '6X']),
+    CardCommand('MANAGE SECURE CHANNEL',    0x73, ['0X', '4X', '6X']),
+    CardCommand('TRANSACT DATA',            0x75, ['0X', '4X', '6X']),
+    CardCommand('SUSPEND UICC',             0x76, ['80']),
+    CardCommand('GET IDENTITY',             0x78, ['8X', 'CX', 'EX']),
+    CardCommand('EXCHANGE CAPABILITIES',    0x7A, ['80']),
+    CardCommand('GET RESPONSE',             0xC0, ['0X', '4X', '6X']),
+    # TS 102 222 Section 6.1 Table 1 "Coding of the commands"
+    CardCommand('CREATE FILE',              0xE0, ['0X', '4X']),
+    CardCommand('DELETE FILE',              0xE4, ['0X', '4X']),
+    CardCommand('DEACTIVATE FILE',          0x04, ['0X', '4X']),
+    CardCommand('ACTIVATE FILE',            0x44, ['0X', '4X']),
+    CardCommand('TERMINATE DF',             0xE6, ['0X', '4X']),
+    CardCommand('TERMINATE EF',             0xE8, ['0X', '4X']),
+    CardCommand('TERMINATE CARD USAGE',     0xFE, ['0X', '4X']),
+    CardCommand('RESIZE FILE',              0xD4, ['8X', 'CX']),
+    ])
 
 
 FCP_TLV_MAP = {
@@ -150,6 +196,269 @@ def tlv_val_interpret(inmap, indata):
             return val
     return {d[0]: newval(inmap, d[0], d[1]) for d in indata.items()}
 
+# ETSI TS 102 221 Section 9.2.7 + ISO7816-4 9.3.3/9.3.4
+
+class _AM_DO_DF(DataObject):
+    def __init__(self):
+        super().__init__('access_mode', 'Access Mode', tag=0x80)
+
+    def from_bytes(self, do:bytes):
+        res = []
+        if len(do) != 1:
+            raise ValueError("We only support single-byte AMF inside AM-DO")
+        amf = do[0]
+        # tables 17..29 and 41..44 of 7816-4
+        if amf & 0x80 == 0:
+            if amf & 0x40:
+                res.append('delete_file')
+            if amf & 0x20:
+                res.append('terminate_df')
+            if amf & 0x10:
+                res.append('activate_file')
+            if amf & 0x08:
+                res.append('deactivate_file')
+        if amf & 0x04:
+            res.append('create_file_df')
+        if amf & 0x02:
+            res.append('create_file_ef')
+        if amf & 0x01:
+            res.append('delete_file_child')
+        self.decoded = res
+
+    def to_bytes(self):
+        val = 0
+        if 'delete_file' in self.decoded:
+            val |= 0x40
+        if 'terminate_df' in self.decoded:
+            val |= 0x20
+        if 'activate_file' in self.decoded:
+            val |= 0x10
+        if 'deactivate_file' in self.decoded:
+            val |= 0x08
+        if 'create_file_df' in self.decoded:
+            val |= 0x04
+        if 'create_file_ef' in self.decoded:
+            val |= 0x02
+        if 'delete_file_child' in self.decoded:
+            val |= 0x01
+        return val.to_bytes(1, 'big')
+
+
+class _AM_DO_EF(DataObject):
+    """ISO7816-4 9.3.2 Table 18 + 9.3.3.1 Table 31"""
+    def __init__(self):
+        super().__init__('access_mode', 'Access Mode', tag=0x80)
+
+    def from_bytes(self, do:bytes):
+        res = []
+        if len(do) != 1:
+            raise ValueError("We only support single-byte AMF inside AM-DO")
+        amf = do[0]
+        # tables 17..29 and 41..44 of 7816-4
+        if amf & 0x80 == 0:
+            if amf & 0x40:
+                res.append('delete_file')
+            if amf & 0x20:
+                res.append('terminate_ef')
+            if amf & 0x10:
+                res.append('activate_file_or_record')
+            if amf & 0x08:
+                res.append('deactivate_file_or_record')
+        if amf & 0x04:
+            res.append('write_append')
+        if amf & 0x02:
+            res.append('update_erase')
+        if amf & 0x01:
+            res.append('read_search_compare')
+        self.decoded = res
+
+    def to_bytes(self):
+        val = 0
+        if 'delete_file' in self.decoded:
+            val |= 0x40
+        if 'terminate_ef' in self.decoded:
+            val |= 0x20
+        if 'activate_file_or_record' in self.decoded:
+            val |= 0x10
+        if 'deactivate_file_or_record' in self.decoded:
+            val |= 0x08
+        if 'write_append' in self.decoded:
+            val |= 0x04
+        if 'update_erase' in self.decoded:
+            val |= 0x02
+        if 'read_search_compare' in self.decoded:
+            val |= 0x01
+        return val.to_bytes(1, 'big')
+
+class _AM_DO_CHDR(DataObject):
+    """Command Header Access Mode DO according to ISO 7816-4 Table 32."""
+    def __init__(self, tag):
+        super().__init__('command_header', 'Command Header Description', tag=tag)
+
+    def from_bytes(self, do:bytes):
+        res = {}
+        i = 0
+        if self.tag & 0x08:
+            res['CLA'] = do[i]
+            i += 1
+        if self.tag & 0x04:
+            res['INS'] = do[i]
+            i += 1
+        if self.tag & 0x02:
+            res['P1'] = do[i]
+            i += 1
+        if self.tag & 0x01:
+            res['P2'] = do[i]
+            i += 1
+        self.decoded = res
+
+    def _compute_tag(self):
+        """Override to encode the tag, as it depends on the value."""
+        tag = 0x80
+        if 'CLA' in self.decoded:
+            tag |= 0x08
+        if 'INS' in self.decoded:
+            tag |= 0x04
+        if 'P1' in self.decoded:
+            tag |= 0x02
+        if 'P2' in self.decoded:
+            tag |= 0x01
+        return tag
+
+    def to_bytes(self):
+        res = bytearray()
+        if 'CLA' in self.decoded:
+            res.append(self.decoded['CLA'])
+        if 'INS' in self.decoded:
+            res.append(self.decoded['INS'])
+        if 'P1' in self.decoded:
+            res.append(self.decoded['P1'])
+        if 'P2' in self.decoded:
+            res.append(self.decoded['P2'])
+        return res
+
+AM_DO_CHDR = DataObjectChoice('am_do_chdr', members=[
+              _AM_DO_CHDR(0x81), _AM_DO_CHDR(0x82), _AM_DO_CHDR(0x83), _AM_DO_CHDR(0x84),
+              _AM_DO_CHDR(0x85), _AM_DO_CHDR(0x86), _AM_DO_CHDR(0x87), _AM_DO_CHDR(0x88),
+              _AM_DO_CHDR(0x89), _AM_DO_CHDR(0x8a), _AM_DO_CHDR(0x8b), _AM_DO_CHDR(0x8c),
+              _AM_DO_CHDR(0x8d), _AM_DO_CHDR(0x8e), _AM_DO_CHDR(0x8f)])
+
+AM_DO_DF = AM_DO_CHDR | _AM_DO_DF()
+AM_DO_EF = AM_DO_CHDR | _AM_DO_EF()
+
+
+# TS 102 221 Section 9.5.1 / Table 9.3
+pin_names = bidict({
+    0x01: 'PIN1',
+    0x02: 'PIN2',
+    0x03: 'PIN3',
+    0x04: 'PIN4',
+    0x05: 'PIN5',
+    0x06: 'PIN6',
+    0x07: 'PIN7',
+    0x08: 'PIN8',
+    0x0a: 'ADM1',
+    0x0b: 'ADM2',
+    0x0c: 'ADM3',
+    0x0d: 'ADM4',
+    0x0e: 'ADM5',
+
+    0x11: 'UNIVERSAL_PIN',
+    0x81: '2PIN1',
+    0x82: '2PIN2',
+    0x83: '2PIN3',
+    0x84: '2PIN4',
+    0x85: '2PIN5',
+    0x86: '2PIN6',
+    0x87: '2PIN7',
+    0x88: '2PIN8',
+    0x8a: 'ADM6',
+    0x8b: 'ADM7',
+    0x8c: 'ADM8',
+    0x8d: 'ADM9',
+    0x8e: 'ADM10',
+    })
+
+class CRT_DO(DataObject):
+    """Control Reference Template as per TS 102 221 9.5.1"""
+    def __init__(self):
+        super().__init__('control_reference_template', 'Control Reference Template', tag=0xA4)
+
+    def from_bytes(self, do: bytes):
+        """Decode a Control Reference Template DO."""
+        if len(do) != 6:
+            raise ValueError('Unsupported CRT DO length: %s', do)
+        if do[0] != 0x83 or do[1] != 0x01:
+            raise ValueError('Unsupported Key Ref Tag or Len in CRT DO %s', do)
+        if do[3:] != b'\x95\x01\x08':
+            raise ValueError('Unsupported Usage Qualifier Tag or Len in CRT DO %s', do)
+        self.encoded = do[0:6]
+        self.decoded = pin_names[do[2]]
+        return do[6:]
+
+    def to_bytes(self):
+        pin = pin_names.inverse[self.decoded]
+        return b'\x83\x01' + pin.to_bytes(1, 'big') + b'\x95\x01\x08'
+
+# ISO7816-4 9.3.3 Table 33
+class SecCondByte_DO(DataObject):
+    def __init__(self, tag=0x9d):
+        super().__init__('security_condition_byte', tag=tag)
+
+    def from_bytes(self, binary:bytes):
+        if len(binary) != 1:
+            raise ValueError
+        inb = binary[0]
+        if inb == 0:
+            cond = 'always'
+        if inb == 0xff:
+            cond = 'never'
+        res = []
+        if inb & 0x80:
+            cond = 'and'
+        else:
+            cond = 'or'
+        if inb & 0x40:
+            res.append('secure_messaging')
+        if inb & 0x20:
+            res.append('external_auth')
+        if inb & 0x10:
+            res.append('user_auth')
+        rd = {'mode': cond }
+        if len(res):
+            rd['conditions'] = res
+        self.decoded = rd
+
+    def to_bytes(self):
+        mode = self.decoded['mode']
+        if mode == 'always':
+            res = 0
+        elif mode == 'never':
+            res = 0xff
+        else:
+            res = 0
+            if mode == 'and':
+                res |= 0x80
+            elif mode == 'or':
+                pass
+            else:
+                raise ValueError('Unknown mode %s' % mode)
+            for c in self.decoded['conditions']:
+                if c == 'secure_messaging':
+                    res |= 0x40
+                elif c == 'external_auth':
+                    res |= 0x20
+                elif c == 'user_auth':
+                    res |= 0x10
+                else:
+                    raise ValueError('Unknown condition %s' % c)
+        return res.to_bytes(1, 'big')
+
+Always_DO = TL0_DataObject('always', 'Always', 0x90)
+Never_DO = TL0_DataObject('never', 'Never', 0x97)
+SC_DO = DataObjectChoice('security_condition', 'Security Condition',
+                         members=[Always_DO, Never_DO, SecCondByte_DO(), SecCondByte_DO(0x9e), CRT_DO()])
+
 
 # ETSI TS 102 221 Section 11.1.1.3
 def decode_select_response(resp_hex):
@@ -207,6 +516,78 @@ class EF_PL(TransRecEF):
 class EF_ARR(LinFixedEF):
     def __init__(self, fid='2f06', sfid=0x06, name='EF.ARR', desc='Access Rule Reference'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc)
+        # add those commands to the general commands of a TransparentEF
+        self.shell_commands += [self.AddlShellCommands()]
+
+    @staticmethod
+    def flatten(inp:list):
+        """Flatten the somewhat deep/complex/nested data returned from decoder."""
+        def sc_abbreviate(sc):
+            if 'always' in sc:
+                return 'always'
+            elif 'never' in sc:
+                return 'never'
+            elif 'control_reference_template' in sc:
+                return sc['control_reference_template']
+            else:
+                return sc
+
+        by_mode = {}
+        for t in inp:
+            am = t[0]
+            sc = t[1]
+            sc_abbr = sc_abbreviate(sc)
+            if 'access_mode' in am:
+                for m in am['access_mode']:
+                    by_mode[m] = sc_abbr
+            elif 'command_header' in am:
+                ins = am['command_header']['INS']
+                if 'CLA' in am['command_header']:
+                    cla = am['command_header']['CLA']
+                else:
+                    cla = None
+                cmd = ts_102_22x_cmdset.lookup(ins, cla)
+                if cmd:
+                    name = cmd.name.lower().replace(' ','_')
+                    by_mode[name] = sc_abbr
+                else:
+                    raise ValueError
+            else:
+                raise ValueError
+        return by_mode
+
+    def _decode_record_bin(self, raw_bin_data):
+        # we can only guess if we should decode for EF or DF here :(
+        arr_seq = DataObjectSequence('arr', sequence = [AM_DO_EF, SC_DO])
+        dec = arr_seq.decode_multi(raw_bin_data)
+        # we cannot pass the result through flatten() here, as we don't have a related
+        # 'un-flattening' decoder, and hence would be unable to encode :(
+        return dec[0]
+
+    @with_default_category('File-Specific Commands')
+    class AddlShellCommands(CommandSet):
+        def __init__(self):
+            super().__init__()
+
+        @cmd2.with_argparser(LinFixedEF.ShellCommands.read_rec_dec_parser)
+        def do_read_arr_record(self, opts):
+            """Read one EF.ARR record in flattened, human-friendly form."""
+            (data, sw) = self._cmd.rs.read_record_dec(opts.record_nr)
+            data = self._cmd.rs.selected_file.flatten(data)
+            self._cmd.poutput_json(data, opts.oneline)
+
+        @cmd2.with_argparser(LinFixedEF.ShellCommands.read_recs_dec_parser)
+        def do_read_arr_records(self, opts):
+            """Read + decode all EF.ARR records in flattened, human-friendly form."""
+            num_of_rec = self._cmd.rs.selected_file_fcp['file_descriptor']['num_of_rec']
+            # collect all results in list so they are rendered as JSON list when printing
+            data_list = []
+            for recnr in range(1, 1 + num_of_rec):
+                (data, sw) = self._cmd.rs.read_record_dec(recnr)
+                data = self._cmd.rs.selected_file.flatten(data)
+                data_list.append(data)
+            self._cmd.poutput_json(data_list, opts.oneline)
+
 
 # TS 102 221 Section 13.6
 class EF_UMPC(TransparentEF):

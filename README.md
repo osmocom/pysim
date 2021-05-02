@@ -39,11 +39,12 @@ pysim requires:
 - pytlv
 - cmd2
 - jsonpath-ng
+- bidict
 
 Example for Debian:
 
 	apt-get install python3-pyscard python3-serial python3-cmd2 python3-pip python3-yaml
-	pip3 install pytlv
+	pip3 install pytlv bidict
 
 Alternatively, everything can be installed using pip:
 
