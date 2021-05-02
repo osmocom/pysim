@@ -1216,3 +1216,69 @@ class DataObjectSequence:
             encoded += e.encode(decoded[i])
             i += 1
         return encoded
+
+class CardCommand:
+    """A single card command / instruction."""
+    def __init__(self, name, ins, cla_list=None, desc=None):
+        self.name = name
+        self.ins = ins
+        self.cla_list = cla_list or []
+        self.cla_list = [x.lower() for x in self.cla_list]
+        self.desc = desc
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return '%s(INS=%02x,CLA=%s)' % (self.name, self.ins, self.cla_list)
+
+    def match_cla(self, cla):
+        """Does the given CLA match the CLA list of the command?."""
+        if not isinstance(cla, str):
+            cla = '%02u' % cla
+        cla = cla.lower()
+        for cla_match in self.cla_list:
+            cla_masked = ""
+            for i in range(0, 2):
+                if cla_match[i] == 'x':
+                    cla_masked += 'x'
+                else:
+                    cla_masked += cla[i]
+            if cla_masked == cla_match:
+                return True
+        return False
+
+
+class CardCommandSet:
+    """A set of card instructions, typically specified within one spec."""
+    def __init__(self, name, cmds=[]):
+        self.name = name
+        self.cmds = { c.ins : c for c in cmds }
+
+    def __str__(self):
+        return self.name
+
+    def __getitem__(self, idx):
+        return self.cmds[idx]
+
+    def __add__(self, other):
+        if isinstance(other, CardCommand):
+            if other.ins in self.cmds:
+                raise ValueError('%s: INS 0x%02x already defined: %s' %
+                                 (self, other.ins, self.cmds[other.ins]))
+            self.cmds[other.ins] = other
+        elif isinstance(other, CardCommandSet):
+            for c in other.cmds.keys():
+                self.cmds[c] = other.cmds[c]
+        else:
+            raise ValueError('%s: Unsupported type to add operator: %s' % (self, other))
+
+    def lookup(self, ins, cla=None):
+        """look-up the command within the CommandSet."""
+        ins = int(ins)
+        if not ins in self.cmds:
+            return None
+        cmd = self.cmds[ins]
+        if cla and not cmd.match_cla(cla):
+            return None
+        return cmd
