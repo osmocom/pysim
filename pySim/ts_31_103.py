@@ -27,6 +27,7 @@ from pySim.utils import *
 from pySim.ts_51_011 import EF_AD, EF_SMS, EF_SMSS, EF_SMSR, EF_SMSP
 from pySim.ts_31_102 import ADF_USIM, EF_FromPreferred
 import pySim.ts_102_221
+from pySim.ts_102_221 import EF_ARR
 
 # Mapping between ISIM Service Number and its description
 EF_IST_map = {
@@ -88,11 +89,6 @@ class EF_DOMAIN(TransparentEF):
 # TS 31.103 Section 4.2.4
 class EF_IMPU(LinFixedEF):
     def __init__(self, fid='6f04', sfid=0x04, name='EF.IMPU', desc='IMS public user identity'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
-
-# TS 31.103 Section 4.2.6
-class EF_ARR(LinFixedEF):
-    def __init__(self, fid='6f06', sfid=0x06, name='EF.ARR', desc='Access Rule Reference'):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
 
 # TS 31.103 Section 4.2.7
@@ -177,7 +173,7 @@ class ADF_ISIM(CardADF):
             EF_DOMAIN(),
             EF_IMPU(),
             EF_AD(),
-            EF_ARR(),
+            EF_ARR('6f06', 0x06),
             EF_IST(),
             EF_PCSCF(),
             EF_GBABP(),
