@@ -23,6 +23,7 @@
 #
 
 from typing import Optional, Dict, Tuple
+import abc
 
 from pySim.ts_51_011 import EF, DF, EF_AD
 from pySim.ts_31_102 import EF_USIM_ADF_map
@@ -470,7 +471,7 @@ class IsimCard(Card):
 				uiari_recs += "UICC IARI: Can't read, response code = %s\n" % (sw)
 		return uiari_recs
 
-class _MagicSimBase(Card):
+class MagicSimBase(abc.ABC, Card):
 	"""
 	Theses cards uses several record based EFs to store the provider infos,
 	each possible provider uses a specific record number in each EF. The
@@ -592,7 +593,7 @@ class _MagicSimBase(Card):
 				self._scc.update_record(['3f00', '7f4d', k], n + ofs, msg)
 
 
-class SuperSim(_MagicSimBase):
+class SuperSim(MagicSimBase):
 
 	name = 'supersim'
 
@@ -605,7 +606,7 @@ class SuperSim(_MagicSimBase):
 	_ki_file = None
 
 
-class MagicSim(_MagicSimBase):
+class MagicSim(MagicSimBase):
 
 	name = 'magicsim'
 
