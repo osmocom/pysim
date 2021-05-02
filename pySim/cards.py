@@ -517,7 +517,7 @@ class MagicSimBase(abc.ABC, Card):
 		r = self._scc.select_path(['3f00', '7f4d', f[0]])
 		rec_len = int(r[-1][28:30], 16)
 		tlen = int(r[-1][4:8],16)
-		rec_cnt = (tlen / rec_len) - 1
+		rec_cnt = (tlen // rec_len) - 1
 
 		if (rec_cnt < 1) or (rec_len != f[1]):
 			raise RuntimeError('Bad card type')
@@ -647,7 +647,7 @@ class FakeMagicSim(Card):
 		r = self._scc.select_path(['3f00', '000c'])
 		rec_len = int(r[-1][28:30], 16)
 		tlen = int(r[-1][4:8],16)
-		rec_cnt = (tlen / rec_len) - 1
+		rec_cnt = (tlen // rec_len) - 1
 
 		if (rec_cnt < 1) or (rec_len != 0x5a):
 			raise RuntimeError('Bad card type')
