@@ -43,7 +43,8 @@ class ModemATCommandLink(LinkBase):
 		self.reset_card()
 
 	def __del__(self):
-		self._sl.close()
+		if hasattr(self, '_sl'):
+			self._sl.close()
 
 	def send_at_cmd(self, cmd, timeout=0.2, patience=0.002):
 		# Convert from string to bytes, if needed
