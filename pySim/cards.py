@@ -22,6 +22,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from typing import Optional, Dict, Tuple
+
 from pySim.ts_51_011 import EF, DF, EF_AD
 from pySim.ts_31_102 import EF_USIM_ADF_map
 from pySim.ts_31_103 import EF_ISIM_ADF_map
@@ -487,6 +489,9 @@ class _MagicSimBase(Card):
 	* 3f00/7f4d/8f0e : Programmable Record EFs
 
 	"""
+
+	_files = { } # type: Dict[str, Tuple[str, int, bool]]
+	_ki_file = None # type: Optional[str]
 
 	@classmethod
 	def autodetect(kls, scc):
