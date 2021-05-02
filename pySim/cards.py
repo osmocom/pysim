@@ -578,7 +578,7 @@ class _MagicSimBase(Card):
 	def erase(self):
 		# Dummy
 		df = {}
-		for k, v in self._files.iteritems():
+		for k, v in self._files.items():
 			ofs = 1
 			fv = v[1] * 'ff'
 			if k == 'name':
@@ -588,7 +588,7 @@ class _MagicSimBase(Card):
 
 		# Write
 		for n in range(0,self._get_count()):
-			for k, (msg, ofs) in df.iteritems():
+			for k, (msg, ofs) in df.items():
 				self._scc.update_record(['3f00', '7f4d', k], n + ofs, msg)
 
 
