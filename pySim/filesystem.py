@@ -659,8 +659,7 @@ class LinFixedEF(CardEF):
         def do_edit_record_decoded(self, opts):
             """Edit the JSON representation of one record in an editor."""
             (orig_json, sw) = self._cmd.rs.read_record_dec(opts.record_nr)
-            dirname = tempfile.mkdtemp(prefix='pysim_')
-            try:
+            with tempfile.TemporaryDirectory(prefix='pysim_') as dirname:
                 filename = '%s/file' % dirname
                 # write existing data as JSON to file
                 with open(filename, 'w') as text_file:
@@ -675,8 +674,6 @@ class LinFixedEF(CardEF):
                     (data, sw) = self._cmd.rs.update_record_dec(opts.record_nr, edited_json)
                     if data:
                         self._cmd.poutput_json(data)
-            finally:
-                shutil.rmtree(dirname)
 
 
     def __init__(self, fid:str, sfid:str=None, name:str=None, desc:str=None,
