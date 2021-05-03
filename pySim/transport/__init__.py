@@ -52,6 +52,7 @@ class LinkBase(abc.ABC):
 		"""Set an (optional) status word interpreter."""
 		self.sw_interpreter = interp
 
+	@abc.abstractmethod
 	def wait_for_card(self, timeout:int=None, newcardonly:bool=False):
 		"""Wait for a card and connect to it
 
@@ -59,22 +60,21 @@ class LinkBase(abc.ABC):
 		   timeout : Maximum wait time in seconds (None=no timeout)
 		   newcardonly : Should we wait for a new card, or an already inserted one ?
 		"""
-		pass
 
+	@abc.abstractmethod
 	def connect(self):
 		"""Connect to a card immediately
 		"""
-		pass
 
+	@abc.abstractmethod
 	def disconnect(self):
 		"""Disconnect from card
 		"""
-		pass
 
+	@abc.abstractmethod
 	def reset_card(self):
 		"""Resets the card (power down/up)
 		"""
-		pass
 
 	def send_apdu_raw(self, pdu:str):
 		"""Sends an APDU with minimal processing
