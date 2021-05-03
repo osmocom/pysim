@@ -34,7 +34,7 @@ import argparse
 
 from typing import cast, Optional, Iterable, List, Any, Dict, Tuple
 
-from pySim.utils import sw_match, h2b, b2h, is_hex, auto_int, bertlv_parse_one
+from pySim.utils import sw_match, h2b, b2h, i2h, is_hex, auto_int, bertlv_parse_one, Hexstr
 from pySim.construct import filter_dict
 from pySim.exceptions import *
 from pySim.jsonpath import js_path_find, js_path_modify
@@ -1019,6 +1019,17 @@ class RuntimeState(object):
         else:
             print("error: could not determine card applications")
         return apps_taken
+
+    def reset(self, cmd_app=None) -> Hexstr:
+        """Perform physical card reset and obtain ATR.
+        Args:
+            cmd_app : Command Application State (for unregistering old file commands)
+        """
+        self.card._scc._tp.reset_card()
+        atr = i2h(self.card._scc._tp.get_atr())
+        # select MF to reset internal state and to verify card really works
+        self.select('MF', cmd_app)
+        return atr
 
     def get_cwd(self) -> CardDF:
         """Obtain the current working directory.

@@ -313,6 +313,12 @@ class PySimCommands(CommandSet):
 		elif context['DF_SKIP']:
 			raise RuntimeError("unable to export %i dedicated files(s)" % context['ERR'])
 
+	def do_reset(self, opts):
+		"""Reset the Card."""
+		atr = self._cmd.rs.reset(self._cmd)
+		self._cmd.poutput('Card ATR: %s' % atr)
+		self._cmd.update_prompt()
+
 
 @with_default_category('ISO7816 Commands')
 class Iso7816Commands(CommandSet):

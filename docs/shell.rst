@@ -193,6 +193,12 @@ verify_adm
 FIXME
 
 
+reset
+~~~~~
+
+Perform card reset and display the card ATR.
+
+
 Linear Fixed EF commands
 ------------------------
 
