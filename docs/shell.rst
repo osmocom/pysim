@@ -185,12 +185,19 @@ export
 
 tree
 ~~~~
-FIXME
+
+Display a tree of the card filesystem.  It is important to note that this displays a tree
+of files that might potentially exist (based on the card profile).  In order to determine if
+a given file really exists on a given card, you have to try to select that file.
 
 
 verify_adm
 ~~~~~~~~~~
-FIXME
+
+Verify the ADM (Administrator) PIN specified as argument.  This is typically needed in order
+to get write/update permissions to most of the files on SIM cards.
+
+Currently only ADM1 is supported.
 
 
 reset
