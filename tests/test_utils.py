@@ -152,5 +152,29 @@ class DecTestCase(unittest.TestCase):
 		msisdn_decoded = utils.dec_msisdn("ffffffffffffffffffffffffffffffffffffffff0bb121436587092143658709ffff")
 		self.assertEqual(msisdn_decoded, (1, 3, "12345678901234567890"))
 
+class TestBerTlv(unittest.TestCase):
+    def test_BerTlvTagDec(self):
+        res = utils.bertlv_parse_tag(b'\x01')
+        self.assertEqual(res, ({'tag':1, 'constructed':False, 'class': 0}, b''))
+        res = utils.bertlv_parse_tag(b'\x21')
+        self.assertEqual(res, ({'tag':1, 'constructed':True, 'class': 0}, b''))
+        res = utils.bertlv_parse_tag(b'\x81\x23')
+        self.assertEqual(res, ({'tag':1, 'constructed':False, 'class': 2}, b'\x23'))
+        res = utils.bertlv_parse_tag(b'\x1f\x8f\x00\x23')
+        self.assertEqual(res, ({'tag':0xf<<7, 'constructed':False, 'class': 0}, b'\x23'))
+
+    def test_BerTlvLenDec(self):
+        self.assertEqual(utils.bertlv_encode_len(1), b'\x01')
+        self.assertEqual(utils.bertlv_encode_len(127), b'\x7f')
+        self.assertEqual(utils.bertlv_encode_len(128), b'\x81\x80')
+        self.assertEqual(utils.bertlv_encode_len(0x123456), b'\x83\x12\x34\x56')
+
+    def test_BerTlvLenEnc(self):
+        self.assertEqual(utils.bertlv_parse_len(b'\x01\x23'), (1, b'\x23'))
+        self.assertEqual(utils.bertlv_parse_len(b'\x7f'), (127, b''))
+        self.assertEqual(utils.bertlv_parse_len(b'\x81\x80'), (128, b''))
+        self.assertEqual(utils.bertlv_parse_len(b'\x83\x12\x34\x56\x78'), (0x123456, b'\x78'))
+
+
 if __name__ == "__main__":
 	unittest.main()

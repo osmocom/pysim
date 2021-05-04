@@ -132,7 +132,7 @@ def bertlv_parse_len(binary:bytes) -> Tuple[int, bytes]:
 		for i in range(1, 1+num_len_oct):
 			length <<= 8
 			length |= binary[i]
-		return (length, binary[num_len_oct:])
+		return (length, binary[1+num_len_oct:])
 
 def bertlv_encode_len(length:int) -> bytes:
 	"""Encode a single Length value according to ITU-T X.690 8.1.3;
