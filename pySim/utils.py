@@ -90,6 +90,50 @@ def half_round_up(n:int) -> int:
 	return (n + 1)//2
 
 #########################################################################
+# poor man's COMPREHENSION-TLV decoder.
+#########################################################################
+
+def comprehensiontlv_parse_tag(binary:bytes) -> Tuple[dict, bytes]:
+    """Parse a single Tag according to ETSI TS 101 220 Section 7.1.1"""
+    if binary[0] in [0x00, 0x80, 0xff]:
+        raise ValueError("Found illegal value 0x%02x in %s" % (binary[0], binary))
+    if binary[0] == 0x7f:
+        # three-byte tag
+        tag = (binary[1] & 0x7f) << 8
+        tag |= binary[2]
+        compr = True if binary[1] & 0x80 else False
+        return ({'comprehension': compr, 'tag': tag}, binary[3:])
+    else:
+        # single byte tag
+        tag = binary[0] & 0x7f
+        compr = True if binary[0] & 0x80 else False
+        return ({'comprehension': compr, 'tag': tag}, binary[1:])
+
+def comprehensiontlv_encode_tag(tag) -> bytes:
+    """Encode a single Tag according to ETSI TS 101 220 Section 7.1.1"""
+    # permit caller to specify tag also as integer value
+    if isinstance(tag, int):
+        compr = True if tag < 0xff and tag & 0x80 else False
+        tag = {'tag': tag, 'comprehension': compr}
+    compr = tag.get('comprehension', False)
+    if tag['tag'] in [0x00, 0x80, 0xff] or tag['tag'] > 0xff:
+        # 3-byte format
+        byte3 = tag['tag'] & 0xff;
+        byte2 = (tag['tag'] >> 8) & 0x7f
+        if compr:
+            byte2 |= 0x80
+        return b'\x7f' + byte2.to_bytes(1, 'big') + byte3.to_bytes(1, 'big')
+    else:
+        # 1-byte format
+        ret = tag['tag']
+        if compr:
+            ret |= 0x80
+        return ret.to_bytes(1, 'big')
+
+# length value coding is equal to BER-TLV
+
+
+#########################################################################
 # poor man's BER-TLV decoder. To be a more sophisticated OO library later
 #########################################################################
 

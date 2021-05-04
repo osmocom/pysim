@@ -179,6 +179,28 @@ class TestBerTlv(unittest.TestCase):
         res = utils.bertlv_parse_one(b'\x81\x01\x01');
         self.assertEqual(res, ({'tag':1, 'constructed':False, 'class':2}, 1, b'\x01', b''))
 
+class TestComprTlv(unittest.TestCase):
+    def test_ComprTlvTagDec(self):
+        res = utils.comprehensiontlv_parse_tag(b'\x12\x23')
+        self.assertEqual(res, ({'tag': 0x12, 'comprehension': False}, b'\x23'))
+        res = utils.comprehensiontlv_parse_tag(b'\x92')
+        self.assertEqual(res, ({'tag': 0x12, 'comprehension': True}, b''))
+        res = utils.comprehensiontlv_parse_tag(b'\x7f\x12\x34')
+        self.assertEqual(res, ({'tag': 0x1234, 'comprehension': False}, b''))
+        res = utils.comprehensiontlv_parse_tag(b'\x7f\x82\x34\x56')
+        self.assertEqual(res, ({'tag': 0x234, 'comprehension': True}, b'\x56'))
+
+    def test_ComprTlvTagEnc(self):
+        res  = utils.comprehensiontlv_encode_tag(0x12)
+        self.assertEqual(res, b'\x12')
+        res  = utils.comprehensiontlv_encode_tag({'tag': 0x12})
+        self.assertEqual(res, b'\x12')
+        res  = utils.comprehensiontlv_encode_tag({'tag': 0x12, 'comprehension':True})
+        self.assertEqual(res, b'\x92')
+        res  = utils.comprehensiontlv_encode_tag(0x1234)
+        self.assertEqual(res, b'\x7f\x12\x34')
+        res  = utils.comprehensiontlv_encode_tag({'tag': 0x1234, 'comprehension':True})
+        self.assertEqual(res, b'\x7f\x92\x34')
 
 if __name__ == "__main__":
 	unittest.main()
