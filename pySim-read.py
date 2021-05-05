@@ -34,7 +34,7 @@ from pySim.ts_31_103 import EF_IST_map, EF_ISIM_ADF_map
 
 from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, argparse_add_reader_args
-from pySim.cards import card_detect, Card, UsimCard, IsimCard
+from pySim.cards import card_detect, SimCard, UsimCard, IsimCard
 from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn
 from pySim.utils import format_xplmn_w_act, dec_st
 from pySim.utils import h2s, format_ePDGSelection
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 	print("Reading ...")
 
 	# Initialize Card object by auto detecting the card
-	card = card_detect("auto", scc) or Card(scc)
+	card = card_detect("auto", scc) or SimCard(scc)
 
 	# Read all AIDs on the UICC
 	card.read_aids()

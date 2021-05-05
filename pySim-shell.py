@@ -37,7 +37,7 @@ from pySim.ts_31_103 import EF_IST_map, EF_ISIM_ADF_map
 from pySim.exceptions import *
 from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args
-from pySim.cards import card_detect, Card
+from pySim.cards import card_detect, SimCard
 from pySim.utils import h2b, swap_nibbles, rpad, b2h, h2s, JsonEncoder, bertlv_parse_one
 from pySim.utils import dec_st, sanitize_pin_adm, tabulate_str_list, is_hex, boxed_heading_str
 from pySim.card_handler import card_handler

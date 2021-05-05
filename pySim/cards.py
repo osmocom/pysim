@@ -50,7 +50,7 @@ def format_addr(addr:str, addr_type:str) -> str:
 		res += "\t%s # %s\n" % (addr_hex, addr)
 	return res
 
-class Card(object):
+class SimCard(object):
 
 	name = 'SIM'
 
@@ -310,7 +310,7 @@ class Card(object):
 		len = self._scc.record_size(ef)
 		self._scc.update_record(ef, rec_no, "ff" * len, force_len=False, verify=True)
 
-class UsimCard(Card):
+class UsimCard(SimCard):
 
 	name = 'USIM'
 
@@ -388,7 +388,7 @@ class UsimCard(Card):
 			(res, sw) = self._scc.update_binary(EF_USIM_ADF_map['UST'], content)
 		return sw
 
-class IsimCard(Card):
+class IsimCard(SimCard):
 
 	name = 'ISIM'
 
@@ -516,7 +516,7 @@ class IsimCard(Card):
 				uiari_recs += "UICC IARI: Can't read, response code = %s\n" % (sw)
 		return uiari_recs
 
-class MagicSimBase(abc.ABC, Card):
+class MagicSimBase(abc.ABC, SimCard):
 	"""
 	Theses cards uses several record based EFs to store the provider infos,
 	each possible provider uses a specific record number in each EF. The
@@ -664,7 +664,7 @@ class MagicSim(MagicSimBase):
 	_ki_file = '6f1b'
 
 
-class FakeMagicSim(Card):
+class FakeMagicSim(SimCard):
 	"""
 	Theses cards have a record based EF 3f00/000c that contains the provider
 	information. See the program method for its format. The records go from
@@ -731,7 +731,7 @@ class FakeMagicSim(Card):
 			self._scc.update_record('000c', 1+i, entry)
 
 
-class GrcardSim(Card):
+class GrcardSim(SimCard):
 	"""
 	Greencard (grcard.cn) HZCOS GSM SIM
 	These cards have a much more regular ISO 7816-4 / TS 11.11 structure,
@@ -834,7 +834,7 @@ class SysmoUSIMgr1(UsimCard):
 		data, sw = self._scc._tp.send_apdu_checksw("0099000033" + par)
 
 
-class SysmoSIMgr2(Card):
+class SysmoSIMgr2(SimCard):
 	"""
 	sysmocom sysmoSIM-GR2
 	"""
@@ -1157,7 +1157,7 @@ class FairwavesSIM(UsimCard):
 			if sw != '9000':
 				print("Programming ACC failed with code %s"%sw)
 
-class OpenCellsSim(Card):
+class OpenCellsSim(SimCard):
 	"""
 	OpenCellsSim
 
