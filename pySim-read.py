@@ -71,7 +71,7 @@ if __name__ == '__main__':
 		scc.cla_byte = "a0"
 		scc.sel_ctrl = "0000"
 
-	# Program the card
+	# Read the card
 	print("Reading ...")
 
 	# Initialize Card object by auto detecting the card
