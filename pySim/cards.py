@@ -34,6 +34,8 @@ from pytlv.TLV import *
 
 class Card(object):
 
+	name = 'SIM'
+
 	def __init__(self, scc):
 		self._scc = scc
 		self._adm_chv_num = 4
@@ -291,6 +293,9 @@ class Card(object):
 		self._scc.update_record(ef, rec_no, "ff" * len, force_len=False, verify=True)
 
 class UsimCard(Card):
+
+	name = 'USIM'
+
 	def __init__(self, ssc):
 		super(UsimCard, self).__init__(ssc)
 
@@ -361,6 +366,9 @@ class UsimCard(Card):
 		return sw
 
 class IsimCard(Card):
+
+	name = 'ISIM'
+
 	def __init__(self, ssc):
 		super(IsimCard, self).__init__(ssc)
 
