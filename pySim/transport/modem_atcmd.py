@@ -67,12 +67,16 @@ class ModemATCommandLink(LinkBase):
 		t_start = time.time()
 		while True:
 			rsp = rsp + self._sl.read(self._sl.in_waiting)
-			if rsp.endswith(b'OK\r\n'):
-				log.debug('Command finished with result: OK')
-				break
-			if rsp.endswith(b'ERROR\r\n'):
-				log.error('Command finished with result: ERROR')
-				break
+			lines = rsp.split(b'\r\n')
+			if len(lines) >= 2:
+				res = lines[-2]
+				if res == b'OK':
+					log.debug('Command finished with result: %s', res)
+					break
+				if res == b'ERROR' or res.startswith(b'+CME ERROR:'):
+					log.error('Command failed with result: %s', res)
+					break
+
 			if time.time() - t_start >= timeout:
 				log.info('Command finished with timeout >= %ss', timeout)
 				break
