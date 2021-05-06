@@ -182,6 +182,8 @@ def fixup_fcp_proprietary_tlv_map(tlv_map):
     for i in range(0xc0, 0xff):
         i_hex = i2h([i]).upper()
         tlv_map[i_hex] = 'proprietary_' + i_hex
+    # Other non-standard TLV objects found on some cards
+    tlv_map['9B'] = 'target_ef' # for sysmoUSIM-SJS1
 
 
 def tlv_key_replace(inmap, indata):
