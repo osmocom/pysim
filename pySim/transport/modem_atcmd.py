@@ -71,10 +71,10 @@ class ModemATCommandLink(LinkBase):
 				log.debug('Command finished with result: OK')
 				break
 			if rsp.endswith(b'ERROR\r\n'):
-				log.debug('Command finished with result: ERROR')
+				log.error('Command finished with result: ERROR')
 				break
 			if time.time() - t_start >= timeout:
-				log.debug('Command finished with timeout >= %ss', timeout)
+				log.info('Command finished with timeout >= %ss', timeout)
 				break
 			time.sleep(patience)
 			its += 1
@@ -137,6 +137,7 @@ class ModemATCommandLink(LinkBase):
 
 		# Prepare the command as described in 8.17
 		cmd = 'AT+CSIM=%d,\"%s\"' % (len(pdu), pdu)
+		log.debug('Sending command: %s',  cmd)
 
 		# Send AT+CSIM command to the modem
 		# TODO: also handle +CME ERROR: <err>
@@ -155,4 +156,5 @@ class ModemATCommandLink(LinkBase):
 		# TODO: make sure we have at least SW
 		data = rsp_pdu[:-4].decode().lower()
 		sw   = rsp_pdu[-4:].decode().lower()
+		log.debug('Command response: %s, %s',  data, sw)
 		return data, sw
