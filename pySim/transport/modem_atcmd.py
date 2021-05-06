@@ -153,6 +153,6 @@ class ModemATCommandLink(LinkBase):
 			raise ReaderError('Failed to parse response from modem: %s' % rsp)
 
 		# TODO: make sure we have at least SW
-		data = rsp_pdu[:-4].decode()
-		sw   = rsp_pdu[-4:].decode()
+		data = rsp_pdu[:-4].decode().lower()
+		sw   = rsp_pdu[-4:].decode().lower()
 		return data, sw
