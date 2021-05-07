@@ -323,7 +323,7 @@ from pySim.utils import *
 from struct import pack, unpack
 from construct import *
 from construct import Optional as COptional
-from pySim.construct import HexAdapter, BcdAdapter, FlagRFU, ByteRFU, GreedyBytesRFU, BitsRFU, BytesRFU
+from pySim.construct import *
 import enum
 
 from pySim.filesystem import *
@@ -519,11 +519,14 @@ class EF_ServiceTable(TransparentEF):
 class EF_SPN(TransparentEF):
     def __init__(self, fid='6f46', sfid=None, name='EF.SPN', desc='Service Provider Name', size={17,17}):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
-    def _decode_hex(self, raw_hex):
-        return {'spn': dec_spn(raw_hex)}
-    def _encode_hex(self, abstract):
-        spn = abstract['spn']
-        return enc_spn(spn[0], spn[1], spn[2])
+        self._construct = BitStruct(
+            # Byte 1
+            'rfu'/BitsRFU(6),
+            'hide_in_oplmn'/Flag,
+            'show_in_hplmn'/Flag,
+            # Bytes 2..17
+            'spn'/Bytewise(GsmString(16))
+        )
 
 # TS 51.011 Section 10.3.13
 class EF_CBMI(TransRecEF):

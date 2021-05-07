@@ -16,6 +16,7 @@ setup(
         "jsonpath-ng",
         "construct >= 2.9",
         "bidict",
+        "gsm0338",
     ],
     scripts=[
         'pySim-prog.py',

@@ -1,5 +1,6 @@
 from construct import *
 from pySim.utils import b2h, h2b, swap_nibbles
+import gsm0338
 
 """Utility code related to the integration of the 'construct' declarative parser."""
 
@@ -32,6 +33,42 @@ class BcdAdapter(Adapter):
         return swap_nibbles(b2h(obj))
     def _encode(self, obj, context, path):
         return h2b(swap_nibbles(obj))
+
+class Rpad(Adapter):
+    """
+    Encoder appends padding bytes (b'\\xff') up to target size.
+    Decoder removes trailing padding bytes.
+
+    Parameters:
+        subcon: Subconstruct as defined by construct library
+        pattern: set padding pattern (default: b'\\xff')
+    """
+
+    def __init__(self, subcon, pattern=b'\xff'):
+        super().__init__(subcon)
+        self.pattern = pattern
+
+    def _decode(self, obj, context, path):
+        return obj.rstrip(self.pattern)
+
+    def _encode(self, obj, context, path):
+        if len(obj) > self.sizeof():
+            raise SizeofError("Input ({}) exceeds target size ({})".format(len(obj), self.sizeof()))
+        return obj + self.pattern * (self.sizeof() - len(obj))
+
+class GsmStringAdapter(Adapter):
+    """Convert GSM 03.38 encoded bytes to a string."""
+
+    def __init__(self, subcon, codec='gsm03.38', err='strict'):
+        super().__init__(subcon)
+        self.codec = codec
+        self.err = err
+
+    def _decode(self, obj, context, path):
+        return obj.decode(self.codec)
+
+    def _encode(self, obj, context, path):
+        return obj.encode(self.codec, self.err)
 
 def filter_dict(d, exclude_prefix='_'):
     """filter the input dict to ensure no keys starting with 'exclude_prefix' remain."""
@@ -88,3 +125,17 @@ def BytesRFU(n=1):
         n (Integer): Number of bytes (default: 1)
     '''
     return Default(Bytes(n), __RFU_VALUE)
+
+def GsmString(n):
+    '''
+    GSM 03.38 encoded byte string of fixed length n.
+    Encoder appends padding bytes (b'\\xff') to maintain
+    length. Decoder removes those trailing bytes.
+
+    Exceptions are raised for invalid characters
+    and length excess.
+
+    Parameters:
+        n (Integer): Fixed length of the encoded byte string
+    '''
+    return GsmStringAdapter(Rpad(Bytes(n), pattern=b'\xff'), codec='gsm03.38')

@@ -25,7 +25,7 @@
 from typing import Optional, Dict, Tuple
 import abc
 
-from pySim.ts_51_011 import EF, DF, EF_AD
+from pySim.ts_51_011 import EF, DF, EF_AD, EF_SPN
 from pySim.ts_31_102 import EF_USIM_ADF_map
 from pySim.ts_31_103 import EF_ISIM_ADF_map
 from pySim.utils import *
@@ -203,15 +203,24 @@ class Card(object):
 		return sw
 
 	def read_spn(self):
-		(spn, sw) = self._scc.read_binary(EF['SPN'])
+		(content, sw) = self._scc.read_binary(EF['SPN'])
 		if sw == '9000':
-			return (dec_spn(spn), sw)
+			abstract_data = EF_SPN().decode_hex(content)
+			show_in_hplmn = abstract_data['show_in_hplmn']
+			hide_in_oplmn = abstract_data['hide_in_oplmn']
+			name = abstract_data['spn']
+			return ((name, show_in_hplmn, hide_in_oplmn), sw)
 		else:
 			return (None, sw)
 
-	def update_spn(self, name, hplmn_disp=False, oplmn_disp=False):
-		content = enc_spn(name, hplmn_disp, oplmn_disp)
-		data, sw = self._scc.update_binary(EF['SPN'], rpad(content, 32))
+	def update_spn(self, name="", show_in_hplmn=False, hide_in_oplmn=False):
+		abstract_data = {
+			'hide_in_oplmn' : hide_in_oplmn,
+			'show_in_hplmn' : show_in_hplmn,
+			'spn' : name,
+		}
+		content = EF_SPN().encode_hex(abstract_data)
+		data, sw = self._scc.update_binary(EF['SPN'], content)
 		return sw
 
 	def read_binary(self, ef, length=None, offset=0):
@@ -915,8 +924,7 @@ class SysmoUSIMSJS1(UsimCard):
 
 		# set Service Provider Name
 		if p.get('name') is not None:
-			content = enc_spn(p['name'], True, True)
-			data, sw = self._scc.update_binary('6F46', rpad(content, 32))
+			self.update_spn(p['name'], True, True)
 
 		if p.get('acc') is not None:
 			self.update_acc(p['acc'])
@@ -1310,8 +1318,7 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 
 		# set Service Provider Name
 		if p.get('name') is not None:
-			content = enc_spn(p['name'], True, True)
-			data, sw = self._scc.update_binary('6F46', rpad(content, 32))
+			self.update_spn(p['name'], True, True)
 
 		# write EF.IMSI
 		if p.get('imsi'):
