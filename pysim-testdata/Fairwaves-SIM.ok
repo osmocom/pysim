@@ -7,8 +7,8 @@ GID1: ffffffffffffffff
 GID2: ffffffffffffffff
 SMSP: e1ffffffffffffffffffffffff0581005155f5ffffffffffff000000ffffffffffffffffffffffffffff
 SPN: Fairwaves
-Display HPLMN: False
-Display OPLMN: False
+Show in HPLMN: False
+Hide in OPLMN: False
 PLMNsel: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 PLMNwAcT:
 	ffffff0000 # unused

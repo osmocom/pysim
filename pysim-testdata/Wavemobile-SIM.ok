@@ -7,8 +7,8 @@ GID1: Can't read file -- SW match failed! Expected 9000 and got 6a82.
 GID2: Can't read file -- SW match failed! Expected 9000 and got 6a82.
 SMSP: e1ffffffffffffffffffffffff0581005155f5ffffffffffff000000ffffffffffffffffffffffffffff
 SPN: wavemobile
-Display HPLMN: False
-Display OPLMN: False
+Show in HPLMN: False
+Hide in OPLMN: False
 PLMNsel: 00f110ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 PLMNwAcT:
 	00f110ffff # MCC: 001 MNC: 01 AcT: UTRAN, E-UTRAN WB-S1, E-UTRAN NB-S1, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT

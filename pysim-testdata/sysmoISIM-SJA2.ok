@@ -7,8 +7,8 @@ GID1: ffffffffffffffffffff
 GID2: ffffffffffffffffffff
 SMSP: ffffffffffffffffffffffffffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff000000
 SPN: Magic
-Display HPLMN: True
-Display OPLMN: True
+Show in HPLMN: True
+Hide in OPLMN: True
 PLMNsel: 00f110ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 PLMNwAcT:
 	00f110ffff # MCC: 001 MNC: 01 AcT: UTRAN, E-UTRAN WB-S1, E-UTRAN NB-S1, GSM, GSM COMPACT, cdma2000 HRPD, cdma2000 1xRTT

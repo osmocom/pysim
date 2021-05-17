@@ -126,8 +126,8 @@ if __name__ == '__main__':
 		(res, sw) = card.read_spn()
 		if sw == '9000':
 			print("SPN: %s" % (res[0] or "Not available"))
-			print("Display HPLMN: %s" % (res[1],))
-			print("Display OPLMN: %s" % (res[2],))
+			print("Show in HPLMN: %s" % (res[1],))
+			print("Hide in OPLMN: %s" % (res[2],))
 		else:
 			print("SPN: Can't read, response code = %s" % (sw,))
 	except Exception as e:
