@@ -19,10 +19,10 @@
 
 from smartcard.CardConnection import CardConnection
 from smartcard.CardRequest import CardRequest
-from smartcard.Exceptions import NoCardException, CardRequestTimeoutException, CardConnectionException
+from smartcard.Exceptions import NoCardException, CardRequestTimeoutException, CardConnectionException, CardConnectionException
 from smartcard.System import readers
 
-from pySim.exceptions import NoCardError, ProtocolError
+from pySim.exceptions import NoCardError, ProtocolError, ReaderError
 from pySim.transport import LinkBase
 from pySim.utils import h2i, i2h
 
@@ -33,6 +33,8 @@ class PcscSimLink(LinkBase):
 	def __init__(self, reader_number:int=0, **kwargs):
 		super().__init__(**kwargs)
 		r = readers()
+		if reader_number >= len(r):
+			raise ReaderError
 		self._reader = r[reader_number]
 		self._con = self._reader.createConnection()
 
