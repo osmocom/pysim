@@ -175,6 +175,10 @@ class TestBerTlv(unittest.TestCase):
         self.assertEqual(utils.bertlv_parse_len(b'\x81\x80'), (128, b''))
         self.assertEqual(utils.bertlv_parse_len(b'\x83\x12\x34\x56\x78'), (0x123456, b'\x78'))
 
+    def test_BerTlvParseOne(self):
+        res = utils.bertlv_parse_one(b'\x81\x01\x01');
+        self.assertEqual(res, ({'tag':1, 'constructed':False, 'class':2}, 1, b'\x01', b''))
+
 
 if __name__ == "__main__":
 	unittest.main()
