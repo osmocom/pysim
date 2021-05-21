@@ -265,7 +265,7 @@ class PySimCommands(CommandSet):
 				tags = self._cmd.rs.retrieve_tags()
 				for t in tags:
 					result = self._cmd.rs.retrieve_data(t)
-					(tag, l, val) = bertlv_parse_one(h2b(result[0]))
+					(tag, l, val, remainer) = bertlv_parse_one(h2b(result[0]))
 					self._cmd.poutput("set_data 0x%02x %s" % (t, b2h(val)))
 			else:
 				raise RuntimeError('Unsupported structure "%s" of file "%s"' % (structure, filename))

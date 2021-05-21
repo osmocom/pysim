@@ -155,7 +155,7 @@ def bertlv_encode_len(length:int) -> bytes:
 	else:
 		raise ValueError("Length > 32bits not supported")
 
-def bertlv_parse_one(binary:bytes) -> (dict, int, bytes):
+def bertlv_parse_one(binary:bytes) -> (dict, int, bytes, bytes):
 	"""Parse a single TLV IE at the start of the given binary data.
 	Args:
 		binary : binary input data of BER-TLV length field
@@ -164,7 +164,9 @@ def bertlv_parse_one(binary:bytes) -> (dict, int, bytes):
 	"""
 	(tagdict, remainder) = bertlv_parse_tag(binary)
 	(length, remainder) = bertlv_parse_len(remainder)
-	return (tagdict, length, remainder)
+	value = remainder[:length]
+	remainder = remainder[length:]
+	return (tagdict, length, value, remainder)
 
 
 

@@ -1260,7 +1260,7 @@ class RuntimeState(object):
         if not isinstance(self.selected_file, BerTlvEF):
             raise TypeError("Only works with BER-TLV EF")
         data, sw = self.card._scc.retrieve_data(self.selected_file.fid, 0x5c)
-        tag, length, value = bertlv_parse_one(h2b(data))
+        tag, length, value, remainder = bertlv_parse_one(h2b(data))
         return list(value)
 
     def set_data(self, tag:int, data_hex:str):
