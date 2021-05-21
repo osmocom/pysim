@@ -359,7 +359,7 @@ class SimCardCommands(object):
 			p2 = '81'
 		elif context == 'gsm':
 			p2 = '80'
-		(data, sw) = self._tp.send_apdu_constr(self.cla_byte, '88', '00', p2, AuthCmd3G, cmd_data, AuthResp3G)
+		(data, sw) = self._tp.send_apdu_constr_checksw(self.cla_byte, '88', '00', p2, AuthCmd3G, cmd_data, AuthResp3G)
 		if 'auts' in data:
 			ret = {'synchronisation_failure': data}
 		else:
