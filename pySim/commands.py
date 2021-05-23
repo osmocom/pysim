@@ -29,7 +29,7 @@ from pySim.exceptions import SwMatchError
 class SimCardCommands(object):
 	def __init__(self, transport):
 		self._tp = transport
-		self._cla_byte = "a0"
+		self.cla_byte = "a0"
 		self.sel_ctrl = "0000"
 
 	# Extract a single FCP item from TLV
@@ -88,13 +88,6 @@ class SimCardCommands(object):
 	def get_atr(self) -> str:
 		"""Return the ATR of the currently inserted card."""
 		return self._tp.get_atr()
-
-	@property
-	def cla_byte(self):
-		return self._cla_byte
-	@cla_byte.setter
-	def cla_byte(self, value):
-		self._cla_byte = value
 
 	def try_select_path(self, dir_list):
 		""" Try to select a specified path given as list of hex-string FIDs"""
