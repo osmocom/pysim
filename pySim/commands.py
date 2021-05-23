@@ -96,13 +96,6 @@ class SimCardCommands(object):
 	def cla_byte(self, value):
 		self._cla_byte = value
 
-	@property
-	def sel_ctrl(self):
-		return self._sel_ctrl
-	@sel_ctrl.setter
-	def sel_ctrl(self, value):
-		self._sel_ctrl = value
-
 	def try_select_path(self, dir_list):
 		""" Try to select a specified path given as list of hex-string FIDs"""
 		rv = []
