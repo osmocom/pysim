@@ -212,6 +212,51 @@ def bertlv_parse_tag(binary:bytes) -> Tuple[dict, bytes]:
 			i += 1
 		return ({'class':cls, 'constructed':constructed, 'tag':tag}, binary[i:])
 
+def bertlv_encode_tag(t) -> bytes:
+    """Encode a single Tag value according to ITU-T X.690 8.1.2
+    """
+    def get_top7_bits(inp:int) -> Tuple[int, int]:
+        """Get top 7 bits of integer. Returns those 7 bits as integer and the remaining LSBs."""
+        remain_bits = inp.bit_length()
+        if remain_bits >= 7:
+            bitcnt = 7
+        else:
+            bitcnt = remain_bits
+        outp = inp >> (remain_bits - bitcnt)
+        remainder = inp & ~ (inp << (remain_bits - bitcnt))
+        return outp, remainder
+
+    if isinstance(t, int):
+        # FIXME: multiple byte tags
+        tag = t & 0x1f
+        constructed = True if t & 0x20 else False
+        cls = t >> 6
+    else:
+        tag = t['tag']
+        constructed = t['constructed']
+        cls = t['class']
+    if tag <= 30:
+        t = tag & 0x1f
+        if constructed:
+            t |= 0x20
+        t |= (cls & 3) << 6
+        return bytes([t])
+    else: # multi-byte tag
+        t = 0x1f;
+        if constructed:
+            t |= 0x20
+        t |= (cls & 3) << 6
+        tag_bytes = bytes([t])
+        remain = tag
+        while True:
+            t, remain = get_top7_bits(remain)
+            if remain:
+                t |= 0x80
+            tag_bytes += bytes([t])
+            if not remain:
+                break
+        return tag_bytes
+
 def bertlv_parse_len(binary:bytes) -> Tuple[int, bytes]:
 	"""Parse a single Length value according to ITU-T X.690 8.1.3;
 	only the definite form is supported here.
