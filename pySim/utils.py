@@ -93,6 +93,21 @@ def half_round_up(n:int) -> int:
 # poor man's COMPREHENSION-TLV decoder.
 #########################################################################
 
+def comprehensiontlv_parse_tag_raw(binary:bytes) -> Tuple[int, bytes]:
+    """Parse a single Tag according to ETSI TS 101 220 Section 7.1.1"""
+    if binary[0] in [0x00, 0x80, 0xff]:
+        raise ValueError("Found illegal value 0x%02x in %s" % (binary[0], binary))
+    if binary[0] == 0x7f:
+        # three-byte tag
+        tag = binary[0] << 16 | binary[1] << 8 | binary[2]
+        return (tag, binary[3:])
+    elif binary[0] == 0xff:
+        return None, binary
+    else:
+        # single byte tag
+        tag = binary[0]
+        return (tag, binary[1:])
+
 def comprehensiontlv_parse_tag(binary:bytes) -> Tuple[dict, bytes]:
     """Parse a single Tag according to ETSI TS 101 220 Section 7.1.1"""
     if binary[0] in [0x00, 0x80, 0xff]:
@@ -132,10 +147,47 @@ def comprehensiontlv_encode_tag(tag) -> bytes:
 
 # length value coding is equal to BER-TLV
 
+def comprehensiontlv_parse_one(binary:bytes) -> (dict, int, bytes, bytes):
+	"""Parse a single TLV IE at the start of the given binary data.
+	Args:
+		binary : binary input data of BER-TLV length field
+	Returns:
+		Tuple of (tag:dict, len:int, remainder:bytes)
+	"""
+	(tagdict, remainder) = comprehensiontlv_parse_tag(binary)
+	(length, remainder) = bertlv_parse_len(remainder)
+	value = remainder[:length]
+	remainder = remainder[length:]
+	return (tagdict, length, value, remainder)
+
+
 
 #########################################################################
 # poor man's BER-TLV decoder. To be a more sophisticated OO library later
 #########################################################################
+
+def bertlv_parse_tag_raw(binary:bytes) -> Tuple[int, bytes]:
+	"""Get a single raw Tag from start of input according to ITU-T X.690 8.1.2
+	Args:
+		binary : binary input data of BER-TLV length field
+	Returns:
+        Tuple of (tag:int, remainder:bytes)
+	"""
+	if binary[0] == 0xff:
+		return None, binary
+	tag = binary[0] & 0x1f
+	if tag <= 30:
+		return binary[0], binary[1:]
+	else: # multi-byte tag
+		tag = binary[0]
+		i = 1
+		last = False
+		while not last:
+			last = False if binary[i] & 0x80 else True
+			tag <<= 8
+			tag |= binary[i]
+			i += 1
+		return tag, binary[i:]
 
 def bertlv_parse_tag(binary:bytes) -> Tuple[dict, bytes]:
 	"""Parse a single Tag value according to ITU-T X.690 8.1.2
