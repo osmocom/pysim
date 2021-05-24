@@ -425,3 +425,7 @@ class SimCardCommands(object):
 		data, sw = self._tp.send_apdu(self.cla_byte + '2800' + ('%02X' % chv_no) + '08' + fc)
 		self._chv_process_sw('enable', chv_no, pin_code, sw)
 		return (data, sw)
+
+	def envelope(self, payload:str):
+		"""Send one ENVELOPE command to the SIM"""
+		return self._tp.send_apdu_checksw('80c20000%02x%s' % (len(payload)//2, payload))
