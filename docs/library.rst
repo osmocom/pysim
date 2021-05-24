@@ -80,6 +80,11 @@ pySim construct utilities
 .. automodule:: pySim.construct
    :members:
 
+pySim TLV utilities
+-------------------
+
+.. automodule:: pySim.tlv
+   :members:
 
 pySim utility functions
 -----------------------
