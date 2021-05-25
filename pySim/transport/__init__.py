@@ -109,11 +109,16 @@ class LinkBase(abc.ABC):
 		# available. There are two SWs commonly used for this 9fxx (sim) and 61xx (usim), where
 		# xx is the number of response bytes available.
 		# See also:
-		# SW1=9F: 3GPP TS 51.011 9.4.1, Responses to commands which are correctly executed
-		# SW1=61: ISO/IEC 7816-4, Table 5 — General meaning of the interindustry values of SW1-SW2
-		if (sw is not None) and ((sw[0:2] == '9f') or (sw[0:2] == '61')):
-			pdu_gr = pdu[0:2] + 'c00000' + sw[2:4]
-			data, sw = self.send_apdu_raw(pdu_gr)
+		if (sw is not None):
+			if ((sw[0:2] == '9f') or (sw[0:2] == '61')):
+				# SW1=9F: 3GPP TS 51.011 9.4.1, Responses to commands which are correctly executed
+				# SW1=61: ISO/IEC 7816-4, Table 5 — General meaning of the interindustry values of SW1-SW2
+				pdu_gr = pdu[0:2] + 'c00000' + sw[2:4]
+				data, sw = self.send_apdu_raw(pdu_gr)
+			if sw[0:2] == '6c':
+				# SW1=6C: ETSI TS 102 221 Table 7.1: Procedure byte coding
+				pdu_gr = pdu[0:8] + sw[2:4]
+				data,sw = self.send_apdu_raw(pdu_gr)
 
 		return data, sw
 
