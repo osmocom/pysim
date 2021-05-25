@@ -367,9 +367,9 @@ class SimCardCommands(object):
 		"""Execute DECATIVATE FILE command as per TS 102 221 Section 11.1.14."""
 		return self._tp.send_apdu_constr_checksw(self.cla_byte, '04', '00', '00', None, None, None)
 
-	def activate_file(self):
+	def activate_file(self, fid):
 		"""Execute ACTIVATE FILE command as per TS 102 221 Section 11.1.15."""
-		return self._tp.send_apdu_constr_checksw(self.cla_byte, '44', '00', '00', None, None, None)
+		return self._tp.send_apdu_checksw(self.cla_byte + '44000002' + fid)
 
 	def manage_channel(self, mode='open', lchan_nr=0):
 		"""Execute MANAGE CHANNEL command as per TS 102 221 Section 11.1.17."""

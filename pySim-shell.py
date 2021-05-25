@@ -419,13 +419,17 @@ class Iso7816Commands(CommandSet):
 
 	def do_deactivate_file(self, opts):
 		"""Deactivate the current EF"""
-		fid = self._cmd.rs.selected_file.fid
-		(data, sw) = self._cmd.card._scc.deactivate_file(fid)
+		(data, sw) = self._cmd.card._scc.deactivate_file()
 
 	def do_activate_file(self, opts):
-		"""Activate the current EF"""
-		fid = self._cmd.rs.selected_file.fid
-		(data, sw) = self._cmd.card._scc.activate_file(fid)
+		"""Activate the specified EF"""
+		path = opts.arg_list[0]
+		(data, sw) = self._cmd.rs.activate_file(path)
+
+	def complete_activate_file(self, text, line, begidx, endidx) -> List[str]:
+		"""Command Line tab completion for ACTIVATE FILE"""
+		index_dict = { 1: self._cmd.rs.selected_file.get_selectable_names() }
+		return self._cmd.index_based_complete(text, line, begidx, endidx, index_dict=index_dict)
 
 	open_chan_parser = argparse.ArgumentParser()
 	open_chan_parser.add_argument('chan_nr', type=int, default=0, help='Channel Number')

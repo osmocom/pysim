@@ -1150,6 +1150,13 @@ class RuntimeState(object):
         (data, sw) = self.card._scc.status()
         return self.selected_file.decode_select_response(data)
 
+    def activate_file(self, name:str):
+        """Request ACTIVATE FILE of specified file."""
+        sels = self.selected_file.get_selectables()
+        f = sels[name]
+        data, sw = self.card._scc.activate_file(f.fid)
+        return data, sw
+
     def read_binary(self, length:int=None, offset:int=0):
         """Read [part of] a transparent EF binary data.
 
