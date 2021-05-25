@@ -443,6 +443,11 @@ class Iso7816Commands(CommandSet):
 		"""Close a logical channel."""
 		(data, sw) = self._cmd.card._scc.manage_channel(mode='close', lchan_nr=opts.chan_nr)
 
+	def do_status(self, opts):
+		"""Perform the STATUS command."""
+		fcp_dec = self._cmd.rs.status()
+		self._cmd.poutput_json(fcp_dec)
+
 
 option_parser = argparse.ArgumentParser(prog='pySim-shell', description='interactive SIM card shell',
                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)

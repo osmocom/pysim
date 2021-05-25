@@ -1145,6 +1145,11 @@ class RuntimeState(object):
 
         return select_resp
 
+    def status(self):
+        """Request STATUS (current selected file FCP) from card."""
+        (data, sw) = self.card._scc.status()
+        return self.selected_file.decode_select_response(data)
+
     def read_binary(self, length:int=None, offset:int=0):
         """Read [part of] a transparent EF binary data.
 
