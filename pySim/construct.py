@@ -1,3 +1,4 @@
+import typing
 from construct import *
 from pySim.utils import b2h, h2b, swap_nibbles
 import gsm0338
@@ -83,6 +84,34 @@ def filter_dict(d, exclude_prefix='_'):
         else:
             res[key] = value
     return res
+
+from construct.lib.containers import Container, ListContainer
+from construct.core import EnumIntegerString
+
+def normalize_construct(c):
+    """Convert a construct specific type to a related base type, mostly useful
+    so we can serialize it."""
+    # we need to include the filter_dict as we otherwise get elements like this
+    # in the dict: '_io': <_io.BytesIO object at 0x7fdb64e05860> which we cannot json-serialize
+    c = filter_dict(c)
+    if isinstance(c, Container) or isinstance(c, dict):
+        r = {k : normalize_construct(v) for (k, v) in c.items()}
+    elif isinstance(c, ListContainer):
+        r = [normalize_construct(x) for x in c]
+    elif isinstance(c, list):
+        r = [normalize_construct(x) for x in c]
+    elif isinstance(c, EnumIntegerString):
+        r = str(c)
+    else:
+        r = c
+    return r
+
+def parse_construct(c, raw_bin_data:bytes, length:typing.Optional[int]=None, exclude_prefix:str='_'):
+    """Helper function to wrap around normalize_construct() and filter_dict()."""
+    if not length:
+        length = len(raw_bin_data)
+    parsed = c.parse(raw_bin_data, total_len=length)
+    return normalize_construct(parsed)
 
 # here we collect some shared / common definitions of data types
 LV = Prefixed(Int8ub, HexAdapter(GreedyBytes))

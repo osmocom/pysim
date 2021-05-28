@@ -35,7 +35,7 @@ import argparse
 from typing import cast, Optional, Iterable, List, Any, Dict, Tuple
 
 from pySim.utils import sw_match, h2b, b2h, i2h, is_hex, auto_int, bertlv_parse_one, Hexstr
-from pySim.construct import filter_dict
+from pySim.construct import filter_dict, parse_construct
 from pySim.exceptions import *
 from pySim.jsonpath import js_path_find, js_path_modify
 
@@ -490,7 +490,7 @@ class TransparentEF(CardEF):
         if callable(method):
             return method(b2h(raw_bin_data))
         if self._construct:
-            return filter_dict(self._construct.parse(raw_bin_data, total_len=len(raw_bin_data)))
+            return parse_construct(self._construct, raw_bin_data)
         return {'raw': raw_bin_data.hex()}
 
     def decode_hex(self, raw_hex_data:str) -> dict:
@@ -513,7 +513,7 @@ class TransparentEF(CardEF):
         if callable(method):
             return method(raw_bin_data)
         if self._construct:
-            return filter_dict(self._construct.parse(raw_bin_data, total_len=len(raw_bin_data)))
+            return parse_construct(self._construct, raw_bin_data)
         return {'raw': raw_bin_data.hex()}
 
     def encode_bin(self, abstract_data:dict) -> bytearray:
@@ -712,7 +712,7 @@ class LinFixedEF(CardEF):
         if callable(method):
             return method(raw_bin_data)
         if self._construct:
-            return filter_dict(self._construct.parse(raw_bin_data, total_len=len(raw_bin_data)))
+            return parse_construct(self._construct, raw_bin_data)
         return {'raw': raw_bin_data.hex()}
 
     def decode_record_bin(self, raw_bin_data:bytearray) -> dict:
@@ -735,7 +735,7 @@ class LinFixedEF(CardEF):
         if callable(method):
             return method(raw_hex_data)
         if self._construct:
-            return filter_dict(self._construct.parse(raw_bin_data, total_len=len(raw_bin_data)))
+            return parse_construct(self._construct, raw_bin_data)
         return {'raw': raw_hex_data}
 
     def encode_record_hex(self, abstract_data:dict) -> str:
@@ -834,7 +834,7 @@ class TransRecEF(TransparentEF):
         if callable(method):
             return method(raw_bin_data)
         if self._construct:
-            return filter_dict(self._construct.parse(raw_bin_data, total_len=len(raw_bin_data)))
+            return parse_construct(self._construct, raw_bin_data)
         return {'raw': raw_hex_data}
 
     def decode_record_bin(self, raw_bin_data:bytearray) -> dict:
@@ -857,7 +857,7 @@ class TransRecEF(TransparentEF):
         if callable(method):
             return method(raw_hex_data)
         if self._construct:
-            return filter_dict(self._construct.parse(raw_bin_data, total_len=len(raw_bin_data)))
+            return parse_construct(self._construct, raw_bin_data)
         return {'raw': raw_hex_data}
 
     def encode_record_hex(self, abstract_data:dict) -> str:
