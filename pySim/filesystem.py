@@ -468,6 +468,7 @@ class TransparentEF(CardEF):
         """
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent)
         self._construct = None
+        self._tlv = None
         self.size = size
         self.shell_commands = [self.ShellCommands()]
 
@@ -491,6 +492,9 @@ class TransparentEF(CardEF):
             return method(b2h(raw_bin_data))
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
+        elif self._tlv:
+            self._tlv.from_tlv(raw_bin_data)
+            return self._tlv.to_dict()
         return {'raw': raw_bin_data.hex()}
 
     def decode_hex(self, raw_hex_data:str) -> dict:
@@ -514,6 +518,9 @@ class TransparentEF(CardEF):
             return method(raw_bin_data)
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
+        elif self._tlv:
+            self._tlv.from_tlv(raw_bin_data)
+            return self._tlv.to_dict()
         return {'raw': raw_bin_data.hex()}
 
     def encode_bin(self, abstract_data:dict) -> bytearray:
@@ -536,6 +543,9 @@ class TransparentEF(CardEF):
             return h2b(method(abstract_data))
         if self._construct:
             return self._construct.build(abstract_data)
+        elif self._tlv:
+            self._tlv.from_dict(abstract_data)
+            return self._tlv.to_tlv()
         raise NotImplementedError
 
     def encode_hex(self, abstract_data:dict) -> str:
@@ -559,6 +569,9 @@ class TransparentEF(CardEF):
             return b2h(raw_bin_data)
         if self._construct:
             return b2h(self._construct.build(abstract_data))
+        elif self._tlv:
+            self._tlv.from_dict(abstract_data)
+            return b2h(self._tlv.to_tlv())
         raise NotImplementedError
 
 
@@ -691,6 +704,7 @@ class LinFixedEF(CardEF):
         self.rec_len = rec_len
         self.shell_commands = [self.ShellCommands()]
         self._construct = None
+        self._tlv = None
 
     def decode_record_hex(self, raw_hex_data:str) -> dict:
         """Decode raw (hex string) data into abstract representation.
@@ -713,6 +727,9 @@ class LinFixedEF(CardEF):
             return method(raw_bin_data)
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
+        elif self._tlv:
+            self._tlv.from_tlv(raw_bin_data)
+            return self._tlv.to_dict()
         return {'raw': raw_bin_data.hex()}
 
     def decode_record_bin(self, raw_bin_data:bytearray) -> dict:
@@ -736,6 +753,9 @@ class LinFixedEF(CardEF):
             return method(raw_hex_data)
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
+        elif self._tlv:
+            self._tlv.from_tlv(raw_bin_data)
+            return self._tlv.to_dict()
         return {'raw': raw_hex_data}
 
     def encode_record_hex(self, abstract_data:dict) -> str:
@@ -759,6 +779,9 @@ class LinFixedEF(CardEF):
             return b2h(raw_bin_data)
         if self._construct:
             return b2h(self._construct.build(abstract_data))
+        elif self._tlv:
+            self._tlv.from_dict(abstract_data)
+            return b2h(self._tlv.to_tlv())
         raise NotImplementedError
 
     def encode_record_bin(self, abstract_data:dict) -> bytearray:
@@ -781,6 +804,9 @@ class LinFixedEF(CardEF):
             return h2b(method(abstract_data))
         if self._construct:
             return self._construct.build(abstract_data)
+        elif self._tlv:
+            self._tlv.from_dict(abstract_data)
+            return self._tlv.to_tlv()
         raise NotImplementedError
 
 class CyclicEF(LinFixedEF):
@@ -835,6 +861,9 @@ class TransRecEF(TransparentEF):
             return method(raw_bin_data)
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
+        elif self._tlv:
+            self._tlv.from_tlv(raw_bin_data)
+            return self._tlv.to_dict()
         return {'raw': raw_hex_data}
 
     def decode_record_bin(self, raw_bin_data:bytearray) -> dict:
@@ -858,6 +887,9 @@ class TransRecEF(TransparentEF):
             return method(raw_hex_data)
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
+        elif self._tlv:
+            self._tlv.from_tlv(raw_bin_data)
+            return self._tlv.to_dict()
         return {'raw': raw_hex_data}
 
     def encode_record_hex(self, abstract_data:dict) -> str:
@@ -880,6 +912,9 @@ class TransRecEF(TransparentEF):
             return b2h(method(abstract_data))
         if self._construct:
             return b2h(filter_dict(self._construct.build(abstract_data)))
+        elif self._tlv:
+            self._tlv.from_dict(abstract_data)
+            return b2h(self._tlv.to_tlv())
         raise NotImplementedError
 
     def encode_record_bin(self, abstract_data:dict) -> bytearray:
@@ -902,6 +937,9 @@ class TransRecEF(TransparentEF):
             return h2b(method(abstract_data))
         if self._construct:
             return filter_dict(self._construct.build(abstract_data))
+        elif self._tlv:
+            self._tlv.from_dict(abstract_data)
+            return self._tlv.to_tlv()
         raise NotImplementedError
 
     def _decode_bin(self, raw_bin_data:bytearray):
