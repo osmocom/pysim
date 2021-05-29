@@ -72,6 +72,8 @@ class GsmStringAdapter(Adapter):
 
 def filter_dict(d, exclude_prefix='_'):
     """filter the input dict to ensure no keys starting with 'exclude_prefix' remain."""
+    if not isinstance(d, dict):
+        return d
     res = {}
     for (key, value) in d.items():
         if key.startswith(exclude_prefix):
