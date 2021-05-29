@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+# without this, pylint will fail when inner classes are used
+# within the 'nested' kwarg of our TlvMeta metaclass on python 3.7 :(
+# pylint: disable=undefined-variable
+
 """
 Various constants from 3GPP TS 31.102 V16.6.0
 """
@@ -278,8 +282,9 @@ EF_USIM_ADF_map = {
 
 from struct import unpack, pack
 from construct import *
-from pySim.construct import LV, HexAdapter, BcdAdapter, BitsRFU
+from pySim.construct import *
 from pySim.filesystem import *
+from pySim.tlv import *
 from pySim.ts_102_221 import EF_ARR
 from pySim.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_PLMNsel, EF_AD
 from pySim.ts_51_011 import EF_CBMID, EF_CBMIR, EF_ADN, EF_SMS, EF_MSISDN, EF_SMSP, EF_SMSS
@@ -288,6 +293,78 @@ from pySim.ts_51_011 import EF_MMSN, EF_MMSICP, EF_MMSUP, EF_MMSUCP, EF_VGCS, EF
 from pySim.ts_51_011 import EF_ACMmax, EF_AAeM, EF_eMLPP, EF_CMI
 
 import pySim.ts_102_221
+
+# 3GPP TS 31.102 Section 4.4.11.4 (EF_5GS3GPPNSC)
+class EF_5GS3GPPNSC(LinFixedEF):
+    class NgKSI(BER_TLV_IE, tag=0x80):
+        _construct = Int8ub
+
+    class K_AMF(BER_TLV_IE, tag=0x81):
+        _construct = HexAdapter(Bytes(32))
+
+    class UplinkNASCount(BER_TLV_IE, tag=0x82):
+        _construct = Int32ub
+
+    class DownlinkNASCount(BER_TLV_IE, tag=0x83):
+        _construct = Int32ub
+
+    class IdsOfSelectedNasAlgos(BER_TLV_IE, tag=0x84):
+        # 3GPP TS 24.501 Section 9.11.3.34
+        _construct = BitStruct('ciphering'/Nibble, 'integrity'/Nibble)
+
+    class IdsOfSelectedEpsAlgos(BER_TLV_IE, tag=0x85):
+        # 3GPP TS 24.301 Section 9.9.3.23
+        _construct = BitStruct('ciphering'/Nibble, 'integrity'/Nibble)
+
+    class FiveGSNasSecurityContext(BER_TLV_IE, tag=0xA0,
+            nested=[NgKSI, K_AMF, UplinkNASCount,
+                    DownlinkNASCount, IdsOfSelectedNasAlgos,
+                    IdsOfSelectedEpsAlgos]):
+        pass
+
+    def __init__(self, fid="4f03", sfid=0x03, name='EF.5GS3GPPNSC', rec_len={57, None},
+        desc='5GS 3GPP Access NAS Security Context'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
+        self._tlv = EF_5GS3GPPNSC.FiveGSNasSecurityContext()
+
+# 3GPP TS 31.102 Section 4.4.11.6
+class EF_5GAUTHKEYS(TransparentEF):
+    class K_AUSF(BER_TLV_IE, tag=0x80):
+        _construct = HexAdapter(GreedyBytes)
+
+    class K_SEAF(BER_TLV_IE, tag=0x81):
+        _construct = HexAdapter(GreedyBytes)
+
+    class FiveGAuthKeys(TLV_IE_Collection, nested=[K_AUSF, K_SEAF]):
+        pass
+
+    def __init__(self, fid='4f05', sfid=0x05, name='EF.5GAUTHKEYS', size={68, None},
+            desc='5G authentication keys'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+        self._tlv = EF_5GAUTHKEYS.FiveGAuthKeys()
+
+# 3GPP TS 31.102 Section 4.4.11.8
+class ProtSchemeIdList(BER_TLV_IE, tag=0xa0):
+    # FIXME: 3GPP TS 24.501 Protection Scheme Identifier
+    # repeated sequence of (id, index) tuples
+    _construct = GreedyRange(Struct('id'/Enum(Byte, null=0, A=1, B=2), 'index'/Int8ub))
+
+class HomeNetPubKeyId(BER_TLV_IE, tag=0x80):
+    # 3GPP TS 24.501 / 3GPP TS 23.003
+    _construct = Int8ub
+
+class HomeNetPubKey(BER_TLV_IE, tag=0x81):
+    # FIXME: RFC 5480
+    _construct = HexAdapter(GreedyBytes)
+
+class HomeNetPubKeyList(BER_TLV_IE, tag=0xa1,
+        nested=[HomeNetPubKeyId, HomeNetPubKey]):
+    pass
+
+# 3GPP TS 31.102 Section 4.4.11.6
+class SUCI_CalcInfo(TLV_IE_Collection, nested=[ProtSchemeIdList,HomeNetPubKeyList]):
+    pass
+
 
 # TS 31.102 4.4.11.8
 class EF_SUCI_Calc_Info(TransparentEF):
@@ -705,9 +782,9 @@ class DF_USIM_5GS(CardDF):
           # I'm looking at 31.102 R16.6
           EF_5GS3GPPLOCI(),
           EF_5GS3GPPLOCI('4f02', 0x02, 'EF.5GSN3GPPLOCI', '5GS non-3GPP location information'),
-          LinFixedEF('4F03', 0x03, 'EF.5GS3GPPNSC', '5GS 3GPP Access NAS Security Context', rec_len={57,None}),
-          LinFixedEF('4F04', 0x04, 'EF.5GSN3GPPNSC', '5GS non-3GPP Access NAS Security Context', rec_len={57,None}),
-          TransparentEF('4F05', 0x05, 'EF.5GAUTHKEYS', '5G authentication keys', size={68, None}),
+          EF_5GS3GPPNSC(),
+          EF_5GS3GPPNSC('4f04', 0x04, 'EF.5GSN3GPPNSC', '5GS non-3GPP Access NAS Security Context'),
+          EF_5GAUTHKEYS(),
           EF_UAC_AIC(),
           EF_SUCI_Calc_Info(),
           EF_OPL5G(),
