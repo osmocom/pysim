@@ -511,7 +511,14 @@ class EF_Keys(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self._construct = Struct('ksi'/Int8ub, 'ck'/HexAdapter(Bytes(16)), 'ik'/HexAdapter(Bytes(16)))
 
-# TS 31.103 Section 4.2.7
+# TS 31.102 Section 4.2.6
+class EF_HPPLMN(TransparentEF):
+    def __init__(self, fid='6f31', sfid=0x12, name='EF.HPPLMN', size={1,1},
+                 desc='Higher Priority PLMN search period'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+        self._construct = Int8ub
+
+# TS 31.102 Section 4.2.8
 class EF_UST(TransparentEF):
     def __init__(self, fid='6f38', sfid=0x04, name='EF.UST', desc='USIM Service Table', size={1,17}):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size)
@@ -677,6 +684,33 @@ class EF_MSK(LinFixedEF):
         self._construct = Struct('key_domain_id'/Bytes(3),
                                  'num_msk_id'/Int8ub,
                                  'msk_ids'/msk_ts_constr[this.num_msk_id])
+# TS 31.102 Section 4.2.81
+class EF_MUK(LinFixedEF):
+    class MUK_Idr(BER_TLV_IE, tag=0x80):
+        _construct = HexAdapter(GreedyBytes)
+    class MUK_Idi(BER_TLV_IE, tag=0x82):
+        _construct = HexAdapter(GreedyBytes)
+    class MUK_ID(BER_TLV_IE, tag=0xA0, nested=[MUK_Idr, MUK_Idi]):
+        pass
+    class TimeStampCounter(BER_TLV_IE, tag=0x81):
+        pass
+    class EF_MUK_Collection(TLV_IE_Collection, nested=[MUK_ID, TimeStampCounter]):
+        pass
+    def __init__(self, fid='6fd8', sfid=None, name='EF.MUK', desc='MBMS User Key'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={None,None})
+        self._tlv = EF_MUK.EF_MUK_Collection
+
+# TS 31.102 Section 4.2.83
+class EF_GBANL(LinFixedEF):
+    class NAF_ID(BER_TLV_IE, tag=0x80):
+        _construct = HexAdapter(GreedyBytes)
+    class B_TID(BER_TLV_IE, tag=0x81):
+        _construct = HexAdapter(GreedyBytes)
+    class EF_GBANL_Collection(BER_TLV_IE, nested=[NAF_ID, B_TID]):
+        pass
+    def __init__(self, fid='6fda', sfid=None, name='EF.GBANL', desc='GBA NAF List'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={None,None})
+        self._tlv = EF_GBANL.EF_GBANL_Collection
 
 # TS 31.102 Section 4.2.85
 class EF_EHPLMNPI(TransparentEF):
@@ -685,6 +719,42 @@ class EF_EHPLMNPI(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self._construct = Struct('presentation_ind'/
                                  Enum(Byte, no_preference=0, display_highest_prio_only=1, display_all=2))
+
+# TS 31.102 Section 4.2.87
+class EF_NAFKCA(LinFixedEF):
+    class NAF_KeyCentreAddress(BER_TLV_IE, tag=0x80):
+        _construct = HexAdapter(GreedyBytes)
+    def __init__(self, fid='6fdd', sfid=None, name='EF.NAFKCA', rec_len={None, None},
+            desc='NAF Key Centre Address'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
+        self._tlv = EF_NAFKCA.NAF_KeyCentreAddress
+
+# TS 31.102 Section 4.2.90
+class EF_NCP_IP(LinFixedEF):
+    class DataDestAddrRange(TLV_IE, tag=0x83):
+        _construct = Struct('type_of_address'/Enum(Byte, IPv4=0x21, IPv6=0x56),
+                            'prefix_length'/Int8ub,
+                            'prefix'/HexAdapter(GreedyBytes))
+    class AccessPointName(TLV_IE, tag=0x80):
+        # coded as per TS 23.003
+        _construct = HexAdapter(GreedyBytes)
+    class Login(TLV_IE, tag=0x81):
+        # as per SMS DCS TS 23.038
+        _construct = GsmStringAdapter(GreedyBytes)
+    class Password(TLV_IE, tag=0x82):
+        # as per SMS DCS TS 23.038
+        _construct = GsmStringAdapter(GreedyBytes)
+    class BearerDescription(TLV_IE, tag=0x84):
+        # Bearer descriptionTLV DO as per TS 31.111
+        pass
+    class EF_NCP_IP_Collection(TLV_IE_Collection,
+                               nested=[AccessPointName, Login, Password, BearerDescription]):
+        pass
+    def __init__(self, fid='6fe2', sfid=None, name='EF.NCP-IP', rec_len={None, None},
+            desc='Network Connectivity Parameters for USIM IP connections'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
+        self._tlv = EF_NCP_IP.EF_NCP_IP_Collection
+
 # TS 31.102 Section 4.2.91
 class EF_EPSLOCI(TransparentEF):
     def __init__(self, fid='6fe3', sfid=0x1e, name='EF.EPSLOCI', size={18,18},
@@ -693,6 +763,27 @@ class EF_EPSLOCI(TransparentEF):
         upd_status_constr = Enum(Byte, updated=0, not_updated=1, roaming_not_allowed=2)
         self._construct = Struct('guti'/Bytes(12), 'last_visited_registered_tai'/Bytes(5),
                                  'eps_update_status'/upd_status_constr)
+
+# TS 31.102 Section 4.2.92
+class EF_EPSNSC(LinFixedEF):
+    class KSI_ASME(BER_TLV_IE, tag= 0x80):
+        _construct = Int8ub
+    class K_ASME(BER_TLV_IE, tag= 0x81):
+        _construct = HexAdapter(GreedyBytes)
+    class UplinkNASCount(BER_TLV_IE, tag=0x82):
+        _construct = Int32ub
+    class DownlinkNASCount(BER_TLV_IE, tag=0x83):
+        _construct = Int32ub
+    class IDofNASAlgorithms(BER_TLV_IE, tag=0x84):
+        _construct = HexAdapter(GreedyBytes)
+    class EPS_NAS_Security_Context(BER_TLV_IE, tag=0xa0,
+                               nested=[KSI_ASME, K_ASME, UplinkNASCount, DownlinkNASCount,
+                                   IDofNASAlgorithms]):
+        pass
+    def __init__(self,fid='6fe4', sfid=0x18, name='EF.EPSNSC', rec_len={54,128},
+            desc='EPS NAS Security Context'):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
+        self._tlv = EF_EPSNSC.EPS_NAS_Security_Context
 
 # TS 31.102 Section 4.2.96
 class EF_PWS(TransparentEF):
@@ -708,6 +799,18 @@ class EF_IPS(CyclicEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
         self._construct = Struct('status'/PaddedString(2, 'ascii'),
                                  'link_to_ef_ipd'/Int8ub, 'rfu'/Byte)
+
+# TS 31.102 Section 4.2.103
+class EF_ePDGId(TransparentEF):
+    class ePDGId(BER_TLV_IE, tag=0x80, nested=[]):
+        _construct = Struct('type_of_ePDG_address'/Enum(Byte, FQDN=0, IPv4=1, IPv6=2),
+                            'ePDG_address'/Switch(this.type_of_address,
+                                { 'FQDN': GreedyString("utf8"),
+                                  'IPv4': HexAdapter(GreedyBytes),
+                                  'IPv6': HexAdapter(GreedyBytes) }))
+    def __init__(self, fid='6ff3', sfid=None, name='EF.eDPDGId', desc='Home ePDG Identifier'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc)
+        self._tlv = EF_ePDGId.ePDGId
 
 # TS 31.102 Section 4.2.106
 class EF_FromPreferred(TransparentEF):
@@ -738,11 +841,38 @@ class EF_UAC_AIC(TransparentEF):
                                      mission_critical_service=2)
         self._construct = Struct('uac_access_id_config'/cfg_constr)
 
-# TS 31.102 Section 4.4.11.10
+# TS 31.102 Section 4.4.11.9
 class EF_OPL5G(LinFixedEF):
     def __init__(self, fid='6f08', sfid=0x08, name='EF.OPL5G', desc='5GS Operator PLMN List'):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={10,None})
         self._construct = Struct('tai'/Bytes(9), 'pnn_record_id'/Int8ub)
+
+# TS 31.102 Section 4.4.11.10
+class EF_SUPI_NAI(TransparentEF):
+    class NetworkSpecificIdentifier(TLV_IE, tag=0x80):
+        # RFC 7542 encoded as UTF-8 string
+        _construct = GreedyString("utf8")
+    class GlobalLineIdentifier(TLV_IE, tag=0x81):
+        # TS 23.003 clause 28.16.2
+        pass
+    class GlobalCableIdentifier(TLV_IE, tag=0x82):
+        # TS 23.003 clause 28.15.2
+        pass
+    class NAI_TLV_Collection(TLV_IE_Collection,
+            nested=[NetworkSpecificIdentifier, GlobalLineIdentifier, GlobalCableIdentifier]):
+        pass
+    def __init__(self, fid='4f09', sfid=0x09, name='EF.SUPI_NAI',
+            desc='SUPI as Network Access Identifier'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc)
+        self._tlv = EF_SUPI_NAI.NAI_TLV_Collection
+
+class EF_TN3GPPSNN(TransparentEF):
+    class ServingNetworkName(BER_TLV_IE, tag=0x80):
+        _construct = GreedyString("utf8")
+    def __init__(self, fid='4f0c', sfid=0x0c, name='EF.TN3GPPSNN',
+            desc='Trusted non-3GPP Serving network names list'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc)
+        self._tlv = EF_TN3GPPSNN.ServingNetworkName
 
 # TS 31.102 Section 4.4.5
 class DF_WLAN(CardDF):
@@ -812,10 +942,10 @@ class DF_USIM_5GS(CardDF):
           EF_UAC_AIC(),
           EF_SUCI_Calc_Info(),
           EF_OPL5G(),
-          TransparentEF('4F09', 0x09, 'EF.SUPI_NAI', 'SUPI as Network Access Identifier'),
+          EF_SUPI_NAI(),
           TransparentEF('4F0A', 0x0a, 'EF.Routing_Indicator', 'Routing Indicator', size={4,4}),
           TransparentEF('4F0B', 0x0b, 'EF.URSP', 'UE Route Selector Policies per PLMN'),
-          TransparentEF('4F0C', 0x0c, 'EF.TN3GPPSNN', 'Trusted non-3GPP Serving network names list'),
+          EF_TN3GPPSNN(),
         ]
         self.add_files(files)
 
@@ -833,7 +963,7 @@ class ADF_USIM(CardADF):
           EF_Keys('6f09', 0x09, 'EF.KeysPS', desc='Ciphering and Integrity Keys for PS domain'),
           EF_xPLMNwAcT('6f60', 0x0a, 'EF.PLMNwAcT',
                        'User controlled PLMN Selector with Access Technology'),
-          TransparentEF('6f31', 0x12, 'EF.HPPLMN', 'Higher Priority PLMN search period'),
+          EF_HPPLMN(),
           EF_ACMmax(),
           EF_UST(),
           CyclicEF('6f39', None, 'EF.ACM', 'Accumulated call meter', rec_len={3,3}),
@@ -903,16 +1033,16 @@ class ADF_USIM(CardADF):
           EF_VGCSCA('6fd5', None, 'EF.VBCSCA', 'Voice Broadcast Service Ciphering Algorithm'),
           EF_GBABP(),
           EF_MSK(),
-          LinFixedEF('6fd8', None, 'EF.MUK', 'MBMS User Key'),
-          LinFixedEF('6fda', None, 'EF.GBANL', 'GBA NFA List'),
+          EF_MUK(),
+          EF_GBANL(),
           EF_PLMNsel('6fd9', 0x1d, 'EF.EHPLMN', 'Equivalent HPLMN', size={12,None}),
           EF_EHPLMNPI(),
-          LinFixedEF('6fdd', None, 'EF.NAFKCA', 'NAF Key Centre Address'),
+          EF_NAFKCA(),
           TransparentEF('6fde', None, 'EF.SPNI', 'Service Provider Name Icon'),
           LinFixedEF('6fdf', None, 'EF.PNNI', 'PLMN Network Name Icon'),
-          LinFixedEF('6fe2', None, 'EF.NCP-IP', 'Network Connectivity Parameters for USIM IP connections'),
+          EF_NCP_IP(),
           EF_EPSLOCI('6fe3', 0x1e, 'EF.EPSLOCI', 'EPS location information'),
-          LinFixedEF('6fe4', 0x18, 'EF.EPSNSC', 'EPS NAS Security Context', rec_len={54,128}),
+          EF_EPSNSC(),
           TransparentEF('6fe6', None, 'EF.UFC', 'USAT Facility Control', size={1,16}),
           TransparentEF('6fe8', None, 'EF.NASCONFIG', 'Non Access Stratum Configuration'),
           # UICC IARI (only in cards that have no ISIM)
@@ -921,7 +1051,8 @@ class ADF_USIM(CardADF):
           LinFixedEF('6fee', None, 'EF.BDNURI', 'Barred Dialling Numbers URI'),
           LinFixedEF('6fef', None, 'EF.SDNURI', 'Service Dialling Numbers URI'),
           EF_IPS(),
-          # FIXME: from EF_ePDGid onwards
+          EF_ePDGId(),
+          # FIXME: from EF_ePDGSelection onwards
           EF_FromPreferred(),
           # FIXME: DF_SoLSA
           # FIXME: DF_PHONEBOOK

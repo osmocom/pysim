@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+# without this, pylint will fail when inner classes are used
+# within the 'nested' kwarg of our TlvMeta metaclass on python 3.7 :(
+# pylint: disable=undefined-variable
+
 """ Various constants from ETSI TS 151.011 +
 Representation of the GSM SIM/USIM/ISIM filesystem hierarchy.
 
@@ -320,6 +324,7 @@ EF_SST_map = {
 }
 
 from pySim.utils import *
+from pySim.tlv import *
 from struct import pack, unpack
 from construct import *
 from construct import Optional as COptional
@@ -533,6 +538,7 @@ class EF_CBMI(TransRecEF):
     def __init__(self, fid='6f45', sfid=None, name='EF.CBMI', size={2,None}, rec_len=2,
                  desc='Cell Broadcast message identifier selection'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len)
+        self._construct = GreedyRange(Int16ub)
 
 # TS 51.011 Section 10.3.15
 class EF_ACC(TransparentEF):
@@ -617,18 +623,21 @@ class EF_CBMID(EF_CBMI):
     def __init__(self, fid='6f48', sfid=None, name='EF.CBMID', size={2,None}, rec_len=2,
                  desc='Cell Broadcast Message Identifier for Data Download'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len)
+        self._construct = GreedyRange(Int16ub)
 
 # TS 51.011 Section 10.3.27
 class EF_ECC(TransRecEF):
     def __init__(self, fid='6fb7', sfid=None, name='EF.ECC', size={3,15}, rec_len=3,
                  desc='Emergency Call Codes'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len)
+        self._construct = GreedyRange(BcdAdapter(Bytes(3)))
 
 # TS 51.011 Section 10.3.28
 class EF_CBMIR(TransRecEF):
     def __init__(self, fid='6f50', sfid=None, name='EF.CBMIR', size={4,None}, rec_len=4,
                  desc='Cell Broadcast message identifier range selection'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len)
+        self._construct = GreedyRange(Struct('lower'/Int16ub, 'upper'/Int16ub))
 
 # TS 51.011 Section 10.3.29
 class EF_DCK(TransparentEF):
@@ -740,6 +749,20 @@ class EF_InvScan(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self._construct = FlagsEnum(Byte, in_limited_service_mode=1, after_successful_plmn_selection=2)
 
+# TS 51.011 Section 4.2.58
+class EF_PNN(LinFixedEF):
+    class FullNameForNetwork(BER_TLV_IE, tag=0x43):
+        # TS 24.008 10.5.3.5a
+        pass
+    class ShortNameForNetwork(BER_TLV_IE, tag=0x45):
+        # TS 24.008 10.5.3.5a
+        pass
+    class NetworkNameCollection(TLV_IE_Collection, nested=[FullNameForNetwork, ShortNameForNetwork]):
+        pass
+    def __init__(self, fid='6fc5', sfid=None, name='EF.PNN', desc='PLMN Network Name'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc)
+        self._tlv = EF_PNN.NetworkNameCollection
+
 # TS 51.011 Section 10.3.42
 class EF_OPL(LinFixedEF):
     def __init__(self, fid='6fc6', sfid=None, name='EF.OPL', rec_len={8,8}, desc='Operator PLMN List'):
@@ -763,6 +786,18 @@ class EF_MWIS(LinFixedEF):
                                  'num_waiting_fax'/Int8ub, 'num_waiting_email'/Int8ub,
                                  'num_waiting_other'/Int8ub, 'num_waiting_videomail'/COptional(Int8ub))
 
+# TS 51.011 Section 10.3.66
+class EF_SPDI(TransparentEF):
+    class ServiceProviderPLMN(BER_TLV_IE, tag=0x80):
+        # flexible numbers of 3-byte PLMN records
+        _construct = GreedyRange(BcdAdapter(Bytes(3)))
+    class SPDI(BER_TLV_IE, tag=0xA3, nested=[ServiceProviderPLMN]):
+        pass
+    def __init__(self, fid='6fcd', sfid=None, name='EF.SPDI',
+            desc='Service Provider Display Information'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc)
+        self._tlv = EF_SPDI.SPDI
+
 # TS 51.011 Section 10.3.51
 class EF_MMSN(LinFixedEF):
     def __init__(self, fid='6fce', sfid=None, name='EF.MMSN', rec_len={4,20}, desc='MMS Notification'):
@@ -770,17 +805,42 @@ class EF_MMSN(LinFixedEF):
         self._construct = Struct('mms_status'/Bytes(2), 'mms_implementation'/Bytes(1),
                                  'mms_notification'/Bytes(this._.total_len-4), 'ext_record_nr'/Byte)
 
+# TS 51.011 Annex K.1
+class MMS_Implementation(BER_TLV_IE, tag=0x80):
+    _construct = FlagsEnum(Byte, WAP=1)
+
 # TS 51.011 Section 10.3.53
 class EF_MMSICP(TransparentEF):
+    class MMS_Relay_Server(BER_TLV_IE, tag=0x81):
+        # 3GPP TS 23.140
+        pass
+    class Interface_to_CN(BER_TLV_IE, tag=0x82):
+        # 3GPP TS 23.140
+        pass
+    class Gateway(BER_TLV_IE, tag=0x83):
+        # Address, Type of address, Port, Service, AuthType, AuthId, AuthPass / 3GPP TS 23.140
+        pass
+    class MMS_ConnectivityParamters(TLV_IE_Collection,
+            nested=[MMS_Implementation, MMS_Relay_Server, Interface_to_CN, Gateway]):
+        pass
     def __init__(self, fid='6fd0', sfid=None, name='EF.MMSICP', size={1,None},
                  desc='MMS Issuer Connectivity Parameters'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+        self._tlv = EF_MMSICP.MMS_ConnectivityParamters
 
 # TS 51.011 Section 10.3.54
 class EF_MMSUP(LinFixedEF):
+    class MMS_UserPref_ProfileName(BER_TLV_IE, tag=0x81):
+        pass
+    class MMS_UserPref_Info(BER_TLV_IE, tag=0x82):
+        pass
+    class MMS_User_Preferences(TLV_IE_Collection,
+            nested=[MMS_Implementation,MMS_UserPref_ProfileName,MMS_UserPref_Info]):
+        pass
     def __init__(self, fid='6fd1', sfid=None, name='EF.MMSUP', rec_len={1,None},
                  desc='MMS User Preferences'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
+        self.tlv = EF_MMSUP.MMS_User_Preferences
 
 # TS 51.011 Section 10.3.55
 class EF_MMSUCP(TransparentEF):
@@ -834,7 +894,7 @@ class DF_GSM(CardDF):
           EF_xPLMNwAcT('6f62', None, 'EF.HPLMNwAcT', 'HPLMN Selector with Access Technology'),
           EF_CPBCCH(),
           EF_InvScan(),
-          LinFixedEF('6fc5', None,'EF.PNN', 'PLMN Network Name'),
+          EF_PNN(),
           EF_OPL(),
           EF_ADN('6fc7', None, 'EF.MBDN', 'Mailbox Dialling Numbers'),
           EF_MBI(),
@@ -842,7 +902,7 @@ class DF_GSM(CardDF):
           EF_ADN('6fcb', None, 'EF.CFIS', 'Call Forwarding Indication Status'),
           EF_EXT('6fc8', None, 'EF.EXT6', 'Externsion6 (MBDN)'),
           EF_EXT('6fcc', None, 'EF.EXT7', 'Externsion7 (CFIS)'),
-          TransparentEF('6fcd', None, 'EF.SPDI', 'Service Provider Display Information'),
+          EF_SPDI(),
           EF_MMSN(),
           EF_EXT('6fcf', None, 'EF.EXT8', 'Extension8 (MMSN)'),
           EF_MMSICP(),

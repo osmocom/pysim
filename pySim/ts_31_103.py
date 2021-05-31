@@ -24,6 +24,7 @@ Various constants from 3GPP TS 31.103 V16.1.0
 
 from pySim.filesystem import *
 from pySim.utils import *
+from pySim.tlv import *
 from pySim.ts_51_011 import EF_AD, EF_SMS, EF_SMSS, EF_SMSR, EF_SMSP
 from pySim.ts_31_102 import ADF_USIM, EF_FromPreferred
 import pySim.ts_102_221
@@ -78,18 +79,27 @@ EF_ISIM_ADF_map = {
 
 # TS 31.103 Section 4.2.2
 class EF_IMPI(TransparentEF):
+    class nai(BER_TLV_IE, tag=0x80):
+        _construct = GreedyString("utf8")
     def __init__(self, fid='6f02', sfid=0x02, name='EF.IMPI', desc='IMS private user identity'):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+        self._tlv = EF_IMPI.nai
 
 # TS 31.103 Section 4.2.3
 class EF_DOMAIN(TransparentEF):
+    class domain(BER_TLV_IE, tag=0x80):
+        _construct = GreedyString("utf8")
     def __init__(self, fid='6f05', sfid=0x05, name='EF.DOMAIN', desc='Home Network Domain Name'):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+        self._tlv = EF_DOMAIN.domain
 
 # TS 31.103 Section 4.2.4
 class EF_IMPU(LinFixedEF):
+    class impu(BER_TLV_IE, tag=0x80):
+        _construct = GreedyString("utf8")
     def __init__(self, fid='6f04', sfid=0x04, name='EF.IMPU', desc='IMS public user identity'):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+        self._tlv = EF_IMPU.impu
 
 # TS 31.103 Section 4.2.7
 class EF_IST(TransparentEF):
@@ -140,8 +150,11 @@ class EF_NAFKCA(LinFixedEF):
 
 # TS 31.103 Section 4.2.16
 class EF_UICCIARI(LinFixedEF):
+    class iari(BER_TLV_IE, tag=0x80):
+        _construct = GreedyString("utf8")
     def __init__(self, fid='6fe7', sfid=None, name='EF.UICCIARI', desc='UICC IARI'):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+        self._tlv = EF_UICCIARI.iari
 
 # TS 31.103 Section 4.2.18
 class EF_IMSConfigData(BerTlvEF):
@@ -155,8 +168,11 @@ class EF_XCAPConfigData(BerTlvEF):
 
 # TS 31.103 Section 4.2.20
 class EF_WebRTCURI(TransparentEF):
+    class uri(BER_TLV_IE, tag=0x80):
+        _construct = GreedyString("utf8")
     def __init__(self, fid='6ffa', sfid=None, name='EF.WebRTCURI', desc='WebRTC URI'):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+        self._tlv = EF_WebRTCURI.uri
 
 # TS 31.103 Section 4.2.21
 class EF_MuDMiDConfigData(BerTlvEF):
