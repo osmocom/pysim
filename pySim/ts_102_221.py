@@ -18,7 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pytlv.TLV import *
-from struct import pack, unpack
+from construct import *
+from pySim.construct import *
 from pySim.utils import *
 from pySim.filesystem import *
 from bidict import bidict
@@ -599,7 +600,8 @@ class EF_ARR(LinFixedEF):
 class EF_UMPC(TransparentEF):
     def __init__(self, fid='2f08', sfid=0x08, name='EF.UMPC', desc='UICC Maximum Power Consumption'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size={5,5})
-
+        addl_info = FlagsEnum(Byte, req_inc_idle_current=1, support_uicc_suspend=2)
+        self._construct = Struct('max_current_mA'/Int8ub, 't_op_s'/Int8ub, 'addl_info'/addl_info)
 
 
 class CardProfileUICC(CardProfile):
