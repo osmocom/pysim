@@ -280,13 +280,15 @@ EF_USIM_ADF_map = {
 # ADF.USIM
 ######################################################################
 
+import enum
 from struct import unpack, pack
 from construct import *
+from construct import Optional as COptional
 from pySim.construct import *
 from pySim.filesystem import *
 from pySim.tlv import *
 from pySim.ts_102_221 import EF_ARR
-from pySim.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_PLMNsel, EF_AD
+from pySim.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_PLMNsel
 from pySim.ts_51_011 import EF_CBMID, EF_CBMIR, EF_ADN, EF_SMS, EF_MSISDN, EF_SMSP, EF_SMSS
 from pySim.ts_51_011 import EF_SMSR, EF_DCK, EF_EXT, EF_CNL, EF_OPL, EF_MBI, EF_MWIS
 from pySim.ts_51_011 import EF_MMSN, EF_MMSICP, EF_MMSUP, EF_MMSUCP, EF_VGCS, EF_VGCSS, EF_NIA
@@ -559,6 +561,28 @@ class EF_LOCI(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self._construct = Struct('tmsi'/HexAdapter(Bytes(4)), 'lai'/HexAdapter(Bytes(5)), 'rfu'/Int8ub,
                                  'lu_status'/Int8ub)
+# TS 31.102 Section 4.2.18
+class EF_AD(TransparentEF):
+    class OP_MODE(enum.IntEnum):
+        normal                                  = 0x00
+        type_approval                           = 0x80
+        normal_and_specific_facilities          = 0x01
+        type_approval_and_specific_facilities   = 0x81
+        maintenance_off_line                    = 0x02
+        cell_test                               = 0x04
+
+    def __init__(self, fid='6fad', sfid=0x03, name='EF.AD', desc='Administrative Data', size={4,6}):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+        self._construct = BitStruct(
+            # Byte 1
+            'ms_operation_mode'/Bytewise(Enum(Byte, EF_AD.OP_MODE)),
+            # Byte 2 + 3
+            'additional_info'/Bytewise(FlagsEnum(Int16ub, ciphering_indicator=1, csg_display_control=2,
+                                                 prose_services=4, extended_drx=8)),
+            'rfu'/BitsRFU(4),
+            'mnc_len'/BitsInteger(4),
+            'extensions'/COptional(Bytewise(GreedyBytesRFU))
+        )
 
 # TS 31.102 Section 4.2.23
 class EF_PSLOCI(TransparentEF):
@@ -821,7 +845,7 @@ class ADF_USIM(CardADF):
           EF_ACC(sfid=0x06),
           EF_PLMNsel('6f7b', 0x0d, 'EF.FPLMN', 'Forbidden PLMNs', size={12,None}),
           EF_LOCI(),
-          EF_AD(sfid=0x03),
+          EF_AD(),
           EF_CBMID(sfid=0x0e),
           EF_ECC(),
           EF_CBMIR(),
