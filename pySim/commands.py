@@ -160,21 +160,38 @@ class SimCardCommands(object):
 			data : hex string of data to be written
 			offset : byte offset in file from which to start writing
 			verify : Whether or not to verify data after write
+			conserve : Whether or not to save write cycles by reading+comparing before writing duplicate data
 		"""
-		data_length = len(data) // 2
-
+		r = self.select_path(ef)
+		if len(r[-1]) == 0:
+			return (None, None)
+			
+		## HERE, it only writes the exact number of data bytes passed in, not the width of entire field
+		## if want to replace the entire field, change length variable to be like read_binary() function
+		length = len(data)//2 # number of hex chars to write => number of bytes
+		
 		# Save write cycles by reading+comparing before write
 		if conserve:
-			data_current, sw = self.read_binary(ef, data_length, offset)
-			if data_current == data:
-				return None, sw
-
-		self.select_path(ef)
-		pdu = self.cla_byte + 'd6%04x%02x' % (offset, data_length) + data
-		res = self._tp.send_apdu_checksw(pdu)
+			read_data, read_sw = self.read_binary(ef, length, offset)
+			if read_data == data:
+				return None, read_sw
+		
+		total_data = ''
+		chunk_offset = offset
+		while chunk_offset < length:
+			chunk_len = min(255, length-chunk_offset)
+			pdu = self.cla_byte + 'd6%04x%02x' % (chunk_offset, chunk_len) + data[chunk_offset*2 : (chunk_offset+chunk_len)*2]  # chunk_offset is bytes, but data slicing is hex chars, so we need to multiply by 2
+			chunk_data, chunk_sw = self._tp.send_apdu(pdu)
+			if chunk_sw == '9000':
+				total_data += chunk_data
+				chunk_offset += chunk_len
+			else:
+				raise ValueError('Failed to write chunk (chunk_offset %d, chunk_len %d)' % (chunk_offset, chunk_len))
+				
 		if verify:
 			self.verify_binary(ef, data, offset)
-		return res
+			
+		return total_data, '9000'
 
 	def verify_binary(self, ef, data:str, offset:int=0):
 		"""Verify contents of transparent EF.
