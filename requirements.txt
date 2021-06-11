@@ -1,7 +1,7 @@
 pyscard
 serial
 pytlv
-cmd2
+cmd2==1.5
 jsonpath-ng
 construct
 bidict

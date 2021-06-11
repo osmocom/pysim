@@ -19,7 +19,7 @@ virtualenv -p python3 venv --system-site-packages
 . venv/bin/activate
 pip install pytlv
 pip install pyyaml
-pip install cmd2
+pip install cmd2==1.5
 pip install jsonpath-ng
 pip install construct
 pip install bidict
