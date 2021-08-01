@@ -170,11 +170,23 @@ class SimCardCommands(object):
 				return None, sw
 
 		self.select_path(ef)
-		pdu = self.cla_byte + 'd6%04x%02x' % (offset, data_length) + data
-		res = self._tp.send_apdu_checksw(pdu)
+		total_data = ''
+		total_sw = "9000"
+		chunk_offset = offset
+		while chunk_offset < data_length:
+			chunk_len = min(255, data_length - chunk_offset)
+			# chunk_offset is bytes, but data slicing is hex chars, so we need to multiply by 2
+			pdu = self.cla_byte + 'd6%04x%02x' % (chunk_offset, chunk_len) + data[chunk_offset*2 : (chunk_offset+chunk_len)*2]
+			chunk_data, chunk_sw = self._tp.send_apdu(pdu)
+			if chunk_sw == total_sw:
+				total_data += chunk_data
+				chunk_offset += chunk_len
+			else:
+				total_sw = chunk_sw
+				raise ValueError('Failed to write chunk (chunk_offset %d, chunk_len %d)' % (chunk_offset, chunk_len))
 		if verify:
 			self.verify_binary(ef, data, offset)
-		return res
+		return total_data, total_sw
 
 	def verify_binary(self, ef, data:str, offset:int=0):
 		"""Verify contents of transparent EF.
