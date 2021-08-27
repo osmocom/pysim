@@ -45,12 +45,7 @@ Please install the following dependencies:
 
 Example for Debian:
 ```
-apt-get install python3-pyscard python3-serial python3-cmd2 python3-pip python3-yaml
-pip3 install pytlv jsonpath-ng construct bidict gsm0338
-```
-
-Alternatively, everything can be installed using pip:
-```
+apt-get install python3-pyscard python3-serial python3-pip python3-yaml
 pip3 install -r requirements.txt
 ```
 
