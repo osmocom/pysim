@@ -1,5 +1,5 @@
 pyscard
-serial
+pyserial
 pytlv
 cmd2==1.5
 jsonpath-ng
