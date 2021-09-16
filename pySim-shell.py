@@ -114,35 +114,6 @@ class PysimApp(cmd2.Cmd):
 		"""Display the intro banner"""
 		self.poutput(self.intro)
 
-	@cmd2.with_category(CUSTOM_CATEGORY)
-	def do_verify_adm(self, arg):
-		"""VERIFY the ADM1 PIN"""
-		if arg:
-			# use specified ADM-PIN
-			pin_adm = sanitize_pin_adm(arg)
-		else:
-			# try to find an ADM-PIN if none is specified
-			result = card_key_provider_get_field('ADM1', key='ICCID', value=self.iccid)
-			pin_adm = sanitize_pin_adm(result)
-			if pin_adm:
-				self.poutput("found ADM-PIN '%s' for ICCID '%s'" % (result, self.iccid))
-			else:
-				self.poutput("cannot find ADM-PIN for ICCID '%s'" % (self.iccid))
-				return
-
-		if pin_adm:
-			self.card.verify_adm(h2b(pin_adm))
-		else:
-			self.poutput("error: cannot authenticate, no adm-pin!")
-
-	@cmd2.with_category(CUSTOM_CATEGORY)
-	def do_desc(self, opts):
-		"""Display human readable file description for the currently selected file"""
-		desc = self.rs.selected_file.desc
-		if desc:
-			self.poutput(desc)
-		else:
-			self.poutput("no description available")
 
 @with_default_category('pySim Commands')
 class PySimCommands(CommandSet):
@@ -319,6 +290,33 @@ class PySimCommands(CommandSet):
 		self._cmd.poutput('Card ATR: %s' % atr)
 		self._cmd.update_prompt()
 
+	def do_desc(self, opts):
+		"""Display human readable file description for the currently selected file"""
+		desc = self._cmd.rs.selected_file.desc
+		if desc:
+			self._cmd.poutput(desc)
+		else:
+			self._cmd.poutput("no description available")
+
+	def do_verify_adm(self, arg):
+		"""VERIFY the ADM1 PIN"""
+		if arg:
+			# use specified ADM-PIN
+			pin_adm = sanitize_pin_adm(arg)
+		else:
+			# try to find an ADM-PIN if none is specified
+			result = card_key_provider_get_field('ADM1', key='ICCID', value=self._cmd.iccid)
+			pin_adm = sanitize_pin_adm(result)
+			if pin_adm:
+				self._cmd.poutput("found ADM-PIN '%s' for ICCID '%s'" % (result, self._cmd.iccid))
+			else:
+				self._cmd.poutput("cannot find ADM-PIN for ICCID '%s'" % (self._cmd.iccid))
+				return
+
+		if pin_adm:
+			self._cmd.card.verify_adm(h2b(pin_adm))
+		else:
+			self._cmd.poutput("error: cannot authenticate, no adm-pin!")
 
 @with_default_category('ISO7816 Commands')
 class Iso7816Commands(CommandSet):
