@@ -50,6 +50,44 @@ from pySim.ts_31_103 import CardApplicationISIM
 
 from pySim.card_key_provider import CardKeyProviderCsv, card_key_provider_register, card_key_provider_get_field
 
+def init_card(sl):
+	"""
+	Detect card in reader and setup card profile and runtime state. This
+	function must be called at least once on startup. The card and runtime
+	state object (rs) is required for all pySim-shell commands.
+	"""
+
+	# Wait up to three seconds for a card in reader and try to detect
+	# the card type.
+	print("Waiting for card...")
+	try:
+		sl.wait_for_card(3)
+	except NoCardError:
+		print("No card detected!")
+		return None, None;
+	except:
+		print("Card not readable!")
+		return None, None;
+
+	card = card_detect("auto", scc)
+	if card is None:
+		print("Could not detect card type!")
+		return None, None;
+
+	# Create runtime state with card profile
+	profile = CardProfileUICC()
+	profile.add_application(CardApplicationUSIM)
+	profile.add_application(CardApplicationISIM)
+	rs = RuntimeState(card, profile)
+
+	# FIXME: do this dynamically
+	rs.mf.add_file(DF_TELECOM())
+	rs.mf.add_file(DF_GSM())
+
+	# inform the transport that we can do context-specific SW interpretation
+	sl.set_sw_interpreter(rs)
+
+	return rs, card
 
 class PysimApp(cmd2.Cmd):
 	CUSTOM_CATEGORY = 'pySim Commands'
@@ -471,43 +509,11 @@ if __name__ == '__main__':
 	# Parse options
 	opts = option_parser.parse_args()
 
-	# Init card reader driver
-	sl = init_reader(opts)
-	if (sl == None):
-		exit(1)
-
-	# Create command layer
-	scc = SimCardCommands(transport=sl)
-
-	sl.wait_for_card();
-
-	card_handler = CardHandler(sl)
-
-	card = card_detect("auto", scc)
-	if card is None:
-		print("No card detected!")
-		sys.exit(2)
-
-	profile = CardProfileUICC()
-	profile.add_application(CardApplicationUSIM)
-	profile.add_application(CardApplicationISIM)
-
-	rs = RuntimeState(card, profile)
-	# inform the transport that we can do context-specific SW interpretation
-	sl.set_sw_interpreter(rs)
-
-	# FIXME: do this dynamically
-	rs.mf.add_file(DF_TELECOM())
-	rs.mf.add_file(DF_GSM())
-
 	# If a script file is specified, be sure that it actually exists
 	if opts.script:
 		if not os.access(opts.script, os.R_OK):
 			print("Invalid script file!")
 			sys.exit(2)
-
-	app = PysimApp(card, rs, opts.script)
-	rs.select('MF', app)
 
 	# Register csv-file as card data provider, either from specified CSV
 	# or from CSV file in home directory
@@ -516,6 +522,20 @@ if __name__ == '__main__':
 		card_key_provider_register(CardKeyProviderCsv(opts.csv))
 	if os.path.isfile(csv_default):
 		card_key_provider_register(CardKeyProviderCsv(csv_default))
+
+	# Init card reader driver
+	sl = init_reader(opts)
+	if sl is None:
+		exit(1)
+
+	# Create command layer
+	scc = SimCardCommands(transport=sl)
+
+	rs, card = init_card(sl)
+	if (rs is None or card is None):
+		exit(1)
+	app = PysimApp(card, rs, opts.script)
+	rs.select('MF', app)
 
 	# If the user supplies an ADM PIN at via commandline args authenticate
 	# immediately so that the user does not have to use the shell commands
