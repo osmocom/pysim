@@ -1329,6 +1329,11 @@ class RuntimeState(object):
             raise TypeError("Only works with BER-TLV EF")
         return self.card._scc.set_data(self.selected_file.fid, tag, data_hex, conserve=self.conserve_write)
 
+    def unregister_cmds(self, cmd_app=None):
+        """Unregister all file specific commands."""
+        if cmd_app and self.selected_file.shell_commands:
+            for c in self.selected_file.shell_commands:
+                cmd_app.unregister_command_set(c)
 
 
 

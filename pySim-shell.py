@@ -20,6 +20,7 @@
 from typing import List
 
 import json
+import traceback
 
 import cmd2
 from cmd2 import style, fg, bg
@@ -99,15 +100,12 @@ def init_card(sl):
 class PysimApp(cmd2.Cmd):
 	CUSTOM_CATEGORY = 'pySim Commands'
 	def __init__(self, card, rs, script = None):
-		basic_commands = [Iso7816Commands(), PySimCommands()]
 		super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
-				 use_ipython=True, auto_load_commands=False, command_sets=basic_commands, startup_script=script)
+				 use_ipython=True, auto_load_commands=False, startup_script=script)
 		self.intro = style('Welcome to pySim-shell!', fg=fg.red)
 		self.default_category = 'pySim-shell built-in commands'
-		self.card = card
-		iccid, sw = self.card.read_iccid()
-		self.iccid = iccid
-		self.rs = rs
+		self.card = None
+		self.rs = None
 		self.py_locals = { 'card': self.card, 'rs' : self.rs }
 		self.numeric_path = False
 		self.add_settable(cmd2.Settable('numeric_path', bool, 'Print File IDs instead of names',
@@ -115,12 +113,46 @@ class PysimApp(cmd2.Cmd):
 		self.conserve_write = True
 		self.add_settable(cmd2.Settable('conserve_write', bool, 'Read and compare before write',
 						  onchange_cb=self._onchange_conserve_write))
-		self.update_prompt()
 		self.json_pretty_print = True
 		self.add_settable(cmd2.Settable('json_pretty_print', bool, 'Pretty-Print JSON output'))
 		self.apdu_trace = False
 		self.add_settable(cmd2.Settable('apdu_trace', bool, 'Trace and display APDUs exchanged with card',
 						  onchange_cb=self._onchange_apdu_trace))
+
+		self.equip(card, rs)
+
+	def equip(self, card, rs):
+		"""
+		Equip pySim-shell with the supplied card and runtime state, add (or remove) all required settables and
+		and commands to enable card operations.
+		"""
+
+		# Unequip everything from pySim-shell that would not work in unequipped state
+		if self.rs:
+			self.rs.unregister_cmds(self)
+		cmd_set = self.find_commandsets(Iso7816Commands)
+		if cmd_set:
+			self.unregister_command_set(cmd_set[0])
+		cmd_set = self.find_commandsets(PySimCommands)
+		if cmd_set:
+			self.unregister_command_set(cmd_set[0])
+
+		self.card = card
+		self.rs = rs
+
+		# When a card object and a runtime state is present, (re)equip pySim-shell with everything that is
+		# needed to operate on cards.
+		if self.card and self.rs:
+			self._onchange_conserve_write('conserve_write', False, self.conserve_write)
+			self._onchange_apdu_trace('apdu_trace', False, self.apdu_trace)
+			self.register_command_set(Iso7816Commands())
+			self.register_command_set(PySimCommands())
+			self.iccid, sw = self.card.read_iccid()
+			rs.select('MF', self)
+		else:
+			self.poutput("pySim-shell not equipped!")
+
+		self.update_prompt()
 
 	def poutput_json(self, data, force_no_pretty = False):
 		"""like cmd2.poutput() but for a JSON serializable dict."""
@@ -134,13 +166,15 @@ class PysimApp(cmd2.Cmd):
 		self.update_prompt()
 
 	def _onchange_conserve_write(self, param_name, old, new):
-		self.rs.conserve_write = new
+		if self.rs:
+			self.rs.conserve_write = new
 
 	def _onchange_apdu_trace(self, param_name, old, new):
-		if new == True:
-			self.card._scc._tp.apdu_tracer = self.Cmd2ApduTracer(self)
-		else:
-			self.card._scc._tp.apdu_tracer = None
+		if self.card:
+			if new == True:
+				self.card._scc._tp.apdu_tracer = self.Cmd2ApduTracer(self)
+			else:
+				self.card._scc._tp.apdu_tracer = None
 
 	class Cmd2ApduTracer(ApduTracer):
 		def __init__(self, cmd2_app):
@@ -151,13 +185,22 @@ class PysimApp(cmd2.Cmd):
 			self.cmd2.poutput("<- %s: %s" % (sw, resp))
 
 	def update_prompt(self):
-		path_list = self.rs.selected_file.fully_qualified_path(not self.numeric_path)
-		self.prompt = 'pySIM-shell (%s)> ' % ('/'.join(path_list))
+		if self.rs:
+			path_list = self.rs.selected_file.fully_qualified_path(not self.numeric_path)
+			self.prompt = 'pySIM-shell (%s)> ' % ('/'.join(path_list))
+		else:
+			self.prompt = 'pySIM-shell (no card)> '
 
 	@cmd2.with_category(CUSTOM_CATEGORY)
 	def do_intro(self, _):
 		"""Display the intro banner"""
 		self.poutput(self.intro)
+
+	@cmd2.with_category(CUSTOM_CATEGORY)
+	def do_equip(self, opts):
+		"""Equip pySim-shell with card"""
+		rs, card = init_card(sl);
+		self.equip(card, rs)
 
 
 @with_default_category('pySim Commands')
@@ -538,16 +581,29 @@ if __name__ == '__main__':
 	# Create command layer
 	scc = SimCardCommands(transport=sl)
 
-	rs, card = init_card(sl)
-	if (rs is None or card is None):
-		exit(1)
-	app = PysimApp(card, rs, opts.script)
-	rs.select('MF', app)
+	# Detect and initialize the card in the reader. This may fail when there
+	# is no card in the reader or the card is unresponsive. PysimApp is
+	# able to tolerate and recover from that.
+	try:
+		rs, card = init_card(sl)
+		app = PysimApp(card, rs, opts.script)
+	except:
+		print("Card initialization failed with an exception:")
+		print("---------------------8<---------------------")
+		traceback.print_exc()
+		print("---------------------8<---------------------")
+		print("(you may still try to recover from this manually by using the 'equip' command.)")
+		print(" it should also be noted that some readers may behave strangely when no card")
+		print(" is inserted.)")
+		print("")
+		app = PysimApp(None, None, opts.script)
 
 	# If the user supplies an ADM PIN at via commandline args authenticate
 	# immediately so that the user does not have to use the shell commands
 	pin_adm = sanitize_pin_adm(opts.pin_adm, opts.pin_adm_hex)
 	if pin_adm:
+		if not card:
+			print("Card error, cannot do ADM verification with supplied ADM pin now.")
 		try:
 			card.verify_adm(h2b(pin_adm))
 		except Exception as e:
