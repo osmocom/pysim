@@ -649,11 +649,11 @@ def save_batch(opts):
 	fh.close()
 
 
-def process_card(opts, first, card_handler):
+def process_card(opts, first, ch):
 
 	if opts.dry_run is False:
 		# Connect transport
-		card_handler.get(first)
+		ch.get(first)
 
 	if opts.dry_run is False:
 		# Get card
@@ -681,13 +681,13 @@ def process_card(opts, first, card_handler):
 		if opts.read_iccid:
 			if opts.dry_run:
 				# Connect transport
-				card_handler.get(False)
+				ch.get(False)
 			(res,_) = scc.read_binary(['3f00', '2fe2'], length=10)
 			iccid = dec_iccid(res)
 		elif opts.read_imsi:
 			if opts.dry_run:
 				# Connect transport
-				card_handler.get(False)
+				ch.get(False)
 			(res,_) = scc.read_binary(EF['IMSI'])
 			imsi = swap_nibbles(res)[3:]
 		else:
@@ -713,7 +713,7 @@ def process_card(opts, first, card_handler):
 		opts.num += 1
 	save_batch(opts)
 
-	card_handler.done()
+	ch.done()
 	return 0
 
 
@@ -741,9 +741,9 @@ if __name__ == '__main__':
 	init_batch(opts)
 
 	if opts.card_handler:
-		card_handler = card_handler_auto(sl, opts.card_handler)
+		ch = card_handler_auto(sl, opts.card_handler)
 	else:
-		card_handler = card_handler(sl)
+		ch = card_handler(sl)
 
 	# Iterate
 	first = True
@@ -751,7 +751,7 @@ if __name__ == '__main__':
 
 	while 1:
 		try:
-			rc = process_card(opts, first, card_handler)
+			rc = process_card(opts, first, ch)
 		except (KeyboardInterrupt):
 			print("")
 			print("Terminated by user!")
@@ -770,7 +770,7 @@ if __name__ == '__main__':
 		# Something did not work as well as expected, however, lets
 		# make sure the card is pulled from the reader.
 		if rc != 0:
-			card_handler.error()
+			ch.error()
 
 		# If we are not in batch mode we are done in any case, so lets
 		# exit here.
