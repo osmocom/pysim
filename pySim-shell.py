@@ -40,7 +40,7 @@ from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args
 from pySim.cards import card_detect, SimCard
 from pySim.utils import h2b, swap_nibbles, rpad, b2h, h2s, JsonEncoder, bertlv_parse_one
 from pySim.utils import dec_st, sanitize_pin_adm, tabulate_str_list, is_hex, boxed_heading_str
-from pySim.card_handler import card_handler
+from pySim.card_handler import CardHandler
 
 from pySim.filesystem import CardMF, RuntimeState, CardDF, CardADF
 from pySim.ts_51_011 import CardProfileSIM, DF_TELECOM, DF_GSM
@@ -484,7 +484,7 @@ if __name__ == '__main__':
 
 	sl.wait_for_card();
 
-	card_handler = card_handler(sl)
+	card_handler = CardHandler(sl)
 
 	card = card_detect("auto", scc)
 	if card is None:

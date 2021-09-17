@@ -27,7 +27,7 @@ import sys
 import yaml
 
 # Manual card handler: User is prompted to insert/remove card from the reader.
-class card_handler:
+class CardHandler:
 
 	sl = None
 
@@ -47,7 +47,7 @@ class card_handler:
 		print("")
 
 # Automatic card handler: A machine is used to handle the cards.
-class card_handler_auto:
+class CardHandlerAuto:
 
 	sl = None
 	cmds = None

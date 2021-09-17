@@ -741,9 +741,9 @@ if __name__ == '__main__':
 	init_batch(opts)
 
 	if opts.card_handler:
-		ch = card_handler_auto(sl, opts.card_handler)
+		ch = CardHandlerAuto(sl, opts.card_handler)
 	else:
-		ch = card_handler(sl)
+		ch = CardHandler(sl)
 
 	# Iterate
 	first = True
