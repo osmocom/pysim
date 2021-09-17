@@ -94,7 +94,8 @@ class CardHandlerAuto:
 	def get(self, first = False):
 		print("Ready for Programming: Transporting card into the reader-bay...")
 		self.__exec_cmd(self.cmds['get'])
-		self.sl.connect()
+		if self.sl:
+			self.sl.connect()
 
 	def error(self):
 		print("Programming failed: Transporting card to the error-bin...")
