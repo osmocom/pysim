@@ -200,7 +200,7 @@ def parse_options():
 	parser.add_option("--dry-run", dest="dry_run",
 			help="Perform a 'dry run', don't actually program the card",
 			default=False, action="store_true")
-	parser.add_option("--card_handler", dest="card_handler", metavar="FILE",
+	parser.add_option("--card_handler", dest="card_handler_config", metavar="FILE",
 			help="Use automatic card handling machine")
 
 	(options, args) = parser.parse_args()
@@ -740,8 +740,8 @@ if __name__ == '__main__':
 	# Batch mode init
 	init_batch(opts)
 
-	if opts.card_handler:
-		ch = CardHandlerAuto(sl, opts.card_handler)
+	if opts.card_handler_config:
+		ch = CardHandlerAuto(sl, opts.card_handler_config)
 	else:
 		ch = CardHandler(sl)
 
