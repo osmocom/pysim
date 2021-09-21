@@ -234,5 +234,8 @@ def init_reader(opts, **kwargs) -> Optional[LinkBase]:
 			sl = SerialSimLink(device=opts.device, baudrate=opts.baudrate, **kwargs)
 		return sl
 	except Exception as e:
-		print("Card reader initialization failed with exception:\n" + str(e))
+		if str(e):
+			print("Card reader initialization failed with exception:\n" + str(e))
+		else:
+			print("Card reader initialization failed with an exception of type:\n" + str(type(e)))
 		return None
