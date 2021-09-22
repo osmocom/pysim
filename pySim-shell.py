@@ -202,6 +202,13 @@ class PysimApp(cmd2.Cmd):
 		rs, card = init_card(sl);
 		self.equip(card, rs)
 
+	echo_parser = argparse.ArgumentParser()
+	echo_parser.add_argument('string', help="string to echo on the shell")
+
+	@cmd2.with_argparser(echo_parser)
+	@cmd2.with_category(CUSTOM_CATEGORY)
+	def do_echo(self, opts):
+		self.poutput(opts.string)
 
 @with_default_category('pySim Commands')
 class PySimCommands(CommandSet):
