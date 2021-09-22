@@ -310,13 +310,12 @@ class PySimCommands(CommandSet):
 			if pin_adm:
 				self._cmd.poutput("found ADM-PIN '%s' for ICCID '%s'" % (result, self._cmd.iccid))
 			else:
-				self._cmd.poutput("cannot find ADM-PIN for ICCID '%s'" % (self._cmd.iccid))
-				return
+				raise ValueError("cannot find ADM-PIN for ICCID '%s'" % (self._cmd.iccid))
 
 		if pin_adm:
 			self._cmd.card.verify_adm(h2b(pin_adm))
 		else:
-			self._cmd.poutput("error: cannot authenticate, no adm-pin!")
+			raise ValueError("error: cannot authenticate, no adm-pin!")
 
 @with_default_category('ISO7816 Commands')
 class Iso7816Commands(CommandSet):
