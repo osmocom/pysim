@@ -56,6 +56,10 @@ class PcscSimLink(LinkBase):
 
 	def connect(self):
 		try:
+			# To avoid leakage of resources, make sure the reader
+			# is disconnected
+			self.disconnect()
+
 			# Explicitly select T=0 communication protocol
 			self._con.connect(CardConnection.T0_protocol)
 		except CardConnectionException:
