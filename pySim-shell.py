@@ -30,6 +30,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
+from io import StringIO
 
 from pySim.ts_51_011 import EF, DF, EF_SST_map
 from pySim.ts_31_102 import EF_UST_map, EF_USIM_ADF_map
@@ -41,7 +42,7 @@ from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args
 from pySim.cards import card_detect, SimCard
 from pySim.utils import h2b, swap_nibbles, rpad, b2h, h2s, JsonEncoder, bertlv_parse_one
 from pySim.utils import dec_st, sanitize_pin_adm, tabulate_str_list, is_hex, boxed_heading_str
-from pySim.card_handler import CardHandler
+from pySim.card_handler import CardHandler, CardHandlerAuto
 
 from pySim.filesystem import CardMF, RuntimeState, CardDF, CardADF, CardModel
 from pySim.ts_51_011 import CardProfileSIM, DF_TELECOM, DF_GSM
@@ -99,7 +100,7 @@ def init_card(sl):
 
 class PysimApp(cmd2.Cmd):
 	CUSTOM_CATEGORY = 'pySim Commands'
-	def __init__(self, card, rs, script = None):
+	def __init__(self, card, rs, sl, ch, script = None):
 		super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
 				 use_ipython=True, auto_load_commands=False, startup_script=script)
 		self.intro = style('Welcome to pySim-shell!', fg=fg.red)
@@ -107,6 +108,9 @@ class PysimApp(cmd2.Cmd):
 		self.card = None
 		self.rs = None
 		self.py_locals = { 'card': self.card, 'rs' : self.rs }
+		self.sl = sl
+		self.ch = ch
+
 		self.numeric_path = False
 		self.add_settable(cmd2.Settable('numeric_path', bool, 'Print File IDs instead of names',
 						  onchange_cb=self._onchange_numeric_path))
@@ -126,6 +130,8 @@ class PysimApp(cmd2.Cmd):
 		Equip pySim-shell with the supplied card and runtime state, add (or remove) all required settables and
 		and commands to enable card operations.
 		"""
+
+		rc = False
 
 		# Unequip everything from pySim-shell that would not work in unequipped state
 		if self.rs:
@@ -149,10 +155,12 @@ class PysimApp(cmd2.Cmd):
 			self.register_command_set(PySimCommands())
 			self.iccid, sw = self.card.read_iccid()
 			rs.select('MF', self)
+			rc = True
 		else:
 			self.poutput("pySim-shell not equipped!")
 
 		self.update_prompt()
+		return rc
 
 	def poutput_json(self, data, force_no_pretty = False):
 		"""like cmd2.poutput() but for a JSON serializable dict."""
@@ -201,6 +209,170 @@ class PysimApp(cmd2.Cmd):
 		"""Equip pySim-shell with card"""
 		rs, card = init_card(sl);
 		self.equip(card, rs)
+
+	class InterceptStderr(list):
+		def __init__(self):
+			self._stderr_backup = sys.stderr
+		def __enter__(self):
+			self._stringio_stderr = StringIO()
+			sys.stderr = self._stringio_stderr
+			return self
+		def __exit__(self, *args):
+			self.stderr = self._stringio_stderr.getvalue().strip()
+			del self._stringio_stderr
+			sys.stderr = self._stderr_backup
+
+	def _show_failure_sign(self):
+		self.poutput(style("  +-------------+", fg=fg.bright_red))
+		self.poutput(style("  +   ##   ##   +", fg=fg.bright_red))
+		self.poutput(style("  +    ## ##    +", fg=fg.bright_red))
+		self.poutput(style("  +     ###     +", fg=fg.bright_red))
+		self.poutput(style("  +    ## ##    +", fg=fg.bright_red))
+		self.poutput(style("  +   ##   ##   +", fg=fg.bright_red))
+		self.poutput(style("  +-------------+", fg=fg.bright_red))
+		self.poutput("")
+
+	def _show_success_sign(self):
+		self.poutput(style("  +-------------+", fg=fg.bright_green))
+		self.poutput(style("  +          ## +", fg=fg.bright_green))
+		self.poutput(style("  +         ##  +", fg=fg.bright_green))
+		self.poutput(style("  +  #    ##    +", fg=fg.bright_green))
+		self.poutput(style("  +   ## #      +", fg=fg.bright_green))
+		self.poutput(style("  +    ##       +", fg=fg.bright_green))
+		self.poutput(style("  +-------------+", fg=fg.bright_green))
+		self.poutput("")
+
+	def _process_card(self, first, script_path):
+
+		# Early phase of card initialzation (this part may fail with an exception)
+		try:
+			rs, card = init_card(self.sl)
+			rc = self.equip(card, rs)
+		except:
+			self.poutput("")
+			self.poutput("Card initialization failed with an exception:")
+			self.poutput("---------------------8<---------------------")
+			traceback.print_exc()
+			self.poutput("---------------------8<---------------------")
+			self.poutput("")
+			return -1
+
+		# Actual card processing step. This part should never fail with an exception since the cmd2
+		# do_run_script method will catch any exception that might occur during script execution.
+		if rc:
+			self.poutput("")
+			self.poutput("Transcript stdout:")
+			self.poutput("---------------------8<---------------------")
+			with self.InterceptStderr() as logged:
+				self.do_run_script(script_path)
+			self.poutput("---------------------8<---------------------")
+
+			self.poutput("")
+			self.poutput("Transcript stderr:")
+			if logged.stderr:
+				self.poutput("---------------------8<---------------------")
+				self.poutput(logged.stderr)
+				self.poutput("---------------------8<---------------------")
+			else:
+				self.poutput("(none)")
+
+			# Check for exceptions
+			self.poutput("")
+			if "EXCEPTION of type" not in logged.stderr:
+				return 0
+
+		return -1
+
+	bulk_script_parser = argparse.ArgumentParser()
+	bulk_script_parser.add_argument('script_path', help="path to the script file")
+	bulk_script_parser.add_argument('--halt_on_error', help='stop card handling if an exeption occurs',
+					action='store_true')
+	bulk_script_parser.add_argument('--tries', type=int, default=2,
+					help='how many tries before trying the next card')
+	bulk_script_parser.add_argument('--on_stop_action', type=str, default=None,
+					help='commandline to execute when card handling has stopped')
+	bulk_script_parser.add_argument('--pre_card_action', type=str, default=None,
+					help='commandline to execute before actually talking to the card')
+
+	@cmd2.with_argparser(bulk_script_parser)
+	@cmd2.with_category(CUSTOM_CATEGORY)
+	def do_bulk_script(self, opts):
+		"""Run script on multiple cards (bulk provisioning)"""
+
+		# Make sure that the script file exists and that it is readable.
+		if not os.access(opts.script_path, os.R_OK):
+			self.poutput("Invalid script file!")
+			return
+
+		success_count = 0
+		fail_count = 0
+
+		first = True
+		while 1:
+			# TODO: Count consecutive failures, if more than N consecutive failures occur, then stop.
+			# The ratinale is: There may be a problem with the device, we do want to prevent that
+			# all remaining cards are fired to the error bin. This is only relevant for situations
+			# with large stacks, probably we do not need this feature right now.
+
+			try:
+				# In case of failure, try multiple times.
+				for i in range(opts.tries):
+					# fetch card into reader bay
+					ch.get(first)
+
+					# if necessary execute an action before we start processing the card
+					if(opts.pre_card_action):
+						os.system(opts.pre_card_action)
+
+					# process the card
+					rc = self._process_card(first, opts.script_path)
+					if rc == 0:
+						success_count = success_count + 1
+						self._show_success_sign()
+						self.poutput("Statistics: success :%i, failure: %i" % (success_count, fail_count))
+						break
+					else:
+						fail_count = fail_count + 1
+						self._show_failure_sign()
+						self.poutput("Statistics: success :%i, failure: %i" % (success_count, fail_count))
+
+
+				# Depending on success or failure, the card goes either in the "error" bin or in the
+				# "done" bin.
+				if rc < 0:
+					ch.error()
+				else:
+					ch.done()
+
+				# In most cases it is possible to proceed with the next card, but the
+				# user may decide to halt immediately when an error occurs
+				if opts.halt_on_error and rc < 0:
+					return
+
+			except (KeyboardInterrupt):
+				self.poutput("")
+				self.poutput("Terminated by user!")
+				return;
+			except (SystemExit):
+				# When all cards are processed the card handler device will throw a SystemExit
+				# exception. Also Errors that are not recoverable (cards stuck etc.) will end up here.
+				# The user has the option to execute some action to make aware that the card handler
+				# needs service.
+				if(opts.on_stop_action):
+					os.system(opts.on_stop_action)
+				return
+			except:
+				self.poutput("")
+				self.poutput("Card handling failed with an exception:")
+				self.poutput("---------------------8<---------------------")
+				traceback.print_exc()
+				self.poutput("---------------------8<---------------------")
+				self.poutput("")
+				fail_count = fail_count + 1
+				self._show_failure_sign()
+				self.poutput("Statistics: success :%i, failure: %i" % (success_count, fail_count))
+
+			first = False
 
 	echo_parser = argparse.ArgumentParser()
 	echo_parser.add_argument('string', help="string to echo on the shell")
@@ -553,6 +725,8 @@ global_group = option_parser.add_argument_group('General Options')
 global_group.add_argument('--script', metavar='PATH', default=None,
                           help='script with pySim-shell commands to be executed automatically at start-up')
 global_group.add_argument('--csv', metavar='FILE', default=None, help='Read card data from CSV file')
+global_group.add_argument("--card_handler", dest="card_handler_config", metavar="FILE",
+			  help="Use automatic card handling machine")
 
 adm_group = global_group.add_mutually_exclusive_group()
 adm_group.add_argument('-a', '--pin-adm', metavar='PIN_ADM1', dest='pin_adm', default=None,
@@ -588,12 +762,18 @@ if __name__ == '__main__':
 	# Create command layer
 	scc = SimCardCommands(transport=sl)
 
+	# Create a card handler (for bulk provisioning)
+	if opts.card_handler_config:
+		ch = CardHandlerAuto(None, opts.card_handler_config)
+	else:
+		ch = CardHandler(sl)
+
 	# Detect and initialize the card in the reader. This may fail when there
 	# is no card in the reader or the card is unresponsive. PysimApp is
 	# able to tolerate and recover from that.
 	try:
 		rs, card = init_card(sl)
-		app = PysimApp(card, rs, opts.script)
+		app = PysimApp(card, rs, sl, ch, opts.script)
 	except:
 		print("Card initialization failed with an exception:")
 		print("---------------------8<---------------------")
@@ -603,7 +783,7 @@ if __name__ == '__main__':
 		print(" it should also be noted that some readers may behave strangely when no card")
 		print(" is inserted.)")
 		print("")
-		app = PysimApp(None, None, opts.script)
+		app = PysimApp(None, None, sl, ch, opts.script)
 
 	# If the user supplies an ADM PIN at via commandline args authenticate
 	# immediately so that the user does not have to use the shell commands
