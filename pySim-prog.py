@@ -760,7 +760,7 @@ if __name__ == '__main__':
 			raise
 		except:
 			print("")
-			print("Card programming failed with an execption:")
+			print("Card programming failed with an exception:")
 			print("---------------------8<---------------------")
 			traceback.print_exc()
 			print("---------------------8<---------------------")
