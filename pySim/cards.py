@@ -1559,14 +1559,6 @@ _cards_classes = [ FakeMagicSim, SuperSim, MagicSim, GrcardSim,
 		   SysmoSIMgr1, SysmoSIMgr2, SysmoUSIMgr1, SysmoUSIMSJS1,
 		   FairwavesSIM, OpenCellsSim, WavemobileSim, SysmoISIMSJA2 ]
 
-def card_autodetect(scc):
-	for kls in _cards_classes:
-		card = kls.autodetect(scc)
-		if card is not None:
-			card.reset()
-			return card
-	return None
-
 def card_detect(ctype, scc):
 	# Detect type if needed
 	card = None
