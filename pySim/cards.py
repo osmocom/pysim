@@ -1564,7 +1564,7 @@ def card_detect(ctype, scc):
 	card = None
 	ctypes = dict([(kls.name, kls) for kls in _cards_classes])
 
-	if ctype in ("auto", "auto_once"):
+	if ctype == "auto":
 		for kls in _cards_classes:
 			card = kls.autodetect(scc)
 			if card:
@@ -1575,9 +1575,6 @@ def card_detect(ctype, scc):
 		if card is None:
 			print("Autodetection failed")
 			return None
-
-		if ctype == "auto_once":
-			ctype = card.name
 
 	elif ctype in ctypes:
 		card = ctypes[ctype](scc)
