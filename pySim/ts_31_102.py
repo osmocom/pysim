@@ -1084,6 +1084,10 @@ class ADF_USIM(CardADF):
             (data, sw) = self._cmd.card._scc.authenticate(opts.rand, opts.autn)
             self._cmd.poutput_json(data)
 
+        def do_terminal_profile(self, arg):
+            """Send a TERMINAL PROFILE command to the card."""
+            (data, sw) = self._cmd.card._scc.terminal_profile(arg)
+            self._cmd.poutput('SW: %s, data: %s' % (sw, data))
 
 
 # TS 31.102 Section 7.3

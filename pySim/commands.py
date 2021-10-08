@@ -441,3 +441,9 @@ class SimCardCommands(object):
 	def envelope(self, payload:str):
 		"""Send one ENVELOPE command to the SIM"""
 		return self._tp.send_apdu_checksw('80c20000%02x%s' % (len(payload)//2, payload))
+
+	def terminal_profile(self, payload:str):
+		"""Send TERMINAL PROFILE to card"""
+		data_length = len(payload) // 2
+		data, sw = self._tp.send_apdu(('80100000%02x' % data_length) + payload)
+		return (data, sw)
