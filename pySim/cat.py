@@ -52,7 +52,7 @@ class CommandDetails(COMPR_TLV_IE, tag=0x01):
                         'command_qualifier'/Int8ub)
 
 # TS 102 223 Section 8.7
-class DeviceIdentities(COMPR_TLV_IE, tag=0x02):
+class DeviceIdentities(COMPR_TLV_IE, tag=0x82):
     DEV_IDS = bidict({
         0x01: 'keypad',
         0x02: 'display',
@@ -126,8 +126,8 @@ class Result(COMPR_TLV_IE, tag=0x03):
 
 
 # TS 102 223 Section 8.13  + TS 31.111 Section 8.13
-class SMS_TPDU(COMPR_TLV_IE, tag=0x0B):
-    pass
+class SMS_TPDU(COMPR_TLV_IE, tag=0x8B):
+    _construct = Struct('tpdu'/HexAdapter(GreedyBytes))
 
 # TS 102 223 Section 8.15
 class TextString(COMPR_TLV_IE, tag=0x0d):
