@@ -163,9 +163,16 @@ class USSDDownload(BER_TLV_IE, tag=0xD9,
                     nested=[DeviceIdentities, USSDString]):
     pass
 
+
+# reasonable default for playing with OTA
+# 010203040506070809101112131415161718192021222324252627282930313233
+#'7fe1e10e000000000000001f43000000ff00000000000000000000000000000000'
+
+# TS 102 223 Section 5.2
 term_prof_bits = {
+     # first byte
       1: 'Profile download',
-      2: 'SMS-PP data doanload',
+      2: 'SMS-PP data download',
       3: 'Cell Broadcast data download',
       4: 'Menu selection',
       5: 'SMS-PP data download',
@@ -173,8 +180,9 @@ term_prof_bits = {
       7: 'USSD string DO support in CC by USIM',
       8: 'Call Control by NAA',
 
+     # first byte
       9: 'Command result',
-     10: 'Call Controll by NAA',
+     10: 'Call Control by NAA',
      11: 'Call Control by NAA',
      12: 'MO short message control support',
      13: 'Call Control by NAA',
@@ -182,6 +190,7 @@ term_prof_bits = {
      15: 'UCS2 Display supported',
      16: 'Display Text',
 
+     # third byte
      17: 'Proactive UICC: DISPLAY TEXT',
      18: 'Proactive UICC: GET INKEY',
      19: 'Proactive UICC: GET INPUT',
@@ -191,6 +200,7 @@ term_prof_bits = {
      23: 'Proactive UICC: POLLING OFF',
      24: 'Proactive UICC: REFRESH',
 
+     # fourth byte
      25: 'Proactive UICC: SELECT ITEM',
      26: 'Proactive UICC: SEND SHORT MESSAGE with 3GPP-SMS-TPDU',
      27: 'Proactive UICC: SEND SS',
@@ -200,6 +210,7 @@ term_prof_bits = {
      31: 'Proactive UICC: PROVIDE LOCAL INFORMATION (MCC, MNC, LAC, Cell ID & IMEI)',
      32: 'Proactive UICC: PROVIDE LOCAL INFORMATION (NMR)',
 
+     # fifth byte
      33: 'Proactive UICC: SET UP EVENT LIST',
      34: 'Event: MT call',
      35: 'Event: Call connected',
@@ -209,6 +220,7 @@ term_prof_bits = {
      39: 'Event: Idle screen available',
      40: 'Event: Card reader status',
 
+     # sixth byte
      41: 'Event: Language selection',
      42: 'Event: Browser Termination',
      43: 'Event: Data aailable',
@@ -217,6 +229,71 @@ term_prof_bits = {
      46: 'Event: Display parameters changed',
      47: 'Event: Local Connection',
      48: 'Event: Network Search Mode Change',
+
+     # seventh byte
+     49: 'Proactive UICC: POWER ON CARD',
+     50: 'Proactive UICC: POWER OFF CARD',
+     51: 'Proactive UICC: PERFORM CARD RESET',
+     52: 'Proactive UICC: GET READER STATUS (Card reader status)',
+     53: 'Proactive UICC: GET READER STATUS (Card reader identifier)',
+     # RFU: 3 bit (54,55,56)
+
+     # eighth byte
+     57: 'Proactive UICC: TIMER MANAGEMENT (start, stop)',
+     58: 'Proactive UICC: TIMER MANAGEMENT (get current value)',
+     59: 'Proactive UICC: PROVIDE LOCAL INFORMATION (date, time and time zone)',
+     60: 'GET INKEY',
+     61: 'SET UP IDLE MODE TEXT',
+     62: 'RUN AT COMMAND',
+     63: 'SETUP CALL',
+     64: 'Call Control by NAA',
+
+     # ninth byte
+     65: 'DISPLAY TEXT',
+     66: 'SEND DTMF command',
+     67: 'Proactive UICC: PROVIDE LOCAL INFORMATION (NMR)',
+     68: 'Proactive UICC: PROVIDE LOCAL INFORMATION (language)',
+     69: 'Proactive UICC: PROVIDE LOCAL INFORMATION (Timing Advance)',
+     70: 'Proactive UICC: LANGUAGE NOTIFICATION',
+     71: 'Proactive UICC: LAUNCH BROWSER',
+     72: 'Proactive UICC: PROVIDE LOCAL INFORMATION (Access Technology)',
+
+     # tenth byte
+     73: 'Soft keys support for SELECT ITEM',
+     74: 'Soft keys support for SET UP MENU ITEM',
+     # RFU: 6 bit (75-80)
+
+     # eleventh byte: max number of soft keys as 8bit value (81..88)
+
+     # twelfth byte
+     89: 'Proactive UICC: OPEN CHANNEL',
+     90: 'Proactive UICC: CLOSE CHANNEL',
+     91: 'Proactive UICC: RECEIVE DATA',
+     92: 'Proactive UICC: SEND DATA',
+     93: 'Proactive UICC: GET CHANNEL STATUS',
+     94: 'Proactive UICC: SERVICE SEARCH',
+     95: 'Proactive UICC: GET SERVICE INFORMATION',
+     96: 'Proactive UICC: DECLARE SERVICE',
+
+     # thirteenth byte
+     97: 'BIP supported Bearer: CSD',
+     98: 'BIP supported Bearer: GPRS',
+     99: 'BIP supported Bearer: Bluetooth',
+     100: 'BIP supported Bearer: IrDA',
+     101: 'BIP supported Bearer: RS232',
+     # 3 bits: number of channels supported (102..104)
+
+     # fourtheenth byte (screen height)
+     # fifteenth byte (screen width)
+     # sixeenth byte (screen effects)
+     # seventeenth byte (BIP supported bearers)
+     129: 'BIP: TCP, UICC in client mode, remote connection',
+     130: 'BIP: UDP, UICC in client mode, remote connection',
+     131: 'BIP: TCP, UICC in server mode',
+     132: 'BIP: TCP, UICC in client mode, local connection',
+     133: 'BIP: UDP, UICC in client mode, local connection',
+     134: 'BIP: direct communication channel',
+     # 2 bits reserved: 135, 136
 
      # FIXME: remainder
 }
