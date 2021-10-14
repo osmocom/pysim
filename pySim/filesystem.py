@@ -1435,7 +1435,9 @@ class CardProfile(object):
 
 
 class CardModel(abc.ABC):
-    """A specific card model, typically having some additional vendor-specific files"""
+    """A specific card model, typically having some additional vendor-specific files. All
+    you need to do is to define a sub-class with a list of ATRs or an overridden match
+    method."""
     _atrs = []
 
     @classmethod
@@ -1456,6 +1458,9 @@ class CardModel(abc.ABC):
 
     @staticmethod
     def apply_matching_models(scc:SimCardCommands, rs:RuntimeState):
+        """Check if any of the CardModel sub-classes 'match' the currently inserted card
+        (by ATR or overriding the 'match' method). If so, call their 'add_files'
+        method."""
         for m in CardModel.__subclasses__():
             if m.match(scc):
                 m.add_files(rs)

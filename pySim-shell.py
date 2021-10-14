@@ -48,6 +48,9 @@ from pySim.ts_102_221 import CardProfileUICC
 from pySim.ts_31_102 import CardApplicationUSIM
 from pySim.ts_31_103 import CardApplicationISIM
 
+# we need to import this module so that the SysmocomSJA2 sub-class of
+# CardModel is created, which will add the ATR-based matching and
+# calling of SysmocomSJA2.add_files.  See  CardModel.apply_matching_models
 import pySim.sysmocom_sja2
 
 from pySim.card_key_provider import CardKeyProviderCsv, card_key_provider_register, card_key_provider_get_field
