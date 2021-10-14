@@ -27,6 +27,8 @@ not the actual contents / runtime state of interacting with a given smart card.
 import code
 import tempfile
 import json
+import abc
+import inspect
 
 import cmd2
 from cmd2 import CommandSet, with_default_category, with_argparser
@@ -34,10 +36,13 @@ import argparse
 
 from typing import cast, Optional, Iterable, List, Any, Dict, Tuple
 
+from smartcard.util import toBytes
+
 from pySim.utils import sw_match, h2b, b2h, i2h, is_hex, auto_int, bertlv_parse_one, Hexstr
 from pySim.construct import filter_dict, parse_construct
 from pySim.exceptions import *
 from pySim.jsonpath import js_path_find, js_path_modify
+from pySim.commands import SimCardCommands
 
 class CardFile(object):
     """Base class for all objects in the smart card filesystem.
@@ -1427,3 +1432,30 @@ class CardProfile(object):
             Tuple of two strings
         """
         return interpret_sw(self.sw, sw)
+
+
+class CardModel(abc.ABC):
+    """A specific card model, typically having some additional vendor-specific files"""
+    _atrs = []
+
+    @classmethod
+    @abc.abstractmethod
+    def add_files(cls, rs:RuntimeState):
+        """Add model specific files to given RuntimeState."""
+
+    @classmethod
+    def match(cls, scc:SimCardCommands) -> bool:
+        """Test if given card matches this model."""
+        card_atr = scc.get_atr()
+        for atr in cls._atrs:
+            atr_bin = toBytes(atr)
+            if atr_bin == card_atr:
+                print("Detected CardModel:", cls.__name__)
+                return True
+        return False
+
+    @staticmethod
+    def apply_matching_models(scc:SimCardCommands, rs:RuntimeState):
+        for m in CardModel.__subclasses__():
+            if m.match(scc):
+                m.add_files(rs)

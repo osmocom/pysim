@@ -42,11 +42,13 @@ from pySim.utils import h2b, swap_nibbles, rpad, b2h, h2s, JsonEncoder, bertlv_p
 from pySim.utils import dec_st, sanitize_pin_adm, tabulate_str_list, is_hex, boxed_heading_str
 from pySim.card_handler import CardHandler
 
-from pySim.filesystem import CardMF, RuntimeState, CardDF, CardADF
+from pySim.filesystem import CardMF, RuntimeState, CardDF, CardADF, CardModel
 from pySim.ts_51_011 import CardProfileSIM, DF_TELECOM, DF_GSM
 from pySim.ts_102_221 import CardProfileUICC
 from pySim.ts_31_102 import CardApplicationUSIM
 from pySim.ts_31_103 import CardApplicationISIM
+
+import pySim.sysmocom_sja2
 
 from pySim.card_key_provider import CardKeyProviderCsv, card_key_provider_register, card_key_provider_get_field
 
@@ -83,6 +85,8 @@ def init_card(sl):
 	# FIXME: do this dynamically
 	rs.mf.add_file(DF_TELECOM())
 	rs.mf.add_file(DF_GSM())
+
+	CardModel.apply_matching_models(scc, rs)
 
 	# inform the transport that we can do context-specific SW interpretation
 	sl.set_sw_interpreter(rs)
