@@ -513,7 +513,7 @@ class EF_ServiceTable(TransparentEF):
             bit_offset = (i % 4) * 2
             bits = (byte >> bit_offset) & 3
             ret[service_nr] = {
-                     'description': self.table[service_nr] or None,
+                     'description': self.table[service_nr] if service_nr in self.table else None,
                      'allocated': True if bits & 1 else False,
                      'activated': True if bits & 2 else False,
                      }
