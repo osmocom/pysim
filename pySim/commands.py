@@ -141,13 +141,14 @@ class SimCardCommands(object):
 		if length is None:
 			length = self.__len(r) - offset
 		total_data = ''
-		while offset < length:
-			chunk_len = min(255, length-offset)
-			pdu = self.cla_byte + 'b0%04x%02x' % (offset, chunk_len)
+		chunk_offset = 0
+		while chunk_offset < length:
+			chunk_len = min(255, length-chunk_offset)
+			pdu = self.cla_byte + 'b0%04x%02x' % (offset + chunk_offset, chunk_len)
 			data,sw = self._tp.send_apdu(pdu)
 			if sw == '9000':
 				total_data += data
-				offset += chunk_len
+				chunk_offset += chunk_len
 			else:
 				raise ValueError('Failed to read (offset %d)' % (offset))
 		return total_data, sw
