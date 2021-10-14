@@ -505,6 +505,12 @@ class EF_ServiceTable(TransparentEF):
     def __init__(self, fid, sfid, name, desc, size, table):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self.table = table
+    @staticmethod
+    def _bit_byte_offset_for_service(service:int) -> (int, int):
+        i = service - 1
+        byte_offset = i//4
+        bit_offset = (i % 4) * 2
+        return (byte_offset, bit_offset)
     def _decode_bin(self, raw_bin):
         ret = {}
         for i in range(0, len(raw_bin)*4):
@@ -518,7 +524,26 @@ class EF_ServiceTable(TransparentEF):
                      'activated': True if bits & 2 else False,
                      }
         return ret
-    # TODO: encoder
+    def _encode_bin(self, in_json):
+        # compute the required binary size
+        bin_len = 0
+        for srv in in_json.keys():
+            service_nr = int(srv)
+            (byte_offset, bit_offset) = EF_ServiceTable._bit_byte_offset_for_service(service_nr)
+            if byte_offset >= bin_len:
+                bin_len = byte_offset+1
+        # encode the actual data
+        out = bytearray(b'\x00' * bin_len)
+        for srv in in_json.keys():
+            service_nr = int(srv)
+            (byte_offset, bit_offset) = EF_ServiceTable._bit_byte_offset_for_service(service_nr)
+            bits = 0
+            if in_json[srv]['allocated'] == True:
+                bits |= 1
+            if in_json[srv]['activated'] == True:
+                bits |= 2
+            out[byte_offset] |= ((bits & 3) << bit_offset)
+        return out
 
 # TS 51.011 Section 10.3.11
 class EF_SPN(TransparentEF):
