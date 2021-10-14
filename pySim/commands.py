@@ -172,11 +172,11 @@ class SimCardCommands(object):
 		self.select_path(ef)
 		total_data = ''
 		total_sw = "9000"
-		chunk_offset = offset
+		chunk_offset = 0
 		while chunk_offset < data_length:
 			chunk_len = min(255, data_length - chunk_offset)
 			# chunk_offset is bytes, but data slicing is hex chars, so we need to multiply by 2
-			pdu = self.cla_byte + 'd6%04x%02x' % (chunk_offset, chunk_len) + data[chunk_offset*2 : (chunk_offset+chunk_len)*2]
+			pdu = self.cla_byte + 'd6%04x%02x' % (offset + chunk_offset, chunk_len) + data[chunk_offset*2 : (chunk_offset+chunk_len)*2]
 			chunk_data, chunk_sw = self._tp.send_apdu(pdu)
 			if chunk_sw == total_sw:
 				total_data += chunk_data
