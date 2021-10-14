@@ -551,7 +551,7 @@ class TransparentEF(CardEF):
         elif self._tlv:
             self._tlv.from_dict(abstract_data)
             return self._tlv.to_tlv()
-        raise NotImplementedError
+        raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
 
     def encode_hex(self, abstract_data:dict) -> str:
         """Encode abstract representation into raw (hex string) data.
@@ -577,7 +577,7 @@ class TransparentEF(CardEF):
         elif self._tlv:
             self._tlv.from_dict(abstract_data)
             return b2h(self._tlv.to_tlv())
-        raise NotImplementedError
+        raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
 
 
 class LinFixedEF(CardEF):
@@ -787,7 +787,7 @@ class LinFixedEF(CardEF):
         elif self._tlv:
             self._tlv.from_dict(abstract_data)
             return b2h(self._tlv.to_tlv())
-        raise NotImplementedError
+        raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
 
     def encode_record_bin(self, abstract_data:dict) -> bytearray:
         """Encode abstract representation into raw (binary) data.
@@ -812,7 +812,7 @@ class LinFixedEF(CardEF):
         elif self._tlv:
             self._tlv.from_dict(abstract_data)
             return self._tlv.to_tlv()
-        raise NotImplementedError
+        raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
 
 class CyclicEF(LinFixedEF):
     """Cyclic EF (Entry File) in the smart card filesystem"""
@@ -920,7 +920,7 @@ class TransRecEF(TransparentEF):
         elif self._tlv:
             self._tlv.from_dict(abstract_data)
             return b2h(self._tlv.to_tlv())
-        raise NotImplementedError
+        raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
 
     def encode_record_bin(self, abstract_data:dict) -> bytearray:
         """Encode abstract representation into raw (binary) data.
@@ -945,7 +945,7 @@ class TransRecEF(TransparentEF):
         elif self._tlv:
             self._tlv.from_dict(abstract_data)
             return self._tlv.to_tlv()
-        raise NotImplementedError
+        raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
 
     def _decode_bin(self, raw_bin_data:bytearray):
         chunks = [raw_bin_data[i:i+self.rec_len] for i in range(0, len(raw_bin_data), self.rec_len)]
