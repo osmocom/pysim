@@ -937,9 +937,9 @@ def decode_select_response(resp_hex):
     file_type = type_of_file_map[resp_bin[6]] if resp_bin[6] in type_of_file_map else resp_bin[6]
     ret['file_descriptor']['file_type'] = file_type
     if file_type in ['mf', 'df']:
-        ret['file_characteristics'] = b2h(resp_bin[13])
-        ret['num_direct_child_df'] = int(resp_bin[14], 16)
-        ret['num_direct_child_ef'] = int(resp_bin[15], 16)
+        ret['file_characteristics'] = b2h(resp_bin[13:14])
+        ret['num_direct_child_df'] = resp_bin[14]
+        ret['num_direct_child_ef'] = resp_bin[15]
         ret['num_chv_unblock_adm_codes'] = int(resp_bin[16])
         # CHV / UNBLOCK CHV stats
     elif file_type in ['working_ef']:
