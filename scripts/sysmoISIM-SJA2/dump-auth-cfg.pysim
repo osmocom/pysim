@@ -1,0 +1,41 @@
+# script to be used with pySim-shell.py which is part of the Osmocom pysim package,
+# found at https://osmocom.org/projects/pysim/wiki
+set echo true
+
+# TODO: add your card-specific ADM pin at the end of the verify_adm line below
+verify_adm
+
+select DF.SYSTEM
+
+# Milenage configuration (constants)
+select EF.MILENAGE_CFG
+read_binary_decoded
+
+# 2G authentication kay / algorithm
+select EF.SIM_AUTH_KEY
+read_binary_decoded
+
+# OTA keys
+#select EF.0348_KEY
+#read_records_decoded
+
+select ADF.USIM
+# USIM authentication key / algoritmh in 3G security context
+select EF.USIM_AUTH_KEY
+read_binary_decoded
+# USIM authentication key / algorithm in 2G security context
+select EF.USIM_AUTH_KEY_2G
+read_binary_decoded
+# USIM SQN numbers
+select EF.USIM_SQN
+read_binary_decoded
+
+select ADF.ISIM
+# ISIM authentication key / algorithm
+select EF.ISIM_AUTH_KEY
+read_binary_decoded
+# ISIM SQN numbers
+select EF.ISIM_SQN
+read_binary_decoded
+
+quit
