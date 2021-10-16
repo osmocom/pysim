@@ -166,7 +166,7 @@ class EF_USIM_SQN(TransparentEF):
                           'aus_concealed'/Bit, 'autn_concealed'/Bit)
         self._construct = Struct('flag1'/Flag1, 'flag2'/Flag2,
                                  'delta_max'/BytesInteger(6), 'age_limit'/BytesInteger(6),
-                                 'freshness'/HexAdapter(GreedyBytes))
+                                 'freshness'/GreedyRange(BytesInteger(6)))
 
 class EF_USIM_AUTH_KEY(TransparentEF):
     def __init__(self, fid='af20', name='EF.USIM_AUTH_KEY'):
