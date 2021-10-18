@@ -223,4 +223,6 @@ sw_isim = {
     }
 }
 
-CardApplicationISIM = CardApplication('ISIM', adf=ADF_ISIM(), sw=sw_isim)
+class CardApplicationISIM(CardApplication):
+    def __init__(self):
+	    super().__init__('ISIM', adf=ADF_ISIM(), sw=sw_isim)

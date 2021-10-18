@@ -82,8 +82,8 @@ def init_card(sl):
 
 	# Create runtime state with card profile
 	profile = CardProfileUICC()
-	profile.add_application(CardApplicationUSIM)
-	profile.add_application(CardApplicationISIM)
+	profile.add_application(CardApplicationUSIM())
+	profile.add_application(CardApplicationISIM())
 	rs = RuntimeState(card, profile)
 
 	# FIXME: do this dynamically

@@ -1115,4 +1115,6 @@ sw_usim = {
     }
 }
 
-CardApplicationUSIM = CardApplication('USIM', adf=ADF_USIM(), sw=sw_usim)
+class CardApplicationUSIM(CardApplication):
+    def __init__(self):
+	    super().__init__('USIM', adf=ADF_USIM(), sw=sw_usim)
