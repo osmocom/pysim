@@ -107,11 +107,11 @@ class FileDescriptor(BER_TLV_IE, tag=0x82):
 
 # ETSI TS 102 221 11.1.1.4.4
 class FileIdentifier(BER_TLV_IE, tag=0x83):
-    _construct = GreedyBytes
+    _construct = HexAdapter(GreedyBytes)
 
 # ETSI TS 102 221 11.1.1.4.5
 class DfName(BER_TLV_IE, tag=0x84):
-    _construct = GreedyBytes
+    _construct = HexAdapter(GreedyBytes)
 
 # ETSI TS 102 221 11.1.1.4.6.1
 class UiccCharacteristics(BER_TLV_IE, tag=0x80):
@@ -157,12 +157,18 @@ class SpecificUiccEnvironmentConditions(BER_TLV_IE, tag=0x88):
 class Platform2PlatformCatSecuredApdu(BER_TLV_IE, tag=0x89):
     _construct = GreedyBytes
 
+# sysmoISIM-SJA2 specific
+class ToolkitAccessConditions(BER_TLV_IE, tag=0xD2):
+    _construct = FlagsEnum(Byte, rfm_create=1, rfm_delete_terminate=2, other_applet_create=4,
+                           other_applet_delete_terminate=8)
+
 # ETSI TS 102 221 11.1.1.4.6.0
 class ProprietaryInformation(BER_TLV_IE, tag=0xA5,
                              nested=[UiccCharacteristics, ApplicationPowerConsumption,
                                      MinApplicationClockFrequency, AvailableMemory,
                                      FileDetails, ReservedFileSize, MaximumFileSize,
-                                     SupportedFilesystemCommands, SpecificUiccEnvironmentConditions]):
+                                     SupportedFilesystemCommands, SpecificUiccEnvironmentConditions,
+                                     ToolkitAccessConditions]):
     pass
 
 # ETSI TS 102 221 11.1.1.4.7.1
@@ -176,11 +182,11 @@ class SecurityAttribExpanded(BER_TLV_IE, tag=0xab):
 # ETSI TS 102 221 11.1.1.4.7.3
 class SecurityAttribReferenced(BER_TLV_IE, tag=0x8b):
     # TODO: longer format with SEID
-    _construct = Struct('ef_arr_file_id'/Bytes(2), 'ef_arr_record_nr'/Int8ub)
+    _construct = Struct('ef_arr_file_id'/HexAdapter(Bytes(2)), 'ef_arr_record_nr'/Int8ub)
 
 # ETSI TS 102 221 11.1.1.4.8
 class ShortFileIdentifier(BER_TLV_IE, tag=0x88):
-    _construct = Byte
+    _construct = HexAdapter(COptional(Bytes(1)))
 
 # ETSI TS 102 221 11.1.1.4.9
 class LifeCycleStatusInteger(BER_TLV_IE, tag=0x8A):
@@ -202,6 +208,23 @@ class LifeCycleStatusInteger(BER_TLV_IE, tag=0x8A):
             ret = lcsi
         self.decoded = ret
         return self.decoded
+    def _to_bytes(self):
+        if self.decoded == 'no_information':
+            return b'\x00'
+        elif self.decoded == 'creation':
+            return b'\x01'
+        elif self.decoded == 'initialization':
+            return b'\x03'
+        elif self.decoded == 'operational_activated':
+            return b'\x05'
+        elif self.decoded == 'operational_deactivated':
+            return b'\x04'
+        elif self.decoded == 'termination':
+            return b'\x0c'
+        elif isinstance(self.decoded, int):
+            return self.decoded.to_bytes(1, 'big')
+        else:
+            raise ValueError
 
 # ETSI TS 102 221 11.1.1.4.9
 class PS_DO(BER_TLV_IE, tag=0x90):

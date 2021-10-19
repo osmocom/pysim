@@ -1475,6 +1475,10 @@ class RuntimeState(object):
         (data, sw) = self.card._scc.status()
         return self.selected_file.decode_select_response(data)
 
+    def get_file_for_selectable(self, name: str):
+        sels = self.selected_file.get_selectables()
+        return sels[name]
+
     def activate_file(self, name: str):
         """Request ACTIVATE FILE of specified file."""
         sels = self.selected_file.get_selectables()

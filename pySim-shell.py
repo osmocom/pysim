@@ -49,6 +49,7 @@ from pySim.profile import CardProfile
 from pySim.ts_51_011 import CardProfileSIM, DF_TELECOM, DF_GSM
 from pySim.ts_102_221 import CardProfileUICC
 from pySim.ts_102_221 import CardProfileUICCSIM
+from pySim.ts_102_222 import Ts102222Commands
 from pySim.ts_31_102 import CardApplicationUSIM
 from pySim.ts_31_103 import CardApplicationISIM
 from pySim.ara_m import CardApplicationARAM
@@ -174,6 +175,7 @@ class PysimApp(cmd2.Cmd):
                 'conserve_write', False, self.conserve_write)
             self._onchange_apdu_trace('apdu_trace', False, self.apdu_trace)
             self.register_command_set(Iso7816Commands())
+            self.register_command_set(Ts102222Commands())
             self.register_command_set(PySimCommands())
             self.iccid, sw = self.card.read_iccid()
             rs.select('MF', self)

@@ -448,6 +448,26 @@ class SimCardCommands(object):
         """
         return self._tp.send_apdu_checksw(self.cla_byte + '44000002' + fid)
 
+    def create_file(self, payload: Hexstr):
+        """Execute CREEATE FILE command as per TS 102 222 Section 6.3"""
+        return self._tp.send_apdu_checksw(self.cla_byte + 'e00000%02x%s' % (len(payload)//2, payload))
+
+    def delete_file(self, fid):
+        """Execute DELETE FILE command as per TS 102 222 Section 6.4"""
+        return self._tp.send_apdu_checksw(self.cla_byte + 'e4000002' + fid)
+
+    def terminate_df(self, fid):
+        """Execute TERMINATE DF command as per TS 102 222 Section 6.7"""
+        return self._tp.send_apdu_checksw(self.cla_byte + 'e6000002' + fid)
+
+    def terminate_ef(self, fid):
+        """Execute TERMINATE EF command as per TS 102 222 Section 6.8"""
+        return self._tp.send_apdu_checksw(self.cla_byte + 'e8000002' + fid)
+
+    def terminate_card_usage(self):
+        """Execute TERMINATE CARD USAGE command as per TS 102 222 Section 6.9"""
+        return self._tp.send_apdu_checksw(self.cla_byte + 'fe000000')
+
     def manage_channel(self, mode='open', lchan_nr=0):
         """Execute MANAGE CHANNEL command as per TS 102 221 Section 11.1.17.
 
