@@ -138,12 +138,10 @@ class PysimApp(cmd2.Cmd):
 		# Unequip everything from pySim-shell that would not work in unequipped state
 		if self.rs:
 			self.rs.unregister_cmds(self)
-		cmd_set = self.find_commandsets(Iso7816Commands)
-		if cmd_set:
-			self.unregister_command_set(cmd_set[0])
-		cmd_set = self.find_commandsets(PySimCommands)
-		if cmd_set:
-			self.unregister_command_set(cmd_set[0])
+		for cmds in [Iso7816Commands, PySimCommands]:
+			cmd_set = self.find_commandsets(cmds)
+			if cmd_set:
+				self.unregister_command_set(cmd_set[0])
 
 		self.card = card
 		self.rs = rs
