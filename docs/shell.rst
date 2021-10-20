@@ -156,6 +156,20 @@ close_channel
    :func: Iso7816Commands.close_chan_parser
 
 
+suspend_uicc
+~~~~~~~~~~~~
+This command allows you to perform the SUSPEND UICC command on the card.  This is a relatively
+recent power-saving addition to the UICC specifications, allowing for suspend/resume while maintaining
+state, as opposed to a full power-off (deactivate) and power-on (activate) of the card.
+
+The pySim command just sends that SUSPEND UICC command and doesn't perform the full related sequence
+including the electrical power down.
+
+.. argparse::
+   :module: pySim-shell
+   :func: Iso7816Commands.suspend_uicc_parser
+
+
 pySim commands
 --------------
 

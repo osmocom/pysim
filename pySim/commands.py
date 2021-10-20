@@ -23,7 +23,7 @@
 
 from construct import *
 from pySim.construct import LV
-from pySim.utils import rpad, b2h, h2b, sw_match, bertlv_encode_len
+from pySim.utils import rpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i
 from pySim.exceptions import SwMatchError
 
 class SimCardCommands(object):
@@ -448,3 +448,39 @@ class SimCardCommands(object):
 		data_length = len(payload) // 2
 		data, sw = self._tp.send_apdu(('80100000%02x' % data_length) + payload)
 		return (data, sw)
+
+	# ETSI TS 102 221 11.1.22
+	def suspend_uicc(self, min_len_secs:int=60, max_len_secs:int=43200):
+		"""Send SUSPEND UICC to the card."""
+		def encode_duration(secs:int) -> Hexstr:
+			if secs >= 10*24*60*60:
+				return '04%02x' % (secs // (10*24*60*60))
+			elif secs >= 24*60*60:
+				return '03%02x' % (secs // (24*60*60))
+			elif secs >= 60*60:
+				return '02%02x' % (secs // (60*60))
+			elif secs >= 60:
+				return '01%02x' % (secs // 60)
+			else:
+				return '00%02x' % secs
+		def decode_duration(enc:Hexstr) -> int:
+			time_unit = enc[:2]
+			length = h2i(enc[2:4])
+			if time_unit == '04':
+				return length * 10*24*60*60
+			elif time_unit == '03':
+				return length * 24*60*60
+			elif time_unit == '02':
+				return length * 60*60
+			elif time_unit == '01':
+				return length * 60
+			elif time_unit == '00':
+				return length
+			else:
+				raise ValueError('Time unit must be 0x00..0x04')
+		min_dur_enc = encode_duration(min_len_secs)
+		max_dur_enc = encode_duration(max_len_secs)
+		data, sw = self._tp.send_apdu_checksw('8076000004' + min_dur_enc + max_dur_enc)
+		negotiated_duration_secs = decode_duration(data[:4])
+		resume_token = data[4:]
+		return (negotiated_duration_secs, resume_token, sw)
