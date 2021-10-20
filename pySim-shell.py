@@ -49,6 +49,7 @@ from pySim.ts_51_011 import CardProfileSIM, DF_TELECOM, DF_GSM
 from pySim.ts_102_221 import CardProfileUICC
 from pySim.ts_31_102 import CardApplicationUSIM
 from pySim.ts_31_103 import CardApplicationISIM
+from pySim.ara_m import CardApplicationARAM
 from pySim.gsm_r import DF_EIRENE
 
 # we need to import this module so that the SysmocomSJA2 sub-class of
@@ -86,6 +87,7 @@ def init_card(sl):
 	profile = CardProfileUICC()
 	profile.add_application(CardApplicationUSIM())
 	profile.add_application(CardApplicationISIM())
+	profile.add_application(CardApplicationARAM())
 	rs = RuntimeState(card, profile)
 
 	# FIXME: do this dynamically

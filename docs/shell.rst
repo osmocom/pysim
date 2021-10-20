@@ -443,6 +443,94 @@ authenticate
    :func: ADF_USIM.AddlShellCommands.authenticate_parser
 
 
+ARA-M commands
+--------------
+
+The ARA-M commands exist to manage the access rules stored in an ARA-M applet on the card.
+
+ARA-M in the context of SIM cards is primarily used to enable Android UICC Carrier Privileges,
+please see https://source.android.com/devices/tech/config/uicc for more details on the background.
+
+
+aram_get_all
+~~~~~~~~~~~~
+
+Obtain and decode all access rules from the ARA-M applet on the card.
+
+NOTE: if the total size of the access rules exceeds 255 bytes, this command will fail, as
+it doesn't yet implement fragmentation/reassembly on rule retrieval. YMMV
+
+::
+
+  pySIM-shell (MF/ADF.ARA-M)> aram_get_all
+  [
+      {
+          "ResponseAllRefArDO": [
+              {
+                  "RefArDO": [
+                      {
+                          "RefDO": [
+                              {
+                                  "AidRefDO": "ffffffffffff"
+                              },
+                              {
+                                  "DevAppIdRefDO": "e46872f28b350b7e1f140de535c2a8d5804f0be3"
+                              }
+                          ]
+                      },
+                      {
+                          "ArDO": [
+                              {
+                                  "ApduArDO": {
+                                      "generic_access_rule": "always"
+                                  }
+                              },
+                              {
+                                  "PermArDO": {
+                                      "permissions": "0000000000000001"
+                                  }
+                              }
+                          ]
+                      }
+                  ]
+              }
+          ]
+      }
+  ]
+
+aram_get_config
+~~~~~~~~~~~~~~~
+Perform Config handshake with ARA-M applet: Tell it our version and retrieve its version.
+
+NOTE: Not supported in all ARA-M implementations.
+
+.. argparse::
+   :module: pySim.ara_m
+   :func: ADF_ARAM.AddlShellCommands.get_config_parser
+
+
+aram_store_ref_ar_do
+~~~~~~~~~~~~~~~~~~~~
+Store a [new] access rule on the ARA-M applet.
+
+.. argparse::
+   :module: pySim.ara_m
+   :func: ADF_ARAM.AddlShellCommands.store_ref_ar_do_parse
+
+For example, to store an Android UICC carrier privilege rule for the SHA1 hash of the certificate used to sign the CoIMS android app of Supreeth Herle (https://github.com/herlesupreeth/CoIMS_Wiki) you can use the following command:
+
+::
+
+  pySIM-shell (MF/ADF.ARA-M)> aram_store_ref_ar_do --aid FFFFFFFFFFFF --device-app-id E46872F28B350B7E1F140DE535C2A8D5804F0BE3 --android-permissions 0000000000000001 --apdu-always
+
+
+aram_delete_all
+~~~~~~~~~~~~~~~
+This command will request deletion of all access rules stored within the
+ARA-M applet.  Use it with caution, there is no undo.  Any rules later
+intended must be manually inserted again using `aram_store_ref_ar_do`
+
+
 
 cmd2 settable parameters
 ------------------------
