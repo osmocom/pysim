@@ -49,6 +49,7 @@ from pySim.ts_51_011 import CardProfileSIM, DF_TELECOM, DF_GSM
 from pySim.ts_102_221 import CardProfileUICC
 from pySim.ts_31_102 import CardApplicationUSIM
 from pySim.ts_31_103 import CardApplicationISIM
+from pySim.gsm_r import DF_EIRENE
 
 # we need to import this module so that the SysmocomSJA2 sub-class of
 # CardModel is created, which will add the ATR-based matching and
@@ -90,6 +91,7 @@ def init_card(sl):
 	# FIXME: do this dynamically
 	rs.mf.add_file(DF_TELECOM())
 	rs.mf.add_file(DF_GSM())
+	rs.mf.add_file(DF_EIRENE())
 
 	CardModel.apply_matching_models(scc, rs)
 
