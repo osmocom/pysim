@@ -380,6 +380,7 @@ class PysimApp(cmd2.Cmd):
 	@cmd2.with_argparser(echo_parser)
 	@cmd2.with_category(CUSTOM_CATEGORY)
 	def do_echo(self, opts):
+		"""Echo (print) a string on the console"""
 		self.poutput(opts.string)
 
 @with_default_category('pySim Commands')

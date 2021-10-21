@@ -196,6 +196,15 @@ export
    :module: pySim-shell
    :func: PySimCommands.export_parser
 
+Please note that `export` works relative to the current working
+directory, so if you are in `MF`, then the export will contain all known
+files on the card.  However, if you are in `ADF.ISIM`, only files below
+that ADF will be part of the export.
+
+Furthermore, it is strongly advised to first enter the ADM1 pin
+(`verify_adm`) to maximize the chance of having permission to read
+all/most files.
+
 
 tree
 ~~~~
@@ -216,8 +225,34 @@ Currently only ADM1 is supported.
 
 reset
 ~~~~~
-
 Perform card reset and display the card ATR.
+
+intro
+~~~~~
+[Re-]Display the introductory banner
+
+
+equip
+~~~~~
+Equip pySim-shell with a card; particularly useful if the program was
+started before a card was present, or after a card has been replaced by
+the user while pySim-shell was kept running.
+
+bulk_script
+~~~~~~~~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: PysimApp.bulk_script_parser
+
+Run a script for bulk-provisioning of multiple cards.
+
+
+echo
+~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: PysimApp.echo_parser
+
 
 
 Linear Fixed EF commands
