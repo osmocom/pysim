@@ -173,7 +173,8 @@ def bertlv_parse_tag_raw(binary:bytes) -> Tuple[int, bytes]:
 	Returns:
         Tuple of (tag:int, remainder:bytes)
 	"""
-	if binary[0] == 0xff:
+	# check for FF padding at the end, as customary in SIM card files
+	if binary[0] == 0xff and len(binary) == 1 or binary[0] == 0xff and binary[1] == 0xff:
 		return None, binary
 	tag = binary[0] & 0x1f
 	if tag <= 30:
