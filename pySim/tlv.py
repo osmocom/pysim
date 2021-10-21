@@ -373,7 +373,8 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
             for k in i.keys():
                 if k in self.members_by_name:
                     cls = self.members_by_name[k]
-                    inst = cls(decoded=i[k])
+                    inst = cls()
+                    inst.from_dict(i[k])
                     res.append(inst)
                 else:
                     raise ValueError('%s: Unknown TLV Class %s in %s; expected %s' %
