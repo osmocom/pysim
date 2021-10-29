@@ -283,9 +283,8 @@ class SimCardCommands(object):
 			pdu = '80cb000000'
 		return self._tp.send_apdu_checksw(pdu)
 
-	# TS 102 221 Section 11.3.1
 	def retrieve_data(self, ef, tag:int):
-		"""Execute RETRIEVE DATA.
+		"""Execute RETRIEVE DATA, see also TS 102 221 Section 11.3.1.
 
 		Args
 			ef : string or list of strings indicating name or path of transparent EF
