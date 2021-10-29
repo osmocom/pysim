@@ -1068,8 +1068,7 @@ class RuntimeState(object):
         Args:
             cmd_app : Command Application State (for unregistering old file commands)
         """
-        self.card._scc._tp.reset_card()
-        atr = i2h(self.card._scc._tp.get_atr())
+        atr = i2h(self.card.reset())
         # select MF to reset internal state and to verify card really works
         self.select('MF', cmd_app)
         return atr

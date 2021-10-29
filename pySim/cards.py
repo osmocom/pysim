@@ -60,7 +60,11 @@ class SimCard(object):
 		self._aids = []
 
 	def reset(self):
-		self._scc.reset_card()
+		rc = self._scc.reset_card()
+		if rc is 1:
+			return self._scc.get_atr()
+		else:
+			return None
 
 	def erase(self):
 		print("warning: erasing is not supported for specified card type!")
