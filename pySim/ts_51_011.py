@@ -980,4 +980,6 @@ def decode_select_response(resp_hex):
 
     return ret
 
-CardProfileSIM = CardProfile('SIM', desc='GSM SIM Card', files_in_mf=[DF_TELECOM(), DF_GSM()])
+class CardProfileSIM(CardProfile):
+    def __init__(self):
+        super().__init__('SIM', desc='GSM SIM Card', files_in_mf=[DF_TELECOM(), DF_GSM()])
