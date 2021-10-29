@@ -74,9 +74,7 @@ class SimCard(object):
 		return True
 
 	def verify_adm(self, key):
-		'''
-		Authenticate with ADM key
-		'''
+		"""Authenticate with ADM key"""
 		(res, sw) = self._scc.verify_chv(self._adm_chv_num, key)
 		return sw
 
@@ -135,10 +133,7 @@ class SimCard(object):
 			return (None, sw)
 
 	def update_oplmn_act(self, mcc, mnc, access_tech='FFFF'):
-		"""
-		See note in update_hplmn_act()
-		"""
-		# get size and write EF.OPLMNwAcT
+		"""get size and write EF.OPLMNwAcT, See note in update_hplmn_act()"""
 		data = self._scc.read_binary(EF['OPLMNwAcT'], length=None, offset=0)
 		size = len(data[0]) // 2
 		hplmn = enc_plmn(mcc, mnc)
@@ -154,10 +149,7 @@ class SimCard(object):
 			return (None, sw)
 
 	def update_plmn_act(self, mcc, mnc, access_tech='FFFF'):
-		"""
-		See note in update_hplmn_act()
-		"""
-		# get size and write EF.PLMNwAcT
+		"""get size and write EF.PLMNwAcT, See note in update_hplmn_act()"""
 		data = self._scc.read_binary(EF['PLMNwAcT'], length=None, offset=0)
 		size = len(data[0]) // 2
 		hplmn = enc_plmn(mcc, mnc)
@@ -265,8 +257,8 @@ class SimCard(object):
 		else:
 			return (None, sw)
 
-	# Fetch all the AIDs present on UICC
 	def read_aids(self):
+		"""Fetch all the AIDs present on UICC"""
 		self._aids = []
 		try:
 			# Find out how many records the EF.DIR has
@@ -282,8 +274,8 @@ class SimCard(object):
 			self._aids = []
 		return self._aids
 
-	# Select ADF.U/ISIM in the Card using its full AID
 	def select_adf_by_aid(self, adf="usim"):
+		"""Select ADF.U/ISIM in the Card using its full AID"""
 		# Find full AID by partial AID:
 		if is_hex(adf):
 			for aid in self._aids:
@@ -300,13 +292,13 @@ class SimCard(object):
 					return self._scc.select_adf(aid)
 		return (None, None)
 
-	# Erase the contents of a file
 	def erase_binary(self, ef):
+		"""Erase the contents of a file"""
 		len = self._scc.binary_size(ef)
 		self._scc.update_binary(ef, "ff" * len, offset=0, verify=True)
 
-	# Erase the contents of a single record
 	def erase_record(self, ef, rec_no):
+		"""Erase the contents of a single record"""
 		len = self._scc.record_size(ef)
 		self._scc.update_record(ef, rec_no, "ff" * len, force_len=False, verify=True)
 
