@@ -302,6 +302,15 @@ class SimCard(object):
 		len = self._scc.record_size(ef)
 		self._scc.update_record(ef, rec_no, "ff" * len, force_len=False, verify=True)
 
+	def set_apdu_parameter(self, cla, sel_ctrl):
+		"""Set apdu parameters (class byte and selection control bytes)"""
+		self._scc.cla_byte = cla
+		self._scc.sel_ctrl = sel_ctrl
+
+	def get_apdu_parameter(self):
+		"""Get apdu parameters (class byte and selection control bytes)"""
+		return (self._scc.cla_byte, self._scc.sel_ctrl)
+
 class UsimCard(SimCard):
 
 	name = 'USIM'
