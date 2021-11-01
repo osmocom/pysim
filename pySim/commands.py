@@ -23,7 +23,7 @@
 
 from construct import *
 from pySim.construct import LV
-from pySim.utils import rpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i
+from pySim.utils import rpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i, str_sanitize
 from pySim.exceptions import SwMatchError
 
 class SimCardCommands(object):
@@ -145,12 +145,12 @@ class SimCardCommands(object):
 		while chunk_offset < length:
 			chunk_len = min(255, length-chunk_offset)
 			pdu = self.cla_byte + 'b0%04x%02x' % (offset + chunk_offset, chunk_len)
-			data,sw = self._tp.send_apdu(pdu)
-			if sw == '9000':
-				total_data += data
-				chunk_offset += chunk_len
-			else:
-				raise ValueError('Failed to read (offset %d)' % (offset))
+			try:
+				data, sw = self._tp.send_apdu_checksw(pdu)
+			except Exception as e:
+				raise ValueError('%s, failed to read (offset %d)' % (str_sanitize(str(e)), offset))
+			total_data += data
+			chunk_offset += chunk_len
 		return total_data, sw
 
 	def update_binary(self, ef, data:str, offset:int=0, verify:bool=False, conserve:bool=False):
@@ -172,22 +172,21 @@ class SimCardCommands(object):
 
 		self.select_path(ef)
 		total_data = ''
-		total_sw = "9000"
 		chunk_offset = 0
 		while chunk_offset < data_length:
 			chunk_len = min(255, data_length - chunk_offset)
 			# chunk_offset is bytes, but data slicing is hex chars, so we need to multiply by 2
 			pdu = self.cla_byte + 'd6%04x%02x' % (offset + chunk_offset, chunk_len) + data[chunk_offset*2 : (chunk_offset+chunk_len)*2]
-			chunk_data, chunk_sw = self._tp.send_apdu(pdu)
-			if chunk_sw == total_sw:
-				total_data += chunk_data
-				chunk_offset += chunk_len
-			else:
-				total_sw = chunk_sw
-				raise ValueError('Failed to write chunk (chunk_offset %d, chunk_len %d)' % (chunk_offset, chunk_len))
+			try:
+				chunk_data, chunk_sw = self._tp.send_apdu_checksw(pdu)
+			except Exception as e:
+				raise ValueError('%s, failed to write chunk (chunk_offset %d, chunk_len %d)' % \
+						 (str_sanitize(str(e)), chunk_offset, chunk_len))
+			total_data += data
+			chunk_offset += chunk_len
 		if verify:
 			self.verify_binary(ef, data, offset)
-		return total_data, total_sw
+		return total_data, chunk_sw
 
 	def verify_binary(self, ef, data:str, offset:int=0):
 		"""Verify contents of transparent EF.

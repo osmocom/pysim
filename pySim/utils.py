@@ -5,6 +5,7 @@
 
 import json
 import abc
+import string
 from io import BytesIO
 from typing import Optional, List, Dict, Any, Tuple
 
@@ -88,6 +89,20 @@ def lpad(s:str, l:int, c='f') -> str:
 
 def half_round_up(n:int) -> int:
 	return (n + 1)//2
+
+def str_sanitize(s:str) -> str:
+	"""replace all non printable chars, line breaks and whitespaces, with ' ', make sure that
+	there are no whitespaces at the end and at the beginning of the string.
+
+	Args:
+		s : string to sanitize
+	Returns:
+		filtered result of string 's'
+	"""
+
+	chars_to_keep = string.digits + string.ascii_letters + string.punctuation
+	res = ''.join([c if c in chars_to_keep else ' ' for c in s])
+	return res.strip()
 
 #########################################################################
 # poor man's COMPREHENSION-TLV decoder.
