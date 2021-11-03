@@ -73,10 +73,9 @@ def milenage_auts(opc:bytes, k:bytes, rand:bytes, auts:bytes) -> Optional[bytes]
         return False
 
 
-def build_url(suffix:str) -> str:
+def build_url(suffix:str, base_path="/sim-auth-api/v1") -> str:
     """Build an URL from global server_host, server_port, BASE_PATH and suffix."""
-    BASE_PATH= "/sim-auth-api/v1"
-    return "http://%s:%u%s%s" % (server_host, server_port, BASE_PATH, suffix)
+    return "http://%s:%u%s%s" % (server_host, server_port, base_path, suffix)
 
 
 def rest_post(suffix:str, js:Optional[dict] = None):
@@ -91,29 +90,29 @@ def rest_post(suffix:str, js:Optional[dict] = None):
         print("POST failed")
     return resp
 
+def rest_get(suffix:str, base_path=None):
+    """Perform a RESTful GET."""
+    url = build_url(suffix, base_path)
+    if verbose:
+        print("GET %s" % url)
+    resp = requests.get(url)
+    if verbose:
+        print("-> %s" % (resp))
+    if not resp.ok:
+        print("GET failed")
+    return resp
 
 
-def main(argv):
-    global server_port, server_host, verbose
+def main_info(args):
+    resp = rest_get('/slot/%u' % args.slot_nr, base_path="/sim-info-api/v1")
+    if not resp.ok:
+        print("<- ERROR %u: %s" % (resp.status_code, resp.text))
+        sys.exit(1)
+    resp_json = resp.json()
+    print("<- %s" % resp_json)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-H", "--host", help="Host to connect to", default="localhost")
-    parser.add_argument("-p", "--port", help="TCP port to connect to", default=8000)
-    parser.add_argument("-v", "--verbose", help="increase output verbosity", action='count', default=0)
-    parser.add_argument("-n", "--slot-nr", help="SIM slot number", type=int, default=0)
-    parser.add_argument("-c", "--count", help="Auth count", type=int, default=10)
 
-    parser.add_argument("-k", "--key", help="Secret key K (hex)", type=str, required=True)
-    parser.add_argument("-o", "--opc", help="Secret OPc (hex)", type=str, required=True)
-    parser.add_argument("-a", "--amf", help="AMF Field (hex)", type=str, default="0000")
-    parser.add_argument("-s", "--sqn", help="SQN Field (hex)", type=str, default="000000000000")
-
-    args = parser.parse_args()
-
-    server_host = args.host
-    server_port = args.port
-    verbose = args.verbose
-
+def main_auth(args):
     #opc = bytes.fromhex('767A662ACF4587EB0C450C6A95540A04')
     #k = bytes.fromhex('876B2D8D403EE96755BEF3E0A1857EBE')
     opc = bytes.fromhex(args.opc)
@@ -152,6 +151,34 @@ def main(argv):
             sqn = pack48(unpack48(sqn) + (1 << 5))
         else:
             raise RuntimeError("Auth failure")
+
+
+def main(argv):
+    global server_port, server_host, verbose
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-H", "--host", help="Host to connect to", default="localhost")
+    parser.add_argument("-p", "--port", help="TCP port to connect to", default=8000)
+    parser.add_argument("-v", "--verbose", help="increase output verbosity", action='count', default=0)
+    parser.add_argument("-n", "--slot-nr", help="SIM slot number", type=int, default=0)
+    subp = parser.add_subparsers()
+
+    auth_p = subp.add_parser('auth', help='UMTS AKA Authentication')
+    auth_p.add_argument("-c", "--count", help="Auth count", type=int, default=10)
+    auth_p.add_argument("-k", "--key", help="Secret key K (hex)", type=str, required=True)
+    auth_p.add_argument("-o", "--opc", help="Secret OPc (hex)", type=str, required=True)
+    auth_p.add_argument("-a", "--amf", help="AMF Field (hex)", type=str, default="0000")
+    auth_p.add_argument("-s", "--sqn", help="SQN Field (hex)", type=str, default="000000000000")
+    auth_p.set_defaults(func=main_auth)
+
+    info_p = subp.add_parser('info', help='Information about the Card')
+    info_p.set_defaults(func=main_info)
+
+    args = parser.parse_args()
+    server_host = args.host
+    server_port = args.port
+    verbose = args.verbose
+    args.func(args)
 
 
 if __name__ == "__main__":
