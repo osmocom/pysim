@@ -204,6 +204,10 @@ class PysimApp(cmd2.Cmd):
 		"""Display the intro banner"""
 		self.poutput(self.intro)
 
+	def do_eof(self, _: argparse.Namespace) -> bool:
+		self.poutput("")
+		return self.do_quit('')
+
 	@cmd2.with_category(CUSTOM_CATEGORY)
 	def do_equip(self, opts):
 		"""Equip pySim-shell with card"""
