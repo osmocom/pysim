@@ -155,6 +155,9 @@ class SimCardCommands(object):
 			return (None, None)
 		if length is None:
 			length = self.__len(r) - offset
+		if length < 0:
+			return (None, None)
+
 		total_data = ''
 		chunk_offset = 0
 		while chunk_offset < length:
