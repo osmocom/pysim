@@ -128,6 +128,9 @@ def main(argv):
         req_json = {'rand': rand.hex(), 'autn': t['autn'].hex()}
         print("-> %s" % req_json)
         resp = rest_post('/slot/%u' % args.slot_nr, req_json)
+        if not resp.ok:
+            print("<- ERROR %u: %s" % (resp.status_code, resp.text))
+            break
         resp_json = resp.json()
         print("<- %s" % resp_json)
         if 'synchronisation_failure' in resp_json:
