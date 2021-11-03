@@ -1,0 +1,14 @@
+[Unit]
+Description=Osmocom SIM REST server
+
+[Service]
+Type=simple
+# we listen to 0.0.0.0, allowing remote, unauthenticated clients to connect from everywhere!
+ExecStart=/usr/local/src/pysim/contrib/sim-rest-server.py -H 0.0.0.0
+Restart=always
+RestartSec=2
+# this user must be created beforehand; it must have PC/SC access
+User=rest
+
+[Install]
+WantedBy=multi-user.target
