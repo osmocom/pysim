@@ -34,6 +34,23 @@ class ApduPrintTracer(ApduTracer):
         #print("CMD: %s -> RSP: %s %s" % (cmd, sw, resp))
         pass
 
+def connect_to_card(slot_nr:int):
+    tp = PcscSimLink(slot_nr, apdu_tracer=ApduPrintTracer())
+    tp.connect()
+
+    scc = SimCardCommands(tp)
+    card = UsimCard(scc)
+
+    # this should be part of UsimCard, but FairewavesSIM breaks with that :/
+    scc.cla_byte = "00"
+    scc.sel_ctrl = "0004"
+
+    card.read_aids()
+    card.select_adf_by_aid(adf='usim')
+
+    return tp, scc, card
+
+
 @route('/sim-auth-api/v1/slot/<int:slot>')
 def auth(request, slot):
     """REST API endpoint for performing authentication against a USIM.
@@ -49,8 +66,7 @@ def auth(request, slot):
         return "Malformed Request"
 
     try:
-        tp = PcscSimLink(slot, apdu_tracer=ApduPrintTracer())
-        tp.connect()
+        tp, scc, card = connect_to_card(slot)
     except ReaderError:
         request.setResponseCode(404)
         return "Specified SIM Slot doesn't exist"
@@ -61,13 +77,7 @@ def auth(request, slot):
         request.setResponseCode(410)
         return "No SIM card inserted in slot"
 
-    scc = SimCardCommands(tp)
-    card = UsimCard(scc)
-    # this should be part of UsimCard, but FairewavesSIM breaks with that :/
-    scc.cla_byte = "00"
-    scc.sel_ctrl = "0004"
     try:
-        card.read_aids()
         card.select_adf_by_aid(adf='usim')
         res, sw = scc.authenticate(rand, autn)
     except SwMatchError as e:
@@ -77,6 +87,38 @@ def auth(request, slot):
     tp.disconnect()
 
     return json.dumps(res, indent=4)
+
+@route('/sim-info-api/v1/slot/<int:slot>')
+def info(request, slot):
+    """REST API endpoint for obtaining information about an USIM.
+    Expects empty body in request.
+    Returns a JSON body containing ICCID, IMSI."""
+
+    try:
+        tp, scc, card = connect_to_card(slot)
+    except ReaderError:
+        request.setResponseCode(404)
+        return "Specified SIM Slot doesn't exist"
+    except ProtocolError:
+        request.setResponseCode(500)
+        return "Error"
+    except NoCardError:
+        request.setResponseCode(410)
+        return "No SIM card inserted in slot"
+
+    try:
+        card.select_adf_by_aid(adf='usim')
+        iccid, sw = card.read_iccid()
+        imsi, sw = card.read_imsi()
+        res = {"imsi": imsi, "iccid": iccid }
+    except SwMatchError as e:
+        request.setResponseCode(500)
+        return "Communication Error %s" % e
+
+    tp.disconnect()
+
+    return json.dumps(res, indent=4)
+
 
 def main(argv):
     parser = argparse.ArgumentParser()
