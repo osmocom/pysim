@@ -332,7 +332,6 @@ from pySim.construct import *
 import enum
 
 from pySim.filesystem import *
-import pySim.ts_102_221
 
 ######################################################################
 # DF.TELECOM
@@ -450,9 +449,6 @@ class DF_TELECOM(CardDF):
           EF_CMI(),
           ]
         self.add_files(files)
-
-    def decode_select_response(self, data_hex):
-        return decode_select_response(data_hex)
 
 ######################################################################
 # DF.GSM
@@ -936,13 +932,11 @@ class DF_GSM(CardDF):
           ]
         self.add_files(files)
 
-    def decode_select_response(self, data_hex):
-        return decode_select_response(data_hex)
 
-def decode_select_response(resp_hex):
+
+def _decode_select_response(resp_hex):
+
     resp_bin = h2b(resp_hex)
-    if resp_bin[0] == 0x62:
-        return pySim.ts_102_221.decode_select_response(resp_hex)
     struct_of_file_map = {
         0: 'transparent',
         1: 'linear_fixed',
@@ -983,3 +977,6 @@ def decode_select_response(resp_hex):
 class CardProfileSIM(CardProfile):
     def __init__(self):
         super().__init__('SIM', desc='GSM SIM Card', files_in_mf=[DF_TELECOM(), DF_GSM()])
+
+    def decode_select_response(self, data_hex:str) -> Any:
+	    return _decode_select_response(data_hex)

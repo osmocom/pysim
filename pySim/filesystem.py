@@ -52,7 +52,7 @@ class CardFile(object):
     RESERVED_FIDS = ['3f00']
 
     def __init__(self, fid:str=None, sfid:str=None, name:str=None, desc:str=None,
-                 parent:Optional['CardDF']=None):
+                 parent:Optional['CardDF']=None, profile:Optional['CardProfile']=None):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -60,6 +60,7 @@ class CardFile(object):
             name : Brief name of the file, lik EF_ICCID
             desc : Description of the file
             parent : Parent CardFile object within filesystem hierarchy
+            profile : Card profile that this file should be part of
         """
         if not isinstance(self, CardADF) and fid == None:
             raise ValueError("fid is mandatory")
@@ -72,6 +73,7 @@ class CardFile(object):
         self.parent = parent
         if self.parent and self.parent != self and self.fid:
             self.parent.add_file(self)
+        self.profile = profile
         self.shell_commands = [] # type: List[CommandSet]
 
 	# Note: the basic properties (fid, name, ect.) are verified when
@@ -173,10 +175,34 @@ class CardFile(object):
         return list(sels.keys())
 
     def decode_select_response(self, data_hex:str):
-        """Decode the response to a SELECT command."""
+        """Decode the response to a SELECT command.
+
+        Args:
+	    data_hex: Hex string of the select response
+	"""
+
+	# When the current file does not implement a custom select response decoder,
+	# we just ask the parent file to decode the select response. If this method
+	# is not overloaded by the current file we will again ask the parent file.
+	# This way we recursively travel up the file system tree until we hit a file
+	# that does implement a concrete decoder.
         if self.parent:
             return self.parent.decode_select_response(data_hex)
 
+    def get_profile(self):
+        """Get the profile associated with this file. If this file does not have any
+        profile assigned, try to find a file above (usually the MF) in the filesystem
+        hirarchy that has a profile assigned
+        """
+
+        # If we have a profile set, return it
+        if self.profile:
+            return self.profile
+
+        # Walk up recursively until we hit a parent that has a profile set
+        if self.parent:
+            return self.parent.get_profile()
+        return None
 
 class CardDF(CardFile):
     """DF (Dedicated File) in the smart card filesystem.  Those are basically sub-directories."""
@@ -331,12 +357,18 @@ class CardMF(CardDF):
     def decode_select_response(self, data_hex:str) -> Any:
         """Decode the response to a SELECT command.
 
-        This is the fall-back method which doesn't perform any decoding. It mostly
-        exists so specific derived classes can overload it for actual decoding.
+        This is the fall-back method which automatically defers to the standard decoding
+        method defined by the card profile. When no profile is set, then no decoding is
+	performed. Specific derived classes (usually ADF) can overload this method to
+	install specific decoding.
         """
-        return data_hex
 
+        profile = self.get_profile()
 
+        if profile:
+            return profile.decode_select_response(data_hex)
+        else:
+            return data_hex
 
 class CardADF(CardDF):
     """ADF (Application Dedicated File) in the smart card filesystem"""
@@ -1029,7 +1061,7 @@ class RuntimeState(object):
             card : pysim.cards.Card instance
             profile : CardProfile instance
         """
-        self.mf = CardMF()
+        self.mf = CardMF(profile=profile)
         self.card = card
         self.selected_file = self.mf # type: CardDF
         self.profile = profile
@@ -1436,6 +1468,19 @@ class CardProfile(object):
             Tuple of two strings
         """
         return interpret_sw(self.sw, sw)
+
+    def decode_select_response(self, data_hex:str) -> Any:
+        """Decode the response to a SELECT command.
+
+        This is the fall-back method which doesn't perform any decoding. It mostly
+        exists so specific derived classes can overload it for actual decoding.
+        This method is implemented in the profile and is only used when application
+        specific decoding cannot be performed (no ADF is selected).
+
+        Args:
+	    data_hex: Hex string of the select response
+        """
+        return data_hex
 
 
 class CardModel(abc.ABC):

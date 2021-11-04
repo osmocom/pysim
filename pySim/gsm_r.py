@@ -253,6 +253,3 @@ class DF_EIRENE(CardDF):
             EF_DialledVals(fid='6f87', name='EF.FreeNumber', desc='Free Number Call Type 0 and 8'),
           ]
         self.add_files(files)
-
-    def decode_select_response(self, data_hex):
-        return pySim.ts_51_011.decode_select_response(data_hex)
