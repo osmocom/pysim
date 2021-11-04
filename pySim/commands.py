@@ -90,7 +90,12 @@ class SimCardCommands(object):
 		return self._tp.get_atr()
 
 	def try_select_path(self, dir_list):
-		""" Try to select a specified path given as list of hex-string FIDs"""
+		""" Try to select a specified path
+
+		Args:
+			dir_list : list of hex-string FIDs
+		"""
+
 		rv = []
 		if type(dir_list) is not list:
 			dir_list = [dir_list]
@@ -119,11 +124,21 @@ class SimCardCommands(object):
 		return rv
 
 	def select_file(self, fid:str):
-		"""Execute SELECT a given file by FID."""
+		"""Execute SELECT a given file by FID.
+
+		Args:
+			fid : file identifier as hex string
+		"""
+
 		return self._tp.send_apdu_checksw(self.cla_byte + "a4" + self.sel_ctrl + "02" + fid)
 
 	def select_adf(self, aid:str):
-		"""Execute SELECT a given Applicaiton ADF."""
+		"""Execute SELECT a given Applicaiton ADF.
+
+		Args:
+			aid : application identifier as hex string
+		"""
+
 		aidlen = ("0" + format(len(aid) // 2, 'x'))[-2:]
 		return self._tp.send_apdu_checksw(self.cla_byte + "a4" + "0404" + aidlen + aid)
 
@@ -214,6 +229,16 @@ class SimCardCommands(object):
 
 	def update_record(self, ef, rec_no:int, data:str, force_len:bool=False, verify:bool=False,
 					  conserve:bool=False):
+		"""Execute UPDATE RECORD.
+
+		Args:
+			ef : string or list of strings indicating name or path of linear fixed EF
+			rec_no : record number to read
+			data : hex string of data to be written
+			force_len : enforce record length by using the actual data length
+			verify : verify data by re-reading the record
+			conserve : read record and compare it with data, skip write on match
+		"""
 		res = self.select_path(ef)
 
 		if force_len:
@@ -243,6 +268,13 @@ class SimCardCommands(object):
 		return res
 
 	def verify_record(self, ef, rec_no:int, data:str):
+		"""Verify record against given data
+
+		Args:
+			ef : string or list of strings indicating name or path of linear fixed EF
+			rec_no : record number to read
+			data : hex string of data to be verified
+		"""
 		res = self.read_record(ef, rec_no)
 		if res[0].lower() != data.lower():
 			raise ValueError('Record verification failed (expected %s, got %s)' % (data.lower(), res[0].lower()))
@@ -344,14 +376,24 @@ class SimCardCommands(object):
 		return rdata, sw
 
 	def run_gsm(self, rand:str):
-		"""Execute RUN GSM ALGORITHM."""
+		"""Execute RUN GSM ALGORITHM.
+
+		Args:
+			rand : 16 byte random data as hex string (RAND)
+		"""
 		if len(rand) != 32:
 			raise ValueError('Invalid rand')
 		self.select_path(['3f00', '7f20'])
 		return self._tp.send_apdu(self.cla_byte + '88000010' + rand)
 
 	def authenticate(self, rand:str, autn:str, context='3g'):
-		"""Execute AUTHENTICATE (USIM/ISIM)."""
+		"""Execute AUTHENTICATE (USIM/ISIM).
+
+		Args:
+			rand : 16 byte random data as hex string (RAND)
+			autn : 8 byte Autentication Token (AUTN)
+			context : 16 byte random data ('3g' or 'gsm')
+		"""
 		# 3GPP TS 31.102 Section 7.1.2.1
 		AuthCmd3G = Struct('rand'/LV, 'autn'/Optional(LV))
 		AuthResp3GSyncFail = Struct(Const(b'\xDC'), 'auts'/LV)
@@ -379,11 +421,20 @@ class SimCardCommands(object):
 		return self._tp.send_apdu_constr_checksw(self.cla_byte, '04', '00', '00', None, None, None)
 
 	def activate_file(self, fid):
-		"""Execute ACTIVATE FILE command as per TS 102 221 Section 11.1.15."""
+		"""Execute ACTIVATE FILE command as per TS 102 221 Section 11.1.15.
+
+		Args:
+			fid : file identifier as hex string
+		"""
 		return self._tp.send_apdu_checksw(self.cla_byte + '44000002' + fid)
 
 	def manage_channel(self, mode='open', lchan_nr=0):
-		"""Execute MANAGE CHANNEL command as per TS 102 221 Section 11.1.17."""
+		"""Execute MANAGE CHANNEL command as per TS 102 221 Section 11.1.17.
+
+		Args:
+			mode : logical channel operation code ('open' or 'close')
+			lchan_nr : logical channel number (1-19, 0=assigned by UICC)
+		"""
 		if mode == 'close':
 			p1 = 0x80
 		else:
@@ -403,53 +454,94 @@ class SimCardCommands(object):
 			raise SwMatchError(sw, '9000')
 
 	def verify_chv(self, chv_no:int, code:str):
-		"""Verify a given CHV (Card Holder Verification == PIN)"""
+		"""Verify a given CHV (Card Holder Verification == PIN)
+
+		Args:
+			chv_no : chv number (1=CHV1, 2=CHV2, ...)
+			code : chv code as hex string
+		"""
 		fc = rpad(b2h(code), 16)
 		data, sw = self._tp.send_apdu(self.cla_byte + '2000' + ('%02X' % chv_no) + '08' + fc)
 		self._chv_process_sw('verify', chv_no, code, sw)
 		return (data, sw)
 
 	def unblock_chv(self, chv_no:int, puk_code:str, pin_code:str):
-		"""Unblock a given CHV (Card Holder Verification == PIN)"""
+		"""Unblock a given CHV (Card Holder Verification == PIN)
+
+		Args:
+			chv_no : chv number (1=CHV1, 2=CHV2, ...)
+			puk_code : puk code as hex string
+			pin_code : new chv code as hex string
+		"""
 		fc = rpad(b2h(puk_code), 16) + rpad(b2h(pin_code), 16)
 		data, sw = self._tp.send_apdu(self.cla_byte + '2C00' + ('%02X' % chv_no) + '10' + fc)
 		self._chv_process_sw('unblock', chv_no, pin_code, sw)
 		return (data, sw)
 
 	def change_chv(self, chv_no:int, pin_code:str, new_pin_code:str):
-		"""Change a given CHV (Card Holder Verification == PIN)"""
+		"""Change a given CHV (Card Holder Verification == PIN)
+
+		Args:
+			chv_no : chv number (1=CHV1, 2=CHV2, ...)
+			pin_code : current chv code as hex string
+			new_pin_code : new chv code as hex string
+		"""
 		fc = rpad(b2h(pin_code), 16) + rpad(b2h(new_pin_code), 16)
 		data, sw = self._tp.send_apdu(self.cla_byte + '2400' + ('%02X' % chv_no) + '10' + fc)
 		self._chv_process_sw('change', chv_no, pin_code, sw)
 		return (data, sw)
 
 	def disable_chv(self, chv_no:int, pin_code:str):
-		"""Disable a given CHV (Card Holder Verification == PIN)"""
+		"""Disable a given CHV (Card Holder Verification == PIN)
+
+		Args:
+			chv_no : chv number (1=CHV1, 2=CHV2, ...)
+			pin_code : current chv code as hex string
+			new_pin_code : new chv code as hex string
+		"""
 		fc = rpad(b2h(pin_code), 16)
 		data, sw = self._tp.send_apdu(self.cla_byte + '2600' + ('%02X' % chv_no) + '08' + fc)
 		self._chv_process_sw('disable', chv_no, pin_code, sw)
 		return (data, sw)
 
 	def enable_chv(self, chv_no:int, pin_code:str):
-		"""Enable a given CHV (Card Holder Verification == PIN)"""
+		"""Enable a given CHV (Card Holder Verification == PIN)
+
+		Args:
+			chv_no : chv number (1=CHV1, 2=CHV2, ...)
+			pin_code : chv code as hex string
+		"""
 		fc = rpad(b2h(pin_code), 16)
 		data, sw = self._tp.send_apdu(self.cla_byte + '2800' + ('%02X' % chv_no) + '08' + fc)
 		self._chv_process_sw('enable', chv_no, pin_code, sw)
 		return (data, sw)
 
 	def envelope(self, payload:str):
-		"""Send one ENVELOPE command to the SIM"""
+		"""Send one ENVELOPE command to the SIM
+
+		Args:
+			payload : payload as hex string
+		"""
 		return self._tp.send_apdu_checksw('80c20000%02x%s' % (len(payload)//2, payload))
 
 	def terminal_profile(self, payload:str):
-		"""Send TERMINAL PROFILE to card"""
+		"""Send TERMINAL PROFILE to card
+
+		Args:
+			payload : payload as hex string
+		"""
 		data_length = len(payload) // 2
 		data, sw = self._tp.send_apdu(('80100000%02x' % data_length) + payload)
 		return (data, sw)
 
 	# ETSI TS 102 221 11.1.22
 	def suspend_uicc(self, min_len_secs:int=60, max_len_secs:int=43200):
-		"""Send SUSPEND UICC to the card."""
+		"""Send SUSPEND UICC to the card.
+
+		Args:
+			 min_len_secs : mimumum suspend time seconds
+			 max_len_secs : maximum suspend time seconds
+		"""
 		def encode_duration(secs:int) -> Hexstr:
 			if secs >= 10*24*60*60:
 				return '04%02x' % (secs // (10*24*60*60))
