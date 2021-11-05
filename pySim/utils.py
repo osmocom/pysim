@@ -56,7 +56,6 @@ def s2h(s:str) -> Hexstr:
 	b.extend(map(ord, s))
 	return b2h(b)
 
-# List of bytes to string
 def i2s(s:List[int]) -> str:
 	"""convert from a list of integers to an ASCII string"""
 	return ''.join([chr(x) for x in s])
