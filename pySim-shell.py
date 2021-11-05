@@ -72,15 +72,15 @@ def init_card(sl):
 		sl.wait_for_card(3)
 	except NoCardError:
 		print("No card detected!")
-		return None, None;
+		return None, None
 	except:
 		print("Card not readable!")
-		return None, None;
+		return None, None
 
 	card = card_detect("auto", scc)
 	if card is None:
 		print("Could not detect card type!")
-		return None, None;
+		return None, None
 
 	# Create runtime state with card profile
 	profile = CardProfileUICC()
@@ -207,7 +207,7 @@ class PysimApp(cmd2.Cmd):
 	@cmd2.with_category(CUSTOM_CATEGORY)
 	def do_equip(self, opts):
 		"""Equip pySim-shell with card"""
-		rs, card = init_card(sl);
+		rs, card = init_card(sl)
 		self.equip(card, rs)
 
 	class InterceptStderr(list):
@@ -352,7 +352,7 @@ class PysimApp(cmd2.Cmd):
 			except (KeyboardInterrupt):
 				self.poutput("")
 				self.poutput("Terminated by user!")
-				return;
+				return
 			except (SystemExit):
 				# When all cards are processed the card handler device will throw a SystemExit
 				# exception. Also Errors that are not recoverable (cards stuck etc.) will end up here.

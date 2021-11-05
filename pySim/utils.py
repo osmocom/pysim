@@ -133,7 +133,7 @@ def comprehensiontlv_encode_tag(tag) -> bytes:
     compr = tag.get('comprehension', False)
     if tag['tag'] in [0x00, 0x80, 0xff] or tag['tag'] > 0xff:
         # 3-byte format
-        byte3 = tag['tag'] & 0xff;
+        byte3 = tag['tag'] & 0xff
         byte2 = (tag['tag'] >> 8) & 0x7f
         if compr:
             byte2 |= 0x80
@@ -243,7 +243,7 @@ def bertlv_encode_tag(t) -> bytes:
         t |= (cls & 3) << 6
         return bytes([t])
     else: # multi-byte tag
-        t = 0x1f;
+        t = 0x1f
         if constructed:
             t |= 0x20
         t |= (cls & 3) << 6
