@@ -38,6 +38,7 @@ pip install pylint
 python -m pylint --errors-only \
 	--disable E1102 \
 	--disable E0401 \
+	--enable W0301 \
 	pySim *.py
 
 # attempt to build documentation
