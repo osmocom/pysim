@@ -1074,6 +1074,10 @@ class RuntimeState(object):
             self.mf.add_file(f)
         self.conserve_write = True
 
+        # make sure that when the runtime state is created, the card is also
+        # in a defined state.
+        self.reset()
+
     def _match_applications(self):
         """match the applications from the profile with applications on the card"""
         apps_profile = self.profile.applications
