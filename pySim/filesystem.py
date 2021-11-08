@@ -1443,65 +1443,6 @@ class CardApplication(object):
         """
         return interpret_sw(self.sw, sw)
 
-class CardProfile(object):
-    """A Card Profile describes a card, it's filesystem hierarchy, an [initial] list of
-       applications as well as profile-specific SW and shell commands.  Every card has
-       one card profile, but there may be multiple applications within that profile."""
-    def __init__(self, name, **kw):
-        """
-        Args:
-            desc (str) : Description
-            files_in_mf : List of CardEF instances present in MF
-            applications : List of CardApplications present on card
-            sw : List of status word definitions
-            shell_cmdsets : List of cmd2 shell command sets of profile-specific commands
-            cla : class byte that should be used with cards of this profile
-            sel_ctrl : selection control bytes class byte that should be used with cards of this profile
-        """
-        self.name = name
-        self.desc = kw.get("desc", None)
-        self.files_in_mf = kw.get("files_in_mf", [])
-        self.sw = kw.get("sw", {})
-        self.applications = kw.get("applications", [])
-        self.shell_cmdsets = kw.get("shell_cmdsets", [])
-        self.cla = kw.get("cla", "00")
-        self.sel_ctrl = kw.get("sel_ctrl", "0004")
-
-    def __str__(self):
-        return self.name
-
-    def add_application(self, app:CardApplication):
-        """Add an application to a card profile.
-
-        Args:
-            app : CardApplication instance to be added to profile
-        """
-        self.applications.append(app)
-
-    def interpret_sw(self, sw:str):
-        """Interpret a given status word within the profile.
-
-        Args:
-            sw : Status word as string of 4 hex digits
-
-        Returns:
-            Tuple of two strings
-        """
-        return interpret_sw(self.sw, sw)
-
-    def decode_select_response(self, data_hex:str) -> Any:
-        """Decode the response to a SELECT command.
-
-        This is the fall-back method which doesn't perform any decoding. It mostly
-        exists so specific derived classes can overload it for actual decoding.
-        This method is implemented in the profile and is only used when application
-        specific decoding cannot be performed (no ADF is selected).
-
-        Args:
-	    data_hex: Hex string of the select response
-        """
-        return data_hex
-
 
 class CardModel(abc.ABC):
     """A specific card model, typically having some additional vendor-specific files. All

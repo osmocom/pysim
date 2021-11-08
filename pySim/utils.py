@@ -1530,3 +1530,7 @@ class CardCommandSet:
         if cla and not cmd.match_cla(cla):
             return None
         return cmd
+
+def all_subclasses(cls) -> set:
+	"""Recursively get all subclasses of a specified class"""
+	return set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in all_subclasses(c)])

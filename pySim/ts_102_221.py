@@ -23,6 +23,13 @@ from pySim.construct import *
 from pySim.utils import *
 from pySim.filesystem import *
 from bidict import bidict
+from pySim.profile import CardProfile
+from pySim.profile import match_uicc
+from pySim.profile import match_sim
+
+# A UICC will usually also support 2G functionality. If this is the case, we
+# need to add DF_GSM and DF_TELECOM along with the UICC related files
+from pySim.ts_51_011 import DF_GSM, DF_TELECOM
 
 ts_102_22x_cmdset = CardCommandSet('TS 102 22x', [
     # TS 102 221 Section 10.1.2 Table 10.5 "Coding of Instruction Byte"
@@ -603,9 +610,11 @@ class EF_UMPC(TransparentEF):
         addl_info = FlagsEnum(Byte, req_inc_idle_current=1, support_uicc_suspend=2)
         self._construct = Struct('max_current_mA'/Int8ub, 't_op_s'/Int8ub, 'addl_info'/addl_info)
 
-
 class CardProfileUICC(CardProfile):
-    def __init__(self):
+
+    ORDER = 1
+
+    def __init__(self, name = 'UICC'):
         files = [
             EF_DIR(),
             EF_ICCID(),
@@ -683,7 +692,27 @@ class CardProfileUICC(CardProfile):
             },
           }
 
-        super().__init__('UICC', desc='ETSI TS 102 221', cla="00", sel_ctrl="0004", files_in_mf=files, sw=sw)
+        super().__init__(name, desc='ETSI TS 102 221', cla="00", sel_ctrl="0004", files_in_mf=files, sw=sw)
 
     def decode_select_response(self, data_hex:str) -> Any:
         return decode_select_response(data_hex)
+
+    @staticmethod
+    def match_with_card(scc:SimCardCommands) -> bool:
+        return match_uicc(scc)
+
+class CardProfileUICCSIM(CardProfileUICC):
+    """Same as above, but including 2G SIM support"""
+
+    ORDER = 0
+
+    def __init__(self):
+        super().__init__('UICC-SIM')
+
+        # Add GSM specific files
+        self.files_in_mf.append(DF_TELECOM())
+        self.files_in_mf.append(DF_GSM())
+
+    @staticmethod
+    def match_with_card(scc:SimCardCommands) -> bool:
+        return match_uicc(scc) and match_sim(scc)

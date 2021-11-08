@@ -332,6 +332,8 @@ from pySim.construct import *
 import enum
 
 from pySim.filesystem import *
+from pySim.profile import CardProfile
+from pySim.profile import match_sim
 
 ######################################################################
 # DF.TELECOM
@@ -975,6 +977,9 @@ def _decode_select_response(resp_hex):
     return ret
 
 class CardProfileSIM(CardProfile):
+
+    ORDER = 2
+
     def __init__(self):
         sw = {
           'Normal': {
@@ -1016,3 +1021,7 @@ class CardProfileSIM(CardProfile):
         super().__init__('SIM', desc='GSM SIM Card', cla="a0", sel_ctrl="0000", files_in_mf=[DF_TELECOM(), DF_GSM()], sw=sw)
     def decode_select_response(self, data_hex:str) -> Any:
 	    return _decode_select_response(data_hex)
+
+    @staticmethod
+    def match_with_card(scc:SimCardCommands) -> bool:
+        return match_sim(scc)

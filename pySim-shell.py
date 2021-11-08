@@ -45,8 +45,10 @@ from pySim.utils import dec_st, sanitize_pin_adm, tabulate_str_list, is_hex, box
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
 from pySim.filesystem import CardMF, RuntimeState, CardDF, CardADF, CardModel
+from pySim.profile import CardProfile
 from pySim.ts_51_011 import CardProfileSIM, DF_TELECOM, DF_GSM
 from pySim.ts_102_221 import CardProfileUICC
+from pySim.ts_102_221 import CardProfileUICCSIM
 from pySim.ts_31_102 import CardApplicationUSIM
 from pySim.ts_31_103 import CardApplicationISIM
 from pySim.ara_m import CardApplicationARAM
@@ -80,19 +82,32 @@ def init_card(sl):
 
 	card = card_detect("auto", scc)
 	if card is None:
-		print("Could not detect card type!")
+		print("Warning: Could not detect card type - assuming a generic card type...")
+		card = SimCard(scc)
+
+	profile = CardProfile.pick(scc)
+	if profile is None:
+		print("Unsupported card type!")
 		return None, None
 
+	print("Info: Card is of type: %s" % str(profile))
+
+	# FIXME: This shouln't be here, the profile should add the applications,
+	# however, we cannot simply put his into ts_102_221.py since we would
+	# have to e.g. import CardApplicationUSIM from ts_31_102.py, which already
+	# imports from ts_102_221.py. This means we will end up with a circular
+	# import, which needs to be resolved first.
+	if isinstance(profile, CardProfileUICC):
+		profile.add_application(CardApplicationUSIM())
+		profile.add_application(CardApplicationISIM())
+		profile.add_application(CardApplicationARAM())
+
 	# Create runtime state with card profile
-	profile = CardProfileUICC()
-	profile.add_application(CardApplicationUSIM())
-	profile.add_application(CardApplicationISIM())
-	profile.add_application(CardApplicationARAM())
 	rs = RuntimeState(card, profile)
 
-	# FIXME: do this dynamically
-	rs.mf.add_file(DF_TELECOM())
-	rs.mf.add_file(DF_GSM())
+	# FIXME: This is an GSM-R related file, it needs to be added throughout,
+	# the profile. At the moment we add it for all cards, this won't hurt,
+	# but regular SIM and UICC will not have it and fail to select it.
 	rs.mf.add_file(DF_EIRENE())
 
 	CardModel.apply_matching_models(scc, rs)
