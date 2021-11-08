@@ -976,7 +976,6 @@ def _decode_select_response(resp_hex):
 
 class CardProfileSIM(CardProfile):
     def __init__(self):
-        super().__init__('SIM', desc='GSM SIM Card', files_in_mf=[DF_TELECOM(), DF_GSM()])
-
+        super().__init__('SIM', desc='GSM SIM Card', cla="a0", sel_ctrl="0000", files_in_mf=[DF_TELECOM(), DF_GSM()])
     def decode_select_response(self, data_hex:str) -> Any:
 	    return _decode_select_response(data_hex)

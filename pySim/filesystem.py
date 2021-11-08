@@ -1065,6 +1065,11 @@ class RuntimeState(object):
         self.card = card
         self.selected_file = self.mf # type: CardDF
         self.profile = profile
+
+        # make sure the class and selection control bytes, which are specified
+        # by the card profile are used
+        self.card.set_apdu_parameter(cla=self.profile.cla, sel_ctrl=self.profile.sel_ctrl)
+
         # add application ADFs + MF-files from profile
         apps = self._match_applications()
         for a in apps:
@@ -1450,6 +1455,8 @@ class CardProfile(object):
             applications : List of CardApplications present on card
             sw : List of status word definitions
             shell_cmdsets : List of cmd2 shell command sets of profile-specific commands
+            cla : class byte that should be used with cards of this profile
+            sel_ctrl : selection control bytes class byte that should be used with cards of this profile
         """
         self.name = name
         self.desc = kw.get("desc", None)
@@ -1457,6 +1464,8 @@ class CardProfile(object):
         self.sw = kw.get("sw", [])
         self.applications = kw.get("applications", [])
         self.shell_cmdsets = kw.get("shell_cmdsets", [])
+        self.cla = kw.get("cla", "00")
+        self.sel_ctrl = kw.get("sel_ctrl", "0004")
 
     def __str__(self):
         return self.name
