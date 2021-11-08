@@ -1077,6 +1077,13 @@ class RuntimeState(object):
     def _match_applications(self):
         """match the applications from the profile with applications on the card"""
         apps_profile = self.profile.applications
+
+        # When the profile does not feature any applications, then we are done already
+        if not apps_profile:
+            return []
+
+        # Read AIDs from card and match them against the applications defined by the
+        # card profile
         aids_card = self.card.read_aids()
         apps_taken = []
         if aids_card:
