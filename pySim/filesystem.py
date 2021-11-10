@@ -1461,7 +1461,7 @@ class CardProfile(object):
         self.name = name
         self.desc = kw.get("desc", None)
         self.files_in_mf = kw.get("files_in_mf", [])
-        self.sw = kw.get("sw", [])
+        self.sw = kw.get("sw", {})
         self.applications = kw.get("applications", [])
         self.shell_cmdsets = kw.get("shell_cmdsets", [])
         self.cla = kw.get("cla", "00")
