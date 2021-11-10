@@ -517,10 +517,28 @@ class PySimCommands(CommandSet):
 				result = self._cmd.rs.read_binary()
 				self._cmd.poutput("update_binary " + str(result[0]))
 			elif structure == 'cyclic' or structure == 'linear_fixed':
-				num_of_rec = fd['num_of_rec']
-				for r in range(1, num_of_rec + 1):
-					result = self._cmd.rs.read_record(r)
-					self._cmd.poutput("update_record %d %s" % (r, str(result[0])))
+				# Use number of records specified in select response
+				if 'num_of_rec' in fd:
+					num_of_rec = fd['num_of_rec']
+					for r in range(1, num_of_rec + 1):
+						result = self._cmd.rs.read_record(r)
+						self._cmd.poutput("update_record %d %s" % (r, str(result[0])))
+				# When the select response does not return the number of records, read until we hit the
+				# first record that cannot be read.
+				else:
+					r = 1
+					while True:
+						try:
+							result = self._cmd.rs.read_record(r)
+						except SwMatchError as e:
+							# We are past the last valid record - stop
+							if e.sw_actual == "9402":
+								break
+							# Some other problem occurred
+							else:
+								raise e
+						self._cmd.poutput("update_record %d %s" % (r, str(result[0])))
+						r = r + 1
 			elif structure == 'ber_tlv':
 				tags = self._cmd.rs.retrieve_tags()
 				for t in tags:
