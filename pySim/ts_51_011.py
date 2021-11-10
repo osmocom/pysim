@@ -976,6 +976,43 @@ def _decode_select_response(resp_hex):
 
 class CardProfileSIM(CardProfile):
     def __init__(self):
-        super().__init__('SIM', desc='GSM SIM Card', cla="a0", sel_ctrl="0000", files_in_mf=[DF_TELECOM(), DF_GSM()])
+        sw = {
+          'Normal': {
+            '9000': 'Normal ending of the command',
+            '91xx': 'normal ending of the command, with extra information from the proactive SIM containing a command for the ME',
+            '9exx': 'length XX of the response data given in case of a SIM data download error',
+            '9fxx': 'length XX of the response data',
+            },
+          'Postponed processing': {
+            '9300': 'SIM Application Toolkit is busy. Command cannot be executed at present, further normal commands are allowed',
+            },
+          'Memory management': {
+            '920x': 'command successful but after using an internal update retry routine X times',
+            '9240': 'memory problem',
+            },
+          'Referencing management': {
+            '9400': 'no EF selected',
+            '9402': 'out of range (invalid address)',
+            '9404': 'file ID not found or pattern not found',
+            '9408': 'file is inconsistent with the command',
+            },
+          'Security management': {
+            '9802': 'no CHV initialized',
+            '9804': 'access condition not fulfilled, unsuccessful CHV verification or authentication failed',
+            '9808': 'in contradiction with CHV status',
+            '9810': 'in contradiction with invalidation status',
+            '9840': 'unsuccessful verification, CHV blocked, UNBLOCK CHV blocked',
+            '9850': 'increase cannot be performed, Max value reached',
+            },
+          'Application independent errors': {
+            '67xx': 'incorrect parameter P3',
+            '6bxx': 'incorrect parameter P1 or P2',
+            '6dxx': 'unknown instruction code given in the command',
+            '6exx': 'wrong instruction class given in the command',
+            '6fxx': 'technical problem with no diagnostic given',
+            },
+          }
+
+        super().__init__('SIM', desc='GSM SIM Card', cla="a0", sel_ctrl="0000", files_in_mf=[DF_TELECOM(), DF_GSM()], sw=sw)
     def decode_select_response(self, data_hex:str) -> Any:
 	    return _decode_select_response(data_hex)
