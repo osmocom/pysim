@@ -228,7 +228,7 @@ class SimCardCommands(object):
 		r = self.select_path(ef)
 		rec_length = self.__record_len(r)
 		pdu = self.cla_byte + 'b2%02x04%02x' % (rec_no, rec_length)
-		return self._tp.send_apdu(pdu)
+		return self._tp.send_apdu_checksw(pdu)
 
 	def update_record(self, ef, rec_no:int, data:str, force_len:bool=False, verify:bool=False,
 					  conserve:bool=False):
