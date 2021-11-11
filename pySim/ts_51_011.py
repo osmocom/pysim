@@ -934,48 +934,6 @@ class DF_GSM(CardDF):
           ]
         self.add_files(files)
 
-
-
-def _decode_select_response(resp_hex):
-
-    resp_bin = h2b(resp_hex)
-    struct_of_file_map = {
-        0: 'transparent',
-        1: 'linear_fixed',
-        3: 'cyclic'
-        }
-    type_of_file_map = {
-        1: 'mf',
-        2: 'df',
-        4: 'working_ef'
-        }
-    ret = {
-        'file_descriptor': {},
-        'proprietary_info': {},
-        }
-    ret['file_id'] = b2h(resp_bin[4:6])
-    ret['proprietary_info']['available_memory'] = int.from_bytes(resp_bin[2:4], 'big')
-    file_type = type_of_file_map[resp_bin[6]] if resp_bin[6] in type_of_file_map else resp_bin[6]
-    ret['file_descriptor']['file_type'] = file_type
-    if file_type in ['mf', 'df']:
-        ret['file_characteristics'] = b2h(resp_bin[13:14])
-        ret['num_direct_child_df'] = resp_bin[14]
-        ret['num_direct_child_ef'] = resp_bin[15]
-        ret['num_chv_unblock_adm_codes'] = int(resp_bin[16])
-        # CHV / UNBLOCK CHV stats
-    elif file_type in ['working_ef']:
-        file_struct = struct_of_file_map[resp_bin[13]] if resp_bin[13] in struct_of_file_map else resp_bin[13]
-        ret['file_descriptor']['structure'] = file_struct
-        ret['access_conditions'] = b2h(resp_bin[8:10])
-        if resp_bin[11] & 0x01 == 0:
-            ret['life_cycle_status_int'] = 'operational_activated'
-        elif resp_bin[11] & 0x04:
-            ret['life_cycle_status_int'] = 'operational_deactivated'
-        else:
-            ret['life_cycle_status_int'] = 'terminated'
-
-    return ret
-
 class CardProfileSIM(CardProfile):
 
     ORDER = 2
@@ -1019,8 +977,44 @@ class CardProfileSIM(CardProfile):
           }
 
         super().__init__('SIM', desc='GSM SIM Card', cla="a0", sel_ctrl="0000", files_in_mf=[DF_TELECOM(), DF_GSM()], sw=sw)
-    def decode_select_response(self, data_hex:str) -> Any:
-	    return _decode_select_response(data_hex)
+
+    def decode_select_response(self, resp_hex:str) -> Any:
+        resp_bin = h2b(resp_hex)
+        struct_of_file_map = {
+            0: 'transparent',
+            1: 'linear_fixed',
+            3: 'cyclic'
+            }
+        type_of_file_map = {
+            1: 'mf',
+            2: 'df',
+            4: 'working_ef'
+            }
+        ret = {
+            'file_descriptor': {},
+            'proprietary_info': {},
+            }
+        ret['file_id'] = b2h(resp_bin[4:6])
+        ret['proprietary_info']['available_memory'] = int.from_bytes(resp_bin[2:4], 'big')
+        file_type = type_of_file_map[resp_bin[6]] if resp_bin[6] in type_of_file_map else resp_bin[6]
+        ret['file_descriptor']['file_type'] = file_type
+        if file_type in ['mf', 'df']:
+            ret['file_characteristics'] = b2h(resp_bin[13:14])
+            ret['num_direct_child_df'] = resp_bin[14]
+            ret['num_direct_child_ef'] = resp_bin[15]
+            ret['num_chv_unblock_adm_codes'] = int(resp_bin[16])
+            # CHV / UNBLOCK CHV stats
+        elif file_type in ['working_ef']:
+            file_struct = struct_of_file_map[resp_bin[13]] if resp_bin[13] in struct_of_file_map else resp_bin[13]
+            ret['file_descriptor']['structure'] = file_struct
+            ret['access_conditions'] = b2h(resp_bin[8:10])
+            if resp_bin[11] & 0x01 == 0:
+                ret['life_cycle_status_int'] = 'operational_activated'
+            elif resp_bin[11] & 0x04:
+                ret['life_cycle_status_int'] = 'operational_deactivated'
+            else:
+                ret['life_cycle_status_int'] = 'terminated'
+        return ret
 
     @staticmethod
     def match_with_card(scc:SimCardCommands) -> bool:
