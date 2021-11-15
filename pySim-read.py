@@ -34,6 +34,7 @@ from pySim.ts_31_103 import EF_IST_map, EF_ISIM_ADF_map
 
 from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, argparse_add_reader_args
+from pySim.exceptions import SwMatchError
 from pySim.cards import card_detect, SimCard, UsimCard, IsimCard
 from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn
 from pySim.utils import format_xplmn_w_act, dec_st
@@ -43,6 +44,24 @@ option_parser = argparse.ArgumentParser(prog='pySim-read',
                         description='Legacy tool for reading some parts of a SIM card',
                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 argparse_add_reader_args(option_parser)
+
+def select_app(adf:str, card:SimCard):
+	"""Select application by its AID"""
+	sw = 0
+	try:
+		if card._scc.cla_byte == "00":
+			data, sw = card.select_adf_by_aid(adf)
+	except SwMatchError as e:
+		if e.sw_actual == "6a82":
+			# If we can't select the file because it does not exist, we just remain silent since it means
+			# that this card just does not have an USIM application installed, which is not an error.
+			pass
+		else:
+			print("ADF." + adf + ": Can't select application -- " + str(e))
+	except Exception as e:
+		print("ADF." + adf + ": Can't select application -- " + str(e))
+
+	return sw
 
 if __name__ == '__main__':
 
@@ -219,7 +238,7 @@ if __name__ == '__main__':
 
 	# Check whether we have th AID of USIM, if so select it by its AID
 	# EF.UST - File Id in ADF USIM : 6f38
-	data, sw = card.select_adf_by_aid(adf="usim")
+	sw = select_app("USIM", card)
 	if sw == '9000':
 		# Select USIM profile
 		usim_card = UsimCard(scc)
@@ -269,7 +288,7 @@ if __name__ == '__main__':
 			print("ePDGSelection: Can't read file -- " + str(e))
 
 	# Select ISIM application by its AID
-	data, sw = card.select_adf_by_aid(adf="isim")
+	sw = select_app("ISIM", card)
 	if sw == '9000':
 		# Select USIM profile
 		isim_card = IsimCard(scc)
