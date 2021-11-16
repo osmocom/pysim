@@ -278,22 +278,35 @@ class SimCard(object):
 			self._aids = []
 		return self._aids
 
+	@staticmethod
+	def _get_aid(adf="usim") -> str:
+		aid_map = {}
+		# First (known) halves of the U/ISIM AID
+		aid_map["usim"] = "a0000000871002"
+		aid_map["isim"] = "a0000000871004"
+		if adf in aid_map:
+			return aid_map[adf]
+		return None
+
+	def _complete_aid(self, aid) -> str:
+		"""find the complete version of an ADF.U/ISIM AID"""
+		# Find full AID by partial AID:
+		if is_hex(aid):
+			for aid_known in self._aids:
+				if len(aid_known) >= len(aid) and aid == aid_known[0:len(aid)]:
+					return aid_known
+		return None
+
 	def select_adf_by_aid(self, adf="usim"):
 		"""Select ADF.U/ISIM in the Card using its full AID"""
-		# Find full AID by partial AID:
 		if is_hex(adf):
-			for aid in self._aids:
-				if len(aid) >= len(adf) and adf == aid[0:len(adf)]:
-					return self._scc.select_adf(aid)
-		# Find full AID by application name:
-		elif adf in ["usim", "isim"]:
-			# First (known) halves of the U/ISIM AID
-			aid_map = {}
-			aid_map["usim"] = "a0000000871002"
-			aid_map["isim"] = "a0000000871004"
-			for aid in self._aids:
-				if aid_map[adf] in aid:
-					return self._scc.select_adf(aid)
+			aid = adf
+		else:
+			aid = self._get_aid(adf)
+		if aid:
+			aid_full = self._complete_aid(aid)
+			if aid_full:
+				return self._scc.select_adf(aid_full)
 		return (None, None)
 
 	def erase_binary(self, ef):
