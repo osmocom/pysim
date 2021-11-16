@@ -978,7 +978,8 @@ class CardProfileSIM(CardProfile):
 
         super().__init__('SIM', desc='GSM SIM Card', cla="a0", sel_ctrl="0000", files_in_mf=[DF_TELECOM(), DF_GSM()], sw=sw)
 
-    def decode_select_response(self, resp_hex:str) -> Any:
+    @staticmethod
+    def decode_select_response(resp_hex:str) -> Any:
         resp_bin = h2b(resp_hex)
         struct_of_file_map = {
             0: 'transparent',

@@ -473,28 +473,6 @@ Never_DO = TL0_DataObject('never', 'Never', 0x97)
 SC_DO = DataObjectChoice('security_condition', 'Security Condition',
                          members=[Always_DO, Never_DO, SecCondByte_DO(), SecCondByte_DO(0x9e), CRT_DO()])
 
-
-# ETSI TS 102 221 Section 11.1.1.3
-def decode_select_response(resp_hex):
-    fixup_fcp_proprietary_tlv_map(FCP_Proprietary_TLV_MAP)
-    resp_hex = resp_hex.upper()
-    # outer layer
-    fcp_base_tlv = TLV(['62'])
-    fcp_base = fcp_base_tlv.parse(resp_hex)
-    # actual FCP
-    fcp_tlv = TLV(FCP_TLV_MAP)
-    fcp = fcp_tlv.parse(fcp_base['62'])
-    # further decode the proprietary information
-    if fcp['A5']:
-        prop_tlv = TLV(FCP_Proprietary_TLV_MAP)
-        prop = prop_tlv.parse(fcp['A5'])
-        fcp['A5'] = tlv_val_interpret(FCP_prorietary_interpreter_map, prop)
-        fcp['A5'] = tlv_key_replace(FCP_Proprietary_TLV_MAP, fcp['A5'])
-    # finally make sure we get human-readable keys in the output dict
-    r = tlv_val_interpret(FCP_interpreter_map, fcp)
-    return tlv_key_replace(FCP_TLV_MAP, r)
-
-
 # TS 102 221 Section 13.1
 class EF_DIR(LinFixedEF):
     def __init__(self, fid='2f00', sfid=0x1e, name='EF.DIR', desc='Application Directory'):
@@ -694,8 +672,26 @@ class CardProfileUICC(CardProfile):
 
         super().__init__(name, desc='ETSI TS 102 221', cla="00", sel_ctrl="0004", files_in_mf=files, sw=sw)
 
-    def decode_select_response(self, data_hex:str) -> Any:
-        return decode_select_response(data_hex)
+    @staticmethod
+    def decode_select_response(resp_hex:str) -> Any:
+        """ETSI TS 102 221 Section 11.1.1.3"""
+        fixup_fcp_proprietary_tlv_map(FCP_Proprietary_TLV_MAP)
+        resp_hex = resp_hex.upper()
+        # outer layer
+        fcp_base_tlv = TLV(['62'])
+        fcp_base = fcp_base_tlv.parse(resp_hex)
+        # actual FCP
+        fcp_tlv = TLV(FCP_TLV_MAP)
+        fcp = fcp_tlv.parse(fcp_base['62'])
+        # further decode the proprietary information
+        if fcp['A5']:
+            prop_tlv = TLV(FCP_Proprietary_TLV_MAP)
+            prop = prop_tlv.parse(fcp['A5'])
+            fcp['A5'] = tlv_val_interpret(FCP_prorietary_interpreter_map, prop)
+            fcp['A5'] = tlv_key_replace(FCP_Proprietary_TLV_MAP, fcp['A5'])
+        # finally make sure we get human-readable keys in the output dict
+        r = tlv_val_interpret(FCP_interpreter_map, fcp)
+        return tlv_key_replace(FCP_TLV_MAP, r)
 
     @staticmethod
     def match_with_card(scc:SimCardCommands) -> bool:

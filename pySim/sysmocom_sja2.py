@@ -154,7 +154,7 @@ class DF_SYSTEM(CardDF):
         self.add_files(files)
 
     def decode_select_response(self, resp_hex):
-        return pySim.ts_102_221.decode_select_response(resp_hex)
+        return pySim.ts_102_221.CardProfileUICC.decode_select_response(resp_hex)
 
 class EF_USIM_SQN(TransparentEF):
     def __init__(self, fid='af30', name='EF.USIM_SQN'):

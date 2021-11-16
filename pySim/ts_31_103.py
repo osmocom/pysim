@@ -213,7 +213,7 @@ class ADF_ISIM(CardADF):
         self.shell_commands += [ADF_USIM.AddlShellCommands()]
 
     def decode_select_response(self, data_hex):
-        return pySim.ts_102_221.decode_select_response(data_hex)
+        return pySim.ts_102_221.CardProfileUICC.decode_select_response(data_hex)
 
 # TS 31.103 Section 7.1
 sw_isim = {

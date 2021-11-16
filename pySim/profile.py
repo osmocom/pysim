@@ -106,7 +106,8 @@ class CardProfile(object):
 		"""
 		return interpret_sw(self.sw, sw)
 
-	def decode_select_response(self, data_hex:str) -> Any:
+	@staticmethod
+	def decode_select_response(data_hex:str) -> Any:
 		"""Decode the response to a SELECT command.
 
 		This is the fall-back method which doesn't perform any decoding. It mostly

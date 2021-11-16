@@ -1067,7 +1067,7 @@ class ADF_USIM(CardADF):
         self.add_files(files)
 
     def decode_select_response(self, data_hex):
-        return pySim.ts_102_221.decode_select_response(data_hex)
+        return pySim.ts_102_221.CardProfileUICC.decode_select_response(data_hex)
 
     @with_default_category('Application-Specific Commands')
     class AddlShellCommands(CommandSet):
