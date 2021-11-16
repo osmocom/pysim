@@ -34,7 +34,7 @@ import cmd2
 from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 
-from typing import cast, Optional, Iterable, List, Any, Dict, Tuple
+from typing import cast, Optional, Iterable, List, Dict, Tuple
 
 from smartcard.util import toBytes
 
@@ -354,7 +354,7 @@ class CardMF(CardDF):
                 sels.update({x.name: x for x in self.applications.values() if x.name})
         return sels
 
-    def decode_select_response(self, data_hex:str) -> Any:
+    def decode_select_response(self, data_hex:str) -> object:
         """Decode the response to a SELECT command.
 
         This is the fall-back method which automatically defers to the standard decoding

@@ -673,7 +673,7 @@ class CardProfileUICC(CardProfile):
         super().__init__(name, desc='ETSI TS 102 221', cla="00", sel_ctrl="0004", files_in_mf=files, sw=sw)
 
     @staticmethod
-    def decode_select_response(resp_hex:str) -> Any:
+    def decode_select_response(resp_hex:str) -> object:
         """ETSI TS 102 221 Section 11.1.1.3"""
         fixup_fcp_proprietary_tlv_map(FCP_Proprietary_TLV_MAP)
         resp_hex = resp_hex.upper()

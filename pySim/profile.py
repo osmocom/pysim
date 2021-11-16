@@ -24,7 +24,6 @@
 from pySim.commands import SimCardCommands
 from pySim.filesystem import CardApplication, interpret_sw
 from pySim.utils import all_subclasses
-from typing import Any
 import abc
 import operator
 
@@ -107,7 +106,7 @@ class CardProfile(object):
 		return interpret_sw(self.sw, sw)
 
 	@staticmethod
-	def decode_select_response(data_hex:str) -> Any:
+	def decode_select_response(data_hex:str) -> object:
 		"""Decode the response to a SELECT command.
 
 		This is the fall-back method which doesn't perform any decoding. It mostly
