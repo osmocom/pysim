@@ -320,10 +320,6 @@ if __name__ == '__main__':
 		except Exception as e:
 			print("UICC IARI: Can't read file -- " + str(e))
 
-	# Check whether we have th AID of ISIM, if so select it by its AID
-	# EF.IST - File Id in ADF ISIM : 6f07
-	data, sw = card.select_adf_by_aid(adf="isim")
-	if sw == '9000':
 		# EF.IST
 		(res, sw) = card.read_binary('6f07')
 		if sw == '9000':
