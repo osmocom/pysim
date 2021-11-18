@@ -308,6 +308,9 @@ class SimCard(object):
 			aid_full = self._complete_aid(aid)
 			if aid_full:
 				return self._scc.select_adf(aid_full)
+			else:
+				# If we cannot get the full AID, try with short AID
+				return self._scc.select_adf(aid)
 		return (None, None)
 
 	def erase_binary(self, ef):
