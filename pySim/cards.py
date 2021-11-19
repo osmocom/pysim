@@ -284,6 +284,7 @@ class SimCard(object):
 		# First (known) halves of the U/ISIM AID
 		aid_map["usim"] = "a0000000871002"
 		aid_map["isim"] = "a0000000871004"
+		adf = adf.lower()
 		if adf in aid_map:
 			return aid_map[adf]
 		return None
