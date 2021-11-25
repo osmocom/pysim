@@ -684,7 +684,7 @@ class CardProfileUICC(CardProfile):
         fcp_tlv = TLV(FCP_TLV_MAP)
         fcp = fcp_tlv.parse(fcp_base['62'])
         # further decode the proprietary information
-        if fcp['A5']:
+        if 'A5' in fcp:
             prop_tlv = TLV(FCP_Proprietary_TLV_MAP)
             prop = prop_tlv.parse(fcp['A5'])
             fcp['A5'] = tlv_val_interpret(FCP_prorietary_interpreter_map, prop)
