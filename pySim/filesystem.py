@@ -1101,14 +1101,23 @@ class RuntimeState(object):
             for a in aids_card:
                 for f in apps_profile:
                     if f.aid in a:
-                        print(" %s: %s" % (f.name, a))
+                        print(" %s: %s (EF.DIR)" % (f.name, a))
                         aids_taken.append(a)
                         apps_taken.append(f)
             aids_unknown = set(aids_card) - set(aids_taken)
             for a in aids_unknown:
-                print(" unknown: %s" % a)
+                print(" unknown: %s (EF.DIR)" % a)
         else:
-            print("error: could not determine card applications")
+            print("warning: EF.DIR seems to be empty!")
+
+        # Some card applications may not be registered in EF.DIR, we will actively
+        # probe for those applications
+        for f in set(apps_profile) - set(apps_taken):
+            data, sw = self.card.select_adf_by_aid(f.aid)
+            if sw == "9000":
+                print(" %s: %s" % (f.name, a))
+                apps_taken.append(f)
+
         return apps_taken
 
     def reset(self, cmd_app=None) -> Hexstr:
