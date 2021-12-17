@@ -470,10 +470,34 @@ class EF_LP(TransRecEF):
 class EF_IMSI(TransparentEF):
     def __init__(self, fid='6f07', sfid=None, name='EF.IMSI', desc='IMSI', size={9,9}):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+        # add those commands to the general commands of a TransparentEF
+        self.shell_commands += [self.AddlShellCommands(self)]
     def _decode_hex(self, raw_hex):
         return {'imsi': dec_imsi(raw_hex)}
     def _encode_hex(self, abstract):
         return enc_imsi(abstract['imsi'])
+    @with_default_category('File-Specific Commands')
+    class AddlShellCommands(CommandSet):
+        def __init__(self,ef:TransparentEF):
+            super().__init__()
+            self._ef=ef
+
+        def do_update_imsi_plmn(self, arg: str):
+            """Change the plmn part of the IMSI"""
+            plmn = arg.strip()
+            if len(plmn) == 5 or len(plmn) == 6:
+                (data, sw) = self._cmd.rs.read_binary_dec()
+                if sw == '9000' and len(data['imsi'])-len(plmn) == 10:
+                    imsi = data['imsi']
+                    msin = imsi[len(plmn):]
+                    (data, sw) = self._cmd.rs.update_binary_dec({'imsi': plmn+msin})
+                    if sw == '9000' and data:
+                        self._cmd.poutput_json(self._cmd.rs.selected_file.decode_hex(data))
+                else:
+                    raise ValueError("PLMN length does not match IMSI length")
+            else:
+                raise ValueError("PLMN has wrong length!")
+
 
 # TS 51.011 Section 10.3.4
 class EF_PLMNsel(TransRecEF):
