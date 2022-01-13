@@ -6,3 +6,4 @@ jsonpath-ng
 construct
 bidict
 gsm0338
+pyyaml
