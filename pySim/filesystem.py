@@ -1113,11 +1113,13 @@ class RuntimeState(object):
         # Some card applications may not be registered in EF.DIR, we will actively
         # probe for those applications
         for f in set(apps_profile) - set(apps_taken):
-            data, sw = self.card.select_adf_by_aid(f.aid)
-            if sw == "9000":
-                print(" %s: %s" % (f.name, f.aid))
-                apps_taken.append(f)
-
+            try:
+                data, sw = self.card.select_adf_by_aid(f.aid)
+                if sw == "9000":
+                    print(" %s: %s" % (f.name, f.aid))
+                    apps_taken.append(f)
+            except SwMatchError:
+                pass
         return apps_taken
 
     def reset(self, cmd_app=None) -> Hexstr:
