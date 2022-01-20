@@ -464,6 +464,7 @@ def dec_act(twohexbytes:Hexstr) -> List[str]:
 	act_list = [
 		{'bit': 15, 'name': "UTRAN"},
 		{'bit': 14, 'name': "E-UTRAN"},
+		{'bit': 11, 'name': "NG-RAN"},
 		{'bit':  7, 'name': "GSM"},
 		{'bit':  6, 'name': "GSM COMPACT"},
 		{'bit':  5, 'name': "cdma2000 HRPD"},
