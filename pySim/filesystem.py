@@ -172,7 +172,9 @@ class CardFile(object):
             list containing all selectable names.
         """
         sels = self.get_selectables(flags)
-        return list(sels.keys())
+        sel_keys = list(sels.keys())
+        sel_keys.sort()
+        return sel_keys
 
     def decode_select_response(self, data_hex:str):
         """Decode the response to a SELECT command.
