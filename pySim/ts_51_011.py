@@ -434,7 +434,7 @@ class DF_TELECOM(CardDF):
         super().__init__(fid=fid, name=name, desc=desc)
         files = [
           EF_ADN(),
-          EF_ADN(fid='6f3b', name='EF_FDN', desc='Fixed dialling numbers'),
+          EF_ADN(fid='6f3b', name='EF.FDN', desc='Fixed dialling numbers'),
           EF_SMS(),
           LinFixedEF(fid='6f3d', name='EF.CCP', desc='Capability Configuration Parameters', rec_len={14,14}),
           LinFixedEF(fid='6f4f', name='EF.ECCP', desc='Extended Capability Configuration Parameters', rec_len={15,32}),
