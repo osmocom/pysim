@@ -887,7 +887,7 @@ class EF_MMSUP(LinFixedEF):
     def __init__(self, fid='6fd1', sfid=None, name='EF.MMSUP', rec_len={1,None},
                  desc='MMS User Preferences'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
-        self.tlv = EF_MMSUP.MMS_User_Preferences
+        self._tlv = EF_MMSUP.MMS_User_Preferences
 
 # TS 51.011 Section 10.3.55
 class EF_MMSUCP(TransparentEF):
