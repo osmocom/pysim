@@ -292,7 +292,7 @@ from pySim.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_P
 from pySim.ts_51_011 import EF_CBMID, EF_CBMIR, EF_ADN, EF_SMS, EF_MSISDN, EF_SMSP, EF_SMSS
 from pySim.ts_51_011 import EF_SMSR, EF_DCK, EF_EXT, EF_CNL, EF_OPL, EF_MBI, EF_MWIS
 from pySim.ts_51_011 import EF_MMSN, EF_MMSICP, EF_MMSUP, EF_MMSUCP, EF_VGCS, EF_VGCSS, EF_NIA
-from pySim.ts_51_011 import EF_ACMmax, EF_AAeM, EF_eMLPP, EF_CMI
+from pySim.ts_51_011 import EF_ACMmax, EF_AAeM, EF_eMLPP, EF_CMI, EF_PNN
 
 import pySim.ts_102_221
 
@@ -1037,7 +1037,7 @@ class ADF_USIM(CardADF):
                        'User controlled PLMN Selector with Access Technology'),
           EF_ARR('6f06', 0x17),
           TransparentEF('6fc4', None, 'EF.NETPAR', 'Network Parameters'),
-          LinFixedEF('6fc5', 0x19, 'EF.PNN', 'PLMN Network Name'),
+          EF_PNN('6fc5', 0x19),
           EF_OPL(),
           EF_ADN('6fc7', None, 'EF.MBDN', 'Mailbox Dialling Numbers'),
           EF_MBI(),
