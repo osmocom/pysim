@@ -558,9 +558,35 @@ class EF_UST(TransparentEF):
 
 # TS 31.103 Section 4.2.7 - *not* the same as DF.GSM/EF.ECC!
 class EF_ECC(LinFixedEF):
+    cc_construct = Rpad(BcdAdapter(Rpad(Bytes(3))), pattern='f')
+    category_construct = FlagsEnum(Byte, police=1, ambulance=2, fire_brigade=3, marine_guard=4,
+                                   mountain_rescue=5, manual_ecall=6, automatic_ecall=7)
+    alpha_construct = GsmStringAdapter(Rpad(GreedyBytes))
     def __init__(self, fid='6fb7', sfid=0x01, name='EF.ECC',
                  desc='Emergency Call Codes'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len={4,20})
+    def _decode_record_bin(self, in_bin):
+        # mandatory parts
+        code = in_bin[:3]
+        if code == b'\xff\xff\xff':
+            return None
+        svc_category = in_bin[-1:]
+        ret = {'call_code': parse_construct(EF_ECC.cc_construct, code),
+               'service_category': parse_construct(EF_ECC.category_construct, svc_category) }
+        # optional alpha identifier
+        if len(in_bin) > 4:
+            alpha_id = in_bin[3:-1]
+            ret['alpha_id'] = parse_construct(EF_ECC.alpha_construct, alpha_id)
+        return ret
+    def _encode_record_bin(self, in_json):
+        if in_json is None:
+            return b'\xff\xff\xff\xff'
+        code = EF_ECC.cc_construct.build(in_json['call_code'])
+        svc_category = EF_ECC.category_construct.build(in_json['category'])
+        alpha_id = EF_ECC.alpha_construct.build(in_json['alpha_id'])
+        # FIXME: alpha_id needs padding up to 'record_length - 4'
+        return code + alpha_id + svc_category
+
 
 # TS 31.102 Section 4.2.17
 class EF_LOCI(TransparentEF):
