@@ -503,6 +503,17 @@ class EF_ICCID(TransparentEF):
 class EF_PL(TransRecEF):
     def __init__(self, fid='2f05', sfid=0x05, name='EF.PL', desc='Preferred Languages'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=2, size={2,None})
+    def _decode_record_bin(self, bin_data):
+        if bin_data == b'\xff\xff':
+            return None
+        else:
+            return bin_data.decode('ascii')
+    def _encode_record_bin(self, in_json):
+        if in_json is None:
+            return b'\xff\xff'
+        else:
+            return in_json.encode('ascii')
+
 
 # TS 102 221 Section 13.4
 class EF_ARR(LinFixedEF):
