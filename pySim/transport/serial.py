@@ -184,7 +184,7 @@ class SerialSimLink(LinkBase):
 	def _send_apdu_raw(self, pdu):
 
 		pdu = h2b(pdu)
-		data_len = ord(pdu[4])	# P3
+		data_len = pdu[4]	# P3
 
 		# Send first CLASS,INS,P1,P2,P3
 		self._tx_string(pdu[0:5])
@@ -195,7 +195,7 @@ class SerialSimLink(LinkBase):
 		#  - SW1: The card can apparently proceed ...
 		while True:
 			b = self._rx_byte()
-			if b == pdu[1]:
+			if ord(b) == pdu[1]:
 				break
 			elif b != '\x60':
 				# Ok, it 'could' be SW1
@@ -215,7 +215,7 @@ class SerialSimLink(LinkBase):
 		#  length = [P3 - tx_data (=len(pdu)-len(hdr)) + 2 (SW1//2) ]
 		to_recv = data_len - len(pdu) + 5 + 2
 
-		data = ''
+		data = bytes(0)
 		while (len(data) < to_recv):
 			b = self._rx_byte()
 			if (to_recv == 2) and (b == '\x60'): # Ignore NIL if we have no RX data (hack ?)
