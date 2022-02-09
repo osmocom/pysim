@@ -47,10 +47,10 @@ pip install sphinxcontrib-napoleon
 pip3 install -e 'git+https://github.com/osmocom/sphinx-argparse@master#egg=sphinx-argparse'
 (cd docs && make html latexpdf)
 
-# run the test with physical cards
-cd pysim-testdata
-../tests/pysim-test.sh
-
 if [ "$WITH_MANUALS" = "1" ] && [ "$PUBLISH" = "1" ]; then
 	make -C "$base/docs" publish
 fi
+
+# run the test with physical cards
+cd pysim-testdata
+../tests/pysim-test.sh
