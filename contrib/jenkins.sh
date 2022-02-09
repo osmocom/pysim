@@ -48,7 +48,7 @@ pip3 install -e 'git+https://github.com/osmocom/sphinx-argparse@master#egg=sphin
 (cd docs && make html latexpdf)
 
 if [ "$WITH_MANUALS" = "1" ] && [ "$PUBLISH" = "1" ]; then
-	make -C "$base/docs" publish
+	make -C "docs" publish
 fi
 
 # run the test with physical cards
