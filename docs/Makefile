@@ -22,6 +22,9 @@ help:
 $(BUILDDIR)/latex/pysim.pdf: latexpdf
 	@/bin/true
 
+publish-html: html
+	rsync -avz -e "ssh -o 'UserKnownHostsFile=$(OSMO_GSM_MANUALS_DIR)/build/known_hosts' -p 48" $(BUILDDIR)/html/ docs@ftp.osmocom.org:web-files/latest/pysim/
+
 # put this before the catch-all below
 include $(OSMO_GSM_MANUALS_DIR)/build/Makefile.common.inc
 
