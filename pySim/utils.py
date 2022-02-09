@@ -567,6 +567,7 @@ def derive_milenage_opc(ki_hex:Hexstr, op_hex:Hexstr) -> Hexstr:
 	Run the milenage algorithm to calculate OPC from Ki and OP
 	"""
 	from Crypto.Cipher import AES
+	# pylint: disable=no-name-in-module
 	from Crypto.Util.strxor import strxor
 	from pySim.utils import b2h
 
