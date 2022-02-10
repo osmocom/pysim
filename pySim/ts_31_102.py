@@ -165,6 +165,13 @@ EF_UST_map = {
 	135: 'Support for Trusted non-3GPP access networks by USIM'
 }
 
+# Mapping between USIM Enbled Service Number and its description
+EF_EST_map = {
+    1: 'Fixed Dialling Numbers (FDN)',
+    2: 'Barred Dialling Numbers (BDN)',
+    3: 'APN Control List (ACL)'
+}
+
 LOCI_STATUS_map = {
 	0:	'updated',
 	1:	'not updated',
@@ -282,6 +289,7 @@ EF_USIM_ADF_map = {
 
 import enum
 from struct import unpack, pack
+from typing import Tuple
 from construct import *
 from construct import Optional as COptional
 from pySim.construct import *
@@ -519,30 +527,49 @@ class EF_HPPLMN(TransparentEF):
         self._construct = Int8ub
 
 # TS 31.102 Section 4.2.8
-class EF_UST(TransparentEF):
-    def __init__(self, fid='6f38', sfid=0x04, name='EF.UST', desc='USIM Service Table', size={1,17}):
+class EF_UServiceTable(TransparentEF):
+    def __init__(self, fid, sfid, name, desc, size, table):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size)
+        self.table = table
         # add those commands to the general commands of a TransparentEF
         self.shell_commands += [self.AddlShellCommands()]
+    @staticmethod
+    def _bit_byte_offset_for_service(service:int) -> Tuple[int, int]:
+        i = service - 1
+        byte_offset = i//8
+        bit_offset = (i % 8)
+        return (byte_offset, bit_offset)
     def _decode_bin(self, in_bin):
-        ret = []
+        ret = {}
         for i in range (0, len(in_bin)):
             byte = in_bin[i]
             for bitno in range(0,7):
-                if byte & (1 << bitno):
-                    ret.append(i * 8 + bitno + 1)
+                service_nr = i * 8 + bitno + 1
+                ret[service_nr] = {
+                        'activated': True if byte & (1 << bitno) else False
+                }
+                if service_nr in self.table:
+                    ret[service_nr]['description'] = self.table[service_nr]
         return ret
     def _encode_bin(self, in_json):
-        # FIXME: size this to length of file
-        ret = bytearray(20)
-        for srv in in_json:
-            print("srv=%d"%srv)
-            srv = srv-1
-            byte_nr = srv // 8
-            # FIXME: detect if service out of range was selected
-            bit_nr = srv % 8
-            ret[byte_nr] |= (1 << bit_nr)
-        return ret
+        # compute the required binary size
+        bin_len = 0
+        for srv in in_json.keys():
+            service_nr = int(srv)
+            (byte_offset, bit_offset) = EF_UServiceTable._bit_byte_offset_for_service(service_nr)
+            if byte_offset >= bin_len:
+                bin_len = byte_offset+1
+        # encode the actual data
+        out = bytearray(b'\x00' * bin_len)
+        for srv in in_json.keys():
+            service_nr = int(srv)
+            (byte_offset, bit_offset) = EF_UServiceTable._bit_byte_offset_for_service(service_nr)
+            if in_json[srv]['activated'] == True:
+                bit = 1
+            else:
+                bit = 0
+            out[byte_offset] |= (bit) << bit_offset
+        return out
     @with_default_category('File-Specific Commands')
     class AddlShellCommands(CommandSet):
         def __init__(self):
@@ -991,7 +1018,7 @@ class ADF_USIM(CardADF):
                        'User controlled PLMN Selector with Access Technology'),
           EF_HPPLMN(),
           EF_ACMmax(),
-          EF_UST(),
+          EF_UServiceTable('6f38', 0x04, 'EF.UST', 'USIM Service Table', size={1,17}, table=EF_UST_map),
           CyclicEF('6f39', None, 'EF.ACM', 'Accumulated call meter', rec_len={3,3}),
           TransparentEF('6f3e', None, 'EF.GID1', 'Group Identifier Level 1'),
           TransparentEF('6f3f', None, 'EF.GID2', 'Group Identifier Level 2'),
@@ -1027,7 +1054,7 @@ class ADF_USIM(CardADF):
           EF_ADN('6f4d', None, 'EF.BDN', 'Barred Dialling Numbers'),
           EF_EXT('6f55', None, 'EF.EXT4', 'Extension4 (BDN/SSC)'),
           EF_CMI(),
-          EF_UST('6f56', 0x05, 'EF.EST', 'Enabled Services Table', size={1,None}),
+          EF_UServiceTable('6f56', 0x05, 'EF.EST', 'Enabled Services Table', size={1,None}, table=EF_EST_map),
           EF_ACL(),
           EF_DCK(),
           EF_CNL(),

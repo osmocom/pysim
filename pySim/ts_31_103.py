@@ -26,7 +26,7 @@ from pySim.filesystem import *
 from pySim.utils import *
 from pySim.tlv import *
 from pySim.ts_51_011 import EF_AD, EF_SMS, EF_SMSS, EF_SMSR, EF_SMSP
-from pySim.ts_31_102 import ADF_USIM, EF_FromPreferred
+from pySim.ts_31_102 import ADF_USIM, EF_FromPreferred, EF_UServiceTable
 import pySim.ts_102_221
 from pySim.ts_102_221 import EF_ARR
 
@@ -101,26 +101,6 @@ class EF_IMPU(LinFixedEF):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
         self._tlv = EF_IMPU.impu
 
-# TS 31.103 Section 4.2.7
-class EF_IST(TransparentEF):
-    def __init__(self, fid='6f07', sfid=0x07, name='EF.IST', desc='ISIM Service Table'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size={1,4})
-        # add those commands to the general commands of a TransparentEF
-        self.shell_commands += [self.AddlShellCommands()]
-
-    @with_default_category('File-Specific Commands')
-    class AddlShellCommands(CommandSet):
-        def __init__(self):
-            super().__init__()
-
-        def do_ist_service_activate(self, arg):
-            """Activate a service within EF.IST"""
-            self._cmd.card.update_ist(int(arg), 1)
-
-        def do_ist_service_deactivate(self, arg):
-            """Deactivate a service within EF.IST"""
-            self._cmd.card.update_ist(int(arg), 0)
-
 # TS 31.103 Section 4.2.8
 class EF_PCSCF(LinFixedEF):
     def __init__(self, fid='6f09', sfid=None, name='EF.P-CSCF', desc='P-CSCF Address'):
@@ -192,7 +172,7 @@ class ADF_ISIM(CardADF):
             EF_IMPU(),
             EF_AD(),
             EF_ARR('6f06', 0x06),
-            EF_IST(),
+            EF_UServiceTable('6f07', 0x07, 'EF.IST', 'ISIM Service Table', {1,None}, EF_IST_map),
             EF_PCSCF(),
             EF_GBABP(),
             EF_GBANL(),
