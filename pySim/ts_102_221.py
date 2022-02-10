@@ -470,8 +470,35 @@ class SecCondByte_DO(DataObject):
 
 Always_DO = TL0_DataObject('always', 'Always', 0x90)
 Never_DO = TL0_DataObject('never', 'Never', 0x97)
+
+class Nested_DO(DataObject):
+    """A DO that nests another DO/Choice/Sequence"""
+    def __init__(self, name, tag, choice):
+        super().__init__(name, tag=tag)
+        self.children = choice
+    def from_bytes(self, binary:bytes) -> list:
+        remainder = binary
+        self.decoded = []
+        while remainder:
+            rc, remainder = self.children.decode(remainder)
+            self.decoded.append(rc)
+        return self.decoded
+    def to_bytes(self) -> bytes:
+        encoded = [self.children.encode(d) for d in self.decoded]
+        return b''.join(encoded)
+
+OR_Template = DataObjectChoice('or_template', 'OR-Template',
+                               members=[Always_DO, Never_DO, SecCondByte_DO(), SecCondByte_DO(0x9e), CRT_DO()])
+OR_DO = Nested_DO('or', 0xa0, OR_Template)
+AND_Template = DataObjectChoice('and_template', 'AND-Template',
+                               members=[Always_DO, Never_DO, SecCondByte_DO(), SecCondByte_DO(0x9e), CRT_DO()])
+AND_DO = Nested_DO('and', 0xa7, AND_Template)
+NOT_Template = DataObjectChoice('not_template', 'NOT-Template',
+                               members=[Always_DO, Never_DO, SecCondByte_DO(), SecCondByte_DO(0x9e), CRT_DO()])
+NOT_DO = Nested_DO('not', 0xaf, NOT_Template)
 SC_DO = DataObjectChoice('security_condition', 'Security Condition',
-                         members=[Always_DO, Never_DO, SecCondByte_DO(), SecCondByte_DO(0x9e), CRT_DO()])
+                         members=[Always_DO, Never_DO, SecCondByte_DO(), SecCondByte_DO(0x9e), CRT_DO(),
+                                  OR_DO, AND_DO, NOT_DO])
 
 # TS 102 221 Section 13.1
 class EF_DIR(LinFixedEF):
