@@ -161,7 +161,7 @@ def comprehensiontlv_encode_tag(tag) -> bytes:
 
 # length value coding is equal to BER-TLV
 
-def comprehensiontlv_parse_one(binary:bytes) -> (dict, int, bytes, bytes):
+def comprehensiontlv_parse_one(binary:bytes) -> Tuple[dict, int, bytes, bytes]:
 	"""Parse a single TLV IE at the start of the given binary data.
 	Args:
 		binary : binary input data of BER-TLV length field
@@ -311,7 +311,7 @@ def bertlv_encode_len(length:int) -> bytes:
 	else:
 		raise ValueError("Length > 32bits not supported")
 
-def bertlv_parse_one(binary:bytes) -> (dict, int, bytes, bytes):
+def bertlv_parse_one(binary:bytes) -> Tuple[dict, int, bytes, bytes]:
 	"""Parse a single TLV IE at the start of the given binary data.
 	Args:
 		binary : binary input data of BER-TLV length field
