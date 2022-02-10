@@ -1253,7 +1253,7 @@ class DataObject(abc.ABC):
     has the habit of specifying TLV data but with very spcific ordering, or specific choices of
     tags at specific points in a stream.  This class tries to represent this."""
 
-    def __init__(self, name: str, desc: str = None, tag: int = None):
+    def __init__(self, name: str, desc: Optional[str] = None, tag: Optional[int] = None):
         """
         Args:
             name: A brief, all-lowercase, underscore separated string identifier
@@ -1376,7 +1376,7 @@ class DataObjectCollection:
     A given encoded DO may contain any of them in any order, and may contain multiple instances
     of each DO."""
 
-    def __init__(self, name: str, desc: str = None, members=None):
+    def __init__(self, name: str, desc: Optional[str] = None, members=None):
         self.name = name
         self.desc = desc
         self.members = members or []
@@ -1491,7 +1491,7 @@ class DataObjectSequence:
        By wrapping them into this formal DataObjectSequence, we can offer convenience methods
        for encoding or decoding an entire sequence."""
 
-    def __init__(self, name: str, desc: str = None, sequence=None):
+    def __init__(self, name: str, desc: Optional[str] = None, sequence=None):
         self.sequence = sequence or []
         self.name = name
         self.desc = desc
