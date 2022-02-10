@@ -32,6 +32,7 @@ from pySim.exceptions import *
 import inspect
 import abc
 
+
 class TlvMeta(abc.ABCMeta):
     """Metaclass which we use to set some class variables at the time of defining a subclass.
     This allows us to create subclasses for each TLV/IE type, where the class represents fixed
@@ -54,6 +55,7 @@ class TlvMeta(abc.ABCMeta):
             x.nested_collection_cls = cls
         return x
 
+
 class TlvCollectionMeta(abc.ABCMeta):
     """Metaclass which we use to set some class variables at the time of defining a subclass.
     This allows us to create subclasses for each Collection type, where the class represents fixed
@@ -72,6 +74,7 @@ class Transcodable(abc.ABC):
      * via a 'construct' object stored in a derived class' _construct variable, or
      * via a 'construct' object stored in an instance _construct variable, or
      * via a derived class' _{to,from}_bytes() methods."""
+
     def __init__(self):
         self.encoded = None
         self.decoded = None
@@ -95,7 +98,7 @@ class Transcodable(abc.ABC):
     def _to_bytes(self):
         raise NotImplementedError
 
-    def from_bytes(self, do:bytes):
+    def from_bytes(self, do: bytes):
         """Convert from binary bytes to internal representation. Store the decoded result
         in the internal state and return it."""
         self.encoded = do
@@ -110,8 +113,9 @@ class Transcodable(abc.ABC):
         return self.decoded
 
     # not an abstractmethod, as it is only required if no _construct exists
-    def _from_bytes(self, do:bytes):
+    def _from_bytes(self, do: bytes):
         raise NotImplementedError
+
 
 class IE(Transcodable, metaclass=TlvMeta):
     # we specify the metaclass so any downstream subclasses will automatically use it
@@ -146,7 +150,7 @@ class IE(Transcodable, metaclass=TlvMeta):
             v = self.decoded
         return {type(self).__name__: v}
 
-    def from_dict(self, decoded:dict):
+    def from_dict(self, decoded: dict):
         """Set the IE internal decoded representation to data from the argument.
         If this is a nested IE, the child IE instance list is re-created."""
         if self.nested_collection:
@@ -177,7 +181,7 @@ class IE(Transcodable, metaclass=TlvMeta):
         else:
             return super().to_bytes()
 
-    def from_bytes(self, do:bytes):
+    def from_bytes(self, do: bytes):
         """Parse _the value part_ from binary bytes to internal representation."""
         if self.nested_collection:
             self.children = self.nested_collection.from_bytes(do)
@@ -188,6 +192,7 @@ class IE(Transcodable, metaclass=TlvMeta):
 
 class TLV_IE(IE):
     """Abstract base class for various TLV type Information Elements."""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -197,12 +202,12 @@ class TLV_IE(IE):
 
     @classmethod
     @abc.abstractmethod
-    def _parse_tag_raw(cls, do:bytes) -> Tuple[int, bytes]:
+    def _parse_tag_raw(cls, do: bytes) -> Tuple[int, bytes]:
         """Obtain the raw TAG at the start of the bytes provided by the user."""
 
     @classmethod
     @abc.abstractmethod
-    def _parse_len(cls, do:bytes) -> Tuple[int, bytes]:
+    def _parse_len(cls, do: bytes) -> Tuple[int, bytes]:
         """Obtain the length encoded at the start of the bytes provided by the user."""
 
     @abc.abstractmethod
@@ -210,7 +215,7 @@ class TLV_IE(IE):
         """Encode the tag part. Must be provided by derived (TLV format specific) class."""
 
     @abc.abstractmethod
-    def _encode_len(self, val:bytes) -> bytes:
+    def _encode_len(self, val: bytes) -> bytes:
         """Encode the length part assuming a certain binary value. Must be provided by
         derived (TLV format specific) class."""
 
@@ -222,7 +227,7 @@ class TLV_IE(IE):
         val = self.to_bytes()
         return self._encode_tag() + self._encode_len(val) + val
 
-    def from_tlv(self, do:bytes):
+    def from_tlv(self, do: bytes):
         (rawtag, remainder) = self.__class__._parse_tag_raw(do)
         if rawtag:
             if rawtag != self.tag:
@@ -240,50 +245,52 @@ class TLV_IE(IE):
 
 class BER_TLV_IE(TLV_IE):
     """TLV_IE formatted as ASN.1 BER described in ITU-T X.690 8.1.2."""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     @classmethod
-    def _decode_tag(cls, do:bytes) -> Tuple[dict, bytes]:
+    def _decode_tag(cls, do: bytes) -> Tuple[dict, bytes]:
         return bertlv_parse_tag(do)
 
     @classmethod
-    def _parse_tag_raw(cls, do:bytes) -> Tuple[int, bytes]:
+    def _parse_tag_raw(cls, do: bytes) -> Tuple[int, bytes]:
         return bertlv_parse_tag_raw(do)
 
     @classmethod
-    def _parse_len(cls, do:bytes) -> Tuple[int, bytes]:
+    def _parse_len(cls, do: bytes) -> Tuple[int, bytes]:
         return bertlv_parse_len(do)
 
     def _encode_tag(self) -> bytes:
         return bertlv_encode_tag(self._compute_tag())
 
-    def _encode_len(self, val:bytes) -> bytes:
+    def _encode_len(self, val: bytes) -> bytes:
         return bertlv_encode_len(len(val))
 
 
 class COMPR_TLV_IE(TLV_IE):
     """TLV_IE formated as COMPREHENSION-TLV as described in ETSI TS 101 220."""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.comprehension = False
 
     @classmethod
-    def _decode_tag(cls, do:bytes) -> Tuple[dict, bytes]:
+    def _decode_tag(cls, do: bytes) -> Tuple[dict, bytes]:
         return comprehensiontlv_parse_tag(do)
 
     @classmethod
-    def _parse_tag_raw(cls, do:bytes) -> Tuple[int, bytes]:
+    def _parse_tag_raw(cls, do: bytes) -> Tuple[int, bytes]:
         return comprehensiontlv_parse_tag_raw(do)
 
     @classmethod
-    def _parse_len(cls, do:bytes) -> Tuple[int, bytes]:
+    def _parse_len(cls, do: bytes) -> Tuple[int, bytes]:
         return bertlv_parse_len(do)
 
     def _encode_tag(self) -> bytes:
         return comprehensiontlv_encode_tag(self._compute_tag())
 
-    def _encode_len(self, val:bytes) -> bytes:
+    def _encode_len(self, val: bytes) -> bytes:
         return bertlv_encode_len(len(val))
 
 
@@ -294,14 +301,15 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
     of each DO."""
     # this is overridden by the TlvCollectionMeta metaclass, if it is used to create subclasses
     possible_nested = []
+
     def __init__(self, desc=None, **kwargs):
         self.desc = desc
         #print("possible_nested: ", self.possible_nested)
         self.members = kwargs.get('nested', self.possible_nested)
         self.members_by_tag = {}
         self.members_by_name = {}
-        self.members_by_tag = { m.tag:m for m in self.members }
-        self.members_by_name = { m.__name__:m for m in self.members }
+        self.members_by_tag = {m.tag: m for m in self.members}
+        self.members_by_name = {m.__name__: m for m in self.members}
         # if we are a constructed IE, [ordered] list of actual child-IE instances
         self.children = kwargs.get('children', [])
         self.encoded = None
@@ -322,11 +330,11 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
             return TLV_IE_Collection(self.desc, nested=members)
         elif inspect.isclass(other) and issubclass(other, TLV_IE):
             # adding a member to a collection
-            return TLV_IE_Collection(self.desc, nested = self.members + [other])
+            return TLV_IE_Collection(self.desc, nested=self.members + [other])
         else:
             raise TypeError
 
-    def from_bytes(self, binary:bytes) -> List[TLV_IE]:
+    def from_bytes(self, binary: bytes) -> List[TLV_IE]:
         """Create a list of TLV_IEs from the collection based on binary input data.
         Args:
             binary : binary bytes of encoded data
@@ -353,9 +361,9 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
             else:
                 # unknown tag; create the related class on-the-fly using the same base class
                 name = 'unknown_%s_%X' % (first.__base__.__name__, tag)
-                cls = type(name, (first.__base__,), {'tag':tag, 'possible_nested':[],
-                    'nested_collection_cls':None})
-                cls._from_bytes = lambda s, a : {'raw': a.hex()}
+                cls = type(name, (first.__base__,), {'tag': tag, 'possible_nested': [],
+                                                     'nested_collection_cls': None})
+                cls._from_bytes = lambda s, a: {'raw': a.hex()}
                 cls._to_bytes = lambda s: bytes.fromhex(s.decoded['raw'])
                 # create an instance and parse accordingly
                 inst = cls()
@@ -364,7 +372,7 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
         self.children = res
         return res
 
-    def from_dict(self, decoded:List[dict]) -> List[TLV_IE]:
+    def from_dict(self, decoded: List[dict]) -> List[TLV_IE]:
         """Create a list of TLV_IE instances from the collection based on an array
         of dicts, where they key indicates the name of the TLV_IE subclass to use."""
         # list of instances of TLV_IE collection member classes appearing in the data

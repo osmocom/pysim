@@ -27,138 +27,142 @@ from pySim.exceptions import *
 # HACK: if somebody needs to debug this thing
 # log.root.setLevel(log.DEBUG)
 
+
 class ModemATCommandLink(LinkBase):
-	"""Transport Link for 3GPP TS 27.007 compliant modems."""
-	def __init__(self, device:str='/dev/ttyUSB0', baudrate:int=115200, **kwargs):
-		super().__init__(**kwargs)
-		self._sl = serial.Serial(device, baudrate, timeout=5)
-		self._echo = False		# this will be auto-detected by _check_echo()
-		self._device = device
-		self._atr = None
+    """Transport Link for 3GPP TS 27.007 compliant modems."""
 
-		# Check the AT interface
-		self._check_echo()
+    def __init__(self, device: str = '/dev/ttyUSB0', baudrate: int = 115200, **kwargs):
+        super().__init__(**kwargs)
+        self._sl = serial.Serial(device, baudrate, timeout=5)
+        self._echo = False		# this will be auto-detected by _check_echo()
+        self._device = device
+        self._atr = None
 
-		# Trigger initial reset
-		self.reset_card()
+        # Check the AT interface
+        self._check_echo()
 
-	def __del__(self):
-		if hasattr(self, '_sl'):
-			self._sl.close()
+        # Trigger initial reset
+        self.reset_card()
 
-	def send_at_cmd(self, cmd, timeout=0.2, patience=0.002):
-		# Convert from string to bytes, if needed
-		bcmd = cmd if type(cmd) is bytes else cmd.encode()
-		bcmd += b'\r'
+    def __del__(self):
+        if hasattr(self, '_sl'):
+            self._sl.close()
 
-		# Clean input buffer from previous/unexpected data
-		self._sl.reset_input_buffer()
+    def send_at_cmd(self, cmd, timeout=0.2, patience=0.002):
+        # Convert from string to bytes, if needed
+        bcmd = cmd if type(cmd) is bytes else cmd.encode()
+        bcmd += b'\r'
 
-		# Send command to the modem
-		log.debug('Sending AT command: %s', cmd)
-		try:
-			wlen = self._sl.write(bcmd)
-			assert(wlen == len(bcmd))
-		except:
-			raise ReaderError('Failed to send AT command: %s' % cmd)
+        # Clean input buffer from previous/unexpected data
+        self._sl.reset_input_buffer()
 
-		rsp = b''
-		its = 1
-		t_start = time.time()
-		while True:
-			rsp = rsp + self._sl.read(self._sl.in_waiting)
-			lines = rsp.split(b'\r\n')
-			if len(lines) >= 2:
-				res = lines[-2]
-				if res == b'OK':
-					log.debug('Command finished with result: %s', res)
-					break
-				if res == b'ERROR' or res.startswith(b'+CME ERROR:'):
-					log.error('Command failed with result: %s', res)
-					break
+        # Send command to the modem
+        log.debug('Sending AT command: %s', cmd)
+        try:
+            wlen = self._sl.write(bcmd)
+            assert(wlen == len(bcmd))
+        except:
+            raise ReaderError('Failed to send AT command: %s' % cmd)
 
-			if time.time() - t_start >= timeout:
-				log.info('Command finished with timeout >= %ss', timeout)
-				break
-			time.sleep(patience)
-			its += 1
-		log.debug('Command took %0.6fs (%d cycles a %fs)', time.time() - t_start, its, patience)
+        rsp = b''
+        its = 1
+        t_start = time.time()
+        while True:
+            rsp = rsp + self._sl.read(self._sl.in_waiting)
+            lines = rsp.split(b'\r\n')
+            if len(lines) >= 2:
+                res = lines[-2]
+                if res == b'OK':
+                    log.debug('Command finished with result: %s', res)
+                    break
+                if res == b'ERROR' or res.startswith(b'+CME ERROR:'):
+                    log.error('Command failed with result: %s', res)
+                    break
 
-		if self._echo:
-			# Skip echo chars
-			rsp = rsp[wlen:]
-		rsp = rsp.strip()
-		rsp = rsp.split(b'\r\n\r\n')
+            if time.time() - t_start >= timeout:
+                log.info('Command finished with timeout >= %ss', timeout)
+                break
+            time.sleep(patience)
+            its += 1
+        log.debug('Command took %0.6fs (%d cycles a %fs)',
+                  time.time() - t_start, its, patience)
 
-		log.debug('Got response from modem: %s', rsp)
-		return rsp
+        if self._echo:
+            # Skip echo chars
+            rsp = rsp[wlen:]
+        rsp = rsp.strip()
+        rsp = rsp.split(b'\r\n\r\n')
 
-	def _check_echo(self):
-		"""Verify the correct response to 'AT' command
-		and detect if inputs are echoed by the device
+        log.debug('Got response from modem: %s', rsp)
+        return rsp
 
-		Although echo of inputs can be enabled/disabled via
-		ATE1/ATE0, respectively, we rather detect the current
-		configuration of the modem without any change.
-		"""
-		# Next command shall not strip the echo from the response
-		self._echo = False
-		result = self.send_at_cmd('AT')
+    def _check_echo(self):
+        """Verify the correct response to 'AT' command
+        and detect if inputs are echoed by the device
 
-		# Verify the response
-		if len(result) > 0:
-			if result[-1] == b'OK':
-				self._echo = False
-				return
-			elif result[-1] == b'AT\r\r\nOK':
-				self._echo = True
-				return
-		raise ReaderError('Interface \'%s\' does not respond to \'AT\' command' % self._device)
+        Although echo of inputs can be enabled/disabled via
+        ATE1/ATE0, respectively, we rather detect the current
+        configuration of the modem without any change.
+        """
+        # Next command shall not strip the echo from the response
+        self._echo = False
+        result = self.send_at_cmd('AT')
 
-	def reset_card(self):
-		# Reset the modem, just to be sure
-		if self.send_at_cmd('ATZ') != [b'OK']:
-			raise ReaderError('Failed to reset the modem')
+        # Verify the response
+        if len(result) > 0:
+            if result[-1] == b'OK':
+                self._echo = False
+                return
+            elif result[-1] == b'AT\r\r\nOK':
+                self._echo = True
+                return
+        raise ReaderError(
+            'Interface \'%s\' does not respond to \'AT\' command' % self._device)
 
-		# Make sure that generic SIM access is supported
-		if self.send_at_cmd('AT+CSIM=?') != [b'OK']:
-			raise ReaderError('The modem does not seem to support SIM access')
+    def reset_card(self):
+        # Reset the modem, just to be sure
+        if self.send_at_cmd('ATZ') != [b'OK']:
+            raise ReaderError('Failed to reset the modem')
 
-		log.info('Modem at \'%s\' is ready!' % self._device)
+        # Make sure that generic SIM access is supported
+        if self.send_at_cmd('AT+CSIM=?') != [b'OK']:
+            raise ReaderError('The modem does not seem to support SIM access')
 
-	def connect(self):
-		pass # Nothing to do really ...
+        log.info('Modem at \'%s\' is ready!' % self._device)
 
-	def disconnect(self):
-		pass # Nothing to do really ...
+    def connect(self):
+        pass  # Nothing to do really ...
 
-	def wait_for_card(self, timeout=None, newcardonly=False):
-		pass # Nothing to do really ...
+    def disconnect(self):
+        pass  # Nothing to do really ...
 
-	def _send_apdu_raw(self, pdu):
-		# Make sure pdu has upper case hex digits [A-F]
-		pdu = pdu.upper()
+    def wait_for_card(self, timeout=None, newcardonly=False):
+        pass  # Nothing to do really ...
 
-		# Prepare the command as described in 8.17
-		cmd = 'AT+CSIM=%d,\"%s\"' % (len(pdu), pdu)
-		log.debug('Sending command: %s',  cmd)
+    def _send_apdu_raw(self, pdu):
+        # Make sure pdu has upper case hex digits [A-F]
+        pdu = pdu.upper()
 
-		# Send AT+CSIM command to the modem
-		# TODO: also handle +CME ERROR: <err>
-		rsp = self.send_at_cmd(cmd)
-		if len(rsp) != 2 or rsp[-1] != b'OK':
-			raise ReaderError('APDU transfer failed: %s' % str(rsp))
-		rsp = rsp[0] # Get rid of b'OK'
+        # Prepare the command as described in 8.17
+        cmd = 'AT+CSIM=%d,\"%s\"' % (len(pdu), pdu)
+        log.debug('Sending command: %s',  cmd)
 
-		# Make sure that the response has format: b'+CSIM: %d,\"%s\"'
-		try:
-			result = re.match(b'\+CSIM: (\d+),\"([0-9A-F]+)\"', rsp)
-			(rsp_pdu_len, rsp_pdu) = result.groups()
-		except:
-			raise ReaderError('Failed to parse response from modem: %s' % rsp)
+        # Send AT+CSIM command to the modem
+        # TODO: also handle +CME ERROR: <err>
+        rsp = self.send_at_cmd(cmd)
+        if len(rsp) != 2 or rsp[-1] != b'OK':
+            raise ReaderError('APDU transfer failed: %s' % str(rsp))
+        rsp = rsp[0]  # Get rid of b'OK'
 
-		# TODO: make sure we have at least SW
-		data = rsp_pdu[:-4].decode().lower()
-		sw   = rsp_pdu[-4:].decode().lower()
-		log.debug('Command response: %s, %s',  data, sw)
-		return data, sw
+        # Make sure that the response has format: b'+CSIM: %d,\"%s\"'
+        try:
+            result = re.match(b'\+CSIM: (\d+),\"([0-9A-F]+)\"', rsp)
+            (rsp_pdu_len, rsp_pdu) = result.groups()
+        except:
+            raise ReaderError('Failed to parse response from modem: %s' % rsp)
+
+        # TODO: make sure we have at least SW
+        data = rsp_pdu[:-4].decode().lower()
+        sw = rsp_pdu[-4:].decode().lower()
+        log.debug('Command response: %s, %s',  data, sw)
+        return data, sw

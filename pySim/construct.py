@@ -1,3 +1,5 @@
+from construct.lib.containers import Container, ListContainer
+from construct.core import EnumIntegerString
 import typing
 from construct import *
 from pySim.utils import b2h, h2b, swap_nibbles
@@ -23,17 +25,23 @@ import gsm0338
 
 class HexAdapter(Adapter):
     """convert a bytes() type to a string of hex nibbles."""
+
     def _decode(self, obj, context, path):
         return b2h(obj)
+
     def _encode(self, obj, context, path):
         return h2b(obj)
 
+
 class BcdAdapter(Adapter):
     """convert a bytes() type to a string of BCD nibbles."""
+
     def _decode(self, obj, context, path):
         return swap_nibbles(b2h(obj))
+
     def _encode(self, obj, context, path):
         return h2b(swap_nibbles(obj))
+
 
 class Rpad(Adapter):
     """
@@ -54,8 +62,10 @@ class Rpad(Adapter):
 
     def _encode(self, obj, context, path):
         if len(obj) > self.sizeof():
-            raise SizeofError("Input ({}) exceeds target size ({})".format(len(obj), self.sizeof()))
+            raise SizeofError("Input ({}) exceeds target size ({})".format(
+                len(obj), self.sizeof()))
         return obj + self.pattern * (self.sizeof() - len(obj))
+
 
 class GsmStringAdapter(Adapter):
     """Convert GSM 03.38 encoded bytes to a string."""
@@ -71,6 +81,7 @@ class GsmStringAdapter(Adapter):
     def _encode(self, obj, context, path):
         return obj.encode(self.codec, self.err)
 
+
 def filter_dict(d, exclude_prefix='_'):
     """filter the input dict to ensure no keys starting with 'exclude_prefix' remain."""
     if not isinstance(d, dict):
@@ -85,8 +96,6 @@ def filter_dict(d, exclude_prefix='_'):
             res[key] = value
     return res
 
-from construct.lib.containers import Container, ListContainer
-from construct.core import EnumIntegerString
 
 def normalize_construct(c):
     """Convert a construct specific type to a related base type, mostly useful
@@ -95,7 +104,7 @@ def normalize_construct(c):
     # in the dict: '_io': <_io.BytesIO object at 0x7fdb64e05860> which we cannot json-serialize
     c = filter_dict(c)
     if isinstance(c, Container) or isinstance(c, dict):
-        r = {k : normalize_construct(v) for (k, v) in c.items()}
+        r = {k: normalize_construct(v) for (k, v) in c.items()}
     elif isinstance(c, ListContainer):
         r = [normalize_construct(x) for x in c]
     elif isinstance(c, list):
@@ -106,12 +115,14 @@ def normalize_construct(c):
         r = c
     return r
 
-def parse_construct(c, raw_bin_data:bytes, length:typing.Optional[int]=None, exclude_prefix:str='_'):
+
+def parse_construct(c, raw_bin_data: bytes, length: typing.Optional[int] = None, exclude_prefix: str = '_'):
     """Helper function to wrap around normalize_construct() and filter_dict()."""
     if not length:
         length = len(raw_bin_data)
     parsed = c.parse(raw_bin_data, total_len=length)
     return normalize_construct(parsed)
+
 
 # here we collect some shared / common definitions of data types
 LV = Prefixed(Int8ub, HexAdapter(GreedyBytes))
@@ -129,6 +140,7 @@ ByteRFU = Default(Byte, __RFU_VALUE)
 # Field that packs all remaining Reserved for Future Use (RFU) bytes
 GreedyBytesRFU = Default(GreedyBytes, b'')
 
+
 def BitsRFU(n=1):
     '''
     Field that packs Reserved for Future Use (RFU) bit(s)
@@ -143,6 +155,7 @@ def BitsRFU(n=1):
     '''
     return Default(BitsInteger(n), __RFU_VALUE)
 
+
 def BytesRFU(n=1):
     '''
     Field that packs Reserved for Future Use (RFU) byte(s)
@@ -156,6 +169,7 @@ def BytesRFU(n=1):
         n (Integer): Number of bytes (default: 1)
     '''
     return Default(Bytes(n), __RFU_VALUE)
+
 
 def GsmString(n):
     '''

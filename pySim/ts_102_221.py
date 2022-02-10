@@ -76,7 +76,7 @@ ts_102_22x_cmdset = CardCommandSet('TS 102 22x', [
     CardCommand('TERMINATE EF',             0xE8, ['0X', '4X']),
     CardCommand('TERMINATE CARD USAGE',     0xFE, ['0X', '4X']),
     CardCommand('RESIZE FILE',              0xD4, ['8X', 'CX']),
-    ])
+])
 
 
 FCP_TLV_MAP = {
@@ -92,7 +92,7 @@ FCP_TLV_MAP = {
     '80': 'file_size',
     '81': 'total_file_size',
     '88': 'short_file_id',
-    }
+}
 
 # ETSI TS 102 221 11.1.1.4.6
 FCP_Proprietary_TLV_MAP = {
@@ -107,9 +107,11 @@ FCP_Proprietary_TLV_MAP = {
     '88': 'specific_uicc_env_cond',
     '89': 'p2p_cat_secured_apdu',
     # Additional private TLV objects (bits b7 and b8 of the first byte of the tag set to '1')
-    }
+}
 
 # ETSI TS 102 221 11.1.1.4.3
+
+
 def interpret_file_descriptor(in_hex):
     in_bin = h2b(in_hex)
     out = {}
@@ -123,7 +125,7 @@ def interpret_file_descriptor(in_hex):
         1: 'transparent',
         2: 'linear_fixed',
         6: 'cyclic',
-     0x39: 'ber_tlv',
+        0x39: 'ber_tlv',
     }
     fdb = in_bin[0]
     ftype = (fdb >> 3) & 7
@@ -140,6 +142,8 @@ def interpret_file_descriptor(in_hex):
     return out
 
 # ETSI TS 102 221 11.1.1.4.9
+
+
 def interpret_life_cycle_sts_int(in_hex):
     lcsi = int(in_hex, 16)
     if lcsi == 0x00:
@@ -157,18 +161,21 @@ def interpret_life_cycle_sts_int(in_hex):
     else:
         return in_hex
 
+
 # ETSI TS 102 221 11.1.1.4.10
 FCP_Pin_Status_TLV_MAP = {
     '90': 'ps_do',
     '95': 'usage_qualifier',
     '83': 'key_reference',
-    }
+}
+
 
 def interpret_ps_templ_do(in_hex):
     # cannot use the 'TLV' parser due to repeating tags
     #psdo_tlv = TLV(FCP_Pin_Status_TLV_MAP)
-    #return psdo_tlv.parse(in_hex)
+    # return psdo_tlv.parse(in_hex)
     return in_hex
+
 
 # 'interpreter' functions for each tag
 FCP_interpreter_map = {
@@ -176,16 +183,18 @@ FCP_interpreter_map = {
     '82': interpret_file_descriptor,
     '8A': interpret_life_cycle_sts_int,
     'C6': interpret_ps_templ_do,
-    }
+}
 
 FCP_prorietary_interpreter_map = {
     '83': lambda x: int(x, 16),
-    }
+}
 
 # pytlv unfortunately doesn't have a setting using which we can make it
 # accept unknown tags.  It also doesn't raise a specific exception type but
 # just the generic ValueError, so we cannot ignore those either.  Instead,
 # we insert a dict entry for every possible proprietary tag permitted
+
+
 def fixup_fcp_proprietary_tlv_map(tlv_map):
     if 'D0' in tlv_map:
         return
@@ -193,7 +202,7 @@ def fixup_fcp_proprietary_tlv_map(tlv_map):
         i_hex = i2h([i]).upper()
         tlv_map[i_hex] = 'proprietary_' + i_hex
     # Other non-standard TLV objects found on some cards
-    tlv_map['9B'] = 'target_ef' # for sysmoUSIM-SJS1
+    tlv_map['9B'] = 'target_ef'  # for sysmoUSIM-SJS1
 
 
 def tlv_key_replace(inmap, indata):
@@ -203,6 +212,7 @@ def tlv_key_replace(inmap, indata):
         else:
             return key
     return {newkey(inmap, d[0]): d[1] for d in indata.items()}
+
 
 def tlv_val_interpret(inmap, indata):
     def newval(inmap, key, val):
@@ -214,11 +224,12 @@ def tlv_val_interpret(inmap, indata):
 
 # ETSI TS 102 221 Section 9.2.7 + ISO7816-4 9.3.3/9.3.4
 
+
 class _AM_DO_DF(DataObject):
     def __init__(self):
         super().__init__('access_mode', 'Access Mode', tag=0x80)
 
-    def from_bytes(self, do:bytes):
+    def from_bytes(self, do: bytes):
         res = []
         if len(do) != 1:
             raise ValueError("We only support single-byte AMF inside AM-DO")
@@ -262,10 +273,11 @@ class _AM_DO_DF(DataObject):
 
 class _AM_DO_EF(DataObject):
     """ISO7816-4 9.3.2 Table 18 + 9.3.3.1 Table 31"""
+
     def __init__(self):
         super().__init__('access_mode', 'Access Mode', tag=0x80)
 
-    def from_bytes(self, do:bytes):
+    def from_bytes(self, do: bytes):
         res = []
         if len(do) != 1:
             raise ValueError("We only support single-byte AMF inside AM-DO")
@@ -306,12 +318,14 @@ class _AM_DO_EF(DataObject):
             val |= 0x01
         return val.to_bytes(1, 'big')
 
+
 class _AM_DO_CHDR(DataObject):
     """Command Header Access Mode DO according to ISO 7816-4 Table 32."""
+
     def __init__(self, tag):
         super().__init__('command_header', 'Command Header Description', tag=tag)
 
-    def from_bytes(self, do:bytes):
+    def from_bytes(self, do: bytes):
         res = {}
         i = 0
         if self.tag & 0x08:
@@ -353,11 +367,12 @@ class _AM_DO_CHDR(DataObject):
             res.append(self.decoded['P2'])
         return res
 
+
 AM_DO_CHDR = DataObjectChoice('am_do_chdr', members=[
-              _AM_DO_CHDR(0x81), _AM_DO_CHDR(0x82), _AM_DO_CHDR(0x83), _AM_DO_CHDR(0x84),
-              _AM_DO_CHDR(0x85), _AM_DO_CHDR(0x86), _AM_DO_CHDR(0x87), _AM_DO_CHDR(0x88),
-              _AM_DO_CHDR(0x89), _AM_DO_CHDR(0x8a), _AM_DO_CHDR(0x8b), _AM_DO_CHDR(0x8c),
-              _AM_DO_CHDR(0x8d), _AM_DO_CHDR(0x8e), _AM_DO_CHDR(0x8f)])
+    _AM_DO_CHDR(0x81), _AM_DO_CHDR(0x82), _AM_DO_CHDR(0x83), _AM_DO_CHDR(0x84),
+    _AM_DO_CHDR(0x85), _AM_DO_CHDR(0x86), _AM_DO_CHDR(0x87), _AM_DO_CHDR(0x88),
+    _AM_DO_CHDR(0x89), _AM_DO_CHDR(0x8a), _AM_DO_CHDR(0x8b), _AM_DO_CHDR(0x8c),
+    _AM_DO_CHDR(0x8d), _AM_DO_CHDR(0x8e), _AM_DO_CHDR(0x8f)])
 
 AM_DO_DF = AM_DO_CHDR | _AM_DO_DF()
 AM_DO_EF = AM_DO_CHDR | _AM_DO_EF()
@@ -393,12 +408,15 @@ pin_names = bidict({
     0x8c: 'ADM8',
     0x8d: 'ADM9',
     0x8e: 'ADM10',
-    })
+})
+
 
 class CRT_DO(DataObject):
     """Control Reference Template as per TS 102 221 9.5.1"""
+
     def __init__(self):
-        super().__init__('control_reference_template', 'Control Reference Template', tag=0xA4)
+        super().__init__('control_reference_template',
+                         'Control Reference Template', tag=0xA4)
 
     def from_bytes(self, do: bytes):
         """Decode a Control Reference Template DO."""
@@ -407,7 +425,8 @@ class CRT_DO(DataObject):
         if do[0] != 0x83 or do[1] != 0x01:
             raise ValueError('Unsupported Key Ref Tag or Len in CRT DO %s', do)
         if do[3:] != b'\x95\x01\x08':
-            raise ValueError('Unsupported Usage Qualifier Tag or Len in CRT DO %s', do)
+            raise ValueError(
+                'Unsupported Usage Qualifier Tag or Len in CRT DO %s', do)
         self.encoded = do[0:6]
         self.decoded = pin_names[do[2]]
         return do[6:]
@@ -417,11 +436,13 @@ class CRT_DO(DataObject):
         return b'\x83\x01' + pin.to_bytes(1, 'big') + b'\x95\x01\x08'
 
 # ISO7816-4 9.3.3 Table 33
+
+
 class SecCondByte_DO(DataObject):
     def __init__(self, tag=0x9d):
         super().__init__('security_condition_byte', tag=tag)
 
-    def from_bytes(self, binary:bytes):
+    def from_bytes(self, binary: bytes):
         if len(binary) != 1:
             raise ValueError
         inb = binary[0]
@@ -440,7 +461,7 @@ class SecCondByte_DO(DataObject):
             res.append('external_auth')
         if inb & 0x10:
             res.append('user_auth')
-        rd = {'mode': cond }
+        rd = {'mode': cond}
         if len(res):
             rd['conditions'] = res
         self.decoded = rd
@@ -470,39 +491,47 @@ class SecCondByte_DO(DataObject):
                     raise ValueError('Unknown condition %s' % c)
         return res.to_bytes(1, 'big')
 
+
 Always_DO = TL0_DataObject('always', 'Always', 0x90)
 Never_DO = TL0_DataObject('never', 'Never', 0x97)
 
+
 class Nested_DO(DataObject):
     """A DO that nests another DO/Choice/Sequence"""
+
     def __init__(self, name, tag, choice):
         super().__init__(name, tag=tag)
         self.children = choice
-    def from_bytes(self, binary:bytes) -> list:
+
+    def from_bytes(self, binary: bytes) -> list:
         remainder = binary
         self.decoded = []
         while remainder:
             rc, remainder = self.children.decode(remainder)
             self.decoded.append(rc)
         return self.decoded
+
     def to_bytes(self) -> bytes:
         encoded = [self.children.encode(d) for d in self.decoded]
         return b''.join(encoded)
+
 
 OR_Template = DataObjectChoice('or_template', 'OR-Template',
                                members=[Always_DO, Never_DO, SecCondByte_DO(), SecCondByte_DO(0x9e), CRT_DO()])
 OR_DO = Nested_DO('or', 0xa0, OR_Template)
 AND_Template = DataObjectChoice('and_template', 'AND-Template',
-                               members=[Always_DO, Never_DO, SecCondByte_DO(), SecCondByte_DO(0x9e), CRT_DO()])
+                                members=[Always_DO, Never_DO, SecCondByte_DO(), SecCondByte_DO(0x9e), CRT_DO()])
 AND_DO = Nested_DO('and', 0xa7, AND_Template)
 NOT_Template = DataObjectChoice('not_template', 'NOT-Template',
-                               members=[Always_DO, Never_DO, SecCondByte_DO(), SecCondByte_DO(0x9e), CRT_DO()])
+                                members=[Always_DO, Never_DO, SecCondByte_DO(), SecCondByte_DO(0x9e), CRT_DO()])
 NOT_DO = Nested_DO('not', 0xaf, NOT_Template)
 SC_DO = DataObjectChoice('security_condition', 'Security Condition',
                          members=[Always_DO, Never_DO, SecCondByte_DO(), SecCondByte_DO(0x9e), CRT_DO(),
                                   OR_DO, AND_DO, NOT_DO])
 
 # TS 102 221 Section 13.1
+
+
 class EF_DIR(LinFixedEF):
     class ApplicationLabel(BER_TLV_IE, tag=0x50):
         # TODO: UCS-2 coding option as per Annex A of TS 102 221
@@ -518,13 +547,15 @@ class EF_DIR(LinFixedEF):
         pass
 
     def __init__(self, fid='2f00', sfid=0x1e, name='EF.DIR', desc='Application Directory'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len={5,54})
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len={5, 54})
         self._tlv = EF_DIR.ApplicationTemplate
 
 # TS 102 221 Section 13.2
+
+
 class EF_ICCID(TransparentEF):
     def __init__(self, fid='2fe2', sfid=0x02, name='EF.ICCID', desc='ICC Identification'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size={10,10})
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size={10, 10})
 
     def _decode_hex(self, raw_hex):
         return {'iccid': dec_iccid(raw_hex)}
@@ -533,14 +564,19 @@ class EF_ICCID(TransparentEF):
         return enc_iccid(abstract['iccid'])
 
 # TS 102 221 Section 13.3
+
+
 class EF_PL(TransRecEF):
     def __init__(self, fid='2f05', sfid=0x05, name='EF.PL', desc='Preferred Languages'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=2, size={2,None})
+        super().__init__(fid, sfid=sfid, name=name,
+                         desc=desc, rec_len=2, size={2, None})
+
     def _decode_record_bin(self, bin_data):
         if bin_data == b'\xff\xff':
             return None
         else:
             return bin_data.decode('ascii')
+
     def _encode_record_bin(self, in_json):
         if in_json is None:
             return b'\xff\xff'
@@ -556,7 +592,7 @@ class EF_ARR(LinFixedEF):
         self.shell_commands += [self.AddlShellCommands()]
 
     @staticmethod
-    def flatten(inp:list):
+    def flatten(inp: list):
         """Flatten the somewhat deep/complex/nested data returned from decoder."""
         def sc_abbreviate(sc):
             if 'always' in sc:
@@ -584,7 +620,7 @@ class EF_ARR(LinFixedEF):
                     cla = None
                 cmd = ts_102_22x_cmdset.lookup(ins, cla)
                 if cmd:
-                    name = cmd.name.lower().replace(' ','_')
+                    name = cmd.name.lower().replace(' ', '_')
                     by_mode[name] = sc_abbr
                 else:
                     raise ValueError
@@ -594,7 +630,7 @@ class EF_ARR(LinFixedEF):
 
     def _decode_record_bin(self, raw_bin_data):
         # we can only guess if we should decode for EF or DF here :(
-        arr_seq = DataObjectSequence('arr', sequence = [AM_DO_EF, SC_DO])
+        arr_seq = DataObjectSequence('arr', sequence=[AM_DO_EF, SC_DO])
         dec = arr_seq.decode_multi(raw_bin_data)
         # we cannot pass the result through flatten() here, as we don't have a related
         # 'un-flattening' decoder, and hence would be unable to encode :(
@@ -628,15 +664,18 @@ class EF_ARR(LinFixedEF):
 # TS 102 221 Section 13.6
 class EF_UMPC(TransparentEF):
     def __init__(self, fid='2f08', sfid=0x08, name='EF.UMPC', desc='UICC Maximum Power Consumption'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size={5,5})
-        addl_info = FlagsEnum(Byte, req_inc_idle_current=1, support_uicc_suspend=2)
-        self._construct = Struct('max_current_mA'/Int8ub, 't_op_s'/Int8ub, 'addl_info'/addl_info)
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size={5, 5})
+        addl_info = FlagsEnum(Byte, req_inc_idle_current=1,
+                              support_uicc_suspend=2)
+        self._construct = Struct(
+            'max_current_mA'/Int8ub, 't_op_s'/Int8ub, 'addl_info'/addl_info)
+
 
 class CardProfileUICC(CardProfile):
 
     ORDER = 1
 
-    def __init__(self, name = 'UICC'):
+    def __init__(self, name='UICC'):
         files = [
             EF_DIR(),
             EF_ICCID(),
@@ -646,78 +685,79 @@ class CardProfileUICC(CardProfile):
             EF_UMPC(),
         ]
         sw = {
-          'Normal': {
-            '9000': 'Normal ending of the command',
-            '91xx': 'Normal ending of the command, with extra information from the proactive UICC containing a command for the terminal',
-            '92xx': 'Normal ending of the command, with extra information concerning an ongoing data transfer session',
+            'Normal': {
+                '9000': 'Normal ending of the command',
+                '91xx': 'Normal ending of the command, with extra information from the proactive UICC containing a command for the terminal',
+                '92xx': 'Normal ending of the command, with extra information concerning an ongoing data transfer session',
             },
-          'Postponed processing': {
-            '9300': 'SIM Application Toolkit is busy. Command cannot be executed at present, further normal commands are allowed',
+            'Postponed processing': {
+                '9300': 'SIM Application Toolkit is busy. Command cannot be executed at present, further normal commands are allowed',
             },
-          'Warnings': {
-            '6200': 'No information given, state of non-volatile memory unchanged',
-            '6281': 'Part of returned data may be corrupted',
-            '6282': 'End of file/record reached before reading Le bytes or unsuccessful search',
-            '6283': 'Selected file invalidated',
-            '6284': 'Selected file in termination state',
-            '62f1': 'More data available',
-            '62f2': 'More data available and proactive command pending',
-            '62f3': 'Response data available',
-            '63f1': 'More data expected',
-            '63f2': 'More data expected and proactive command pending',
-            '63cx': 'Command successful but after using an internal update retry routine X times',
+            'Warnings': {
+                '6200': 'No information given, state of non-volatile memory unchanged',
+                '6281': 'Part of returned data may be corrupted',
+                '6282': 'End of file/record reached before reading Le bytes or unsuccessful search',
+                '6283': 'Selected file invalidated',
+                '6284': 'Selected file in termination state',
+                '62f1': 'More data available',
+                '62f2': 'More data available and proactive command pending',
+                '62f3': 'Response data available',
+                '63f1': 'More data expected',
+                '63f2': 'More data expected and proactive command pending',
+                '63cx': 'Command successful but after using an internal update retry routine X times',
             },
-          'Execution errors': {
-            '6400': 'No information given, state of non-volatile memory unchanged',
-            '6500': 'No information given, state of non-volatile memory changed',
-            '6581': 'Memory problem',
+            'Execution errors': {
+                '6400': 'No information given, state of non-volatile memory unchanged',
+                '6500': 'No information given, state of non-volatile memory changed',
+                '6581': 'Memory problem',
             },
-          'Checking errors': {
-            '6700': 'Wrong length',
-            '67xx': 'The interpretation of this status word is command dependent',
-            '6b00': 'Wrong parameter(s) P1-P2',
-            '6d00': 'Instruction code not supported or invalid',
-            '6e00': 'Class not supported',
-            '6f00': 'Technical problem, no precise diagnosis',
-            '6fxx': 'The interpretation of this status word is command dependent',
+            'Checking errors': {
+                '6700': 'Wrong length',
+                '67xx': 'The interpretation of this status word is command dependent',
+                '6b00': 'Wrong parameter(s) P1-P2',
+                '6d00': 'Instruction code not supported or invalid',
+                '6e00': 'Class not supported',
+                '6f00': 'Technical problem, no precise diagnosis',
+                '6fxx': 'The interpretation of this status word is command dependent',
             },
-          'Functions in CLA not supported': {
-            '6800': 'No information given',
-            '6881': 'Logical channel not supported',
-            '6882': 'Secure messaging not supported',
+            'Functions in CLA not supported': {
+                '6800': 'No information given',
+                '6881': 'Logical channel not supported',
+                '6882': 'Secure messaging not supported',
             },
-          'Command not allowed': {
-            '6900': 'No information given',
-            '6981': 'Command incompatible with file structure',
-            '6982': 'Security status not satisfied',
-            '6983': 'Authentication/PIN method blocked',
-            '6984': 'Referenced data invalidated',
-            '6985': 'Conditions of use not satisfied',
-            '6986': 'Command not allowed (no EF selected)',
-            '6989': 'Command not allowed - secure channel - security not satisfied',
+            'Command not allowed': {
+                '6900': 'No information given',
+                '6981': 'Command incompatible with file structure',
+                '6982': 'Security status not satisfied',
+                '6983': 'Authentication/PIN method blocked',
+                '6984': 'Referenced data invalidated',
+                '6985': 'Conditions of use not satisfied',
+                '6986': 'Command not allowed (no EF selected)',
+                '6989': 'Command not allowed - secure channel - security not satisfied',
             },
-          'Wrong parameters': {
-            '6a80': 'Incorrect parameters in the data field',
-            '6a81': 'Function not supported',
-            '6a82': 'File not found',
-            '6a83': 'Record not found',
-            '6a84': 'Not enough memory space',
-            '6a86': 'Incorrect parameters P1 to P2',
-            '6a87': 'Lc inconsistent with P1 to P2',
-            '6a88': 'Referenced data not found',
+            'Wrong parameters': {
+                '6a80': 'Incorrect parameters in the data field',
+                '6a81': 'Function not supported',
+                '6a82': 'File not found',
+                '6a83': 'Record not found',
+                '6a84': 'Not enough memory space',
+                '6a86': 'Incorrect parameters P1 to P2',
+                '6a87': 'Lc inconsistent with P1 to P2',
+                '6a88': 'Referenced data not found',
             },
-          'Application errors': {
-            '9850': 'INCREASE cannot be performed, max value reached',
-            '9862': 'Authentication error, application specific',
-            '9863': 'Security session or association expired',
-            '9864': 'Minimum UICC suspension time is too long',
+            'Application errors': {
+                '9850': 'INCREASE cannot be performed, max value reached',
+                '9862': 'Authentication error, application specific',
+                '9863': 'Security session or association expired',
+                '9864': 'Minimum UICC suspension time is too long',
             },
-          }
+        }
 
-        super().__init__(name, desc='ETSI TS 102 221', cla="00", sel_ctrl="0004", files_in_mf=files, sw=sw)
+        super().__init__(name, desc='ETSI TS 102 221', cla="00",
+                         sel_ctrl="0004", files_in_mf=files, sw=sw)
 
     @staticmethod
-    def decode_select_response(resp_hex:str) -> object:
+    def decode_select_response(resp_hex: str) -> object:
         """ETSI TS 102 221 Section 11.1.1.3"""
         fixup_fcp_proprietary_tlv_map(FCP_Proprietary_TLV_MAP)
         resp_hex = resp_hex.upper()
@@ -738,8 +778,9 @@ class CardProfileUICC(CardProfile):
         return tlv_key_replace(FCP_TLV_MAP, r)
 
     @staticmethod
-    def match_with_card(scc:SimCardCommands) -> bool:
+    def match_with_card(scc: SimCardCommands) -> bool:
         return match_uicc(scc)
+
 
 class CardProfileUICCSIM(CardProfileUICC):
     """Same as above, but including 2G SIM support"""
@@ -754,5 +795,5 @@ class CardProfileUICCSIM(CardProfileUICC):
         self.files_in_mf.append(DF_GSM())
 
     @staticmethod
-    def match_with_card(scc:SimCardCommands) -> bool:
+    def match_with_card(scc: SimCardCommands) -> bool:
         return match_uicc(scc) and match_sim(scc)

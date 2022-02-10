@@ -28,63 +28,64 @@ from pySim.utils import h2i, i2h
 
 
 class PcscSimLink(LinkBase):
-	""" pySim: PCSC reader transport link."""
+    """ pySim: PCSC reader transport link."""
 
-	def __init__(self, reader_number:int=0, **kwargs):
-		super().__init__(**kwargs)
-		r = readers()
-		if reader_number >= len(r):
-			raise ReaderError
-		self._reader = r[reader_number]
-		self._con = self._reader.createConnection()
+    def __init__(self, reader_number: int = 0, **kwargs):
+        super().__init__(**kwargs)
+        r = readers()
+        if reader_number >= len(r):
+            raise ReaderError
+        self._reader = r[reader_number]
+        self._con = self._reader.createConnection()
 
-	def __del__(self):
-		try:
-			# FIXME: this causes multiple warnings in Python 3.5.3
-			self._con.disconnect()
-		except:
-			pass
-		return
+    def __del__(self):
+        try:
+            # FIXME: this causes multiple warnings in Python 3.5.3
+            self._con.disconnect()
+        except:
+            pass
+        return
 
-	def wait_for_card(self, timeout:int=None, newcardonly:bool=False):
-		cr = CardRequest(readers=[self._reader], timeout=timeout, newcardonly=newcardonly)
-		try:
-			cr.waitforcard()
-		except CardRequestTimeoutException:
-			raise NoCardError()
-		self.connect()
+    def wait_for_card(self, timeout: int = None, newcardonly: bool = False):
+        cr = CardRequest(readers=[self._reader],
+                         timeout=timeout, newcardonly=newcardonly)
+        try:
+            cr.waitforcard()
+        except CardRequestTimeoutException:
+            raise NoCardError()
+        self.connect()
 
-	def connect(self):
-		try:
-			# To avoid leakage of resources, make sure the reader
-			# is disconnected
-			self.disconnect()
+    def connect(self):
+        try:
+            # To avoid leakage of resources, make sure the reader
+            # is disconnected
+            self.disconnect()
 
-			# Explicitly select T=0 communication protocol
-			self._con.connect(CardConnection.T0_protocol)
-		except CardConnectionException:
-			raise ProtocolError()
-		except NoCardException:
-			raise NoCardError()
+            # Explicitly select T=0 communication protocol
+            self._con.connect(CardConnection.T0_protocol)
+        except CardConnectionException:
+            raise ProtocolError()
+        except NoCardException:
+            raise NoCardError()
 
-	def get_atr(self):
-		return self._con.getATR()
+    def get_atr(self):
+        return self._con.getATR()
 
-	def disconnect(self):
-		self._con.disconnect()
+    def disconnect(self):
+        self._con.disconnect()
 
-	def reset_card(self):
-		self.disconnect()
-		self.connect()
-		return 1
+    def reset_card(self):
+        self.disconnect()
+        self.connect()
+        return 1
 
-	def _send_apdu_raw(self, pdu):
+    def _send_apdu_raw(self, pdu):
 
-		apdu = h2i(pdu)
+        apdu = h2i(pdu)
 
-		data, sw1, sw2 = self._con.transmit(apdu)
+        data, sw1, sw2 = self._con.transmit(apdu)
 
-		sw = [sw1, sw2]
+        sw = [sw1, sw2]
 
-		# Return value
-		return i2h(data), i2h(sw)
+        # Return value
+        return i2h(data), i2h(sw)

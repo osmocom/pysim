@@ -21,34 +21,40 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
 class NoCardError(Exception):
-	"""No card was found in the reader."""
-	pass
+    """No card was found in the reader."""
+    pass
+
 
 class ProtocolError(Exception):
-	"""Some kind of protocol level error interfacing with the card."""
-	pass
+    """Some kind of protocol level error interfacing with the card."""
+    pass
+
 
 class ReaderError(Exception):
-	"""Some kind of general error with the card reader."""
-	pass
+    """Some kind of general error with the card reader."""
+    pass
+
 
 class SwMatchError(Exception):
-	"""Raised when an operation specifies an expected SW but the actual SW from
-	   the card doesn't match."""
-	def __init__(self, sw_actual:str, sw_expected:str, rs=None):
-		"""
-		Args:
-			sw_actual : the SW we actually received from the card (4 hex digits)
-			sw_expected : the SW we expected to receive from the card (4 hex digits)
-			rs : interpreter class to convert SW to string
-		"""
-		self.sw_actual = sw_actual
-		self.sw_expected = sw_expected
-		self.rs = rs
-	def __str__(self):
-		if self.rs:
-			r = self.rs.interpret_sw(self.sw_actual)
-			if r:
-				return "SW match failed! Expected %s and got %s: %s - %s" % (self.sw_expected, self.sw_actual, r[0], r[1])
-		return "SW match failed! Expected %s and got %s." % (self.sw_expected, self.sw_actual)
+    """Raised when an operation specifies an expected SW but the actual SW from
+       the card doesn't match."""
+
+    def __init__(self, sw_actual: str, sw_expected: str, rs=None):
+        """
+        Args:
+                sw_actual : the SW we actually received from the card (4 hex digits)
+                sw_expected : the SW we expected to receive from the card (4 hex digits)
+                rs : interpreter class to convert SW to string
+        """
+        self.sw_actual = sw_actual
+        self.sw_expected = sw_expected
+        self.rs = rs
+
+    def __str__(self):
+        if self.rs:
+            r = self.rs.interpret_sw(self.sw_actual)
+            if r:
+                return "SW match failed! Expected %s and got %s: %s - %s" % (self.sw_expected, self.sw_actual, r[0], r[1])
+        return "SW match failed! Expected %s and got %s." % (self.sw_expected, self.sw_actual)

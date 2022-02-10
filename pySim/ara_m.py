@@ -34,29 +34,35 @@ from pySim.tlv import *
 
 # various BER-TLV encoded Data Objects (DOs)
 
+
 class AidRefDO(BER_TLV_IE, tag=0x4f):
     # SEID v1.1 Table 6-3
     _construct = HexAdapter(GreedyBytes)
+
 
 class AidRefEmptyDO(BER_TLV_IE, tag=0xc0):
     # SEID v1.1 Table 6-3
     pass
 
+
 class DevAppIdRefDO(BER_TLV_IE, tag=0xc1):
     # SEID v1.1 Table 6-4
     _construct = HexAdapter(GreedyBytes)
+
 
 class PkgRefDO(BER_TLV_IE, tag=0xca):
     # Android UICC Carrier Privileges specific extension, see https://source.android.com/devices/tech/config/uicc
     _construct = Struct('package_name_string'/GreedyString("ascii"))
 
-class RefDO(BER_TLV_IE, tag=0xe1, nested=[AidRefDO,AidRefEmptyDO,DevAppIdRefDO,PkgRefDO]):
+
+class RefDO(BER_TLV_IE, tag=0xe1, nested=[AidRefDO, AidRefEmptyDO, DevAppIdRefDO, PkgRefDO]):
     # SEID v1.1 Table 6-5
     pass
 
+
 class ApduArDO(BER_TLV_IE, tag=0xd0):
     # SEID v1.1 Table 6-8
-    def _from_bytes(self, do:bytes):
+    def _from_bytes(self, do: bytes):
         if len(do) == 1:
             if do[0] == 0x00:
                 self.decoded = {'generic_access_rule': 'never'}
@@ -76,6 +82,7 @@ class ApduArDO(BER_TLV_IE, tag=0xd0):
                                                 'mask': b2h(do[offset+4:offset+8])}
             self.decoded = res
             return res
+
     def _to_bytes(self):
         if 'generic_access_rule' in self.decoded:
             if self.decoded['generic_access_rule'] == 'never':
@@ -99,93 +106,117 @@ class ApduArDO(BER_TLV_IE, tag=0xd0):
                 res += header_b + mask_b
             return res
 
+
 class NfcArDO(BER_TLV_IE, tag=0xd1):
     # SEID v1.1 Table 6-9
-    _construct = Struct('nfc_event_access_rule'/Enum(Int8ub, never=0, always=1))
+    _construct = Struct('nfc_event_access_rule' /
+                        Enum(Int8ub, never=0, always=1))
+
 
 class PermArDO(BER_TLV_IE, tag=0xdb):
     # Android UICC Carrier Privileges specific extension, see https://source.android.com/devices/tech/config/uicc
     _construct = Struct('permissions'/HexAdapter(Bytes(8)))
 
+
 class ArDO(BER_TLV_IE, tag=0xe3, nested=[ApduArDO, NfcArDO, PermArDO]):
     # SEID v1.1 Table 6-7
     pass
+
 
 class RefArDO(BER_TLV_IE, tag=0xe2, nested=[RefDO, ArDO]):
     # SEID v1.1 Table 6-6
     pass
 
+
 class ResponseAllRefArDO(BER_TLV_IE, tag=0xff40, nested=[RefArDO]):
     # SEID v1.1 Table 4-2
     pass
+
 
 class ResponseArDO(BER_TLV_IE, tag=0xff50, nested=[ArDO]):
     # SEID v1.1 Table 4-3
     pass
 
+
 class ResponseRefreshTagDO(BER_TLV_IE, tag=0xdf20):
     # SEID v1.1 Table 4-4
     _construct = Struct('refresh_tag'/HexAdapter(Bytes(8)))
+
 
 class DeviceInterfaceVersionDO(BER_TLV_IE, tag=0xe6):
     # SEID v1.1 Table 6-12
     _construct = Struct('major'/Int8ub, 'minor'/Int8ub, 'patch'/Int8ub)
 
+
 class DeviceConfigDO(BER_TLV_IE, tag=0xe4, nested=[DeviceInterfaceVersionDO]):
     # SEID v1.1 Table 6-10
     pass
+
 
 class ResponseDeviceConfigDO(BER_TLV_IE, tag=0xff7f, nested=[DeviceConfigDO]):
     # SEID v1.1 Table 5-14
     pass
 
+
 class AramConfigDO(BER_TLV_IE, tag=0xe5, nested=[DeviceInterfaceVersionDO]):
     # SEID v1.1 Table 6-11
     pass
+
 
 class ResponseAramConfigDO(BER_TLV_IE, tag=0xdf21, nested=[AramConfigDO]):
     # SEID v1.1 Table 4-5
     pass
 
+
 class CommandStoreRefArDO(BER_TLV_IE, tag=0xf0, nested=[RefArDO]):
     # SEID v1.1 Table 5-2
     pass
+
 
 class CommandDelete(BER_TLV_IE, tag=0xf1, nested=[AidRefDO, AidRefEmptyDO, RefDO, RefArDO]):
     # SEID v1.1 Table 5-4
     pass
 
+
 class CommandUpdateRefreshTagDO(BER_TLV_IE, tag=0xf2):
     # SEID V1.1 Table 5-6
     pass
+
 
 class CommandRegisterClientAidsDO(BER_TLV_IE, tag=0xf7, nested=[AidRefDO, AidRefEmptyDO]):
     # SEID v1.1 Table 5-7
     pass
 
+
 class CommandGet(BER_TLV_IE, tag=0xf3, nested=[AidRefDO, AidRefEmptyDO]):
     # SEID v1.1 Table 5-8
     pass
+
 
 class CommandGetAll(BER_TLV_IE, tag=0xf4):
     # SEID v1.1 Table 5-9
     pass
 
+
 class CommandGetClientAidsDO(BER_TLV_IE, tag=0xf6):
     # SEID v1.1 Table 5-10
     pass
+
 
 class CommandGetNext(BER_TLV_IE, tag=0xf5):
     # SEID v1.1 Table 5-11
     pass
 
+
 class CommandGetDeviceConfigDO(BER_TLV_IE, tag=0xf8):
     # SEID v1.1 Table 5-12
     pass
 
+
 class ResponseAracAidDO(BER_TLV_IE, tag=0xff70, nested=[AidRefDO, AidRefEmptyDO]):
     # SEID v1.1 Table 5-13
     pass
+
 
 class BlockDO(BER_TLV_IE, tag=0xe7):
     # SEID v1.1 Table 6-13
@@ -197,11 +228,15 @@ class GetCommandDoCollection(TLV_IE_Collection, nested=[RefDO, DeviceConfigDO]):
     pass
 
 # SEID v1.1 Table 4-2
+
+
 class GetResponseDoCollection(TLV_IE_Collection, nested=[ResponseAllRefArDO, ResponseArDO,
                                                          ResponseRefreshTagDO, ResponseAramConfigDO]):
     pass
 
 # SEID v1.1 Table 5-1
+
+
 class StoreCommandDoCollection(TLV_IE_Collection,
                                nested=[BlockDO, CommandStoreRefArDO, CommandDelete,
                                        CommandUpdateRefreshTagDO, CommandRegisterClientAidsDO,
@@ -215,6 +250,7 @@ class StoreResponseDoCollection(TLV_IE_Collection,
                                 nested=[ResponseAllRefArDO, ResponseAracAidDO, ResponseDeviceConfigDO]):
     pass
 
+
 class ADF_ARAM(CardADF):
     def __init__(self, aid='a00000015141434c00', name='ADF.ARA-M', fid=None, sfid=None,
                  desc='ARA-M Application'):
@@ -224,7 +260,7 @@ class ADF_ARAM(CardADF):
         self.add_files(files)
 
     @staticmethod
-    def xceive_apdu_tlv(tp, hdr:Hexstr, cmd_do, resp_cls, exp_sw='9000'):
+    def xceive_apdu_tlv(tp, hdr: Hexstr, cmd_do, resp_cls, exp_sw='9000'):
         """Transceive an APDU with the card, transparently encoding the command data from TLV
         and decoding the response data tlv."""
         if cmd_do:
@@ -259,7 +295,8 @@ class ADF_ARAM(CardADF):
     @staticmethod
     def get_config(tp, v_major=0, v_minor=0, v_patch=1):
         cmd_do = DeviceConfigDO()
-        cmd_do.from_dict([{'DeviceInterfaceVersionDO': {'major': v_major, 'minor': v_minor, 'patch': v_patch }}])
+        cmd_do.from_dict([{'DeviceInterfaceVersionDO': {
+                         'major': v_major, 'minor': v_minor, 'patch': v_patch}}])
         return ADF_ARAM.xceive_apdu_tlv(tp, '80cadf21', cmd_do, ResponseAramConfigDO)
 
     @with_default_category('Application-Specific Commands')
@@ -281,20 +318,30 @@ class ADF_ARAM(CardADF):
 
         store_ref_ar_do_parse = argparse.ArgumentParser()
         # REF-DO
-        store_ref_ar_do_parse.add_argument('--device-app-id', required=True, help='Identifies the specific device application that the rule appplies to. Hash of Certificate of Application Provider, or UUID. (20/32 hex bytes)')
+        store_ref_ar_do_parse.add_argument(
+            '--device-app-id', required=True, help='Identifies the specific device application that the rule appplies to. Hash of Certificate of Application Provider, or UUID. (20/32 hex bytes)')
         aid_grp = store_ref_ar_do_parse.add_mutually_exclusive_group()
-        aid_grp.add_argument('--aid', help='Identifies the specific SE application for which rules are to be stored. Can be a partial AID, containing for example only the RID.  (5-16 hex bytes)')
-        aid_grp.add_argument('--aid-empty', action='store_true', help='No specific SE application, applies to all applications')
-        store_ref_ar_do_parse.add_argument('--pkg-ref', help='Full Android Java package name (up to 127 chars ASCII)')
+        aid_grp.add_argument(
+            '--aid', help='Identifies the specific SE application for which rules are to be stored. Can be a partial AID, containing for example only the RID.  (5-16 hex bytes)')
+        aid_grp.add_argument('--aid-empty', action='store_true',
+                             help='No specific SE application, applies to all applications')
+        store_ref_ar_do_parse.add_argument(
+            '--pkg-ref', help='Full Android Java package name (up to 127 chars ASCII)')
         # AR-DO
         apdu_grp = store_ref_ar_do_parse.add_mutually_exclusive_group()
-        apdu_grp.add_argument('--apdu-never', action='store_true', help='APDU access is not allowed')
-        apdu_grp.add_argument('--apdu-always', action='store_true', help='APDU access is allowed')
-        apdu_grp.add_argument('--apdu-filter', help='APDU filter: 4 byte CLA/INS/P1/P2 followed by 4 byte mask (8 hex bytes)')
+        apdu_grp.add_argument(
+            '--apdu-never', action='store_true', help='APDU access is not allowed')
+        apdu_grp.add_argument(
+            '--apdu-always', action='store_true', help='APDU access is allowed')
+        apdu_grp.add_argument(
+            '--apdu-filter', help='APDU filter: 4 byte CLA/INS/P1/P2 followed by 4 byte mask (8 hex bytes)')
         nfc_grp = store_ref_ar_do_parse.add_mutually_exclusive_group()
-        nfc_grp.add_argument('--nfc-always', action='store_true', help='NFC event access is allowed')
-        nfc_grp.add_argument('--nfc-never', action='store_true', help='NFC event access is not allowed')
-        store_ref_ar_do_parse.add_argument('--android-permissions', help='Android UICC Carrier Privilege Permissions (8 hex bytes)')
+        nfc_grp.add_argument('--nfc-always', action='store_true',
+                             help='NFC event access is allowed')
+        nfc_grp.add_argument('--nfc-never', action='store_true',
+                             help='NFC event access is not allowed')
+        store_ref_ar_do_parse.add_argument(
+            '--android-permissions', help='Android UICC Carrier Privilege Permissions (8 hex bytes)')
 
         @cmd2.with_argparser(store_ref_ar_do_parse)
         def do_aram_store_ref_ar_do(self, opts):
@@ -323,7 +370,7 @@ class ADF_ARAM(CardADF):
                 ar_do_content += [{'NfcArDO': {'nfc_event_access_rule': 'never'}}]
             if opts.android_permissions:
                 ar_do_content += [{'PermArDO': {'permissions': opts.android_permissions}}]
-            d = [{'RefArDO': [{ 'RefDO': ref_do_content}, {'ArDO': ar_do_content }]}]
+            d = [{'RefArDO': [{'RefDO': ref_do_content}, {'ArDO': ar_do_content}]}]
             csrado = CommandStoreRefArDO()
             csrado.from_dict(d)
             res_do = ADF_ARAM.store_data(self._cmd.card._scc._tp, csrado)
@@ -359,6 +406,7 @@ sw_aram = {
     }
 }
 
+
 class CardApplicationARAM(CardApplication):
     def __init__(self):
-	    super().__init__('ARA-M', adf=ADF_ARAM(), sw=sw_aram)
+        super().__init__('ARA-M', adf=ADF_ARAM(), sw=sw_aram)

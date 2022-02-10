@@ -44,6 +44,7 @@ from pySim.exceptions import *
 from pySim.jsonpath import js_path_find, js_path_modify
 from pySim.commands import SimCardCommands
 
+
 class CardFile(object):
     """Base class for all objects in the smart card filesystem.
     Serve as a common ancestor to all other file types; rarely used directly.
@@ -51,8 +52,8 @@ class CardFile(object):
     RESERVED_NAMES = ['..', '.', '/', 'MF']
     RESERVED_FIDS = ['3f00']
 
-    def __init__(self, fid:str=None, sfid:str=None, name:str=None, desc:str=None,
-                 parent:Optional['CardDF']=None, profile:Optional['CardProfile']=None):
+    def __init__(self, fid: str = None, sfid: str = None, name: str = None, desc: str = None,
+                 parent: Optional['CardDF'] = None, profile: Optional['CardProfile'] = None):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -74,11 +75,11 @@ class CardFile(object):
         if self.parent and self.parent != self and self.fid:
             self.parent.add_file(self)
         self.profile = profile
-        self.shell_commands = [] # type: List[CommandSet]
+        self.shell_commands = []  # type: List[CommandSet]
 
-	# Note: the basic properties (fid, name, ect.) are verified when
-	# the file is attached to a parent file. See method add_file() in
-	# class Card DF
+        # Note: the basic properties (fid, name, ect.) are verified when
+        # the file is attached to a parent file. See method add_file() in
+        # class Card DF
 
     def __str__(self):
         if self.name:
@@ -86,13 +87,13 @@ class CardFile(object):
         else:
             return self.fid
 
-    def _path_element(self, prefer_name:bool) -> Optional[str]:
+    def _path_element(self, prefer_name: bool) -> Optional[str]:
         if prefer_name and self.name:
             return self.name
         else:
             return self.fid
 
-    def fully_qualified_path(self, prefer_name:bool=True) -> List[str]:
+    def fully_qualified_path(self, prefer_name: bool = True) -> List[str]:
         """Return fully qualified path to file as list of FID or name strings.
 
         Args:
@@ -117,7 +118,7 @@ class CardFile(object):
             node = node.parent
         return cast(CardMF, node)
 
-    def _get_self_selectables(self, alias:str=None, flags = []) -> Dict[str, 'CardFile']:
+    def _get_self_selectables(self, alias: str = None, flags=[]) -> Dict[str, 'CardFile']:
         """Return a dict of {'identifier': self} tuples.
 
         Args:
@@ -136,7 +137,7 @@ class CardFile(object):
             sels.update({self.name: self})
         return sels
 
-    def get_selectables(self, flags = []) -> Dict[str, 'CardFile']:
+    def get_selectables(self, flags=[]) -> Dict[str, 'CardFile']:
         """Return a dict of {'identifier': File} that is selectable from the current file.
 
         Args:
@@ -158,11 +159,11 @@ class CardFile(object):
         if flags == [] or 'MF' in flags:
             mf = self.get_mf()
             if mf:
-                sels.update(mf._get_self_selectables(flags = flags))
-                sels.update(mf.get_app_selectables(flags = flags))
+                sels.update(mf._get_self_selectables(flags=flags))
+                sels.update(mf.get_app_selectables(flags=flags))
         return sels
 
-    def get_selectable_names(self, flags = []) -> List[str]:
+    def get_selectable_names(self, flags=[]) -> List[str]:
         """Return a dict of {'identifier': File} that is selectable from the current file.
 
         Args:
@@ -176,18 +177,18 @@ class CardFile(object):
         sel_keys.sort()
         return sel_keys
 
-    def decode_select_response(self, data_hex:str):
+    def decode_select_response(self, data_hex: str):
         """Decode the response to a SELECT command.
 
         Args:
-	    data_hex: Hex string of the select response
-	"""
+            data_hex: Hex string of the select response
+        """
 
-	# When the current file does not implement a custom select response decoder,
-	# we just ask the parent file to decode the select response. If this method
-	# is not overloaded by the current file we will again ask the parent file.
-	# This way we recursively travel up the file system tree until we hit a file
-	# that does implement a concrete decoder.
+        # When the current file does not implement a custom select response decoder,
+        # we just ask the parent file to decode the select response. If this method
+        # is not overloaded by the current file we will again ask the parent file.
+        # This way we recursively travel up the file system tree until we hit a file
+        # that does implement a concrete decoder.
         if self.parent:
             return self.parent.decode_select_response(data_hex)
 
@@ -205,6 +206,7 @@ class CardFile(object):
         if self.parent:
             return self.parent.get_profile()
         return None
+
 
 class CardDF(CardFile):
     """DF (Dedicated File) in the smart card filesystem.  Those are basically sub-directories."""
@@ -225,7 +227,7 @@ class CardDF(CardFile):
     def __str__(self):
         return "DF(%s)" % (super().__str__())
 
-    def add_file(self, child:CardFile, ignore_existing:bool=False):
+    def add_file(self, child: CardFile, ignore_existing: bool = False):
         """Add a child (DF/EF) to this DF.
         Args:
             child: The new DF/EF to be added
@@ -233,7 +235,7 @@ class CardDF(CardFile):
         """
         if not isinstance(child, CardFile):
             raise TypeError("Expected a File instance")
-        if not is_hex(child.fid, minlen = 4, maxlen = 4):
+        if not is_hex(child.fid, minlen=4, maxlen=4):
             raise ValueError("File name %s is not a valid fid" % (child.fid))
         if child.name in CardFile.RESERVED_NAMES:
             raise ValueError("File name %s is a reserved name" % (child.name))
@@ -242,17 +244,20 @@ class CardDF(CardFile):
         if child.fid in self.children:
             if ignore_existing:
                 return
-            raise ValueError("File with given fid %s already exists in %s" % (child.fid, self))
+            raise ValueError(
+                "File with given fid %s already exists in %s" % (child.fid, self))
         if self.lookup_file_by_sfid(child.sfid):
-            raise ValueError("File with given sfid %s already exists in %s" % (child.sfid, self))
+            raise ValueError(
+                "File with given sfid %s already exists in %s" % (child.sfid, self))
         if self.lookup_file_by_name(child.name):
             if ignore_existing:
                 return
-            raise ValueError("File with given name %s already exists in %s" % (child.name, self))
+            raise ValueError(
+                "File with given name %s already exists in %s" % (child.name, self))
         self.children[child.fid] = child
         child.parent = self
 
-    def add_files(self, children:Iterable[CardFile], ignore_existing:bool=False):
+    def add_files(self, children: Iterable[CardFile], ignore_existing: bool = False):
         """Add a list of child (DF/EF) to this DF
 
         Args:
@@ -262,7 +267,7 @@ class CardDF(CardFile):
         for child in children:
             self.add_file(child, ignore_existing)
 
-    def get_selectables(self, flags = []) -> dict:
+    def get_selectables(self, flags=[]) -> dict:
         """Return a dict of {'identifier': File} that is selectable from the current DF.
 
         Args:
@@ -275,12 +280,12 @@ class CardDF(CardFile):
         # global selectables + our children
         sels = super().get_selectables(flags)
         if flags == [] or 'FIDS' in flags:
-                sels.update({x.fid: x for x in self.children.values() if x.fid})
+            sels.update({x.fid: x for x in self.children.values() if x.fid})
         if flags == [] or 'FNAMES' in flags:
-                sels.update({x.name: x for x in self.children.values() if x.name})
+            sels.update({x.name: x for x in self.children.values() if x.name})
         return sels
 
-    def lookup_file_by_name(self, name:Optional[str]) -> Optional[CardFile]:
+    def lookup_file_by_name(self, name: Optional[str]) -> Optional[CardFile]:
         """Find a file with given name within current DF."""
         if name == None:
             return None
@@ -289,7 +294,7 @@ class CardDF(CardFile):
                 return i
         return None
 
-    def lookup_file_by_sfid(self, sfid:Optional[str]) -> Optional[CardFile]:
+    def lookup_file_by_sfid(self, sfid: Optional[str]) -> Optional[CardFile]:
         """Find a file with given short file ID within current DF."""
         if sfid == None:
             return None
@@ -298,7 +303,7 @@ class CardDF(CardFile):
                 return i
         return None
 
-    def lookup_file_by_fid(self, fid:str) -> Optional[CardFile]:
+    def lookup_file_by_fid(self, fid: str) -> Optional[CardFile]:
         """Find a file with given file ID within current DF."""
         if fid in self.children:
             return self.children[fid]
@@ -307,6 +312,7 @@ class CardDF(CardFile):
 
 class CardMF(CardDF):
     """MF (Master File) in the smart card filesystem"""
+
     def __init__(self, **kwargs):
         # can be overridden; use setdefault
         kwargs.setdefault('fid', '3f00')
@@ -320,20 +326,20 @@ class CardMF(CardDF):
     def __str__(self):
         return "MF(%s)" % (self.fid)
 
-    def add_application_df(self, app:'CardADF'):
+    def add_application_df(self, app: 'CardADF'):
         """Add an Application to the MF"""
         if not isinstance(app, CardADF):
             raise TypeError("Expected an ADF instance")
         if app.aid in self.applications:
             raise ValueError("AID %s already exists" % (app.aid))
         self.applications[app.aid] = app
-        app.parent=self
+        app.parent = self
 
     def get_app_names(self):
         """Get list of completions (AID names)"""
         return [x.name for x in self.applications]
 
-    def get_selectables(self, flags = []) -> dict:
+    def get_selectables(self, flags=[]) -> dict:
         """Return a dict of {'identifier': File} that is selectable from the current DF.
 
         Args:
@@ -347,22 +353,23 @@ class CardMF(CardDF):
         sels.update(self.get_app_selectables(flags))
         return sels
 
-    def get_app_selectables(self, flags = []) -> dict:
+    def get_app_selectables(self, flags=[]) -> dict:
         """Get applications by AID + name"""
         sels = {}
         if flags == [] or 'AIDS' in flags:
-                sels.update({x.aid: x for x in self.applications.values()})
+            sels.update({x.aid: x for x in self.applications.values()})
         if flags == [] or 'ANAMES' in flags:
-                sels.update({x.name: x for x in self.applications.values() if x.name})
+            sels.update(
+                {x.name: x for x in self.applications.values() if x.name})
         return sels
 
-    def decode_select_response(self, data_hex:str) -> object:
+    def decode_select_response(self, data_hex: str) -> object:
         """Decode the response to a SELECT command.
 
         This is the fall-back method which automatically defers to the standard decoding
         method defined by the card profile. When no profile is set, then no decoding is
-	performed. Specific derived classes (usually ADF) can overload this method to
-	install specific decoding.
+        performed. Specific derived classes (usually ADF) can overload this method to
+        install specific decoding.
         """
 
         profile = self.get_profile()
@@ -372,9 +379,11 @@ class CardMF(CardDF):
         else:
             return data_hex
 
+
 class CardADF(CardDF):
     """ADF (Application Dedicated File) in the smart card filesystem"""
-    def __init__(self, aid:str, **kwargs):
+
+    def __init__(self, aid: str, **kwargs):
         super().__init__(**kwargs)
         # reference to CardApplication may be set from CardApplication constructor
         self.application = None  # type: Optional[CardApplication]
@@ -386,7 +395,7 @@ class CardADF(CardDF):
     def __str__(self):
         return "ADF(%s)" % (self.aid)
 
-    def _path_element(self, prefer_name:bool):
+    def _path_element(self, prefer_name: bool):
         if self.name and prefer_name:
             return self.name
         else:
@@ -395,6 +404,7 @@ class CardADF(CardDF):
 
 class CardEF(CardFile):
     """EF (Entry File) in the smart card filesystem"""
+
     def __init__(self, *, fid, **kwargs):
         kwargs['fid'] = fid
         super().__init__(**kwargs)
@@ -402,7 +412,7 @@ class CardEF(CardFile):
     def __str__(self):
         return "EF(%s)" % (super().__str__())
 
-    def get_selectables(self, flags = []) -> dict:
+    def get_selectables(self, flags=[]) -> dict:
         """Return a dict of {'identifier': File} that is selectable from the current DF.
 
         Args:
@@ -412,9 +422,10 @@ class CardEF(CardFile):
             dict containing all selectable items. Key is identifier (string), value
             a reference to a CardFile (or derived class) instance.
         """
-        #global selectable names + those of the parent DF
+        # global selectable names + those of the parent DF
         sels = super().get_selectables(flags)
-        sels.update({x.name:x for x in self.parent.children.values() if x != self})
+        sels.update(
+            {x.name: x for x in self.parent.children.values() if x != self})
         return sels
 
 
@@ -427,12 +438,16 @@ class TransparentEF(CardEF):
     @with_default_category('Transparent EF Commands')
     class ShellCommands(CommandSet):
         """Shell commands specific for transparent EFs."""
+
         def __init__(self):
             super().__init__()
 
         read_bin_parser = argparse.ArgumentParser()
-        read_bin_parser.add_argument('--offset', type=int, default=0, help='Byte offset for start of read')
-        read_bin_parser.add_argument('--length', type=int, help='Number of bytes to read')
+        read_bin_parser.add_argument(
+            '--offset', type=int, default=0, help='Byte offset for start of read')
+        read_bin_parser.add_argument(
+            '--length', type=int, help='Number of bytes to read')
+
         @cmd2.with_argparser(read_bin_parser)
         def do_read_binary(self, opts):
             """Read binary data from a transparent EF"""
@@ -442,6 +457,7 @@ class TransparentEF(CardEF):
         read_bin_dec_parser = argparse.ArgumentParser()
         read_bin_dec_parser.add_argument('--oneline', action='store_true',
                                          help='No JSON pretty-printing, dump as a single line')
+
         @cmd2.with_argparser(read_bin_dec_parser)
         def do_read_binary_decoded(self, opts):
             """Read + decode data from a transparent EF"""
@@ -449,8 +465,11 @@ class TransparentEF(CardEF):
             self._cmd.poutput_json(data, opts.oneline)
 
         upd_bin_parser = argparse.ArgumentParser()
-        upd_bin_parser.add_argument('--offset', type=int, default=0, help='Byte offset for start of read')
-        upd_bin_parser.add_argument('data', help='Data bytes (hex format) to write')
+        upd_bin_parser.add_argument(
+            '--offset', type=int, default=0, help='Byte offset for start of read')
+        upd_bin_parser.add_argument(
+            'data', help='Data bytes (hex format) to write')
+
         @cmd2.with_argparser(upd_bin_parser)
         def do_update_binary(self, opts):
             """Update (Write) data of a transparent EF"""
@@ -459,15 +478,18 @@ class TransparentEF(CardEF):
                 self._cmd.poutput(data)
 
         upd_bin_dec_parser = argparse.ArgumentParser()
-        upd_bin_dec_parser.add_argument('data', help='Abstract data (JSON format) to write')
+        upd_bin_dec_parser.add_argument(
+            'data', help='Abstract data (JSON format) to write')
         upd_bin_dec_parser.add_argument('--json-path', type=str,
                                         help='JSON path to modify specific element of file only')
+
         @cmd2.with_argparser(upd_bin_dec_parser)
         def do_update_binary_decoded(self, opts):
             """Encode + Update (Write) data of a transparent EF"""
             if opts.json_path:
                 (data_json, sw) = self._cmd.rs.read_binary_dec()
-                js_path_modify(data_json, opts.json_path, json.loads(opts.data))
+                js_path_modify(data_json, opts.json_path,
+                               json.loads(opts.data))
             else:
                 data_json = json.loads(opts.data)
             (data, sw) = self._cmd.rs.update_binary_dec(data_json)
@@ -493,9 +515,8 @@ class TransparentEF(CardEF):
                     if data:
                         self._cmd.poutput_json(data)
 
-
-    def __init__(self, fid:str, sfid:str=None, name:str=None, desc:str=None, parent:CardDF=None,
-                 size={1,None}):
+    def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None, parent: CardDF = None,
+                 size={1, None}):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -511,7 +532,7 @@ class TransparentEF(CardEF):
         self.size = size
         self.shell_commands = [self.ShellCommands()]
 
-    def decode_bin(self, raw_bin_data:bytearray) -> dict:
+    def decode_bin(self, raw_bin_data: bytearray) -> dict:
         """Decode raw (binary) data into abstract representation.
 
         A derived class would typically provide a _decode_bin() or _decode_hex() method
@@ -537,7 +558,7 @@ class TransparentEF(CardEF):
             return t.to_dict()
         return {'raw': raw_bin_data.hex()}
 
-    def decode_hex(self, raw_hex_data:str) -> dict:
+    def decode_hex(self, raw_hex_data: str) -> dict:
         """Decode raw (hex string) data into abstract representation.
 
         A derived class would typically provide a _decode_bin() or _decode_hex() method
@@ -564,7 +585,7 @@ class TransparentEF(CardEF):
             return t.to_dict()
         return {'raw': raw_bin_data.hex()}
 
-    def encode_bin(self, abstract_data:dict) -> bytearray:
+    def encode_bin(self, abstract_data: dict) -> bytearray:
         """Encode abstract representation into raw (binary) data.
 
         A derived class would typically provide an _encode_bin() or _encode_hex() method
@@ -588,9 +609,10 @@ class TransparentEF(CardEF):
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return t.to_tlv()
-        raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
+        raise NotImplementedError(
+            "%s encoder not yet implemented. Patches welcome." % self)
 
-    def encode_hex(self, abstract_data:dict) -> str:
+    def encode_hex(self, abstract_data: dict) -> str:
         """Encode abstract representation into raw (hex string) data.
 
         A derived class would typically provide an _encode_bin() or _encode_hex() method
@@ -615,7 +637,8 @@ class TransparentEF(CardEF):
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return b2h(t.to_tlv())
-        raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
+        raise NotImplementedError(
+            "%s encoder not yet implemented. Patches welcome." % self)
 
 
 class LinFixedEF(CardEF):
@@ -627,12 +650,16 @@ class LinFixedEF(CardEF):
     @with_default_category('Linear Fixed EF Commands')
     class ShellCommands(CommandSet):
         """Shell commands specific for Linear Fixed EFs."""
+
         def __init__(self):
             super().__init__()
 
         read_rec_parser = argparse.ArgumentParser()
-        read_rec_parser.add_argument('record_nr', type=int, help='Number of record to be read')
-        read_rec_parser.add_argument('--count', type=int, default=1, help='Number of records to be read, beginning at record_nr')
+        read_rec_parser.add_argument(
+            'record_nr', type=int, help='Number of record to be read')
+        read_rec_parser.add_argument(
+            '--count', type=int, default=1, help='Number of records to be read, beginning at record_nr')
+
         @cmd2.with_argparser(read_rec_parser)
         def do_read_record(self, opts):
             """Read one or multiple records from a record-oriented EF"""
@@ -640,15 +667,17 @@ class LinFixedEF(CardEF):
                 recnr = opts.record_nr + r
                 (data, sw) = self._cmd.rs.read_record(recnr)
                 if (len(data) > 0):
-                   recstr = str(data)
+                    recstr = str(data)
                 else:
-                   recstr = "(empty)"
+                    recstr = "(empty)"
                 self._cmd.poutput("%03d %s" % (recnr, recstr))
 
         read_rec_dec_parser = argparse.ArgumentParser()
-        read_rec_dec_parser.add_argument('record_nr', type=int, help='Number of record to be read')
+        read_rec_dec_parser.add_argument(
+            'record_nr', type=int, help='Number of record to be read')
         read_rec_dec_parser.add_argument('--oneline', action='store_true',
                                          help='No JSON pretty-printing, dump as a single line')
+
         @cmd2.with_argparser(read_rec_dec_parser)
         def do_read_record_decoded(self, opts):
             """Read + decode a record from a record-oriented EF"""
@@ -656,6 +685,7 @@ class LinFixedEF(CardEF):
             self._cmd.poutput_json(data, opts.oneline)
 
         read_recs_parser = argparse.ArgumentParser()
+
         @cmd2.with_argparser(read_recs_parser)
         def do_read_records(self, opts):
             """Read all records from a record-oriented EF"""
@@ -663,14 +693,15 @@ class LinFixedEF(CardEF):
             for recnr in range(1, 1 + num_of_rec):
                 (data, sw) = self._cmd.rs.read_record(recnr)
                 if (len(data) > 0):
-                   recstr = str(data)
+                    recstr = str(data)
                 else:
-                   recstr = "(empty)"
+                    recstr = "(empty)"
                 self._cmd.poutput("%03d %s" % (recnr, recstr))
 
         read_recs_dec_parser = argparse.ArgumentParser()
         read_recs_dec_parser.add_argument('--oneline', action='store_true',
-                                         help='No JSON pretty-printing, dump as a single line')
+                                          help='No JSON pretty-printing, dump as a single line')
+
         @cmd2.with_argparser(read_recs_dec_parser)
         def do_read_records_decoded(self, opts):
             """Read + decode all records from a record-oriented EF"""
@@ -683,8 +714,11 @@ class LinFixedEF(CardEF):
             self._cmd.poutput_json(data_list, opts.oneline)
 
         upd_rec_parser = argparse.ArgumentParser()
-        upd_rec_parser.add_argument('record_nr', type=int, help='Number of record to be read')
-        upd_rec_parser.add_argument('data', help='Data bytes (hex format) to write')
+        upd_rec_parser.add_argument(
+            'record_nr', type=int, help='Number of record to be read')
+        upd_rec_parser.add_argument(
+            'data', help='Data bytes (hex format) to write')
+
         @cmd2.with_argparser(upd_rec_parser)
         def do_update_record(self, opts):
             """Update (write) data to a record-oriented EF"""
@@ -693,24 +727,31 @@ class LinFixedEF(CardEF):
                 self._cmd.poutput(data)
 
         upd_rec_dec_parser = argparse.ArgumentParser()
-        upd_rec_dec_parser.add_argument('record_nr', type=int, help='Number of record to be read')
-        upd_rec_dec_parser.add_argument('data', help='Abstract data (JSON format) to write')
+        upd_rec_dec_parser.add_argument(
+            'record_nr', type=int, help='Number of record to be read')
+        upd_rec_dec_parser.add_argument(
+            'data', help='Abstract data (JSON format) to write')
         upd_rec_dec_parser.add_argument('--json-path', type=str,
                                         help='JSON path to modify specific element of record only')
+
         @cmd2.with_argparser(upd_rec_dec_parser)
         def do_update_record_decoded(self, opts):
             """Encode + Update (write) data to a record-oriented EF"""
             if opts.json_path:
                 (data_json, sw) = self._cmd.rs.read_record_dec(opts.record_nr)
-                js_path_modify(data_json, opts.json_path, json.loads(opts.data))
+                js_path_modify(data_json, opts.json_path,
+                               json.loads(opts.data))
             else:
                 data_json = json.loads(opts.data)
-            (data, sw) = self._cmd.rs.update_record_dec(opts.record_nr, data_json)
+            (data, sw) = self._cmd.rs.update_record_dec(
+                opts.record_nr, data_json)
             if data:
                 self._cmd.poutput(data)
 
         edit_rec_dec_parser = argparse.ArgumentParser()
-        edit_rec_dec_parser.add_argument('record_nr', type=int, help='Number of record to be edited')
+        edit_rec_dec_parser.add_argument(
+            'record_nr', type=int, help='Number of record to be edited')
+
         @cmd2.with_argparser(edit_rec_dec_parser)
         def do_edit_record_decoded(self, opts):
             """Edit the JSON representation of one record in an editor."""
@@ -727,13 +768,13 @@ class LinFixedEF(CardEF):
                 if edited_json == orig_json:
                     self._cmd.poutput("Data not modified, skipping write")
                 else:
-                    (data, sw) = self._cmd.rs.update_record_dec(opts.record_nr, edited_json)
+                    (data, sw) = self._cmd.rs.update_record_dec(
+                        opts.record_nr, edited_json)
                     if data:
                         self._cmd.poutput_json(data)
 
-
-    def __init__(self, fid:str, sfid:str=None, name:str=None, desc:str=None,
-                 parent:Optional[CardDF]=None, rec_len={1,None}):
+    def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None,
+                 parent: Optional[CardDF] = None, rec_len={1, None}):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -749,7 +790,7 @@ class LinFixedEF(CardEF):
         self._construct = None
         self._tlv = None
 
-    def decode_record_hex(self, raw_hex_data:str) -> dict:
+    def decode_record_hex(self, raw_hex_data: str) -> dict:
         """Decode raw (hex string) data into abstract representation.
 
         A derived class would typically provide a _decode_record_bin() or _decode_record_hex()
@@ -776,7 +817,7 @@ class LinFixedEF(CardEF):
             return t.to_dict()
         return {'raw': raw_bin_data.hex()}
 
-    def decode_record_bin(self, raw_bin_data:bytearray) -> dict:
+    def decode_record_bin(self, raw_bin_data: bytearray) -> dict:
         """Decode raw (binary) data into abstract representation.
 
         A derived class would typically provide a _decode_record_bin() or _decode_record_hex()
@@ -803,7 +844,7 @@ class LinFixedEF(CardEF):
             return t.to_dict()
         return {'raw': raw_hex_data}
 
-    def encode_record_hex(self, abstract_data:dict) -> str:
+    def encode_record_hex(self, abstract_data: dict) -> str:
         """Encode abstract representation into raw (hex string) data.
 
         A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
@@ -828,9 +869,10 @@ class LinFixedEF(CardEF):
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return b2h(t.to_tlv())
-        raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
+        raise NotImplementedError(
+            "%s encoder not yet implemented. Patches welcome." % self)
 
-    def encode_record_bin(self, abstract_data:dict) -> bytearray:
+    def encode_record_bin(self, abstract_data: dict) -> bytearray:
         """Encode abstract representation into raw (binary) data.
 
         A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
@@ -854,14 +896,19 @@ class LinFixedEF(CardEF):
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return t.to_tlv()
-        raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
+        raise NotImplementedError(
+            "%s encoder not yet implemented. Patches welcome." % self)
+
 
 class CyclicEF(LinFixedEF):
     """Cyclic EF (Entry File) in the smart card filesystem"""
     # we don't really have any special support for those; just recycling LinFixedEF here
-    def __init__(self, fid:str, sfid:str=None, name:str=None, desc:str=None, parent:CardDF=None,
-                 rec_len={1,None}):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, rec_len=rec_len)
+
+    def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None, parent: CardDF = None,
+                 rec_len={1, None}):
+        super().__init__(fid=fid, sfid=sfid, name=name,
+                         desc=desc, parent=parent, rec_len=rec_len)
+
 
 class TransRecEF(TransparentEF):
     """Transparent EF (Entry File) containing fixed-size records.
@@ -872,8 +919,9 @@ class TransRecEF(TransparentEF):
     We add a special class for those, so the user only has to provide encoder/decoder functions
     for a record, while this class takes care of split / merge of records.
     """
-    def __init__(self, fid:str, rec_len:int, sfid:str=None, name:str=None, desc:str=None,
-                 parent:Optional[CardDF]=None, size={1,None}):
+
+    def __init__(self, fid: str, rec_len: int, sfid: str = None, name: str = None, desc: str = None,
+                 parent: Optional[CardDF] = None, size={1, None}):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -887,7 +935,7 @@ class TransRecEF(TransparentEF):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, size=size)
         self.rec_len = rec_len
 
-    def decode_record_hex(self, raw_hex_data:str) -> dict:
+    def decode_record_hex(self, raw_hex_data: str) -> dict:
         """Decode raw (hex string) data into abstract representation.
 
         A derived class would typically provide a _decode_record_bin() or _decode_record_hex()
@@ -914,7 +962,7 @@ class TransRecEF(TransparentEF):
             return t.to_dict()
         return {'raw': raw_hex_data}
 
-    def decode_record_bin(self, raw_bin_data:bytearray) -> dict:
+    def decode_record_bin(self, raw_bin_data: bytearray) -> dict:
         """Decode raw (binary) data into abstract representation.
 
         A derived class would typically provide a _decode_record_bin() or _decode_record_hex()
@@ -941,7 +989,7 @@ class TransRecEF(TransparentEF):
             return t.to_dict()
         return {'raw': raw_hex_data}
 
-    def encode_record_hex(self, abstract_data:dict) -> str:
+    def encode_record_hex(self, abstract_data: dict) -> str:
         """Encode abstract representation into raw (hex string) data.
 
         A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
@@ -965,9 +1013,10 @@ class TransRecEF(TransparentEF):
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return b2h(t.to_tlv())
-        raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
+        raise NotImplementedError(
+            "%s encoder not yet implemented. Patches welcome." % self)
 
-    def encode_record_bin(self, abstract_data:dict) -> bytearray:
+    def encode_record_bin(self, abstract_data: dict) -> bytearray:
         """Encode abstract representation into raw (binary) data.
 
         A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
@@ -991,10 +1040,12 @@ class TransRecEF(TransparentEF):
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return t.to_tlv()
-        raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
+        raise NotImplementedError(
+            "%s encoder not yet implemented. Patches welcome." % self)
 
-    def _decode_bin(self, raw_bin_data:bytearray):
-        chunks = [raw_bin_data[i:i+self.rec_len] for i in range(0, len(raw_bin_data), self.rec_len)]
+    def _decode_bin(self, raw_bin_data: bytearray):
+        chunks = [raw_bin_data[i:i+self.rec_len]
+                  for i in range(0, len(raw_bin_data), self.rec_len)]
         return [self.decode_record_bin(x) for x in chunks]
 
     def _encode_bin(self, abstract_data) -> bytes:
@@ -1014,11 +1065,14 @@ class BerTlvEF(CardEF):
     @with_default_category('BER-TLV EF Commands')
     class ShellCommands(CommandSet):
         """Shell commands specific for BER-TLV EFs."""
+
         def __init__(self):
             super().__init__()
 
         retrieve_data_parser = argparse.ArgumentParser()
-        retrieve_data_parser.add_argument('tag', type=auto_int, help='BER-TLV Tag of value to retrieve')
+        retrieve_data_parser.add_argument(
+            'tag', type=auto_int, help='BER-TLV Tag of value to retrieve')
+
         @cmd2.with_argparser(retrieve_data_parser)
         def do_retrieve_data(self, opts):
             """Retrieve (Read) data from a BER-TLV EF"""
@@ -1031,8 +1085,11 @@ class BerTlvEF(CardEF):
             self._cmd.poutput(tags)
 
         set_data_parser = argparse.ArgumentParser()
-        set_data_parser.add_argument('tag', type=auto_int, help='BER-TLV Tag of value to set')
-        set_data_parser.add_argument('data', help='Data bytes (hex format) to write')
+        set_data_parser.add_argument(
+            'tag', type=auto_int, help='BER-TLV Tag of value to set')
+        set_data_parser.add_argument(
+            'data', help='Data bytes (hex format) to write')
+
         @cmd2.with_argparser(set_data_parser)
         def do_set_data(self, opts):
             """Set (Write) data for a given tag in a BER-TLV EF"""
@@ -1041,7 +1098,9 @@ class BerTlvEF(CardEF):
                 self._cmd.poutput(data)
 
         del_data_parser = argparse.ArgumentParser()
-        del_data_parser.add_argument('tag', type=auto_int, help='BER-TLV Tag of value to set')
+        del_data_parser.add_argument(
+            'tag', type=auto_int, help='BER-TLV Tag of value to set')
+
         @cmd2.with_argparser(del_data_parser)
         def do_delete_data(self, opts):
             """Delete  data for a given tag in a BER-TLV EF"""
@@ -1049,9 +1108,8 @@ class BerTlvEF(CardEF):
             if data:
                 self._cmd.poutput(data)
 
-
-    def __init__(self, fid:str, sfid:str=None, name:str=None, desc:str=None, parent:CardDF=None,
-                 size={1,None}):
+    def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None, parent: CardDF = None,
+                 size={1, None}):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -1069,7 +1127,8 @@ class BerTlvEF(CardEF):
 
 class RuntimeState(object):
     """Represent the runtime state of a session with a card."""
-    def __init__(self, card, profile:'CardProfile'):
+
+    def __init__(self, card, profile: 'CardProfile'):
         """
         Args:
             card : pysim.cards.Card instance
@@ -1077,12 +1136,13 @@ class RuntimeState(object):
         """
         self.mf = CardMF(profile=profile)
         self.card = card
-        self.selected_file = self.mf # type: CardDF
+        self.selected_file = self.mf  # type: CardDF
         self.profile = profile
 
         # make sure the class and selection control bytes, which are specified
         # by the card profile are used
-        self.card.set_apdu_parameter(cla=self.profile.cla, sel_ctrl=self.profile.sel_ctrl)
+        self.card.set_apdu_parameter(
+            cla=self.profile.cla, sel_ctrl=self.profile.sel_ctrl)
 
         # add application ADFs + MF-files from profile
         apps = self._match_applications()
@@ -1170,7 +1230,7 @@ class RuntimeState(object):
             node = node.parent
         return None
 
-    def interpret_sw(self, sw:str):
+    def interpret_sw(self, sw: str):
         """Interpret a given status word relative to the currently selected application
         or the underlying card profile.
 
@@ -1191,11 +1251,12 @@ class RuntimeState(object):
                 res = app.interpret_sw(sw)
         return res or self.profile.interpret_sw(sw)
 
-    def probe_file(self, fid:str, cmd_app=None):
+    def probe_file(self, fid: str, cmd_app=None):
         """Blindly try to select a file and automatically add a matching file
-	       object if the file actually exists."""
+               object if the file actually exists."""
         if not is_hex(fid, 4, 4):
-            raise ValueError("Cannot select unknown file by name %s, only hexadecimal 4 digit FID is allowed" % fid)
+            raise ValueError(
+                "Cannot select unknown file by name %s, only hexadecimal 4 digit FID is allowed" % fid)
 
         try:
             (data, sw) = self.card._scc.select_file(fid)
@@ -1207,18 +1268,21 @@ class RuntimeState(object):
 
         select_resp = self.selected_file.decode_select_response(data)
         if (select_resp['file_descriptor']['file_type'] == 'df'):
-            f = CardDF(fid=fid, sfid=None, name="DF." + str(fid).upper(), desc="dedicated file, manually added at runtime")
+            f = CardDF(fid=fid, sfid=None, name="DF." + str(fid).upper(),
+                       desc="dedicated file, manually added at runtime")
         else:
             if (select_resp['file_descriptor']['structure'] == 'transparent'):
-                f = TransparentEF(fid=fid, sfid=None, name="EF." + str(fid).upper(), desc="elementary file, manually added at runtime")
+                f = TransparentEF(fid=fid, sfid=None, name="EF." + str(fid).upper(),
+                                  desc="elementary file, manually added at runtime")
             else:
-                f = LinFixedEF(fid=fid, sfid=None, name="EF." + str(fid).upper(), desc="elementary file, manually added at runtime")
+                f = LinFixedEF(fid=fid, sfid=None, name="EF." + str(fid).upper(),
+                               desc="elementary file, manually added at runtime")
 
         self.selected_file.add_files([f])
         self.selected_file = f
         return select_resp
 
-    def select(self, name:str, cmd_app=None):
+    def select(self, name: str, cmd_app=None):
         """Select a file (EF, DF, ADF, MF, ...).
 
         Args:
@@ -1265,14 +1329,14 @@ class RuntimeState(object):
         (data, sw) = self.card._scc.status()
         return self.selected_file.decode_select_response(data)
 
-    def activate_file(self, name:str):
+    def activate_file(self, name: str):
         """Request ACTIVATE FILE of specified file."""
         sels = self.selected_file.get_selectables()
         f = sels[name]
         data, sw = self.card._scc.activate_file(f.fid)
         return data, sw
 
-    def read_binary(self, length:int=None, offset:int=0):
+    def read_binary(self, length: int = None, offset: int = 0):
         """Read [part of] a transparent EF binary data.
 
         Args:
@@ -1298,7 +1362,7 @@ class RuntimeState(object):
         dec_data = self.selected_file.decode_hex(data)
         return (dec_data, sw)
 
-    def update_binary(self, data_hex:str, offset:int=0):
+    def update_binary(self, data_hex: str, offset: int = 0):
         """Update transparent EF binary data.
 
         Args:
@@ -1309,7 +1373,7 @@ class RuntimeState(object):
             raise TypeError("Only works with TransparentEF")
         return self.card._scc.update_binary(self.selected_file.fid, data_hex, offset, conserve=self.conserve_write)
 
-    def update_binary_dec(self, data:dict):
+    def update_binary_dec(self, data: dict):
         """Update transparent EF from abstract data. Encodes the data to binary and
         then updates the EF with it.
 
@@ -1319,7 +1383,7 @@ class RuntimeState(object):
         data_hex = self.selected_file.encode_hex(data)
         return self.update_binary(data_hex)
 
-    def read_record(self, rec_nr:int=0):
+    def read_record(self, rec_nr: int = 0):
         """Read a record as binary data.
 
         Args:
@@ -1332,7 +1396,7 @@ class RuntimeState(object):
         # returns a string of hex nibbles
         return self.card._scc.read_record(self.selected_file.fid, rec_nr)
 
-    def read_record_dec(self, rec_nr:int=0) -> Tuple[dict, str]:
+    def read_record_dec(self, rec_nr: int = 0) -> Tuple[dict, str]:
         """Read a record and decode it to abstract data.
 
         Args:
@@ -1343,7 +1407,7 @@ class RuntimeState(object):
         (data, sw) = self.read_record(rec_nr)
         return (self.selected_file.decode_record_hex(data), sw)
 
-    def update_record(self, rec_nr:int, data_hex:str):
+    def update_record(self, rec_nr: int, data_hex: str):
         """Update a record with given binary data
 
         Args:
@@ -1354,7 +1418,7 @@ class RuntimeState(object):
             raise TypeError("Only works with Linear Fixed EF")
         return self.card._scc.update_record(self.selected_file.fid, rec_nr, data_hex, conserve=self.conserve_write)
 
-    def update_record_dec(self, rec_nr:int, data:dict):
+    def update_record_dec(self, rec_nr: int, data: dict):
         """Update a record with given abstract data.  Will encode abstract to binary data
         and then write it to the given record on the card.
 
@@ -1365,7 +1429,7 @@ class RuntimeState(object):
         data_hex = self.selected_file.encode_record_hex(data)
         return self.update_record(rec_nr, data_hex)
 
-    def retrieve_data(self, tag:int=0):
+    def retrieve_data(self, tag: int = 0):
         """Read a DO/TLV as binary data.
 
         Args:
@@ -1390,7 +1454,7 @@ class RuntimeState(object):
         tag, length, value, remainder = bertlv_parse_one(h2b(data))
         return list(value)
 
-    def set_data(self, tag:int, data_hex:str):
+    def set_data(self, tag: int, data_hex: str):
         """Update a TLV/DO with given binary data
 
         Args:
@@ -1408,15 +1472,15 @@ class RuntimeState(object):
                 cmd_app.unregister_command_set(c)
 
 
-
 class FileData(object):
     """Represent the runtime, on-card data."""
+
     def __init__(self, fdesc):
         self.desc = fdesc
         self.fcp = None
 
 
-def interpret_sw(sw_data:dict, sw:str):
+def interpret_sw(sw_data: dict, sw: str):
     """Interpret a given status word.
 
     Args:
@@ -1435,10 +1499,12 @@ def interpret_sw(sw_data:dict, sw:str):
                 return (class_str, descr)
     return None
 
+
 class CardApplication(object):
     """A card application is represented by an ADF (with contained hierarchy) and optionally
        some SW definitions."""
-    def __init__(self, name, adf:Optional[CardADF]=None, aid:str=None, sw:dict=None):
+
+    def __init__(self, name, adf: Optional[CardADF] = None, aid: str = None, sw: dict = None):
         """
         Args:
             adf : ADF name
@@ -1477,11 +1543,11 @@ class CardModel(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def add_files(cls, rs:RuntimeState):
+    def add_files(cls, rs: RuntimeState):
         """Add model specific files to given RuntimeState."""
 
     @classmethod
-    def match(cls, scc:SimCardCommands) -> bool:
+    def match(cls, scc: SimCardCommands) -> bool:
         """Test if given card matches this model."""
         card_atr = scc.get_atr()
         for atr in cls._atrs:
@@ -1492,7 +1558,7 @@ class CardModel(abc.ABC):
         return False
 
     @staticmethod
-    def apply_matching_models(scc:SimCardCommands, rs:RuntimeState):
+    def apply_matching_models(scc: SimCardCommands, rs: RuntimeState):
         """Check if any of the CardModel sub-classes 'match' the currently inserted card
         (by ATR or overriding the 'match' method). If so, call their 'add_files'
         method."""

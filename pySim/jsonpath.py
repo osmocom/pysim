@@ -25,6 +25,7 @@ of a file or record in its JSON representation.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 def js_path_find(js_dict, js_path):
     """Find/Match a JSON path within a given JSON-serializable dict.
     Args:
@@ -34,6 +35,7 @@ def js_path_find(js_dict, js_path):
     """
     jsonpath_expr = jsonpath_ng.parse(js_path)
     return jsonpath_expr.find(js_dict)
+
 
 def js_path_modify(js_dict, js_path, new_val):
     """Find/Match a JSON path within a given JSON-serializable dict.
@@ -45,4 +47,3 @@ def js_path_modify(js_dict, js_path, new_val):
     jsonpath_expr = jsonpath_ng.parse(js_path)
     jsonpath_expr.find(js_dict)
     jsonpath_expr.update(js_dict, new_val)
-
