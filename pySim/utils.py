@@ -1170,7 +1170,7 @@ class DataObject(abc.ABC):
     simply has any number of different TLVs that may occur in any order at any point, ISO 7816
     has the habit of specifying TLV data but with very spcific ordering, or specific choices of
     tags at specific points in a stream.  This class tries to represent this."""
-    def __init__(self, name, desc = None, tag = None):
+    def __init__(self, name:str, desc:str = None, tag:int = None):
         """
         Args:
             name: A brief, all-lowercase, underscore separated string identifier
@@ -1186,10 +1186,10 @@ class DataObject(abc.ABC):
     def __str__(self):
         return self.name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '%s(%s)' % (self.__class__, self.name)
 
-    def __or__(self, other):
+    def __or__(self, other) -> 'DataObjectChoice':
         """OR-ing DataObjects together renders a DataObjectChoice."""
         if isinstance(other, DataObject):
             # DataObject | DataObject = DataObjectChoice
@@ -1197,17 +1197,19 @@ class DataObject(abc.ABC):
         else:
             raise TypeError
 
-    def __add__(self, other):
+    def __add__(self, other) -> 'DataObjectCollection':
         """ADD-ing DataObjects together renders a DataObjectCollection."""
         if isinstance(other, DataObject):
             # DataObject + DataObject = DataObjectCollectin
             return DataObjectCollection(None, members=[self, other])
+        else:
+            raise TypeError
 
-    def _compute_tag(self):
+    def _compute_tag(self) -> int:
         """Compute the tag (sometimes the tag encodes part of the value)."""
         return self.tag
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """Return a dict in form "name: decoded_value" """
         return {self.name: self.decoded}
 
@@ -1219,13 +1221,13 @@ class DataObject(abc.ABC):
         """
 
     @abc.abstractmethod
-    def to_bytes(self):
+    def to_bytes(self) -> bytes:
         """Encode the internal state of this instance into the TLV value part.
         Returns:
             binary bytes encoding the internal state
         """
 
-    def from_tlv(self, do:bytes):
+    def from_tlv(self, do:bytes) -> bytes:
         """Parse binary TLV representation into internal state.  The resulting decoded
         representation is _not_ returned, but just internalized in the object instance!
         Args:
@@ -1241,7 +1243,7 @@ class DataObject(abc.ABC):
         # return remaining bytes
         return do[2+length:]
 
-    def to_tlv(self):
+    def to_tlv(self) -> bytes:
         """Encode internal representation to binary TLV.
         Returns:
             bytes encoded in TLV format.
@@ -1250,7 +1252,7 @@ class DataObject(abc.ABC):
         return bytes(self._compute_tag()) + bytes(len(val)) + val
 
     # 'codec' interface
-    def decode(self, binary:bytes):
+    def decode(self, binary:bytes) -> Tuple[dict, bytes]:
         """Decode a single DOs from the input data.
         Args:
             binary : binary bytes of encoded data
@@ -1265,12 +1267,12 @@ class DataObject(abc.ABC):
         return (self.to_dict(), remainder)
 
     # 'codec' interface
-    def encode(self):
+    def encode(self) -> bytes:
         return self.to_tlv()
 
 class TL0_DataObject(DataObject):
     """Data Object that has Tag, Len=0 and no Value part."""
-    def __init__(self, name, desc, tag, val=None):
+    def __init__(self, name:str, desc:str, tag:int, val=None):
         super().__init__(name, desc, tag)
         self.val = val
 
@@ -1279,7 +1281,7 @@ class TL0_DataObject(DataObject):
             raise ValueError
         self.decoded = self.val
 
-    def to_bytes(self):
+    def to_bytes(self) -> bytes:
         return b''
 
 
@@ -1287,7 +1289,7 @@ class DataObjectCollection:
     """A DataObjectCollection consits of multiple Data Objects identified by their tags.
     A given encoded DO may contain any of them in any order, and may contain multiple instances
     of each DO."""
-    def __init__(self, name, desc = None, members=None):
+    def __init__(self, name:str, desc:str = None, members=None):
         self.name = name
         self.desc = desc
         self.members = members or []
@@ -1296,15 +1298,15 @@ class DataObjectCollection:
         self.members_by_tag = { m.tag:m for m in members }
         self.members_by_name = { m.name:m for m in members }
 
-    def __str__(self):
+    def __str__(self) -> str:
         member_strs = [str(x) for x in self.members]
         return '%s(%s)' % (self.name, ','.join(member_strs))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         member_strs = [repr(x) for x in self.members]
         return '%s(%s)' % (self.__class__, ','.join(member_strs))
 
-    def __add__(self, other):
+    def __add__(self, other) -> 'DataObjectCollection':
         """Extending DataCollections with other DataCollections or DataObjects."""
         if isinstance(other, DataObjectCollection):
             # adding one collection to another
@@ -1317,7 +1319,7 @@ class DataObjectCollection:
             raise TypeError
 
     # 'codec' interface
-    def decode(self, binary:bytes):
+    def decode(self, binary:bytes) -> Tuple[List, bytes]:
         """Decode any number of DOs from the collection until the end of the input data,
         or uninitialized memory (0xFF) is found.
         Args:
@@ -1343,7 +1345,7 @@ class DataObjectCollection:
         return (res, remainder)
 
     # 'codec' interface
-    def encode(self, decoded):
+    def encode(self, decoded) -> bytes:
         res = bytearray()
         for i in decoded:
             obj = self.members_by_name(i[0])
@@ -1358,7 +1360,7 @@ class DataObjectChoice(DataObjectCollection):
         """We overload the add operator here to avoid inheriting it from DataObjecCollection."""
         raise TypeError
 
-    def __or__(self, other):
+    def __or__(self, other) -> 'DataObjectChoice':
         """OR-ing a Choice to another choice extends the choice, as does OR-ing a DataObject."""
         if isinstance(other, DataObjectChoice):
             # adding one collection to another
@@ -1371,7 +1373,7 @@ class DataObjectChoice(DataObjectCollection):
             raise TypeError
 
     # 'codec' interface
-    def decode(self, binary:bytes):
+    def decode(self, binary:bytes) -> Tuple[dict, bytes]:
         """Decode a single DOs from the choice based on the tag.
         Args:
             binary : binary bytes of encoded data
@@ -1389,7 +1391,7 @@ class DataObjectChoice(DataObjectCollection):
         return (obj.to_dict(), remainder)
 
     # 'codec' interface
-    def encode(self, decoded):
+    def encode(self, decoded) -> bytes:
         obj = self.members_by_name(decoded[0])
         return obj.to_tlv()
 
@@ -1398,20 +1400,20 @@ class DataObjectSequence:
        ordered sequence of DOs or choices of DOs that have to appear as per the specification.
        By wrapping them into this formal DataObjectSequence, we can offer convenience methods
        for encoding or decoding an entire sequence."""
-    def __init__(self, name, desc=None, sequence=None):
+    def __init__(self, name:str, desc:str=None, sequence=None):
         self.sequence = sequence or []
         self.name = name
         self.desc = desc
 
-    def __str__(self):
+    def __str__(self) -> str:
         member_strs = [str(x) for x in self.sequence]
         return '%s(%s)' % (self.name, ','.join(member_strs))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         member_strs = [repr(x) for x in self.sequence]
         return '%s(%s)' % (self.__class__, ','.join(member_strs))
 
-    def __add__(self, other):
+    def __add__(self, other) -> 'DataObjectSequence':
         """Add (append) a DataObject or DataObjectChoice to the sequence."""
         if isinstance(other, 'DataObject'):
                 return DataObjectSequence(self.name, self.desc, self.sequence + [other])
@@ -1421,7 +1423,7 @@ class DataObjectSequence:
                 return DataObjectSequence(self.name, self.desc, self.sequence + other.sequence)
 
     # 'codec' interface
-    def decode(self, binary:bytes):
+    def decode(self, binary:bytes) -> Tuple[list, bytes]:
         """Decode a sequence by calling the decoder of each element in the sequence.
         Args:
             binary : binary bytes of encoded data
@@ -1437,7 +1439,7 @@ class DataObjectSequence:
         return (res, remainder)
 
     # 'codec' interface
-    def decode_multi(self, do:bytes):
+    def decode_multi(self, do:bytes) -> Tuple[list, bytes]:
         """Decode multiple occurrences of the sequence from the binary input data.
         Args:
             do : binary input data to be decoded
@@ -1458,7 +1460,7 @@ class DataObjectSequence:
         return (res, remainder)
 
     # 'codec' interface
-    def encode(self, decoded):
+    def encode(self, decoded) -> bytes:
         """Encode a sequence by calling the encoder of each element in the sequence."""
         encoded = bytearray()
         i = 0
