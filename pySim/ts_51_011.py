@@ -325,6 +325,7 @@ EF_SST_map = {
 
 from pySim.utils import *
 from pySim.tlv import *
+from typing import Tuple
 from struct import pack, unpack
 from construct import *
 from construct import Optional as COptional
@@ -528,7 +529,7 @@ class EF_ServiceTable(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self.table = table
     @staticmethod
-    def _bit_byte_offset_for_service(service:int) -> (int, int):
+    def _bit_byte_offset_for_service(service:int) -> Tuple[int, int]:
         i = service - 1
         byte_offset = i//4
         bit_offset = (i % 4) * 2
