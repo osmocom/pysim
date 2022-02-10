@@ -532,7 +532,7 @@ class TransparentEF(CardEF):
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
         elif self._tlv:
-            t = self._tlv()
+            t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_tlv(raw_bin_data)
             return t.to_dict()
         return {'raw': raw_bin_data.hex()}
@@ -559,7 +559,7 @@ class TransparentEF(CardEF):
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
         elif self._tlv:
-            t = self._tlv()
+            t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_tlv(raw_bin_data)
             return t.to_dict()
         return {'raw': raw_bin_data.hex()}
@@ -585,7 +585,7 @@ class TransparentEF(CardEF):
         if self._construct:
             return self._construct.build(abstract_data)
         elif self._tlv:
-            t = self._tlv()
+            t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return t.to_tlv()
         raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
@@ -612,7 +612,7 @@ class TransparentEF(CardEF):
         if self._construct:
             return b2h(self._construct.build(abstract_data))
         elif self._tlv:
-            t = self._tlv()
+            t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return b2h(t.to_tlv())
         raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
@@ -771,7 +771,7 @@ class LinFixedEF(CardEF):
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
         elif self._tlv:
-            t = self._tlv()
+            t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_tlv(raw_bin_data)
             return t.to_dict()
         return {'raw': raw_bin_data.hex()}
@@ -798,7 +798,7 @@ class LinFixedEF(CardEF):
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
         elif self._tlv:
-            t = self._tlv()
+            t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_tlv(raw_bin_data)
             return t.to_dict()
         return {'raw': raw_hex_data}
@@ -825,7 +825,7 @@ class LinFixedEF(CardEF):
         if self._construct:
             return b2h(self._construct.build(abstract_data))
         elif self._tlv:
-            t = self._tlv()
+            t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return b2h(t.to_tlv())
         raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
@@ -851,7 +851,7 @@ class LinFixedEF(CardEF):
         if self._construct:
             return self._construct.build(abstract_data)
         elif self._tlv:
-            t = self._tlv()
+            t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return t.to_tlv()
         raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
@@ -909,7 +909,7 @@ class TransRecEF(TransparentEF):
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
         elif self._tlv:
-            t = self._tlv()
+            t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_tlv(raw_bin_data)
             return t.to_dict()
         return {'raw': raw_hex_data}
@@ -936,7 +936,7 @@ class TransRecEF(TransparentEF):
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
         elif self._tlv:
-            t = self._tlv()
+            t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_tlv(raw_bin_data)
             return t.to_dict()
         return {'raw': raw_hex_data}
@@ -962,7 +962,7 @@ class TransRecEF(TransparentEF):
         if self._construct:
             return b2h(filter_dict(self._construct.build(abstract_data)))
         elif self._tlv:
-            t = self._tlv()
+            t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return b2h(t.to_tlv())
         raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
@@ -988,7 +988,7 @@ class TransRecEF(TransparentEF):
         if self._construct:
             return filter_dict(self._construct.build(abstract_data))
         elif self._tlv:
-            t = self._tlv()
+            t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return t.to_tlv()
         raise NotImplementedError("%s encoder not yet implemented. Patches welcome." % self)
