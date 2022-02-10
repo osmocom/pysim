@@ -22,10 +22,12 @@ from construct import *
 from pySim.construct import *
 from pySim.utils import *
 from pySim.filesystem import *
+from pySim.tlv import *
 from bidict import bidict
 from pySim.profile import CardProfile
 from pySim.profile import match_uicc
 from pySim.profile import match_sim
+import pySim.iso7816_4 as iso7816_4
 
 # A UICC will usually also support 2G functionality. If this is the case, we
 # need to add DF_GSM and DF_TELECOM along with the UICC related files
@@ -502,18 +504,22 @@ SC_DO = DataObjectChoice('security_condition', 'Security Condition',
 
 # TS 102 221 Section 13.1
 class EF_DIR(LinFixedEF):
+    class ApplicationLabel(BER_TLV_IE, tag=0x50):
+        # TODO: UCS-2 coding option as per Annex A of TS 102 221
+        _construct = GreedyString('ascii')
+
+    # see https://github.com/PyCQA/pylint/issues/5794
+    #pylint: disable=undefined-variable
+    class ApplicationTemplate(BER_TLV_IE, tag=0x61,
+                              nested=[iso7816_4.ApplicationId, ApplicationLabel, iso7816_4.FileReference,
+                                      iso7816_4.CommandApdu, iso7816_4.DiscretionaryData,
+                                      iso7816_4.DiscretionaryTemplate, iso7816_4.URL,
+                                      iso7816_4.ApplicationRelatedDOSet]):
+        pass
+
     def __init__(self, fid='2f00', sfid=0x1e, name='EF.DIR', desc='Application Directory'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len={5,54})
-
-    def _decode_record_hex(self, raw_hex_data):
-        raw_hex_data = raw_hex_data.upper()
-        atempl_base_tlv = TLV(['61'])
-        atempl_base = atempl_base_tlv.parse(raw_hex_data)
-        atempl_TLV_MAP = {'4F': 'aid_value', 50:'label'}
-        atempl_tlv = TLV(atempl_TLV_MAP)
-        atempl = atempl_tlv.parse(atempl_base['61'])
-        # FIXME: "All other Dos are according to ISO/IEC 7816-4"
-        return tlv_key_replace(atempl_TLV_MAP, atempl)
+        self._tlv = EF_DIR.ApplicationTemplate
 
 # TS 102 221 Section 13.2
 class EF_ICCID(TransparentEF):
