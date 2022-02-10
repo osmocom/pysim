@@ -335,7 +335,7 @@ class EF_5GS3GPPNSC(LinFixedEF):
     def __init__(self, fid="4f03", sfid=0x03, name='EF.5GS3GPPNSC', rec_len={57, None},
         desc='5GS 3GPP Access NAS Security Context'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
-        self._tlv = EF_5GS3GPPNSC.FiveGSNasSecurityContext()
+        self._tlv = EF_5GS3GPPNSC.FiveGSNasSecurityContext
 
 # 3GPP TS 31.102 Section 4.4.11.6
 class EF_5GAUTHKEYS(TransparentEF):
@@ -351,7 +351,7 @@ class EF_5GAUTHKEYS(TransparentEF):
     def __init__(self, fid='4f05', sfid=0x05, name='EF.5GAUTHKEYS', size={68, None},
             desc='5G authentication keys'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
-        self._tlv = EF_5GAUTHKEYS.FiveGAuthKeys()
+        self._tlv = EF_5GAUTHKEYS.FiveGAuthKeys
 
 # 3GPP TS 31.102 Section 4.4.11.8
 class ProtSchemeIdList(BER_TLV_IE, tag=0xa0):
