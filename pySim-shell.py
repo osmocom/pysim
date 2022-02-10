@@ -457,7 +457,7 @@ class PySimCommands(CommandSet):
         self._cmd.poutput(directory_str)
         self._cmd.poutput("%d files" % len(selectables))
 
-    def walk(self, indent=0, action=None, context=None):
+    def walk(self, indent=0, action=None, context=None, as_json=False):
         """Recursively walk through the file system, starting at the currently selected DF"""
         files = self._cmd.rs.selected_file.get_selectables(
             flags=['FNAMES', 'ANAMES'])
@@ -489,12 +489,12 @@ class PySimCommands(CommandSet):
                 # If the DF was skipped, we never have entered the directory
                 # below, so we must not move up.
                 if skip_df == False:
-                    self.walk(indent + 1, action, context)
+                    self.walk(indent + 1, action, context, as_json)
                     fcp_dec = self._cmd.rs.select("..", self._cmd)
 
             elif action:
                 df_before_action = self._cmd.rs.selected_file
-                action(f, context)
+                action(f, context, as_json)
                 # When walking through the file system tree the action must not
                 # always restore the currently selected file to the file that
                 # was selected before executing the action() callback.
@@ -506,7 +506,7 @@ class PySimCommands(CommandSet):
         """Display a filesystem-tree with all selectable files"""
         self.walk()
 
-    def export(self, filename, context):
+    def export(self, filename, context, as_json=False):
         """ Select and export a single file """
         context['COUNT'] += 1
         df = self._cmd.rs.selected_file
@@ -537,23 +537,36 @@ class PySimCommands(CommandSet):
             self._cmd.poutput("select " + self._cmd.rs.selected_file.name)
 
             if structure == 'transparent':
-                result = self._cmd.rs.read_binary()
-                self._cmd.poutput("update_binary " + str(result[0]))
+                if as_json:
+                    result = self._cmd.rs.read_binary_dec()
+                    self._cmd.poutput("update_binary_decoded '%s'" % json.dumps(result[0], cls=JsonEncoder))
+                else:
+                    result = self._cmd.rs.read_binary()
+                    self._cmd.poutput("update_binary " + str(result[0]))
             elif structure == 'cyclic' or structure == 'linear_fixed':
                 # Use number of records specified in select response
                 if 'num_of_rec' in fd:
                     num_of_rec = fd['num_of_rec']
                     for r in range(1, num_of_rec + 1):
-                        result = self._cmd.rs.read_record(r)
-                        self._cmd.poutput("update_record %d %s" %
-                                          (r, str(result[0])))
+                        if as_json:
+                            result = self._cmd.rs.read_record_dec(r)
+                            self._cmd.poutput("update_record_decoded %d '%s'" % (r, json.dumps(result[0], cls=JsonEncoder)))
+                        else:
+                            result = self._cmd.rs.read_record(r)
+                            self._cmd.poutput("update_record %d %s" % (r, str(result[0])))
+
                 # When the select response does not return the number of records, read until we hit the
                 # first record that cannot be read.
                 else:
                     r = 1
                     while True:
                         try:
-                            result = self._cmd.rs.read_record(r)
+                            if as_json:
+                                result = self._cmd.rs.read_record_dec(r)
+                                self._cmd.poutput("update_record_decoded %d '%s'" % (r, json.dumps(result[0], cls=JsonEncoder)))
+                            else:
+                                result = self._cmd.rs.read_record(r)
+                                self._cmd.poutput("update_record %d %s" % (r, str(result[0])))
                         except SwMatchError as e:
                             # We are past the last valid record - stop
                             if e.sw_actual == "9402":
@@ -561,8 +574,6 @@ class PySimCommands(CommandSet):
                             # Some other problem occurred
                             else:
                                 raise e
-                        self._cmd.poutput("update_record %d %s" %
-                                          (r, str(result[0])))
                         r = r + 1
             elif structure == 'ber_tlv':
                 tags = self._cmd.rs.retrieve_tags()
@@ -591,6 +602,8 @@ class PySimCommands(CommandSet):
     export_parser = argparse.ArgumentParser()
     export_parser.add_argument(
         '--filename', type=str, default=None, help='only export specific file')
+    export_parser.add_argument(
+        '--json', action='store_true', help='export as JSON (less reliable)')
 
     @cmd2.with_argparser(export_parser)
     def do_export(self, opts):
@@ -598,9 +611,9 @@ class PySimCommands(CommandSet):
         context = {'ERR': 0, 'COUNT': 0, 'BAD': [],
                    'DF_SKIP': 0, 'DF_SKIP_REASON': []}
         if opts.filename:
-            self.export(opts.filename, context)
+            self.export(opts.filename, context, opts.json)
         else:
-            self.walk(0, self.export, context)
+            self.walk(0, self.export, context, opts.json)
 
         self._cmd.poutput(boxed_heading_str("Export summary"))
 
