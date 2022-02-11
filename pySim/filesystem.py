@@ -34,7 +34,7 @@ import cmd2
 from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 
-from typing import cast, Optional, Iterable, List, Dict, Tuple
+from typing import cast, Optional, Iterable, List, Dict, Tuple, Union
 
 from smartcard.util import toBytes
 
@@ -44,6 +44,10 @@ from pySim.exceptions import *
 from pySim.jsonpath import js_path_find, js_path_modify
 from pySim.commands import SimCardCommands
 
+# int: a single service is associated with this file
+# list: any of the listed services requires this file
+# tuple: logical-and of the listed services requires this file
+CardFileService = Union[int, List[int], Tuple[int, ...]]
 
 class CardFile(object):
     """Base class for all objects in the smart card filesystem.
@@ -53,7 +57,8 @@ class CardFile(object):
     RESERVED_FIDS = ['3f00']
 
     def __init__(self, fid: str = None, sfid: str = None, name: str = None, desc: str = None,
-                 parent: Optional['CardDF'] = None, profile: Optional['CardProfile'] = None):
+                 parent: Optional['CardDF'] = None, profile: Optional['CardProfile'] = None,
+                 service: Optional[CardFileService] = None):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -62,6 +67,7 @@ class CardFile(object):
             desc : Description of the file
             parent : Parent CardFile object within filesystem hierarchy
             profile : Card profile that this file should be part of
+            service : Service (SST/UST/IST) associated with the file
         """
         if not isinstance(self, CardADF) and fid == None:
             raise ValueError("fid is mandatory")
@@ -75,6 +81,7 @@ class CardFile(object):
         if self.parent and self.parent != self and self.fid:
             self.parent.add_file(self)
         self.profile = profile
+        self.service = service
         self.shell_commands = []  # type: List[CommandSet]
 
         # Note: the basic properties (fid, name, ect.) are verified when
@@ -207,6 +214,28 @@ class CardFile(object):
             return self.parent.get_profile()
         return None
 
+    def should_exist_for_services(self, services: List[int]):
+        """Assuming the provided list of activated services, should this file exist and be activated?."""
+        if self.service is None:
+            return None
+        elif isinstance(self.service, int):
+            # a single service determines the result
+            return self.service in services
+        elif isinstance(self.service, list):
+            # any of the services active -> true
+            for s in self.service:
+                if s in services:
+                    return True
+            return False
+        elif isinstance(self.service, tuple):
+            # all of the services active -> true
+            for s in self.service:
+                if not s in services:
+                    return False
+            return True
+        else:
+            raise ValueError("self.service must be either int or list or tuple")
+
 
 class CardDF(CardFile):
     """DF (Dedicated File) in the smart card filesystem.  Those are basically sub-directories."""
@@ -223,9 +252,26 @@ class CardDF(CardFile):
         super().__init__(**kwargs)
         self.children = dict()
         self.shell_commands = [self.ShellCommands()]
+        # dict of CardFile affected by service(int), indexed by service
+        self.files_by_service = {}
 
     def __str__(self):
         return "DF(%s)" % (super().__str__())
+
+    def _add_file_services(self, child):
+        """Add a child (DF/EF) to the files_by_services of the parent."""
+        if not child.service:
+            return
+        if isinstance(child.service, int):
+            self.files_by_service.setdefault(child.service, []).append(child)
+        elif isinstance(child.service, list):
+            for service in child.service:
+                self.files_by_service.setdefault(service, []).append(child)
+        elif isinstance(child.service, tuple):
+            for service in child.service:
+                self.files_by_service.setdefault(service, []).append(child)
+        else:
+            raise ValueError
 
     def add_file(self, child: CardFile, ignore_existing: bool = False):
         """Add a child (DF/EF) to this DF.
@@ -256,6 +302,7 @@ class CardDF(CardFile):
                 "File with given name %s already exists in %s" % (child.name, self))
         self.children[child.fid] = child
         child.parent = self
+        self._add_file_services(child)
 
     def add_files(self, children: Iterable[CardFile], ignore_existing: bool = False):
         """Add a list of child (DF/EF) to this DF
@@ -519,7 +566,7 @@ class TransparentEF(CardEF):
                         self._cmd.poutput_json(data)
 
     def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None, parent: CardDF = None,
-                 size={1, None}):
+                 size={1, None}, **kwargs):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -529,7 +576,7 @@ class TransparentEF(CardEF):
             parent : Parent CardFile object within filesystem hierarchy
             size : tuple of (minimum_size, recommended_size)
         """
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent)
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, **kwargs)
         self._construct = None
         self._tlv = None
         self.size = size
@@ -654,8 +701,8 @@ class LinFixedEF(CardEF):
     class ShellCommands(CommandSet):
         """Shell commands specific for Linear Fixed EFs."""
 
-        def __init__(self):
-            super().__init__()
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
 
         read_rec_parser = argparse.ArgumentParser()
         read_rec_parser.add_argument(
@@ -777,7 +824,7 @@ class LinFixedEF(CardEF):
                         self._cmd.poutput_json(data)
 
     def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None,
-                 parent: Optional[CardDF] = None, rec_len={1, None}):
+                 parent: Optional[CardDF] = None, rec_len={1, None}, **kwargs):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -787,7 +834,7 @@ class LinFixedEF(CardEF):
             parent : Parent CardFile object within filesystem hierarchy
             rec_len : set of {minimum_length, recommended_length}
         """
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent)
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, **kwargs)
         self.rec_len = rec_len
         self.shell_commands = [self.ShellCommands()]
         self._construct = None
@@ -908,9 +955,8 @@ class CyclicEF(LinFixedEF):
     # we don't really have any special support for those; just recycling LinFixedEF here
 
     def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None, parent: CardDF = None,
-                 rec_len={1, None}):
-        super().__init__(fid=fid, sfid=sfid, name=name,
-                         desc=desc, parent=parent, rec_len=rec_len)
+                 rec_len={1, None}, **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, rec_len=rec_len, **kwargs)
 
 
 class TransRecEF(TransparentEF):
@@ -924,7 +970,7 @@ class TransRecEF(TransparentEF):
     """
 
     def __init__(self, fid: str, rec_len: int, sfid: str = None, name: str = None, desc: str = None,
-                 parent: Optional[CardDF] = None, size={1, None}):
+                 parent: Optional[CardDF] = None, size={1, None}, **kwargs):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -935,7 +981,7 @@ class TransRecEF(TransparentEF):
             rec_len : Length of the fixed-length records within transparent EF
             size : tuple of (minimum_size, recommended_size)
         """
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, size=size)
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, size=size, **kwargs)
         self.rec_len = rec_len
 
     def decode_record_hex(self, raw_hex_data: str) -> dict:
@@ -1112,7 +1158,7 @@ class BerTlvEF(CardEF):
                 self._cmd.poutput(data)
 
     def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None, parent: CardDF = None,
-                 size={1, None}):
+                 size={1, None}, **kwargs):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -1122,7 +1168,7 @@ class BerTlvEF(CardEF):
             parent : Parent CardFile object within filesystem hierarchy
             size : tuple of (minimum_size, recommended_size)
         """
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent)
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, **kwargs)
         self._construct = None
         self.size = size
         self.shell_commands = [self.ShellCommands()]
