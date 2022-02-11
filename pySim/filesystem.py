@@ -363,7 +363,7 @@ class CardMF(CardDF):
                 {x.name: x for x in self.applications.values() if x.name})
         return sels
 
-    def decode_select_response(self, data_hex: str) -> object:
+    def decode_select_response(self, data_hex: Optional[str]) -> object:
         """Decode the response to a SELECT command.
 
         This is the fall-back method which automatically defers to the standard decoding
@@ -371,6 +371,9 @@ class CardMF(CardDF):
         performed. Specific derived classes (usually ADF) can overload this method to
         install specific decoding.
         """
+
+        if not data_hex:
+            return data_hex
 
         profile = self.get_profile()
 
