@@ -404,3 +404,30 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
 
     def to_tlv(self):
         return self.to_bytes()
+
+
+def flatten_dict_lists(inp):
+    """hierarchically flatten each list-of-dicts into a single dict. This is useful to
+       make the output of hierarchical TLV decoder structures flatter and more easy to read."""
+    def are_all_elements_dict(l):
+        for e in l:
+            if not isinstance(e, dict):
+                return False
+        return True
+
+    if isinstance(inp, list):
+        if are_all_elements_dict(inp):
+            # flatten into one shared dict
+            newdict = {}
+            for e in inp:
+                key = list(e.keys())[0]
+                newdict[key] = e[key]
+            inp = newdict
+            # process result as any native dict
+            return {k:flatten_dict_lists(inp[k]) for k in inp.keys()}
+        else:
+            return [flatten_dict_lists(x) for x in inp]
+    elif isinstance(inp, dict):
+        return {k:flatten_dict_lists(inp[k]) for k in inp.keys()}
+    else:
+        return inp
