@@ -232,6 +232,8 @@ class TLV_IE(IE):
         return self._encode_tag() + self._encode_len(val) + val
 
     def from_tlv(self, do: bytes):
+        if len(do) == 0:
+            return {}, b''
         (rawtag, remainder) = self.__class__._parse_tag_raw(do)
         if rawtag:
             if rawtag != self.tag:
