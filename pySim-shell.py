@@ -673,6 +673,17 @@ class PySimCommands(CommandSet):
         else:
             raise ValueError("error: cannot authenticate, no adm-pin!")
 
+    apdu_cmd_parser = argparse.ArgumentParser()
+    apdu_cmd_parser.add_argument('APDU', type=str, help='APDU as hex string')
+
+    @cmd2.with_argparser(apdu_cmd_parser)
+    def do_apdu(self, opts):
+        """Send a raw APDU to the card, and print SW + Response.
+        DANGEROUS: pySim-shell will not know any card state changes, and
+        not continue to work as expected if you e.g. select a different file."""
+        data, sw = self._cmd.card._scc._tp.send_apdu(opts.APDU)
+        self._cmd.poutput("SW: %s %s, RESP: %s" % (sw, self._cmd.rs.interpret_sw(sw), data))
+
 
 @with_default_category('ISO7816 Commands')
 class Iso7816Commands(CommandSet):
