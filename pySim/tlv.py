@@ -31,7 +31,11 @@ from pySim.exceptions import *
 
 import inspect
 import abc
+import re
 
+def camel_to_snake(name):
+    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
 class TlvMeta(abc.ABCMeta):
     """Metaclass which we use to set some class variables at the time of defining a subclass.
@@ -148,7 +152,7 @@ class IE(Transcodable, metaclass=TlvMeta):
             v = [x.to_dict() for x in self.children]
         else:
             v = self.decoded
-        return {type(self).__name__: v}
+        return {camel_to_snake(type(self).__name__): v}
 
     def from_dict(self, decoded: dict):
         """Set the IE internal decoded representation to data from the argument.
