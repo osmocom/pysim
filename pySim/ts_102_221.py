@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pytlv.TLV import *
 from construct import *
 from pySim.construct import *
 from pySim.utils import *
@@ -78,131 +77,159 @@ ts_102_22x_cmdset = CardCommandSet('TS 102 22x', [
     CardCommand('RESIZE FILE',              0xD4, ['8X', 'CX']),
 ])
 
+# ETSI TS 102 221 11.1.1.4.2
+class FileSize(BER_TLV_IE, tag=0x80):
+    _construct = GreedyInteger()
 
-FCP_TLV_MAP = {
-    '82': 'file_descriptor',
-    '83': 'file_identifier',
-    '84': 'df_name',
-    'A5': 'proprietary_info',
-    '8A': 'life_cycle_status_int',
-    '8B': 'security_attrib_ref_expanded',
-    '8C': 'security_attrib_compact',
-    'AB': 'security_attrib_espanded',
-    'C6': 'pin_status_template_do',
-    '80': 'file_size',
-    '81': 'total_file_size',
-    '88': 'short_file_id',
-}
-
-# ETSI TS 102 221 11.1.1.4.6
-FCP_Proprietary_TLV_MAP = {
-    '80': 'uicc_characteristics',
-    '81': 'application_power_consumption',
-    '82': 'minimum_app_clock_freq',
-    '83': 'available_memory',
-    '84': 'file_details',
-    '85': 'reserved_file_size',
-    '86': 'maximum_file_size',
-    '87': 'suported_system_commands',
-    '88': 'specific_uicc_env_cond',
-    '89': 'p2p_cat_secured_apdu',
-    # Additional private TLV objects (bits b7 and b8 of the first byte of the tag set to '1')
-}
+# ETSI TS 102 221 11.1.1.4.2
+class TotalFileSize(BER_TLV_IE, tag=0x81):
+    _construct = GreedyInteger()
 
 # ETSI TS 102 221 11.1.1.4.3
+class FileDescriptor(BER_TLV_IE, tag=0x82):
+    def _from_bytes(self, in_bin: bytes):
+        out = {}
+        ft_dict = {
+            0: 'working_ef',
+            1: 'internal_ef',
+            7: 'df'
+        }
+        fs_dict = {
+            0: 'no_info_given',
+            1: 'transparent',
+            2: 'linear_fixed',
+            6: 'cyclic',
+            0x39: 'ber_tlv',
+        }
+        fdb = in_bin[0]
+        ftype = (fdb >> 3) & 7
+        if fdb & 0xbf == 0x39:
+            fstruct = 0x39
+        else:
+            fstruct = fdb & 7
+        out['shareable'] = True if fdb & 0x40 else False
+        out['file_type'] = ft_dict[ftype] if ftype in ft_dict else ftype
+        out['structure'] = fs_dict[fstruct] if fstruct in fs_dict else fstruct
+        if len(in_bin) >= 5:
+            out['record_len'] = int.from_bytes(in_bin[2:4], 'big')
+            out['num_of_rec'] = int.from_bytes(in_bin[4:5], 'big')
+        self.decoded = out
+        return self.decoded
 
+# ETSI TS 102 221 11.1.1.4.4
+class FileIdentifier(BER_TLV_IE, tag=0x83):
+    _construct = GreedyBytes
 
-def interpret_file_descriptor(in_hex):
-    in_bin = h2b(in_hex)
-    out = {}
-    ft_dict = {
-        0: 'working_ef',
-        1: 'internal_ef',
-        7: 'df'
-    }
-    fs_dict = {
-        0: 'no_info_given',
-        1: 'transparent',
-        2: 'linear_fixed',
-        6: 'cyclic',
-        0x39: 'ber_tlv',
-    }
-    fdb = in_bin[0]
-    ftype = (fdb >> 3) & 7
-    if fdb & 0xbf == 0x39:
-        fstruct = 0x39
-    else:
-        fstruct = fdb & 7
-    out['shareable'] = True if fdb & 0x40 else False
-    out['file_type'] = ft_dict[ftype] if ftype in ft_dict else ftype
-    out['structure'] = fs_dict[fstruct] if fstruct in fs_dict else fstruct
-    if len(in_bin) >= 5:
-        out['record_len'] = int.from_bytes(in_bin[2:4], 'big')
-        out['num_of_rec'] = int.from_bytes(in_bin[4:5], 'big')
-    return out
+# ETSI TS 102 221 11.1.1.4.5
+class DfName(BER_TLV_IE, tag=0x84):
+    _construct = GreedyBytes
+
+# ETSI TS 102 221 11.1.1.4.6.1
+class UiccCharacteristics(BER_TLV_IE, tag=0x80):
+    _construct = GreedyBytes
+
+# ETSI TS 102 221 11.1.1.4.6.2
+class ApplicationPowerConsumption(BER_TLV_IE, tag=0x81):
+    _construct = Struct('voltage_class'/Int8ub,
+                        'power_consumption_ma'/Int8ub,
+                        'reference_freq_100k'/Int8ub)
+
+# ETSI TS 102 221 11.1.1.4.6.3
+class MinApplicationClockFrequency(BER_TLV_IE, tag=0x82):
+    _construct = Int8ub
+
+# ETSI TS 102 221 11.1.1.4.6.4
+class AvailableMemory(BER_TLV_IE, tag=0x83):
+    _construct = GreedyInteger()
+
+# ETSI TS 102 221 11.1.1.4.6.5
+class FileDetails(BER_TLV_IE, tag=0x84):
+    _construct = FlagsEnum(Byte, der_coding_only=1)
+
+# ETSI TS 102 221 11.1.1.4.6.6
+class ReservedFileSize(BER_TLV_IE, tag=0x85):
+    _construct = GreedyInteger()
+
+# ETSI TS 102 221 11.1.1.4.6.7
+class MaximumFileSize(BER_TLV_IE, tag=0x86):
+    _construct = GreedyInteger()
+
+# ETSI TS 102 221 11.1.1.4.6.8
+class SupportedFilesystemCommands(BER_TLV_IE, tag=0x87):
+    _construct = FlagsEnum(Byte, terminal_capability=1)
+
+# ETSI TS 102 221 11.1.1.4.6.9
+class SpecificUiccEnvironmentConditions(BER_TLV_IE, tag=0x88):
+    _construct = BitStruct('rfu'/BitsRFU(4),
+                           'high_humidity_supported'/Flag,
+                           'temperature_class'/Enum(BitsInteger(3), standard=0, class_A=1, class_B=2, class_C=3))
+
+# ETSI TS 102 221 11.1.1.4.6.10
+class Platform2PlatformCatSecuredApdu(BER_TLV_IE, tag=0x89):
+    _construct = GreedyBytes
+
+# ETSI TS 102 221 11.1.1.4.6.0
+class ProprietaryInformation(BER_TLV_IE, tag=0xA5,
+                             nested=[UiccCharacteristics, ApplicationPowerConsumption,
+                                     MinApplicationClockFrequency, AvailableMemory,
+                                     FileDetails, ReservedFileSize, MaximumFileSize,
+                                     SupportedFilesystemCommands, SpecificUiccEnvironmentConditions]):
+    pass
+
+# ETSI TS 102 221 11.1.1.4.7.1
+class SecurityAttribCompact(BER_TLV_IE, tag=0x8c):
+    _construct = GreedyBytes
+
+# ETSI TS 102 221 11.1.1.4.7.2
+class SecurityAttribExpanded(BER_TLV_IE, tag=0xab):
+    _construct = GreedyBytes
+
+# ETSI TS 102 221 11.1.1.4.7.3
+class SecurityAttribReferenced(BER_TLV_IE, tag=0x8b):
+    # TODO: longer format with SEID
+    _construct = Struct('ef_arr_file_id'/Bytes(2), 'ef_arr_record_nr'/Int8ub)
+
+# ETSI TS 102 221 11.1.1.4.8
+class ShortFileIdentifier(BER_TLV_IE, tag=0x88):
+    _construct = Byte
 
 # ETSI TS 102 221 11.1.1.4.9
+class LifeCycleStatusInteger(BER_TLV_IE, tag=0x8A):
+    def _from_bytes(self, do: bytes):
+        lcsi = int.from_bytes(do, 'big')
+        if lcsi == 0x00:
+            ret = 'no_information'
+        elif lcsi == 0x01:
+            ret = 'creation'
+        elif lcsi == 0x03:
+            ret = 'initialization'
+        elif lcsi & 0x05 == 0x05:
+            ret = 'operational_activated'
+        elif lcsi & 0x05 == 0x04:
+            ret = 'operational_deactivated'
+        elif lcsi & 0xc0 == 0xc0:
+            ret = 'termination'
+        else:
+            ret = lcsi
+        self.decoded = ret
+        return self.decoded
 
+# ETSI TS 102 221 11.1.1.4.9
+class PS_DO(BER_TLV_IE, tag=0x90):
+    _construct = GreedyBytes
+class UsageQualifier_DO(BER_TLV_IE, tag=0x95):
+    _construct = GreedyBytes
+class KeyReference(BER_TLV_IE, tag=0x83):
+    _construct = Byte
+class PinStatusTemplate_DO(BER_TLV_IE, tag=0xC6, nested=[PS_DO, UsageQualifier_DO, KeyReference]):
+    pass
 
-def interpret_life_cycle_sts_int(in_hex):
-    lcsi = int(in_hex, 16)
-    if lcsi == 0x00:
-        return 'no_information'
-    elif lcsi == 0x01:
-        return 'creation'
-    elif lcsi == 0x03:
-        return 'initialization'
-    elif lcsi & 0x05 == 0x05:
-        return 'operational_activated'
-    elif lcsi & 0x05 == 0x04:
-        return 'operational_deactivated'
-    elif lcsi & 0xc0 == 0xc0:
-        return 'termination'
-    else:
-        return in_hex
-
-
-# ETSI TS 102 221 11.1.1.4.10
-FCP_Pin_Status_TLV_MAP = {
-    '90': 'ps_do',
-    '95': 'usage_qualifier',
-    '83': 'key_reference',
-}
-
-
-def interpret_ps_templ_do(in_hex):
-    # cannot use the 'TLV' parser due to repeating tags
-    #psdo_tlv = TLV(FCP_Pin_Status_TLV_MAP)
-    # return psdo_tlv.parse(in_hex)
-    return in_hex
-
-
-# 'interpreter' functions for each tag
-FCP_interpreter_map = {
-    '80': lambda x: int(x, 16),
-    '82': interpret_file_descriptor,
-    '8A': interpret_life_cycle_sts_int,
-    'C6': interpret_ps_templ_do,
-}
-
-FCP_prorietary_interpreter_map = {
-    '83': lambda x: int(x, 16),
-}
-
-# pytlv unfortunately doesn't have a setting using which we can make it
-# accept unknown tags.  It also doesn't raise a specific exception type but
-# just the generic ValueError, so we cannot ignore those either.  Instead,
-# we insert a dict entry for every possible proprietary tag permitted
-
-
-def fixup_fcp_proprietary_tlv_map(tlv_map):
-    if 'D0' in tlv_map:
-        return
-    for i in range(0xc0, 0xff):
-        i_hex = i2h([i]).upper()
-        tlv_map[i_hex] = 'proprietary_' + i_hex
-    # Other non-standard TLV objects found on some cards
-    tlv_map['9B'] = 'target_ef'  # for sysmoUSIM-SJS1
+class FcpTemplate(BER_TLV_IE, tag=0x62, nested=[FileSize, TotalFileSize, FileDescriptor, FileIdentifier,
+                                                DfName, ProprietaryInformation, SecurityAttribCompact,
+                                                SecurityAttribExpanded, SecurityAttribReferenced,
+                                                ShortFileIdentifier, LifeCycleStatusInteger,
+                                                PinStatusTemplate_DO]):
+    pass
 
 
 def tlv_key_replace(inmap, indata):
@@ -759,23 +786,10 @@ class CardProfileUICC(CardProfile):
     @staticmethod
     def decode_select_response(resp_hex: str) -> object:
         """ETSI TS 102 221 Section 11.1.1.3"""
-        fixup_fcp_proprietary_tlv_map(FCP_Proprietary_TLV_MAP)
-        resp_hex = resp_hex.upper()
-        # outer layer
-        fcp_base_tlv = TLV(['62'])
-        fcp_base = fcp_base_tlv.parse(resp_hex)
-        # actual FCP
-        fcp_tlv = TLV(FCP_TLV_MAP)
-        fcp = fcp_tlv.parse(fcp_base['62'])
-        # further decode the proprietary information
-        if 'A5' in fcp:
-            prop_tlv = TLV(FCP_Proprietary_TLV_MAP)
-            prop = prop_tlv.parse(fcp['A5'])
-            fcp['A5'] = tlv_val_interpret(FCP_prorietary_interpreter_map, prop)
-            fcp['A5'] = tlv_key_replace(FCP_Proprietary_TLV_MAP, fcp['A5'])
-        # finally make sure we get human-readable keys in the output dict
-        r = tlv_val_interpret(FCP_interpreter_map, fcp)
-        return tlv_key_replace(FCP_TLV_MAP, r)
+        t = FcpTemplate()
+        t.from_tlv(h2b(resp_hex))
+        d = t.to_dict()
+        return flatten_dict_lists(d['fcp_template'])
 
     @staticmethod
     def match_with_card(scc: SimCardCommands) -> bool:
