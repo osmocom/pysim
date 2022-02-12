@@ -384,7 +384,7 @@ class CardMF(CardDF):
 
     def get_app_names(self):
         """Get list of completions (AID names)"""
-        return [x.name for x in self.applications]
+        return list(self.applications.values())
 
     def get_selectables(self, flags=[]) -> dict:
         """Return a dict of {'identifier': File} that is selectable from the current DF.
