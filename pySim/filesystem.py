@@ -115,6 +115,34 @@ class CardFile(object):
             ret.append(elem)
         return ret
 
+    def fully_qualified_path_fobj(self) -> List['CardFile']:
+        """Return fully qualified path to file as list of CardFile instance references."""
+        if self.parent and self.parent != self:
+            ret = self.parent.fully_qualified_path_fobj()
+        else:
+            ret = []
+        if self:
+            ret.append(self)
+        return ret
+
+    def build_select_path_to(self, target: 'CardFile') -> Optional[List['CardFile']]:
+        """Build the relative sequence of files we need to traverse to get from us to 'target'."""
+        cur_fqpath = self.fully_qualified_path_fobj()
+        target_fqpath = target.fully_qualified_path_fobj()
+        inter_path = []
+        cur_fqpath.pop()  # drop last element (currently selected file, doesn't need re-selection
+        cur_fqpath.reverse()
+        for ce in cur_fqpath:
+            inter_path.append(ce)
+            for i in range(0, len(target_fqpath)-1):
+                te = target_fqpath[i]
+                if te == ce:
+                    for te2 in target_fqpath[i+1:]:
+                        inter_path.append(te2)
+                    # we found our common ancestor
+                    return inter_path
+        return None
+
     def get_mf(self) -> Optional['CardMF']:
         """Return the MF (root) of the file system."""
         if self.parent == None:
@@ -1337,6 +1365,45 @@ class RuntimeState(object):
         self.selected_file = f
         return select_resp
 
+    def _select_pre(self, cmd_app):
+        # unregister commands of old file
+        if cmd_app and self.selected_file.shell_commands:
+            for c in self.selected_file.shell_commands:
+                cmd_app.unregister_command_set(c)
+
+    def _select_post(self, cmd_app):
+        # register commands of new file
+        if cmd_app and self.selected_file.shell_commands:
+            for c in self.selected_file.shell_commands:
+                cmd_app.register_command_set(c)
+
+    def select_file(self, file: CardFile, cmd_app=None):
+        """Select a file (EF, DF, ADF, MF, ...).
+
+        Args:
+            file : CardFile [or derived class] instance
+            cmd_app : Command Application State (for unregistering old file commands)
+        """
+        # we need to find a path from our self.selected_file to the destination
+        inter_path = self.selected_file.build_select_path_to(file)
+        if not inter_path:
+            raise RuntimeError('Cannot determine path from %s to %s' % (self.selected_file, file))
+
+        self._select_pre(cmd_app)
+
+        for p in inter_path:
+            try:
+                if isinstance(p, CardADF):
+                    (data, sw) = self.card.select_adf_by_aid(p.aid)
+                else:
+                    (data, sw) = self.card._scc.select_file(p.fid)
+                self.selected_file = p
+            except SwMatchError as swm:
+                self._select_post(cmd_app)
+                raise(swm)
+
+        self._select_post(cmd_app)
+
     def select(self, name: str, cmd_app=None):
         """Select a file (EF, DF, ADF, MF, ...).
 
@@ -1348,10 +1415,7 @@ class RuntimeState(object):
         if is_hex(name):
             name = name.lower()
 
-        # unregister commands of old file
-        if cmd_app and self.selected_file.shell_commands:
-            for c in self.selected_file.shell_commands:
-                cmd_app.unregister_command_set(c)
+        self._select_pre(cmd_app)
 
         if name in sels:
             f = sels[name]
@@ -1372,11 +1436,7 @@ class RuntimeState(object):
         # store the decoded FCP for later reference
         self.selected_file_fcp = select_resp
 
-        # register commands of new file
-        if cmd_app and self.selected_file.shell_commands:
-            for c in self.selected_file.shell_commands:
-                cmd_app.register_command_set(c)
-
+        self._select_post(cmd_app)
         return select_resp
 
     def status(self):

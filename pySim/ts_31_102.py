@@ -608,12 +608,8 @@ class EF_UServiceTable(TransparentEF):
                 for f in files_by_service[s]:
                     should_exist = f.should_exist_for_services(active_services)
                     try:
-                        (data, sw) = cmd.card._scc.select_file(f.fid)
+                        cmd.rs.select_file(f)
                         exists = True
-                        fcp = f.decode_select_response(data)
-                        # if we just selected a directory, go back
-                        if fcp['file_descriptor']['file_type'] == 'df':
-                            cmd.card._scc.select_parent_df()
                     except SwMatchError as e:
                         sw = str(e)
                         exists = False
@@ -625,7 +621,7 @@ class EF_UServiceTable(TransparentEF):
                             cmd.perror("  ERROR: File %s is not selectable (%s) but should!" %  (f, sw))
         finally:
             # re-select the EF.UST
-            cmd.card._scc.select_file(self.fid)
+            cmd.rs.select_file(self)
         return num_problems
 
 class EF_UST(EF_UServiceTable):
