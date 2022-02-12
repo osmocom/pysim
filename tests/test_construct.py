@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import unittest
-from pySim.construct import GreedyInteger
+from pySim.construct import *
 
 tests = [
         ( b'\x80', 0x80 ),
@@ -20,6 +20,17 @@ class TestGreedyInt(unittest.TestCase):
         for t in tests:
             self.assertEqual(t[0], gi.build(t[1]))
         pass
+
+class TestUtils(unittest.TestCase):
+    def test_filter_dict(self):
+        inp = {'foo': 0xf00, '_bar' : 0xba5, 'baz': 0xba2 }
+        out = {'foo': 0xf00, 'baz': 0xba2 }
+        self.assertEqual(filter_dict(inp), out)
+
+    def test_filter_dict_nested(self):
+        inp = {'foo': 0xf00, 'nest': {'_bar' : 0xba5}, 'baz': 0xba2 }
+        out = {'foo': 0xf00, 'nest': {}, 'baz': 0xba2 }
+        self.assertEqual(filter_dict(inp), out)
 
 
 if __name__ == "__main__":
