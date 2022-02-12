@@ -84,8 +84,8 @@ class EF_IMPI(TransparentEF):
     class nai(BER_TLV_IE, tag=0x80):
         _construct = GreedyString("utf8")
 
-    def __init__(self, fid='6f02', sfid=0x02, name='EF.IMPI', desc='IMS private user identity'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+    def __init__(self, fid='6f02', sfid=0x02, name='EF.IMPI', desc='IMS private user identity', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_IMPI.nai
 
 # TS 31.103 Section 4.2.3
@@ -95,8 +95,8 @@ class EF_DOMAIN(TransparentEF):
     class domain(BER_TLV_IE, tag=0x80):
         _construct = GreedyString("utf8")
 
-    def __init__(self, fid='6f05', sfid=0x05, name='EF.DOMAIN', desc='Home Network Domain Name'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+    def __init__(self, fid='6f05', sfid=0x05, name='EF.DOMAIN', desc='Home Network Domain Name', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_DOMAIN.domain
 
 # TS 31.103 Section 4.2.4
@@ -106,16 +106,16 @@ class EF_IMPU(LinFixedEF):
     class impu(BER_TLV_IE, tag=0x80):
         _construct = GreedyString("utf8")
 
-    def __init__(self, fid='6f04', sfid=0x04, name='EF.IMPU', desc='IMS public user identity'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+    def __init__(self, fid='6f04', sfid=0x04, name='EF.IMPU', desc='IMS public user identity', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_IMPU.impu
 
 # TS 31.103 Section 4.2.8
 
 
 class EF_PCSCF(LinFixedEF):
-    def __init__(self, fid='6f09', sfid=None, name='EF.P-CSCF', desc='P-CSCF Address'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+    def __init__(self, fid='6f09', sfid=None, name='EF.P-CSCF', desc='P-CSCF Address', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
 
     def _decode_record_hex(self, raw_hex):
         addr, addr_type = dec_addr_tlv(raw_hex)
@@ -130,22 +130,22 @@ class EF_PCSCF(LinFixedEF):
 
 
 class EF_GBABP(TransparentEF):
-    def __init__(self, fid='6fd5', sfid=None, name='EF.GBABP', desc='GBA Bootstrapping'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+    def __init__(self, fid='6fd5', sfid=None, name='EF.GBABP', desc='GBA Bootstrapping', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
 
 # TS 31.103 Section 4.2.10
 
 
 class EF_GBANL(LinFixedEF):
-    def __init__(self, fid='6fd7', sfid=None, name='EF.GBANL', desc='GBA NAF List'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+    def __init__(self, fid='6fd7', sfid=None, name='EF.GBANL', desc='GBA NAF List', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
 
 # TS 31.103 Section 4.2.11
 
 
 class EF_NAFKCA(LinFixedEF):
-    def __init__(self, fid='6fdd', sfid=None, name='EF.NAFKCA', desc='NAF Key Centre Address'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+    def __init__(self, fid='6fdd', sfid=None, name='EF.NAFKCA', desc='NAF Key Centre Address', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
 
 # TS 31.103 Section 4.2.16
 
@@ -154,23 +154,23 @@ class EF_UICCIARI(LinFixedEF):
     class iari(BER_TLV_IE, tag=0x80):
         _construct = GreedyString("utf8")
 
-    def __init__(self, fid='6fe7', sfid=None, name='EF.UICCIARI', desc='UICC IARI'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+    def __init__(self, fid='6fe7', sfid=None, name='EF.UICCIARI', desc='UICC IARI', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_UICCIARI.iari
 
 # TS 31.103 Section 4.2.18
 
 
 class EF_IMSConfigData(BerTlvEF):
-    def __init__(self, fid='6ff8', sfid=None, name='EF.IMSConfigData', desc='IMS Configuration Data'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+    def __init__(self, fid='6ff8', sfid=None, name='EF.IMSConfigData', desc='IMS Configuration Data', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
 
 # TS 31.103 Section 4.2.19
 
 
 class EF_XCAPConfigData(BerTlvEF):
-    def __init__(self, fid='6ffc', sfid=None, name='EF.XCAPConfigData', desc='XCAP Configuration Data'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+    def __init__(self, fid='6ffc', sfid=None, name='EF.XCAPConfigData', desc='XCAP Configuration Data', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
 
 # TS 31.103 Section 4.2.20
 
@@ -179,8 +179,8 @@ class EF_WebRTCURI(TransparentEF):
     class uri(BER_TLV_IE, tag=0x80):
         _construct = GreedyString("utf8")
 
-    def __init__(self, fid='6ffa', sfid=None, name='EF.WebRTCURI', desc='WebRTC URI'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+    def __init__(self, fid='6ffa', sfid=None, name='EF.WebRTCURI', desc='WebRTC URI', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_WebRTCURI.uri
 
 # TS 31.103 Section 4.2.21
@@ -188,8 +188,8 @@ class EF_WebRTCURI(TransparentEF):
 
 class EF_MuDMiDConfigData(BerTlvEF):
     def __init__(self, fid='6ffe', sfid=None, name='EF.MuDMiDConfigData',
-                 desc='MuD and MiD Configuration Data'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc)
+                 desc='MuD and MiD Configuration Data', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
 
 
 class ADF_ISIM(CardADF):
@@ -205,20 +205,20 @@ class ADF_ISIM(CardADF):
             EF_ARR('6f06', 0x06),
             EF_UServiceTable('6f07', 0x07, 'EF.IST',
                              'ISIM Service Table', {1, None}, EF_IST_map),
-            EF_PCSCF(),
-            EF_GBABP(),
-            EF_GBANL(),
-            EF_NAFKCA(),
-            EF_SMS(),
-            EF_SMSS(),
-            EF_SMSR(),
-            EF_SMSP(),
-            EF_UICCIARI(),
-            EF_FromPreferred(),
-            EF_IMSConfigData(),
-            EF_XCAPConfigData(),
-            EF_WebRTCURI(),
-            EF_MuDMiDConfigData(),
+            EF_PCSCF(service=5),
+            EF_GBABP(service=2),
+            EF_GBANL(service=2),
+            EF_NAFKCA(service=2),
+            EF_SMS(service=(6,8)),
+            EF_SMSS(service=(6,8)),
+            EF_SMSR(service=(7,8)),
+            EF_SMSP(service=8),
+            EF_UICCIARI(service=10),
+            EF_FromPreferred(service=17),
+            EF_IMSConfigData(service=18),
+            EF_XCAPConfigData(service=19),
+            EF_WebRTCURI(service=20),
+            EF_MuDMiDConfigData(service=21),
         ]
         self.add_files(files)
         # add those commands to the general commands of a TransparentEF

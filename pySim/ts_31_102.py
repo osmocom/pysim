@@ -550,8 +550,8 @@ class EF_HPPLMN(TransparentEF):
 
 
 class EF_UServiceTable(TransparentEF):
-    def __init__(self, fid, sfid, name, desc, size, table):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size)
+    def __init__(self, fid, sfid, name, desc, size, table, **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self.table = table
         # add those commands to the general commands of a TransparentEF
         self.shell_commands += [self.AddlShellCommands()]
@@ -693,8 +693,8 @@ class EF_PSLOCI(TransparentEF):
 
 class EF_ICI(CyclicEF):
     def __init__(self, fid='6f80', sfid=0x14, name='EF.ICI', rec_len={28, 48},
-                 desc='Incoming Call Information'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
+                 desc='Incoming Call Information', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct('alpha_id'/Bytes(this._.total_len-28),
                                  'len_of_bcd_contents'/Int8ub,
                                  'ton_npi'/Int8ub,
@@ -711,8 +711,8 @@ class EF_ICI(CyclicEF):
 
 class EF_OCI(CyclicEF):
     def __init__(self, fid='6f81', sfid=0x15, name='EF.OCI', rec_len={27, 47},
-                 desc='Outgoing Call Information'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
+                 desc='Outgoing Call Information', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct('alpha_id'/Bytes(this._.total_len-27),
                                  'len_of_bcd_contents'/Int8ub,
                                  'ton_npi'/Int8ub,
@@ -728,25 +728,24 @@ class EF_OCI(CyclicEF):
 
 class EF_ICT(CyclicEF):
     def __init__(self, fid='6f82', sfid=None, name='EF.ICT', rec_len={3, 3},
-                 desc='Incoming Call Timer'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
+                 desc='Incoming Call Timer', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct('accumulated_call_timer'/Int24ub)
 
 # TS 31.102 Section 4.2.38
 
 
 class EF_CCP2(LinFixedEF):
-    def __init__(self, fid='6f4f', sfid=0x16, name='EF.CCP2', desc='Capability Configuration Parameters 2'):
-        super().__init__(fid=fid, sfid=sfid,
-                         name=name, desc=desc, rec_len={15, None})
+    def __init__(self, fid='6f4f', sfid=0x16, name='EF.CCP2', desc='Capability Configuration Parameters 2', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={15, None}, **kwargs)
 
 # TS 31.102 Section 4.2.48
 
 
 class EF_ACL(TransparentEF):
     def __init__(self, fid='6f57', sfid=None, name='EF.ACL', size={32, None},
-                 desc='Access Point Name Control List'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                 desc='Access Point Name Control List', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct('num_of_apns'/Int8ub, 'tlvs'/GreedyBytes)
 
 # TS 31.102 Section 4.2.51
@@ -754,8 +753,8 @@ class EF_ACL(TransparentEF):
 
 class EF_START_HFN(TransparentEF):
     def __init__(self, fid='6f5b', sfid=0x0f, name='EF.START-HFN', size={6, 6},
-                 desc='Initialisation values for Hyperframe number'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                 desc='Initialisation values for Hyperframe number', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct('start_cs'/Int24ub, 'start_ps'/Int24ub)
 
 # TS 31.102 Section 4.2.52
@@ -763,8 +762,8 @@ class EF_START_HFN(TransparentEF):
 
 class EF_THRESHOLD(TransparentEF):
     def __init__(self, fid='6f5c', sfid=0x10, name='EF.THRESHOLD', size={3, 3},
-                 desc='Maximum value of START'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                 desc='Maximum value of START', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct('max_start'/Int24ub)
 
 # TS 31.102 Section 4.2.77
@@ -772,8 +771,8 @@ class EF_THRESHOLD(TransparentEF):
 
 class EF_VGCSCA(TransRecEF):
     def __init__(self, fid='6fd4', sfid=None, name='EF.VGCSCA', size={2, 100}, rec_len=2,
-                 desc='Voice Group Call Service Ciphering Algorithm'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len)
+                 desc='Voice Group Call Service Ciphering Algorithm', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
         self._construct = Struct('alg_v_ki_1'/Int8ub, 'alg_v_ki_2'/Int8ub)
 
 # TS 31.102 Section 4.2.79
@@ -781,17 +780,16 @@ class EF_VGCSCA(TransRecEF):
 
 class EF_GBABP(TransparentEF):
     def __init__(self, fid='6fd6', sfid=None, name='EF.GBABP', size={3, 50},
-                 desc='GBA Bootstrapping parameters'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                 desc='GBA Bootstrapping parameters', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct('rand'/LV, 'b_tid'/LV, 'key_lifetime'/LV)
 
 # TS 31.102 Section 4.2.80
 
 
 class EF_MSK(LinFixedEF):
-    def __init__(self, fid='6fd7', sfid=None, name='EF.MSK', desc='MBMS Service Key List'):
-        super().__init__(fid=fid, sfid=sfid,
-                         name=name, desc=desc, rec_len={20, None})
+    def __init__(self, fid='6fd7', sfid=None, name='EF.MSK', desc='MBMS Service Key List', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={20, None}, **kwargs)
         msk_ts_constr = Struct('msk_id'/Int32ub, 'timestamp_counter'/Int32ub)
         self._construct = Struct('key_domain_id'/Bytes(3),
                                  'num_msk_id'/Int8ub,
@@ -815,9 +813,8 @@ class EF_MUK(LinFixedEF):
     class EF_MUK_Collection(TLV_IE_Collection, nested=[MUK_ID, TimeStampCounter]):
         pass
 
-    def __init__(self, fid='6fd8', sfid=None, name='EF.MUK', desc='MBMS User Key'):
-        super().__init__(fid=fid, sfid=sfid, name=name,
-                         desc=desc, rec_len={None, None})
+    def __init__(self, fid='6fd8', sfid=None, name='EF.MUK', desc='MBMS User Key', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={None, None}, **kwargs)
         self._tlv = EF_MUK.EF_MUK_Collection
 
 # TS 31.102 Section 4.2.83
@@ -833,9 +830,8 @@ class EF_GBANL(LinFixedEF):
     class EF_GBANL_Collection(BER_TLV_IE, nested=[NAF_ID, B_TID]):
         pass
 
-    def __init__(self, fid='6fda', sfid=None, name='EF.GBANL', desc='GBA NAF List'):
-        super().__init__(fid=fid, sfid=sfid, name=name,
-                         desc=desc, rec_len={None, None})
+    def __init__(self, fid='6fda', sfid=None, name='EF.GBANL', desc='GBA NAF List', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={None, None}, **kwargs)
         self._tlv = EF_GBANL.EF_GBANL_Collection
 
 # TS 31.102 Section 4.2.85
@@ -843,8 +839,8 @@ class EF_GBANL(LinFixedEF):
 
 class EF_EHPLMNPI(TransparentEF):
     def __init__(self, fid='6fdb', sfid=None, name='EF.EHPLMNPI', size={1, 1},
-                 desc='Equivalent HPLMN Presentation Indication'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                 desc='Equivalent HPLMN Presentation Indication', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct('presentation_ind' /
                                  Enum(Byte, no_preference=0, display_highest_prio_only=1, display_all=2))
 
@@ -855,8 +851,8 @@ class EF_NAFKCA(LinFixedEF):
     class NAF_KeyCentreAddress(BER_TLV_IE, tag=0x80):
         _construct = HexAdapter(GreedyBytes)
     def __init__(self, fid='6fdd', sfid=None, name='EF.NAFKCA', rec_len={None, None},
-                 desc='NAF Key Centre Address'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
+                 desc='NAF Key Centre Address', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._tlv = EF_NAFKCA.NAF_KeyCentreAddress
 
 # TS 31.102 Section 4.2.90
@@ -888,8 +884,8 @@ class EF_NCP_IP(LinFixedEF):
                                nested=[AccessPointName, Login, Password, BearerDescription]):
         pass
     def __init__(self, fid='6fe2', sfid=None, name='EF.NCP-IP', rec_len={None, None},
-                 desc='Network Connectivity Parameters for USIM IP connections'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
+                 desc='Network Connectivity Parameters for USIM IP connections', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._tlv = EF_NCP_IP.EF_NCP_IP_Collection
 
 # TS 31.102 Section 4.2.91
@@ -897,8 +893,8 @@ class EF_NCP_IP(LinFixedEF):
 
 class EF_EPSLOCI(TransparentEF):
     def __init__(self, fid='6fe3', sfid=0x1e, name='EF.EPSLOCI', size={18, 18},
-                 desc='EPS Location Information'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                 desc='EPS Location Information', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         upd_status_constr = Enum(
             Byte, updated=0, not_updated=1, roaming_not_allowed=2)
         self._construct = Struct('guti'/Bytes(12), 'last_visited_registered_tai'/Bytes(5),
@@ -928,16 +924,16 @@ class EF_EPSNSC(LinFixedEF):
                                            IDofNASAlgorithms]):
         pass
     def __init__(self, fid='6fe4', sfid=0x18, name='EF.EPSNSC', rec_len={54, 128},
-                 desc='EPS NAS Security Context'):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
+                 desc='EPS NAS Security Context', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._tlv = EF_EPSNSC.EPS_NAS_Security_Context
 
 # TS 31.102 Section 4.2.96
 
 
 class EF_PWS(TransparentEF):
-    def __init__(self, fid='6fec', sfid=None, name='EF.PWS', desc='Public Warning System', size={1, 1}):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+    def __init__(self, fid='6fec', sfid=None, name='EF.PWS', desc='Public Warning System', size={1, 1}, **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         pws_config = FlagsEnum(
             Byte, ignore_pws_in_hplmn_and_equivalent=1, ignore_pws_in_vplmn=2)
         self._construct = Struct('pws_configuration'/pws_config)
@@ -947,8 +943,8 @@ class EF_PWS(TransparentEF):
 
 class EF_IPS(CyclicEF):
     def __init__(self, fid='6ff1', sfid=None, name='EF.IPS', rec_len={4, 4},
-                 desc='IMEI(SV) Pairing Status'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
+                 desc='IMEI(SV) Pairing Status', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct('status'/PaddedString(2, 'ascii'),
                                  'link_to_ef_ipd'/Int8ub, 'rfu'/Byte)
 
@@ -963,8 +959,8 @@ class EF_ePDGId(TransparentEF):
                                                    'IPv4': HexAdapter(GreedyBytes),
                                                    'IPv6': HexAdapter(GreedyBytes)}))
 
-    def __init__(self, fid='6ff3', sfid=None, name='EF.eDPDGId', desc='Home ePDG Identifier'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc)
+    def __init__(self, fid='6ff3', sfid=None, name='EF.eDPDGId', desc='Home ePDG Identifier', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_ePDGId.ePDGId
 
 # TS 31.102 Section 4.2.106
@@ -972,8 +968,8 @@ class EF_ePDGId(TransparentEF):
 
 class EF_FromPreferred(TransparentEF):
     def __init__(self, fid='6ff7', sfid=None, name='EF.FromPreferred', size={1, 1},
-                 desc='From Preferred'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                 desc='From Preferred', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = BitStruct('rfu'/BitsRFU(7), 'from_preferred'/Bit)
 
 ######################################################################
@@ -1049,8 +1045,8 @@ class EF_TN3GPPSNN(TransparentEF):
 
 
 class DF_WLAN(CardDF):
-    def __init__(self, fid='5f40', name='DF.WLAN', desc='Files for WLAN purpose'):
-        super().__init__(fid=fid, name=name, desc=desc)
+    def __init__(self, fid='5f40', name='DF.WLAN', desc='Files for WLAN purpose', **kwargs):
+        super().__init__(fid=fid, name=name, desc=desc, **kwargs)
         files = [
             TransparentEF('4f41', 0x01, 'EF.Pseudo', 'Pseudonym'),
             TransparentEF('4f42', 0x02, 'EF.UPLMNWLAN',
@@ -1080,8 +1076,8 @@ class DF_WLAN(CardDF):
 
 
 class DF_HNB(CardDF):
-    def __init__(self, fid='5f50', name='DF.HNB', desc='Files for HomeNodeB purpose'):
-        super().__init__(fid=fid, name=name, desc=desc)
+    def __init__(self, fid='5f50', name='DF.HNB', desc='Files for HomeNodeB purpose', **kwargs):
+        super().__init__(fid=fid, name=name, desc=desc, **kwargs)
         files = [
             LinFixedEF('4f01', 0x01, 'EF.ACSGL', 'Allowed CSG Lists'),
             LinFixedEF('4f02', 0x02, 'EF.CSGTL', 'CSG Types'),
@@ -1096,8 +1092,8 @@ class DF_HNB(CardDF):
 
 
 class DF_ProSe(CardDF):
-    def __init__(self, fid='5f90', name='DF.ProSe', desc='Files for ProSe purpose'):
-        super().__init__(fid=fid, name=name, desc=desc)
+    def __init__(self, fid='5f90', name='DF.ProSe', desc='Files for ProSe purpose', **kwargs):
+        super().__init__(fid=fid, name=name, desc=desc, **kwargs)
         files = [
             LinFixedEF('4f01', 0x01, 'EF.PROSE_MON',
                        'ProSe Monitoring Parameters'),
@@ -1128,8 +1124,8 @@ class DF_ProSe(CardDF):
 
 
 class DF_USIM_5GS(CardDF):
-    def __init__(self, fid='5FC0', name='DF.5GS', desc='5GS related files'):
-        super().__init__(fid=fid, name=name, desc=desc)
+    def __init__(self, fid='5FC0', name='DF.5GS', desc='5GS related files', **kwargs):
+        super().__init__(fid=fid, name=name, desc=desc, **kwargs)
         files = [
             # I'm looking at 31.102 R16.6
             EF_5GS3GPPLOCI(),
@@ -1166,123 +1162,115 @@ class ADF_USIM(CardADF):
             EF_Keys('6f09', 0x09, 'EF.KeysPS',
                     desc='Ciphering and Integrity Keys for PS domain'),
             EF_xPLMNwAcT('6f60', 0x0a, 'EF.PLMNwAcT',
-                         'User controlled PLMN Selector with Access Technology'),
+                         'User controlled PLMN Selector with Access Technology', service=20),
             EF_HPPLMN(),
-            EF_ACMmax(),
+            EF_ACMmax(service=13),
             EF_UServiceTable('6f38', 0x04, 'EF.UST', 'USIM Service Table', size={
                              1, 17}, table=EF_UST_map),
             CyclicEF('6f39', None, 'EF.ACM',
-                     'Accumulated call meter', rec_len={3, 3}),
-            TransparentEF('6f3e', None, 'EF.GID1', 'Group Identifier Level 1'),
-            TransparentEF('6f3f', None, 'EF.GID2', 'Group Identifier Level 2'),
-            EF_SPN(),
+                     'Accumulated call meter', rec_len={3, 3}, service=13),
+            TransparentEF('6f3e', None, 'EF.GID1', 'Group Identifier Level 1', service=17),
+            TransparentEF('6f3f', None, 'EF.GID2', 'Group Identifier Level 2', service=18),
+            EF_SPN(service=19),
             TransparentEF('6f41', None, 'EF.PUCT',
-                          'Price per unit and currency table', size={5, 5}),
-            EF_CBMI(),
+                          'Price per unit and currency table', size={5, 5}, service=13),
+            EF_CBMI(service=15),
             EF_ACC(sfid=0x06),
             EF_PLMNsel('6f7b', 0x0d, 'EF.FPLMN',
                        'Forbidden PLMNs', size={12, None}),
             EF_LOCI(),
             EF_AD(),
-            EF_CBMID(sfid=0x0e),
+            EF_CBMID(sfid=0x0e, service=29),
             EF_ECC(),
-            EF_CBMIR(),
+            EF_CBMIR(service=16),
             EF_PSLOCI(),
-            EF_ADN('6f3b', None, 'EF.FDN', 'Fixed Dialling Numbers'),
-            EF_SMS('6f3c', None),
-            EF_MSISDN(),
-            EF_SMSP(),
-            EF_SMSS(),
-            EF_ADN('6f49', None, 'EF.SDN', 'Service Dialling Numbers'),
-            EF_EXT('6f4b', None, 'EF.EXT2', 'Extension2 (FDN)'),
-            EF_EXT('6f4c', None, 'EF.EXT3', 'Extension2 (SDN)'),
-            EF_SMSR(),
-            EF_ICI(),
-            EF_OCI(),
-            EF_ICT(),
-            EF_ICT('6f83', None, 'EF.OCT', 'Outgoing Call Timer'),
-            EF_EXT('6f4e', None, 'EF.EXT5', 'Extension5 (ICI/OCI/MSISDN)'),
-            EF_CCP2(),
-            EF_eMLPP(),
-            EF_AAeM(),
+            EF_ADN('6f3b', None, 'EF.FDN', 'Fixed Dialling Numbers', service=[2, 89]),
+            EF_SMS('6f3c', None, service=10),
+            EF_MSISDN(service=21),
+            EF_SMSP(service=12),
+            EF_SMSS(service=10),
+            EF_ADN('6f49', None, 'EF.SDN', 'Service Dialling Numbers', service=[4, 89]),
+            EF_EXT('6f4b', None, 'EF.EXT2', 'Extension2 (FDN)', service=3),
+            EF_EXT('6f4c', None, 'EF.EXT3', 'Extension2 (SDN)', service=5),
+            EF_SMSR(service=11),
+            EF_ICI(service=9),
+            EF_OCI(service=8),
+            EF_ICT(service=9),
+            EF_ICT('6f83', None, 'EF.OCT', 'Outgoing Call Timer', service=8),
+            EF_EXT('6f4e', None, 'EF.EXT5', 'Extension5 (ICI/OCI/MSISDN)', service=44),
+            EF_CCP2(service=14),
+            EF_eMLPP(service=24),
+            EF_AAeM(service=25),
             # EF_Hiddenkey
-            EF_ADN('6f4d', None, 'EF.BDN', 'Barred Dialling Numbers'),
-            EF_EXT('6f55', None, 'EF.EXT4', 'Extension4 (BDN/SSC)'),
-            EF_CMI(),
+            EF_ADN('6f4d', None, 'EF.BDN', 'Barred Dialling Numbers', service=6),
+            EF_EXT('6f55', None, 'EF.EXT4', 'Extension4 (BDN/SSC)', service=7),
+            EF_CMI(service=6),
             EF_UServiceTable('6f56', 0x05, 'EF.EST', 'Enabled Services Table', size={
-                1, None}, table=EF_EST_map),
-            EF_ACL(),
-            EF_DCK(),
-            EF_CNL(),
+                1, None}, table=EF_EST_map, service=[2, 6, 34, 35]),
+            EF_ACL(service=35),
+            EF_DCK(service=36),
+            EF_CNL(service=37),
             EF_START_HFN(),
             EF_THRESHOLD(),
-            EF_xPLMNwAcT('6f61', 0x11, 'EF.OPLMNwAcT',
-                         'User controlled PLMN Selector with Access Technology'),
+            EF_xPLMNwAcT('6f61', 0x11, 'EF.OPLMNwAcT', 'User controlled PLMN Selector with Access Technology', service=42),
+            EF_xPLMNwAcT('6f62', 0x13, 'EF.HPLMNwAcT', 'HPLMN Selector with Access Technology', service=43),
             EF_ARR('6f06', 0x17),
             TransparentEF('6fc4', None, 'EF.NETPAR', 'Network Parameters'),
-            EF_PNN('6fc5', 0x19),
-            EF_OPL(),
-            EF_ADN('6fc7', None, 'EF.MBDN', 'Mailbox Dialling Numbers'),
-            EF_MBI(),
-            EF_MWIS(),
-            EF_ADN('6fcb', None, 'EF.CFIS',
-                   'Call Forwarding Indication Status'),
+            EF_PNN('6fc5', 0x19, service=45),
+            EF_OPL(service=46),
+            EF_ADN('6fc7', None, 'EF.MBDN', 'Mailbox Dialling Numbers', service=47),
+            EF_EXT('6fc8', None, 'EF.EXT6', 'Extension6 (MBDN)'),
+            EF_MBI(service=47),
+            EF_MWIS(service=48),
+            EF_ADN('6fcb', None, 'EF.CFIS', 'Call Forwarding Indication Status', service=49),
             EF_EXT('6fcc', None, 'EF.EXT7', 'Extension7 (CFIS)'),
-            TransparentEF('6fcd', None, 'EF.SPDI',
-                          'Service Provider Display Information'),
-            EF_MMSN(),
-            EF_EXT('6fcf', None, 'EF.EXT8', 'Extension8 (MMSN)'),
-            EF_MMSICP(),
-            EF_MMSUP(),
-            EF_MMSUCP(),
-            EF_NIA(),
-            EF_VGCS(),
-            EF_VGCSS(),
-            EF_VGCS('6fb3', None, 'EF.VBS', 'Voice Broadcast Service'),
-            EF_VGCSS('6fb4', None, 'EF.VBSS',
-                     'Voice Broadcast Service Status'),
-            EF_VGCSCA(),
-            EF_VGCSCA('6fd5', None, 'EF.VBCSCA',
-                      'Voice Broadcast Service Ciphering Algorithm'),
-            EF_GBABP(),
-            EF_MSK(),
-            EF_MUK(),
-            EF_GBANL(),
-            EF_PLMNsel('6fd9', 0x1d, 'EF.EHPLMN',
-                       'Equivalent HPLMN', size={12, None}),
-            EF_EHPLMNPI(),
-            EF_NAFKCA(),
-            TransparentEF('6fde', None, 'EF.SPNI',
-                          'Service Provider Name Icon'),
-            LinFixedEF('6fdf', None, 'EF.PNNI', 'PLMN Network Name Icon'),
-            EF_NCP_IP(),
-            EF_EPSLOCI('6fe3', 0x1e, 'EF.EPSLOCI', 'EPS location information'),
-            EF_EPSNSC(),
-            TransparentEF('6fe6', None, 'EF.UFC',
-                          'USAT Facility Control', size={1, 16}),
-            TransparentEF('6fe8', None, 'EF.NASCONFIG',
-                          'Non Access Stratum Configuration'),
-            # UICC IARI (only in cards that have no ISIM)
-            EF_PWS(),
-            LinFixedEF('6fed', None, 'EF.FDNURI',
-                       'Fixed Dialling Numbers URI'),
-            LinFixedEF('6fee', None, 'EF.BDNURI',
-                       'Barred Dialling Numbers URI'),
-            LinFixedEF('6fef', None, 'EF.SDNURI',
-                       'Service Dialling Numbers URI'),
+            TransparentEF('6fcd', None, 'EF.SPDI', 'Service Provider Display Information', service=51),
+            EF_MMSN(service=52),
+            EF_EXT('6fcf', None, 'EF.EXT8', 'Extension8 (MMSN)', service=53),
+            EF_MMSICP(service=52),
+            EF_MMSUP(service=52),
+            EF_MMSUCP(service=(52, 55)),
+            EF_NIA(service=56),
+            EF_VGCS(service=57),
+            EF_VGCSS(service=57),
+            EF_VGCS('6fb3', None, 'EF.VBS', 'Voice Broadcast Service', service=58),
+            EF_VGCSS('6fb4', None, 'EF.VBSS', 'Voice Broadcast Service Status', service=58),
+            EF_VGCSCA(service=64),
+            EF_VGCSCA('6fd5', None, 'EF.VBCSCA', 'Voice Broadcast Service Ciphering Algorithm', service=65),
+            EF_GBABP(service=68),
+            EF_MSK(service=69),
+            EF_MUK(service=69),
+            EF_GBANL(service=68),
+            EF_PLMNsel('6fd9', 0x1d, 'EF.EHPLMN', 'Equivalent HPLMN', size={12, None}, service=71),
+            EF_EHPLMNPI(service=(71, 73)),
+            # EF_LRPLMNSI ('6fdc', service=74)
+            EF_NAFKCA(service=(68, 76)),
+            TransparentEF('6fde', None, 'EF.SPNI', 'Service Provider Name Icon', service=78),
+            LinFixedEF('6fdf', None, 'EF.PNNI', 'PLMN Network Name Icon', service=79),
+            EF_NCP_IP(service=80),
+            EF_EPSLOCI('6fe3', 0x1e, 'EF.EPSLOCI', 'EPS location information', service=85),
+            EF_EPSNSC(service=85),
+            TransparentEF('6fe6', None, 'EF.UFC', 'USAT Facility Control', size={1, 16}),
+            TransparentEF('6fe8', None, 'EF.NASCONFIG', 'Non Access Stratum Configuration', service=96),
+            # UICC IARI (only in cards that have no ISIM) service=95
+            EF_PWS(service=97),
+            LinFixedEF('6fed', None, 'EF.FDNURI', 'Fixed Dialling Numbers URI', service=(2, 99)),
+            LinFixedEF('6fee', None, 'EF.BDNURI', 'Barred Dialling Numbers URI', service=(6, 99)),
+            LinFixedEF('6fef', None, 'EF.SDNURI', 'Service Dialling Numbers URI', service=(4, 99)),
+            # EF_IWL (IMEI(SV) White List)
             EF_IPS(),
-            EF_ePDGId(),
+            EF_ePDGId(service=(106, 107)),
             # FIXME: from EF_ePDGSelection onwards
-            EF_FromPreferred(),
-            # FIXME: DF_SoLSA
+            EF_FromPreferred(service=114),
+            # FIXME: DF_SoLSA service=23
             # FIXME: DF_PHONEBOOK
-            # FIXME: DF_GSM_ACCESS
-            DF_WLAN(),
-            DF_HNB(),
-            DF_ProSe(),
-            # FIXME: DF_ACDC
-            # FIXME: DF_TV
-            DF_USIM_5GS(),
+            # FIXME: DF_GSM_ACCESS service=27
+            DF_WLAN(service=[59, 60, 61, 62, 63, 66, 81, 82, 83, 84, 88]),
+            DF_HNB(service=[86, 90]),
+            DF_ProSe(service=101),
+            # FIXME: DF_ACDC service=108
+            # FIXME: DF_TV service=116
+            DF_USIM_5GS(service=[122, 123, 124, 125, 126, 127, 129, 130]),
         ]
         self.add_files(files)
 
