@@ -644,7 +644,12 @@ class EF_UST(EF_UServiceTable):
             self._cmd.card.update_ust(int(arg), 0)
 
         def do_ust_service_check(self, arg):
-            """Check consistency between services of this file and files present/activated"""
+            """Check consistency between services of this file and files present/activated.
+
+            Many services determine if one or multiple files shall be present/activated or if they shall be
+            absent/deactivated.  This performs a consistency check to ensure that no services are activated
+            for files that are not - and vice-versa, no files are activated for services that are not.  Error
+            messages are printed for every inconsistency found."""
             selected_file = self._cmd.rs.selected_file
             num_problems = selected_file.ust_service_check(self._cmd)
             # obtain list of currently active services
@@ -801,13 +806,6 @@ class EF_EST(EF_UServiceTable):
         def do_est_service_deactivate(self, arg):
             """Deactivate a service within EF.UST"""
             self._cmd.card.update_est(int(arg), 0)
-
-        def do_est_service_check(self, arg):
-            """Check consistency between services of this file and files present/activated"""
-            # obtain list of currently active services
-            (service_data, sw) = self._cmd.rs.read_binary_dec()
-            active_services = service_data.keys()
-
 
 # TS 31.102 Section 4.2.48
 class EF_ACL(TransparentEF):

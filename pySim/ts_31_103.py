@@ -125,9 +125,16 @@ class EF_IST(EF_UServiceTable):
             self._cmd.card.update_ist(int(arg), 0)
 
         def do_ist_service_check(self, arg):
-            """Check consistency between services of this file and files present/activated"""
+            """Check consistency between services of this file and files present/activated.
+
+            Many services determine if one or multiple files shall be present/activated or if they shall be
+            absent/deactivated.  This performs a consistency check to ensure that no services are activated
+            for files that are not - and vice-versa, no files are activated for services that are not.  Error
+            messages are printed for every inconsistency found."""
             selected_file = self._cmd.rs.selected_file
-            selected_file.ust_service_check(self._cmd)
+            num_problems = selected_file.ust_service_check(self._cmd)
+            self._cmd.poutput("===> %u service / file inconsistencies detected" % num_problems)
+
 
 # TS 31.103 Section 4.2.8
 class EF_PCSCF(LinFixedEF):
