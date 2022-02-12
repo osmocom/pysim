@@ -302,7 +302,13 @@ class CardDF(CardFile):
                 "File with given name %s already exists in %s" % (child.name, self))
         self.children[child.fid] = child
         child.parent = self
+        # update the service -> file relationship table
         self._add_file_services(child)
+        if isinstance(child, CardDF):
+            for c in child.children.values():
+                self._add_file_services(c)
+                if isinstance(c, CardDF):
+                    raise ValueError('TODO: implement recursive service -> file mapping')
 
     def add_files(self, children: Iterable[CardFile], ignore_existing: bool = False):
         """Add a list of child (DF/EF) to this DF

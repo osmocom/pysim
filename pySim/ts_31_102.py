@@ -332,8 +332,8 @@ class EF_5GS3GPPNSC(LinFixedEF):
         pass
 
     def __init__(self, fid="4f03", sfid=0x03, name='EF.5GS3GPPNSC', rec_len={57, None},
-                 desc='5GS 3GPP Access NAS Security Context'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len)
+                 desc='5GS 3GPP Access NAS Security Context', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._tlv = EF_5GS3GPPNSC.FiveGSNasSecurityContext
 
 # 3GPP TS 31.102 Section 4.4.11.6
@@ -348,8 +348,8 @@ class EF_5GAUTHKEYS(TransparentEF):
         pass
 
     def __init__(self, fid='4f05', sfid=0x05, name='EF.5GAUTHKEYS', size={68, None},
-                 desc='5G authentication keys'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                 desc='5G authentication keys', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._tlv = EF_5GAUTHKEYS.FiveGAuthKeys
 
 # 3GPP TS 31.102 Section 4.4.11.8
@@ -382,8 +382,8 @@ class SUCI_CalcInfo(TLV_IE_Collection, nested=[ProtSchemeIdList, HomeNetPubKeyLi
 # TS 31.102 4.4.11.8
 class EF_SUCI_Calc_Info(TransparentEF):
     def __init__(self, fid="4f07", sfid=0x07, name='EF.SUCI_Calc_Info', size={2, None},
-                 desc='SUCI Calc Info'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                 desc='SUCI Calc Info', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
 
     def _encode_prot_scheme_id_list(self, in_list):
         out_bytes = [0xa0]
@@ -1019,8 +1019,8 @@ class EF_FromPreferred(TransparentEF):
 # TS 31.102 Section 4.4.11.2
 class EF_5GS3GPPLOCI(TransparentEF):
     def __init__(self, fid='4f01', sfid=0x01, name='EF.5GS3GPPLOCI', size={20, 20},
-                 desc='5S 3GP location information'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                 desc='5S 3GP location information', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         upd_status_constr = Enum(
             Byte, updated=0, not_updated=1, roaming_not_allowed=2)
         self._construct = Struct('5g_guti'/Bytes(13), 'last_visited_registered_tai_in_5gs'/Bytes(6),
@@ -1029,17 +1029,16 @@ class EF_5GS3GPPLOCI(TransparentEF):
 # TS 31.102 Section 4.4.11.7
 class EF_UAC_AIC(TransparentEF):
     def __init__(self, fid='4f06', sfid=0x06, name='EF.UAC_AIC', size={4, 4},
-                 desc='UAC Access Identities Configuration'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                 desc='UAC Access Identities Configuration', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         cfg_constr = FlagsEnum(Byte, multimedia_priority_service=1,
                                mission_critical_service=2)
         self._construct = Struct('uac_access_id_config'/cfg_constr)
 
 # TS 31.102 Section 4.4.11.9
 class EF_OPL5G(LinFixedEF):
-    def __init__(self, fid='6f08', sfid=0x08, name='EF.OPL5G', desc='5GS Operator PLMN List'):
-        super().__init__(fid=fid, sfid=sfid,
-                         name=name, desc=desc, rec_len={10, None})
+    def __init__(self, fid='6f08', sfid=0x08, name='EF.OPL5G', desc='5GS Operator PLMN List', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={10, None}, **kwargs)
         self._construct = Struct('tai'/Bytes(9), 'pnn_record_id'/Int8ub)
 
 # TS 31.102 Section 4.4.11.10
@@ -1060,8 +1059,8 @@ class EF_SUPI_NAI(TransparentEF):
                              nested=[NetworkSpecificIdentifier, GlobalLineIdentifier, GlobalCableIdentifier]):
         pass
     def __init__(self, fid='4f09', sfid=0x09, name='EF.SUPI_NAI',
-                 desc='SUPI as Network Access Identifier'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc)
+                 desc='SUPI as Network Access Identifier', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_SUPI_NAI.NAI_TLV_Collection
 
 
@@ -1069,8 +1068,8 @@ class EF_TN3GPPSNN(TransparentEF):
     class ServingNetworkName(BER_TLV_IE, tag=0x80):
         _construct = GreedyString("utf8")
     def __init__(self, fid='4f0c', sfid=0x0c, name='EF.TN3GPPSNN',
-                 desc='Trusted non-3GPP Serving network names list'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc)
+                 desc='Trusted non-3GPP Serving network names list', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_TN3GPPSNN.ServingNetworkName
 
 # TS 31.102 Section 4.4.5
@@ -1078,27 +1077,27 @@ class DF_WLAN(CardDF):
     def __init__(self, fid='5f40', name='DF.WLAN', desc='Files for WLAN purpose', **kwargs):
         super().__init__(fid=fid, name=name, desc=desc, **kwargs)
         files = [
-            TransparentEF('4f41', 0x01, 'EF.Pseudo', 'Pseudonym'),
+            TransparentEF('4f41', 0x01, 'EF.Pseudo', 'Pseudonym', service=59),
             TransparentEF('4f42', 0x02, 'EF.UPLMNWLAN',
-                          'User controlled PLMN selector for I-WLAN Access'),
+                          'User controlled PLMN selector for I-WLAN Access', service=60),
             TransparentEF('4f43', 0x03, 'EF.OPLMNWLAN',
-                          'Operator controlled PLMN selector for I-WLAN Access'),
+                          'Operator controlled PLMN selector for I-WLAN Access', service=61),
             LinFixedEF('4f44', 0x04, 'EF.UWSIDL',
-                       'User controlled WLAN Specific Identifier List'),
+                       'User controlled WLAN Specific Identifier List', service=62),
             LinFixedEF('4f45', 0x05, 'EF.OWSIDL',
-                       'Operator controlled WLAN Specific Identifier List'),
+                       'Operator controlled WLAN Specific Identifier List', service=63),
             TransparentEF('4f46', 0x06, 'EF.WRI',
-                          'WLAN Reauthentication Identity'),
+                          'WLAN Reauthentication Identity', service=66),
             LinFixedEF('4f47', 0x07, 'EF.HWSIDL',
-                       'Home I-WLAN Specific Identifier List'),
+                       'Home I-WLAN Specific Identifier List', service=81),
             TransparentEF('4f48', 0x08, 'EF.WEHPLMNPI',
-                          'I-WLAN Equivalent HPLMN Presentation Indication'),
+                          'I-WLAN Equivalent HPLMN Presentation Indication', service=82),
             TransparentEF('4f49', 0x09, 'EF.WHPI',
-                          'I-WLAN HPLMN Priority Indication'),
+                          'I-WLAN HPLMN Priority Indication', service=83),
             TransparentEF('4f4a', 0x0a, 'EF.WLRPLMN',
-                          'I-WLAN Last Registered PLMN'),
+                          'I-WLAN Last Registered PLMN', service=84),
             TransparentEF('4f4b', 0x0b, 'EF.HPLMNDAI',
-                          'HPLMN Direct Access Indicator'),
+                          'HPLMN Direct Access Indicator', service=88),
         ]
         self.add_files(files)
 
@@ -1107,12 +1106,12 @@ class DF_HNB(CardDF):
     def __init__(self, fid='5f50', name='DF.HNB', desc='Files for HomeNodeB purpose', **kwargs):
         super().__init__(fid=fid, name=name, desc=desc, **kwargs)
         files = [
-            LinFixedEF('4f01', 0x01, 'EF.ACSGL', 'Allowed CSG Lists'),
-            LinFixedEF('4f02', 0x02, 'EF.CSGTL', 'CSG Types'),
-            LinFixedEF('4f03', 0x03, 'EF.HNBN', 'Home NodeB Name'),
-            LinFixedEF('4f04', 0x04, 'EF.OCSGL', 'Operator CSG Lists'),
-            LinFixedEF('4f05', 0x05, 'EF.OCSGT', 'Operator CSG Type'),
-            LinFixedEF('4f06', 0x06, 'EF.OHNBN', 'Operator Home NodeB Name'),
+            LinFixedEF('4f01', 0x01, 'EF.ACSGL', 'Allowed CSG Lists', service=86),
+            LinFixedEF('4f02', 0x02, 'EF.CSGTL', 'CSG Types', service=86),
+            LinFixedEF('4f03', 0x03, 'EF.HNBN', 'Home NodeB Name', service=86),
+            LinFixedEF('4f04', 0x04, 'EF.OCSGL', 'Operator CSG Lists', service=90),
+            LinFixedEF('4f05', 0x05, 'EF.OCSGT', 'Operator CSG Type', service=90),
+            LinFixedEF('4f06', 0x06, 'EF.OHNBN', 'Operator Home NodeB Name', service=90),
         ]
         self.add_files(files)
 
@@ -1154,22 +1153,22 @@ class DF_USIM_5GS(CardDF):
         super().__init__(fid=fid, name=name, desc=desc, **kwargs)
         files = [
             # I'm looking at 31.102 R16.6
-            EF_5GS3GPPLOCI(),
+            EF_5GS3GPPLOCI(service=122),
             EF_5GS3GPPLOCI('4f02', 0x02, 'EF.5GSN3GPPLOCI',
-                           '5GS non-3GPP location information'),
-            EF_5GS3GPPNSC(),
+                           '5GS non-3GPP location information', service=122),
+            EF_5GS3GPPNSC(service=122),
             EF_5GS3GPPNSC('4f04', 0x04, 'EF.5GSN3GPPNSC',
-                          '5GS non-3GPP Access NAS Security Context'),
-            EF_5GAUTHKEYS(),
-            EF_UAC_AIC(),
-            EF_SUCI_Calc_Info(),
-            EF_OPL5G(),
-            EF_SUPI_NAI(),
+                          '5GS non-3GPP Access NAS Security Context', service=122),
+            EF_5GAUTHKEYS(service=123),
+            EF_UAC_AIC(service=126),
+            EF_SUCI_Calc_Info(service=124),
+            EF_OPL5G(service=129),
+            EF_SUPI_NAI(service=130),
             TransparentEF('4F0A', 0x0a, 'EF.Routing_Indicator',
-                          'Routing Indicator', size={4, 4}),
+                          'Routing Indicator', size={4, 4}, service=124),
             TransparentEF('4F0B', 0x0b, 'EF.URSP',
-                          'UE Route Selector Policies per PLMN'),
-            EF_TN3GPPSNN(),
+                          'UE Route Selector Policies per PLMN', service=132),
+            EF_TN3GPPSNN(service=133),
         ]
         self.add_files(files)
 
