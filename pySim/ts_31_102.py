@@ -600,6 +600,42 @@ class EF_UServiceTable(TransparentEF):
             """Deactivate a service within EF.UST"""
             self._cmd.card.update_ust(int(arg), 0)
 
+        def do_ust_service_check(self, arg):
+            """Check consistency between services of this file and files present/activated"""
+            # obtain list of currently active services
+            (service_data, sw) = self._cmd.rs.read_binary_dec()
+            for s in service_data.keys():
+                if service_data[s]['activated']:
+                    active_services.append(s)
+            # iterate over all the service-constraints we know of
+            selected_file = self._cmd.rs.selected_file
+            files_by_service = selected_file.parent.files_by_service
+            try:
+                for s in sorted(files_by_service.keys()):
+                    active_str = 'active' if s in active_services else 'inactive'
+                    self._cmd.poutput("Checking service No %u (%s)" % (s, active_str))
+                    for f in files_by_service[s]:
+                        should_exist = f.should_exist_for_services(active_services)
+                        try:
+                            (data, sw) = self._cmd.card._scc.select_file(f.fid)
+                            exists = True
+                            fcp = f.decode_select_response(data)
+                            # if we just selected a directory, go back
+                            if fcp['file_descriptor']['file_type'] == 'df':
+                                self._cmd.card._scc.select_parent_df()
+                        except SwMatchError as e:
+                            sw = e.sw_actual
+                            exists = False
+                        if exists != should_exist:
+                            if exists:
+                                self._cmd.poutput("  ERROR: File %s is selectable but should not!" % f)
+                            else:
+                                self._cmd.poutput("  ERROR: File %s is not selectable (SW=%s) but should!" %  (f, sw))
+            finally:
+                # re-select the EF.UST
+                self._cmd.card._scc.select_file(selected_file.fid)
+
+
 # TS 31.103 Section 4.2.7 - *not* the same as DF.GSM/EF.ECC!
 class EF_ECC(LinFixedEF):
     cc_construct = Rpad(BcdAdapter(Rpad(Bytes(3))), pattern='f')
