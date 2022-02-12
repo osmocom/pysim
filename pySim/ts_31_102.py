@@ -585,14 +585,20 @@ class EF_UServiceTable(TransparentEF):
             out[byte_offset] |= (bit) << bit_offset
         return out
 
-    def ust_service_check(self, cmd):
-        """Check consistency between services of this file and files present/activated"""
+    def get_active_services(self, cmd):
         # obtain list of currently active services
         (service_data, sw) = cmd.rs.read_binary_dec()
         active_services = []
         for s in service_data.keys():
             if service_data[s]['activated']:
                 active_services.append(s)
+        return active_services
+
+    def ust_service_check(self, cmd):
+        """Check consistency between services of this file and files present/activated"""
+        num_problems = 0
+        # obtain list of currently active services
+        active_services = self.get_active_services(cmd)
         # iterate over all the service-constraints we know of
         files_by_service = self.parent.files_by_service
         try:
@@ -612,6 +618,7 @@ class EF_UServiceTable(TransparentEF):
                         sw = str(e)
                         exists = False
                     if exists != should_exist:
+                        num_problems += 1
                         if exists:
                             cmd.poutput("  ERROR: File %s is selectable but should not!" % f)
                         else:
@@ -619,6 +626,7 @@ class EF_UServiceTable(TransparentEF):
         finally:
             # re-select the EF.UST
             cmd.card._scc.select_file(self.fid)
+        return num_problems
 
 class EF_UST(EF_UServiceTable):
     def __init__(self, **kwargs):
@@ -642,7 +650,26 @@ class EF_UST(EF_UServiceTable):
         def do_ust_service_check(self, arg):
             """Check consistency between services of this file and files present/activated"""
             selected_file = self._cmd.rs.selected_file
-            selected_file.ust_service_check(self._cmd)
+            num_problems = selected_file.ust_service_check(self._cmd)
+            # obtain list of currently active services
+            active_services = selected_file.get_active_services(self._cmd)
+            # Service n°46 can only be declared "available" if service n°45 is declared "available"
+            if 46 in active_services and not 45 in active_services:
+                self._cmd.poutput("ERROR: Service 46 available, but it requires Service 45")
+                num_problems += 1
+            # Service n°125 shall only be taken into account if Service n°124 is declared "available"
+            if 125 in active_services and not 124 in active_services:
+                self._cmd.poutput("ERROR: Service 125 is ignored as Service 124 not available")
+                num_problems += 1
+            # Service n°95, n°99 and n°115 shall not be declared "available" if an ISIM application is present on the UICC
+            non_isim_services = [95, 99, 115]
+            app_names = selected_file.get_mf().get_app_names()
+            if 'ADF.ISIM' in app_names:
+                for s in non_isim_services:
+                    if s in active_services:
+                        self._cmd.poutput("ERROR: Service %u shall not be available as ISIM application is present" % s)
+                        num_problems += 1
+            self._cmd.poutput("===> %u service / file inconsistencies detected" % num_problems)
 
 
 # TS 31.103 Section 4.2.7 - *not* the same as DF.GSM/EF.ECC!
