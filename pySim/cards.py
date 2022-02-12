@@ -425,6 +425,15 @@ class UsimCard(SimCard):
                 EF_USIM_ADF_map['UST'], content)
         return sw
 
+    def update_est(self, service, bit=1):
+        (res, sw) = self._scc.read_binary(EF_USIM_ADF_map['EST'])
+        if sw == '9000':
+            content = enc_st(res, service, bit)
+            (res, sw) = self._scc.update_binary(
+                EF_USIM_ADF_map['EST'], content)
+        return sw
+
+
 
 class IsimCard(SimCard):
 
@@ -565,6 +574,14 @@ class IsimCard(SimCard):
                 uiari_recs += "UICC IARI: Can't read, response code = %s\n" % (
                     sw)
         return uiari_recs
+
+    def update_ist(self, service, bit=1):
+        (res, sw) = self._scc.read_binary(EF_ISIM_ADF_map['IST'])
+        if sw == '9000':
+            content = enc_st(res, service, bit)
+            (res, sw) = self._scc.update_binary(
+                EF_ISIM_ADF_map['IST'], content)
+        return sw
 
 
 class MagicSimBase(abc.ABC, SimCard):

@@ -104,6 +104,31 @@ class EF_IMPU(LinFixedEF):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_IMPU.impu
 
+# TS 31.103 Section 4.2.7
+class EF_IST(EF_UServiceTable):
+    def __init__(self, **kwargs):
+        super().__init__('6f07', 0x07, 'EF.IST', 'ISIM Service Table', {1, None}, EF_IST_map)
+        # add those commands to the general commands of a TransparentEF
+        self.shell_commands += [self.AddlShellCommands()]
+
+    @with_default_category('File-Specific Commands')
+    class AddlShellCommands(CommandSet):
+        def __init__(self):
+            super().__init__()
+
+        def do_ist_service_activate(self, arg):
+            """Activate a service within EF.IST"""
+            self._cmd.card.update_ist(int(arg), 1)
+
+        def do_ist_service_deactivate(self, arg):
+            """Deactivate a service within EF.IST"""
+            self._cmd.card.update_ist(int(arg), 0)
+
+        def do_ist_service_check(self, arg):
+            """Check consistency between services of this file and files present/activated"""
+            selected_file = self._cmd.rs.selected_file
+            selected_file.ust_service_check(self._cmd)
+
 # TS 31.103 Section 4.2.8
 class EF_PCSCF(LinFixedEF):
     def __init__(self, fid='6f09', sfid=None, name='EF.P-CSCF', desc='P-CSCF Address', **kwargs):
@@ -179,8 +204,7 @@ class ADF_ISIM(CardADF):
             EF_IMPU(),
             EF_AD(),
             EF_ARR('6f06', 0x06),
-            EF_UServiceTable('6f07', 0x07, 'EF.IST',
-                             'ISIM Service Table', {1, None}, EF_IST_map),
+            EF_IST(),
             EF_PCSCF(service=5),
             EF_GBABP(service=2),
             EF_GBANL(service=2),

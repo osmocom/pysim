@@ -542,8 +542,6 @@ class EF_UServiceTable(TransparentEF):
     def __init__(self, fid, sfid, name, desc, size, table, **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self.table = table
-        # add those commands to the general commands of a TransparentEF
-        self.shell_commands += [self.AddlShellCommands()]
 
     @staticmethod
     def _bit_byte_offset_for_service(service: int) -> Tuple[int, int]:
@@ -587,6 +585,47 @@ class EF_UServiceTable(TransparentEF):
             out[byte_offset] |= (bit) << bit_offset
         return out
 
+    def ust_service_check(self, cmd):
+        """Check consistency between services of this file and files present/activated"""
+        # obtain list of currently active services
+        (service_data, sw) = cmd.rs.read_binary_dec()
+        active_services = []
+        for s in service_data.keys():
+            if service_data[s]['activated']:
+                active_services.append(s)
+        # iterate over all the service-constraints we know of
+        files_by_service = self.parent.files_by_service
+        try:
+            for s in sorted(files_by_service.keys()):
+                active_str = 'active' if s in active_services else 'inactive'
+                cmd.poutput("Checking service No %u (%s)" % (s, active_str))
+                for f in files_by_service[s]:
+                    should_exist = f.should_exist_for_services(active_services)
+                    try:
+                        (data, sw) = cmd.card._scc.select_file(f.fid)
+                        exists = True
+                        fcp = f.decode_select_response(data)
+                        # if we just selected a directory, go back
+                        if fcp['file_descriptor']['file_type'] == 'df':
+                            cmd.card._scc.select_parent_df()
+                    except SwMatchError as e:
+                        sw = str(e)
+                        exists = False
+                    if exists != should_exist:
+                        if exists:
+                            cmd.poutput("  ERROR: File %s is selectable but should not!" % f)
+                        else:
+                            cmd.poutput("  ERROR: File %s is not selectable (%s) but should!" %  (f, sw))
+        finally:
+            # re-select the EF.UST
+            cmd.card._scc.select_file(self.fid)
+
+class EF_UST(EF_UServiceTable):
+    def __init__(self, **kwargs):
+        super().__init__(fid='6f38', sfid=0x04, name='EF.UST', desc='USIM Service Table', size={1,17}, table=EF_UST_map, **kwargs)
+        # add those commands to the general commands of a TransparentEF
+        self.shell_commands += [self.AddlShellCommands()]
+
     @with_default_category('File-Specific Commands')
     class AddlShellCommands(CommandSet):
         def __init__(self):
@@ -602,38 +641,8 @@ class EF_UServiceTable(TransparentEF):
 
         def do_ust_service_check(self, arg):
             """Check consistency between services of this file and files present/activated"""
-            # obtain list of currently active services
-            (service_data, sw) = self._cmd.rs.read_binary_dec()
-            for s in service_data.keys():
-                if service_data[s]['activated']:
-                    active_services.append(s)
-            # iterate over all the service-constraints we know of
             selected_file = self._cmd.rs.selected_file
-            files_by_service = selected_file.parent.files_by_service
-            try:
-                for s in sorted(files_by_service.keys()):
-                    active_str = 'active' if s in active_services else 'inactive'
-                    self._cmd.poutput("Checking service No %u (%s)" % (s, active_str))
-                    for f in files_by_service[s]:
-                        should_exist = f.should_exist_for_services(active_services)
-                        try:
-                            (data, sw) = self._cmd.card._scc.select_file(f.fid)
-                            exists = True
-                            fcp = f.decode_select_response(data)
-                            # if we just selected a directory, go back
-                            if fcp['file_descriptor']['file_type'] == 'df':
-                                self._cmd.card._scc.select_parent_df()
-                        except SwMatchError as e:
-                            sw = e.sw_actual
-                            exists = False
-                        if exists != should_exist:
-                            if exists:
-                                self._cmd.poutput("  ERROR: File %s is selectable but should not!" % f)
-                            else:
-                                self._cmd.poutput("  ERROR: File %s is not selectable (SW=%s) but should!" %  (f, sw))
-            finally:
-                # re-select the EF.UST
-                self._cmd.card._scc.select_file(selected_file.fid)
+            selected_file.ust_service_check(self._cmd)
 
 
 # TS 31.103 Section 4.2.7 - *not* the same as DF.GSM/EF.ECC!
@@ -749,6 +758,33 @@ class EF_ICT(CyclicEF):
 class EF_CCP2(LinFixedEF):
     def __init__(self, fid='6f4f', sfid=0x16, name='EF.CCP2', desc='Capability Configuration Parameters 2', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={15, None}, **kwargs)
+
+# TS 31.102 Section 4.2.47
+class EF_EST(EF_UServiceTable):
+    def __init__(self, **kwargs):
+        super().__init__(fid='6f56', sfid=0x05, name='EF.EST', desc='Enabled Services Table', size={1,None}, table=EF_EST_map, **kwargs)
+        # add those commands to the general commands of a TransparentEF
+        self.shell_commands += [self.AddlShellCommands()]
+
+    @with_default_category('File-Specific Commands')
+    class AddlShellCommands(CommandSet):
+        def __init__(self):
+            super().__init__()
+
+        def do_est_service_activate(self, arg):
+            """Activate a service within EF.UST"""
+            self._cmd.card.update_est(int(arg), 1)
+
+        def do_est_service_deactivate(self, arg):
+            """Deactivate a service within EF.UST"""
+            self._cmd.card.update_est(int(arg), 0)
+
+        def do_est_service_check(self, arg):
+            """Check consistency between services of this file and files present/activated"""
+            # obtain list of currently active services
+            (service_data, sw) = self._cmd.rs.read_binary_dec()
+            active_services = service_data.keys()
+
 
 # TS 31.102 Section 4.2.48
 class EF_ACL(TransparentEF):
@@ -1128,8 +1164,7 @@ class ADF_USIM(CardADF):
                          'User controlled PLMN Selector with Access Technology', service=20),
             EF_HPPLMN(),
             EF_ACMmax(service=13),
-            EF_UServiceTable('6f38', 0x04, 'EF.UST', 'USIM Service Table', size={
-                             1, 17}, table=EF_UST_map),
+            EF_UST(),
             CyclicEF('6f39', None, 'EF.ACM',
                      'Accumulated call meter', rec_len={3, 3}, service=13),
             TransparentEF('6f3e', None, 'EF.GID1', 'Group Identifier Level 1', service=17),
@@ -1168,8 +1203,7 @@ class ADF_USIM(CardADF):
             EF_ADN('6f4d', None, 'EF.BDN', 'Barred Dialling Numbers', service=6),
             EF_EXT('6f55', None, 'EF.EXT4', 'Extension4 (BDN/SSC)', service=7),
             EF_CMI(service=6),
-            EF_UServiceTable('6f56', 0x05, 'EF.EST', 'Enabled Services Table', size={
-                1, None}, table=EF_EST_map, service=[2, 6, 34, 35]),
+            EF_EST(service=[2, 6, 34, 35]),
             EF_ACL(service=35),
             EF_DCK(service=36),
             EF_CNL(service=37),
