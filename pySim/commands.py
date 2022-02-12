@@ -136,6 +136,10 @@ class SimCardCommands(object):
 
         return self._tp.send_apdu_checksw(self.cla_byte + "a4" + self.sel_ctrl + "02" + fid)
 
+    def select_parent_df(self):
+        """Execute SELECT to switch to the parent DF """
+        return self._tp.send_apdu_checksw(self.cla_byte + "a4030400")
+
     def select_adf(self, aid: str):
         """Execute SELECT a given Applicaiton ADF.
 
