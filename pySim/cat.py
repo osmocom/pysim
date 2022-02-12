@@ -24,48 +24,34 @@ from construct import *
 # Tag values as per TS 101 220 Table 7.23
 
 # TS 102 223 Section 8.1
-
-
 class Address(COMPR_TLV_IE, tag=0x06):
     _construct = Struct('ton_npi'/Int8ub,
                         'call_number'/BcdAdapter(Bytes(this._.total_len-1)))
 
 # TS 102 223 Section 8.2
-
-
 class AlphaIdentifier(COMPR_TLV_IE, tag=0x05):
     # FIXME: like EF.ADN
     pass
 
 # TS 102 223 Section 8.3
-
-
 class Subaddress(COMPR_TLV_IE, tag=0x08):
     pass
 
 # TS 102 223 Section 8.4
-
-
 class CapabilityConfigParams(COMPR_TLV_IE, tag=0x07):
     pass
 
 # TS 31.111 Section 8.5
-
-
 class CBSPage(COMPR_TLV_IE, tag=0x0C):
     pass
 
 # TS 102 223 Section 8.6
-
-
 class CommandDetails(COMPR_TLV_IE, tag=0x01):
     _construct = Struct('command_number'/Int8ub,
                         'type_of_command'/Int8ub,
                         'command_qualifier'/Int8ub)
 
 # TS 102 223 Section 8.7
-
-
 class DeviceIdentities(COMPR_TLV_IE, tag=0x82):
     DEV_IDS = bidict({
         0x01: 'keypad',
@@ -115,35 +101,25 @@ class DeviceIdentities(COMPR_TLV_IE, tag=0x82):
         return bytes([src, dst])
 
 # TS 102 223 Section 8.8
-
-
 class Duration(COMPR_TLV_IE, tag=0x04):
     _construct = Struct('time_unit'/Int8ub,
                         'time_interval'/Int8ub)
 
 # TS 102 223 Section 8.9
-
-
 class Item(COMPR_TLV_IE, tag=0x0f):
     _construct = Struct('identifier'/Int8ub,
                         'text_string'/GsmStringAdapter(GreedyBytes))
 
 # TS 102 223 Section 8.10
-
-
 class ItemIdentifier(COMPR_TLV_IE, tag=0x10):
     _construct = Struct('identifier'/Int8ub)
 
 # TS 102 223 Section 8.11
-
-
 class ResponseLength(COMPR_TLV_IE, tag=0x11):
     _construct = Struct('minimum_length'/Int8ub,
                         'maximum_length'/Int8ub)
 
 # TS 102 223 Section 8.12
-
-
 class Result(COMPR_TLV_IE, tag=0x03):
     _construct = Struct('general_result'/Int8ub,
                         'additional_information'/HexAdapter(GreedyBytes))
@@ -154,21 +130,15 @@ class SMS_TPDU(COMPR_TLV_IE, tag=0x8B):
     _construct = Struct('tpdu'/HexAdapter(GreedyBytes))
 
 # TS 102 223 Section 8.15
-
-
 class TextString(COMPR_TLV_IE, tag=0x0d):
     _construct = Struct('dcs'/Int8ub,
                         'text_string'/HexAdapter(GreedyBytes))
 
 # TS 102 223 Section 8.16
-
-
 class Tone(COMPR_TLV_IE, tag=0x0e):
     _construct = Struct('tone'/Int8ub)
 
 # TS 31 111 Section 8.17
-
-
 class USSDString(COMPR_TLV_IE, tag=0x0a):
     _construct = Struct('dcs'/Int8ub,
                         'ussd_string'/HexAdapter(GreedyBytes))
@@ -179,15 +149,11 @@ class ProactiveCommand(BER_TLV_IE, tag=0xD0):
     pass
 
 # TS 101 220 Table 7.17 + 31.111 7.1.1.2
-
-
 class SMSPPDownload(BER_TLV_IE, tag=0xD1,
                     nested=[DeviceIdentities, Address, SMS_TPDU]):
     pass
 
 # TS 101 220 Table 7.17 + 31.111 7.1.1.3
-
-
 class SMSCBDownload(BER_TLV_IE, tag=0xD2,
                     nested=[DeviceIdentities, CBSPage]):
     pass

@@ -250,8 +250,6 @@ def tlv_val_interpret(inmap, indata):
     return {d[0]: newval(inmap, d[0], d[1]) for d in indata.items()}
 
 # ETSI TS 102 221 Section 9.2.7 + ISO7816-4 9.3.3/9.3.4
-
-
 class _AM_DO_DF(DataObject):
     def __init__(self):
         super().__init__('access_mode', 'Access Mode', tag=0x80)
@@ -463,8 +461,6 @@ class CRT_DO(DataObject):
         return b'\x83\x01' + pin.to_bytes(1, 'big') + b'\x95\x01\x08'
 
 # ISO7816-4 9.3.3 Table 33
-
-
 class SecCondByte_DO(DataObject):
     def __init__(self, tag=0x9d):
         super().__init__('security_condition_byte', tag=tag)
@@ -557,8 +553,6 @@ SC_DO = DataObjectChoice('security_condition', 'Security Condition',
                                   OR_DO, AND_DO, NOT_DO])
 
 # TS 102 221 Section 13.1
-
-
 class EF_DIR(LinFixedEF):
     class ApplicationLabel(BER_TLV_IE, tag=0x50):
         # TODO: UCS-2 coding option as per Annex A of TS 102 221
@@ -578,8 +572,6 @@ class EF_DIR(LinFixedEF):
         self._tlv = EF_DIR.ApplicationTemplate
 
 # TS 102 221 Section 13.2
-
-
 class EF_ICCID(TransparentEF):
     def __init__(self, fid='2fe2', sfid=0x02, name='EF.ICCID', desc='ICC Identification'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size={10, 10})
@@ -591,8 +583,6 @@ class EF_ICCID(TransparentEF):
         return enc_iccid(abstract['iccid'])
 
 # TS 102 221 Section 13.3
-
-
 class EF_PL(TransRecEF):
     def __init__(self, fid='2f05', sfid=0x05, name='EF.PL', desc='Preferred Languages'):
         super().__init__(fid, sfid=sfid, name=name,
