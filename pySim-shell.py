@@ -134,7 +134,7 @@ class PysimApp(cmd2.Cmd):
 
     def __init__(self, card, rs, sl, ch, script=None):
         super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
-                         use_ipython=True, auto_load_commands=False, startup_script=script)
+                         auto_load_commands=False, startup_script=script)
         self.intro = style('Welcome to pySim-shell!', fg=fg.red)
         self.default_category = 'pySim-shell built-in commands'
         self.card = None
@@ -145,16 +145,16 @@ class PysimApp(cmd2.Cmd):
         self.ch = ch
 
         self.numeric_path = False
-        self.add_settable(cmd2.Settable('numeric_path', bool, 'Print File IDs instead of names',
+        self.add_settable(cmd2.Settable('numeric_path', bool, 'Print File IDs instead of names', self,
                                         onchange_cb=self._onchange_numeric_path))
         self.conserve_write = True
-        self.add_settable(cmd2.Settable('conserve_write', bool, 'Read and compare before write',
+        self.add_settable(cmd2.Settable('conserve_write', bool, 'Read and compare before write', self,
                                         onchange_cb=self._onchange_conserve_write))
         self.json_pretty_print = True
         self.add_settable(cmd2.Settable('json_pretty_print',
-                          bool, 'Pretty-Print JSON output'))
+                          bool, 'Pretty-Print JSON output', self))
         self.apdu_trace = False
-        self.add_settable(cmd2.Settable('apdu_trace', bool, 'Trace and display APDUs exchanged with card',
+        self.add_settable(cmd2.Settable('apdu_trace', bool, 'Trace and display APDUs exchanged with card', self,
                                         onchange_cb=self._onchange_apdu_trace))
 
         self.equip(card, rs)
