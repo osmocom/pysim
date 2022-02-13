@@ -472,7 +472,7 @@ class EF_CMI(LinFixedEF):
                  desc='Comparison Method Information', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct(
-            'alpha_id'/Bytes(this._.total_len-1), 'comparison_method_id'/Int8ub)
+            'alpha_id'/GsmStringAdapter(Rpad(Bytes(this._.total_len-1))), 'comparison_method_id'/Int8ub)
 
 
 class DF_TELECOM(CardDF):
