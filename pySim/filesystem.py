@@ -1411,6 +1411,22 @@ class RuntimeState(object):
             name : Name of file to select
             cmd_app : Command Application State (for unregistering old file commands)
         """
+        # handling of entire paths with multiple directories/elements
+        if '/' in name:
+            prev_sel_file = self.selected_file
+            pathlist = name.split('/')
+            # treat /DF.GSM/foo like MF/DF.GSM/foo
+            if pathlist[0] == '':
+                pathlist[0] = 'MF'
+            try:
+                for p in pathlist:
+                    self.select(p, cmd_app)
+                return
+            except Exception as e:
+                # if any intermediate step fails, go back to where we were
+                self.select_file(prev_sel_file, cmd_app)
+                raise e
+
         sels = self.selected_file.get_selectables()
         if is_hex(name):
             name = name.lower()
