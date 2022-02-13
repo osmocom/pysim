@@ -343,13 +343,12 @@ EF_SST_map = {
 class EF_ADN(LinFixedEF):
     def __init__(self, fid='6f3a', sfid=None, name='EF.ADN', desc='Abbreviated Dialing Numbers', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len={14, 30}, **kwargs)
-
-    def _decode_record_bin(self, raw_bin_data):
-        alpha_id_len = len(raw_bin_data) - 14
-        alpha_id = raw_bin_data[:alpha_id_len]
-        u = unpack('!BB10sBB', raw_bin_data[-14:])
-        return {'alpha_id': alpha_id, 'len_of_bcd': u[0], 'ton_npi': u[1],
-                'dialing_nr': u[2], 'cap_conf_id': u[3], 'ext1_record_id': u[4]}
+        self._construct = Struct('alpha_id'/COptional(GsmStringAdapter(Rpad(Bytes(this._.total_len-14)), codec='ascii')),
+                                 'len_of_bcd'/Int8ub,
+                                 'ton_npi'/TonNpi,
+                                 'dialing_nr'/BcdAdapter(Rpad(Bytes(10))),
+                                 'cap_conf_id'/Int8ub,
+                                 'ext1_record_id'/Int8ub)
 
 # TS 51.011 Section 10.5.5
 class EF_SMS(LinFixedEF):
@@ -656,12 +655,7 @@ class EF_ACC(TransparentEF):
     def __init__(self, fid='6f78', sfid=None, name='EF.ACC',
                  desc='Access Control Class', size={2, 2}, **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
-
-    def _decode_bin(self, raw_bin):
-        return {'acc': unpack('!H', raw_bin)[0]}
-
-    def _encode_bin(self, abstract):
-        return pack('!H', abstract['acc'])
+        self._construct = HexAdapter(Bytes(2))
 
 # TS 51.011 Section 10.3.16
 class EF_LOCI(TransparentEF):
