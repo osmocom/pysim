@@ -305,7 +305,7 @@ class BluetoothSapSimLink(LinkBase):
         self.connected = False
 
     def reset_card(self):
-        if self._connected:
+        if self.connected:
             self.send_sap_message("RESET_SIM_REQ")
             msg_name, param_list = self._recv_sap_response('RESET_SIM_RESP')
             connection_status = next(
