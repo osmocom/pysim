@@ -295,8 +295,8 @@ class BluetoothSapSimLink(LinkBase):
         except:
             raise ReaderError("Cannot connect to SIM Access service")
 
-    # def get_atr(self):
-    #	return bytes(self._con.getATR())
+    def get_atr(self):
+        return self._atr
 
     def disconnect(self):
         if self.connected:
