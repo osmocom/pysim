@@ -2,7 +2,7 @@ from construct.lib.containers import Container, ListContainer
 from construct.core import EnumIntegerString
 import typing
 from construct import *
-from construct.core import evaluate, bytes2integer, integer2bytes
+from construct.core import evaluate, bytes2integer, integer2bytes, BitwisableString
 from construct.lib import integertypes
 from pySim.utils import b2h, h2b, swap_nibbles
 import gsm0338
@@ -44,6 +44,25 @@ class BcdAdapter(Adapter):
     def _encode(self, obj, context, path):
         return h2b(swap_nibbles(obj))
 
+class InvertAdapter(Adapter):
+    """inverse logic (false->true, true->false)."""
+    @staticmethod
+    def _invert_bool_in_obj(obj):
+        for k,v in obj.items():
+            # skip all private entries
+            if k.startswith('_'):
+                continue
+            if v == False:
+                obj[k] = True
+            elif v == True:
+                obj[k] = False
+        return obj
+
+    def _decode(self, obj, context, path):
+        return self._invert_bool_in_obj(obj)
+
+    def _encode(self, obj, context, path):
+        return self._invert_bool_in_obj(obj)
 
 class Rpad(Adapter):
     """
@@ -228,3 +247,11 @@ class GreedyInteger(Construct):
             data = swapbytes(data)
         stream_write(stream, data, length, path)
         return obj
+
+# merged definitions of 24.008 + 23.040
+TypeOfNumber = Enum(BitsInteger(3), unknown=0, international=1, national=2, network_specific=3,
+                    short_code=4, alphanumeric=5, abbreviated=6, reserved_for_extension=7)
+NumberingPlan = Enum(BitsInteger(4), unknown=0, isdn_e164=1, data_x121=3, telex_f69=4,
+                     sc_specific_5=5, sc_specific_6=6, national=8, private=9,
+                     ermes=10, reserved_cts=11, reserved_for_extension=15)
+TonNpi = BitStruct('ext'/Flag, 'type_of_number'/TypeOfNumber, 'numbering_plan_id'/NumberingPlan)

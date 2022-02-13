@@ -402,8 +402,42 @@ class EF_MSISDN(LinFixedEF):
 
 # TS 51.011 Section 10.5.6
 class EF_SMSP(LinFixedEF):
+    class ValidityPeriodAdapter(Adapter):
+        def _decode(self, obj, context, path):
+            if obj <= 143:
+                return obj + 1 * 5
+            elif obj <= 167:
+                return 12 * 60 + ((obj - 143) * 30)
+            elif obj <= 196:
+                return (obj - 166) * (24 * 60)
+            elif obj <= 255:
+                return (obj - 192) * (7 * 24 * 60)
+            else:
+                raise ValueError
+        def _encode(self, obj, context, path):
+            if obj <= 12*60:
+                return obj/5 - 1
+            elif obj <= 24*60:
+                return 143 + ((obj - (12 * 60)) / 30)
+            elif obj <= 30 * 24 * 60:
+                return 166 + (obj / (24 * 60))
+            elif obj <= 63 * 7 * 24 * 60:
+                return 192 + (obj / (7 * 24 * 60))
+            else:
+                raise ValueError
+
     def __init__(self, fid='6f42', sfid=None, name='EF.SMSP', desc='Short message service parameters', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len={28, None}, **kwargs)
+        ScAddr = Struct('length'/Int8ub, 'ton_npi'/TonNpi, 'call_number'/BcdAdapter(Rpad(Bytes(10))))
+        self._construct = Struct('alpha_id'/COptional(GsmStringAdapter(Rpad(Bytes(this._.total_len-28)))),
+                                 'parameter_indicators'/InvertAdapter(FlagsEnum(Byte, tp_dest_addr=1, tp_sc_addr=2,
+                                                                                tp_pid=3, tp_dcs=4, tp_vp=5)),
+                                 'tp_dest_addr'/ScAddr,
+                                 'tp_sc_addr'/ScAddr,
+
+                                 'tp_pid'/HexAdapter(Bytes(1)),
+                                 'tp_dcs'/HexAdapter(Bytes(1)),
+                                 'tp_vp_minutes'/EF_SMSP.ValidityPeriodAdapter(Byte))
 
 # TS 51.011 Section 10.5.7
 class EF_SMSS(TransparentEF):
