@@ -176,13 +176,61 @@ class EF_UICCIARI(LinFixedEF):
 
 # TS 31.103 Section 4.2.18
 class EF_IMSConfigData(BerTlvEF):
+    class ImsConfigDataEncoding(BER_TLV_IE, tag=0x80):
+        _construct = HexAdapter(Bytes(1))
+    class ImsConfigData(BER_TLV_IE, tag=0x81):
+        _construct = GreedyString
+    # pylint: disable=undefined-variable
+    class ImsConfigDataCollection(TLV_IE_Collection, neted=[ImsConfigDataEncoding, ImsConfigData]):
+        pass
     def __init__(self, fid='6ff8', sfid=None, name='EF.IMSConfigData', desc='IMS Configuration Data', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._tlv = EF_IMSConfigData.ImsConfigDataCollection
 
 # TS 31.103 Section 4.2.19
 class EF_XCAPConfigData(BerTlvEF):
+    class Access(BER_TLV_IE, tag=0x81):
+        pass
+    class ApplicationName(BER_TLV_IE, tag=0x82):
+        pass
+    class ProviderID(BER_TLV_IE, tag=0x83):
+        pass
+    class URI(BER_TLV_IE, tag=0x84):
+        pass
+    class XcapAuthenticationUserName(BER_TLV_IE, tag=0x85):
+        pass
+    class XcapAuthenticationPassword(BER_TLV_IE, tag=0x86):
+        pass
+    class XcapAuthenticationType(BER_TLV_IE, tag=0x87):
+        pass
+    class AddressType(BER_TLV_IE, tag=0x88):
+        pass
+    class Address(BER_TLV_IE, tag=0x89):
+        pass
+    class PDPAuthenticationType(BER_TLV_IE, tag=0x8a):
+        pass
+    class PDPAuthenticationName(BER_TLV_IE, tag=0x8b):
+        pass
+    class PDPAuthenticationSecret(BER_TLV_IE, tag=0x8c):
+        pass
+
+    class AccessForXCAP(BER_TLV_IE, tag=0x81):
+        pass
+    class NumberOfXcapConnParPolicy(BER_TLV_IE, tag=0x82):
+        _construct = Int8ub
+    # pylint: disable=undefined-variable
+    class XcapConnParamsPolicyPart(BER_TLV_IE, tag=0xa1, nested=[Access, ApplicationName, ProviderID, URI,
+                                 XcapAuthenticationUserName, XcapAuthenticationPassword,
+                                 XcapAuthenticationType, AddressType, Address, PDPAuthenticationType,
+                                 PDPAuthenticationName, PDPAuthenticationSecret]):
+        pass
+    class XcapConnParamsPolicy(BER_TLV_IE, tag=0xa0, nested=[AccessForXCAP, NumberOfXcapConnParPolicy, XcapConnParamsPolicyPart]):
+        pass
+    class XcapConnParamsPolicyDO(BER_TLV_IE, tag=0x80, nested=[XcapConnParamsPolicy]):
+        pass
     def __init__(self, fid='6ffc', sfid=None, name='EF.XCAPConfigData', desc='XCAP Configuration Data', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._tlv = EF_XCAPConfigData.XcapConnParamsPolicy
 
 # TS 31.103 Section 4.2.20
 class EF_WebRTCURI(TransparentEF):
@@ -195,9 +243,17 @@ class EF_WebRTCURI(TransparentEF):
 
 # TS 31.103 Section 4.2.21
 class EF_MuDMiDConfigData(BerTlvEF):
+    class MudMidConfigDataEncoding(BER_TLV_IE, tag=0x80):
+        _construct = HexAdapter(Bytes(1))
+    class MudMidConfigData(BER_TLV_IE, tag=0x81):
+        _construct = GreedyString
+    # pylint: disable=undefined-variable
+    class MudMidConfigDataCollection(TLV_IE_Collection, neted=[MudMidConfigDataEncoding, MudMidConfigData]):
+        pass
     def __init__(self, fid='6ffe', sfid=None, name='EF.MuDMiDConfigData',
                  desc='MuD and MiD Configuration Data', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._tlv = EF_MuDMiDConfigData.MudMidConfigDataCollection
 
 
 class ADF_ISIM(CardADF):
