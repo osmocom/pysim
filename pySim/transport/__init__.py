@@ -215,6 +215,10 @@ def argparse_add_reader_args(arg_parser):
     osmobb_group.add_argument('--osmocon', dest='osmocon_sock', metavar='PATH', default=None,
                               help='Socket path for Calypso (e.g. Motorola C1XX) based reader (via OsmocomBB)')
 
+    btsap_group = arg_parser.add_argument_group('Bluetooth Device (SIM Access Profile)')
+    btsap_group.add_argument('--bt-addr', dest='bt_addr', metavar='ADDR', default=None,
+                             help='Bluetooth device address')
+
     return arg_parser
 
 
@@ -237,6 +241,10 @@ def init_reader(opts, **kwargs) -> Optional[LinkBase]:
             from pySim.transport.modem_atcmd import ModemATCommandLink
             sl = ModemATCommandLink(
                 device=opts.modem_dev, baudrate=opts.modem_baud, **kwargs)
+        elif opts.bt_addr is not None:
+            print("Using Bluetooth device (SIM Access Profile)")
+            from pySim.transport.bt_rsap import BluetoothSapSimLink
+            sl = BluetoothSapSimLink(opts.bt_addr, **kwargs)
         else:  # Serial reader is default
             print("Using serial reader interface")
             from pySim.transport.serial import SerialSimLink
