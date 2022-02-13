@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from construct import *
+from construct import Optional as COptional
 from pySim.construct import *
 from pySim.utils import *
 from pySim.filesystem import *
@@ -87,34 +88,22 @@ class TotalFileSize(BER_TLV_IE, tag=0x81):
 
 # ETSI TS 102 221 11.1.1.4.3
 class FileDescriptor(BER_TLV_IE, tag=0x82):
-    def _from_bytes(self, in_bin: bytes):
-        out = {}
-        ft_dict = {
-            0: 'working_ef',
-            1: 'internal_ef',
-            7: 'df'
-        }
-        fs_dict = {
-            0: 'no_info_given',
-            1: 'transparent',
-            2: 'linear_fixed',
-            6: 'cyclic',
-            0x39: 'ber_tlv',
-        }
-        fdb = in_bin[0]
-        ftype = (fdb >> 3) & 7
-        if fdb & 0xbf == 0x39:
-            fstruct = 0x39
-        else:
-            fstruct = fdb & 7
-        out['shareable'] = True if fdb & 0x40 else False
-        out['file_type'] = ft_dict[ftype] if ftype in ft_dict else ftype
-        out['structure'] = fs_dict[fstruct] if fstruct in fs_dict else fstruct
-        if len(in_bin) >= 5:
-            out['record_len'] = int.from_bytes(in_bin[2:4], 'big')
-            out['num_of_rec'] = int.from_bytes(in_bin[4:5], 'big')
-        self.decoded = out
-        return self.decoded
+    class BerTlvAdapter(Adapter):
+        def _parse(self, obj, context, path):
+            if obj == 0x39:
+                return 'ber_tlv'
+            raise ValidationError
+        def _build(self, obj, context, path):
+            if obj == 'ber_tlv':
+                return 0x39
+            raise ValidationError
+
+    FDB = Select(BitStruct(Const(0, Bit), 'shareable'/Flag, 'structure'/BerTlvAdapter(Const(0x39, BitsInteger(6)))),
+                 BitStruct(Const(0, Bit), 'shareable'/Flag, 'file_type'/Enum(BitsInteger(3), working_ef=0, internal_ef=1, df=7),
+                           'structure'/Enum(BitsInteger(3), no_info_given=0, transparent=1, linear_fixed=2, cyclic=6))
+                )
+    _construct = Struct('file_descriptor_byte'/FDB, Const(b'\x21'),
+                        'record_len'/COptional(Int16ub), 'num_of_rec'/COptional(Int16ub))
 
 # ETSI TS 102 221 11.1.1.4.4
 class FileIdentifier(BER_TLV_IE, tag=0x83):
@@ -668,7 +657,7 @@ class EF_ARR(LinFixedEF):
         @cmd2.with_argparser(LinFixedEF.ShellCommands.read_recs_dec_parser)
         def do_read_arr_records(self, opts):
             """Read + decode all EF.ARR records in flattened, human-friendly form."""
-            num_of_rec = self._cmd.rs.selected_file_fcp['file_descriptor']['num_of_rec']
+            num_of_rec = self._cmd.rs.selected_file_num_of_rec()
             # collect all results in list so they are rendered as JSON list when printing
             data_list = []
             for recnr in range(1, 1 + num_of_rec):

@@ -1109,7 +1109,9 @@ class CardProfileSIM(CardProfile):
             4: 'working_ef'
         }
         ret = {
-            'file_descriptor': {},
+            'file_descriptor': {
+                'file_descriptor_byte': {},
+            },
             'proprietary_info': {},
         }
         ret['file_id'] = b2h(resp_bin[4:6])
@@ -1117,7 +1119,7 @@ class CardProfileSIM(CardProfile):
             resp_bin[2:4], 'big')
         file_type = type_of_file_map[resp_bin[6]
                                      ] if resp_bin[6] in type_of_file_map else resp_bin[6]
-        ret['file_descriptor']['file_type'] = file_type
+        ret['file_descriptor']['file_descriptor_byte']['file_type'] = file_type
         if file_type in ['mf', 'df']:
             ret['file_characteristics'] = b2h(resp_bin[13:14])
             ret['num_direct_child_df'] = resp_bin[14]
@@ -1127,7 +1129,7 @@ class CardProfileSIM(CardProfile):
         elif file_type in ['working_ef']:
             file_struct = struct_of_file_map[resp_bin[13]
                                              ] if resp_bin[13] in struct_of_file_map else resp_bin[13]
-            ret['file_descriptor']['structure'] = file_struct
+            ret['file_descriptor']['file_descriptor_byte']['structure'] = file_struct
             ret['access_conditions'] = b2h(resp_bin[8:10])
             if resp_bin[11] & 0x01 == 0:
                 ret['life_cycle_status_int'] = 'operational_activated'

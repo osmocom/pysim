@@ -773,7 +773,7 @@ class LinFixedEF(CardEF):
         @cmd2.with_argparser(read_recs_parser)
         def do_read_records(self, opts):
             """Read all records from a record-oriented EF"""
-            num_of_rec = self._cmd.rs.selected_file_fcp['file_descriptor']['num_of_rec']
+            num_of_rec = self._cmd.rs.selected_file_num_of_rec()
             for recnr in range(1, 1 + num_of_rec):
                 (data, sw) = self._cmd.rs.read_record(recnr)
                 if (len(data) > 0):
@@ -789,7 +789,7 @@ class LinFixedEF(CardEF):
         @cmd2.with_argparser(read_recs_dec_parser)
         def do_read_records_decoded(self, opts):
             """Read + decode all records from a record-oriented EF"""
-            num_of_rec = self._cmd.rs.selected_file_fcp['file_descriptor']['num_of_rec']
+            num_of_rec = self._cmd.rs.selected_file_num_of_rec()
             # collect all results in list so they are rendered as JSON list when printing
             data_list = []
             for recnr in range(1, 1 + num_of_rec):
@@ -1279,6 +1279,21 @@ class RuntimeState(object):
                 pass
         return apps_taken
 
+    def selected_file_descriptor_byte(self) -> dict:
+        return self.selected_file_fcp['file_descriptor']['file_descriptor_byte']
+
+    def selected_file_shareable(self) -> bool:
+        return self.selected_file_descriptor_byte()['shareable']
+
+    def selected_file_structure(self) -> str:
+        return self.selected_file_descriptor_byte()['structure']
+
+    def selected_file_type(self) -> str:
+        return self.selected_file_descriptor_byte()['file_type']
+
+    def selected_file_num_of_rec(self) -> Optional[int]:
+        return self.selected_file_fcp['file_descriptor'].get('num_of_rec')
+
     def reset(self, cmd_app=None) -> Hexstr:
         """Perform physical card reset and obtain ATR.
         Args:
@@ -1350,11 +1365,11 @@ class RuntimeState(object):
             raise RuntimeError("%s: %s - %s" % (swm.sw_actual, k[0], k[1]))
 
         select_resp = self.selected_file.decode_select_response(data)
-        if (select_resp['file_descriptor']['file_type'] == 'df'):
+        if (select_resp['file_descriptor']['file_descriptor_byte']['file_type'] == 'df'):
             f = CardDF(fid=fid, sfid=None, name="DF." + str(fid).upper(),
                        desc="dedicated file, manually added at runtime")
         else:
-            if (select_resp['file_descriptor']['structure'] == 'transparent'):
+            if (select_resp['file_descriptor']['file_descriptor_byte']['structure'] == 'transparent'):
                 f = TransparentEF(fid=fid, sfid=None, name="EF." + str(fid).upper(),
                                   desc="elementary file, manually added at runtime")
             else:

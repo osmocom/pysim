@@ -80,9 +80,11 @@ This will
   pySIM-shell (MF)> select ADF.USIM
   {
       "file_descriptor": {
-          "shareable": true,
-          "file_type": "df",
-          "structure": "no_info_given"
+          "file_descriptor_byte": {
+              "shareable": true,
+              "file_type": "df",
+              "structure": "no_info_given"
+          }
       },
       "df_name": "A0000000871002FFFFFFFF8907090000",
       "proprietary_info": {

@@ -528,8 +528,7 @@ class PySimCommands(CommandSet):
             self._cmd.poutput("# file: %s (%s)" % (
                 self._cmd.rs.selected_file.name, self._cmd.rs.selected_file.fid))
 
-            fd = fcp_dec['file_descriptor']
-            structure = fd['structure']
+            structure = self._cmd.rs.selected_file_structure()
             self._cmd.poutput("# structure: %s" % str(structure))
 
             for f in df_path_list:
@@ -545,8 +544,8 @@ class PySimCommands(CommandSet):
                     self._cmd.poutput("update_binary " + str(result[0]))
             elif structure == 'cyclic' or structure == 'linear_fixed':
                 # Use number of records specified in select response
-                if 'num_of_rec' in fd:
-                    num_of_rec = fd['num_of_rec']
+                num_of_rec = self._cmd.rs.selected_file_num_of_rec()
+                if num_of_rec:
                     for r in range(1, num_of_rec + 1):
                         if as_json:
                             result = self._cmd.rs.read_record_dec(r)
