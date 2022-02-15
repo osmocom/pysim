@@ -4,6 +4,9 @@ Legacy tools
 *legacy tools* are the classic ``pySim-prog`` and ``pySim-read`` programs that
 existed long before ``pySim-shell``.
 
+These days, you should primarily use ``pySim-shell`` instead of these
+legacy tools.
+
 pySim-prog
 ----------
 
@@ -44,6 +47,11 @@ pySim-read
 
 ``pySim-read`` allows you to read some data from a SIM card.  It will only some files
 of the card, and will only read files accessible to a normal user (without any special authentication)
+
+These days, you should use the ``export`` command of ``pySim-shell``
+instead. It performs a much more comprehensive export of all of the
+[standard] files that can be found on the card.  To get a human-readable
+decode instead of the raw hex export, you can use ``export --json``.
 
 Specifically, pySim-read will dump the following:
 
