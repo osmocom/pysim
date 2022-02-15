@@ -683,7 +683,8 @@ class PySimCommands(CommandSet):
     def do_apdu(self, opts):
         """Send a raw APDU to the card, and print SW + Response.
         DANGEROUS: pySim-shell will not know any card state changes, and
-        not continue to work as expected if you e.g. select a different file."""
+        not continue to work as expected if you e.g. select a different
+        file."""
         data, sw = self._cmd.card._scc._tp.send_apdu(opts.APDU)
         self._cmd.poutput("SW: %s %s, RESP: %s" % (sw, self._cmd.rs.interpret_sw(sw), data))
 
@@ -739,7 +740,9 @@ class Iso7816Commands(CommandSet):
 
     @cmd2.with_argparser(verify_chv_parser)
     def do_verify_chv(self, opts):
-        """Verify (authenticate) using specified PIN code"""
+        """Verify (authenticate) using specified CHV (PIN) code, which is how the specifications
+        call it if you authenticate yourself using the specified PIN.  There usually is at least PIN1 and
+        PIN2."""
         pin = self.get_code(opts.pin_code)
         (data, sw) = self._cmd.card._scc.verify_chv(opts.pin_nr, h2b(pin))
         self._cmd.poutput("CHV verification successful")
@@ -812,7 +815,8 @@ class Iso7816Commands(CommandSet):
     activate_file_parser.add_argument('NAME', type=str, help='File name or FID of file to activate')
     @cmd2.with_argparser(activate_file_parser)
     def do_activate_file(self, opts):
-        """Activate the specified EF"""
+        """Activate the specified EF. This used to be called REHABILITATE in TS 11.11 for classic
+        SIM.  You need to specify the name or FID of the file to activate."""
         (data, sw) = self._cmd.rs.activate_file(opts.NAME)
 
     def complete_activate_file(self, text, line, begidx, endidx) -> List[str]:

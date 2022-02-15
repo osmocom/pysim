@@ -311,7 +311,7 @@ class ADF_ARAM(CardADF):
                 self._cmd.poutput_json(res_do.to_dict())
 
         def do_aram_get_config(self, opts):
-            """GET DATA [Config] on the ARA-M Applet"""
+            """Perform GET DATA [Config] on the ARA-M Applet: Tell it our version and retrieve its version."""
             res_do = ADF_ARAM.get_config(self._cmd.card._scc._tp)
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
@@ -345,7 +345,7 @@ class ADF_ARAM(CardADF):
 
         @cmd2.with_argparser(store_ref_ar_do_parse)
         def do_aram_store_ref_ar_do(self, opts):
-            """Perform STORE DATA [Command-Store-REF-AR-DO] to store a new access rule."""
+            """Perform STORE DATA [Command-Store-REF-AR-DO] to store a (new) access rule."""
             # REF
             ref_do_content = []
             if opts.aid:

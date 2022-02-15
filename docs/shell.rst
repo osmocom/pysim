@@ -164,9 +164,6 @@ unblock_chv
 
 verify_chv
 ~~~~~~~~~~
-This command allows you to verify a CHV (PIN), which is how the specifications call
-it if you authenticate yourself with the said CHV/PIN.
-
 .. argparse::
    :module: pySim-shell
    :func: Iso7816Commands.verify_chv_parser
@@ -178,9 +175,6 @@ Deactivate the currently selected file.  This used to be called INVALIDATE in TS
 
 activate_file
 ~~~~~~~~~~~~~
-Activate the specified file.  This used to be called REHABILITATE in TS 11.11.
-You need to specify the name or FID of the file to activate.
-
 .. argparse::
    :module: pySim-shell
    :func: Iso7816Commands.activate_file_parser
@@ -212,6 +206,7 @@ including the electrical power down.
    :func: Iso7816Commands.suspend_uicc_parser
 
 
+
 pySim commands
 --------------
 
@@ -221,7 +216,6 @@ a complex sequence of card-commands.
 
 desc
 ~~~~
-
 Display human readable file description for the currently selected file.
 
 
@@ -230,6 +224,17 @@ dir
 .. argparse::
    :module: pySim-shell
    :func: PySimCommands.dir_parser
+
+Example:
+::
+
+  pySIM-shell (MF)> dir
+  MF
+  3f00
+   ..          ADF.USIM    DF.SYSTEM   EF.DIR      EF.UMPC
+   ADF.ARA-M   DF.EIRENE   DF.TELECOM  EF.ICCID    MF
+   ADF.ISIM    DF.GSM      EF.ARR      EF.PL
+  14 files
 
 
 export
@@ -250,15 +255,27 @@ all/most files.
 
 tree
 ~~~~
-
 Display a tree of the card filesystem.  It is important to note that this displays a tree
 of files that might potentially exist (based on the card profile).  In order to determine if
 a given file really exists on a given card, you have to try to select that file.
 
+Example:
+::
+
+  pySIM-shell (MF)> tree --help
+  EF.DIR                    2f00 Application Directory
+  EF.ICCID                  2fe2 ICC Identification
+  EF.PL                     2f05 Preferred Languages
+  EF.ARR                    2f06 Access Rule Reference
+  EF.UMPC                   2f08 UICC Maximum Power Consumption
+  DF.TELECOM                7f10 None
+    EF.ADN                  6f3a Abbreviated Dialing Numbers
+  ...
+
+
 
 verify_adm
 ~~~~~~~~~~
-
 Verify the ADM (Administrator) PIN specified as argument.  This is typically needed in order
 to get write/update permissions to most of the files on SIM cards.
 
@@ -286,14 +303,19 @@ bulk_script
    :module: pySim-shell
    :func: PysimApp.bulk_script_parser
 
-Run a script for bulk-provisioning of multiple cards.
-
 
 echo
 ~~~~
 .. argparse::
    :module: pySim-shell
    :func: PysimApp.echo_parser
+
+
+apdu
+~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: PySimCommands.apdu_cmd_parser
 
 
 
@@ -484,6 +506,26 @@ authenticate
    :module: pySim.ts_31_102
    :func: ADF_USIM.AddlShellCommands.authenticate_parser
 
+terminal_profile
+~~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.ts_31_102
+   :func: ADF_USIM.AddlShellCommands.term_prof_parser
+
+envelope
+~~~~~~~~
+.. argparse::
+   :module: pySim.ts_31_102
+   :func: ADF_USIM.AddlShellCommands.envelope_parser
+
+envelope_sms
+~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.ts_31_102
+   :func: ADF_USIM.AddlShellCommands.envelope_sms_parser
+
+
+
 
 ARA-M commands
 --------------
@@ -546,21 +588,14 @@ Perform Config handshake with ARA-M applet: Tell it our version and retrieve its
 
 NOTE: Not supported in all ARA-M implementations.
 
-.. argparse::
-   :module: pySim.ara_m
-   :func: ADF_ARAM.AddlShellCommands.get_config_parser
-
 
 aram_store_ref_ar_do
 ~~~~~~~~~~~~~~~~~~~~
-Store a [new] access rule on the ARA-M applet.
-
 .. argparse::
    :module: pySim.ara_m
    :func: ADF_ARAM.AddlShellCommands.store_ref_ar_do_parse
 
 For example, to store an Android UICC carrier privilege rule for the SHA1 hash of the certificate used to sign the CoIMS android app of Supreeth Herle (https://github.com/herlesupreeth/CoIMS_Wiki) you can use the following command:
-
 ::
 
   pySIM-shell (MF/ADF.ARA-M)> aram_store_ref_ar_do --aid FFFFFFFFFFFF --device-app-id E46872F28B350B7E1F140DE535C2A8D5804F0BE3 --android-permissions 0000000000000001 --apdu-always

@@ -34,7 +34,7 @@ pySim consists of several parts:
 * the [legacy] :ref:`pySim-prog and pySim-read tools<Legacy tools>`
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    shell

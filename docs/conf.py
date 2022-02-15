@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'osmopysim-usermanual'
-copyright = '2009-2021 by Sylvain Munaut, Harald Welte, Philipp Maier, Supreeth Herle'
+copyright = '2009-2022 by Sylvain Munaut, Harald Welte, Philipp Maier, Supreeth Herle'
 author = 'Sylvain Munaut, Harald Welte, Philipp Maier, Supreeth Herle'
 
 
