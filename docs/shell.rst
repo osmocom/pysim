@@ -143,7 +143,12 @@ Deactivate the currently selected file.  This used to be called INVALIDATE in TS
 
 activate_file
 ~~~~~~~~~~~~~
-Activate the currently selected file.  This used to be called REHABILITATE in TS 11.11.
+Activate the specified file.  This used to be called REHABILITATE in TS 11.11.
+You need to specify the name or FID of the file to activate.
+
+.. argparse::
+   :module: pySim-shell
+   :func: Iso7816Commands.activate_file_parser
 
 open_channel
 ~~~~~~~~~~~~

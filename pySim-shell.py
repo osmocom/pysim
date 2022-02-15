@@ -805,13 +805,15 @@ class Iso7816Commands(CommandSet):
         self._cmd.poutput("CHV enable successful")
 
     def do_deactivate_file(self, opts):
-        """Deactivate the current EF"""
+        """Deactivate the currently selected EF"""
         (data, sw) = self._cmd.card._scc.deactivate_file()
 
+    activate_file_parser = argparse.ArgumentParser()
+    activate_file_parser.add_argument('NAME', type=str, help='File name or FID of file to activate')
+    @cmd2.with_argparser(activate_file_parser)
     def do_activate_file(self, opts):
         """Activate the specified EF"""
-        path = opts.arg_list[0]
-        (data, sw) = self._cmd.rs.activate_file(path)
+        (data, sw) = self._cmd.rs.activate_file(opts.NAME)
 
     def complete_activate_file(self, text, line, begidx, endidx) -> List[str]:
         """Command Line tab completion for ACTIVATE FILE"""
