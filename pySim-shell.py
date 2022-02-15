@@ -532,6 +532,8 @@ class PySimCommands(CommandSet):
 
             structure = self._cmd.rs.selected_file_structure()
             self._cmd.poutput("# structure: %s" % str(structure))
+            self._cmd.poutput("# RAW FCP Template: %s" % str(self._cmd.rs.selected_file_fcp_hex))
+            self._cmd.poutput("# Decoded FCP Template: %s" % str(self._cmd.rs.selected_file_fcp))
 
             for f in df_path_list:
                 self._cmd.poutput("select " + str(f))

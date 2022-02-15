@@ -1221,6 +1221,8 @@ class RuntimeState(object):
         self.card = card
         self.selected_file = self.mf  # type: CardDF
         self.profile = profile
+        self.selected_file_fcp = None
+        self.selected_file_fcp_hex = None
 
         # make sure the class and selection control bytes, which are specified
         # by the card profile are used
@@ -1464,7 +1466,8 @@ class RuntimeState(object):
             select_resp = f.decode_select_response(data)
         else:
             select_resp = self.probe_file(name, cmd_app)
-        # store the decoded FCP for later reference
+        # store the raw + decoded FCP for later reference
+        self.selected_file_fcp_hex = data
         self.selected_file_fcp = select_resp
 
         self._select_post(cmd_app)
