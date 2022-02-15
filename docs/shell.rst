@@ -98,6 +98,41 @@ This will
   pySIM-shell (MF/ADF.USIM)>
 
 
+status
+~~~~~~
+
+The ``status`` command [re-]obtains the File Control Template of the
+currently-selected file and print its decoded output.
+
+Example:
+
+::
+
+  pySIM-shell (MF/ADF.ISIM)> status
+  {
+      "file_descriptor": {
+          "file_descriptor_byte": {
+              "shareable": true,
+              "file_type": "df",
+              "structure": "no_info_given"
+          },
+          "record_len": null,
+          "num_of_rec": null
+      },
+      "file_identifier": "ff01",
+      "df_name": "a0000000871004ffffffff8907090000",
+      "proprietary_information": {
+          "uicc_characteristics": "71",
+          "available_memory": 101640
+      },
+      "life_cycle_status_integer": "operational_activated",
+      "security_attrib_compact": "00",
+      "pin_status_template_do": {
+          "ps_do": "70",
+          "key_reference": 11
+      }
+  }
+
 
 change_chv
 ~~~~~~~~~~
