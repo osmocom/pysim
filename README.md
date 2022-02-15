@@ -93,46 +93,30 @@ We are using a gerrit-based patch review process explained at
 <https://osmocom.org/projects/cellular-infrastructure/wiki/Gerrit>
 
 
-Usage Examples
---------------
+Documentation
+-------------
 
- * Program customizable SIMs. Two modes are possible:
+The pySim user manual can be built from this very source code by means
+of sphinx (with sphinxcontrib-napoleon and sphinx-argparse).  See the
+Makefile in the 'docs' directory.
 
-  - one where you specify every parameter manually:
-```
-./pySim-prog.py -n 26C3 -c 49 -x 262 -y 42 -i <IMSI> -s <ICCID>
-```
+A pre-rendered HTML user manual of the current pySim 'git master' is
+available from <https://downloads.osmocom.org/docs/latest/pysim/> and
+a downloadable PDF version is published at
+<https://downloads.osmocom.org/docs/latest/osmopysim-usermanual.pdf>.
 
-  - one where they are generated from some minimal set:
-```
-./pySim-prog.py -n 26C3 -c 49 -x 262 -y 42 -z <random_string_of_choice> -j <card_num>
-```
+A slightly dated video presentation about pySim-shell can be found at
+<https://media.ccc.de/v/osmodevcall-20210409-laforge-pysim-shell>.
 
-With ``<random_string_of_choice>`` and ``<card_num>``, the soft will generate
-'predictable' IMSI and ICCID, so make sure you choose them so as not to
-conflict with anyone. (for e.g. your name as ``<random_string_of_choice>`` and
-0 1 2 ... for ``<card num>``).
 
-You also need to enter some parameters to select the device:
+pySim-shell vs. legacy tools
+----------------------------
 
- -t TYPE : type of card (``supersim``, ``magicsim``, ``fakemagicsim`` or try ``auto``)  
- -d DEV  : Serial port device (default ``/dev/ttyUSB0``)  
- -b BAUD : Baudrate (default 9600)  
+While you will find a lot of online resources still describing the use of
+pySim-prog.py and pySim-read.py, those tools are considered legacy by
+now and have by far been superseded by the much more capable
+pySim-shell.  We strongly encourage users to adopt pySim-shell, unless
+they have very specific requirements like batch programming of large
+quantities of cards, which is about the only remaining use case for the
+legacy tools.
 
- * Interact with SIMs from a python interactive shell (e.g. ipython):
-
-```
-from pySim.transport.serial import SerialSimLink
-from pySim.commands import SimCardCommands
-
-sl = SerialSimLink(device='/dev/ttyUSB0', baudrate=9600)
-sc = SimCardCommands(sl)
-
-sl.wait_for_card()
-
-	# Print IMSI
-print(sc.read_binary(['3f00', '7f20', '6f07']))
-
-	# Run A3/A8
-print(sc.run_gsm('00112233445566778899aabbccddeeff'))
-```
