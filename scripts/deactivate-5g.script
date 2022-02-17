@@ -1,0 +1,69 @@
+# script to be used with pySim-shell.py which is part of the Osmocom pysim package,
+# found at https://osmocom.org/projects/pysim/wiki
+set echo true
+
+# this script will deactivate all 5G related services and files.  This can be used
+# in case you do not wish to use any 5G services, or you do not wish to configure
+# the 5G specific files on the USIM card.  The card will then behave like a 3G USIM
+# without any 5G capability, using the default fall-back mechanisms specified by 3GPP.
+
+# TODO: add your card-specific ADM pin at the end of the verify_adm line below
+verify_adm
+
+# deactivate any 5G related services in EF.UST
+select ADF.USIM
+select EF.UST
+ust_service_deactivate 122
+ust_service_deactivate 123
+ust_service_deactivate 124
+ust_service_deactivate 125
+ust_service_deactivate 127
+ust_service_deactivate 129
+ust_service_deactivate 130
+ust_service_deactivate 132
+ust_service_deactivate 133
+ust_service_deactivate 134
+ust_service_deactivate 135
+
+# deactivate all files in EF.5GS
+select ADF.USIM
+select DF.5GS
+
+select EF.5GAUTHKEYS
+deactivate_file
+
+select EF.5GS3GPPLOCI
+deactivate_file
+
+select EF.5GSN3GPPNSC
+deactivate_file
+
+select EF.5GSN3GPPLOCI
+deactivate_file
+
+select EF.5GS3GPPNSC
+deactivate_file
+
+# only exists on sysmoISIM-SJA2v2
+select EF.OPL5G
+deactivate_file
+
+select EF.Routing_Indicator
+deactivate_file
+
+select EF.SUCI_Calc_Info
+deactivate_file
+
+select EF.SUPI_NAI
+deactivate_file
+
+# only exists on sysmoISIM-SJA2v2
+select EF.TN3GPPSNN
+deactivate_file
+
+select EF.UAC_AIC
+deactivate_file
+
+# only exists on sysmoISIM-SJA2v2
+select EF.URSP
+deactivate_file
