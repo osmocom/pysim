@@ -1,0 +1,74 @@
+# script to be used with pySim-shell.py which is part of the Osmocom pysim package,
+# found at https://osmocom.org/projects/pysim/wiki
+set echo true
+
+# this script will deactivate all IMS related services and files.  This can be used
+# in case you do not wish to use any IMS services, or you do not wish to configure
+# the IMS specific files on the USIM/ISIM cards.  The card will then behave like a 3G USIM
+# without any IMS capability, using the default fall-back mechanisms specified by 3GPP.
+
+# TODO: add your card-specific ADM pin at the end of the verify_adm line below
+verify_adm
+
+# deactivate any IMS related services in EF.UST
+select ADF.USIM
+select EF.UST
+ust_service_deactivate 93
+ust_service_deactivate 95
+ust_service_deactivate 104
+ust_service_deactivate 105
+ust_service_deactivate 106
+ust_service_deactivate 107
+ust_service_deactivate 108
+ust_service_deactivate 109
+ust_service_deactivate 110
+ust_service_deactivate 112
+ust_service_deactivate 114
+ust_service_deactivate 115
+ust_service_deactivate 118
+ust_service_deactivate 120
+ust_service_deactivate 131
+ust_service_deactivate 134
+
+# deactivate all IMS related files in ADF.USIM
+select ADF.USIM
+
+select EF.UICCIARI
+deactivate_file
+
+select EF.ePDGId
+deactivate_file
+
+select EF.ePDGSelection
+deactivate_file
+
+select EF.ePDGIdEm
+deactivate_file
+
+select EF.ePDGSelectionEm
+deactivate_file
+
+select EF.FromPreferred
+deactivate_file
+
+select EF.IMSConfigData
+deactivate_file
+
+select EF.3GPPPSDATAOFF
+deactivate_file
+
+select EF.3GPPPSDATAOFFservicelist
+deactivate_file
+
+select EF.XCAPConfigData
+deactivate_file
+
+select EF.MuDMiDConfigData
+deactivate_file
+
+echo "Please make sure to manually disable the ISIM applet as described in the end of the script"
+# you can currently only manually do this via GlobalPlatformPro or some other tool using
+# java -jar ./gp.jar --key-enc KIC1 --key-mac KID1 --key-dek KIK1 --lock-applet A0000000871004FFFFFFFF8907090000
+# (substituting KIC1/KID1/KIK1 with the card-specific keys, of course)
+
+quit
