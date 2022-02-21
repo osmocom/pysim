@@ -53,6 +53,7 @@ from pySim.ts_102_222 import Ts102222Commands
 from pySim.ts_31_102 import CardApplicationUSIM
 from pySim.ts_31_103 import CardApplicationISIM
 from pySim.ara_m import CardApplicationARAM
+from pySim.global_platform import CardApplicationISD
 from pySim.gsm_r import DF_EIRENE
 
 # we need to import this module so that the SysmocomSJA2 sub-class of
@@ -103,6 +104,7 @@ def init_card(sl):
         profile.add_application(CardApplicationUSIM())
         profile.add_application(CardApplicationISIM())
         profile.add_application(CardApplicationARAM())
+        profile.add_application(CardApplicationISD())
 
     # Create runtime state with card profile
     rs = RuntimeState(card, profile)

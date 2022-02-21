@@ -621,3 +621,7 @@ class SimCardCommands(object):
         negotiated_duration_secs = decode_duration(data[:4])
         resume_token = data[4:]
         return (negotiated_duration_secs, resume_token, sw)
+
+    def get_data(self, tag: int, cla: int = 0x00):
+        data, sw = self._tp.send_apdu('%02xca%04x00' % (cla, tag))
+        return (data, sw)
