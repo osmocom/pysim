@@ -712,8 +712,8 @@ class EF_ECC(LinFixedEF):
 class EF_LOCI(TransparentEF):
     def __init__(self, fid='6f7e', sfid=0x0b, name='EF.LOCI', desc='Location information', size={11, 11}):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
-        self._construct = Struct('tmsi'/HexAdapter(Bytes(4)), 'lai'/HexAdapter(Bytes(5)), 'rfu'/Int8ub,
-                                 'lu_status'/Int8ub)
+        Lai = Struct('mcc_mnc'/BcdAdapter(Bytes(3)), 'lac'/HexAdapter(Bytes(2)))
+        self._construct = Struct('tmsi'/HexAdapter(Bytes(4)), 'lai'/Lai, 'rfu'/Int8ub, 'lu_status'/Int8ub)
 # TS 31.102 Section 4.2.18
 class EF_AD(TransparentEF):
     class OP_MODE(enum.IntEnum):
