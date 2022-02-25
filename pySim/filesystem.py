@@ -526,6 +526,17 @@ class TransparentEF(CardEF):
         def __init__(self):
             super().__init__()
 
+        dec_hex_parser = argparse.ArgumentParser()
+        dec_hex_parser.add_argument('--oneline', action='store_true',
+                                    help='No JSON pretty-printing, dump as a single line')
+        dec_hex_parser.add_argument('HEXSTR', help='Hex-string of encoded data to decode')
+
+        @cmd2.with_argparser(dec_hex_parser)
+        def do_decode_hex(self, opts):
+            """Decode command-line provided hex-string as if it was read from the file."""
+            data = self._cmd.rs.selected_file.decode_hex(opts.HEXSTR)
+            self._cmd.poutput_json(data, opts.oneline)
+
         read_bin_parser = argparse.ArgumentParser()
         read_bin_parser.add_argument(
             '--offset', type=int, default=0, help='Byte offset for start of read')
@@ -737,6 +748,17 @@ class LinFixedEF(CardEF):
 
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
+
+        dec_hex_parser = argparse.ArgumentParser()
+        dec_hex_parser.add_argument('--oneline', action='store_true',
+                                    help='No JSON pretty-printing, dump as a single line')
+        dec_hex_parser.add_argument('HEXSTR', help='Hex-string of encoded data to decode')
+
+        @cmd2.with_argparser(dec_hex_parser)
+        def do_decode_hex(self, opts):
+            """Decode command-line provided hex-string as if it was read from the file."""
+            data = self._cmd.rs.selected_file.decode_record_hex(opts.HEXSTR)
+            self._cmd.poutput_json(data, opts.oneline)
 
         read_rec_parser = argparse.ArgumentParser()
         read_rec_parser.add_argument(

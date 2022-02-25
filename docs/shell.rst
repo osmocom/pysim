@@ -384,6 +384,13 @@ back to the record on the SIM card.
 This allows for easy interactive modification of records.
 
 
+decode_hex
+~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: LinFixedEF.ShellCommands.dec_hex_parser
+
+
 
 Transparent EF commands
 -----------------------
@@ -458,6 +465,13 @@ Afterwards, the modified JSON will be re-encoded to the binary format, and the r
 to the SIM card.
 
 This allows for easy interactive modification of file contents.
+
+
+decode_hex
+~~~~~~~~~~
+.. argparse::
+   :module: pySim.filesystem
+   :func: TransparentEF.ShellCommands.dec_hex_parser
 
 
 
