@@ -889,7 +889,7 @@ class EF_PNN(LinFixedEF):
 class EF_OPL(LinFixedEF):
     def __init__(self, fid='6fc6', sfid=None, name='EF.OPL', rec_len={8, 8}, desc='Operator PLMN List', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
-        self._construct = Struct('lai'/Bytes(5), 'pnn_record_id'/Int8ub)
+        self._construct = Struct('lai'/Bytes(7), 'pnn_record_id'/Int8ub)
 
 # TS 51.011 Section 10.3.44 + TS 31.102 4.2.62
 class EF_MBI(LinFixedEF):
