@@ -103,7 +103,7 @@ class FileDescriptor(BER_TLV_IE, tag=0x82):
                            'structure'/Enum(BitsInteger(3), no_info_given=0, transparent=1, linear_fixed=2, cyclic=6))
                 )
     _construct = Struct('file_descriptor_byte'/FDB, Const(b'\x21'),
-                        'record_len'/COptional(Int16ub), 'num_of_rec'/COptional(Int16ub))
+                        'record_len'/COptional(Int16ub), 'num_of_rec'/COptional(Int8ub))
 
 # ETSI TS 102 221 11.1.1.4.4
 class FileIdentifier(BER_TLV_IE, tag=0x83):
