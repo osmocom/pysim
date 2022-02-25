@@ -1033,7 +1033,8 @@ class EF_UAC_AIC(TransparentEF):
 class EF_OPL5G(LinFixedEF):
     def __init__(self, fid='6f08', sfid=0x08, name='EF.OPL5G', desc='5GS Operator PLMN List', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={10, None}, **kwargs)
-        self._construct = Struct('tai'/Bytes(9), 'pnn_record_id'/Int8ub)
+        Tai = Struct('mcc_mnc'/BcdAdapter(Bytes(3)), 'tac_min'/Bytes(3), 'tac_max'/Bytes(3))
+        self._construct = Struct('tai'/Tai, 'pnn_record_id'/Int8ub)
 
 # TS 31.102 Section 4.4.11.10
 class EF_SUPI_NAI(TransparentEF):
