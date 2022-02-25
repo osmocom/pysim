@@ -554,7 +554,7 @@ class EF_UServiceTable(TransparentEF):
         ret = {}
         for i in range(0, len(in_bin)):
             byte = in_bin[i]
-            for bitno in range(0, 7):
+            for bitno in range(0, 8):
                 service_nr = i * 8 + bitno + 1
                 ret[service_nr] = {
                     'activated': True if byte & (1 << bitno) else False
