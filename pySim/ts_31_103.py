@@ -91,7 +91,7 @@ class EF_DOMAIN(TransparentEF):
     class domain(BER_TLV_IE, tag=0x80):
         _construct = GreedyString("utf8")
 
-    def __init__(self, fid='6f05', sfid=0x05, name='EF.DOMAIN', desc='Home Network Domain Name', **kwargs):
+    def __init__(self, fid='6f03', sfid=0x05, name='EF.DOMAIN', desc='Home Network Domain Name', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_DOMAIN.domain
 
