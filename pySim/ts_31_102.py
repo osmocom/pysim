@@ -609,6 +609,7 @@ class EF_UServiceTable(TransparentEF):
                     should_exist = f.should_exist_for_services(active_services)
                     try:
                         cmd.rs.select_file(f)
+                        sw = None
                         exists = True
                     except SwMatchError as e:
                         sw = str(e)
