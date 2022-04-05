@@ -1561,6 +1561,18 @@ class DataObjectSequence:
             i += 1
         return encoded
 
+    def encode_multi(self, decoded) -> bytes:
+        """Encode multiple occurrences of the sequence from the decoded input data.
+        Args:
+            decoded : list of json-serializable input data; one sequence per list item
+        Returns:
+            binary encoded output data
+        """
+        encoded = bytearray()
+        for d in decoded:
+            encoded += self.encode(d)
+        return encoded
+
 
 class CardCommand:
     """A single card command / instruction."""
