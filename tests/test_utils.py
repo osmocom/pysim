@@ -4,6 +4,22 @@ import unittest
 from pySim import utils
 from pySim.ts_31_102 import EF_SUCI_Calc_Info
 
+# we don't really want to thest TS 102 221, but the underlying DataObject codebase
+from pySim.ts_102_221 import AM_DO_EF, AM_DO_DF, SC_DO
+
+class DoTestCase(unittest.TestCase):
+
+    def testSeqOfChoices(self):
+        """A sequence of two choices with each a variety of DO/TLVs"""
+        arr_seq = utils.DataObjectSequence('arr', sequence=[AM_DO_EF, SC_DO])
+        # input data
+        dec_in = [{'access_mode': ['update_erase', 'read_search_compare']}, {'control_reference_template':'PIN1'}]
+        # encode it once
+        encoded = arr_seq.encode(dec_in)
+        # decode again
+        re_decoded = arr_seq.decode(encoded)
+        self.assertEqual(dec_in, re_decoded[0])
+
 class DecTestCase(unittest.TestCase):
 	# TS33.501 Annex C.4 test keys
 	hnet_pubkey_profile_b = "0272DA71976234CE833A6907425867B82E074D44EF907DFB4B3E21C1C2256EBCD1" # ID 27 in test file

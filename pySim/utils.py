@@ -1333,7 +1333,7 @@ class DataObject(abc.ABC):
             bytes encoded in TLV format.
         """
         val = self.to_bytes()
-        return bytes(self._compute_tag()) + bytes(len(val)) + val
+        return bertlv_encode_tag(self._compute_tag()) + bertlv_encode_len(len(val)) + val
 
     # 'codec' interface
     def decode(self, binary: bytes) -> Tuple[dict, bytes]:
@@ -1481,7 +1481,8 @@ class DataObjectChoice(DataObjectCollection):
 
     # 'codec' interface
     def encode(self, decoded) -> bytes:
-        obj = self.members_by_name(decoded[0])
+        obj = self.members_by_name[list(decoded)[0]]
+        obj.decoded = list(decoded.values())[0]
         return obj.to_tlv()
 
 
