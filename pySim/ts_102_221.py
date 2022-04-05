@@ -672,6 +672,11 @@ class EF_ARR(LinFixedEF):
         # 'un-flattening' decoder, and hence would be unable to encode :(
         return dec[0]
 
+    def _encode_record_bin(self, in_json):
+        # we can only guess if we should decode for EF or DF here :(
+        arr_seq = DataObjectSequence('arr', sequence=[AM_DO_EF, SC_DO])
+        return arr_seq.encode_multi(in_json)
+
     @with_default_category('File-Specific Commands')
     class AddlShellCommands(CommandSet):
         def __init__(self):
