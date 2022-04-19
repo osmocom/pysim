@@ -139,6 +139,9 @@ class Ts102222Commands(CommandSet):
                 self._cmd.perror("you must specify the --record-length for linear fixed EF")
                 return
             file_descriptor['record_len'] = opts.record_length
+            file_descriptor['num_of_rec'] = opts.file_size // opts.record_length
+            if file_descriptor['num_of_rec'] * file_descriptor['record_len'] != opts.file_size:
+                raise ValueError("File size not evenly divisible by record length")
         elif opts.structure == 'ber_tlv':
             self._cmd.perror("BER-TLV creation not yet fully supported, sorry")
             return
