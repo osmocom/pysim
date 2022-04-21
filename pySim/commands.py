@@ -402,7 +402,7 @@ class SimCardCommands(object):
         if len(rand) != 32:
             raise ValueError('Invalid rand')
         self.select_path(['3f00', '7f20'])
-        return self._tp.send_apdu('a0' + '88000010' + rand)
+        return self._tp.send_apdu_checksw('a0' + '88000010' + rand, sw='9000')
 
     def authenticate(self, rand: str, autn: str, context='3g'):
         """Execute AUTHENTICATE (USIM/ISIM).
