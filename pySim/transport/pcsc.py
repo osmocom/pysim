@@ -34,7 +34,7 @@ class PcscSimLink(LinkBase):
         super().__init__(**kwargs)
         r = readers()
         if reader_number >= len(r):
-            raise ReaderError
+            raise ReaderError('No reader found for number %d' % reader_number)
         self._reader = r[reader_number]
         self._con = self._reader.createConnection()
 
