@@ -63,7 +63,7 @@ class SimCard(object):
 
     def reset(self):
         rc = self._scc.reset_card()
-        if rc is 1:
+        if rc == 1:
             return self._scc.get_atr()
         else:
             return None
