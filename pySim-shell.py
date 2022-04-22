@@ -866,6 +866,16 @@ class Iso7816Commands(CommandSet):
         self._cmd.poutput(
             'Negotiated Duration: %u secs, Token: %s, SW: %s' % (duration, token, sw))
 
+    run_gsm_algo_parser = argparse.ArgumentParser()
+    run_gsm_algo_parser.add_argument('rand', type=str, help='RAND value')
+
+    # not ISO7816-4 but TS 102 221
+    @cmd2.with_argparser(run_gsm_algo_parser)
+    def do_run_gsm_algo(self, opts):
+        (data, sw) = self._cmd.card._scc.run_gsm(opts.rand)
+        self._cmd.poutput('SRES:  %s' % data[:8])
+        self._cmd.poutput('Kc:    %s' % data[8:])
+
 
 option_parser = argparse.ArgumentParser(prog='pySim-shell', description='interactive SIM card shell',
                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
