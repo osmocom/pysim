@@ -461,7 +461,7 @@ class PySimCommands(CommandSet):
         self._cmd.poutput(directory_str)
         self._cmd.poutput("%d files" % len(selectables))
 
-    def walk(self, indent=0, action=None, context=None, as_json=False):
+    def walk(self, indent=0, action=None, context=None, **kwargs):
         """Recursively walk through the file system, starting at the currently selected DF"""
         files = self._cmd.rs.selected_file.get_selectables(
             flags=['FNAMES', 'ANAMES'])
@@ -493,12 +493,12 @@ class PySimCommands(CommandSet):
                 # If the DF was skipped, we never have entered the directory
                 # below, so we must not move up.
                 if skip_df == False:
-                    self.walk(indent + 1, action, context, as_json)
+                    self.walk(indent + 1, action, context, **kwargs)
                     fcp_dec = self._cmd.rs.select("..", self._cmd)
 
             elif action:
                 df_before_action = self._cmd.rs.selected_file
-                action(f, context, as_json)
+                action(f, context, **kwargs)
                 # When walking through the file system tree the action must not
                 # always restore the currently selected file to the file that
                 # was selected before executing the action() callback.
@@ -510,7 +510,7 @@ class PySimCommands(CommandSet):
         """Display a filesystem-tree with all selectable files"""
         self.walk()
 
-    def export(self, filename, context, as_json=False):
+    def export(self, filename, context, as_json):
         """ Select and export a single file """
         context['COUNT'] += 1
         df = self._cmd.rs.selected_file
@@ -619,10 +619,11 @@ class PySimCommands(CommandSet):
         """Export files to script that can be imported back later"""
         context = {'ERR': 0, 'COUNT': 0, 'BAD': [],
                    'DF_SKIP': 0, 'DF_SKIP_REASON': []}
+        kwargs_export = {'as_json': opts.json}
         if opts.filename:
-            self.export(opts.filename, context, opts.json)
+            self.export(opts.filename, context, **kwargs_export)
         else:
-            self.walk(0, self.export, context, opts.json)
+            self.walk(0, self.export, context, **kwargs_export)
 
         self._cmd.poutput(boxed_heading_str("Export summary"))
 
