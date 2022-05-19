@@ -515,6 +515,10 @@ class PySimCommands(CommandSet):
         context['COUNT'] += 1
         df = self._cmd.rs.selected_file
 
+	# The currently selected file (not the file we are going to export)
+	# must always be an ADF or DF. From this starting point we select
+	# the EF we want to export. To maintain consistency we will then
+	# select the current DF again (see comment below).
         if not isinstance(df, CardDF):
             raise RuntimeError(
                 "currently selected file %s is not a DF or ADF" % str(df))
