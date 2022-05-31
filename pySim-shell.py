@@ -483,12 +483,18 @@ class PySimCommands(CommandSet):
         self._cmd.poutput(directory_str)
         self._cmd.poutput("%d files" % len(selectables))
 
-    def walk(self, indent=0, action=None, context=None, **kwargs):
+    def walk(self, indent=0, action_ef=None, action_df=None, context=None, **kwargs):
         """Recursively walk through the file system, starting at the currently selected DF"""
+
+        if isinstance(self._cmd.rs.selected_file, CardDF):
+            if action_df:
+                action_df(context, opts)
+
         files = self._cmd.rs.selected_file.get_selectables(
             flags=['FNAMES', 'ANAMES'])
         for f in files:
-            if not action:
+            # special case: When no action is performed, just output a directory
+            if not action_ef and not action_df:
                 output_str = "  " * indent + str(f) + (" " * 250)
                 output_str = output_str[0:25]
                 if isinstance(files[f], CardADF):
@@ -515,12 +521,12 @@ class PySimCommands(CommandSet):
                 # If the DF was skipped, we never have entered the directory
                 # below, so we must not move up.
                 if skip_df == False:
-                    self.walk(indent + 1, action, context, **kwargs)
+                    self.walk(indent + 1, action_ef, action_df, context, **kwargs)
                     fcp_dec = self._cmd.rs.select("..", self._cmd)
 
-            elif action:
+            elif action_ef:
                 df_before_action = self._cmd.rs.selected_file
-                action(f, context, **kwargs)
+                action_ef(f, context, **kwargs)
                 # When walking through the file system tree the action must not
                 # always restore the currently selected file to the file that
                 # was selected before executing the action() callback.
@@ -532,8 +538,8 @@ class PySimCommands(CommandSet):
         """Display a filesystem-tree with all selectable files"""
         self.walk()
 
-    def export(self, filename, context, as_json):
-        """ Select and export a single file """
+    def export_ef(self, filename, context, as_json):
+        """ Select and export a single elementary file (EF) """
         context['COUNT'] += 1
         df = self._cmd.rs.selected_file
 
@@ -643,9 +649,9 @@ class PySimCommands(CommandSet):
                    'DF_SKIP': 0, 'DF_SKIP_REASON': []}
         kwargs_export = {'as_json': opts.json}
         if opts.filename:
-            self.export(opts.filename, context, **kwargs_export)
+            self.export_ef(opts.filename, context, **kwargs_export)
         else:
-            self.walk(0, self.export, context, **kwargs_export)
+            self.walk(0, self.export_ef, None, context, **kwargs_export)
 
         self._cmd.poutput(boxed_heading_str("Export summary"))
 
