@@ -648,10 +648,17 @@ class PySimCommands(CommandSet):
         context = {'ERR': 0, 'COUNT': 0, 'BAD': [],
                    'DF_SKIP': 0, 'DF_SKIP_REASON': []}
         kwargs_export = {'as_json': opts.json}
+        exception_str_add = ""
+
         if opts.filename:
             self.export_ef(opts.filename, context, **kwargs_export)
         else:
-            self.walk(0, self.export_ef, None, context, **kwargs_export)
+            try:
+                self.walk(0, self.export_ef, None, context, **kwargs_export)
+            except Exception as e:
+                print("# Stopping early here due to exception: " + str(e))
+                print("#")
+                exception_str_add = ", also had to stop early due to exception:" + str(e)
 
         self._cmd.poutput(boxed_heading_str("Export summary"))
 
@@ -666,14 +673,14 @@ class PySimCommands(CommandSet):
             self._cmd.poutput("#  " + b)
 
         if context['ERR'] and context['DF_SKIP']:
-            raise RuntimeError("unable to export %i elementary file(s) and %i dedicated file(s)" % (
-                context['ERR'], context['DF_SKIP']))
+            raise RuntimeError("unable to export %i elementary file(s) and %i dedicated file(s)%s" % (
+                    context['ERR'], context['DF_SKIP'], exception_str_add))
         elif context['ERR']:
             raise RuntimeError(
-                "unable to export %i elementary file(s)" % context['ERR'])
+                    "unable to export %i elementary file(s)%s" % (context['ERR'], exception_str_add))
         elif context['DF_SKIP']:
             raise RuntimeError(
-                "unable to export %i dedicated files(s)" % context['ERR'])
+                    "unable to export %i dedicated files(s)%s" % (context['ERR'], exception_str_add))
 
     def do_reset(self, opts):
         """Reset the Card."""
