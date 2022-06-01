@@ -1402,7 +1402,7 @@ class RuntimeState(object):
 
         self.selected_file.add_files([f])
         self.selected_file = f
-        return select_resp
+        return select_resp, data
 
     def _select_pre(self, cmd_app):
         # unregister commands of old file
@@ -1487,7 +1487,8 @@ class RuntimeState(object):
                 raise RuntimeError("%s: %s - %s" % (swm.sw_actual, k[0], k[1]))
             select_resp = f.decode_select_response(data)
         else:
-            select_resp = self.probe_file(name, cmd_app)
+            (select_resp, data) = self.probe_file(name, cmd_app)
+
         # store the raw + decoded FCP for later reference
         self.selected_file_fcp_hex = data
         self.selected_file_fcp = select_resp
