@@ -80,11 +80,11 @@ ts_102_22x_cmdset = CardCommandSet('TS 102 22x', [
 
 # ETSI TS 102 221 11.1.1.4.2
 class FileSize(BER_TLV_IE, tag=0x80):
-    _construct = GreedyInteger()
+    _construct = GreedyInteger(minlen=2)
 
 # ETSI TS 102 221 11.1.1.4.2
 class TotalFileSize(BER_TLV_IE, tag=0x81):
-    _construct = GreedyInteger()
+    _construct = GreedyInteger(minlen=2)
 
 # ETSI TS 102 221 11.1.1.4.3
 class FileDescriptor(BER_TLV_IE, tag=0x82):
