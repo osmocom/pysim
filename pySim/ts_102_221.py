@@ -190,10 +190,11 @@ class ShortFileIdentifier(BER_TLV_IE, tag=0x88):
     # of the TLV value field. In this case, bits b3 to b1 shall be set to 0
     class Shift3RAdapter(Adapter):
         def _decode(self, obj, context, path):
-            return obj >> 3
+            return int.from_bytes(obj, 'big') >> 3
         def _encode(self, obj, context, path):
-            return obj << 3
-    _construct = COptional(Shift3RAdapter(Byte))
+            val = int(obj) << 3
+            return val.to_bytes(1, 'big')
+    _construct = COptional(Shift3RAdapter(Bytes(1)))
 
 # ETSI TS 102 221 11.1.1.4.9
 class LifeCycleStatusInteger(BER_TLV_IE, tag=0x8A):
