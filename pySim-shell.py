@@ -91,7 +91,7 @@ def init_card(sl):
     profile = CardProfile.pick(scc)
     if profile is None:
         print("Unsupported card type!")
-        return None, None
+        return None, card
 
     print("Info: Card is of type: %s" % str(profile))
 
@@ -224,7 +224,10 @@ class PysimApp(cmd2.Cmd):
                 not self.numeric_path)
             self.prompt = 'pySIM-shell (%s)> ' % ('/'.join(path_list))
         else:
-            self.prompt = 'pySIM-shell (no card)> '
+            if self.card:
+                self.prompt = 'pySIM-shell (no card profile)> '
+            else:
+                self.prompt = 'pySIM-shell (no card)> '
 
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_intro(self, _):
@@ -240,6 +243,21 @@ class PysimApp(cmd2.Cmd):
         """Equip pySim-shell with card"""
         rs, card = init_card(sl)
         self.equip(card, rs)
+
+    apdu_cmd_parser = argparse.ArgumentParser()
+    apdu_cmd_parser.add_argument('APDU', type=str, help='APDU as hex string')
+
+    @cmd2.with_argparser(apdu_cmd_parser)
+    def do_apdu(self, opts):
+        """Send a raw APDU to the card, and print SW + Response.
+        DANGEROUS: pySim-shell will not know any card state changes, and
+        not continue to work as expected if you e.g. select a different
+        file."""
+        data, sw = self.card._scc._tp.send_apdu(opts.APDU)
+        if data:
+            self.poutput("SW: %s, RESP: %s" % (sw, data))
+        else:
+            self.poutput("SW: %s" % sw)
 
     class InterceptStderr(list):
         def __init__(self):
@@ -683,18 +701,6 @@ class PySimCommands(CommandSet):
         else:
             raise ValueError("error: cannot authenticate, no adm-pin!")
 
-    apdu_cmd_parser = argparse.ArgumentParser()
-    apdu_cmd_parser.add_argument('APDU', type=str, help='APDU as hex string')
-
-    @cmd2.with_argparser(apdu_cmd_parser)
-    def do_apdu(self, opts):
-        """Send a raw APDU to the card, and print SW + Response.
-        DANGEROUS: pySim-shell will not know any card state changes, and
-        not continue to work as expected if you e.g. select a different
-        file."""
-        data, sw = self._cmd.card._scc._tp.send_apdu(opts.APDU)
-        self._cmd.poutput("SW: %s %s, RESP: %s" % (sw, self._cmd.rs.interpret_sw(sw), data))
-
 
 @with_default_category('ISO7816 Commands')
 class Iso7816Commands(CommandSet):
@@ -940,7 +946,7 @@ if __name__ == '__main__':
             " it should also be noted that some readers may behave strangely when no card")
         print(" is inserted.)")
         print("")
-        app = PysimApp(None, None, sl, ch, opts.script)
+        app = PysimApp(card, None, sl, ch, opts.script)
 
     # If the user supplies an ADM PIN at via commandline args authenticate
     # immediately so that the user does not have to use the shell commands
