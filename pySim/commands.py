@@ -23,7 +23,7 @@
 
 from construct import *
 from pySim.construct import LV
-from pySim.utils import rpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i, str_sanitize
+from pySim.utils import rpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i, str_sanitize, expand_hex
 from pySim.exceptions import SwMatchError
 
 
@@ -190,6 +190,10 @@ class SimCardCommands(object):
                 offset : byte offset in file from which to start writing
                 verify : Whether or not to verify data after write
         """
+
+        file_len = self.binary_size(ef)
+        data = expand_hex(data, file_len)
+
         data_length = len(data) // 2
 
         # Save write cycles by reading+comparing before write
@@ -255,16 +259,17 @@ class SimCardCommands(object):
                 verify : verify data by re-reading the record
                 conserve : read record and compare it with data, skip write on match
         """
+
         res = self.select_path(ef)
+        rec_length = self.__record_len(res)
+        data = expand_hex(data, rec_length)
 
         if force_len:
             # enforce the record length by the actual length of the given data input
             rec_length = len(data) // 2
         else:
-            # determine the record length from the select response of the file and pad
-            # the input data with 0xFF if necessary. In cases where the input data
-            # exceed we throw an exception.
-            rec_length = self.__record_len(res)
+            # make sure the input data is padded to the record length using 0xFF.
+            # In cases where the input data exceed we throw an exception.
             if (len(data) // 2 > rec_length):
                 raise ValueError('Data length exceeds record length (expected max %d, got %d)' % (
                     rec_length, len(data) // 2))

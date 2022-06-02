@@ -1225,6 +1225,60 @@ def auto_int(x):
     return int(x, 0)
 
 
+def expand_hex(hexstring, length):
+    """Expand a given hexstring to a specified length by replacing "." or ".."
+       with a filler that is derived from the neighboring nibbles respective
+       bytes. Usually this will be the nibble respective byte before "." or
+       "..", execpt when the string begins with "." or "..", then the nibble
+       respective byte after "." or ".." is used.". In case the string cannot
+       be expanded for some reason, the input string is returned unmodified.
+
+    Args:
+            hexstring : hexstring to expand
+            length : desired length of the resulting hexstring.
+    Returns:
+            expanded hexstring
+    """
+
+    # expand digit aligned
+    if hexstring.count(".") == 1:
+        pos = hexstring.index(".")
+        if pos > 0:
+            filler = hexstring[pos - 1]
+        else:
+            filler = hexstring[pos + 1]
+
+        missing = length * 2 - (len(hexstring) - 1)
+        if missing <= 0:
+            return hexstring
+
+        return hexstring.replace(".", filler * missing)
+
+    # expand byte aligned
+    elif hexstring.count("..") == 1:
+        if len(hexstring) % 2:
+            return hexstring
+
+        pos = hexstring.index("..")
+
+        if pos % 2:
+            return hexstring
+
+        if pos > 1:
+            filler = hexstring[pos - 2:pos]
+        else:
+            filler = hexstring[pos + 2:pos+4]
+
+        missing = length * 2 - (len(hexstring) - 2)
+        if missing <= 0:
+            return hexstring
+
+        return hexstring.replace("..", filler * (missing // 2))
+
+    # no change
+    return hexstring
+
+
 class JsonEncoder(json.JSONEncoder):
     """Extend the standard library JSONEncoder with support for more types."""
 
