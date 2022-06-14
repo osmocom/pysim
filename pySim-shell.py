@@ -83,15 +83,25 @@ def init_card(sl):
         print("Card not readable!")
         return None, None
 
+    generic_card = False
     card = card_detect("auto", scc)
     if card is None:
         print("Warning: Could not detect card type - assuming a generic card type...")
         card = SimCard(scc)
+        generic_card = True
 
     profile = CardProfile.pick(scc)
     if profile is None:
         print("Unsupported card type!")
         return None, card
+
+    # ETSI TS 102 221, Table 9.3 specifies a default for the PIN key
+    # references, however card manufactures may still decide to pick an
+    # arbitrary key reference. In case we run on a generic card class that is
+    # detected as an UICC, we will pick the key reference that is officially
+    # specified.
+    if generic_card and isinstance(profile, CardProfileUICC):
+        card._adm_chv_num = 0x0A
 
     print("Info: Card is of type: %s" % str(profile))
 
