@@ -50,6 +50,8 @@ def connect_to_card(slot_nr:int):
 
     return tp, scc, card
 
+def set_headers(request):
+    request.setHeader('Content-Type', 'application/json')
 
 @route('/sim-auth-api/v1/slot/<int:slot>')
 def auth(request, slot):
@@ -86,6 +88,7 @@ def auth(request, slot):
 
     tp.disconnect()
 
+    set_headers(request)
     return json.dumps(res, indent=4)
 
 @route('/sim-info-api/v1/slot/<int:slot>')
@@ -117,6 +120,7 @@ def info(request, slot):
 
     tp.disconnect()
 
+    set_headers(request)
     return json.dumps(res, indent=4)
 
 
