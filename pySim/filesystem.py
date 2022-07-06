@@ -49,7 +49,7 @@ from pySim.commands import SimCardCommands
 # tuple: logical-and of the listed services requires this file
 CardFileService = Union[int, List[int], Tuple[int, ...]]
 
-class CardFile(object):
+class CardFile:
     """Base class for all objects in the smart card filesystem.
     Serve as a common ancestor to all other file types; rarely used directly.
     """
@@ -1230,7 +1230,7 @@ class BerTlvEF(CardEF):
         self.shell_commands = [self.ShellCommands()]
 
 
-class RuntimeState(object):
+class RuntimeState:
     """Represent the runtime state of a session with a card."""
 
     def __init__(self, card, profile: 'CardProfile'):
@@ -1648,7 +1648,7 @@ class RuntimeState(object):
                 cmd_app.unregister_command_set(c)
 
 
-class FileData(object):
+class FileData:
     """Represent the runtime, on-card data."""
 
     def __init__(self, fdesc):
@@ -1676,7 +1676,7 @@ def interpret_sw(sw_data: dict, sw: str):
     return None
 
 
-class CardApplication(object):
+class CardApplication:
     """A card application is represented by an ADF (with contained hierarchy) and optionally
        some SW definitions."""
 

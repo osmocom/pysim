@@ -52,7 +52,7 @@ def format_addr(addr: str, addr_type: str) -> str:
     return res
 
 
-class SimCard(object):
+class SimCard:
 
     name = 'SIM'
 

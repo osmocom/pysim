@@ -26,7 +26,7 @@ from pySim.exceptions import *
 from pySim.utils import h2b, b2h
 
 
-class L1CTLMessage(object):
+class L1CTLMessage:
 
     # Every (encoded) L1CTL message has the following structure:
     #  - msg_length (2 bytes, net order)

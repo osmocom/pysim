@@ -62,7 +62,7 @@ def match_sim(scc: SimCardCommands) -> bool:
     return _mf_select_test(scc, "a0", "0000")
 
 
-class CardProfile(object):
+class CardProfile:
     """A Card Profile describes a card, it's filesystem hierarchy, an [initial] list of
     applications as well as profile-specific SW and shell commands.  Every card has
     one card profile, but there may be multiple applications within that profile."""

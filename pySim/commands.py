@@ -27,7 +27,7 @@ from pySim.utils import rpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i
 from pySim.exceptions import SwMatchError
 
 
-class SimCardCommands(object):
+class SimCardCommands:
     def __init__(self, transport):
         self._tp = transport
         self.cla_byte = "a0"
