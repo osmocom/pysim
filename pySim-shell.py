@@ -23,7 +23,7 @@ import json
 import traceback
 
 import cmd2
-from cmd2 import style, fg
+from cmd2 import style, Fg
 from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 
@@ -135,7 +135,7 @@ class PysimApp(cmd2.Cmd):
     def __init__(self, card, rs, sl, ch, script=None):
         super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
                          auto_load_commands=False, startup_script=script)
-        self.intro = style('Welcome to pySim-shell!', fg=fg.red)
+        self.intro = style('Welcome to pySim-shell!', fg=Fg.RED)
         self.default_category = 'pySim-shell built-in commands'
         self.card = None
         self.rs = None
@@ -287,23 +287,23 @@ class PysimApp(cmd2.Cmd):
             sys.stderr = self._stderr_backup
 
     def _show_failure_sign(self):
-        self.poutput(style("  +-------------+", fg=fg.bright_red))
-        self.poutput(style("  +   ##   ##   +", fg=fg.bright_red))
-        self.poutput(style("  +    ## ##    +", fg=fg.bright_red))
-        self.poutput(style("  +     ###     +", fg=fg.bright_red))
-        self.poutput(style("  +    ## ##    +", fg=fg.bright_red))
-        self.poutput(style("  +   ##   ##   +", fg=fg.bright_red))
-        self.poutput(style("  +-------------+", fg=fg.bright_red))
+        self.poutput(style("  +-------------+", fg=Fg.LIGHT_RED))
+        self.poutput(style("  +   ##   ##   +", fg=Fg.LIGHT_RED))
+        self.poutput(style("  +    ## ##    +", fg=Fg.LIGHT_RED))
+        self.poutput(style("  +     ###     +", fg=Fg.LIGHT_RED))
+        self.poutput(style("  +    ## ##    +", fg=Fg.LIGHT_RED))
+        self.poutput(style("  +   ##   ##   +", fg=Fg.LIGHT_RED))
+        self.poutput(style("  +-------------+", fg=Fg.LIGHT_RED))
         self.poutput("")
 
     def _show_success_sign(self):
-        self.poutput(style("  +-------------+", fg=fg.bright_green))
-        self.poutput(style("  +          ## +", fg=fg.bright_green))
-        self.poutput(style("  +         ##  +", fg=fg.bright_green))
-        self.poutput(style("  +  #    ##    +", fg=fg.bright_green))
-        self.poutput(style("  +   ## #      +", fg=fg.bright_green))
-        self.poutput(style("  +    ##       +", fg=fg.bright_green))
-        self.poutput(style("  +-------------+", fg=fg.bright_green))
+        self.poutput(style("  +-------------+", fg=Fg.LIGHT_GREEN))
+        self.poutput(style("  +          ## +", fg=Fg.LIGHT_GREEN))
+        self.poutput(style("  +         ##  +", fg=Fg.LIGHT_GREEN))
+        self.poutput(style("  +  #    ##    +", fg=Fg.LIGHT_GREEN))
+        self.poutput(style("  +   ## #      +", fg=Fg.LIGHT_GREEN))
+        self.poutput(style("  +    ##       +", fg=Fg.LIGHT_GREEN))
+        self.poutput(style("  +-------------+", fg=Fg.LIGHT_GREEN))
         self.poutput("")
 
     def _process_card(self, first, script_path):
