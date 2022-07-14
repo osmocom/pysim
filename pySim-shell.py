@@ -23,7 +23,7 @@ import json
 import traceback
 
 import cmd2
-from cmd2 import style, fg, bg
+from cmd2 import style, fg
 from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 
