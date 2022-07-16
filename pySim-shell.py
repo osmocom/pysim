@@ -32,23 +32,17 @@ import sys
 from pathlib import Path
 from io import StringIO
 
-from pySim.ts_51_011 import EF, DF, EF_SST_map
-from pySim.ts_31_102 import EF_UST_map, EF_USIM_ADF_map
-from pySim.ts_31_103 import EF_IST_map, EF_ISIM_ADF_map
-
 from pySim.exceptions import *
 from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args
 from pySim.cards import card_detect, SimCard
-from pySim.utils import h2b, swap_nibbles, rpad, b2h, h2s, JsonEncoder, bertlv_parse_one, sw_match
-from pySim.utils import dec_st, sanitize_pin_adm, tabulate_str_list, is_hex, boxed_heading_str
+from pySim.utils import h2b, swap_nibbles, rpad, b2h, JsonEncoder, bertlv_parse_one, sw_match
+from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
-from pySim.filesystem import CardMF, RuntimeState, CardDF, CardADF, CardModel
+from pySim.filesystem import RuntimeState, CardDF, CardADF, CardModel
 from pySim.profile import CardProfile
-from pySim.ts_51_011 import CardProfileSIM, DF_TELECOM, DF_GSM
 from pySim.ts_102_221 import CardProfileUICC
-from pySim.ts_102_221 import CardProfileUICCSIM
 from pySim.ts_102_222 import Ts102222Commands
 from pySim.ts_31_102 import CardApplicationUSIM
 from pySim.ts_31_103 import CardApplicationISIM
