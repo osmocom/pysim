@@ -488,7 +488,7 @@ class CardADF(CardDF):
             mf.add_application_df(self)
 
     def __str__(self):
-        return "ADF(%s)" % (self.aid)
+        return "ADF(%s)" % (self.name if self.name else self.aid)
 
     def _path_element(self, prefer_name: bool):
         if self.name and prefer_name:
