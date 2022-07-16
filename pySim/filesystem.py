@@ -1253,6 +1253,7 @@ class RuntimeState:
         self.mf = CardMF(profile=profile)
         self.card = card
         self.selected_file = self.mf  # type: CardDF
+        self.selected_adf = None
         self.profile = profile
         self.selected_file_fcp = None
         self.selected_file_fcp_hex = None
@@ -1337,6 +1338,7 @@ class RuntimeState:
         atr = i2h(self.card.reset())
         # select MF to reset internal state and to verify card really works
         self.select('MF', cmd_app)
+        self.selected_adf = None
         return atr
 
     def get_cwd(self) -> CardDF:
@@ -1445,6 +1447,7 @@ class RuntimeState:
             try:
                 if isinstance(p, CardADF):
                     (data, sw) = self.card.select_adf_by_aid(p.aid)
+                    self.selected_adf = p
                 else:
                     (data, sw) = self.card._scc.select_file(p.fid)
                 self.selected_file = p
