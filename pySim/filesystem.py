@@ -301,6 +301,14 @@ class CardDF(CardFile):
         else:
             raise ValueError
 
+    def _has_service(self):
+        if self.service:
+            return True
+        for c in self.children.values():
+            if isinstance(c, CardDF):
+                if c._has_service():
+                    return True
+
     def add_file(self, child: CardFile, ignore_existing: bool = False):
         """Add a child (DF/EF) to this DF.
         Args:
@@ -336,7 +344,10 @@ class CardDF(CardFile):
             for c in child.children.values():
                 self._add_file_services(c)
                 if isinstance(c, CardDF):
-                    raise ValueError('TODO: implement recursive service -> file mapping')
+                    for gc in c.children.values():
+                        if isinstance(gc, CardDF):
+                            if gc._has_service():
+                                raise ValueError('TODO: implement recursive service -> file mapping')
 
     def add_files(self, children: Iterable[CardFile], ignore_existing: bool = False):
         """Add a list of child (DF/EF) to this DF
