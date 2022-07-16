@@ -36,6 +36,7 @@ from pySim.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_P
 from pySim.ts_102_221 import EF_ARR
 from pySim.tlv import *
 from pySim.filesystem import *
+from pySim.ts_31_102_telecom import DF_PHONEBOOK
 from pySim.construct import *
 from construct import Optional as COptional
 from construct import *
@@ -1282,7 +1283,7 @@ class ADF_USIM(CardADF):
             # FIXME: from EF_ePDGSelection onwards
             EF_FromPreferred(service=114),
             # FIXME: DF_SoLSA service=23
-            # FIXME: DF_PHONEBOOK
+            DF_PHONEBOOK(),
             # FIXME: DF_GSM_ACCESS service=27
             DF_WLAN(service=[59, 60, 61, 62, 63, 66, 81, 82, 83, 84, 88]),
             DF_HNB(service=[86, 90]),
