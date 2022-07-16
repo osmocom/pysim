@@ -45,7 +45,7 @@ Please install the following dependencies:
 
 Example for Debian:
 ```
-apt-get install python3-pyscard python3-serial python3-pip python3-yaml
+apt-get install python3-pyscard python3-serial python3-pip python3-yaml python3-termcolor python3-colorlog
 pip3 install -r requirements.txt
 ```
 

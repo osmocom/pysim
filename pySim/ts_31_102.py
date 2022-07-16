@@ -10,7 +10,7 @@ Various constants from 3GPP TS 31.102 V16.6.0
 
 #
 # Copyright (C) 2020 Supreeth Herle <herlesupreeth@gmail.com>
-# Copyright (C) 2021 Harald Welte <laforge@osmocom.org>
+# Copyright (C) 2021-2022 Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -299,6 +299,10 @@ EF_USIM_ADF_map = {
     'ePDGIdEm': '6FF5',
     'ePDGSelectionEm': '6FF6',
 }
+
+# 3gPP TS 31.102 Section 7.5.2.1
+class SUCI_TlvDataObject(BER_TLV_IE, tag=0xA1):
+    _construct = HexAdapter(GreedyBytes)
 
 ######################################################################
 # ADF.USIM

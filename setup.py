@@ -17,6 +17,8 @@ setup(
         "construct >= 2.9",
         "bidict",
         "gsm0338",
+        "termcolor",
+        "colorlog"
     ],
     scripts=[
         'pySim-prog.py',

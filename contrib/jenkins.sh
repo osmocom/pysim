@@ -24,6 +24,8 @@ pip install jsonpath-ng
 pip install construct
 pip install bidict
 pip install gsm0338
+pip install termcolor
+pip install colorlog
 
 # Execute automatically discovered unit tests first
 python -m unittest discover -v -s tests/
