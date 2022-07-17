@@ -743,6 +743,15 @@ class EF_THRESHOLD(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct('max_start'/Int24ub)
 
+# TS 31.102 (old releases like 3.8.0) Section 4.2.56
+class EF_RPLMNAcT(TransRecEF):
+    def __init__(self, fid='6f65', sfid=None, name='EF.RPLMNAcTD', size={2, 4}, rec_len=2,
+                 desc='RPLMN Last used Access Technology', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
+    def _decode_record_hex(self, in_hex):
+        return dec_act(in_hex)
+    # TODO: Encode
+
 # TS 31.102 Section 4.2.77
 class EF_VGCSCA(TransRecEF):
     def __init__(self, fid='6fd4', sfid=None, name='EF.VGCSCA', size={2, 100}, rec_len=2,
@@ -1165,6 +1174,7 @@ class ADF_USIM(CardADF):
             EF_xPLMNwAcT('6f61', 0x11, 'EF.OPLMNwAcT', 'User controlled PLMN Selector with Access Technology', service=42),
             EF_xPLMNwAcT('6f62', 0x13, 'EF.HPLMNwAcT', 'HPLMN Selector with Access Technology', service=43),
             EF_ARR('6f06', 0x17),
+            EF_RPLMNAcT(),
             TransparentEF('6fc4', None, 'EF.NETPAR', 'Network Parameters'),
             EF_PNN('6fc5', 0x19, service=45),
             EF_OPL(service=46),
