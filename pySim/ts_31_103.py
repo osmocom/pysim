@@ -181,7 +181,7 @@ class EF_IMSConfigData(BerTlvEF):
     class ImsConfigData(BER_TLV_IE, tag=0x81):
         _construct = GreedyString
     # pylint: disable=undefined-variable
-    class ImsConfigDataCollection(TLV_IE_Collection, neted=[ImsConfigDataEncoding, ImsConfigData]):
+    class ImsConfigDataCollection(TLV_IE_Collection, nested=[ImsConfigDataEncoding, ImsConfigData]):
         pass
     def __init__(self, fid='6ff8', sfid=None, name='EF.IMSConfigData', desc='IMS Configuration Data', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
@@ -248,7 +248,7 @@ class EF_MuDMiDConfigData(BerTlvEF):
     class MudMidConfigData(BER_TLV_IE, tag=0x81):
         _construct = GreedyString
     # pylint: disable=undefined-variable
-    class MudMidConfigDataCollection(TLV_IE_Collection, neted=[MudMidConfigDataEncoding, MudMidConfigData]):
+    class MudMidConfigDataCollection(TLV_IE_Collection, nested=[MudMidConfigDataEncoding, MudMidConfigData]):
         pass
     def __init__(self, fid='6ffe', sfid=None, name='EF.MuDMiDConfigData',
                  desc='MuD and MiD Configuration Data', **kwargs):
