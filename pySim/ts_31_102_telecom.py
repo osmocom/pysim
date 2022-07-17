@@ -5,7 +5,7 @@
 # pylint: disable=undefined-variable
 
 """
-DF_PHONEBOOK as specified in 3GPP TS 31.102 V16.6.0
+DF_PHONEBOOK, DF_MULTIMEDIA as specified in 3GPP TS 31.102 V16.6.0
 Needs to be a separate python module to avoid cyclic imports
 """
 
@@ -67,5 +67,26 @@ class DF_PHONEBOOK(CardDF):
             EF_CC(),
             EF_PUID(),
             # FIXME: Those 4Fxx entries with unspecified FID...
+            ]
+        self.add_files(files)
+
+
+
+# TS 31.102 Section 4.6.3.1
+class EF_MML(BerTlvEF):
+    def __init__(self, fid='4F47', name='EF.MML', desc='Multimedia Messages List', **kwargs):
+        super().__init__(fid, name=name, desc=desc, **kwargs)
+
+# TS 31.102 Section 4.6.3.2
+class EF_MMDF(BerTlvEF):
+    def __init__(self, fid='4F48', name='EF.MMDF', desc='Multimedia Messages Data File', **kwargs):
+        super().__init__(fid, name=name, desc=desc, **kwargs)
+
+class DF_MULTIMEDIA(CardDF):
+    def __init__(self, fid='5F3B', name='DF.MULTIMEDIA', desc='Multimedia', **kwargs):
+        super().__init__(fid=fid, name=name, desc=desc, **kwargs)
+        files = [
+            EF_MML(),
+            EF_MMDF(),
             ]
         self.add_files(files)
