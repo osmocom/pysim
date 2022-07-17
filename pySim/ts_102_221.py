@@ -686,19 +686,19 @@ class EF_ARR(LinFixedEF):
         @cmd2.with_argparser(LinFixedEF.ShellCommands.read_rec_dec_parser)
         def do_read_arr_record(self, opts):
             """Read one EF.ARR record in flattened, human-friendly form."""
-            (data, sw) = self._cmd.rs.read_record_dec(opts.record_nr)
-            data = self._cmd.rs.selected_file.flatten(data)
+            (data, sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
+            data = self._cmd.lchan.selected_file.flatten(data)
             self._cmd.poutput_json(data, opts.oneline)
 
         @cmd2.with_argparser(LinFixedEF.ShellCommands.read_recs_dec_parser)
         def do_read_arr_records(self, opts):
             """Read + decode all EF.ARR records in flattened, human-friendly form."""
-            num_of_rec = self._cmd.rs.selected_file_num_of_rec()
+            num_of_rec = self._cmd.lchan.selected_file_num_of_rec()
             # collect all results in list so they are rendered as JSON list when printing
             data_list = []
             for recnr in range(1, 1 + num_of_rec):
-                (data, sw) = self._cmd.rs.read_record_dec(recnr)
-                data = self._cmd.rs.selected_file.flatten(data)
+                (data, sw) = self._cmd.lchan.read_record_dec(recnr)
+                data = self._cmd.lchan.selected_file.flatten(data)
                 data_list.append(data)
             self._cmd.poutput_json(data_list, opts.oneline)
 

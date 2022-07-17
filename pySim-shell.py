@@ -136,7 +136,8 @@ class PysimApp(cmd2.Cmd):
         self.default_category = 'pySim-shell built-in commands'
         self.card = None
         self.rs = None
-        self.py_locals = {'card': self.card, 'rs': self.rs}
+        self.lchan = None
+        self.py_locals = {'card': self.card, 'rs': self.rs, 'lchan': self.lchan}
         self.sl = sl
         self.ch = ch
 
@@ -165,7 +166,8 @@ class PysimApp(cmd2.Cmd):
 
         # Unequip everything from pySim-shell that would not work in unequipped state
         if self.rs:
-            self.rs.unregister_cmds(self)
+            lchan = self.rs.lchan[0]
+            lchan.unregister_cmds(self)
         for cmds in [Iso7816Commands, PySimCommands]:
             cmd_set = self.find_commandsets(cmds)
             if cmd_set:
@@ -177,6 +179,7 @@ class PysimApp(cmd2.Cmd):
         # When a card object and a runtime state is present, (re)equip pySim-shell with everything that is
         # needed to operate on cards.
         if self.card and self.rs:
+            self.lchan = self.rs.lchan[0]
             self._onchange_conserve_write(
                 'conserve_write', False, self.conserve_write)
             self._onchange_apdu_trace('apdu_trace', False, self.apdu_trace)
@@ -184,7 +187,7 @@ class PysimApp(cmd2.Cmd):
             self.register_command_set(Ts102222Commands())
             self.register_command_set(PySimCommands())
             self.iccid, sw = self.card.read_iccid()
-            rs.select('MF', self)
+            self.lchan.select('MF', self)
             rc = True
         else:
             self.poutput("pySim-shell not equipped!")
@@ -223,8 +226,8 @@ class PysimApp(cmd2.Cmd):
             self.cmd2.poutput("<- %s: %s" % (sw, resp))
 
     def update_prompt(self):
-        if self.rs:
-            path_list = self.rs.selected_file.fully_qualified_path(
+        if self.lchan:
+            path_list = self.lchan.selected_file.fully_qualified_path(
                 not self.numeric_path)
             self.prompt = 'pySIM-shell (%s)> ' % ('/'.join(path_list))
         else:
@@ -477,12 +480,12 @@ class PySimCommands(CommandSet):
         else:
             flags = ['PARENT', 'SELF', 'FNAMES', 'ANAMES']
         selectables = list(
-            self._cmd.rs.selected_file.get_selectable_names(flags=flags))
+            self._cmd.lchan.selected_file.get_selectable_names(flags=flags))
         directory_str = tabulate_str_list(
             selectables, width=79, hspace=2, lspace=1, align_left=True)
-        path_list = self._cmd.rs.selected_file.fully_qualified_path(True)
+        path_list = self._cmd.lchan.selected_file.fully_qualified_path(True)
         self._cmd.poutput('/'.join(path_list))
-        path_list = self._cmd.rs.selected_file.fully_qualified_path(False)
+        path_list = self._cmd.lchan.selected_file.fully_qualified_path(False)
         self._cmd.poutput('/'.join(path_list))
         self._cmd.poutput(directory_str)
         self._cmd.poutput("%d files" % len(selectables))
@@ -490,11 +493,11 @@ class PySimCommands(CommandSet):
     def walk(self, indent=0, action_ef=None, action_df=None, context=None, **kwargs):
         """Recursively walk through the file system, starting at the currently selected DF"""
 
-        if isinstance(self._cmd.rs.selected_file, CardDF):
+        if isinstance(self._cmd.lchan.selected_file, CardDF):
             if action_df:
                 action_df(context, opts)
 
-        files = self._cmd.rs.selected_file.get_selectables(
+        files = self._cmd.lchan.selected_file.get_selectables(
             flags=['FNAMES', 'ANAMES'])
         for f in files:
             # special case: When no action is performed, just output a directory
@@ -511,10 +514,10 @@ class PySimCommands(CommandSet):
             if isinstance(files[f], CardDF):
                 skip_df = False
                 try:
-                    fcp_dec = self._cmd.rs.select(f, self._cmd)
+                    fcp_dec = self._cmd.lchan.select(f, self._cmd)
                 except Exception as e:
                     skip_df = True
-                    df = self._cmd.rs.selected_file
+                    df = self._cmd.lchan.selected_file
                     df_path_list = df.fully_qualified_path(True)
                     df_skip_reason_str = '/'.join(df_path_list) + \
                         "/" + str(f) + ", " + str(e)
@@ -526,17 +529,17 @@ class PySimCommands(CommandSet):
                 # below, so we must not move up.
                 if skip_df == False:
                     self.walk(indent + 1, action_ef, action_df, context, **kwargs)
-                    fcp_dec = self._cmd.rs.select("..", self._cmd)
+                    fcp_dec = self._cmd.lchan.select("..", self._cmd)
 
             elif action_ef:
-                df_before_action = self._cmd.rs.selected_file
+                df_before_action = self._cmd.lchan.selected_file
                 action_ef(f, context, **kwargs)
                 # When walking through the file system tree the action must not
                 # always restore the currently selected file to the file that
                 # was selected before executing the action() callback.
-                if df_before_action != self._cmd.rs.selected_file:
+                if df_before_action != self._cmd.lchan.selected_file:
                     raise RuntimeError("inconsistent walk, %s is currently selected but expecting %s to be selected"
-                                       % (str(self._cmd.rs.selected_file), str(df_before_action)))
+                                       % (str(self._cmd.lchan.selected_file), str(df_before_action)))
 
     def do_tree(self, opts):
         """Display a filesystem-tree with all selectable files"""
@@ -545,7 +548,7 @@ class PySimCommands(CommandSet):
     def export_ef(self, filename, context, as_json):
         """ Select and export a single elementary file (EF) """
         context['COUNT'] += 1
-        df = self._cmd.rs.selected_file
+        df = self._cmd.lchan.selected_file
 
 	# The currently selected file (not the file we are going to export)
 	# must always be an ADF or DF. From this starting point we select
@@ -564,36 +567,36 @@ class PySimCommands(CommandSet):
         self._cmd.poutput("# directory: %s (%s)" %
                           ('/'.join(df_path_list), '/'.join(df_path_list_fid)))
         try:
-            fcp_dec = self._cmd.rs.select(filename, self._cmd)
+            fcp_dec = self._cmd.lchan.select(filename, self._cmd)
             self._cmd.poutput("# file: %s (%s)" % (
-                self._cmd.rs.selected_file.name, self._cmd.rs.selected_file.fid))
+                self._cmd.lchan.selected_file.name, self._cmd.lchan.selected_file.fid))
 
-            structure = self._cmd.rs.selected_file_structure()
+            structure = self._cmd.lchan.selected_file_structure()
             self._cmd.poutput("# structure: %s" % str(structure))
-            self._cmd.poutput("# RAW FCP Template: %s" % str(self._cmd.rs.selected_file_fcp_hex))
-            self._cmd.poutput("# Decoded FCP Template: %s" % str(self._cmd.rs.selected_file_fcp))
+            self._cmd.poutput("# RAW FCP Template: %s" % str(self._cmd.lchan.selected_file_fcp_hex))
+            self._cmd.poutput("# Decoded FCP Template: %s" % str(self._cmd.lchan.selected_file_fcp))
 
             for f in df_path_list:
                 self._cmd.poutput("select " + str(f))
-            self._cmd.poutput("select " + self._cmd.rs.selected_file.name)
+            self._cmd.poutput("select " + self._cmd.lchan.selected_file.name)
 
             if structure == 'transparent':
                 if as_json:
-                    result = self._cmd.rs.read_binary_dec()
+                    result = self._cmd.lchan.read_binary_dec()
                     self._cmd.poutput("update_binary_decoded '%s'" % json.dumps(result[0], cls=JsonEncoder))
                 else:
-                    result = self._cmd.rs.read_binary()
+                    result = self._cmd.lchan.read_binary()
                     self._cmd.poutput("update_binary " + str(result[0]))
             elif structure == 'cyclic' or structure == 'linear_fixed':
                 # Use number of records specified in select response
-                num_of_rec = self._cmd.rs.selected_file_num_of_rec()
+                num_of_rec = self._cmd.lchan.selected_file_num_of_rec()
                 if num_of_rec:
                     for r in range(1, num_of_rec + 1):
                         if as_json:
-                            result = self._cmd.rs.read_record_dec(r)
+                            result = self._cmd.lchan.read_record_dec(r)
                             self._cmd.poutput("update_record_decoded %d '%s'" % (r, json.dumps(result[0], cls=JsonEncoder)))
                         else:
-                            result = self._cmd.rs.read_record(r)
+                            result = self._cmd.lchan.read_record(r)
                             self._cmd.poutput("update_record %d %s" % (r, str(result[0])))
 
                 # When the select response does not return the number of records, read until we hit the
@@ -603,10 +606,10 @@ class PySimCommands(CommandSet):
                     while True:
                         try:
                             if as_json:
-                                result = self._cmd.rs.read_record_dec(r)
+                                result = self._cmd.lchan.read_record_dec(r)
                                 self._cmd.poutput("update_record_decoded %d '%s'" % (r, json.dumps(result[0], cls=JsonEncoder)))
                             else:
-                                result = self._cmd.rs.read_record(r)
+                                result = self._cmd.lchan.read_record(r)
                                 self._cmd.poutput("update_record %d %s" % (r, str(result[0])))
                         except SwMatchError as e:
                             # We are past the last valid record - stop
@@ -617,9 +620,9 @@ class PySimCommands(CommandSet):
                                 raise e
                         r = r + 1
             elif structure == 'ber_tlv':
-                tags = self._cmd.rs.retrieve_tags()
+                tags = self._cmd.lchan.retrieve_tags()
                 for t in tags:
-                    result = self._cmd.rs.retrieve_data(t)
+                    result = self._cmd.lchan.retrieve_data(t)
                     (tag, l, val, remainer) = bertlv_parse_one(h2b(result[0]))
                     self._cmd.poutput("set_data 0x%02x %s" % (t, b2h(val)))
             else:
@@ -635,8 +638,8 @@ class PySimCommands(CommandSet):
         # When reading the file is done, make sure the parent file is
         # selected again. This will be the usual case, however we need
         # to check before since we must not select the same DF twice
-        if df != self._cmd.rs.selected_file:
-            self._cmd.rs.select(df.fid or df.aid, self._cmd)
+        if df != self._cmd.lchan.selected_file:
+            self._cmd.lchan.select(df.fid or df.aid, self._cmd)
 
         self._cmd.poutput("#")
 
@@ -688,13 +691,13 @@ class PySimCommands(CommandSet):
 
     def do_reset(self, opts):
         """Reset the Card."""
-        atr = self._cmd.rs.reset(self._cmd)
+        atr = self._cmd.lchan.reset(self._cmd)
         self._cmd.poutput('Card ATR: %s' % atr)
         self._cmd.update_prompt()
 
     def do_desc(self, opts):
         """Display human readable file description for the currently selected file"""
-        desc = self._cmd.rs.selected_file.desc
+        desc = self._cmd.lchan.selected_file.desc
         if desc:
             self._cmd.poutput(desc)
         else:
@@ -731,21 +734,21 @@ class Iso7816Commands(CommandSet):
     def do_select(self, opts):
         """SELECT a File (ADF/DF/EF)"""
         if len(opts.arg_list) == 0:
-            path_list = self._cmd.rs.selected_file.fully_qualified_path(True)
-            path_list_fid = self._cmd.rs.selected_file.fully_qualified_path(
+            path_list = self._cmd.lchan.selected_file.fully_qualified_path(True)
+            path_list_fid = self._cmd.lchan.selected_file.fully_qualified_path(
                 False)
             self._cmd.poutput("currently selected file: " +
                               '/'.join(path_list) + " (" + '/'.join(path_list_fid) + ")")
             return
 
         path = opts.arg_list[0]
-        fcp_dec = self._cmd.rs.select(path, self._cmd)
+        fcp_dec = self._cmd.lchan.select(path, self._cmd)
         self._cmd.update_prompt()
         self._cmd.poutput_json(fcp_dec)
 
     def complete_select(self, text, line, begidx, endidx) -> List[str]:
         """Command Line tab completion for SELECT"""
-        index_dict = {1: self._cmd.rs.selected_file.get_selectable_names()}
+        index_dict = {1: self._cmd.lchan.selected_file.get_selectable_names()}
         return self._cmd.index_based_complete(text, line, begidx, endidx, index_dict=index_dict)
 
     def get_code(self, code):
@@ -851,11 +854,11 @@ class Iso7816Commands(CommandSet):
     def do_activate_file(self, opts):
         """Activate the specified EF. This used to be called REHABILITATE in TS 11.11 for classic
         SIM.  You need to specify the name or FID of the file to activate."""
-        (data, sw) = self._cmd.rs.activate_file(opts.NAME)
+        (data, sw) = self._cmd.lchan.activate_file(opts.NAME)
 
     def complete_activate_file(self, text, line, begidx, endidx) -> List[str]:
         """Command Line tab completion for ACTIVATE FILE"""
-        index_dict = {1: self._cmd.rs.selected_file.get_selectable_names()}
+        index_dict = {1: self._cmd.lchan.selected_file.get_selectable_names()}
         return self._cmd.index_based_complete(text, line, begidx, endidx, index_dict=index_dict)
 
     open_chan_parser = argparse.ArgumentParser()
@@ -880,7 +883,7 @@ class Iso7816Commands(CommandSet):
 
     def do_status(self, opts):
         """Perform the STATUS command."""
-        fcp_dec = self._cmd.rs.status()
+        fcp_dec = self._cmd.lchan.status()
         self._cmd.poutput_json(fcp_dec)
 
     suspend_uicc_parser = argparse.ArgumentParser()

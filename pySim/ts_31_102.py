@@ -588,7 +588,7 @@ class EF_UServiceTable(TransparentEF):
 
     def get_active_services(self, cmd):
         # obtain list of currently active services
-        (service_data, sw) = cmd.rs.read_binary_dec()
+        (service_data, sw) = cmd.lchan.read_binary_dec()
         active_services = []
         for s in service_data.keys():
             if service_data[s]['activated']:
@@ -609,7 +609,7 @@ class EF_UServiceTable(TransparentEF):
                 for f in files_by_service[s]:
                     should_exist = f.should_exist_for_services(active_services)
                     try:
-                        cmd.rs.select_file(f)
+                        cmd.lchan.select_file(f)
                         sw = None
                         exists = True
                     except SwMatchError as e:
@@ -623,7 +623,7 @@ class EF_UServiceTable(TransparentEF):
                             cmd.perror("  ERROR: File %s is not selectable (%s) but should!" %  (f, sw))
         finally:
             # re-select the EF.UST
-            cmd.rs.select_file(self)
+            cmd.lchan.select_file(self)
         return num_problems
 
 class EF_UST(EF_UServiceTable):
@@ -652,7 +652,7 @@ class EF_UST(EF_UServiceTable):
             absent/deactivated.  This performs a consistency check to ensure that no services are activated
             for files that are not - and vice-versa, no files are activated for services that are not.  Error
             messages are printed for every inconsistency found."""
-            selected_file = self._cmd.rs.selected_file
+            selected_file = self._cmd.lchan.selected_file
             num_problems = selected_file.ust_service_check(self._cmd)
             # obtain list of currently active services
             active_services = selected_file.get_active_services(self._cmd)

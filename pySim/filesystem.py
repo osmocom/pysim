@@ -49,6 +49,18 @@ from pySim.commands import SimCardCommands
 # tuple: logical-and of the listed services requires this file
 CardFileService = Union[int, List[int], Tuple[int, ...]]
 
+def lchan_nr_from_cla(cla: int) -> int:
+    """Resolve the logical channel number from the CLA byte."""
+    # TS 102 221 10.1.1 Coding of Class Byte
+    if cla >> 4 in [0x0, 0xA, 0x8]:
+        # Table 10.3
+        return cla & 0x03
+    elif cla & 0xD0 in [0x40, 0xC0]:
+        # Table 10.4a
+        return 4 + (cla & 0x0F)
+    else:
+        raise ValueError('Could not determine logical channel for CLA=%2X' % cla)
+
 class CardFile:
     """Base class for all objects in the smart card filesystem.
     Serve as a common ancestor to all other file types; rarely used directly.
@@ -545,7 +557,7 @@ class TransparentEF(CardEF):
         @cmd2.with_argparser(dec_hex_parser)
         def do_decode_hex(self, opts):
             """Decode command-line provided hex-string as if it was read from the file."""
-            data = self._cmd.rs.selected_file.decode_hex(opts.HEXSTR)
+            data = self._cmd.lchan.selected_file.decode_hex(opts.HEXSTR)
             self._cmd.poutput_json(data, opts.oneline)
 
         read_bin_parser = argparse.ArgumentParser()
@@ -557,7 +569,7 @@ class TransparentEF(CardEF):
         @cmd2.with_argparser(read_bin_parser)
         def do_read_binary(self, opts):
             """Read binary data from a transparent EF"""
-            (data, sw) = self._cmd.rs.read_binary(opts.length, opts.offset)
+            (data, sw) = self._cmd.lchan.read_binary(opts.length, opts.offset)
             self._cmd.poutput(data)
 
         read_bin_dec_parser = argparse.ArgumentParser()
@@ -567,7 +579,7 @@ class TransparentEF(CardEF):
         @cmd2.with_argparser(read_bin_dec_parser)
         def do_read_binary_decoded(self, opts):
             """Read + decode data from a transparent EF"""
-            (data, sw) = self._cmd.rs.read_binary_dec()
+            (data, sw) = self._cmd.lchan.read_binary_dec()
             self._cmd.poutput_json(data, opts.oneline)
 
         upd_bin_parser = argparse.ArgumentParser()
@@ -579,7 +591,7 @@ class TransparentEF(CardEF):
         @cmd2.with_argparser(upd_bin_parser)
         def do_update_binary(self, opts):
             """Update (Write) data of a transparent EF"""
-            (data, sw) = self._cmd.rs.update_binary(opts.data, opts.offset)
+            (data, sw) = self._cmd.lchan.update_binary(opts.data, opts.offset)
             if data:
                 self._cmd.poutput(data)
 
@@ -593,18 +605,18 @@ class TransparentEF(CardEF):
         def do_update_binary_decoded(self, opts):
             """Encode + Update (Write) data of a transparent EF"""
             if opts.json_path:
-                (data_json, sw) = self._cmd.rs.read_binary_dec()
+                (data_json, sw) = self._cmd.lchan.read_binary_dec()
                 js_path_modify(data_json, opts.json_path,
                                json.loads(opts.data))
             else:
                 data_json = json.loads(opts.data)
-            (data, sw) = self._cmd.rs.update_binary_dec(data_json)
+            (data, sw) = self._cmd.lchan.update_binary_dec(data_json)
             if data:
                 self._cmd.poutput_json(data)
 
         def do_edit_binary_decoded(self, opts):
             """Edit the JSON representation of the EF contents in an editor."""
-            (orig_json, sw) = self._cmd.rs.read_binary_dec()
+            (orig_json, sw) = self._cmd.lchan.read_binary_dec()
             with tempfile.TemporaryDirectory(prefix='pysim_') as dirname:
                 filename = '%s/file' % dirname
                 # write existing data as JSON to file
@@ -617,7 +629,7 @@ class TransparentEF(CardEF):
                 if edited_json == orig_json:
                     self._cmd.poutput("Data not modified, skipping write")
                 else:
-                    (data, sw) = self._cmd.rs.update_binary_dec(edited_json)
+                    (data, sw) = self._cmd.lchan.update_binary_dec(edited_json)
                     if data:
                         self._cmd.poutput_json(data)
 
@@ -768,7 +780,7 @@ class LinFixedEF(CardEF):
         @cmd2.with_argparser(dec_hex_parser)
         def do_decode_hex(self, opts):
             """Decode command-line provided hex-string as if it was read from the file."""
-            data = self._cmd.rs.selected_file.decode_record_hex(opts.HEXSTR)
+            data = self._cmd.lchan.selected_file.decode_record_hex(opts.HEXSTR)
             self._cmd.poutput_json(data, opts.oneline)
 
         read_rec_parser = argparse.ArgumentParser()
@@ -782,7 +794,7 @@ class LinFixedEF(CardEF):
             """Read one or multiple records from a record-oriented EF"""
             for r in range(opts.count):
                 recnr = opts.record_nr + r
-                (data, sw) = self._cmd.rs.read_record(recnr)
+                (data, sw) = self._cmd.lchan.read_record(recnr)
                 if (len(data) > 0):
                     recstr = str(data)
                 else:
@@ -798,7 +810,7 @@ class LinFixedEF(CardEF):
         @cmd2.with_argparser(read_rec_dec_parser)
         def do_read_record_decoded(self, opts):
             """Read + decode a record from a record-oriented EF"""
-            (data, sw) = self._cmd.rs.read_record_dec(opts.record_nr)
+            (data, sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
             self._cmd.poutput_json(data, opts.oneline)
 
         read_recs_parser = argparse.ArgumentParser()
@@ -806,9 +818,9 @@ class LinFixedEF(CardEF):
         @cmd2.with_argparser(read_recs_parser)
         def do_read_records(self, opts):
             """Read all records from a record-oriented EF"""
-            num_of_rec = self._cmd.rs.selected_file_num_of_rec()
+            num_of_rec = self._cmd.lchan.selected_file_num_of_rec()
             for recnr in range(1, 1 + num_of_rec):
-                (data, sw) = self._cmd.rs.read_record(recnr)
+                (data, sw) = self._cmd.lchan.read_record(recnr)
                 if (len(data) > 0):
                     recstr = str(data)
                 else:
@@ -822,11 +834,11 @@ class LinFixedEF(CardEF):
         @cmd2.with_argparser(read_recs_dec_parser)
         def do_read_records_decoded(self, opts):
             """Read + decode all records from a record-oriented EF"""
-            num_of_rec = self._cmd.rs.selected_file_num_of_rec()
+            num_of_rec = self._cmd.lchan.selected_file_num_of_rec()
             # collect all results in list so they are rendered as JSON list when printing
             data_list = []
             for recnr in range(1, 1 + num_of_rec):
-                (data, sw) = self._cmd.rs.read_record_dec(recnr)
+                (data, sw) = self._cmd.lchan.read_record_dec(recnr)
                 data_list.append(data)
             self._cmd.poutput_json(data_list, opts.oneline)
 
@@ -839,7 +851,7 @@ class LinFixedEF(CardEF):
         @cmd2.with_argparser(upd_rec_parser)
         def do_update_record(self, opts):
             """Update (write) data to a record-oriented EF"""
-            (data, sw) = self._cmd.rs.update_record(opts.record_nr, opts.data)
+            (data, sw) = self._cmd.lchan.update_record(opts.record_nr, opts.data)
             if data:
                 self._cmd.poutput(data)
 
@@ -855,12 +867,12 @@ class LinFixedEF(CardEF):
         def do_update_record_decoded(self, opts):
             """Encode + Update (write) data to a record-oriented EF"""
             if opts.json_path:
-                (data_json, sw) = self._cmd.rs.read_record_dec(opts.record_nr)
+                (data_json, sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
                 js_path_modify(data_json, opts.json_path,
                                json.loads(opts.data))
             else:
                 data_json = json.loads(opts.data)
-            (data, sw) = self._cmd.rs.update_record_dec(
+            (data, sw) = self._cmd.lchan.update_record_dec(
                 opts.record_nr, data_json)
             if data:
                 self._cmd.poutput(data)
@@ -872,7 +884,7 @@ class LinFixedEF(CardEF):
         @cmd2.with_argparser(edit_rec_dec_parser)
         def do_edit_record_decoded(self, opts):
             """Edit the JSON representation of one record in an editor."""
-            (orig_json, sw) = self._cmd.rs.read_record_dec(opts.record_nr)
+            (orig_json, sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
             with tempfile.TemporaryDirectory(prefix='pysim_') as dirname:
                 filename = '%s/file' % dirname
                 # write existing data as JSON to file
@@ -885,7 +897,7 @@ class LinFixedEF(CardEF):
                 if edited_json == orig_json:
                     self._cmd.poutput("Data not modified, skipping write")
                 else:
-                    (data, sw) = self._cmd.rs.update_record_dec(
+                    (data, sw) = self._cmd.lchan.update_record_dec(
                         opts.record_nr, edited_json)
                     if data:
                         self._cmd.poutput_json(data)
@@ -1192,12 +1204,12 @@ class BerTlvEF(CardEF):
         @cmd2.with_argparser(retrieve_data_parser)
         def do_retrieve_data(self, opts):
             """Retrieve (Read) data from a BER-TLV EF"""
-            (data, sw) = self._cmd.rs.retrieve_data(opts.tag)
+            (data, sw) = self._cmd.lchan.retrieve_data(opts.tag)
             self._cmd.poutput(data)
 
         def do_retrieve_tags(self, opts):
             """List tags available in a given BER-TLV EF"""
-            tags = self._cmd.rs.retrieve_tags()
+            tags = self._cmd.lchan.retrieve_tags()
             self._cmd.poutput(tags)
 
         set_data_parser = argparse.ArgumentParser()
@@ -1209,7 +1221,7 @@ class BerTlvEF(CardEF):
         @cmd2.with_argparser(set_data_parser)
         def do_set_data(self, opts):
             """Set (Write) data for a given tag in a BER-TLV EF"""
-            (data, sw) = self._cmd.rs.set_data(opts.tag, opts.data)
+            (data, sw) = self._cmd.lchan.set_data(opts.tag, opts.data)
             if data:
                 self._cmd.poutput(data)
 
@@ -1220,7 +1232,7 @@ class BerTlvEF(CardEF):
         @cmd2.with_argparser(del_data_parser)
         def do_delete_data(self, opts):
             """Delete  data for a given tag in a BER-TLV EF"""
-            (data, sw) = self._cmd.rs.set_data(opts.tag, None)
+            (data, sw) = self._cmd.lchan.set_data(opts.tag, None)
             if data:
                 self._cmd.poutput(data)
 
@@ -1252,11 +1264,10 @@ class RuntimeState:
         """
         self.mf = CardMF(profile=profile)
         self.card = card
-        self.selected_file = self.mf  # type: CardDF
-        self.selected_adf = None
         self.profile = profile
-        self.selected_file_fcp = None
-        self.selected_file_fcp_hex = None
+        self.lchan = {}
+        # the basic logical channel always exists
+        self.lchan[0] = RuntimeLchan(0, self)
 
         # make sure the class and selection control bytes, which are specified
         # by the card profile are used
@@ -1315,6 +1326,66 @@ class RuntimeState:
                 pass
         return apps_taken
 
+    def reset(self, cmd_app=None) -> Hexstr:
+        """Perform physical card reset and obtain ATR.
+        Args:
+            cmd_app : Command Application State (for unregistering old file commands)
+        """
+        # delete all lchan != 0 (basic lchan)
+        for lchan_nr in self.lchan.keys():
+            if lchan_nr == 0:
+                continue
+            del self.lchan[lchan_nr]
+        atr = i2h(self.card.reset())
+        # select MF to reset internal state and to verify card really works
+        self.lchan[0].select('MF', cmd_app)
+        self.lchan[0].selected_adf = None
+        return atr
+
+    def add_lchan(self, lchan_nr: int) -> 'RuntimeLchan':
+        """Add a logical channel to the runtime state.  You shouldn't call this
+        directly but always go through RuntimeLchan.add_lchan()."""
+        if lchan_nr in self.lchan.keys():
+            raise ValueError('Cannot create already-existing lchan %d' % lchan_nr)
+        self.lchan[lchan_nr] = RuntimeLchan(lchan_nr, self)
+        return self.lchan[lchan_nr]
+
+    def del_lchan(self, lchan_nr: int):
+        if lchan_nr in self.lchan.keys():
+            del self.lchan[lchan_nr]
+            return True
+        else:
+            return False
+
+    def get_lchan_by_cla(self, cla) -> Optional['RuntimeLchan']:
+        lchan_nr = lchan_nr_from_cla(cla)
+        if lchan_nr in self.lchan.keys():
+            return self.lchan[lchan_nr]
+        else:
+            return None
+
+
+class RuntimeLchan:
+    """Represent the runtime state of a logical channel with a card."""
+
+    def __init__(self, lchan_nr: int, rs: RuntimeState):
+        self.lchan_nr = lchan_nr
+        self.rs = rs
+        self.selected_file = self.rs.mf
+        self.selected_adf = None
+        self.selected_file_fcp = None
+        self.selected_file_fcp_hex = None
+
+    def add_lchan(self, lchan_nr: int) -> 'RuntimeLchan':
+        """Add a new logical channel from the current logical channel. Just affects
+        internal state, doesn't actually open a channel with the UICC."""
+        new_lchan = self.rs.add_lchan(lchan_nr)
+        # See TS 102 221 Table 8.3
+        if self.lchan_nr != 0:
+            new_lchan.selected_file = self.get_cwd()
+            new_lchan.selected_adf = self.selected_adf
+        return new_lchan
+
     def selected_file_descriptor_byte(self) -> dict:
         return self.selected_file_fcp['file_descriptor']['file_descriptor_byte']
 
@@ -1329,17 +1400,6 @@ class RuntimeState:
 
     def selected_file_num_of_rec(self) -> Optional[int]:
         return self.selected_file_fcp['file_descriptor'].get('num_of_rec')
-
-    def reset(self, cmd_app=None) -> Hexstr:
-        """Perform physical card reset and obtain ATR.
-        Args:
-            cmd_app : Command Application State (for unregistering old file commands)
-        """
-        atr = i2h(self.card.reset())
-        # select MF to reset internal state and to verify card really works
-        self.select('MF', cmd_app)
-        self.selected_adf = None
-        return atr
 
     def get_cwd(self) -> CardDF:
         """Obtain the current working directory.
@@ -1384,7 +1444,7 @@ class RuntimeState:
             # card profile.
             if app and hasattr(app, "interpret_sw"):
                 res = app.interpret_sw(sw)
-        return res or self.profile.interpret_sw(sw)
+        return res or self.rs.profile.interpret_sw(sw)
 
     def probe_file(self, fid: str, cmd_app=None):
         """Blindly try to select a file and automatically add a matching file
@@ -1394,7 +1454,7 @@ class RuntimeState:
                 "Cannot select unknown file by name %s, only hexadecimal 4 digit FID is allowed" % fid)
 
         try:
-            (data, sw) = self.card._scc.select_file(fid)
+            (data, sw) = self.rs.card._scc.select_file(fid)
         except SwMatchError as swm:
             k = self.interpret_sw(swm.sw_actual)
             if not k:
@@ -1446,10 +1506,10 @@ class RuntimeState:
         for p in inter_path:
             try:
                 if isinstance(p, CardADF):
-                    (data, sw) = self.card.select_adf_by_aid(p.aid)
+                    (data, sw) = self.rs.card.select_adf_by_aid(p.aid)
                     self.selected_adf = p
                 else:
-                    (data, sw) = self.card._scc.select_file(p.fid)
+                    (data, sw) = self.rs.card._scc.select_file(p.fid)
                 self.selected_file = p
             except SwMatchError as swm:
                 self._select_post(cmd_app)
@@ -1490,9 +1550,9 @@ class RuntimeState:
             f = sels[name]
             try:
                 if isinstance(f, CardADF):
-                    (data, sw) = self.card.select_adf_by_aid(f.aid)
+                    (data, sw) = self.rs.card.select_adf_by_aid(f.aid)
                 else:
-                    (data, sw) = self.card._scc.select_file(f.fid)
+                    (data, sw) = self.rs.card._scc.select_file(f.fid)
                 self.selected_file = f
             except SwMatchError as swm:
                 k = self.interpret_sw(swm.sw_actual)
@@ -1512,7 +1572,7 @@ class RuntimeState:
 
     def status(self):
         """Request STATUS (current selected file FCP) from card."""
-        (data, sw) = self.card._scc.status()
+        (data, sw) = self.rs.card._scc.status()
         return self.selected_file.decode_select_response(data)
 
     def get_file_for_selectable(self, name: str):
@@ -1523,7 +1583,7 @@ class RuntimeState:
         """Request ACTIVATE FILE of specified file."""
         sels = self.selected_file.get_selectables()
         f = sels[name]
-        data, sw = self.card._scc.activate_file(f.fid)
+        data, sw = self.rs.card._scc.activate_file(f.fid)
         return data, sw
 
     def read_binary(self, length: int = None, offset: int = 0):
@@ -1537,7 +1597,7 @@ class RuntimeState:
         """
         if not isinstance(self.selected_file, TransparentEF):
             raise TypeError("Only works with TransparentEF")
-        return self.card._scc.read_binary(self.selected_file.fid, length, offset)
+        return self.rs.card._scc.read_binary(self.selected_file.fid, length, offset)
 
     def read_binary_dec(self) -> Tuple[dict, str]:
         """Read [part of] a transparent EF binary data and decode it.
@@ -1561,7 +1621,7 @@ class RuntimeState:
         """
         if not isinstance(self.selected_file, TransparentEF):
             raise TypeError("Only works with TransparentEF")
-        return self.card._scc.update_binary(self.selected_file.fid, data_hex, offset, conserve=self.conserve_write)
+        return self.rs.card._scc.update_binary(self.selected_file.fid, data_hex, offset, conserve=self.rs.conserve_write)
 
     def update_binary_dec(self, data: dict):
         """Update transparent EF from abstract data. Encodes the data to binary and
@@ -1584,7 +1644,7 @@ class RuntimeState:
         if not isinstance(self.selected_file, LinFixedEF):
             raise TypeError("Only works with Linear Fixed EF")
         # returns a string of hex nibbles
-        return self.card._scc.read_record(self.selected_file.fid, rec_nr)
+        return self.rs.card._scc.read_record(self.selected_file.fid, rec_nr)
 
     def read_record_dec(self, rec_nr: int = 0) -> Tuple[dict, str]:
         """Read a record and decode it to abstract data.
@@ -1606,7 +1666,7 @@ class RuntimeState:
         """
         if not isinstance(self.selected_file, LinFixedEF):
             raise TypeError("Only works with Linear Fixed EF")
-        return self.card._scc.update_record(self.selected_file.fid, rec_nr, data_hex, conserve=self.conserve_write)
+        return self.rs.card._scc.update_record(self.selected_file.fid, rec_nr, data_hex, conserve=self.rs.conserve_write)
 
     def update_record_dec(self, rec_nr: int, data: dict):
         """Update a record with given abstract data.  Will encode abstract to binary data
@@ -1630,7 +1690,7 @@ class RuntimeState:
         if not isinstance(self.selected_file, BerTlvEF):
             raise TypeError("Only works with BER-TLV EF")
         # returns a string of hex nibbles
-        return self.card._scc.retrieve_data(self.selected_file.fid, tag)
+        return self.rs.card._scc.retrieve_data(self.selected_file.fid, tag)
 
     def retrieve_tags(self):
         """Retrieve tags available on BER-TLV EF.
@@ -1640,7 +1700,7 @@ class RuntimeState:
         """
         if not isinstance(self.selected_file, BerTlvEF):
             raise TypeError("Only works with BER-TLV EF")
-        data, sw = self.card._scc.retrieve_data(self.selected_file.fid, 0x5c)
+        data, sw = self.rs.card._scc.retrieve_data(self.selected_file.fid, 0x5c)
         tag, length, value, remainder = bertlv_parse_one(h2b(data))
         return list(value)
 
@@ -1653,7 +1713,7 @@ class RuntimeState:
         """
         if not isinstance(self.selected_file, BerTlvEF):
             raise TypeError("Only works with BER-TLV EF")
-        return self.card._scc.set_data(self.selected_file.fid, tag, data_hex, conserve=self.conserve_write)
+        return self.rs.card._scc.set_data(self.selected_file.fid, tag, data_hex, conserve=self.rs.conserve_write)
 
     def unregister_cmds(self, cmd_app=None):
         """Unregister all file specific commands."""

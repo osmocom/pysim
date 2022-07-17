@@ -131,7 +131,7 @@ class EF_IST(EF_UServiceTable):
             absent/deactivated.  This performs a consistency check to ensure that no services are activated
             for files that are not - and vice-versa, no files are activated for services that are not.  Error
             messages are printed for every inconsistency found."""
-            selected_file = self._cmd.rs.selected_file
+            selected_file = self._cmd.lchan.selected_file
             num_problems = selected_file.ust_service_check(self._cmd)
             self._cmd.poutput("===> %u service / file inconsistencies detected" % num_problems)
 

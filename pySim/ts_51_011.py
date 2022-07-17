@@ -542,15 +542,15 @@ class EF_IMSI(TransparentEF):
             """Change the plmn part of the IMSI"""
             plmn = arg.strip()
             if len(plmn) == 5 or len(plmn) == 6:
-                (data, sw) = self._cmd.rs.read_binary_dec()
+                (data, sw) = self._cmd.lchan.read_binary_dec()
                 if sw == '9000' and len(data['imsi'])-len(plmn) == 10:
                     imsi = data['imsi']
                     msin = imsi[len(plmn):]
-                    (data, sw) = self._cmd.rs.update_binary_dec(
+                    (data, sw) = self._cmd.lchan.update_binary_dec(
                         {'imsi': plmn+msin})
                     if sw == '9000' and data:
                         self._cmd.poutput_json(
-                            self._cmd.rs.selected_file.decode_hex(data))
+                            self._cmd.lchan.selected_file.decode_hex(data))
                 else:
                     raise ValueError("PLMN length does not match IMSI length")
             else:
