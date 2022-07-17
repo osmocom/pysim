@@ -798,8 +798,8 @@ class EF_NIA(LinFixedEF):
 
 # TS 51.011 Section 10.3.32
 class EF_Kc(TransparentEF):
-    def __init__(self, fid='6f20', sfid=None, name='EF.Kc', desc='Ciphering key Kc', size={9, 9}):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+    def __init__(self, fid='6f20', sfid=None, name='EF.Kc', desc='Ciphering key Kc', size={9, 9}, **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct('kc'/HexAdapter(Bytes(8)), 'cksn'/Int8ub)
 
 # TS 51.011 Section 10.3.33
@@ -862,15 +862,15 @@ class EF_xPLMNwAcT(TransRecEF):
 # TS 51.011 Section 10.3.38
 class EF_CPBCCH(TransRecEF):
     def __init__(self, fid='6f63', sfid=None, name='EF.CPBCCH', size={2, 14}, rec_len=2,
-                 desc='CPBCCH Information'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len)
+                 desc='CPBCCH Information', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
         self._construct = Struct('cpbcch'/Int16ub)
 
 # TS 51.011 Section 10.3.39
 class EF_InvScan(TransparentEF):
     def __init__(self, fid='6f64', sfid=None, name='EF.InvScan', size={1, 1},
-                 desc='IOnvestigation Scan'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                 desc='IOnvestigation Scan', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = FlagsEnum(
             Byte, in_limited_service_mode=1, after_successful_plmn_selection=2)
 

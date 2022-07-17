@@ -33,6 +33,7 @@ from pySim.ts_51_011 import EF_MMSN, EF_MMSICP, EF_MMSUP, EF_MMSUCP, EF_VGCS, EF
 from pySim.ts_51_011 import EF_SMSR, EF_DCK, EF_EXT, EF_CNL, EF_OPL, EF_MBI, EF_MWIS
 from pySim.ts_51_011 import EF_CBMID, EF_CBMIR, EF_ADN, EF_SMS, EF_MSISDN, EF_SMSP, EF_SMSS
 from pySim.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_PLMNsel
+from pySim.ts_51_011 import EF_Kc, EF_CPBCCH, EF_InvScan
 from pySim.ts_102_221 import EF_ARR
 from pySim.tlv import *
 from pySim.filesystem import *
@@ -920,6 +921,23 @@ class EF_FromPreferred(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = BitStruct('rfu'/BitsRFU(7), 'from_preferred'/Bit)
 
+
+######################################################################
+# DF.GSM-ACCESS
+######################################################################
+
+class DF_GSM_ACCESS(CardDF):
+    def __init__(self, fid='5F3B', name='DF.GSM-ACCESS', desc='GSM Access', **kwargs):
+        super().__init__(fid=fid, name=name, desc=desc, service=27, **kwargs)
+        files = [
+            EF_Kc(fid='4f20', sfid=0x01, service=27),
+            EF_Kc(fid='4f52', sfid=0x02, name='EF.KcGPRS', desc='GPRS Ciphering key KcGPRS', service=27),
+            EF_CPBCCH(fid='4f63', service=39),
+            EF_InvScan(fid='4f64', service=40),
+        ]
+        self.add_files(files)
+
+
 ######################################################################
 # DF.5GS
 ######################################################################
@@ -1196,7 +1214,7 @@ class ADF_USIM(CardADF):
             EF_FromPreferred(service=114),
             # FIXME: DF_SoLSA service=23
             DF_PHONEBOOK(),
-            # FIXME: DF_GSM_ACCESS service=27
+            DF_GSM_ACCESS(),
             DF_WLAN(service=[59, 60, 61, 62, 63, 66, 81, 82, 83, 84, 88]),
             DF_HNB(service=[86, 90]),
             DF_ProSe(service=101),
