@@ -246,3 +246,45 @@ class DF_MCS(CardDF):
             EF_MCS_CONFIG(),
             ]
         self.add_files(files)
+
+
+# TS 31.102 Section 4.6.5.2
+EF_VST_map = {
+    1: 'MCPTT UE configuration data',
+    2: 'MCPTT User profile data',
+    3: 'MCS Group configuration data',
+    4: 'MCPTT Service configuration data',
+    5: 'MCS UE initial configuration data',
+    6: 'MCData UE configuration data',
+    7: 'MCData user profile data',
+    8: 'MCData service configuration data',
+    9: 'MCVideo UE configuration data',
+    10: 'MCVideo user profile data',
+    11: 'MCVideo service configuration data',
+    }
+
+# TS 31.102 Section 4.6.5.2
+class EF_VST(EF_UServiceTable):
+    def __init__(self, fid='4F01', sfid=0x01, name='EF.VST', desc='V2X Service Table', size={2,2},
+                 table=EF_VST_map, **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size, table=table)
+
+# TS 31.102 Section 4.6.5.3
+class EF_V2X_CONFIG(BerTlvEF):
+    class V2xConfigurationData(BER_TLV_IE, tag=0x80):
+        pass
+    class V2xConfigDataCollection(TLV_IE_Collection, nested=[V2xConfigurationData]):
+        pass
+    def __init__(self, fid='4F02', sfid=0x02, name='EF.V2X_CONFIG', desc='V2X configuration data', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._tlv = EF_V2X_CONFIG.V2xConfigDataCollection
+
+# TS 31.102 Section 4.6.5
+class DF_V2X(CardDF):
+    def __init__(self, fid='5F3E', name='DF.V2X', desc='Vehicle to X', **kwargs):
+        super().__init__(fid=fid, name=name, desc=desc, **kwargs)
+        files = [
+            EF_VST(),
+            EF_V2X_CONFIG(),
+            ]
+        self.add_files(files)
