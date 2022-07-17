@@ -26,7 +26,8 @@ from pySim.filesystem import *
 from pySim.utils import *
 from pySim.tlv import *
 from pySim.ts_51_011 import EF_AD, EF_SMS, EF_SMSS, EF_SMSR, EF_SMSP
-from pySim.ts_31_102 import ADF_USIM, EF_FromPreferred, EF_UServiceTable
+from pySim.ts_31_102 import ADF_USIM, EF_FromPreferred
+from pySim.ts_31_102_telecom import EF_UServiceTable
 import pySim.ts_102_221
 from pySim.ts_102_221 import EF_ARR
 

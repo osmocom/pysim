@@ -32,6 +32,96 @@ from pySim.construct import *
 from construct import Optional as COptional
 from construct import *
 
+# TS 31.102 Section 4.2.8
+class EF_UServiceTable(TransparentEF):
+    def __init__(self, fid, sfid, name, desc, size, table, **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
+        self.table = table
+
+    @staticmethod
+    def _bit_byte_offset_for_service(service: int) -> Tuple[int, int]:
+        i = service - 1
+        byte_offset = i//8
+        bit_offset = (i % 8)
+        return (byte_offset, bit_offset)
+
+    def _decode_bin(self, in_bin):
+        ret = {}
+        for i in range(0, len(in_bin)):
+            byte = in_bin[i]
+            for bitno in range(0, 8):
+                service_nr = i * 8 + bitno + 1
+                ret[service_nr] = {
+                    'activated': True if byte & (1 << bitno) else False
+                }
+                if service_nr in self.table:
+                    ret[service_nr]['description'] = self.table[service_nr]
+        return ret
+
+    def _encode_bin(self, in_json):
+        # compute the required binary size
+        bin_len = 0
+        for srv in in_json.keys():
+            service_nr = int(srv)
+            (byte_offset, bit_offset) = EF_UServiceTable._bit_byte_offset_for_service(
+                service_nr)
+            if byte_offset >= bin_len:
+                bin_len = byte_offset+1
+        # encode the actual data
+        out = bytearray(b'\x00' * bin_len)
+        for srv in in_json.keys():
+            service_nr = int(srv)
+            (byte_offset, bit_offset) = EF_UServiceTable._bit_byte_offset_for_service(
+                service_nr)
+            if in_json[srv]['activated'] == True:
+                bit = 1
+            else:
+                bit = 0
+            out[byte_offset] |= (bit) << bit_offset
+        return out
+
+    def get_active_services(self, cmd):
+        # obtain list of currently active services
+        (service_data, sw) = cmd.lchan.read_binary_dec()
+        active_services = []
+        for s in service_data.keys():
+            if service_data[s]['activated']:
+                active_services.append(s)
+        return active_services
+
+    def ust_service_check(self, cmd):
+        """Check consistency between services of this file and files present/activated"""
+        num_problems = 0
+        # obtain list of currently active services
+        active_services = self.get_active_services(cmd)
+        # iterate over all the service-constraints we know of
+        files_by_service = self.parent.files_by_service
+        try:
+            for s in sorted(files_by_service.keys()):
+                active_str = 'active' if s in active_services else 'inactive'
+                cmd.poutput("Checking service No %u (%s)" % (s, active_str))
+                for f in files_by_service[s]:
+                    should_exist = f.should_exist_for_services(active_services)
+                    try:
+                        cmd.lchan.select_file(f)
+                        sw = None
+                        exists = True
+                    except SwMatchError as e:
+                        sw = str(e)
+                        exists = False
+                    if exists != should_exist:
+                        num_problems += 1
+                        if exists:
+                            cmd.perror("  ERROR: File %s is selectable but should not!" % f)
+                        else:
+                            cmd.perror("  ERROR: File %s is not selectable (%s) but should!" %  (f, sw))
+        finally:
+            # re-select the EF.UST
+            cmd.lchan.select_file(self)
+        return num_problems
+
+
+
 # TS 31.102 Section 4.4.2.1
 class EF_PBR(LinFixedEF):
     def __init__(self, fid='4F30', name='EF.PBR', desc='Phone Book Reference', **kwargs):
