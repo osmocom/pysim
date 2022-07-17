@@ -5,7 +5,7 @@
 # pylint: disable=undefined-variable
 
 """
-DF_PHONEBOOK, DF_MULTIMEDIA as specified in 3GPP TS 31.102 V16.6.0
+DF_PHONEBOOK, DF_MULTIMEDIA, DF_MCS as specified in 3GPP TS 31.102 V16.6.0
 Needs to be a separate python module to avoid cyclic imports
 """
 
@@ -178,5 +178,71 @@ class DF_MULTIMEDIA(CardDF):
         files = [
             EF_MML(),
             EF_MMDF(),
+            ]
+        self.add_files(files)
+
+
+# TS 31.102 Section 4.6.4.1
+EF_MST_map = {
+    1: 'MCPTT UE configuration data',
+    2: 'MCPTT User profile data',
+    3: 'MCS Group configuration data',
+    4: 'MCPTT Service configuration data',
+    5: 'MCS UE initial configuration data',
+    6: 'MCData UE configuration data',
+    7: 'MCData user profile data',
+    8: 'MCData service configuration data',
+    9: 'MCVideo UE configuration data',
+    10: 'MCVideo user profile data',
+    11: 'MCVideo service configuration data',
+    }
+
+# TS 31.102 Section 4.6.4.2
+class EF_MCS_CONFIG(BerTlvEF):
+    class McpttUeConfigurationData(BER_TLV_IE, tag=0x80):
+        pass
+    class McpttUserProfileData(BER_TLV_IE, tag=0x81):
+        pass
+    class McsGroupConfigurationData(BER_TLV_IE, tag=0x82):
+        pass
+    class McpttServiceConfigurationData(BER_TLV_IE, tag=0x83):
+        pass
+    class McsUeInitialConfigurationData(BER_TLV_IE, tag=0x84):
+        pass
+    class McdataUeConfigurationData(BER_TLV_IE, tag=0x85):
+        pass
+    class McdataUserProfileData(BER_TLV_IE, tag=0x86):
+        pass
+    class McdataServiceConfigurationData(BER_TLV_IE, tag=0x87):
+        pass
+    class McvideoUeConfigurationData(BER_TLV_IE, tag=0x88):
+        pass
+    class McvideoUserProfileData(BER_TLV_IE, tag=0x89):
+        pass
+    class McvideoServiceConfigurationData(BER_TLV_IE, tag=0x8a):
+        pass
+    class McsConfigDataCollection(TLV_IE_Collection, nested=[McpttUeConfigurationData,
+                                  McpttUserProfileData, McsGroupConfigurationData,
+                                  McpttServiceConfigurationData, McsUeInitialConfigurationData,
+                                  McdataUeConfigurationData, McdataUserProfileData,
+                                  McdataServiceConfigurationData, McvideoUeConfigurationData,
+                                  McvideoUserProfileData, McvideoServiceConfigurationData]):
+        pass
+    def __init__(self, fid='4F02', sfid=0x02, name='EF.MCS_CONFIG', desc='MCS configuration data', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._tlv = EF_MCS_CONFIG.McsConfigDataCollection
+
+# TS 31.102 Section 4.6.4.1
+class EF_MST(EF_UServiceTable):
+    def __init__(self, fid='4F01', sfid=0x01, name='EF.MST', desc='MCS Service Table', size={2,2},
+                 table=EF_MST_map, **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size, table=table)
+
+class DF_MCS(CardDF):
+    def __init__(self, fid='5F3D', name='DF.MCS', desc='Mission Critical Services', **kwargs):
+        super().__init__(fid=fid, name=name, desc=desc, **kwargs)
+        files = [
+            EF_MST(),
+            EF_MCS_CONFIG(),
             ]
         self.add_files(files)

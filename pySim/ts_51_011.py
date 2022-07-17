@@ -32,7 +32,7 @@ order to describe the files specified in the relevant ETSI + 3GPP specifications
 from pySim.profile import match_sim
 from pySim.profile import CardProfile
 from pySim.filesystem import *
-from pySim.ts_31_102_telecom import DF_PHONEBOOK, DF_MULTIMEDIA
+from pySim.ts_31_102_telecom import DF_PHONEBOOK, DF_MULTIMEDIA, DF_MCS
 import enum
 from pySim.construct import *
 from construct import Optional as COptional
@@ -500,8 +500,8 @@ class DF_TELECOM(CardDF):
             EF_CMI(),
             # not really part of 51.011 but something that TS 31.102 specifies may exist here.
             DF_PHONEBOOK(),
-            # not really part of 51.011 but something that TS 31.102 specifies may exist here.
             DF_MULTIMEDIA(),
+            DF_MCS(),
         ]
         self.add_files(files)
 
