@@ -1102,12 +1102,12 @@ class DF_HNB(CardDF):
     def __init__(self, fid='5f50', name='DF.HNB', desc='Files for HomeNodeB purpose', **kwargs):
         super().__init__(fid=fid, name=name, desc=desc, **kwargs)
         files = [
-            LinFixedEF('4f01', 0x01, 'EF.ACSGL', 'Allowed CSG Lists', service=86),
-            LinFixedEF('4f02', 0x02, 'EF.CSGTL', 'CSG Types', service=86),
-            LinFixedEF('4f03', 0x03, 'EF.HNBN', 'Home NodeB Name', service=86),
-            LinFixedEF('4f04', 0x04, 'EF.OCSGL', 'Operator CSG Lists', service=90),
-            LinFixedEF('4f05', 0x05, 'EF.OCSGT', 'Operator CSG Type', service=90),
-            LinFixedEF('4f06', 0x06, 'EF.OHNBN', 'Operator Home NodeB Name', service=90),
+            LinFixedEF('4f81', 0x01, 'EF.ACSGL', 'Allowed CSG Lists', service=86),
+            LinFixedEF('4f82', 0x02, 'EF.CSGTL', 'CSG Types', service=86),
+            LinFixedEF('4f83', 0x03, 'EF.HNBN', 'Home NodeB Name', service=86),
+            LinFixedEF('4f84', 0x04, 'EF.OCSGL', 'Operator CSG Lists', service=90),
+            LinFixedEF('4f85', 0x05, 'EF.OCSGT', 'Operator CSG Type', service=90),
+            LinFixedEF('4f86', 0x06, 'EF.OHNBN', 'Operator Home NodeB Name', service=90),
         ]
         self.add_files(files)
 
