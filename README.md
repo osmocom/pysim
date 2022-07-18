@@ -16,7 +16,7 @@ network, and want to issue your own SIM/USIM cards for that network.
 Homepage and Manual
 -------------------
 
-Please visit the [official homepage](https://osmocom.org/projects/pysim/wiki) for usage instructions, manual and examples.
+Please visit the [official homepage](https://osmocom.org/projects/pysim/wiki) for usage instructions, manual and examples.  The user manual can also be built locally from this source code by ``cd docs && make html latexpdf`` for HTML and PDF format, respectively.
 
 Git Repository
 --------------
