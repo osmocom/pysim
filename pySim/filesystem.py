@@ -112,6 +112,14 @@ class CardFile:
         else:
             return self.fid
 
+    def fully_qualified_path_str(self, prefer_name: bool = True) -> str:
+        """Return fully qualified path to file as string.
+
+        Args:
+            prefer_name : Preferably build path of names; fall-back to FIDs as required
+        """
+        return '/'.join(self.fully_qualified_path(prefer_name))
+
     def fully_qualified_path(self, prefer_name: bool = True) -> List[str]:
         """Return fully qualified path to file as list of FID or name strings.
 

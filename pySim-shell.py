@@ -227,9 +227,8 @@ class PysimApp(cmd2.Cmd):
 
     def update_prompt(self):
         if self.lchan:
-            path_list = self.lchan.selected_file.fully_qualified_path(
-                not self.numeric_path)
-            self.prompt = 'pySIM-shell (%s)> ' % ('/'.join(path_list))
+            path_str = self.lchan.selected_file.fully_qualified_path_str(not self.numeric_path)
+            self.prompt = 'pySIM-shell (%s)> ' % (path_str)
         else:
             if self.card:
                 self.prompt = 'pySIM-shell (no card profile)> '
@@ -483,10 +482,10 @@ class PySimCommands(CommandSet):
             self._cmd.lchan.selected_file.get_selectable_names(flags=flags))
         directory_str = tabulate_str_list(
             selectables, width=79, hspace=2, lspace=1, align_left=True)
-        path_list = self._cmd.lchan.selected_file.fully_qualified_path(True)
-        self._cmd.poutput('/'.join(path_list))
-        path_list = self._cmd.lchan.selected_file.fully_qualified_path(False)
-        self._cmd.poutput('/'.join(path_list))
+        path = self._cmd.lchan.selected_file.fully_qualified_path_str(True)
+        self._cmd.poutput(path)
+        path = self._cmd.lchan.selected_file.fully_qualified_path_str(False)
+        self._cmd.poutput(path)
         self._cmd.poutput(directory_str)
         self._cmd.poutput("%d files" % len(selectables))
 
@@ -518,8 +517,8 @@ class PySimCommands(CommandSet):
                 except Exception as e:
                     skip_df = True
                     df = self._cmd.lchan.selected_file
-                    df_path_list = df.fully_qualified_path(True)
-                    df_skip_reason_str = '/'.join(df_path_list) + \
+                    df_path = df.fully_qualified_path_str(True)
+                    df_skip_reason_str = df_path + \
                         "/" + str(f) + ", " + str(e)
                     if context:
                         context['DF_SKIP'] += 1
@@ -559,13 +558,13 @@ class PySimCommands(CommandSet):
                 "currently selected file %s is not a DF or ADF" % str(df))
 
         df_path_list = df.fully_qualified_path(True)
-        df_path_list_fid = df.fully_qualified_path(False)
+        df_path = df.fully_qualified_path_str(True)
+        df_path_fid = df.fully_qualified_path_str(False)
 
-        file_str = '/'.join(df_path_list) + "/" + str(filename)
+        file_str = df_path + "/" + str(filename)
         self._cmd.poutput(boxed_heading_str(file_str))
 
-        self._cmd.poutput("# directory: %s (%s)" %
-                          ('/'.join(df_path_list), '/'.join(df_path_list_fid)))
+        self._cmd.poutput("# directory: %s (%s)" % (df_path, df_path_fid))
         try:
             fcp_dec = self._cmd.lchan.select(filename, self._cmd)
             self._cmd.poutput("# file: %s (%s)" % (
@@ -629,8 +628,7 @@ class PySimCommands(CommandSet):
                 raise RuntimeError(
                     'Unsupported structure "%s" of file "%s"' % (structure, filename))
         except Exception as e:
-            bad_file_str = '/'.join(df_path_list) + \
-                "/" + str(filename) + ", " + str(e)
+            bad_file_str = df_path + "/" + str(filename) + ", " + str(e)
             self._cmd.poutput("# bad file: %s" % bad_file_str)
             context['ERR'] += 1
             context['BAD'].append(bad_file_str)
@@ -734,11 +732,9 @@ class Iso7816Commands(CommandSet):
     def do_select(self, opts):
         """SELECT a File (ADF/DF/EF)"""
         if len(opts.arg_list) == 0:
-            path_list = self._cmd.lchan.selected_file.fully_qualified_path(True)
-            path_list_fid = self._cmd.lchan.selected_file.fully_qualified_path(
-                False)
-            self._cmd.poutput("currently selected file: " +
-                              '/'.join(path_list) + " (" + '/'.join(path_list_fid) + ")")
+            path = self._cmd.lchan.selected_file.fully_qualified_path_str(True)
+            path_fid = self._cmd.lchan.selected_file.fully_qualified_path_str(False)
+            self._cmd.poutput("currently selected file: %s (%s)" % (path, path_fid))
             return
 
         path = opts.arg_list[0]
