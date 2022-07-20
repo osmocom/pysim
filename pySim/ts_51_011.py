@@ -878,11 +878,13 @@ class EF_InvScan(TransparentEF):
 class EF_PNN(LinFixedEF):
     class FullNameForNetwork(BER_TLV_IE, tag=0x43):
         # TS 24.008 10.5.3.5a
-        pass
+        # TODO: proper decode
+        _construct = HexAdapter(GreedyBytes)
 
     class ShortNameForNetwork(BER_TLV_IE, tag=0x45):
         # TS 24.008 10.5.3.5a
-        pass
+        # TODO: proper decode
+        _construct = HexAdapter(GreedyBytes)
 
     class NetworkNameCollection(TLV_IE_Collection, nested=[FullNameForNetwork, ShortNameForNetwork]):
         pass
