@@ -667,7 +667,7 @@ class EF_ACC(TransparentEF):
 class EF_LOCI(TransparentEF):
     def __init__(self, fid='6f7e', sfid=None, name='EF.LOCI', desc='Location Information', size={11, 11}):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
-        self._construct = Struct('tmsi'/Bytes(4), 'lai'/Bytes(5), 'tmsi_time'/Int8ub,
+        self._construct = Struct('tmsi'/HexAdapter(Bytes(4)), 'lai'/HexAdapter(Bytes(5)), 'tmsi_time'/Int8ub,
                                  'lu_status'/Enum(Byte, updated=0, not_updated=1, plmn_not_allowed=2,
                                                   location_area_not_allowed=3))
 
@@ -806,7 +806,7 @@ class EF_Kc(TransparentEF):
 class EF_LOCIGPRS(TransparentEF):
     def __init__(self, fid='6f53', sfid=None, name='EF.LOCIGPRS', desc='GPRS Location Information', size={14, 14}):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
-        self._construct = Struct('ptmsi'/Bytes(4), 'ptmsi_sig'/Int8ub, 'rai'/Bytes(6),
+        self._construct = Struct('ptmsi'/HexAdapter(Bytes(4)), 'ptmsi_sig'/Int8ub, 'rai'/HexAdapter(Bytes(6)),
                                  'rau_status'/Enum(Byte, updated=0, not_updated=1, plmn_not_allowed=2,
                                                    routing_area_not_allowed=3))
 
@@ -897,7 +897,8 @@ class EF_PNN(LinFixedEF):
 class EF_OPL(LinFixedEF):
     def __init__(self, fid='6fc6', sfid=None, name='EF.OPL', rec_len={8, 8}, desc='Operator PLMN List', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
-        self._construct = Struct('lai'/Struct('mcc_mnc'/BcdAdapter(Bytes(3)), 'lac_min'/Bytes(2), 'lac_max'/Bytes(2)), 'pnn_record_id'/Int8ub)
+        self._construct = Struct('lai'/Struct('mcc_mnc'/BcdAdapter(Bytes(3)),
+                                 'lac_min'/HexAdapter(Bytes(2)), 'lac_max'/HexAdapter(Bytes(2))), 'pnn_record_id'/Int8ub)
 
 # TS 51.011 Section 10.3.44 + TS 31.102 4.2.62
 class EF_MBI(LinFixedEF):
@@ -933,8 +934,8 @@ class EF_SPDI(TransparentEF):
 class EF_MMSN(LinFixedEF):
     def __init__(self, fid='6fce', sfid=None, name='EF.MMSN', rec_len={4, 20}, desc='MMS Notification', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
-        self._construct = Struct('mms_status'/Bytes(2), 'mms_implementation'/Bytes(1),
-                                 'mms_notification'/Bytes(this._.total_len-4), 'ext_record_nr'/Byte)
+        self._construct = Struct('mms_status'/HexAdapter(Bytes(2)), 'mms_implementation'/HexAdapter(Bytes(1)),
+                                 'mms_notification'/HexAdapter(Bytes(this._.total_len-4)), 'ext_record_nr'/Byte)
 
 # TS 51.011 Annex K.1
 class MMS_Implementation(BER_TLV_IE, tag=0x80):

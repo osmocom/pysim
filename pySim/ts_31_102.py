@@ -664,7 +664,7 @@ class EF_ICI(CyclicEF):
     def __init__(self, fid='6f80', sfid=0x14, name='EF.ICI', rec_len={28, 48},
                  desc='Incoming Call Information', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
-        self._construct = Struct('alpha_id'/Bytes(this._.total_len-28),
+        self._construct = Struct('alpha_id'/HexAdapter(Bytes(this._.total_len-28)),
                                  'len_of_bcd_contents'/Int8ub,
                                  'ton_npi'/Int8ub,
                                  'call_number'/BcdAdapter(Bytes(10)),
@@ -673,14 +673,14 @@ class EF_ICI(CyclicEF):
                                  'date_and_time'/BcdAdapter(Bytes(7)),
                                  'duration'/Int24ub,
                                  'status'/Byte,
-                                 'link_to_phonebook'/Bytes(3))
+                                 'link_to_phonebook'/HexAdapter(Bytes(3)))
 
 # TS 31.102 Section 4.2.34
 class EF_OCI(CyclicEF):
     def __init__(self, fid='6f81', sfid=0x15, name='EF.OCI', rec_len={27, 47},
                  desc='Outgoing Call Information', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
-        self._construct = Struct('alpha_id'/Bytes(this._.total_len-27),
+        self._construct = Struct('alpha_id'/HexAdapter(Bytes(this._.total_len-27)),
                                  'len_of_bcd_contents'/Int8ub,
                                  'ton_npi'/Int8ub,
                                  'call_number'/BcdAdapter(Bytes(10)),
@@ -688,7 +688,7 @@ class EF_OCI(CyclicEF):
                                  'ext5_record_id'/Int8ub,
                                  'date_and_time'/BcdAdapter(Bytes(7)),
                                  'duration'/Int24ub,
-                                 'link_to_phonebook'/Bytes(3))
+                                 'link_to_phonebook'/HexAdapter(Bytes(3)))
 
 # TS 31.102 Section 4.2.35
 class EF_ICT(CyclicEF):
@@ -727,7 +727,7 @@ class EF_ACL(TransparentEF):
     def __init__(self, fid='6f57', sfid=None, name='EF.ACL', size={32, None},
                  desc='Access Point Name Control List', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
-        self._construct = Struct('num_of_apns'/Int8ub, 'tlvs'/GreedyBytes)
+        self._construct = Struct('num_of_apns'/Int8ub, 'tlvs'/HexAdapter(GreedyBytes))
 
 # TS 31.102 Section 4.2.51
 class EF_START_HFN(TransparentEF):
@@ -771,7 +771,7 @@ class EF_MSK(LinFixedEF):
     def __init__(self, fid='6fd7', sfid=None, name='EF.MSK', desc='MBMS Service Key List', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={20, None}, **kwargs)
         msk_ts_constr = Struct('msk_id'/Int32ub, 'timestamp_counter'/Int32ub)
-        self._construct = Struct('key_domain_id'/Bytes(3),
+        self._construct = Struct('key_domain_id'/HexAdapter(Bytes(3)),
                                  'num_msk_id'/Int8ub,
                                  'msk_ids'/msk_ts_constr[this.num_msk_id])
 # TS 31.102 Section 4.2.81
@@ -865,7 +865,8 @@ class EF_EPSLOCI(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         upd_status_constr = Enum(
             Byte, updated=0, not_updated=1, roaming_not_allowed=2)
-        self._construct = Struct('guti'/Bytes(12), 'last_visited_registered_tai'/Bytes(5),
+        self._construct = Struct('guti'/HexAdapter(Bytes(12)),
+                                 'last_visited_registered_tai'/HexAdapter(Bytes(5)),
                                  'eps_update_status'/upd_status_constr)
 
 # TS 31.102 Section 4.2.92
@@ -958,7 +959,8 @@ class EF_5GS3GPPLOCI(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         upd_status_constr = Enum(
             Byte, updated=0, not_updated=1, roaming_not_allowed=2)
-        self._construct = Struct('5g_guti'/Bytes(13), 'last_visited_registered_tai_in_5gs'/Bytes(6),
+        self._construct = Struct('5g_guti'/HexAdapter(Bytes(13)),
+                                 'last_visited_registered_tai_in_5gs'/HexAdapter(Bytes(6)),
                                  '5gs_update_status'/upd_status_constr)
 
 # TS 31.102 Section 4.4.11.7
@@ -974,7 +976,8 @@ class EF_UAC_AIC(TransparentEF):
 class EF_OPL5G(LinFixedEF):
     def __init__(self, fid='6f08', sfid=0x08, name='EF.OPL5G', desc='5GS Operator PLMN List', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={10, None}, **kwargs)
-        Tai = Struct('mcc_mnc'/BcdAdapter(Bytes(3)), 'tac_min'/Bytes(3), 'tac_max'/Bytes(3))
+        Tai = Struct('mcc_mnc'/BcdAdapter(Bytes(3)), 'tac_min'/HexAdapter(Bytes(3)),
+                     'tac_max'/HexAdapter(Bytes(3)))
         self._construct = Struct('tai'/Tai, 'pnn_record_id'/Int8ub)
 
 # TS 31.102 Section 4.4.11.10

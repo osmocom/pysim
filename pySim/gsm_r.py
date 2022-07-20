@@ -185,7 +185,7 @@ class EF_Shunting(TransparentEF):
         super().__init__(fid='6ff4', sfid=None,
                          name='EF.Shunting', desc='Shunting', size={8, 8})
         self._construct = Struct('common_gid'/Int8ub,
-                                 'shunting_gid'/Bytes(7))
+                                 'shunting_gid'/HexAdapter(Bytes(7)))
 
 
 class EF_GsmrPLMN(LinFixedEF):
