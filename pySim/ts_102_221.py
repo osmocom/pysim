@@ -594,7 +594,7 @@ class EF_DIR(LinFixedEF):
 # TS 102 221 Section 13.2
 class EF_ICCID(TransparentEF):
     def __init__(self, fid='2fe2', sfid=0x02, name='EF.ICCID', desc='ICC Identification'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size={10, 10})
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=(10, 10))
 
     def _decode_hex(self, raw_hex):
         return {'iccid': dec_iccid(raw_hex)}
@@ -606,7 +606,7 @@ class EF_ICCID(TransparentEF):
 class EF_PL(TransRecEF):
     def __init__(self, fid='2f05', sfid=0x05, name='EF.PL', desc='Preferred Languages'):
         super().__init__(fid, sfid=sfid, name=name,
-                         desc=desc, rec_len=2, size={2, None})
+                         desc=desc, rec_len=2, size=(2, None))
 
     def _decode_record_bin(self, bin_data):
         if bin_data == b'\xff\xff':
@@ -706,7 +706,7 @@ class EF_ARR(LinFixedEF):
 # TS 102 221 Section 13.6
 class EF_UMPC(TransparentEF):
     def __init__(self, fid='2f08', sfid=0x08, name='EF.UMPC', desc='UICC Maximum Power Consumption'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size={5, 5})
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=(5, 5))
         addl_info = FlagsEnum(Byte, req_inc_idle_current=1,
                               support_uicc_suspend=2)
         self._construct = Struct(

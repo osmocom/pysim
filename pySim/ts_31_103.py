@@ -108,7 +108,7 @@ class EF_IMPU(LinFixedEF):
 # TS 31.103 Section 4.2.7
 class EF_IST(EF_UServiceTable):
     def __init__(self, **kwargs):
-        super().__init__('6f07', 0x07, 'EF.IST', 'ISIM Service Table', {1, None}, EF_IST_map)
+        super().__init__('6f07', 0x07, 'EF.IST', 'ISIM Service Table', (1, None), EF_IST_map)
         # add those commands to the general commands of a TransparentEF
         self.shell_commands += [self.AddlShellCommands()]
 

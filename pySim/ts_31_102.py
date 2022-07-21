@@ -349,7 +349,7 @@ class EF_5GAUTHKEYS(TransparentEF):
     class FiveGAuthKeys(TLV_IE_Collection, nested=[K_AUSF, K_SEAF]):
         pass
 
-    def __init__(self, fid='4f05', sfid=0x05, name='EF.5GAUTHKEYS', size={68, None},
+    def __init__(self, fid='4f05', sfid=0x05, name='EF.5GAUTHKEYS', size=(68, None),
                  desc='5G authentication keys', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._tlv = EF_5GAUTHKEYS.FiveGAuthKeys
@@ -383,7 +383,7 @@ class SUCI_CalcInfo(TLV_IE_Collection, nested=[ProtSchemeIdList, HomeNetPubKeyLi
 
 # TS 31.102 4.4.11.8
 class EF_SUCI_Calc_Info(TransparentEF):
-    def __init__(self, fid="4f07", sfid=0x07, name='EF.SUCI_Calc_Info', size={2, None},
+    def __init__(self, fid="4f07", sfid=0x07, name='EF.SUCI_Calc_Info', size=(2, None),
                  desc='SUCI Calc Info', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
 
@@ -506,7 +506,7 @@ class EF_SUCI_Calc_Info(TransparentEF):
 
 
 class EF_LI(TransRecEF):
-    def __init__(self, fid='6f05', sfid=None, name='EF.LI', size={2, None}, rec_len=2,
+    def __init__(self, fid='6f05', sfid=None, name='EF.LI', size=(2, None), rec_len=2,
                  desc='Language Indication'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len)
 
@@ -526,7 +526,7 @@ class EF_LI(TransRecEF):
 
 
 class EF_Keys(TransparentEF):
-    def __init__(self, fid='6f08', sfid=0x08, name='EF.Keys', size={33, 33},
+    def __init__(self, fid='6f08', sfid=0x08, name='EF.Keys', size=(33, 33),
                  desc='Ciphering and Integrity Keys'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self._construct = Struct(
@@ -534,14 +534,14 @@ class EF_Keys(TransparentEF):
 
 # TS 31.102 Section 4.2.6
 class EF_HPPLMN(TransparentEF):
-    def __init__(self, fid='6f31', sfid=0x12, name='EF.HPPLMN', size={1, 1},
+    def __init__(self, fid='6f31', sfid=0x12, name='EF.HPPLMN', size=(1, 1),
                  desc='Higher Priority PLMN search period'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self._construct = Int8ub
 
 class EF_UST(EF_UServiceTable):
     def __init__(self, **kwargs):
-        super().__init__(fid='6f38', sfid=0x04, name='EF.UST', desc='USIM Service Table', size={1,17}, table=EF_UST_map, **kwargs)
+        super().__init__(fid='6f38', sfid=0x04, name='EF.UST', desc='USIM Service Table', size=(1,17), table=EF_UST_map, **kwargs)
         # add those commands to the general commands of a TransparentEF
         self.shell_commands += [self.AddlShellCommands()]
 
@@ -625,7 +625,7 @@ class EF_ECC(LinFixedEF):
 
 # TS 31.102 Section 4.2.17
 class EF_LOCI(TransparentEF):
-    def __init__(self, fid='6f7e', sfid=0x0b, name='EF.LOCI', desc='Location information', size={11, 11}):
+    def __init__(self, fid='6f7e', sfid=0x0b, name='EF.LOCI', desc='Location information', size=(11, 11)):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         Lai = Struct('mcc_mnc'/BcdAdapter(Bytes(3)), 'lac'/HexAdapter(Bytes(2)))
         self._construct = Struct('tmsi'/HexAdapter(Bytes(4)), 'lai'/Lai, 'rfu'/Int8ub, 'lu_status'/Int8ub)
@@ -639,7 +639,7 @@ class EF_AD(TransparentEF):
         maintenance_off_line = 0x02
         cell_test = 0x04
 
-    def __init__(self, fid='6fad', sfid=0x03, name='EF.AD', desc='Administrative Data', size={4, 6}):
+    def __init__(self, fid='6fad', sfid=0x03, name='EF.AD', desc='Administrative Data', size=(4, 6)):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self._construct = BitStruct(
             # Byte 1
@@ -654,7 +654,7 @@ class EF_AD(TransparentEF):
 
 # TS 31.102 Section 4.2.23
 class EF_PSLOCI(TransparentEF):
-    def __init__(self, fid='6f73', sfid=0x0c, name='EF.PSLOCI', desc='PS Location information', size={14, 14}):
+    def __init__(self, fid='6f73', sfid=0x0c, name='EF.PSLOCI', desc='PS Location information', size=(14, 14)):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self._construct = Struct('ptmsi'/HexAdapter(Bytes(4)), 'ptmsi_sig'/HexAdapter(Bytes(3)),
                                  'rai'/HexAdapter(Bytes(6)), 'rau_status'/Int8ub)
@@ -705,7 +705,7 @@ class EF_CCP2(LinFixedEF):
 # TS 31.102 Section 4.2.47
 class EF_EST(EF_UServiceTable):
     def __init__(self, **kwargs):
-        super().__init__(fid='6f56', sfid=0x05, name='EF.EST', desc='Enabled Services Table', size={1,None}, table=EF_EST_map, **kwargs)
+        super().__init__(fid='6f56', sfid=0x05, name='EF.EST', desc='Enabled Services Table', size=(1,None), table=EF_EST_map, **kwargs)
         # add those commands to the general commands of a TransparentEF
         self.shell_commands += [self.AddlShellCommands()]
 
@@ -724,28 +724,28 @@ class EF_EST(EF_UServiceTable):
 
 # TS 31.102 Section 4.2.48
 class EF_ACL(TransparentEF):
-    def __init__(self, fid='6f57', sfid=None, name='EF.ACL', size={32, None},
+    def __init__(self, fid='6f57', sfid=None, name='EF.ACL', size=(32, None),
                  desc='Access Point Name Control List', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct('num_of_apns'/Int8ub, 'tlvs'/HexAdapter(GreedyBytes))
 
 # TS 31.102 Section 4.2.51
 class EF_START_HFN(TransparentEF):
-    def __init__(self, fid='6f5b', sfid=0x0f, name='EF.START-HFN', size={6, 6},
+    def __init__(self, fid='6f5b', sfid=0x0f, name='EF.START-HFN', size=(6, 6),
                  desc='Initialisation values for Hyperframe number', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct('start_cs'/Int24ub, 'start_ps'/Int24ub)
 
 # TS 31.102 Section 4.2.52
 class EF_THRESHOLD(TransparentEF):
-    def __init__(self, fid='6f5c', sfid=0x10, name='EF.THRESHOLD', size={3, 3},
+    def __init__(self, fid='6f5c', sfid=0x10, name='EF.THRESHOLD', size=(3, 3),
                  desc='Maximum value of START', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct('max_start'/Int24ub)
 
 # TS 31.102 (old releases like 3.8.0) Section 4.2.56
 class EF_RPLMNAcT(TransRecEF):
-    def __init__(self, fid='6f65', sfid=None, name='EF.RPLMNAcTD', size={2, 4}, rec_len=2,
+    def __init__(self, fid='6f65', sfid=None, name='EF.RPLMNAcTD', size=(2, 4), rec_len=2,
                  desc='RPLMN Last used Access Technology', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
     def _decode_record_hex(self, in_hex):
@@ -754,14 +754,14 @@ class EF_RPLMNAcT(TransRecEF):
 
 # TS 31.102 Section 4.2.77
 class EF_VGCSCA(TransRecEF):
-    def __init__(self, fid='6fd4', sfid=None, name='EF.VGCSCA', size={2, 100}, rec_len=2,
+    def __init__(self, fid='6fd4', sfid=None, name='EF.VGCSCA', size=(2, 100), rec_len=2,
                  desc='Voice Group Call Service Ciphering Algorithm', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
         self._construct = Struct('alg_v_ki_1'/Int8ub, 'alg_v_ki_2'/Int8ub)
 
 # TS 31.102 Section 4.2.79
 class EF_GBABP(TransparentEF):
-    def __init__(self, fid='6fd6', sfid=None, name='EF.GBABP', size={3, 50},
+    def __init__(self, fid='6fd6', sfid=None, name='EF.GBABP', size=(3, 50),
                  desc='GBA Bootstrapping parameters', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct('rand'/LV, 'b_tid'/LV, 'key_lifetime'/LV)
@@ -812,7 +812,7 @@ class EF_GBANL(LinFixedEF):
 
 # TS 31.102 Section 4.2.85
 class EF_EHPLMNPI(TransparentEF):
-    def __init__(self, fid='6fdb', sfid=None, name='EF.EHPLMNPI', size={1, 1},
+    def __init__(self, fid='6fdb', sfid=None, name='EF.EHPLMNPI', size=(1, 1),
                  desc='Equivalent HPLMN Presentation Indication', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct('presentation_ind' /
@@ -860,7 +860,7 @@ class EF_NCP_IP(LinFixedEF):
 
 # TS 31.102 Section 4.2.91
 class EF_EPSLOCI(TransparentEF):
-    def __init__(self, fid='6fe3', sfid=0x1e, name='EF.EPSLOCI', size={18, 18},
+    def __init__(self, fid='6fe3', sfid=0x1e, name='EF.EPSLOCI', size=(18, 18),
                  desc='EPS Location Information', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         upd_status_constr = Enum(
@@ -897,7 +897,7 @@ class EF_EPSNSC(LinFixedEF):
 
 # TS 31.102 Section 4.2.96
 class EF_PWS(TransparentEF):
-    def __init__(self, fid='6fec', sfid=None, name='EF.PWS', desc='Public Warning System', size={1, 1}, **kwargs):
+    def __init__(self, fid='6fec', sfid=None, name='EF.PWS', desc='Public Warning System', size=(1, 1), **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         pws_config = FlagsEnum(
             Byte, ignore_pws_in_hplmn_and_equivalent=1, ignore_pws_in_vplmn=2)
@@ -926,7 +926,7 @@ class EF_ePDGId(TransparentEF):
 
 # TS 31.102 Section 4.2.106
 class EF_FromPreferred(TransparentEF):
-    def __init__(self, fid='6ff7', sfid=None, name='EF.FromPreferred', size={1, 1},
+    def __init__(self, fid='6ff7', sfid=None, name='EF.FromPreferred', size=(1, 1),
                  desc='From Preferred', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = BitStruct('rfu'/BitsRFU(7), 'from_preferred'/Bit)
@@ -954,7 +954,7 @@ class DF_GSM_ACCESS(CardDF):
 
 # TS 31.102 Section 4.4.11.2
 class EF_5GS3GPPLOCI(TransparentEF):
-    def __init__(self, fid='4f01', sfid=0x01, name='EF.5GS3GPPLOCI', size={20, 20},
+    def __init__(self, fid='4f01', sfid=0x01, name='EF.5GS3GPPLOCI', size=(20, 20),
                  desc='5S 3GP location information', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         upd_status_constr = Enum(
@@ -965,7 +965,7 @@ class EF_5GS3GPPLOCI(TransparentEF):
 
 # TS 31.102 Section 4.4.11.7
 class EF_UAC_AIC(TransparentEF):
-    def __init__(self, fid='4f06', sfid=0x06, name='EF.UAC_AIC', size={4, 4},
+    def __init__(self, fid='4f06', sfid=0x06, name='EF.UAC_AIC', size=(4, 4),
                  desc='UAC Access Identities Configuration', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         cfg_constr = FlagsEnum(Byte, multimedia_priority_service=1,
@@ -1104,7 +1104,7 @@ class DF_USIM_5GS(CardDF):
             EF_OPL5G(service=129),
             EF_SUPI_NAI(service=130),
             TransparentEF('4F0A', 0x0a, 'EF.Routing_Indicator',
-                          'Routing Indicator', size={4, 4}, service=124),
+                          'Routing Indicator', size=(4, 4), service=124),
             TransparentEF('4F0B', 0x0b, 'EF.URSP',
                           'UE Route Selector Policies per PLMN', service=132),
             EF_TN3GPPSNN(service=133),
@@ -1136,11 +1136,11 @@ class ADF_USIM(CardADF):
             TransparentEF('6f3f', None, 'EF.GID2', 'Group Identifier Level 2', service=18),
             EF_SPN(service=19),
             TransparentEF('6f41', None, 'EF.PUCT',
-                          'Price per unit and currency table', size={5, 5}, service=13),
+                          'Price per unit and currency table', size=(5, 5), service=13),
             EF_CBMI(service=15),
             EF_ACC(sfid=0x06),
             EF_PLMNsel('6f7b', 0x0d, 'EF.FPLMN',
-                       'Forbidden PLMNs', size={12, None}),
+                       'Forbidden PLMNs', size=(12, None)),
             EF_LOCI(),
             EF_AD(),
             EF_CBMID(sfid=0x0e, service=29),
@@ -1204,7 +1204,7 @@ class ADF_USIM(CardADF):
             EF_MSK(service=69),
             EF_MUK(service=69),
             EF_GBANL(service=68),
-            EF_PLMNsel('6fd9', 0x1d, 'EF.EHPLMN', 'Equivalent HPLMN', size={12, None}, service=71),
+            EF_PLMNsel('6fd9', 0x1d, 'EF.EHPLMN', 'Equivalent HPLMN', size=(12, None), service=71),
             EF_EHPLMNPI(service=(71, 73)),
             # EF_LRPLMNSI ('6fdc', service=74)
             EF_NAFKCA(service=(68, 76)),
@@ -1213,7 +1213,7 @@ class ADF_USIM(CardADF):
             EF_NCP_IP(service=80),
             EF_EPSLOCI('6fe3', 0x1e, 'EF.EPSLOCI', 'EPS location information', service=85),
             EF_EPSNSC(service=85),
-            TransparentEF('6fe6', None, 'EF.UFC', 'USAT Facility Control', size={1, 16}),
+            TransparentEF('6fe6', None, 'EF.UFC', 'USAT Facility Control', size=(1, 16)),
             TransparentEF('6fe8', None, 'EF.NASCONFIG', 'Non Access Stratum Configuration', service=96),
             # UICC IARI (only in cards that have no ISIM) service=95
             EF_PWS(service=97),

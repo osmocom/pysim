@@ -49,6 +49,8 @@ from pySim.commands import SimCardCommands
 # tuple: logical-and of the listed services requires this file
 CardFileService = Union[int, List[int], Tuple[int, ...]]
 
+Size = Tuple[int, Optional[int]]
+
 def lchan_nr_from_cla(cla: int) -> int:
     """Resolve the logical channel number from the CLA byte."""
     # TS 102 221 10.1.1 Coding of Class Byte
@@ -642,7 +644,7 @@ class TransparentEF(CardEF):
                         self._cmd.poutput_json(data)
 
     def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None, parent: CardDF = None,
-                 size={1, None}, **kwargs):
+                 size: Size = (1, None), **kwargs):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -1057,7 +1059,7 @@ class TransRecEF(TransparentEF):
     """
 
     def __init__(self, fid: str, rec_len: int, sfid: str = None, name: str = None, desc: str = None,
-                 parent: Optional[CardDF] = None, size={1, None}, **kwargs):
+                 parent: Optional[CardDF] = None, size: Size = (1, None), **kwargs):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -1245,7 +1247,7 @@ class BerTlvEF(CardEF):
                 self._cmd.poutput(data)
 
     def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None, parent: CardDF = None,
-                 size={1, None}, **kwargs):
+                 size: Size = (1, None), **kwargs):
         """
         Args:
             fid : File Identifier (4 hex digits)

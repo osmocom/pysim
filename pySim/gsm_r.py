@@ -149,7 +149,7 @@ class EF_CallconfC(TransparentEF):
     """Section 7.3"""
 
     def __init__(self):
-        super().__init__(fid='6ff2', sfid=None, name='EF.CallconfC', size={24, 24},
+        super().__init__(fid='6ff2', sfid=None, name='EF.CallconfC', size=(24, 24),
                          desc='Call Configuration of emergency calls Configuration')
         self._construct = Struct('pl_conf'/PlConfAdapter(Int8ub),
                                  'conf_nr'/BcdAdapter(Bytes(8)),
@@ -183,7 +183,7 @@ class EF_Shunting(TransparentEF):
 
     def __init__(self):
         super().__init__(fid='6ff4', sfid=None,
-                         name='EF.Shunting', desc='Shunting', size={8, 8})
+                         name='EF.Shunting', desc='Shunting', size=(8, 8))
         self._construct = Struct('common_gid'/Int8ub,
                                  'shunting_gid'/HexAdapter(Bytes(7)))
 
@@ -253,7 +253,7 @@ class EF_DialledVals(TransparentEF):
     """Section 8.6"""
 
     def __init__(self, fid, name, desc):
-        super().__init__(fid=fid, sfid=None, name=name, desc=desc, size={4, 4})
+        super().__init__(fid=fid, sfid=None, name=name, desc=desc, size=(4, 4))
         self._construct = Struct('next_table_type'/NextTableType,
                                  'id_of_next_table'/HexAdapter(Bytes(2)),
                                  'dialed_digits'/BcdAdapter(Bytes(1)))

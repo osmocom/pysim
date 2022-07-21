@@ -234,7 +234,7 @@ class EF_MCS_CONFIG(BerTlvEF):
 
 # TS 31.102 Section 4.6.4.1
 class EF_MST(EF_UServiceTable):
-    def __init__(self, fid='4F01', sfid=0x01, name='EF.MST', desc='MCS Service Table', size={2,2},
+    def __init__(self, fid='4F01', sfid=0x01, name='EF.MST', desc='MCS Service Table', size=(2,2),
                  table=EF_MST_map, **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size, table=table)
 
@@ -265,7 +265,7 @@ EF_VST_map = {
 
 # TS 31.102 Section 4.6.5.2
 class EF_VST(EF_UServiceTable):
-    def __init__(self, fid='4F01', sfid=0x01, name='EF.VST', desc='V2X Service Table', size={2,2},
+    def __init__(self, fid='4F01', sfid=0x01, name='EF.VST', desc='V2X Service Table', size=(2,2),
                  table=EF_VST_map, **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size, table=table)
 
