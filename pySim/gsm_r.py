@@ -61,7 +61,7 @@ class EF_FN(LinFixedEF):
 
     def __init__(self):
         super().__init__(fid='6ff1', sfid=None, name='EF.EN',
-                         desc='Functional numbers', rec_len={9, 9})
+                         desc='Functional numbers', rec_len=(9, 9))
         self._construct = Struct('functional_number_and_type'/FuncNTypeAdapter(Bytes(8)),
                                  'list_number'/Int8ub)
 
@@ -166,7 +166,7 @@ class EF_CallconfI(LinFixedEF):
     """Section 7.5"""
 
     def __init__(self):
-        super().__init__(fid='6ff3', sfid=None, name='EF.CallconfI', rec_len={21, 21},
+        super().__init__(fid='6ff3', sfid=None, name='EF.CallconfI', rec_len=(21, 21),
                          desc='Call Configuration of emergency calls Information')
         self._construct = Struct('t_dur'/Int24ub,
                                  't_relcalc'/Int32ub,
@@ -193,7 +193,7 @@ class EF_GsmrPLMN(LinFixedEF):
 
     def __init__(self):
         super().__init__(fid='6ff5', sfid=None, name='EF.GsmrPLMN',
-                         desc='GSM-R network selection', rec_len={9, 9})
+                         desc='GSM-R network selection', rec_len=(9, 9))
         self._construct = Struct('plmn'/BcdAdapter(Bytes(3)),
                                  'class_of_network'/BitStruct('supported'/FlagsEnum(BitsInteger(5), vbs=1, vgcs=2, emlpp=4, fn=8, eirene=16),
                                                               'preference'/BitsInteger(3)),
@@ -207,7 +207,7 @@ class EF_IC(LinFixedEF):
 
     def __init__(self):
         super().__init__(fid='6f8d', sfid=None, name='EF.IC',
-                         desc='International Code', rec_len={7, 7})
+                         desc='International Code', rec_len=(7, 7))
         self._construct = Struct('next_table_type'/NextTableType,
                                  'id_of_next_table'/HexAdapter(Bytes(2)),
                                  'ic_decision_value'/BcdAdapter(Bytes(2)),
@@ -219,7 +219,7 @@ class EF_NW(LinFixedEF):
 
     def __init__(self):
         super().__init__(fid='6f80', sfid=None, name='EF.NW',
-                         desc='Network Name', rec_len={8, 8})
+                         desc='Network Name', rec_len=(8, 8))
         self._construct = GsmString(8)
 
 
@@ -228,7 +228,7 @@ class EF_Switching(LinFixedEF):
 
     def __init__(self, fid, name, desc):
         super().__init__(fid=fid, sfid=None,
-                         name=name, desc=desc, rec_len={6, 6})
+                         name=name, desc=desc, rec_len=(6, 6))
         self._construct = Struct('next_table_type'/NextTableType,
                                  'id_of_next_table'/HexAdapter(Bytes(2)),
                                  'decision_value'/BcdAdapter(Bytes(2)),
@@ -240,7 +240,7 @@ class EF_Predefined(LinFixedEF):
 
     def __init__(self, fid, name, desc):
         super().__init__(fid=fid, sfid=None,
-                         name=name, desc=desc, rec_len={3, 3})
+                         name=name, desc=desc, rec_len=(3, 3))
         # header and other records have different structure. WTF !?!
         self._construct = Struct('next_table_type'/NextTableType,
                                  'id_of_next_table'/HexAdapter(Bytes(2)),

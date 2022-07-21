@@ -333,7 +333,7 @@ class EF_5GS3GPPNSC(LinFixedEF):
                                            IdsOfSelectedEpsAlgos]):
         pass
 
-    def __init__(self, fid="4f03", sfid=0x03, name='EF.5GS3GPPNSC', rec_len={57, None},
+    def __init__(self, fid="4f03", sfid=0x03, name='EF.5GS3GPPNSC', rec_len=(57, None),
                  desc='5GS 3GPP Access NAS Security Context', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._tlv = EF_5GS3GPPNSC.FiveGSNasSecurityContext
@@ -597,7 +597,7 @@ class EF_ECC(LinFixedEF):
 
     def __init__(self, fid='6fb7', sfid=0x01, name='EF.ECC',
                  desc='Emergency Call Codes'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len={4, 20})
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(4, 20))
 
     def _decode_record_bin(self, in_bin):
         # mandatory parts
@@ -661,7 +661,7 @@ class EF_PSLOCI(TransparentEF):
 
 # TS 31.102 Section 4.2.33
 class EF_ICI(CyclicEF):
-    def __init__(self, fid='6f80', sfid=0x14, name='EF.ICI', rec_len={28, 48},
+    def __init__(self, fid='6f80', sfid=0x14, name='EF.ICI', rec_len=(28, 48),
                  desc='Incoming Call Information', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct('alpha_id'/HexAdapter(Bytes(this._.total_len-28)),
@@ -677,7 +677,7 @@ class EF_ICI(CyclicEF):
 
 # TS 31.102 Section 4.2.34
 class EF_OCI(CyclicEF):
-    def __init__(self, fid='6f81', sfid=0x15, name='EF.OCI', rec_len={27, 47},
+    def __init__(self, fid='6f81', sfid=0x15, name='EF.OCI', rec_len=(27, 47),
                  desc='Outgoing Call Information', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct('alpha_id'/HexAdapter(Bytes(this._.total_len-27)),
@@ -692,7 +692,7 @@ class EF_OCI(CyclicEF):
 
 # TS 31.102 Section 4.2.35
 class EF_ICT(CyclicEF):
-    def __init__(self, fid='6f82', sfid=None, name='EF.ICT', rec_len={3, 3},
+    def __init__(self, fid='6f82', sfid=None, name='EF.ICT', rec_len=(3, 3),
                  desc='Incoming Call Timer', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct('accumulated_call_timer'/Int24ub)
@@ -700,7 +700,7 @@ class EF_ICT(CyclicEF):
 # TS 31.102 Section 4.2.38
 class EF_CCP2(LinFixedEF):
     def __init__(self, fid='6f4f', sfid=0x16, name='EF.CCP2', desc='Capability Configuration Parameters 2', **kwargs):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={15, None}, **kwargs)
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(15, None), **kwargs)
 
 # TS 31.102 Section 4.2.47
 class EF_EST(EF_UServiceTable):
@@ -769,7 +769,7 @@ class EF_GBABP(TransparentEF):
 # TS 31.102 Section 4.2.80
 class EF_MSK(LinFixedEF):
     def __init__(self, fid='6fd7', sfid=None, name='EF.MSK', desc='MBMS Service Key List', **kwargs):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={20, None}, **kwargs)
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(20, None), **kwargs)
         msk_ts_constr = Struct('msk_id'/Int32ub, 'timestamp_counter'/Int32ub)
         self._construct = Struct('key_domain_id'/HexAdapter(Bytes(3)),
                                  'num_msk_id'/Int8ub,
@@ -792,7 +792,7 @@ class EF_MUK(LinFixedEF):
         pass
 
     def __init__(self, fid='6fd8', sfid=None, name='EF.MUK', desc='MBMS User Key', **kwargs):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={None, None}, **kwargs)
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(None, None), **kwargs)
         self._tlv = EF_MUK.EF_MUK_Collection
 
 # TS 31.102 Section 4.2.83
@@ -807,7 +807,7 @@ class EF_GBANL(LinFixedEF):
         pass
 
     def __init__(self, fid='6fda', sfid=None, name='EF.GBANL', desc='GBA NAF List', **kwargs):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={None, None}, **kwargs)
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(None, None), **kwargs)
         self._tlv = EF_GBANL.EF_GBANL_Collection
 
 # TS 31.102 Section 4.2.85
@@ -822,7 +822,7 @@ class EF_EHPLMNPI(TransparentEF):
 class EF_NAFKCA(LinFixedEF):
     class NAF_KeyCentreAddress(BER_TLV_IE, tag=0x80):
         _construct = HexAdapter(GreedyBytes)
-    def __init__(self, fid='6fdd', sfid=None, name='EF.NAFKCA', rec_len={None, None},
+    def __init__(self, fid='6fdd', sfid=None, name='EF.NAFKCA', rec_len=(None, None),
                  desc='NAF Key Centre Address', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._tlv = EF_NAFKCA.NAF_KeyCentreAddress
@@ -853,7 +853,7 @@ class EF_NCP_IP(LinFixedEF):
     class EF_NCP_IP_Collection(TLV_IE_Collection,
                                nested=[AccessPointName, Login, Password, BearerDescription]):
         pass
-    def __init__(self, fid='6fe2', sfid=None, name='EF.NCP-IP', rec_len={None, None},
+    def __init__(self, fid='6fe2', sfid=None, name='EF.NCP-IP', rec_len=(None, None),
                  desc='Network Connectivity Parameters for USIM IP connections', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._tlv = EF_NCP_IP.EF_NCP_IP_Collection
@@ -890,7 +890,7 @@ class EF_EPSNSC(LinFixedEF):
                                    nested=[KSI_ASME, K_ASME, UplinkNASCount, DownlinkNASCount,
                                            IDofNASAlgorithms]):
         pass
-    def __init__(self, fid='6fe4', sfid=0x18, name='EF.EPSNSC', rec_len={54, 128},
+    def __init__(self, fid='6fe4', sfid=0x18, name='EF.EPSNSC', rec_len=(54, 128),
                  desc='EPS NAS Security Context', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._tlv = EF_EPSNSC.EPS_NAS_Security_Context
@@ -905,7 +905,7 @@ class EF_PWS(TransparentEF):
 
 # TS 31.102 Section 4.2.101
 class EF_IPS(CyclicEF):
-    def __init__(self, fid='6ff1', sfid=None, name='EF.IPS', rec_len={4, 4},
+    def __init__(self, fid='6ff1', sfid=None, name='EF.IPS', rec_len=(4, 4),
                  desc='IMEI(SV) Pairing Status', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct('status'/PaddedString(2, 'ascii'),
@@ -975,7 +975,7 @@ class EF_UAC_AIC(TransparentEF):
 # TS 31.102 Section 4.4.11.9
 class EF_OPL5G(LinFixedEF):
     def __init__(self, fid='6f08', sfid=0x08, name='EF.OPL5G', desc='5GS Operator PLMN List', **kwargs):
-        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len={10, None}, **kwargs)
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(10, None), **kwargs)
         Tai = Struct('mcc_mnc'/BcdAdapter(Bytes(3)), 'tac_min'/HexAdapter(Bytes(3)),
                      'tac_max'/HexAdapter(Bytes(3)))
         self._construct = Struct('tai'/Tai, 'pnn_record_id'/Int8ub)
@@ -1131,7 +1131,7 @@ class ADF_USIM(CardADF):
             EF_ACMmax(service=13),
             EF_UST(),
             CyclicEF('6f39', None, 'EF.ACM',
-                     'Accumulated call meter', rec_len={3, 3}, service=13),
+                     'Accumulated call meter', rec_len=(3, 3), service=13),
             TransparentEF('6f3e', None, 'EF.GID1', 'Group Identifier Level 1', service=17),
             TransparentEF('6f3f', None, 'EF.GID2', 'Group Identifier Level 2', service=18),
             EF_SPN(service=19),

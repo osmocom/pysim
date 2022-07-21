@@ -85,7 +85,7 @@ class EF_MILENAGE_CFG(TransparentEF):
 
 class EF_0348_KEY(LinFixedEF):
     def __init__(self, fid='6f22', name='EF.0348_KEY', desc='TS 03.48 OTA Keys'):
-        super().__init__(fid, name=name, desc=desc, rec_len={27, 35})
+        super().__init__(fid, name=name, desc=desc, rec_len=(27, 35))
 
     def _decode_record_bin(self, raw_bin_data):
         u = unpack('!BBB', raw_bin_data[0:3])
@@ -103,7 +103,7 @@ class EF_0348_KEY(LinFixedEF):
 
 class EF_0348_COUNT(LinFixedEF):
     def __init__(self, fid='6f23', name='EF.0348_COUNT', desc='TS 03.48 OTA Counters'):
-        super().__init__(fid, name=name, desc=desc, rec_len={7, 7})
+        super().__init__(fid, name=name, desc=desc, rec_len=(7, 7))
 
     def _decode_record_bin(self, raw_bin_data):
         u = unpack('!BB5s', raw_bin_data)
@@ -118,7 +118,7 @@ class EF_SIM_AUTH_COUNTER(TransparentEF):
 
 class EF_GP_COUNT(LinFixedEF):
     def __init__(self, fid='6f26', name='EF.GP_COUNT', desc='GP SCP02 Counters'):
-        super().__init__(fid, name=name, desc=desc, rec_len={5, 5})
+        super().__init__(fid, name=name, desc=desc, rec_len=(5, 5))
 
     def _decode_record_bin(self, raw_bin_data):
         u = unpack('!BBHB', raw_bin_data)
@@ -127,7 +127,7 @@ class EF_GP_COUNT(LinFixedEF):
 
 class EF_GP_DIV_DATA(LinFixedEF):
     def __init__(self, fid='6f27', name='EF.GP_DIV_DATA', desc='GP SCP02 key diversification data'):
-        super().__init__(fid, name=name, desc=desc, rec_len={12, 12})
+        super().__init__(fid, name=name, desc=desc, rec_len=(12, 12))
 
     def _decode_record_bin(self, raw_bin_data):
         u = unpack('!BB8s', raw_bin_data)
@@ -241,7 +241,7 @@ class EF_GBA_REC_LIST(TransparentEF):
 class EF_GBA_INT_KEY(LinFixedEF):
     def __init__(self, fid='af33', name='EF.GBA_INT_KEY'):
         super().__init__(fid, name=name,
-                         desc='Secret key for GBA key derivation', rec_len={32, 32})
+                         desc='Secret key for GBA key derivation', rec_len=(32, 32))
         self._construct = GreedyBytes
 
 

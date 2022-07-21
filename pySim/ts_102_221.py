@@ -588,7 +588,7 @@ class EF_DIR(LinFixedEF):
         pass
 
     def __init__(self, fid='2f00', sfid=0x1e, name='EF.DIR', desc='Application Directory'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len={5, 54})
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(5, 54))
         self._tlv = EF_DIR.ApplicationTemplate
 
 # TS 102 221 Section 13.2

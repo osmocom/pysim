@@ -913,7 +913,7 @@ class LinFixedEF(CardEF):
                         self._cmd.poutput_json(data)
 
     def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None,
-                 parent: Optional[CardDF] = None, rec_len={1, None}, **kwargs):
+                 parent: Optional[CardDF] = None, rec_len: Size = (1, None), **kwargs):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -921,7 +921,7 @@ class LinFixedEF(CardEF):
             name : Brief name of the file, lik EF_ICCID
             desc : Description of the file
             parent : Parent CardFile object within filesystem hierarchy
-            rec_len : set of {minimum_length, recommended_length}
+            rec_len : Tuple of (minimum_length, recommended_length)
         """
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, **kwargs)
         self.rec_len = rec_len
@@ -1044,7 +1044,7 @@ class CyclicEF(LinFixedEF):
     # we don't really have any special support for those; just recycling LinFixedEF here
 
     def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None, parent: CardDF = None,
-                 rec_len={1, None}, **kwargs):
+                 rec_len: Size = (1, None), **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, rec_len=rec_len, **kwargs)
 
 
