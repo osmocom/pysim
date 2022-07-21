@@ -860,8 +860,8 @@ class EF_NCP_IP(LinFixedEF):
 
 # TS 31.102 Section 4.2.91
 class EF_EPSLOCI(TransparentEF):
-    def __init__(self, fid='6fe3', sfid=0x1e, name='EF.EPSLOCI', size=(18, 18),
-                 desc='EPS Location Information', **kwargs):
+    def __init__(self, fid='6fe3', sfid=0x1e, name='EF.EPSLOCI',
+                 desc='EPS Location Information', size=(18,18), **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         upd_status_constr = Enum(
             Byte, updated=0, not_updated=1, roaming_not_allowed=2)
