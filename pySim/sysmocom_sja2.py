@@ -137,7 +137,7 @@ class EF_GP_DIV_DATA(LinFixedEF):
 class EF_SIM_AUTH_KEY(TransparentEF):
     def __init__(self, fid='6f20', name='EF.SIM_AUTH_KEY'):
         super().__init__(fid, name=name, desc='USIM authentication key')
-        CfgByte = BitStruct(Bit[2],
+        CfgByte = BitStruct(Padding(2),
                             'use_sres_deriv_func_2'/Bit,
                             'use_opc_instead_of_op'/Bit,
                             'algorithm'/Enum(Nibble, milenage=4, comp128v1=1, comp128v2=2, comp128v3=3))
@@ -192,7 +192,7 @@ class EF_USIM_SQN(TransparentEF):
 class EF_USIM_AUTH_KEY(TransparentEF):
     def __init__(self, fid='af20', name='EF.USIM_AUTH_KEY'):
         super().__init__(fid, name=name, desc='USIM authentication key')
-        CfgByte = BitStruct(Bit, 'only_4bytes_res_in_3g'/Bit,
+        CfgByte = BitStruct(Padding(1), 'only_4bytes_res_in_3g'/Bit,
                             'use_sres_deriv_func_2_in_3g'/Bit,
                             'use_opc_instead_of_op'/Bit,
                             'algorithm'/Enum(Nibble, milenage=4, sha1_aka=5, xor=15))
@@ -210,7 +210,7 @@ class EF_USIM_AUTH_KEY(TransparentEF):
 class EF_USIM_AUTH_KEY_2G(TransparentEF):
     def __init__(self, fid='af22', name='EF.USIM_AUTH_KEY_2G'):
         super().__init__(fid, name=name, desc='USIM authentication key in 2G context')
-        CfgByte = BitStruct(Bit, 'only_4bytes_res_in_3g'/Bit,
+        CfgByte = BitStruct(Padding(1), 'only_4bytes_res_in_3g'/Bit,
                             'use_sres_deriv_func_2_in_3g'/Bit,
                             'use_opc_instead_of_op'/Bit,
                             'algorithm'/Enum(Nibble, milenage=4, comp128v1=1, comp128v2=2, comp128v3=3))
