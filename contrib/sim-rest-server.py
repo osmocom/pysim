@@ -2,7 +2,7 @@
 
 # RESTful HTTP service for performing authentication against USIM cards
 #
-# (C) 2021 by Harald Welte <laforge@osmocom.org>
+# (C) 2021-2022 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,11 +51,15 @@ def connect_to_card(slot_nr:int):
     return tp, scc, card
 
 class ApiError:
-    def __init__(self, msg:str):
+    def __init__(self, msg:str, sw=None):
         self.msg = msg
+        self.sw = sw
 
     def __str__(self):
-        return json.dumps({'error': {'message':self.msg}})
+        d = {'error': {'message':self.msg}}
+        if self.sw:
+            d['error']['status_word'] = self.sw
+        return json.dumps(d)
 
 
 def set_headers(request):
@@ -80,13 +84,19 @@ class SimRestServer:
     def protocol_error(self, request, failure):
         set_headers(request)
         request.setResponseCode(500)
-        return str(ApiError("Protocol Error"))
+        return str(ApiError("Protocol Error: %s" % failure.value))
 
     @app.handle_errors(SwMatchError)
     def sw_match_error(self, request, failure):
         set_headers(request)
         request.setResponseCode(500)
-        return str(ApiError("Card Communication Error %s" % failure))
+        sw = failure.value.sw_actual
+        if sw == '9862':
+            return str(ApiError("Card Authentication Error - Incorrect MAC", sw))
+        elif sw == '6982':
+            return str(ApiError("Security Status not satisfied - Card PIN enabled?", sw))
+        else:
+            return str(ApiError("Card Communication Error %s" % failure.value), sw)
 
 
     @app.route('/sim-auth-api/v1/slot/<int:slot>')
