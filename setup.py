@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='pySim',
-    version='1.0',
+    version='1.1',
     packages=['pySim', 'pySim.transport'],
     url='https://osmocom.org/projects/pysim/wiki',
     license='GPLv2',
