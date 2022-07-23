@@ -447,6 +447,11 @@ class PysimApp(cmd2.Cmd):
         """Echo (print) a string on the console"""
         self.poutput(opts.string)
 
+    @cmd2.with_category(CUSTOM_CATEGORY)
+    def do_version(self, opts):
+        """Print the pySim software version."""
+        import pkg_resources
+        self.poutput(pkg_resources.get_distribution('pySim'))
 
 @with_default_category('pySim Commands')
 class PySimCommands(CommandSet):
