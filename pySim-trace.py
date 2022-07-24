@@ -33,10 +33,11 @@ logger = colorlog.getLogger()
 
 # merge all of the command sets into one global set. This will override instructions,
 # the one from the 'last' set in the addition below will prevail.
+from pySim.apdu.ts_51_011 import ApduCommands as SimApduCommands
 from pySim.apdu.ts_102_221 import ApduCommands as UiccApduCommands
 from pySim.apdu.ts_31_102 import ApduCommands as UsimApduCommands
 from pySim.apdu.global_platform import ApduCommands as GpApduCommands
-ApduCommands = UiccApduCommands + UsimApduCommands #+ GpApduCommands
+ApduCommands = SimApduCommands + UiccApduCommands + UsimApduCommands #+ GpApduCommands
 
 
 class DummySimLink(LinkBase):
