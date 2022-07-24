@@ -541,8 +541,10 @@ class CardEF(CardFile):
         """
         # global selectable names + those of the parent DF
         sels = super().get_selectables(flags)
-        sels.update(
-            {x.name: x for x in self.parent.children.values() if x != self})
+        if flags == [] or 'FIDS' in flags:
+            sels.update({x.fid: x for x in self.parent.children.values() if x.fid and x != self})
+        if flags == [] or 'FNAMES' in flags:
+            sels.update({x.name: x for x in self.parent.children.values() if x.name and x != self})
         return sels
 
 
