@@ -63,9 +63,10 @@ class UiccSelect(ApduCommand, n='SELECT', ins=0xA4, cla=['0X', '4X', '6X']):
                         lchan.selected_adf = sels['ADF.USIM']
                     lchan.selected_file = lchan.selected_adf
                     #print("\tSELECT CUR_ADF %s" % lchan.selected_file)
+                    # iterate to next element in path
                     continue
                 else:
-                    sels = lchan.selected_file.get_selectables(['FIDS'])
+                    sels = lchan.selected_file.get_selectables(['FIDS','MF'])
                     if file_hex in sels:
                         if self.successful:
                             #print("\tSELECT %s" % sels[file_hex])
@@ -73,12 +74,13 @@ class UiccSelect(ApduCommand, n='SELECT', ins=0xA4, cla=['0X', '4X', '6X']):
                         else:
                             #print("\tSELECT %s FAILED" % sels[file_hex])
                             pass
+                        # iterate to next element in path
                         continue
                 logger.warning('SELECT UNKNOWN FID %s (%s)' % (file_hex, '/'.join([b2h(x) for x in path])))
         elif mode == 'df_ef_or_mf_by_file_id':
             if len(self.cmd_data) != 2:
                 raise ValueError('Expecting a 2-byte FID')
-            sels = lchan.selected_file.get_selectables(['FIDS'])
+            sels = lchan.selected_file.get_selectables(['FIDS','MF'])
             file_hex = b2h(self.cmd_data)
             if file_hex in sels:
                 if self.successful:
