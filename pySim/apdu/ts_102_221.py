@@ -95,7 +95,9 @@ class UiccSelect(ApduCommand, n='SELECT', ins=0xA4, cla=['0X', '4X', '6X']):
         # decode the SELECT response
         if self.successful:
             self.file = lchan.selected_file
-            return lchan.selected_file.decode_select_response(self.rsp_dict['body'])
+            if 'body' in self.rsp_dict:
+                # not every SELECT is asking for the FCP in response...
+                return lchan.selected_file.decode_select_response(self.rsp_dict['body'])
         return None
 
 
