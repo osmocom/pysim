@@ -194,6 +194,21 @@ class CardFile:
             sels.update({self.name: self})
         return sels
 
+    def _get_parent_selectables(self, alias: Optional[str] = None, flags=[]) -> Dict[str, 'CardFile']:
+        sels = {}
+        if not self.parent or self.parent == self:
+            return sels
+        # add our immediate parent
+        if alias:
+            sels.update({alias: self.parent})
+        if self.parent.fid and (flags == [] or 'FIDS' in flags):
+            sels.update({self.parent.fid: self.parent})
+        if self.parent.name and (flags == [] or 'FNAMES' in flags):
+            sels.update({self.parent.name: self.parent})
+        # recurse to parents of our parent, but without any alias
+        sels.update(self.parent._get_parent_selectables(None, flags))
+        return sels
+
     def get_selectables(self, flags=[]) -> Dict[str, 'CardFile']:
         """Return a dict of {'identifier': File} that is selectable from the current file.
 
@@ -210,8 +225,7 @@ class CardFile:
             sels = self._get_self_selectables('.', flags)
         # we can always select our parent
         if flags == [] or 'PARENT' in flags:
-            if self.parent:
-                sels = self.parent._get_self_selectables('..', flags)
+            sels.update(self._get_parent_selectables('..', flags))
         # if we have a MF, we can always select its applications
         if flags == [] or 'MF' in flags:
             mf = self.get_mf()
