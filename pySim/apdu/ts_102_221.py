@@ -78,6 +78,17 @@ class UiccSelect(ApduCommand, n='SELECT', ins=0xA4, cla=['0X', '4X', '6X']):
         elif mode == 'df_ef_or_mf_by_file_id':
             if len(self.cmd_data) != 2:
                 raise ValueError('Expecting a 2-byte FID')
+            sels = lchan.selected_file.get_selectables(['FIDS'])
+            file_hex = b2h(self.cmd_data)
+            if file_hex in sels:
+                if self.successful:
+                    #print("\tSELECT %s" % sels[file_hex])
+                    lchan.selected_file = sels[file_hex]
+                else:
+                    #print("\tSELECT %s FAILED" % sels[file_hex])
+                    pass
+            else:
+                logger.warning('SELECT UNKNOWN FID %s' % (file_hex))
         elif mode == 'df_name':
             # Select by AID (can be sub-string!)
             aid = self.cmd_dict['body']
