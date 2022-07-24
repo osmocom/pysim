@@ -117,8 +117,10 @@ option_parser = argparse.ArgumentParser(prog='pySim-trace', description='Osmocom
                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 global_group = option_parser.add_argument_group('General Options')
-global_group.add_argument('--no-suppress-select', help="Don't suppress displaying SELECT APDUs")
-global_group.add_argument('--no-suppress-status', help="Don't suppress displaying STATUS APDUs")
+global_group.add_argument('--no-suppress-select', action='store_false', dest='suppress_select',
+                          help="Don't suppress displaying SELECT APDUs")
+global_group.add_argument('--no-suppress-status', action='store_false', dest='suppress_status',
+                          help="Don't suppress displaying STATUS APDUs")
 
 subparsers = option_parser.add_subparsers(help='APDU Source', dest='source', required=True)
 
@@ -153,7 +155,7 @@ if __name__ == '__main__':
     elif opts.source == 'rspro-pyshark-live':
         s = PysharkRsproLive(opts.interface)
 
-    tracer = Tracer(source=s)
+    tracer = Tracer(source=s, suppress_status=opts.suppress_status, suppress_select=opts.suppress_select)
     logger.info('Entering main loop...')
     tracer.main()
 
