@@ -145,7 +145,6 @@ parser_rspro_pyshark_live.add_argument('-i', '--interface', required=True,
 if __name__ == '__main__':
 
     opts = option_parser.parse_args()
-    pp(opts)
 
     logger.info('Opening source %s...' % opts.source)
     if opts.source == 'gsmtap-udp':
