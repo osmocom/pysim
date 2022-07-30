@@ -1264,40 +1264,40 @@ class ADF_USIM(CardADF):
         term_prof_parser.add_argument('PROFILE', help='Hexstring of encoded terminal profile')
 
         @cmd2.with_argparser(term_prof_parser)
-        def do_terminal_profile(self, arg):
+        def do_terminal_profile(self, opts):
             """Send a TERMINAL PROFILE command to the card.
             This is used to inform the card about which optional
             features the terminal (modem/phone) supports, particularly
             in the context of SIM Toolkit, Proactive SIM and OTA.  You
             must specify a hex-string with the encoded terminal profile
             you want to send to the card."""
-            (data, sw) = self._cmd.card._scc.terminal_profile(arg)
+            (data, sw) = self._cmd.card._scc.terminal_profile(opts.PROFILE)
             self._cmd.poutput('SW: %s, data: %s' % (sw, data))
 
         envelope_parser = argparse.ArgumentParser()
         envelope_parser.add_argument('PAYLOAD', help='Hexstring of encoded payload to ENVELOPE')
 
         @cmd2.with_argparser(envelope_parser)
-        def do_envelope(self, arg):
+        def do_envelope(self, opts):
             """Send an ENVELOPE command to the card.  This is how a
             variety of information is communicated from the terminal
             (modem/phone) to the card, particularly in the context of
             SIM Toolkit, Proactive SIM and OTA."""
-            (data, sw) = self._cmd.card._scc.envelope(arg)
+            (data, sw) = self._cmd.card._scc.envelope(opts.PAYLOAD)
             self._cmd.poutput('SW: %s, data: %s' % (sw, data))
 
         envelope_sms_parser = argparse.ArgumentParser()
         envelope_sms_parser.add_argument('TPDU', help='Hexstring of encoded SMS TPDU')
 
         @cmd2.with_argparser(envelope_sms_parser)
-        def do_envelope_sms(self, arg):
+        def do_envelope_sms(self, opts):
             """Send an ENVELOPE(SMS-PP-Download) command to the card.
             This emulates a terminal (modem/phone) having received a SMS
             with a PID of 'SMS for the SIM card'.  You can use this
             command in the context of testing OTA related features
             without a modem/phone or a cellular netwokr."""
             tpdu_ie = SMS_TPDU()
-            tpdu_ie.from_bytes(h2b(arg))
+            tpdu_ie.from_bytes(h2b(opts.TPDU))
             dev_ids = DeviceIdentities(
                 decoded={'source_dev_id': 'network', 'dest_dev_id': 'uicc'})
             sms_dl = SMSPPDownload(children=[dev_ids, tpdu_ie])
