@@ -39,6 +39,7 @@ from pySim.tlv import *
 from pySim.filesystem import *
 from pySim.ts_31_102_telecom import DF_PHONEBOOK, EF_UServiceTable
 from pySim.construct import *
+from pySim.cat import SMS_TPDU, DeviceIdentities, SMSPPDownload
 from construct import Optional as COptional
 from construct import *
 from typing import Tuple
