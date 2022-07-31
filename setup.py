@@ -18,7 +18,8 @@ setup(
         "bidict",
         "gsm0338",
         "termcolor",
-        "colorlog"
+        "colorlog",
+        "pycryptodome"
     ],
     scripts=[
         'pySim-prog.py',
