@@ -26,6 +26,7 @@ pip install bidict
 pip install gsm0338
 pip install termcolor
 pip install colorlog
+pip install pycryptodome
 
 # Execute automatically discovered unit tests first
 python -m unittest discover -v -s tests/
