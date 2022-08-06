@@ -2,7 +2,7 @@
 
 # Interactive shell for working with SIM / UICC / USIM / ISIM cards
 #
-# (C) 2021 by Harald Welte <laforge@osmocom.org>
+# (C) 2021-2022 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,12 +32,14 @@ import sys
 from pathlib import Path
 from io import StringIO
 
+from pprint import pprint as pp
+
 from pySim.exceptions import *
 from pySim.commands import SimCardCommands
-from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args
+from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args, ProactiveHandler
 from pySim.cards import card_detect, SimCard
 from pySim.utils import h2b, swap_nibbles, rpad, b2h, JsonEncoder, bertlv_parse_one, sw_match
-from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str
+from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, Hexstr
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
 from pySim.filesystem import RuntimeState, CardDF, CardADF, CardModel
@@ -49,6 +51,7 @@ from pySim.ts_31_103 import CardApplicationISIM
 from pySim.ara_m import CardApplicationARAM
 from pySim.global_platform import CardApplicationISD
 from pySim.gsm_r import DF_EIRENE
+from pySim.cat import ProactiveCommand
 
 # we need to import this module so that the SysmocomSJA2 sub-class of
 # CardModel is created, which will add the ATR-based matching and
@@ -902,6 +905,13 @@ class Iso7816Commands(CommandSet):
         self._cmd.poutput(
             'Negotiated Duration: %u secs, Token: %s, SW: %s' % (duration, token, sw))
 
+class Proact(ProactiveHandler):
+    def receive_fetch(self, pcmd: ProactiveCommand):
+        # print its parsed representation
+        print(pcmd.decoded)
+        # TODO: implement the basics, such as SMS Sending, ...
+
+
 
 option_parser = argparse.ArgumentParser(prog='pySim-shell', description='interactive SIM card shell',
                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -942,7 +952,7 @@ if __name__ == '__main__':
         card_key_provider_register(CardKeyProviderCsv(csv_default))
 
     # Init card reader driver
-    sl = init_reader(opts)
+    sl = init_reader(opts, proactive_handler = Proact())
     if sl is None:
         exit(1)
 
