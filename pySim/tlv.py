@@ -236,7 +236,7 @@ class TLV_IE(IE):
             return {}, b''
         (rawtag, remainder) = self.__class__._parse_tag_raw(do)
         if rawtag:
-            if rawtag != self.tag:
+            if rawtag != self._compute_tag():
                 raise ValueError("%s: Encountered tag %s doesn't match our supported tag %s" %
                                  (self, rawtag, self.tag))
             (length, remainder) = self.__class__._parse_len(remainder)
