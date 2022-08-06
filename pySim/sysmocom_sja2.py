@@ -158,6 +158,28 @@ class EF_SIM_AUTH_KEY(TransparentEF):
                                  'key'/HexAdapter(Bytes(16)),
                                  'op_opc' /HexAdapter(Bytes(16)))
 
+class EF_HTTPS_CFG(TransparentEF):
+    def __init__(self, fid='6f2a', name='EF.HTTPS_CFG'):
+        super().__init__(fid, name=name, desc='HTTPS configuration')
+
+class EF_HTTPS_KEYS(TransparentEF):
+    KeyRecord = Struct('security_domain'/Int8ub,
+                       'key_type'/Enum(Int8ub, des=0x80, psk=0x85, aes=0x88),
+                       'key_version'/Int8ub,
+                       'key_id'/Int8ub,
+                       'key_length'/Int8ub,
+                       'key'/HexAdapter(Bytes(this.key_length)))
+    def __init__(self, fid='6f2b', name='EF.HTTPS_KEYS'):
+        super().__init__(fid, name=name, desc='HTTPS PSK and DEK keys')
+        self._construct = GreedyRange(self.KeyRecord)
+
+class EF_HTTPS_POLL(TransparentEF):
+    TimeUnit = Enum(Int8ub, seconds=0, minutes=1, hours=2, days=3, ten_days=4)
+    def __init__(self, fid='6f2c', name='EF.HTTPS_POLL'):
+        super().__init__(fid, name=name, desc='HTTPS polling interval')
+        self._construct = Struct(Const(b'\x82'), 'time_unit'/self.TimeUnit, 'value'/Int8ub,
+                                 'adm_session_triggering_tlv'/HexAdapter(GreedyBytes))
+
 
 class DF_SYSTEM(CardDF):
     def __init__(self):
@@ -176,6 +198,9 @@ class DF_SYSTEM(CardDF):
             EF_0348_COUNT(),
             EF_GP_COUNT(),
             EF_GP_DIV_DATA(),
+            EF_HTTPS_CFG(),
+            EF_HTTPS_KEYS(),
+            EF_HTTPS_POLL(),
         ]
         self.add_files(files)
 
