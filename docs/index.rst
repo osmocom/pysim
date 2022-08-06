@@ -41,6 +41,7 @@ pySim consists of several parts:
    shell
    trace
    legacy
+   smpp2sim
    library
    osmo-smdpp
    sim-rest
