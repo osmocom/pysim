@@ -9,11 +9,12 @@ from typing import Optional, Tuple
 
 from pySim.exceptions import *
 from pySim.construct import filter_dict
-from pySim.utils import sw_match, b2h, h2b, i2h
+from pySim.utils import sw_match, b2h, h2b, i2h, Hexstr
+from pySim.cat import ProactiveCommand
 
 #
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
-# Copyright (C) 2021 Harald Welte <laforge@osmocom.org>
+# Copyright (C) 2021-2022 Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,13 +38,36 @@ class ApduTracer:
     def trace_response(self, cmd, sw, resp):
         pass
 
+class ProactiveHandler(abc.ABC):
+    """Abstract base class representing the interface of some code that handles
+    the proactive commands, as returned by the card in responses to the FETCH
+    command."""
+    def receive_fetch_raw(self, payload: Hexstr):
+        # parse the proactive command
+        pcmd = ProactiveCommand()
+        parsed = pcmd.from_tlv(h2b(payload))
+        # try to find a generic handler like handle_SendShortMessage
+        handle_name = 'handle_%s' % type(parsed).__name__
+        if hasattr(self, handle_name):
+            handler = getattr(self, handle_name)
+            return handler(pcmd.decoded)
+        # fall back to common handler
+        return self.receive_fetch(pcmd)
+
+    def receive_fetch(self, pcmd: ProactiveCommand):
+        """Default handler for not otherwise handled proactive commands."""
+        raise NotImplementedError('No handler method for %s' % pcmd.decoded)
+
+
 
 class LinkBase(abc.ABC):
     """Base class for link/transport to card."""
 
-    def __init__(self, sw_interpreter=None, apdu_tracer=None):
+    def __init__(self, sw_interpreter=None, apdu_tracer=None,
+                 proactive_handler: Optional[ProactiveHandler]=None):
         self.sw_interpreter = sw_interpreter
         self.apdu_tracer = apdu_tracer
+        self.proactive_handler = proactive_handler
 
     @abc.abstractmethod
     def _send_apdu_raw(self, pdu: str) -> Tuple[str, str]:
@@ -137,10 +161,12 @@ class LinkBase(abc.ABC):
         """
         rv = self.send_apdu(pdu)
 
-        if sw == '9000' and sw_match(rv[1], '91xx'):
+        while sw == '9000' and sw_match(rv[1], '91xx'):
             # proactive sim as per TS 102 221 Setion 7.4.2
             rv = self.send_apdu_checksw('80120000' + rv[1][2:], sw)
-            print("FETCH: %s", rv[0])
+            print("FETCH: %s" % rv[0])
+            if self.proactive_handler:
+                self.proactive_handler.receive_fetch_raw(rv[0])
         if not sw_match(rv[1], sw):
             raise SwMatchError(rv[1], sw.lower(), self.sw_interpreter)
         return rv
