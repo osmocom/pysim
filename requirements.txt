@@ -11,3 +11,4 @@ termcolor
 colorlog
 pycryptodomex
 packaging
+git+https://github.com/hologram-io/smpp.pdu

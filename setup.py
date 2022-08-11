@@ -22,6 +22,7 @@ setup(
         "colorlog",
         "pycryptodomex",
         "packaging",
+        "smpp.pdu @ git+https://github.com/hologram-io/smpp.pdu",
     ],
     scripts=[
         'pySim-prog.py',
