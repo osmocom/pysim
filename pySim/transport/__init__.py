@@ -160,13 +160,18 @@ class LinkBase(abc.ABC):
                         sw   : string (in hex) of status word (ex. "9000")
         """
         rv = self.send_apdu(pdu)
+        last_sw = rv[1]
 
-        while sw == '9000' and sw_match(rv[1], '91xx'):
+        while sw == '9000' and sw_match(last_sw, '91xx'):
+            # It *was* successful after all -- the extra pieces FETCH handled
+            # need not concern the caller.
+            rv = (rv[0], '9000')
             # proactive sim as per TS 102 221 Setion 7.4.2
-            rv = self.send_apdu_checksw('80120000' + rv[1][2:], sw)
-            print("FETCH: %s" % rv[0])
+            fetch_rv = self.send_apdu_checksw('80120000' + last_sw[2:], sw)
+            last_sw = fetch_rv[1]
+            print("FETCH: %s" % fetch_rv[0])
             if self.proactive_handler:
-                self.proactive_handler.receive_fetch_raw(rv[0])
+                self.proactive_handler.receive_fetch_raw(fetch_rv[0])
         if not sw_match(rv[1], sw):
             raise SwMatchError(rv[1], sw.lower(), self.sw_interpreter)
         return rv
