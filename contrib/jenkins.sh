@@ -27,6 +27,8 @@ pip install gsm0338
 pip install termcolor
 pip install colorlog
 pip install pycryptodome
+# we need this direct git install, as pypi only lists the python2.7 only release 0.3 from 2013 :(
+pip install git+https://github.com/hologram-io/smpp.pdu
 
 # Execute automatically discovered unit tests first
 python -m unittest discover -v -s tests/

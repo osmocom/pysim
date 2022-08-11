@@ -189,7 +189,7 @@ class PysimApp(cmd2.Cmd):
             self.register_command_set(Iso7816Commands())
             self.register_command_set(Ts102222Commands())
             self.register_command_set(PySimCommands())
-            self.iccid, sw = self.card.read_iccid()
+            #self.iccid, sw = self.card.read_iccid()
             self.lchan.select('MF', self)
             rc = True
         else:

@@ -19,7 +19,8 @@ setup(
         "gsm0338",
         "termcolor",
         "colorlog",
-        "pycryptodome"
+        "pycryptodome",
+        "smpp.pdu @ git+https://github.com/hologram-io/smpp.pdu",
     ],
     scripts=[
         'pySim-prog.py',
