@@ -36,8 +36,8 @@ class UserDataHeader:
     def __init__(self, ies=[]):
         self.ies = ies
 
-    def __str__(self) -> str:
-        return 'UDH(%s)' % self.ies
+    def __repr__(self) -> str:
+        return 'UDH(%r)' % self.ies
 
     def has_ie(self, iei:int) -> bool:
         for ie in self.ies:
