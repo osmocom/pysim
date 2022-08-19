@@ -23,6 +23,7 @@ from bidict import bidict
 import zlib
 import abc
 import struct
+from typing import Optional
 
 # ETS TS 102 225 gives the general command structure and the dialects for CAT_TP, TCP/IP and HTTPS
 # 3GPP TS 31.115 gives the dialects for SMS-PP, SMS-CB, USSD and HTTP
@@ -158,7 +159,12 @@ class OtaDialect(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def decode_resp(self, otak: OtaKeyset, apdu: bytes) -> bytes:
+    def decode_resp(self, otak: OtaKeyset, apdu: bytes) -> (object, Optional["CompactRemoteResp"]):
+        """Decode a response into a response packet and, if indicted (by a
+        response status of `"por_ok"`) a decoded response.
+
+        The response packet's common characteristics are not fully determined,
+        and (so far) completely proprietary per dialect."""
         pass
 
 
@@ -401,7 +407,7 @@ class OtaDialectSms(OtaDialect):
 
         return envelope_data
 
-    def decode_resp(self, otak: OtaKeyset, spi: dict, data: bytes) -> bytes:
+    def decode_resp(self, otak: OtaKeyset, spi: dict, data: bytes) -> ("OtaDialectSms.SmsResponsePacket", Optional["CompactRemoteResp"]):
         if isinstance(data, str):
             data = h2b(data)
         # plain-text POR:   027100000e0ab000110000000000000001612f
@@ -448,7 +454,8 @@ class OtaDialectSms(OtaDialect):
             raise OtaCheckError('Unknown por_rc_cc_ds: %s' % spi['por_rc_cc_ds'])
 
         # TODO: ExpandedRemoteResponse according to TS 102 226 5.2.2
-        dec = CompactRemoteResp.parse(res['secured_data'])
-        dec['tar'] = res['tar']
-        dec['response_status'] = res['response_status']
-        return dec
+        if res.response_status == 'por_ok':
+            dec = CompactRemoteResp.parse(res['secured_data'])
+        else:
+            dec = None
+        return (res, dec)
