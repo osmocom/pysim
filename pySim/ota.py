@@ -344,7 +344,9 @@ class OtaDialectSms(OtaDialect):
         if spi['ciphering']: # ciphering is requested
             # append padding bytes to end up with blocksize
             len_cipher = 6 + len_sig + len(apdu)
-            apdu += otak.crypt._get_padding(len_cipher, otak.crypt.blocksize)
+            padding = otak.crypt._get_padding(len_cipher, otak.crypt.blocksize)
+            pad_cnt = len(padding)
+            apdu += padding
 
         kic = {'key': otak.kic_idx, 'algo': otak.algo_crypt}
         kid = {'key': otak.kid_idx, 'algo': otak.algo_auth}
