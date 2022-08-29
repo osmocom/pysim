@@ -47,9 +47,14 @@ Please install the following dependencies:
  - colorlog
 
 Example for Debian:
-```
-apt-get install python3-pyscard python3-serial python3-pip python3-yaml python3-termcolor python3-colorlog
-pip3 install -r requirements.txt
+```sh
+sudo apt-get install --no-install-recommends \
+	pcscd libpcsclite-dev \
+	python3 \
+	python3-setuptools \
+	python3-pyscard \
+	python3-pip
+pip3 install --user -r requirements.txt
 ```
 
 After installing all dependencies, the pySim applications ``pySim-read.py``, ``pySim-prog.py`` and ``pySim-shell.py`` may be started directly from the cloned repository.
