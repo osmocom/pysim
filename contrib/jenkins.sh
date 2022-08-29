@@ -15,15 +15,7 @@ fi
 
 virtualenv -p python3 venv --system-site-packages
 . venv/bin/activate
-pip install pytlv
-pip install 'pyyaml>=5.1'
-pip install cmd2==1.5
-pip install jsonpath-ng
-pip install construct
-pip install bidict
-pip install gsm0338
-pip install termcolor
-pip install colorlog
+pip install -r requirements.txt
 
 # Execute automatically discovered unit tests first
 python -m unittest discover -v -s tests/
