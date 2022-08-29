@@ -35,7 +35,7 @@ Installation
 Please install the following dependencies:
 
  - pyscard
- - serial
+ - pyserial
  - pytlv
  - cmd2 >= 1.3.0 but < 2.0.0
  - jsonpath-ng
