@@ -14,7 +14,7 @@ setup(
         "pytlv",
         "cmd2 >= 1.3.0, < 2.0.0",
         "jsonpath-ng",
-        "construct >= 2.9",
+        "construct >= 2.9.51",
         "bidict",
         "gsm0338",
         "termcolor",
