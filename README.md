@@ -23,10 +23,10 @@ Git Repository
 
 You can clone from the official Osmocom  git repository using
 ```
-git clone git://git.osmocom.org/pysim.git
+git clone https://gitea.osmocom.org/sim-card/pysim.git
 ```
 
-There is a cgit interface at <https://git.osmocom.org/pysim>
+There is a web interface at <https://gitea.osmocom.org/sim-card/pysim>.
 
 
 Installation
