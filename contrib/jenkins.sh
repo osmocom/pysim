@@ -1,12 +1,10 @@
-#!/bin/sh
+#!/bin/sh -xe
 # jenkins build helper script for pysim.  This is how we build on jenkins.osmocom.org
 #
 # environment variables:
 # * WITH_MANUALS: build manual PDFs if set to "1"
 # * PUBLISH: upload manuals after building if set to "1" (ignored without WITH_MANUALS = "1")
 #
-
-set -e
 
 if [ ! -d "./pysim-testdata/" ] ; then
 	echo "###############################################"
