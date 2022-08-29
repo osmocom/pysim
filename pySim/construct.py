@@ -2,7 +2,7 @@ from construct.lib.containers import Container, ListContainer
 from construct.core import EnumIntegerString
 import typing
 from construct import *
-from construct.core import evaluate, bytes2integer, integer2bytes, BitwisableString
+from construct.core import evaluate, BitwisableString
 from construct.lib import integertypes
 from pySim.utils import b2h, h2b, swap_nibbles
 import gsm0338
@@ -219,7 +219,7 @@ class GreedyInteger(Construct):
         if evaluate(self.swapped, context):
             data = swapbytes(data)
         try:
-            return bytes2integer(data, self.signed)
+            return int.from_bytes(data, byteorder='big', signed=self.signed)
         except ValueError as e:
             raise IntegerError(str(e), path=path)
 
@@ -248,7 +248,7 @@ class GreedyInteger(Construct):
             raise IntegerError(f"value {obj} is not an integer", path=path)
         length = self.__bytes_required(obj, self.minlen)
         try:
-            data = integer2bytes(obj, length, self.signed)
+            data = obj.to_bytes(length, byteorder='big', signed=self.signed)
         except ValueError as e:
             raise IntegerError(str(e), path=path)
         if evaluate(self.swapped, context):
