@@ -37,7 +37,7 @@ python -m unittest discover -v -s tests/
 #   pySim/utils.py:276: E0401: Unable to import 'Crypto.Cipher' (import-error)
 #   pySim/utils.py:277: E0401: Unable to import 'Crypto.Util.strxor' (import-error)
 pip install pylint==2.14.5 # FIXME: 2.15 is crashing, see OS#5668
-python -m pylint --errors-only \
+python -m pylint -j0 --errors-only \
 	--disable E1102 \
 	--disable E0401 \
 	--enable W0301 \
