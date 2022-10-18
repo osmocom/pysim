@@ -6,6 +6,8 @@
 # * PUBLISH: upload manuals after building if set to "1" (ignored without WITH_MANUALS = "1")
 #
 
+export PYTHONUNBUFFERED=1
+
 if [ ! -d "./pysim-testdata/" ] ; then
 	echo "###############################################"
 	echo "Please call from pySim-prog top directory"
