@@ -4,6 +4,7 @@
 # environment variables:
 # * WITH_MANUALS: build manual PDFs if set to "1"
 # * PUBLISH: upload manuals after building if set to "1" (ignored without WITH_MANUALS = "1")
+# * JOB_TYPE: one of 'test', 'pylint', 'docs'
 #
 
 export PYTHONUNBUFFERED=1
@@ -15,36 +16,43 @@ if [ ! -d "./pysim-testdata/" ] ; then
 	exit 1
 fi
 
-virtualenv -p python3 venv --system-site-packages
-. venv/bin/activate
-pip install -r requirements.txt
+case "$JOB_TYPE" in
+"test")
+	virtualenv -p python3 venv --system-site-packages
+	. venv/bin/activate
 
-# Execute automatically discovered unit tests first
-python -m unittest discover -v -s tests/
+	pip install -r requirements.txt
 
-# Run pylint to find potential errors
-# Ignore E1102: not-callable
-#   pySim/filesystem.py: E1102: method is not callable (not-callable)
-# Ignore E0401: import-error
-#   pySim/utils.py:276: E0401: Unable to import 'Crypto.Cipher' (import-error)
-#   pySim/utils.py:277: E0401: Unable to import 'Crypto.Util.strxor' (import-error)
-pip install pylint
-python -m pylint -j0 --errors-only \
-	--disable E1102 \
-	--disable E0401 \
-	--enable W0301 \
-	pySim *.py
+	# Execute automatically discovered unit tests first
+	python -m unittest discover -v -s tests/
 
-# attempt to build documentation
-pip install sphinx
-pip install sphinxcontrib-napoleon
-pip3 install -e 'git+https://github.com/osmocom/sphinx-argparse@master#egg=sphinx-argparse'
-(cd docs && make html latexpdf)
+	# Run the test with physical cards
+	cd pysim-testdata
+	../tests/pysim-test.sh
+	;;
+"pylint")
+	# Run pylint to find potential errors
+	# Ignore E1102: not-callable
+	#   pySim/filesystem.py: E1102: method is not callable (not-callable)
+	# Ignore E0401: import-error
+	#   pySim/utils.py:276: E0401: Unable to import 'Crypto.Cipher' (import-error)
+	#   pySim/utils.py:277: E0401: Unable to import 'Crypto.Util.strxor' (import-error)
+	python3 -m pylint -j0 --errors-only \
+		--disable E1102 \
+		--disable E0401 \
+		--enable W0301 \
+		pySim *.py
+	;;
+"docs")
+	rm -rf docs/_build
+	make -C "docs" html latexpdf
 
-if [ "$WITH_MANUALS" = "1" ] && [ "$PUBLISH" = "1" ]; then
-	make -C "docs" publish publish-html
-fi
-
-# run the test with physical cards
-cd pysim-testdata
-../tests/pysim-test.sh
+	if [ "$WITH_MANUALS" = "1" ] && [ "$PUBLISH" = "1" ]; then
+		make -C "docs" publish publish-html
+	fi
+	;;
+*)
+	set +x
+	echo "ERROR: JOB_TYPE has unexpected value '$JOB_TYPE'."
+	exit 1
+esac
