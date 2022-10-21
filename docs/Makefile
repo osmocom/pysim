@@ -9,7 +9,7 @@ SOURCEDIR     = .
 BUILDDIR      = _build
 
 # for osmo-gsm-manuals
-OSMO_GSM_MANUALS_DIR=$(shell pkg-config osmo-gsm-manuals --variable=osmogsmmanualsdir 2>/dev/null)
+OSMO_GSM_MANUALS_DIR ?= $(shell pkg-config osmo-gsm-manuals --variable=osmogsmmanualsdir 2>/dev/null)
 OSMO_REPOSITORY = "pysim"
 UPLOAD_FILES = $(BUILDDIR)/latex/osmopysim-usermanual.pdf
 CLEAN_FILES = $(UPLOAD_FILES)
