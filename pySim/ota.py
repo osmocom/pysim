@@ -154,7 +154,7 @@ from Crypto.Cipher import DES, DES3, AES
 from Crypto.Hash import CMAC
 
 class OtaAlgo(abc.ABC):
-    iv = b'\x00\x00\x00\x00\x00\x00\x00\x00'
+    iv = property(lambda self: bytes([0] * self.blocksize))
     blocksize = None
     enum_name = None
 
