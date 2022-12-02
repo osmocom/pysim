@@ -18,6 +18,7 @@ from pySim.transport import LinkBase
 
 from pySim.apdu_source.gsmtap import GsmtapApduSource
 from pySim.apdu_source.pyshark_rspro import PysharkRsproPcap, PysharkRsproLive
+from pySim.apdu_source.pyshark_gsmtap import PysharkGsmtapPcap
 
 from pySim.apdu.ts_102_221 import UiccSelect, UiccStatus
 
@@ -130,6 +131,11 @@ parser_gsmtap.add_argument('-i', '--bind-ip', default='127.0.0.1',
 parser_gsmtap.add_argument('-p', '--bind-port', default=4729,
                            help='Local UDP port')
 
+parser_gsmtap_pyshark_pcap = subparsers.add_parser('gsmtap-pyshark-pcap', help="""
+    PCAP file containing GSMTAP (SIM APDU) communication; processed via pyshark.""")
+parser_gsmtap_pyshark_pcap.add_argument('-f', '--pcap-file', required=True,
+                                       help='Name of the PCAP[ng] file to be read')
+
 parser_rspro_pyshark_pcap = subparsers.add_parser('rspro-pyshark-pcap', help="""
     PCAP file containing RSPRO (osmo-remsim) communication; processed via pyshark.
     REQUIRES OSMOCOM PATCHED WIRESHARK!""")
@@ -153,6 +159,8 @@ if __name__ == '__main__':
         s = PysharkRsproPcap(opts.pcap_file)
     elif opts.source == 'rspro-pyshark-live':
         s = PysharkRsproLive(opts.interface)
+    elif opts.source == 'gsmtap-pyshark-pcap':
+        s = PysharkGsmtapPcap(opts.pcap_file)
 
     tracer = Tracer(source=s, suppress_status=opts.suppress_status, suppress_select=opts.suppress_select)
     logger.info('Entering main loop...')
