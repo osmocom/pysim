@@ -143,12 +143,7 @@ class EF_SIM_AUTH_KEY(TransparentEF):
                             'algorithm'/Enum(Nibble, milenage=4, comp128v1=1, comp128v2=2, comp128v3=3))
         self._construct = Struct('cfg'/CfgByte,
                                  'key'/HexAdapter(Bytes(16)),
-                                 'op'/ If(this.cfg.algorithm == 'milenage' and not this.cfg.use_opc_instead_of_op,
-                                     HexAdapter(Bytes(16))),
-                                 'opc' /
-                                 If(this.cfg.algorithm == 'milenage' and this.cfg.use_opc_instead_of_op,
-                                     HexAdapter(Bytes(16)))
-                                 )
+                                 'op_opc' /HexAdapter(Bytes(16)))
 
 
 class DF_SYSTEM(CardDF):
@@ -198,13 +193,7 @@ class EF_USIM_AUTH_KEY(TransparentEF):
                             'algorithm'/Enum(Nibble, milenage=4, sha1_aka=5, xor=15))
         self._construct = Struct('cfg'/CfgByte,
                                  'key'/HexAdapter(Bytes(16)),
-                                 'op' /
-                                 If(this.cfg.algorithm == 'milenage' and not this.cfg.use_opc_instead_of_op,
-                                     HexAdapter(Bytes(16))),
-                                 'opc' /
-                                 If(this.cfg.algorithm == 'milenage' and this.cfg.use_opc_instead_of_op,
-                                     HexAdapter(Bytes(16)))
-                                 )
+                                 'op_opc' /HexAdapter(Bytes(16)))
 
 
 class EF_USIM_AUTH_KEY_2G(TransparentEF):
@@ -216,13 +205,7 @@ class EF_USIM_AUTH_KEY_2G(TransparentEF):
                             'algorithm'/Enum(Nibble, milenage=4, comp128v1=1, comp128v2=2, comp128v3=3))
         self._construct = Struct('cfg'/CfgByte,
                                  'key'/HexAdapter(Bytes(16)),
-                                 'op' /
-                                 If(this.cfg.algorithm == 'milenage' and not this.cfg.use_opc_instead_of_op,
-                                     HexAdapter(Bytes(16))),
-                                 'opc' /
-                                 If(this.cfg.algorithm == 'milenage' and this.cfg.use_opc_instead_of_op,
-                                     HexAdapter(Bytes(16)))
-                                 )
+                                 'op_opc' /HexAdapter(Bytes(16)))
 
 
 class EF_GBA_SK(TransparentEF):
