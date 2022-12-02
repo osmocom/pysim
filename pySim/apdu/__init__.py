@@ -135,7 +135,12 @@ class Apdu(Tpdu):
         if callable(method):
             return method()
         # default case: only 9000 is success
-        return self.sw == b'\x90\x00'
+        if self.sw == b'\x90\x00':
+            return True
+        # This is not really a generic positive APDU SW but specific to UICC/SIM
+        if self.sw[0] == 0x91:
+            return True
+        return False
 
 
 class ApduCommand(Apdu, metaclass=ApduCommandMeta):
