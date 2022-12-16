@@ -669,7 +669,7 @@ def write_params_hlr(opts, params):
         conn.close()
 
 
-def write_parameters(opts, params):
+def write_parameters_to_csv_and_hlr(opts, params):
     write_params_csv(opts, params)
     write_params_hlr(opts, params)
 
@@ -764,8 +764,8 @@ def process_card(opts, first, ch):
     else:
         print("Dry Run: NOT PROGRAMMING!")
 
-    # Write parameters permanently
-    write_parameters(opts, cp)
+    # Write parameters to a specified CSV file or an HLR database (not the card)
+    write_parameters_to_csv_and_hlr(opts, cp)
 
     # Batch mode state update and save
     if opts.num is not None:
