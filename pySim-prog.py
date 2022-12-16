@@ -718,22 +718,21 @@ def save_batch(opts):
 
 def process_card(opts, first, ch):
 
+    # Connect transport
+    ch.get(first)
+
+    # Get card
+    card = card_detect(opts.type, scc)
+    if card is None:
+        print("No card detected!")
+        return -1
+
+    # Probe only
+    if opts.probe:
+        return 0
+
+    # Erase if requested (not in dry run mode!)
     if opts.dry_run is False:
-        # Connect transport
-        ch.get(first)
-
-    if opts.dry_run is False:
-        # Get card
-        card = card_detect(opts.type, scc)
-        if card is None:
-            print("No card detected!")
-            return -1
-
-        # Probe only
-        if opts.probe:
-            return 0
-
-        # Erase if requested
         if opts.erase:
             print("Formatting ...")
             card.erase()
@@ -746,15 +745,9 @@ def process_card(opts, first, ch):
         imsi = None
         iccid = None
         if opts.read_iccid:
-            if opts.dry_run:
-                # Connect transport
-                ch.get(False)
             (res, _) = scc.read_binary(['3f00', '2fe2'], length=10)
             iccid = dec_iccid(res)
         elif opts.read_imsi:
-            if opts.dry_run:
-                # Connect transport
-                ch.get(False)
             (res, _) = scc.read_binary(EF['IMSI'])
             imsi = swap_nibbles(res)[3:]
         else:
