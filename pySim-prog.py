@@ -32,6 +32,7 @@ import re
 import sys
 import traceback
 import json
+import csv
 
 from pySim.commands import SimCardCommands
 from pySim.transport import init_reader
@@ -524,37 +525,59 @@ def write_params_csv(opts, params):
         f.close()
 
 
-def _read_params_csv(opts, iccid=None, imsi=None):
-    import csv
-    f = open(opts.read_csv, 'r')
+def find_row_in_csv_file(csv_file_name:str, num=None, iccid=None, imsi=None):
+    """
+    Pick a matching row in a CSV file by row number or ICCID or IMSI. When num
+    is not None, the search parameters iccid and imsi are ignored. When
+    searching for a specific ICCID or IMSI the caller must set num to None. It
+    is possible to search for an ICCID or an IMSI at the same time. The first
+    line that either contains a matching ICCID or IMSI is returned. Unused
+    search parameters must be set to None.
+    """
+
+    f = open(csv_file_name, 'r')
     cr = csv.DictReader(f)
+
+    # Make sure the CSV file contains at least the fields we are searching for
+    if not 'iccid' in cr.fieldnames:
+        raise Exception("wrong CSV file format - no field \"iccid\" or missing header!")
+    if not 'imsi' in cr.fieldnames:
+        raise Exception("wrong CSV file format - no field \"imsi\" or missing header!")
+
+    # Enforce at least one search parameter
+    if not num and not iccid and not imsi:
+        raise Exception("no CSV file search parameters!")
 
     # Lower-case fieldnames
     cr.fieldnames = [field.lower() for field in cr.fieldnames]
 
     i = 0
-    if not 'iccid' in cr.fieldnames:
-        raise Exception("CSV file in wrong format!")
     for row in cr:
-        if opts.num is not None and opts.read_iccid is False and opts.read_imsi is False:
+        # Pick a specific row by line number (num)
+        if num is not None and iccid is None and imsi is None:
             if opts.num == i:
                 f.close()
                 return row
-            i += 1
+
+	# Pick the first row that contains the specified ICCID
         if row['iccid'] == iccid:
             f.close()
             return row
 
+	# Pick the first row that contains the specified IMSI
         if row['imsi'] == imsi:
             f.close()
             return row
 
+        i += 1
+
     f.close()
+    print("Could not read card parameters from CSV file, no matching entry found.")
     return None
 
 
 def read_params_csv(opts, imsi=None, iccid=None):
-    row = _read_params_csv(opts, iccid=iccid, imsi=imsi)
+    row = find_row_in_csv_file(opts.read_csv, opts.num, iccid=iccid, imsi=imsi)
     if row is not None:
         row['mcc'] = row.get('mcc', mcc_from_imsi(row.get('imsi')))
         row['mnc'] = row.get('mnc', mnc_from_imsi(row.get('imsi')))
@@ -713,7 +736,6 @@ def process_card(opts, first, ch):
             imsi = opts.imsi
         cp = read_params_csv(opts, imsi=imsi, iccid=iccid)
     if cp is None:
-        print("Error reading parameters from CSV file!\n")
         return 2
     print_parameters(cp)
 
