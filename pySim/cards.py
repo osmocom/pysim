@@ -205,11 +205,12 @@ class SimCard:
 
         # perform updates
         if mnc and abstract_data['extensions']:
+            # Note: Since we derive the length of the MNC by the string length
+            # of the mnc parameter, the caller must ensure that mnc has the
+            # correct length and is padded with zeros (if necessary).
             mnclen = len(str(mnc))
-            if mnclen == 1:
-                mnclen = 2
-            if mnclen > 3:
-                raise RuntimeError('invalid length of mnc "{}"'.format(mnc))
+            if mnclen > 3 or mnclen < 2:
+                raise RuntimeError('invalid length of mnc "{}", expecting 2 or 3 digits'.format(mnc))
             abstract_data['extensions']['mnc_len'] = mnclen
         if opmode:
             opmode_num = int(opmode, 16)
