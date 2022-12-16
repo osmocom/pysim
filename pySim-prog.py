@@ -114,8 +114,8 @@ def parse_options():
                       )
     parser.add_option("--mnclen", dest="mnclen", type="choice",
                       help="Length of Mobile Network Code [default: %default]",
-                      default=2,
-                      choices=[2, 3],
+                      default="auto",
+                      choices=["2", "3", "auto"],
                       )
     parser.add_option("-m", "--smsc", dest="smsc",
                       help="SMSC number (Start with + for international no.) [default: '00 + country code + 5555']",
@@ -319,8 +319,15 @@ def gen_parameters(opts):
 
     # MCC always has 3 digits
     mcc = lpad(mcc, 3, "0")
-    # MNC must be at least 2 digits
-    mnc = lpad(mnc, 2, "0")
+
+    # The MNC must be at least 2 digits long. This is also the most common case.
+    # The user may specify an explicit length using the --mnclen option.
+    if opts.mnclen != "auto":
+        if len(mnc) > int(opts.mnclen):
+            raise ValueError('mcc is longer than specified in option --mnclen')
+        mnc = lpad(mnc, int(opts.mnclen), "0")
+    else:
+        mnc = lpad(mnc, 2, "0")
 
     # Digitize country code (2 or 3 digits)
     cc_digits = _cc_digits(opts.country)
@@ -580,7 +587,25 @@ def read_params_csv(opts, imsi=None, iccid=None):
     row = find_row_in_csv_file(opts.read_csv, opts.num, iccid=iccid, imsi=imsi)
     if row is not None:
         row['mcc'] = row.get('mcc', mcc_from_imsi(row.get('imsi')))
-        row['mnc'] = row.get('mnc', mnc_from_imsi(row.get('imsi')))
+
+        # We cannot determine the MNC length (2 or 3 digits?) from the IMSI
+        # alone. In cases where the user has specified an mnclen via the
+        # commandline options we can use that info, otherwise we guess that
+        # the length is 2, which is also the most common case.
+        if opts.mnclen != "auto":
+            if opts.mnclen is "2":
+                row['mnc'] = row.get('mnc', mnc_from_imsi(row.get('imsi'), False))
+            elif opts.mnclen is "3":
+                row['mnc'] = row.get('mnc', mnc_from_imsi(row.get('imsi'), True))
+            else:
+                raise ValueError("invalid parameter --mnclen, must be 2 or 3 or auto")
+        else:
+            row['mnc'] = row.get('mnc', mnc_from_imsi(row.get('imsi'), False))
+
+	# NOTE: We might concider to specify a new CSV field "mnclen" in our
+	# CSV files for a better automatization. However, this only makes sense
+	# when the tools and databases we export our files from will also add
+	# such a field.
 
         pin_adm = None
         # We need to escape the pin_adm we get from the csv
