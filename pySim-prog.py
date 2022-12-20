@@ -584,6 +584,12 @@ def find_row_in_csv_file(csv_file_name:str, num=None, iccid=None, imsi=None):
 
 
 def read_params_csv(opts, imsi=None, iccid=None):
+    """
+    Read the card parameters from a CSV file. This function will generate the
+    same dictionary that gen_parameters would generate from parameters passed as
+    commandline arguments.
+    """
+
     row = find_row_in_csv_file(opts.read_csv, opts.num, iccid=iccid, imsi=imsi)
     if row is not None:
         row['mcc'] = row.get('mcc', mcc_from_imsi(row.get('imsi')))
