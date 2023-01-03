@@ -1331,13 +1331,13 @@ class WavemobileSim(UsimCard):
             print(
                 "Warning: Programming of the ICCID is not implemented for this type of card.")
 
-        # KI (Presumably a propritary file)
+        # KI (Presumably a proprietary file)
         # TODO: Add programming of KI
         if p.get('ki'):
             print(
                 "Warning: Programming of the KI is not implemented for this type of card.")
 
-        # OPc (Presumably a propritary file)
+        # OPc (Presumably a proprietary file)
         # TODO: Add programming of OPc
         if p.get('opc'):
             print(
