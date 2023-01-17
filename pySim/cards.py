@@ -178,7 +178,7 @@ class SimCard:
         data, sw = self._scc.update_record(EF['SMSP'], 1, rpad(smsp, 84))
         return sw
 
-    def update_ad(self, mnc=None, opmode=None, ofm=None):
+    def update_ad(self, mnc=None, opmode=None, ofm=None, path=EF['AD']):
         """
         Update Administrative Data (AD)
 
@@ -191,6 +191,7 @@ class SimCard:
                 mnc (str): MNC of IMSI
                 opmode (Hex-str, 1 Byte): MS Operation Mode
                 ofm (Hex-str, 1 Byte): Operational Feature Monitor (OFM) aka Ciphering Indicator
+                path (optional list with file path e.g. ['3f00', '7f20', '6fad'])
 
         Returns:
                 str: Return code of write operation
@@ -200,7 +201,7 @@ class SimCard:
 
         # read from card
         raw_hex_data, sw = self._scc.read_binary(
-            EF['AD'], length=None, offset=0)
+            path, length=None, offset=0)
         abstract_data = ad.decode_hex(raw_hex_data)
 
         # perform updates
@@ -223,7 +224,7 @@ class SimCard:
 
         # write to card
         raw_hex_data = ad.encode_hex(abstract_data)
-        data, sw = self._scc.update_binary(EF['AD'], raw_hex_data)
+        data, sw = self._scc.update_binary(path, raw_hex_data)
         return sw
 
     def read_spn(self):
@@ -1576,6 +1577,17 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 
         data, sw = self.select_adf_by_aid(adf="usim")
         if sw == '9000':
+            # EF.AD in ADF.USIM
+            if (p.get('mcc') and p.get('mnc')) or p.get('opmode'):
+                 if p.get('mcc') and p.get('mnc'):
+                     mnc = p['mnc']
+                 else:
+                     mnc = None
+            sw = self.update_ad(mnc=mnc, opmode=p.get('opmode'),
+                                path=EF_USIM_ADF_map['AD'])
+            if sw != '9000':
+                print("Programming AD failed with code %s" % sw)
+
             # update EF-USIM_AUTH_KEY in ADF.USIM
             if p.get('ki'):
                 self._scc.update_binary('af20', p['ki'], 1)
