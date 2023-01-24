@@ -240,7 +240,7 @@ class EF_Predefined(LinFixedEF):
     # header and other records have different structure. WTF !?!
     construct_first = Struct('next_table_type'/NextTableType,
                              'id_of_next_table'/HexAdapter(Bytes(2)))
-    construct_others = Struct('predefined_value1'/HexAdapter(Bytes(2)),
+    construct_others = Struct('predefined_value1'/BcdAdapter(Bytes(2)),
                               'string_table_index1'/Int8ub)
 
     def __init__(self, fid, name, desc):
