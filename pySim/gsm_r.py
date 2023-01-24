@@ -47,10 +47,10 @@ import pySim.ts_51_011
 class FuncNTypeAdapter(Adapter):
     def _decode(self, obj, context, path):
         bcd = swap_nibbles(b2h(obj))
-        last_digit = bcd[-1]
+        last_digit = int(bcd[-1], 16)
         return {'functional_number': bcd[:-1],
-                'presentation_of_only_this_fn': last_digit & 4,
-                'permanent_fn': last_digit & 8}
+                'presentation_of_only_this_fn': bool(last_digit & 4),
+                'permanent_fn': bool(last_digit & 8)}
 
     def _encode(self, obj, context, path):
         return 'FIXME'
