@@ -60,7 +60,7 @@ class EF_FN(LinFixedEF):
     """Section 7.2"""
 
     def __init__(self):
-        super().__init__(fid='6ff1', sfid=None, name='EF.EN',
+        super().__init__(fid='6ff1', sfid=None, name='EF.FN',
                          desc='Functional numbers', rec_len=(9, 9))
         self._construct = Struct('functional_number_and_type'/FuncNTypeAdapter(Bytes(8)),
                                  'list_number'/Int8ub)
