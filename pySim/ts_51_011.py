@@ -1124,6 +1124,9 @@ class CardProfileSIM(CardProfile):
 
     @staticmethod
     def decode_select_response(resp_hex: str) -> object:
+        # we try to build something that resembles a dict resulting from the TLV decoder
+        # of TS 102.221 (FcpTemplate), so that higher-level code only has to deal with one
+        # format of SELECT response
         resp_bin = h2b(resp_hex)
         struct_of_file_map = {
             0: 'transparent',
@@ -1142,21 +1145,25 @@ class CardProfileSIM(CardProfile):
             'proprietary_info': {},
         }
         ret['file_id'] = b2h(resp_bin[4:6])
-        ret['proprietary_info']['available_memory'] = int.from_bytes(
-            resp_bin[2:4], 'big')
         file_type = type_of_file_map[resp_bin[6]
                                      ] if resp_bin[6] in type_of_file_map else resp_bin[6]
         ret['file_descriptor']['file_descriptor_byte']['file_type'] = file_type
         if file_type in ['mf', 'df']:
+            ret['proprietary_info']['available_memory'] = int.from_bytes(resp_bin[2:4], 'big')
             ret['file_characteristics'] = b2h(resp_bin[13:14])
             ret['num_direct_child_df'] = resp_bin[14]
             ret['num_direct_child_ef'] = resp_bin[15]
             ret['num_chv_unblock_adm_codes'] = int(resp_bin[16])
             # CHV / UNBLOCK CHV stats
         elif file_type in ['working_ef']:
+            ret['file_size'] = int.from_bytes(resp_bin[2:4], 'big')
             file_struct = struct_of_file_map[resp_bin[13]
                                              ] if resp_bin[13] in struct_of_file_map else resp_bin[13]
             ret['file_descriptor']['file_descriptor_byte']['structure'] = file_struct
+            if file_struct != 'transparent':
+                record_len = resp_bin[14]
+                ret['file_descriptor']['record_len'] = record_len
+                ret['file_descriptor']['num_of_rec'] = ret['file_size'] // record_len
             ret['access_conditions'] = b2h(resp_bin[8:10])
             if resp_bin[11] & 0x01 == 0:
                 ret['life_cycle_status_int'] = 'operational_activated'
