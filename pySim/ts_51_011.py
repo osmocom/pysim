@@ -714,8 +714,8 @@ class EF_VGCSS(TransparentEF):
     def __init__(self, fid='6fb2', sfid=None, name='EF.VGCSS', size=(7, 7),
                  desc='Voice Group Call Service Status', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
-        self._construct = BitStruct(
-            'flags'/Bit[50], Padding(6, pattern=b'\xff'))
+        self._construct = BitsSwapped(BitStruct(
+            'flags'/Bit[50], Padding(6, pattern=b'\xff')))
 
 # TS 51.011 Section 10.3.24
 class EF_eMLPP(TransparentEF):
