@@ -87,7 +87,7 @@ class EF_0348_KEY(LinFixedEF):
     def __init__(self, fid='6f22', name='EF.0348_KEY', desc='TS 03.48 OTA Keys'):
         super().__init__(fid, name=name, desc=desc, rec_len=(27, 35))
 
-    def _decode_record_bin(self, raw_bin_data):
+    def _decode_record_bin(self, raw_bin_data, **kwargs):
         u = unpack('!BBB', raw_bin_data[0:3])
         key_algo = (u[2] >> 6) & 1
         key_length = ((u[2] >> 3) & 3) * 8
@@ -105,7 +105,7 @@ class EF_0348_COUNT(LinFixedEF):
     def __init__(self, fid='6f23', name='EF.0348_COUNT', desc='TS 03.48 OTA Counters'):
         super().__init__(fid, name=name, desc=desc, rec_len=(7, 7))
 
-    def _decode_record_bin(self, raw_bin_data):
+    def _decode_record_bin(self, raw_bin_data, **kwargs):
         u = unpack('!BB5s', raw_bin_data)
         return {'sec_domain': u[0], 'key_set_version': u[1], 'counter': u[2]}
 
@@ -120,7 +120,7 @@ class EF_GP_COUNT(LinFixedEF):
     def __init__(self, fid='6f26', name='EF.GP_COUNT', desc='GP SCP02 Counters'):
         super().__init__(fid, name=name, desc=desc, rec_len=(5, 5))
 
-    def _decode_record_bin(self, raw_bin_data):
+    def _decode_record_bin(self, raw_bin_data, **kwargs):
         u = unpack('!BBHB', raw_bin_data)
         return {'sec_domain': u[0], 'key_set_version': u[1], 'counter': u[2], 'rfu': u[3]}
 
@@ -129,7 +129,7 @@ class EF_GP_DIV_DATA(LinFixedEF):
     def __init__(self, fid='6f27', name='EF.GP_DIV_DATA', desc='GP SCP02 key diversification data'):
         super().__init__(fid, name=name, desc=desc, rec_len=(12, 12))
 
-    def _decode_record_bin(self, raw_bin_data):
+    def _decode_record_bin(self, raw_bin_data, **kwargs):
         u = unpack('!BB8s', raw_bin_data)
         return {'sec_domain': u[0], 'key_set_version': u[1], 'key_div_data': u[2].hex()}
 

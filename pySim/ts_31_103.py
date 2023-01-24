@@ -142,11 +142,11 @@ class EF_PCSCF(LinFixedEF):
     def __init__(self, fid='6f09', sfid=None, name='EF.P-CSCF', desc='P-CSCF Address', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
 
-    def _decode_record_hex(self, raw_hex):
+    def _decode_record_hex(self, raw_hex, **kwargs):
         addr, addr_type = dec_addr_tlv(raw_hex)
         return {"addr": addr, "addr_type": addr_type}
 
-    def _encode_record_hex(self, json_in):
+    def _encode_record_hex(self, json_in, **kwargs):
         addr = json_in['addr']
         addr_type = json_in['addr_type']
         return enc_addr_tlv(addr, addr_type)

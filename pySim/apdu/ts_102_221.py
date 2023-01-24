@@ -201,7 +201,7 @@ class ReadRecord(ApduCommand, n='READ RECORD', ins=0xB2, cla=['0X', '4X', '6X'])
             return b2h(self.rsp_data)
         method = getattr(self.file, 'decode_record_bin', None)
         if self.successful and callable(method):
-            return method(self.rsp_data)
+            return method(self.rsp_data, self.cmd_dict['record_number'])
 
 # TS 102 221 Section 11.1.6
 class UpdateRecord(ApduCommand, n='UPDATE RECORD', ins=0xDC, cla=['0X', '4X', '6X']):
@@ -217,7 +217,7 @@ class UpdateRecord(ApduCommand, n='UPDATE RECORD', ins=0xDC, cla=['0X', '4X', '6
             return b2h(self.cmd_data)
         method = getattr(self.file, 'decode_record_bin', None)
         if self.successful and callable(method):
-            return method(self.cmd_data)
+            return method(self.cmd_data, self.cmd_dict['record_number'])
 
 # TS 102 221 Section 11.1.7
 class SearchRecord(ApduCommand, n='SEARCH RECORD', ins=0xA2, cla=['0X', '4X', '6X']):

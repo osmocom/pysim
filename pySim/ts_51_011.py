@@ -356,7 +356,7 @@ class EF_SMS(LinFixedEF):
     def __init__(self, fid='6f3c', sfid=None, name='EF.SMS', desc='Short messages', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(176, 176), **kwargs)
 
-    def _decode_record_bin(self, raw_bin_data):
+    def _decode_record_bin(self, raw_bin_data, **kwargs):
         def decode_status(status):
             if status & 0x01 == 0x00:
                 return (None, 'free_space')
@@ -387,10 +387,10 @@ class EF_MSISDN(LinFixedEF):
     def __init__(self, fid='6f40', sfid=None, name='EF.MSISDN', desc='MSISDN', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(15, 34), **kwargs)
 
-    def _decode_record_hex(self, raw_hex_data):
+    def _decode_record_hex(self, raw_hex_data, **kwargs):
         return {'msisdn': dec_msisdn(raw_hex_data)}
 
-    def _encode_record_hex(self, abstract):
+    def _encode_record_hex(self, abstract, **kwargs):
         msisdn = abstract['msisdn']
         if type(msisdn) == str:
             encoded_msisdn = enc_msisdn(msisdn)
@@ -516,10 +516,10 @@ class EF_LP(TransRecEF):
                  desc='Language Preference'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len)
 
-    def _decode_record_bin(self, in_bin):
+    def _decode_record_bin(self, in_bin, **kwargs):
         return b2h(in_bin)
 
-    def _encode_record_bin(self, in_json):
+    def _encode_record_bin(self, in_json, **kwargs):
         return h2b(in_json)
 
 # TS 51.011 Section 10.3.2
@@ -566,13 +566,13 @@ class EF_PLMNsel(TransRecEF):
                  size=(24, None), rec_len=3, **kwargs):
         super().__init__(fid, name=name, sfid=sfid, desc=desc, size=size, rec_len=rec_len, **kwargs)
 
-    def _decode_record_hex(self, in_hex):
+    def _decode_record_hex(self, in_hex, **kwargs):
         if in_hex[:6] == "ffffff":
             return None
         else:
             return dec_plmn(in_hex)
 
-    def _encode_record_hex(self, in_json):
+    def _encode_record_hex(self, in_json, **kwargs):
         if in_json == None:
             return "ffffff"
         else:
@@ -772,7 +772,7 @@ class EF_CNL(TransRecEF):
                  desc='Co-operative Network List', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
 
-    def _decode_record_hex(self, in_hex):
+    def _decode_record_hex(self, in_hex, **kwargs):
         (in_plmn, sub, svp, corp) = unpack('!3sBBB', h2b(in_hex))
         res = dec_plmn(b2h(in_plmn))
         res['network_subset'] = sub
@@ -780,7 +780,7 @@ class EF_CNL(TransRecEF):
         res['corporate_id'] = corp
         return res
 
-    def _encode_record_hex(self, in_json):
+    def _encode_record_hex(self, in_json, **kwargs):
         plmn = enc_plmn(in_json['mcc'], in_json['mnc'])
         return b2h(pack('!3sBBB',
                         h2b(plmn),
@@ -815,13 +815,13 @@ class EF_xPLMNwAcT(TransRecEF):
     def __init__(self, fid, sfid=None, name=None, desc=None, size=(40, None), rec_len=5, **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
 
-    def _decode_record_hex(self, in_hex):
+    def _decode_record_hex(self, in_hex, **kwargs):
         if in_hex[:6] == "ffffff":
             return None
         else:
             return dec_xplmn_w_act(in_hex)
 
-    def _encode_record_hex(self, in_json):
+    def _encode_record_hex(self, in_json, **kwargs):
         if in_json == None:
             return "ffffff0000"
         else:

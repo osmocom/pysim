@@ -945,7 +945,7 @@ class LinFixedEF(CardEF):
         self._construct = None
         self._tlv = None
 
-    def decode_record_hex(self, raw_hex_data: str) -> dict:
+    def decode_record_hex(self, raw_hex_data: str, record_nr: int) -> dict:
         """Decode raw (hex string) data into abstract representation.
 
         A derived class would typically provide a _decode_record_bin() or _decode_record_hex()
@@ -954,16 +954,17 @@ class LinFixedEF(CardEF):
 
         Args:
             raw_hex_data : hex-encoded data
+            record_nr : record number (1 for first record, ...)
         Returns:
             abstract_data; dict representing the decoded data
         """
         method = getattr(self, '_decode_record_hex', None)
         if callable(method):
-            return method(raw_hex_data)
+            return method(raw_hex_data, record_nr=record_nr)
         raw_bin_data = h2b(raw_hex_data)
         method = getattr(self, '_decode_record_bin', None)
         if callable(method):
-            return method(raw_bin_data)
+            return method(raw_bin_data, record_nr=record_nr)
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
         elif self._tlv:
@@ -972,7 +973,7 @@ class LinFixedEF(CardEF):
             return t.to_dict()
         return {'raw': raw_bin_data.hex()}
 
-    def decode_record_bin(self, raw_bin_data: bytearray) -> dict:
+    def decode_record_bin(self, raw_bin_data: bytearray, record_nr: int) -> dict:
         """Decode raw (binary) data into abstract representation.
 
         A derived class would typically provide a _decode_record_bin() or _decode_record_hex()
@@ -981,16 +982,17 @@ class LinFixedEF(CardEF):
 
         Args:
             raw_bin_data : binary encoded data
+            record_nr : record number (1 for first record, ...)
         Returns:
             abstract_data; dict representing the decoded data
         """
         method = getattr(self, '_decode_record_bin', None)
         if callable(method):
-            return method(raw_bin_data)
+            return method(raw_bin_data, record_nr=record_nr)
         raw_hex_data = b2h(raw_bin_data)
         method = getattr(self, '_decode_record_hex', None)
         if callable(method):
-            return method(raw_hex_data)
+            return method(raw_hex_data, record_nr=record_nr)
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
         elif self._tlv:
@@ -999,7 +1001,7 @@ class LinFixedEF(CardEF):
             return t.to_dict()
         return {'raw': raw_hex_data}
 
-    def encode_record_hex(self, abstract_data: dict) -> str:
+    def encode_record_hex(self, abstract_data: dict, record_nr: int) -> str:
         """Encode abstract representation into raw (hex string) data.
 
         A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
@@ -1008,15 +1010,16 @@ class LinFixedEF(CardEF):
 
         Args:
             abstract_data : dict representing the decoded data
+            record_nr : record number (1 for first record, ...)
         Returns:
             hex string encoded data
         """
         method = getattr(self, '_encode_record_hex', None)
         if callable(method):
-            return method(abstract_data)
+            return method(abstract_data, record_nr=record_nr)
         method = getattr(self, '_encode_record_bin', None)
         if callable(method):
-            raw_bin_data = method(abstract_data)
+            raw_bin_data = method(abstract_data, record_nr=record_nr)
             return b2h(raw_bin_data)
         if self._construct:
             return b2h(self._construct.build(abstract_data))
@@ -1027,7 +1030,7 @@ class LinFixedEF(CardEF):
         raise NotImplementedError(
             "%s encoder not yet implemented. Patches welcome." % self)
 
-    def encode_record_bin(self, abstract_data: dict) -> bytearray:
+    def encode_record_bin(self, abstract_data: dict, record_nr : int) -> bytearray:
         """Encode abstract representation into raw (binary) data.
 
         A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
@@ -1036,15 +1039,16 @@ class LinFixedEF(CardEF):
 
         Args:
             abstract_data : dict representing the decoded data
+            record_nr : record number (1 for first record, ...)
         Returns:
             binary encoded data
         """
         method = getattr(self, '_encode_record_bin', None)
         if callable(method):
-            return method(abstract_data)
+            return method(abstract_data, record_nr=record_nr)
         method = getattr(self, '_encode_record_hex', None)
         if callable(method):
-            return h2b(method(abstract_data))
+            return h2b(method(abstract_data, record_nr=record_nr))
         if self._construct:
             return self._construct.build(abstract_data)
         elif self._tlv:
@@ -1681,7 +1685,7 @@ class RuntimeLchan:
             abstract data contained in record
         """
         (data, sw) = self.read_record(rec_nr)
-        return (self.selected_file.decode_record_hex(data), sw)
+        return (self.selected_file.decode_record_hex(data, rec_nr), sw)
 
     def update_record(self, rec_nr: int, data_hex: str):
         """Update a record with given binary data
@@ -1702,7 +1706,7 @@ class RuntimeLchan:
             rec_nr : Record number to read
             data_hex : Abstract data to be written
         """
-        data_hex = self.selected_file.encode_record_hex(data)
+        data_hex = self.selected_file.encode_record_hex(data, rec_nr)
         return self.update_record(rec_nr, data_hex)
 
     def retrieve_data(self, tag: int = 0):

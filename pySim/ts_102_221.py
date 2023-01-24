@@ -608,13 +608,13 @@ class EF_PL(TransRecEF):
         super().__init__(fid, sfid=sfid, name=name,
                          desc=desc, rec_len=2, size=(2, None))
 
-    def _decode_record_bin(self, bin_data):
+    def _decode_record_bin(self, bin_data, **kwargs):
         if bin_data == b'\xff\xff':
             return None
         else:
             return bin_data.decode('ascii')
 
-    def _encode_record_bin(self, in_json):
+    def _encode_record_bin(self, in_json, **kwargs):
         if in_json is None:
             return b'\xff\xff'
         else:
@@ -665,7 +665,7 @@ class EF_ARR(LinFixedEF):
                 raise ValueError
         return by_mode
 
-    def _decode_record_bin(self, raw_bin_data):
+    def _decode_record_bin(self, raw_bin_data, **kwargs):
         # we can only guess if we should decode for EF or DF here :(
         arr_seq = DataObjectSequence('arr', sequence=[AM_DO_EF, SC_DO])
         dec = arr_seq.decode_multi(raw_bin_data)
@@ -673,7 +673,7 @@ class EF_ARR(LinFixedEF):
         # 'un-flattening' decoder, and hence would be unable to encode :(
         return dec[0]
 
-    def _encode_record_bin(self, in_json):
+    def _encode_record_bin(self, in_json, **kwargs):
         # we can only guess if we should decode for EF or DF here :(
         arr_seq = DataObjectSequence('arr', sequence=[AM_DO_EF, SC_DO])
         return arr_seq.encode_multi(in_json)
