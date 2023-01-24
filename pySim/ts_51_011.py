@@ -490,7 +490,8 @@ class DF_TELECOM(CardDF):
             EF_MSISDN(),
             EF_SMSP(),
             EF_SMSS(),
-            # LND, SDN
+            # LND
+            EF_ADN('6f49', None, 'EF.SDN', 'Service Dialling Numbers'),
             EF_EXT('6f4a', None, 'EF.EXT1', 'Extension1 (ADN/SSC)'),
             EF_EXT('6f4b', None, 'EF.EXT2', 'Extension2 (FDN/SSC)'),
             EF_EXT('6f4c', None, 'EF.EXT3', 'Extension3 (SDN)'),
