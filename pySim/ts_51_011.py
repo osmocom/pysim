@@ -358,14 +358,15 @@ class ExtendedBcdAdapter(Adapter):
 
 # TS 51.011 Section 10.5.1
 class EF_ADN(LinFixedEF):
-    def __init__(self, fid='6f3a', sfid=None, name='EF.ADN', desc='Abbreviated Dialing Numbers', **kwargs):
+    def __init__(self, fid='6f3a', sfid=None, name='EF.ADN', desc='Abbreviated Dialing Numbers', ext=1, **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(14, 30), **kwargs)
+        ext_name = 'ext%u_record_id' % ext
         self._construct = Struct('alpha_id'/COptional(GsmStringAdapter(Rpad(Bytes(this._.total_len-14)), codec='ascii')),
                                  'len_of_bcd'/Int8ub,
                                  'ton_npi'/TonNpi,
                                  'dialing_nr'/ExtendedBcdAdapter(BcdAdapter(Rpad(Bytes(10)))),
                                  'cap_conf_id'/Int8ub,
-                                 'ext1_record_id'/Int8ub)
+                                 ext_name/Int8ub)
 
 # TS 51.011 Section 10.5.5
 class EF_SMS(LinFixedEF):
@@ -497,7 +498,7 @@ class DF_TELECOM(CardDF):
         super().__init__(fid=fid, name=name, desc=desc, **kwargs)
         files = [
             EF_ADN(),
-            EF_ADN(fid='6f3b', name='EF.FDN', desc='Fixed dialling numbers'),
+            EF_ADN(fid='6f3b', name='EF.FDN', desc='Fixed dialling numbers', ext=2),
             EF_SMS(),
             LinFixedEF(fid='6f3d', name='EF.CCP',
                        desc='Capability Configuration Parameters', rec_len=(14, 14)),
@@ -507,7 +508,7 @@ class DF_TELECOM(CardDF):
             EF_SMSP(),
             EF_SMSS(),
             # LND
-            EF_ADN('6f49', None, 'EF.SDN', 'Service Dialling Numbers'),
+            EF_ADN('6f49', None, 'EF.SDN', 'Service Dialling Numbers', ext=3),
             EF_EXT('6f4a', None, 'EF.EXT1', 'Extension1 (ADN/SSC)'),
             EF_EXT('6f4b', None, 'EF.EXT2', 'Extension2 (FDN/SSC)'),
             EF_EXT('6f4c', None, 'EF.EXT3', 'Extension3 (SDN)'),
