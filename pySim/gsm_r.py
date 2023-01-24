@@ -237,17 +237,29 @@ class EF_Switching(LinFixedEF):
 
 class EF_Predefined(LinFixedEF):
     """Section 8.5"""
+    # header and other records have different structure. WTF !?!
+    construct_first = Struct('next_table_type'/NextTableType,
+                             'id_of_next_table'/HexAdapter(Bytes(2)))
+    construct_others = Struct('predefined_value1'/HexAdapter(Bytes(2)),
+                              'string_table_index1'/Int8ub)
 
     def __init__(self, fid, name, desc):
         super().__init__(fid=fid, sfid=None,
                          name=name, desc=desc, rec_len=(3, 3))
-        # header and other records have different structure. WTF !?!
-        self._construct = Struct('next_table_type'/NextTableType,
-                                 'id_of_next_table'/HexAdapter(Bytes(2)),
-                                 'predefined_value1'/HexAdapter(Bytes(2)),
-                                 'string_table_index1'/Int8ub)
-        # TODO: predefined value n, ...
 
+    def _decode_record_bin(self, raw_bin_data : bytes, record_nr : int) -> dict:
+        if record_nr == 1:
+            return parse_construct(self.construct_first, raw_bin_data)
+        else:
+            return parse_construct(self.construct_others, raw_bin_data)
+
+    def _encode_record_bin(self, abstract_data : dict, record_nr : int) -> bytearray:
+        r = None
+        if record_nr == 1:
+            r = self.construct_first.build(abstract_data)
+        else:
+            r = self.construct_others.build(abstract_data)
+        return filter_dict(r)
 
 class EF_DialledVals(TransparentEF):
     """Section 8.6"""
