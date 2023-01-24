@@ -340,6 +340,22 @@ EF_SST_map = {
 # DF.TELECOM
 ######################################################################
 
+
+# TS 51.011 Section 10.5.1 / Table 12
+class ExtendedBcdAdapter(Adapter):
+    """Replace some hex-characters with other ASCII characters"""
+    # we only translate a=* / b=# as they habe a clear representation
+    # in terms of USSD / SS service codes
+    def _decode(self, obj, context, path):
+        if not isinstance(obj, str):
+            return obj
+        return obj.lower().replace("a","*").replace("b","#")
+
+    def _encode(self, obj, context, path):
+        if not isinstance(obj, str):
+            return obj
+        return obj.replace("*","a").replace("#","b")
+
 # TS 51.011 Section 10.5.1
 class EF_ADN(LinFixedEF):
     def __init__(self, fid='6f3a', sfid=None, name='EF.ADN', desc='Abbreviated Dialing Numbers', **kwargs):
@@ -347,7 +363,7 @@ class EF_ADN(LinFixedEF):
         self._construct = Struct('alpha_id'/COptional(GsmStringAdapter(Rpad(Bytes(this._.total_len-14)), codec='ascii')),
                                  'len_of_bcd'/Int8ub,
                                  'ton_npi'/TonNpi,
-                                 'dialing_nr'/BcdAdapter(Rpad(Bytes(10))),
+                                 'dialing_nr'/ExtendedBcdAdapter(BcdAdapter(Rpad(Bytes(10)))),
                                  'cap_conf_id'/Int8ub,
                                  'ext1_record_id'/Int8ub)
 
