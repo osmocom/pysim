@@ -58,7 +58,11 @@ class FuncNTypeAdapter(Adapter):
 
 class EF_FN(LinFixedEF):
     """Section 7.2"""
-
+    _test_decode = [
+        ( "40315801000010ff01",
+          { "functional_number_and_type": { "functional_number": "04138510000001f",
+                "presentation_of_only_this_fn": True, "permanent_fn": True }, "list_number": 1 } ),
+    ]
     def __init__(self):
         super().__init__(fid='6ff1', sfid=None, name='EF.FN',
                          desc='Functional numbers', rec_len=(9, 9))
@@ -147,7 +151,12 @@ NextTableType = Enum(Byte, decision=0xf0, predefined=0xf1,
 
 class EF_CallconfC(TransparentEF):
     """Section 7.3"""
-
+    _test_de_encode = [
+        ( "026121ffffffffffff1e000a040a010253600795792426f0",
+          { "pl_conf": 3, "conf_nr": "1612ffffffffffff", "max_rand": 30, "n_ack_max": 10,
+            "pl_ack": 1, "n_nested_max": 10, "train_emergency_gid": 1, "shunting_emergency_gid": 2,
+           "imei": "350670599742620f" } ),
+    ]
     def __init__(self):
         super().__init__(fid='6ff2', sfid=None, name='EF.CallconfC', size=(24, 24),
                          desc='Call Configuration of emergency calls Configuration')
@@ -180,7 +189,9 @@ class EF_CallconfI(LinFixedEF):
 
 class EF_Shunting(TransparentEF):
     """Section 7.6"""
-
+    _test_de_encode = [
+        ( "03f8ffffff000000", { "common_gid": 3, "shunting_gid": "f8ffffff000000" } ),
+    ]
     def __init__(self):
         super().__init__(fid='6ff4', sfid=None,
                          name='EF.Shunting', desc='Shunting', size=(8, 8))
@@ -190,7 +201,18 @@ class EF_Shunting(TransparentEF):
 
 class EF_GsmrPLMN(LinFixedEF):
     """Section 7.7"""
-
+    _test_de_encode = [
+        ( "22f860f86f8d6f8e01", { "plmn": "228f06", "class_of_network": {
+                                    "supported": { "vbs": True, "vgcs": True, "emlpp": True,
+                                    "fn": True, "eirene": True }, "preference": 0 },
+                                  "ic_incoming_ref_tbl": "6f8d", "outgoing_ref_tbl": "6f8e",
+                                  "ic_table_ref": "01" } ),
+        ( "22f810416f8d6f8e02", { "plmn": "228f01", "class_of_network": {
+                                    "supported": { "vbs": False, "vgcs": False, "emlpp": False,
+                                    "fn": True, "eirene": False }, "preference": 1 },
+                                  "ic_incoming_ref_tbl": "6f8d", "outgoing_ref_tbl": "6f8e",
+                                  "ic_table_ref": "02" } ),
+    ]
     def __init__(self):
         super().__init__(fid='6ff5', sfid=None, name='EF.GsmrPLMN',
                          desc='GSM-R network selection', rec_len=(9, 9))
@@ -204,7 +226,12 @@ class EF_GsmrPLMN(LinFixedEF):
 
 class EF_IC(LinFixedEF):
     """Section 7.8"""
-
+    _test_de_encode = [
+        ( "f06f8e40f10001", { "next_table_type": "decision", "id_of_next_table": "6f8e",
+                              "ic_decision_value": "041f", "network_string_table_index": 1 } ),
+        ( "ffffffffffffff", { "next_table_type": "empty", "id_of_next_table": "ffff",
+                              "ic_decision_value": "ffff", "network_string_table_index": 65535 } ),
+    ]
     def __init__(self):
         super().__init__(fid='6f8d', sfid=None, name='EF.IC',
                          desc='International Code', rec_len=(7, 7))
@@ -216,7 +243,12 @@ class EF_IC(LinFixedEF):
 
 class EF_NW(LinFixedEF):
     """Section 7.9"""
-
+    _test_de_encode = [
+        ( "47534d2d52204348", "GSM-R CH" ),
+        ( "537769737347534d", "SwissGSM" ),
+        ( "47534d2d52204442", "GSM-R DB" ),
+        ( "47534d2d52524649", "GSM-RRFI" ),
+    ]
     def __init__(self):
         super().__init__(fid='6f80', sfid=None, name='EF.NW',
                          desc='Network Name', rec_len=(8, 8))
@@ -225,8 +257,15 @@ class EF_NW(LinFixedEF):
 
 class EF_Switching(LinFixedEF):
     """Section 8.4"""
-
-    def __init__(self, fid, name, desc):
+    _test_de_encode = [
+        ( "f26f87f0ff00", { "next_table_type": "num_dial_digits", "id_of_next_table": "6f87",
+                            "decision_value": "0fff", "string_table_index": 0 } ),
+        ( "f06f8ff1ff01", { "next_table_type": "decision", "id_of_next_table": "6f8f",
+                            "decision_value": "1fff", "string_table_index": 1 } ),
+        ( "f16f89f5ff05", { "next_table_type": "predefined", "id_of_next_table": "6f89",
+                            "decision_value": "5fff", "string_table_index": 5 } ),
+    ]
+    def __init__(self, fid='1234', name='Switching', desc=None):
         super().__init__(fid=fid, sfid=None,
                          name=name, desc=desc, rec_len=(6, 6))
         self._construct = Struct('next_table_type'/NextTableType,
@@ -237,13 +276,17 @@ class EF_Switching(LinFixedEF):
 
 class EF_Predefined(LinFixedEF):
     """Section 8.5"""
+    _test_de_encode = [
+        ( "f26f85", 1, { "next_table_type": "num_dial_digits", "id_of_next_table": "6f85" } ),
+        ( "f0ffc8", 2, { "predefined_value1": "0fff", "string_table_index1": 200 } ),
+    ]
     # header and other records have different structure. WTF !?!
     construct_first = Struct('next_table_type'/NextTableType,
                              'id_of_next_table'/HexAdapter(Bytes(2)))
     construct_others = Struct('predefined_value1'/BcdAdapter(Bytes(2)),
                               'string_table_index1'/Int8ub)
 
-    def __init__(self, fid, name, desc):
+    def __init__(self, fid='1234', name='Predefined', desc=None):
         super().__init__(fid=fid, sfid=None,
                          name=name, desc=desc, rec_len=(3, 3))
 
@@ -263,8 +306,11 @@ class EF_Predefined(LinFixedEF):
 
 class EF_DialledVals(TransparentEF):
     """Section 8.6"""
-
-    def __init__(self, fid, name, desc):
+    _test_de_encode = [
+        ( "ffffff22", { "next_table_type": "empty", "id_of_next_table": "ffff", "dialed_digits": "22" } ),
+        ( "f16f8885", { "next_table_type": "predefined", "id_of_next_table": "6f88", "dialed_digits": "58" }),
+    ]
+    def __init__(self, fid='1234', name='DialledVals', desc=None):
         super().__init__(fid=fid, sfid=None, name=name, desc=desc, size=(4, 4))
         self._construct = Struct('next_table_type'/NextTableType,
                                  'id_of_next_table'/HexAdapter(Bytes(2)),

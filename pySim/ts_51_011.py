@@ -358,6 +358,14 @@ class ExtendedBcdAdapter(Adapter):
 
 # TS 51.011 Section 10.5.1
 class EF_ADN(LinFixedEF):
+    _test_decode = [
+            ( '42204841203120536963ffffffff06810628560810ffffffffffffff',
+              { "alpha_id": "B HA 1 Sic", "len_of_bcd": 6, "ton_npi": { "ext": True, "type_of_number":
+                                                                       "unknown", "numbering_plan_id":
+                                                                       "isdn_e164" }, "dialing_nr":
+               "6082658001", "cap_conf_id": 255, "ext1_record_id": 255 }),
+         ]
+
     def __init__(self, fid='6f3a', sfid=None, name='EF.ADN', desc='Abbreviated Dialing Numbers', ext=1, **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(14, 30), **kwargs)
         ext_name = 'ext%u_record_id' % ext
@@ -419,6 +427,19 @@ class EF_MSISDN(LinFixedEF):
 
 # TS 51.011 Section 10.5.6
 class EF_SMSP(LinFixedEF):
+    # FIXME: re-encode fails / missing alpha_id at start of output
+    _test_decode = [
+        ( '454e6574776f726b73fffffffffffffff1ffffffffffffffffffffffffffffffffffffffffffffffff0000a7',
+          { "alpha_id": "ENetworks", "parameter_indicators": { "tp_dest_addr": False, "tp_sc_addr": True,
+                                                               "tp_pid": True, "tp_dcs": True, "tp_vp": True },
+            "tp_dest_addr": { "length": 255, "ton_npi": { "ext": True, "type_of_number": "reserved_for_extension",
+                                                          "numbering_plan_id": "reserved_for_extension" },
+                              "call_number": "" },
+            "tp_sc_addr": { "length": 255, "ton_npi": { "ext": True, "type_of_number": "reserved_for_extension",
+                                                        "numbering_plan_id": "reserved_for_extension" },
+                            "call_number": "" },
+            "tp_pid": "00", "tp_dcs": "00", "tp_vp_minutes": 1440 } ),
+    ]
     class ValidityPeriodAdapter(Adapter):
         def _decode(self, obj, context, path):
             if obj <= 143:
@@ -530,6 +551,9 @@ class DF_TELECOM(CardDF):
 
 # TS 51.011 Section 10.3.1
 class EF_LP(TransRecEF):
+    _test_de_encode = [
+            ( "24", "24"),
+        ]
     def __init__(self, fid='6f05', sfid=None, name='EF.LP', size=(1, None), rec_len=1,
                  desc='Language Preference'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len)
@@ -542,6 +566,10 @@ class EF_LP(TransRecEF):
 
 # TS 51.011 Section 10.3.2
 class EF_IMSI(TransparentEF):
+    _test_de_encode = [
+            ( "082982608200002080", { "imsi": "228062800000208" } ),
+            ( "082926101160845740", { "imsi": "262011106487504" } ),
+        ]
     def __init__(self, fid='6f07', sfid=None, name='EF.IMSI', desc='IMSI', size=(9, 9)):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         # add those commands to the general commands of a TransparentEF
@@ -580,6 +608,10 @@ class EF_IMSI(TransparentEF):
 
 # TS 51.011 Section 10.3.4
 class EF_PLMNsel(TransRecEF):
+    _test_de_encode = [
+            ( "22F860",  { "mcc": "228", "mnc": "06" } ),
+            ( "330420",  { "mcc": "334", "mnc": "020" } ),
+        ]
     def __init__(self, fid='6f30', sfid=None, name='EF.PLMNsel', desc='PLMN selector',
                  size=(24, None), rec_len=3, **kwargs):
         super().__init__(fid, name=name, sfid=sfid, desc=desc, size=size, rec_len=rec_len, **kwargs)
@@ -598,6 +630,9 @@ class EF_PLMNsel(TransRecEF):
 
 # TS 51.011 Section 10.3.6
 class EF_ACMmax(TransparentEF):
+    _test_de_encode = [
+            ( "000000", { "acm_max": 0 } ),
+        ]
     def __init__(self, fid='6f37', sfid=None, name='EF.ACMmax', size=(3, 3),
                  desc='ACM maximum value', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
@@ -655,6 +690,11 @@ class EF_ServiceTable(TransparentEF):
 
 # TS 51.011 Section 10.3.11
 class EF_SPN(TransparentEF):
+    _test_de_encode = [
+            ( "0147534d2d52204348ffffffffffffffff",
+              { "rfu": 0, "hide_in_oplmn": False, "show_in_hplmn": True, "spn": "GSM-R CH" } ),
+        ]
+
     def __init__(self, fid='6f46', sfid=None, name='EF.SPN',
                  desc='Service Provider Name', size=(17, 17), **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
@@ -669,6 +709,7 @@ class EF_SPN(TransparentEF):
 
 # TS 51.011 Section 10.3.13
 class EF_CBMI(TransRecEF):
+    # TODO: Test vectors
     def __init__(self, fid='6f45', sfid=None, name='EF.CBMI', size=(2, None), rec_len=2,
                  desc='Cell Broadcast message identifier selection', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
@@ -676,6 +717,9 @@ class EF_CBMI(TransRecEF):
 
 # TS 51.011 Section 10.3.15
 class EF_ACC(TransparentEF):
+    _test_de_encode = [
+            ( "0100", "0100" ),
+        ]
     def __init__(self, fid='6f78', sfid=None, name='EF.ACC',
                  desc='Access Control Class', size=(2, 2), **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
@@ -683,6 +727,10 @@ class EF_ACC(TransparentEF):
 
 # TS 51.011 Section 10.3.16
 class EF_LOCI(TransparentEF):
+    _test_de_encode = [
+            ( "7802570222f81009780000",
+              { "tmsi": "78025702", "lai": "22f8100978", "tmsi_time": 0, "lu_status": "updated" } ),
+        ]
     def __init__(self, fid='6f7e', sfid=None, name='EF.LOCI', desc='Location Information', size=(11, 11)):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self._construct = Struct('tmsi'/HexAdapter(Bytes(4)), 'lai'/HexAdapter(Bytes(5)), 'tmsi_time'/Int8ub,
@@ -691,6 +739,10 @@ class EF_LOCI(TransparentEF):
 
 # TS 51.011 Section 10.3.18
 class EF_AD(TransparentEF):
+    _test_de_encode = [
+            ( "00ffff",
+              { "ms_operation_mode": "normal", "rfu1": 255, "rfu2": 127, "ofm": True, "extensions": None } ),
+        ]
     class OP_MODE(enum.IntEnum):
         normal = 0x00
         type_approval = 0x80
@@ -722,6 +774,9 @@ class EF_AD(TransparentEF):
 
 # TS 51.011 Section 10.3.20 / 10.3.22
 class EF_VGCS(TransRecEF):
+    _test_de_encode = [
+            ( "92f9ffff", "299fffff" ),
+        ]
     def __init__(self, fid='6fb1', sfid=None, name='EF.VGCS', size=(4, 200), rec_len=4,
                  desc='Voice Group Call Service', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
@@ -729,6 +784,12 @@ class EF_VGCS(TransRecEF):
 
 # TS 51.011 Section 10.3.21 / 10.3.23
 class EF_VGCSS(TransparentEF):
+    _test_decode = [
+        ( "010000004540fc",
+          { "flags": [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 ] }
+        ),
+    ]
     def __init__(self, fid='6fb2', sfid=None, name='EF.VGCSS', size=(7, 7),
                  desc='Voice Group Call Service Status', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
@@ -737,6 +798,13 @@ class EF_VGCSS(TransparentEF):
 
 # TS 51.011 Section 10.3.24
 class EF_eMLPP(TransparentEF):
+    _test_de_encode = [
+        ( "7c04", { "levels": { "A": False, "B": False, "zero": True, "one": True,
+                                "two": True, "three": True, "four": True },
+                    "fast_call_setup_cond": { "A": False, "B": False, "zero": True, "one": False,
+                                              "two": False, "three": False, "four": False }
+                  }),
+    ]
     def __init__(self, fid='6fb5', sfid=None, name='EF.eMLPP', size=(2, 2),
                  desc='enhanced Multi Level Pre-emption and Priority', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
@@ -747,6 +815,10 @@ class EF_eMLPP(TransparentEF):
 
 # TS 51.011 Section 10.3.25
 class EF_AAeM(TransparentEF):
+    _test_de_encode = [
+        ( "3c", { "auto_answer_prio_levels": { "A": False, "B": False, "zero": True, "one": True,
+                                               "two": True, "three": True, "four": False } } ),
+    ]
     def __init__(self, fid='6fb6', sfid=None, name='EF.AAeM', size=(1, 1),
                  desc='Automatic Answer for eMLPP Service', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
@@ -816,12 +888,19 @@ class EF_NIA(LinFixedEF):
 
 # TS 51.011 Section 10.3.32
 class EF_Kc(TransparentEF):
+    _test_de_encode = [
+        ( "837d783609a3858f05", { "kc": "837d783609a3858f", "cksn": 5 } ),
+    ]
     def __init__(self, fid='6f20', sfid=None, name='EF.Kc', desc='Ciphering key Kc', size=(9, 9), **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct('kc'/HexAdapter(Bytes(8)), 'cksn'/Int8ub)
 
 # TS 51.011 Section 10.3.33
 class EF_LOCIGPRS(TransparentEF):
+    _test_de_encode = [
+        ( "ffffffffffffff22f8990000ff01",
+          { "ptmsi": "ffffffff", "ptmsi_sig": "ffffff", "rai": "22f8990000ff", "rau_status": "not_updated" } ),
+    ]
     def __init__(self, fid='6f53', sfid=None, name='EF.LOCIGPRS', desc='GPRS Location Information', size=(14, 14)):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self._construct = Struct('ptmsi'/HexAdapter(Bytes(4)), 'ptmsi_sig'/HexAdapter(Bytes(3)),
@@ -831,7 +910,11 @@ class EF_LOCIGPRS(TransparentEF):
 
 # TS 51.011 Section 10.3.35..37
 class EF_xPLMNwAcT(TransRecEF):
-    def __init__(self, fid, sfid=None, name=None, desc=None, size=(40, None), rec_len=5, **kwargs):
+    _test_de_encode = [
+        ( '62F2104000', { "mcc": "262", "mnc": "01", "act": [ "E-UTRAN" ] } ),
+        ( '62F2108000', { "mcc": "262", "mnc": "01", "act": [ "UTRAN" ] } ),
+    ]
+    def __init__(self, fid='1234', sfid=None, name=None, desc=None, size=(40, None), rec_len=5, **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
 
     def _decode_record_hex(self, in_hex, **kwargs):
@@ -895,6 +978,8 @@ class EF_InvScan(TransparentEF):
 
 # TS 51.011 Section 4.2.58
 class EF_PNN(LinFixedEF):
+    # TODO: 430a82d432bbbc7eb75de432450a82d432bbbc7eb75de432ffffffff
+    # TODO: 430a82c596b34cbfbfe5eb39ffffffffffffffffffffffffffffffffffff
     class FullNameForNetwork(BER_TLV_IE, tag=0x43):
         # TS 24.008 10.5.3.5a
         # TODO: proper decode
@@ -914,6 +999,10 @@ class EF_PNN(LinFixedEF):
 
 # TS 51.011 Section 10.3.42
 class EF_OPL(LinFixedEF):
+    _test_de_encode = [
+        ( '62f2100000fffe01',
+          { "lai": { "mcc_mnc": "262f01", "lac_min": "0000", "lac_max": "fffe" }, "pnn_record_id": 1 } ),
+    ]
     def __init__(self, fid='6fc6', sfid=None, name='EF.OPL', rec_len=(8, 8), desc='Operator PLMN List', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct('lai'/Struct('mcc_mnc'/BcdAdapter(Bytes(3)),
@@ -921,6 +1010,10 @@ class EF_OPL(LinFixedEF):
 
 # TS 51.011 Section 10.3.44 + TS 31.102 4.2.62
 class EF_MBI(LinFixedEF):
+    _test_de_encode = [
+        ( '0100000000',
+          { "mbi_voicemail": 1, "mbi_fax": 0, "mbi_email": 0, "mbi_other": 0, "mbi_videocall": 0 } ),
+    ]
     def __init__(self, fid='6fc9', sfid=None, name='EF.MBI', rec_len=(4, 5), desc='Mailbox Identifier', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct('mbi_voicemail'/Int8ub, 'mbi_fax'/Int8ub, 'mbi_email'/Int8ub,
@@ -938,6 +1031,7 @@ class EF_MWIS(LinFixedEF):
 
 # TS 51.011 Section 10.3.66
 class EF_SPDI(TransparentEF):
+    # TODO: a305800337f800ffffffffffffffffffffffffffffffffffffffffffffff
     class ServiceProviderPLMN(BER_TLV_IE, tag=0x80):
         # flexible numbers of 3-byte PLMN records
         _construct = GreedyRange(BcdAdapter(Bytes(3)))

@@ -124,6 +124,7 @@ class EF_UServiceTable(TransparentEF):
 
 # TS 31.102 Section 4.4.2.1
 class EF_PBR(LinFixedEF):
+    # TODO: a80ac0034f3a02c5034f0904aa0acb034f3d07c2034f4a06
     def __init__(self, fid='4F30', name='EF.PBR', desc='Phone Book Reference', **kwargs):
         super().__init__(fid, name=name, desc=desc, **kwargs)
         #self._tlv = FIXME
