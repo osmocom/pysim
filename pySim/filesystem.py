@@ -945,7 +945,7 @@ class LinFixedEF(CardEF):
         self._construct = None
         self._tlv = None
 
-    def decode_record_hex(self, raw_hex_data: str, record_nr: int) -> dict:
+    def decode_record_hex(self, raw_hex_data: str, record_nr: int = 1) -> dict:
         """Decode raw (hex string) data into abstract representation.
 
         A derived class would typically provide a _decode_record_bin() or _decode_record_hex()
