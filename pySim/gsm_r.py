@@ -211,7 +211,7 @@ class EF_IC(LinFixedEF):
         self._construct = Struct('next_table_type'/NextTableType,
                                  'id_of_next_table'/HexAdapter(Bytes(2)),
                                  'ic_decision_value'/BcdAdapter(Bytes(2)),
-                                 'network_string_table_index'/Int8ub)
+                                 'network_string_table_index'/Int16ub)
 
 
 class EF_NW(LinFixedEF):
