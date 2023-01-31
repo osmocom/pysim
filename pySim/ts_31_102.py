@@ -622,9 +622,12 @@ class EF_ECC(LinFixedEF):
         if in_json is None:
             return b'\xff\xff\xff\xff'
         code = EF_ECC.cc_construct.build(in_json['call_code'])
-        svc_category = EF_ECC.category_construct.build(in_json['category'])
-        alpha_id = EF_ECC.alpha_construct.build(in_json['alpha_id'])
-        # FIXME: alpha_id needs padding up to 'record_length - 4'
+        svc_category = EF_ECC.category_construct.build(in_json['service_category'])
+        if 'alpha_id' in in_json:
+            alpha_id = EF_ECC.alpha_construct.build(in_json['alpha_id'])
+            # FIXME: alpha_id needs padding up to 'record_length - 4'
+        else:
+            alpha_id = b''
         return code + alpha_id + svc_category
 
 
