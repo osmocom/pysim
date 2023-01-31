@@ -824,7 +824,8 @@ class EF_Kc(TransparentEF):
 class EF_LOCIGPRS(TransparentEF):
     def __init__(self, fid='6f53', sfid=None, name='EF.LOCIGPRS', desc='GPRS Location Information', size=(14, 14)):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
-        self._construct = Struct('ptmsi'/HexAdapter(Bytes(4)), 'ptmsi_sig'/Int8ub, 'rai'/HexAdapter(Bytes(6)),
+        self._construct = Struct('ptmsi'/HexAdapter(Bytes(4)), 'ptmsi_sig'/HexAdapter(Bytes(3)),
+                                 'rai'/HexAdapter(Bytes(6)),
                                  'rau_status'/Enum(Byte, updated=0, not_updated=1, plmn_not_allowed=2,
                                                    routing_area_not_allowed=3))
 
