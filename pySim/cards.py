@@ -307,6 +307,15 @@ class SimCard:
                     return aid_known
         return None
 
+    def adf_present(self, adf="usim") -> bool:
+        """Check if the AID of the specified ADF is present in EF.DIR (call read_aids before use)"""
+        aid = self._get_aid(adf)
+        if aid:
+            aid_full = self._complete_aid(aid)
+            if aid_full:
+                return True
+        return False
+
     def select_adf_by_aid(self, adf="usim"):
         """Select ADF.U/ISIM in the Card using its full AID"""
         if is_hex(adf):
@@ -1437,6 +1446,9 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
     def program(self, p):
         self.verify_adm(h2b(p['pin_adm']))
 
+        # Populate AIDs
+        self.read_aids()
+
         # This type of card does not allow to reprogram the ICCID.
         # Reprogramming the ICCID would mess up the card os software
         # license management, so the ICCID must be kept at its factory
@@ -1514,9 +1526,6 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
             if sw != '9000':
                 print("Programming ACC failed with code %s" % sw)
 
-        # Populate AIDs
-        self.read_aids()
-
         # update EF-SIM_AUTH_KEY (and EF-USIM_AUTH_KEY_2G, which is
         # hard linked to EF-USIM_AUTH_KEY)
         self._scc.select_path(['3f00'])
@@ -1527,8 +1536,9 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
             self._scc.update_binary('6f20', p['opc'], 17)
 
         # update EF-USIM_AUTH_KEY in ADF.ISIM
-        data, sw = self.select_adf_by_aid(adf="isim")
-        if sw == '9000':
+        if self.adf_present("isim"):
+            self.select_adf_by_aid(adf="isim")
+
             if p.get('ki'):
                 self._scc.update_binary('af20', p['ki'], 1)
             if p.get('opc'):
@@ -1575,8 +1585,9 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
                 if sw != '9000':
                     print("Programming IMPU failed with code %s" % sw)
 
-        data, sw = self.select_adf_by_aid(adf="usim")
-        if sw == '9000':
+        if self.adf_present("usim"):
+            self.select_adf_by_aid(adf="usim")
+
             # EF.AD in ADF.USIM
             if (p.get('mcc') and p.get('mnc')) or p.get('opmode'):
                  if p.get('mcc') and p.get('mnc'):
