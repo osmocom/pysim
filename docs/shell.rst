@@ -514,6 +514,8 @@ del_data
 USIM commands
 -------------
 
+These commands are available only while ADF.USIM (or ADF.ISIM, respectively) is selected.
+
 authenticate
 ~~~~~~~~~~~~
 .. argparse::
@@ -539,6 +541,106 @@ envelope_sms
    :func: ADF_USIM.AddlShellCommands.envelope_sms_parser
 
 
+File-specific commands
+----------------------
+
+These commands are valid only if the respective file is currently selected.  They perform some
+operation that's specific to this file only.
+
+EF.ARR: read_arr_record
+~~~~~~~~~~~~~~~~~~~~~~~
+Read one EF.ARR record in flattened, human-friendly form.
+
+EF.ARR: read_arr_records
+~~~~~~~~~~~~~~~~~~~~~~~~
+Read + decode all EF.ARR records in flattened, human-friendly form.
+
+EF.IMSI: update_imsi_plmn
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Change the PLMN part (MCC+MNC) of the IMSI.  Requires a single argument consisting of 5/6 digits of
+concatenated MCC+MNC.
+
+ADF.USIM/EF.UST: ust_service_activate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Activates a single service in EF.UST.  Requires service number as argument.
+
+ADF.USIM/EF.UST: ust_service_deactivate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Deactivates a single service in EF.UST.  Requires service number as argument.
+
+ADF.USIM/EF.UST: ust_service_check
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Check consistency between services of this file and files present/activated.
+Many services determine if one or multiple files shall be present/activated or if they shall be
+absent/deactivated.  This performs a consistency check to ensure that no services are activated
+for files that are not - and vice-versa, no files are activated for services that are not.  Error
+messages are printed for every inconsistency found.
+
+ADF.ISIM/EF.IST: ist_service_activate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Activates a single service in EF.IST.  Requires service number as argument.
+
+ADF.ISIM/EF.IST: ist_service_deactivate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Deactivates a single service in EF.UST.  Requires service number as argument.
+
+ADF.ISIM/EF.IST: ist_service_check
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Check consistency between services of this file and files present/activated.
+Many services determine if one or multiple files shall be present/activated or if they shall be
+absent/deactivated.  This performs a consistency check to ensure that no services are activated
+for files that are not - and vice-versa, no files are activated for services that are not.  Error
+messages are printed for every inconsistency found.
+
+
+UICC Administrative commands
+----------------------------
+
+ETSI TS 102 222 specifies a set of *Administrative Commands*, which can
+be used by the card issuer / operator to modify the file system structure
+(delete files, create files) or even to terminate individual files or the
+entire card.
+
+pySim-shell supports those commands, but **use extreme caution**.
+Unless you know exactly what you're doing, it's very easy to render your
+card unusable.  You've been warned!
+
+delete_file
+~~~~~~~~~~~
+.. argparse::
+   :module: pySim.ts_102_222
+   :func: Ts102222Commands.delfile_parser
+
+
+terminate_df
+~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.ts_102_222
+   :func: Ts102222Commands.termdf_parser
+
+terminate_ef
+~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.ts_102_222
+   :func: Ts102222Commands.termdf_parser
+
+terminate_card
+~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.ts_102_222
+   :func: Ts102222Commands.tcard_parser
+
+create_ef
+~~~~~~~~~
+.. argparse::
+   :module: pySim.ts_102_222
+   :func: Ts102222Commands.create_parser
+
+create_df
+~~~~~~~~~
+.. argparse::
+   :module: pySim.ts_102_222
+   :func: Ts102222Commands.createdf_parser
 
 
 ARA-M commands
@@ -621,6 +723,16 @@ This command will request deletion of all access rules stored within the
 ARA-M applet.  Use it with caution, there is no undo.  Any rules later
 intended must be manually inserted again using `aram_store_ref_ar_do`
 
+
+GlobalPlatform commands
+-----------------------
+
+pySim-shell has only the mots rudimentary support for GlobalPlatform at this point. Please use dedicated
+projects like GlobalPlatformPro meanwhile.
+
+get_data
+~~~~~~~~
+Performs the GET DATA command as specified by GlobalPlatform.
 
 
 cmd2 settable parameters
