@@ -749,12 +749,12 @@ class EF_EST(EF_UServiceTable):
         def __init__(self):
             super().__init__()
 
-        def do_est_service_activate(self, arg):
-            """Activate a service within EF.UST"""
+        def do_est_service_enable(self, arg):
+            """Enable a service within EF.UST"""
             self._cmd.card.update_est(int(arg), 1)
 
-        def do_est_service_deactivate(self, arg):
-            """Deactivate a service within EF.UST"""
+        def do_est_service_disable(self, arg):
+            """Disable a service within EF.UST"""
             self._cmd.card.update_est(int(arg), 0)
 
 # TS 31.102 Section 4.2.48
