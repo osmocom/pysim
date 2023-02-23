@@ -555,6 +555,14 @@ EF.ARR: read_arr_records
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Read + decode all EF.ARR records in flattened, human-friendly form.
 
+ADF.USIM/EF.EST: est_service_enable
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Enables a single service in EF.EST.  Requires service number as argument.
+
+ADF.USIM/EF.EST: est_service_disable
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Disables a single service in EF.EST.  Requires service number as argument.
+
 EF.IMSI: update_imsi_plmn
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 Change the PLMN part (MCC+MNC) of the IMSI.  Requires a single argument consisting of 5/6 digits of
