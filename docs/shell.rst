@@ -650,6 +650,12 @@ create_df
    :module: pySim.ts_102_222
    :func: Ts102222Commands.createdf_parser
 
+resize_ef
+~~~~~~~~~
+.. argparse::
+   :module: pySim.ts_102_222
+   :func: Ts102222Commands.resize_ef_parser
+
 
 ARA-M commands
 --------------

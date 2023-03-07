@@ -206,3 +206,25 @@ class Ts102222Commands(CommandSet):
         (data, sw) = self._cmd.card._scc.create_file(b2h(fcp.to_tlv()))
         # the newly-created file is automatically selected but our runtime state knows nothing of it
         self._cmd.lchan.select_file(self._cmd.lchan.selected_file)
+
+    resize_ef_parser = argparse.ArgumentParser()
+    resize_ef_parser.add_argument('NAME', type=str, help='Name or FID of file to be resized')
+    resize_ef_parser._action_groups.pop()
+    resize_ef_required = resize_ef_parser.add_argument_group('required arguments')
+    resize_ef_required.add_argument('--file-size', required=True, type=int, help='Size of file in octets')
+
+    @cmd2.with_argparser(resize_ef_parser)
+    def do_resize_ef(self, opts):
+        """Resize an existing EF below the currently selected DF.  Requires related privileges."""
+        f = self._cmd.lchan.get_file_for_selectable(opts.NAME)
+        ies = [FileIdentifier(decoded=f.fid),
+               FileSize(decoded=opts.file_size)]
+        fcp = FcpTemplate(children=ies)
+        (data, sw) = self._cmd.card._scc.resize_file(b2h(fcp.to_tlv()))
+        # the resized file is automatically selected but our runtime state knows nothing of it
+        self._cmd.lchan.select_file(self._cmd.lchan.selected_file)
+
+    def complete_resize_ef(self, text, line, begidx, endidx) -> List[str]:
+        """Command Line tab completion for RESIZE EF"""
+        index_dict = {1: self._cmd.lchan.selected_file.get_selectable_names()}
+        return self._cmd.index_based_complete(text, line, begidx, endidx, index_dict=index_dict)

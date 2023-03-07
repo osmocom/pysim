@@ -457,6 +457,10 @@ class SimCardCommands:
         """Execute CREEATE FILE command as per TS 102 222 Section 6.3"""
         return self._tp.send_apdu_checksw(self.cla_byte + 'e00000%02x%s' % (len(payload)//2, payload))
 
+    def resize_file(self, payload: Hexstr):
+        """Execute RESIZE FILE command as per TS 102 222 Section 6.10"""
+        return self._tp.send_apdu_checksw('80d40000%02x%s' % (len(payload)//2, payload))
+
     def delete_file(self, fid):
         """Execute DELETE FILE command as per TS 102 222 Section 6.4"""
         return self._tp.send_apdu_checksw(self.cla_byte + 'e4000002' + fid)
