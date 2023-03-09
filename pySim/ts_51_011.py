@@ -1102,6 +1102,8 @@ class EF_MMSUCP(TransparentEF):
 class DF_GSM(CardDF):
     def __init__(self, fid='7f20', name='DF.GSM', desc='GSM Network related files'):
         super().__init__(fid=fid, name=name, desc=desc)
+        self.shell_commands += [self.AddlShellCommands()]
+
         files = [
             EF_LP(),
             EF_IMSI(),
@@ -1170,6 +1172,20 @@ class DF_GSM(CardDF):
             EF_MMSUCP(),
         ]
         self.add_files(files)
+
+    @with_default_category('Application-Specific Commands')
+    class AddlShellCommands(CommandSet):
+        def __init__(self):
+            super().__init__()
+
+        authenticate_parser = argparse.ArgumentParser()
+        authenticate_parser.add_argument('rand', help='Random challenge')
+
+        @cmd2.with_argparser(authenticate_parser)
+        def do_authenticate(self, opts):
+            """Perform GSM Authentication."""
+            (data, sw) = self._cmd.card._scc.run_gsm(opts.rand)
+            self._cmd.poutput_json(data)
 
 
 class CardProfileSIM(CardProfile):
