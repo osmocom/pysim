@@ -731,6 +731,17 @@ class PySimCommands(CommandSet):
         else:
             raise ValueError("error: cannot authenticate, no adm-pin!")
 
+    def do_cardinfo(self, opts):
+        """Display information about the currently inserted card"""
+        self._cmd.poutput("Card info:")
+        self._cmd.poutput(" Name: %s" % self._cmd.card.name)
+        self._cmd.poutput(" ATR: %s" % b2h(self._cmd.card._scc.get_atr()))
+        self._cmd.poutput(" ICCID: %s" % self._cmd.iccid)
+        self._cmd.poutput(" Class-Byte: %s" % self._cmd.card._scc.cla_byte)
+        self._cmd.poutput(" Select-Ctrl: %s" % self._cmd.card._scc.sel_ctrl)
+        self._cmd.poutput(" AIDs:")
+        for a in self._cmd.rs.mf.applications:
+                self._cmd.poutput("  %s" % a)
 
 @with_default_category('ISO7816 Commands')
 class Iso7816Commands(CommandSet):
