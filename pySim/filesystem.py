@@ -1366,7 +1366,11 @@ class RuntimeState:
             if lchan_nr == 0:
                 continue
             del self.lchan[lchan_nr]
-        atr = i2h(self.card.reset())
+        
+        atr = self.card.reset()
+        print("atr>>>>>>>>>>>: ", atr)
+        if atr != None:
+            atr = i2h(atr)
         # select MF to reset internal state and to verify card really works
         self.lchan[0].select('MF', cmd_app)
         self.lchan[0].selected_adf = None

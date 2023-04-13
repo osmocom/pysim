@@ -23,7 +23,7 @@ import json
 import traceback
 
 import cmd2
-from cmd2 import style, fg
+from cmd2 import style, Fg
 from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 
@@ -134,8 +134,8 @@ class PysimApp(cmd2.Cmd):
 
     def __init__(self, card, rs, sl, ch, script=None):
         super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
-                         use_ipython=True, auto_load_commands=False, startup_script=script)
-        self.intro = style('Welcome to pySim-shell!', fg=fg.red)
+                         include_py=True, include_ipy=True, auto_load_commands=False, startup_script=script)
+        self.intro = style('Welcome to pySim-shell!', fg=Fg.RED)
         self.default_category = 'pySim-shell built-in commands'
         self.card = None
         self.rs = None
@@ -146,16 +146,16 @@ class PysimApp(cmd2.Cmd):
 
         self.numeric_path = False
         self.add_settable(cmd2.Settable('numeric_path', bool, 'Print File IDs instead of names',
-                                        onchange_cb=self._onchange_numeric_path))
+                                        settable_object=None, onchange_cb=self._onchange_numeric_path))
         self.conserve_write = True
         self.add_settable(cmd2.Settable('conserve_write', bool, 'Read and compare before write',
-                                        onchange_cb=self._onchange_conserve_write))
+                                        settable_object=None, onchange_cb=self._onchange_conserve_write))
         self.json_pretty_print = True
         self.add_settable(cmd2.Settable('json_pretty_print',
-                          bool, 'Pretty-Print JSON output'))
+                          bool, 'Pretty-Print JSON output', settable_object=None))
         self.apdu_trace = False
         self.add_settable(cmd2.Settable('apdu_trace', bool, 'Trace and display APDUs exchanged with card',
-                                        onchange_cb=self._onchange_apdu_trace))
+                                        settable_object=None, onchange_cb=self._onchange_apdu_trace))
 
         self.equip(card, rs)
 
