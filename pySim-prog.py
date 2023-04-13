@@ -599,9 +599,9 @@ def read_params_csv(opts, imsi=None, iccid=None):
         # commandline options we can use that info, otherwise we guess that
         # the length is 2, which is also the most common case.
         if opts.mnclen != "auto":
-            if opts.mnclen is "2":
+            if opts.mnclen == "2":
                 row['mnc'] = row.get('mnc', mnc_from_imsi(row.get('imsi'), False))
-            elif opts.mnclen is "3":
+            elif opts.mnclen == "3":
                 row['mnc'] = row.get('mnc', mnc_from_imsi(row.get('imsi'), True))
             else:
                 raise ValueError("invalid parameter --mnclen, must be 2 or 3 or auto")
