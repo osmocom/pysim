@@ -717,13 +717,25 @@ class EF_CBMI(TransRecEF):
 
 # TS 51.011 Section 10.3.15
 class EF_ACC(TransparentEF):
+    # example: acc_list(15) will produce a dict with only ACC15 being True
+    # example: acc_list(2, 4) will produce a dict with ACC2 and ACC4 being True
+    # example: acc_list() will produce a dict with all ACCs being False
+    acc_list = lambda *active: {'ACC{}'.format(c) : c in active for c in range(16)}
+
     _test_de_encode = [
-            ( "0100", "0100" ),
+            ( "0000", acc_list() ),
+            ( "0001", acc_list(0) ),
+            ( "0002", acc_list(1) ),
+            ( "0100", acc_list(8) ),
+            ( "8000", acc_list(15) ),
+            ( "802b", acc_list(0,1,3,5,15) ),
         ]
     def __init__(self, fid='6f78', sfid=None, name='EF.ACC',
                  desc='Access Control Class', size=(2, 2), **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
-        self._construct = HexAdapter(Bytes(2))
+        # LSB of octet 2 is ACC=0 ... MSB of octet 1 is ACC=15
+        flags = ['ACC{}'.format(c) / Flag for c in range(16)]
+        self._construct = ByteSwapped(BitsSwapped(BitStruct(*flags)))
 
 # TS 51.011 Section 10.3.16
 class EF_LOCI(TransparentEF):
