@@ -26,9 +26,12 @@ from pySim.filesystem import CardApplication, interpret_sw
 from pySim.utils import all_subclasses
 import abc
 import operator
+from typing import List
 
 
-def _mf_select_test(scc: SimCardCommands, cla_byte: str, sel_ctrl: str) -> bool:
+def _mf_select_test(scc: SimCardCommands,
+                    cla_byte: str, sel_ctrl: str,
+                    fids: List[str]) -> bool:
     cla_byte_bak = scc.cla_byte
     sel_ctrl_bak = scc.sel_ctrl
     scc.reset_card()
@@ -37,7 +40,8 @@ def _mf_select_test(scc: SimCardCommands, cla_byte: str, sel_ctrl: str) -> bool:
     scc.sel_ctrl = sel_ctrl
     rc = True
     try:
-        scc.select_file('3f00')
+        for fid in fids:
+            scc.select_file(fid)
     except:
         rc = False
 
@@ -51,7 +55,7 @@ def match_uicc(scc: SimCardCommands) -> bool:
     """ Try to access MF via UICC APDUs (3GPP TS 102.221), if this works, the
     card is considered a UICC card.
     """
-    return _mf_select_test(scc, "00", "0004")
+    return _mf_select_test(scc, "00", "0004", ["3f00"])
 
 
 def match_sim(scc: SimCardCommands) -> bool:
@@ -59,7 +63,14 @@ def match_sim(scc: SimCardCommands) -> bool:
     is also a simcard. This will be the case for most UICC cards, but there may
     also be plain UICC cards without 2G support as well.
     """
-    return _mf_select_test(scc, "a0", "0000")
+    return _mf_select_test(scc, "a0", "0000", ["3f00"])
+
+
+def match_ruim(scc: SimCardCommands) -> bool:
+    """ Try to access MF/DF.CDMA via 2G APDUs (3GPP TS 11.11), if this works,
+    the card is considered an R-UIM card for CDMA.
+    """
+    return _mf_select_test(scc, "a0", "0000", ["3f00", "7f25"])
 
 
 class CardProfile:

@@ -1200,7 +1200,7 @@ class DF_GSM(CardDF):
 
 class CardProfileSIM(CardProfile):
 
-    ORDER = 2
+    ORDER = 3
 
     def __init__(self):
         sw = {

@@ -44,6 +44,7 @@ from pySim.card_handler import CardHandler, CardHandlerAuto
 
 from pySim.filesystem import RuntimeState, CardDF, CardADF, CardModel
 from pySim.profile import CardProfile
+from pySim.cdma_ruim import CardProfileRUIM
 from pySim.ts_102_221 import CardProfileUICC
 from pySim.ts_102_222 import Ts102222Commands
 from pySim.ts_31_102 import CardApplicationUSIM
