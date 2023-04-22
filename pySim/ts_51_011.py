@@ -670,16 +670,14 @@ class EF_ServiceTable(TransparentEF):
         bin_len = 0
         for srv in in_json.keys():
             service_nr = int(srv)
-            (byte_offset, bit_offset) = EF_ServiceTable._bit_byte_offset_for_service(
-                service_nr)
+            (byte_offset, bit_offset) = self._bit_byte_offset_for_service(service_nr)
             if byte_offset >= bin_len:
                 bin_len = byte_offset+1
         # encode the actual data
         out = bytearray(b'\x00' * bin_len)
         for srv in in_json.keys():
             service_nr = int(srv)
-            (byte_offset, bit_offset) = EF_ServiceTable._bit_byte_offset_for_service(
-                service_nr)
+            (byte_offset, bit_offset) = self._bit_byte_offset_for_service(service_nr)
             bits = 0
             if in_json[srv]['allocated'] == True:
                 bits |= 1
