@@ -135,8 +135,13 @@ class PysimApp(cmd2.Cmd):
     CUSTOM_CATEGORY = 'pySim Commands'
 
     def __init__(self, card, rs, sl, ch, script=None):
+        if version.parse(cmd2.__version__) < version.parse("2.0.0"):
+            kwargs = {'use_ipython': True}
+        else:
+            kwargs = {'include_ipy': True}
+
         super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
-                         use_ipython=True, auto_load_commands=False, startup_script=script)
+                         auto_load_commands=False, startup_script=script, **kwargs)
         self.intro = style('Welcome to pySim-shell!', fg=fg.red)
         self.default_category = 'pySim-shell built-in commands'
         self.card = None
