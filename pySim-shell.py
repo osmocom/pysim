@@ -24,7 +24,18 @@ import traceback
 
 import cmd2
 from packaging import version
-from cmd2 import style, fg
+from cmd2 import style
+# cmd2 >= 2.3.0 has deprecated the bg/fg in favor of Bg/Fg :(
+if version.parse(cmd2.__version__) < version.parse("2.3.0"):
+    from cmd2 import fg, bg
+    RED = fg.red
+    LIGHT_RED = fg.bright_red
+    LIGHT_GREEN = fg.bright_green
+else:
+    from cmd2 import Fg, Bg # pylint: disable=no-name-in-module
+    RED = Fg.RED
+    LIGHT_RED = Fg.LIGHT_RED
+    LIGHT_GREEN = Fg.LIGHT_GREEN
 from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 
@@ -142,7 +153,7 @@ class PysimApp(cmd2.Cmd):
 
         super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
                          auto_load_commands=False, startup_script=script, **kwargs)
-        self.intro = style('Welcome to pySim-shell!', fg=fg.red)
+        self.intro = style('Welcome to pySim-shell!', fg=RED)
         self.default_category = 'pySim-shell built-in commands'
         self.card = None
         self.rs = None
@@ -302,23 +313,23 @@ class PysimApp(cmd2.Cmd):
             sys.stderr = self._stderr_backup
 
     def _show_failure_sign(self):
-        self.poutput(style("  +-------------+", fg=fg.bright_red))
-        self.poutput(style("  +   ##   ##   +", fg=fg.bright_red))
-        self.poutput(style("  +    ## ##    +", fg=fg.bright_red))
-        self.poutput(style("  +     ###     +", fg=fg.bright_red))
-        self.poutput(style("  +    ## ##    +", fg=fg.bright_red))
-        self.poutput(style("  +   ##   ##   +", fg=fg.bright_red))
-        self.poutput(style("  +-------------+", fg=fg.bright_red))
+        self.poutput(style("  +-------------+", fg=LIGHT_RED))
+        self.poutput(style("  +   ##   ##   +", fg=LIGHT_RED))
+        self.poutput(style("  +    ## ##    +", fg=LIGHT_RED))
+        self.poutput(style("  +     ###     +", fg=LIGHT_RED))
+        self.poutput(style("  +    ## ##    +", fg=LIGHT_RED))
+        self.poutput(style("  +   ##   ##   +", fg=LIGHT_RED))
+        self.poutput(style("  +-------------+", fg=LIGHT_RED))
         self.poutput("")
 
     def _show_success_sign(self):
-        self.poutput(style("  +-------------+", fg=fg.bright_green))
-        self.poutput(style("  +          ## +", fg=fg.bright_green))
-        self.poutput(style("  +         ##  +", fg=fg.bright_green))
-        self.poutput(style("  +  #    ##    +", fg=fg.bright_green))
-        self.poutput(style("  +   ## #      +", fg=fg.bright_green))
-        self.poutput(style("  +    ##       +", fg=fg.bright_green))
-        self.poutput(style("  +-------------+", fg=fg.bright_green))
+        self.poutput(style("  +-------------+", fg=LIGHT_GREEN))
+        self.poutput(style("  +          ## +", fg=LIGHT_GREEN))
+        self.poutput(style("  +         ##  +", fg=LIGHT_GREEN))
+        self.poutput(style("  +  #    ##    +", fg=LIGHT_GREEN))
+        self.poutput(style("  +   ## #      +", fg=LIGHT_GREEN))
+        self.poutput(style("  +    ##       +", fg=LIGHT_GREEN))
+        self.poutput(style("  +-------------+", fg=LIGHT_GREEN))
         self.poutput("")
 
     def _process_card(self, first, script_path):
