@@ -23,6 +23,7 @@ import json
 import traceback
 
 import cmd2
+from packaging import version
 from cmd2 import style, fg
 from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
@@ -146,18 +147,26 @@ class PysimApp(cmd2.Cmd):
         self.ch = ch
 
         self.numeric_path = False
-        self.add_settable(cmd2.Settable('numeric_path', bool, 'Print File IDs instead of names',
-                                        onchange_cb=self._onchange_numeric_path))
         self.conserve_write = True
-        self.add_settable(cmd2.Settable('conserve_write', bool, 'Read and compare before write',
-                                        onchange_cb=self._onchange_conserve_write))
         self.json_pretty_print = True
-        self.add_settable(cmd2.Settable('json_pretty_print',
-                          bool, 'Pretty-Print JSON output'))
         self.apdu_trace = False
-        self.add_settable(cmd2.Settable('apdu_trace', bool, 'Trace and display APDUs exchanged with card',
-                                        onchange_cb=self._onchange_apdu_trace))
 
+        if version.parse(cmd2.__version__) < version.parse("2.0.0"):
+            self.add_settable(cmd2.Settable('numeric_path', bool, 'Print File IDs instead of names',
+                                            onchange_cb=self._onchange_numeric_path))
+            self.add_settable(cmd2.Settable('conserve_write', bool, 'Read and compare before write',
+                                            onchange_cb=self._onchange_conserve_write))
+            self.add_settable(cmd2.Settable('json_pretty_print', bool, 'Pretty-Print JSON output'))
+            self.add_settable(cmd2.Settable('apdu_trace', bool, 'Trace and display APDUs exchanged with card',
+                                            onchange_cb=self._onchange_apdu_trace))
+        else:
+            self.add_settable(cmd2.Settable('numeric_path', bool, 'Print File IDs instead of names', self, \
+                                            onchange_cb=self._onchange_numeric_path)) # pylint: disable=too-many-function-args
+            self.add_settable(cmd2.Settable('conserve_write', bool, 'Read and compare before write', self, \
+                                            onchange_cb=self._onchange_conserve_write)) # pylint: disable=too-many-function-args
+            self.add_settable(cmd2.Settable('json_pretty_print', bool, 'Pretty-Print JSON output', self)) # pylint: disable=too-many-function-args
+            self.add_settable(cmd2.Settable('apdu_trace', bool, 'Trace and display APDUs exchanged with card', self, \
+                                            onchange_cb=self._onchange_apdu_trace)) # pylint: disable=too-many-function-args
         self.equip(card, rs)
 
     def equip(self, card, rs):

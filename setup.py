@@ -20,6 +20,7 @@ setup(
         "termcolor",
         "colorlog",
         "pycryptodome"
+        "packaging"
     ],
     scripts=[
         'pySim-prog.py',

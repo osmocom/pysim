@@ -45,6 +45,7 @@ Please install the following dependencies:
  - pyyaml >= 5.1
  - termcolor
  - colorlog
+ - packaging
 
 Example for Debian:
 ```sh
