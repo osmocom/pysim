@@ -1,7 +1,7 @@
 pyscard
 pyserial
 pytlv
-cmd2==1.5
+cmd2>=1.5
 jsonpath-ng
 construct>=2.9.51
 bidict

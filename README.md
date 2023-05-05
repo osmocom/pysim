@@ -37,7 +37,7 @@ Please install the following dependencies:
  - pyscard
  - pyserial
  - pytlv
- - cmd2 >= 1.3.0 but < 2.0.0
+ - cmd2 >= 1.5.0
  - jsonpath-ng
  - construct >= 2.9.51
  - bidict
