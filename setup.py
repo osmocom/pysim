@@ -24,6 +24,7 @@ setup(
     scripts=[
         'pySim-prog.py',
         'pySim-read.py',
-        'pySim-shell.py'
+        'pySim-shell.py',
+        'pySim-trace.py',
     ]
 )
