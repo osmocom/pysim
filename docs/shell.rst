@@ -36,6 +36,13 @@ pySim-shell has a variety of command line arguments to control
    :module: pySim-shell
    :func: option_parser
 
+Usage Examples
+--------------
+.. toctree::
+   :maxdepth: 1
+   :caption: Tutorials for pySIM-shell:
+
+   suci-tutorial
 
 
 cmd2 basics
