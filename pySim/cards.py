@@ -91,6 +91,10 @@ class SimCard:
         else:
             return (None, sw)
 
+    def update_iccid(self, iccid):
+        data, sw = self._scc.update_binary(EF['ICCID'], enc_iccid(iccid))
+        return sw
+
     def read_imsi(self):
         (res, sw) = self._scc.read_binary(EF['IMSI'])
         if sw == '9000':
@@ -1683,11 +1687,70 @@ class SysmoISIMSJA5(SysmoISIMSJA2):
         return None
 
 
+class GialerSim(UsimCard):
+    """
+    Gialer sim cards (www.gialer.com).
+    """
+    name = 'gialersim'
+
+    def __init__(self, ssc):
+        super().__init__(ssc)
+        self._program_handlers = {
+            'iccid': self.update_iccid,
+            'imsi': self.update_imsi,
+            'acc': self.update_acc,
+            'smsp': self.update_smsp,
+            'ki': self.update_ki,
+            'opc': self.update_opc,
+        }
+
+    @classmethod
+    def autodetect(cls, scc):
+        try:
+            # Look for ATR
+            if scc.get_atr() == toBytes('3B 9F 95 80 1F C7 80 31 A0 73 B6 A1 00 67 CF 32 15 CA 9C D7 09 20'):
+                return cls(scc)
+        except:
+            return None
+        return None
+
+    def program(self, p):
+        # Authenticate
+        self._scc.verify_chv(0xc, h2b('3834373936313533'))
+        for handler in self._program_handlers:
+            if p.get(handler) is not None:
+                self._program_handlers[handler](p[handler])
+
+        mcc = p.get('mcc')
+        mnc = p.get('mnc')
+        has_plmn = mcc is not None and mnc is not None
+        # EF.HPLMN
+        if has_plmn:
+            self.update_hplmn_act(mcc, mnc)
+
+        # EF.AD
+        if has_plmn or (p.get('opmode') is not None):
+            self.update_ad(mnc=mnc, opmode=p.get('opmode'))
+
+    def update_smsp(self, smsp):
+        data, sw = self._scc.update_record(EF['SMSP'], 1, rpad(smsp, 80))
+        return sw
+
+    def update_ki(self, ki):
+        self._scc.select_path(['3f00', '0001'])
+        self._scc.update_binary('0001', ki)
+
+    def update_opc(self, opc):
+        self._scc.select_path(['3f00', '6002'])
+        # No idea why the '01' is required
+        self._scc.update_binary('6002', '01' + opc)
+
+
 # In order for autodetection ...
 _cards_classes = [FakeMagicSim, SuperSim, MagicSim, GrcardSim,
                   SysmoSIMgr1, SysmoSIMgr2, SysmoUSIMgr1, SysmoUSIMSJS1,
                   FairwavesSIM, OpenCellsSim, WavemobileSim, SysmoISIMSJA2,
-                  SysmoISIMSJA5]
+                  SysmoISIMSJA5, GialerSim]
 
 
 def card_detect(ctype, scc):
