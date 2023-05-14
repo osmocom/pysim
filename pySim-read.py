@@ -253,6 +253,14 @@ if __name__ == '__main__':
             else:
                 print("EHPLMN: Can't read, response code = %s" % (sw,))
 
+        # EF.FPLMN
+        if usim_card.file_exists(EF_USIM_ADF_map['FPLMN']):
+            res, sw = usim_card.read_fplmn()
+            if sw == '9000':
+                print(f'FPLMN:\n{res}')
+            else:
+                print(f'FPLMN: Can\'t read, response code = {sw}')
+
         # EF.UST
         try:
             if usim_card.file_exists(EF_USIM_ADF_map['UST']):

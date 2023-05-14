@@ -93,6 +93,12 @@ SIM Service Table: ff33ff0f3c00ff0f000cf0c0f0030000
 	Service 58 - Extension 8
 	Service 59 - MMS User Connectivity Parameters
 
+FPLMN:
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+
 USIM Service Table: 9eff1b3c37fe5900000000
 	Service 2 - Fixed Dialling Numbers (FDN)
 	Service 3 - Extension 2

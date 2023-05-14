@@ -150,6 +150,9 @@ def parse_options():
                       default=None,
                       choices=['{:02X}'.format(int(m)) for m in EF_AD.OP_MODE],
                       )
+    parser.add_option("-f", "--fplmn", dest="fplmn", action="append",
+                      help="Set Forbidden PLMN. Add multiple time for multiple FPLMNS",
+                      )
     parser.add_option("--epdgid", dest="epdgid",
                       help="Set Home Evolved Packet Data Gateway (ePDG) Identifier. (Only FQDN format supported)",
                       )
@@ -498,6 +501,7 @@ def gen_parameters(opts):
         'impi': opts.impi,
         'impu': opts.impu,
         'opmode': opts.opmode,
+        'fplmn': opts.fplmn,
     }
 
 

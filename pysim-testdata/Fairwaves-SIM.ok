@@ -88,6 +88,18 @@ SIM Service Table: ff3cc3ff030fff0f000fff03f0c0
 	Service 58 - Extension 8
 	Service 59 - MMS User Connectivity Parameters
 
+FPLMN:
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+
 USIM Service Table: 01ea1ffc21360480010000
 	Service 1 - Local Phone Book
 	Service 10 - Short Message Storage (SMS)

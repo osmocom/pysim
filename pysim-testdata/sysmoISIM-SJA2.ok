@@ -108,6 +108,12 @@ EHPLMN:
 	ffffff # unused
 	ffffff # unused
 
+FPLMN:
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+
 USIM Service Table: beff9f9de73e0408400170330000002e00000000
 	Service 2 - Fixed Dialling Numbers (FDN)
 	Service 3 - Extension 2

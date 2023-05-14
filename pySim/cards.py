@@ -381,6 +381,22 @@ class UsimCard(SimCard):
         data, sw = self._scc.update_binary(EF_USIM_ADF_map['EHPLMN'], ehplmn)
         return sw
 
+    def read_fplmn(self):
+        res, sw = self._scc.read_binary(EF_USIM_ADF_map['FPLMN'])
+        if sw == '9000':
+            return format_xplmn(res), sw
+        else:
+            return None, sw
+
+    def update_fplmn(self, fplmn):
+        self._scc.select_file('3f00')
+        self.select_adf_by_aid('USIM')
+        size = self._scc.binary_size(EF_USIM_ADF_map['FPLMN'])
+        encoded = ''.join([enc_plmn(plmn[:3], plmn[3:]) for plmn in fplmn])
+        encoded = rpad(encoded, size)
+        data, sw = self._scc.update_binary(EF_USIM_ADF_map['FPLMN'], encoded)
+        return sw
+
     def read_epdgid(self):
         (res, sw) = self._scc.read_binary(EF_USIM_ADF_map['ePDGId'])
         if sw == '9000':
@@ -1702,6 +1718,7 @@ class GialerSim(UsimCard):
             'smsp': self.update_smsp,
             'ki': self.update_ki,
             'opc': self.update_opc,
+            'fplmn': self.update_fplmn,
         }
 
     @classmethod
@@ -1715,6 +1732,7 @@ class GialerSim(UsimCard):
         return None
 
     def program(self, p):
+        self.set_apdu_parameter('00', '0004')
         # Authenticate
         self._scc.verify_chv(0xc, h2b('3834373936313533'))
         for handler in self._program_handlers:
