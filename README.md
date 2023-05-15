@@ -46,6 +46,7 @@ Please install the following dependencies:
  - termcolor
  - colorlog
  - packaging
+ - pycryptodome
 
 Example for Debian:
 ```sh
