@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='pySim',
     version='1.0',
-    packages=['pySim', 'pySim.transport'],
+    packages=['pySim', 'pySim.transport', 'pySim.apdu', 'pySim.apdu_source'],
     url='https://osmocom.org/projects/pysim/wiki',
     license='GPLv2',
     author_email='simtrace@lists.osmocom.org',
