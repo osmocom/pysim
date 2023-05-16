@@ -31,6 +31,8 @@ case "$JOB_TYPE" in
 	../tests/pysim-test.sh
 	;;
 "pylint")
+	# Print pylint version
+	pip3 freeze | grep pylint
 	# Run pylint to find potential errors
 	# Ignore E1102: not-callable
 	#   pySim/filesystem.py: E1102: method is not callable (not-callable)
