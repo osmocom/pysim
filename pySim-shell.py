@@ -27,7 +27,7 @@ from packaging import version
 from cmd2 import style
 # cmd2 >= 2.3.0 has deprecated the bg/fg in favor of Bg/Fg :(
 if version.parse(cmd2.__version__) < version.parse("2.3.0"):
-    from cmd2 import fg, bg
+    from cmd2 import fg, bg # pylint: disable=no-name-in-module
     RED = fg.red
     LIGHT_RED = fg.bright_red
     LIGHT_GREEN = fg.bright_green
@@ -151,6 +151,7 @@ class PysimApp(cmd2.Cmd):
         else:
             kwargs = {'include_ipy': True}
 
+        # pylint: disable=unexpected-keyword-arg
         super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
                          auto_load_commands=False, startup_script=script, **kwargs)
         self.intro = style('Welcome to pySim-shell!', fg=RED)
@@ -168,11 +169,15 @@ class PysimApp(cmd2.Cmd):
         self.apdu_trace = False
 
         if version.parse(cmd2.__version__) < version.parse("2.0.0"):
+            # pylint: disable=no-value-for-parameter
             self.add_settable(cmd2.Settable('numeric_path', bool, 'Print File IDs instead of names',
                                             onchange_cb=self._onchange_numeric_path))
+            # pylint: disable=no-value-for-parameter
             self.add_settable(cmd2.Settable('conserve_write', bool, 'Read and compare before write',
                                             onchange_cb=self._onchange_conserve_write))
+            # pylint: disable=no-value-for-parameter
             self.add_settable(cmd2.Settable('json_pretty_print', bool, 'Pretty-Print JSON output'))
+            # pylint: disable=no-value-for-parameter
             self.add_settable(cmd2.Settable('apdu_trace', bool, 'Trace and display APDUs exchanged with card',
                                             onchange_cb=self._onchange_apdu_trace))
         else:
