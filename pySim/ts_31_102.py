@@ -5,12 +5,12 @@
 # pylint: disable=undefined-variable
 
 """
-Various constants from 3GPP TS 31.102 V16.6.0
+Various constants from 3GPP TS 31.102 V17.9.0
 """
 
 #
 # Copyright (C) 2020 Supreeth Herle <herlesupreeth@gmail.com>
-# Copyright (C) 2021-2022 Harald Welte <laforge@osmocom.org>
+# Copyright (C) 2021-2023 Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -180,7 +180,26 @@ EF_UST_map = {
     132: 'Support for URSP by USIM',
     133: '5G Security Parameters extended',
     134: 'MuD and MiD configuration data',
-    135: 'Support for Trusted non-3GPP access networks by USIM'
+    135: 'Support for Trusted non-3GPP access networks by USIM',
+    136: 'Support for multiple records of NAS security context storage for multiple registration',
+    137: 'Pre-configured CAG information list',
+    138: 'SOR-CMCI storage in USIM',
+    139: '5G ProSe',
+    140: 'Storage of disaster roaming information in USIM',
+    141: 'Pre-configured eDRX parameters',
+    142: '5G NSWO support',
+    143: 'PWS configuration for SNPN in USIM',
+    144: 'Multiplier Coefficient for Higher Priority PLMN search via NG-RAN satellite access',
+    145: 'K_AUSF derivation configuration',
+    146: 'Network Identifier for SNPN (NID)',
+}
+
+EF_5G_PROSE_ST_map = {
+    1: '5G ProSe configuration data for direct discovery',
+    2: '5G ProSe configuration data for direct communication',
+    3: '5G ProSe configuration data for UE-to-network relay UE',
+    4: '5G ProSe configuration data for remote UE',
+    5: '5G ProSe configuration data for usage information reporting',
 }
 
 # Mapping between USIM Enbled Service Number and its description
@@ -979,6 +998,13 @@ class EF_FromPreferred(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = BitStruct('rfu'/BitsRFU(7), 'from_preferred'/Bit)
 
+# TS 31.102 Section 4.2.114
+class EF_eAKA(TransparentEF):
+    def __init__(self, fid='6f01', sfid=None, name='EF.eAKA', size=(1, 1),
+                 desc='enhanced AKA support', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
+        self._construct = BitStruct('rfu'/BitsRFU(7), 'enhanced_sqn_calculation_supported'/Bit)
+
 
 ######################################################################
 # DF.GSM-ACCESS
@@ -1055,6 +1081,7 @@ class EF_SUPI_NAI(TransparentEF):
         self._tlv = EF_SUPI_NAI.NAI_TLV_Collection
 
 
+# TS 31.102 Section 4.4.11.13
 class EF_TN3GPPSNN(TransparentEF):
     class ServingNetworkName(BER_TLV_IE, tag=0x80):
         _construct = GreedyString("utf8")
@@ -1062,6 +1089,258 @@ class EF_TN3GPPSNN(TransparentEF):
                  desc='Trusted non-3GPP Serving network names list', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_TN3GPPSNN.ServingNetworkName
+
+# TS 31.102 Section 4.4.11.14 (Rel 17)
+class EF_CAG(TransparentEF):
+    def __init__(self, fid='4f0d', sfid=0x0d, name='EF.CAG',
+                 desc='Pre-configured CAG information list EF', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._construct = HexAdapter(GreedyBytes)
+
+# TS 31.102 Section 4.4.11.15 (Rel 17)
+class EF_SOR_CMCI(TransparentEF):
+    def __init__(self, fid='4f0e', sfid=0x0e, name='EF.SOR-CMCI',
+                 desc='Steering Of Roaming - Connected Mode Control Information', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._construct = HexAdapter(GreedyBytes)
+
+# TS 31.102 Section 4.4.11.17 (Rel 17)
+class EF_DRI(TransparentEF):
+    def __init__(self, fid='4f0f', sfid=0x0f, name='EF.DRI',
+                 desc='Disaster roaming information EF', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._construct = Struct('disaster_roaming_enabled'/Byte,
+                                 'parameters_indicator_status'/FlagsEnum(Byte, roaming_wait_range=1,
+                                                                         return_wait_range=2,
+                                                                         applicability_indicator=3),
+                                 'roaming_wait_range'/HexAdapter(Bytes(2)),
+                                 'return_wait_range'/HexAdapter(Bytes(2)),
+                                 'applicability_indicator'/HexAdapter(Byte))
+
+# TS 31.102 Section 4.4.12.2 (Rel 17)
+class EF_PWS_SNPN(TransparentEF):
+    def __init__(self, fid='4f01', sfid=0x01, name='EF.PWS_SNPN',
+                 desc='Public Warning System in SNPNs', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._construct = Struct('pws_config_in_snpns'/FlagsEnum(Byte, ignore_all_pws_in_subscribed=1,
+                                                                 ignore_all_pws_in_non_subscribed=2))
+
+# TS 31.102 Section 4.4.12.2 (Rel 17)
+class EF_NID(LinFixedEF):
+    def __init__(self, fid='4f02', sfid=0x02, name='EF.NID',
+                 desc='Network Identifier for SNPN', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(6,6), **kwargs)
+        self._construct = Struct('assignment_mode'/Enum(Byte, coordinated_ass_opt1=0,
+                                                              self_ass=1,
+                                                              coordinated_ass_opt2=2),
+                                 'network_identifier'/HexAdapter(Bytes(5)))
+
+# TS 31.102 Section 4.4.12 (Rel 17)
+class DF_SNPN(CardDF):
+    def __init__(self, fid='5fe0', name='DF.SNPN', desc='Files for SNPN purpose', **kwargs):
+        super().__init__(fid=fid, name=name, desc=desc, **kwargs)
+        files = [
+            EF_PWS_SNPN(service=143),
+            EF_NID(service=146),
+        ]
+        self.add_files(files)
+
+# TS 31.102 Section 4.4.13.2 (Rel 17)
+class EF_5G_PROSE_ST(EF_UServiceTable):
+    def __init__(self, **kwargs):
+        super().__init__(fid='4f01', sfid=0x01, name='EF.5G_PROSE_ST',
+                         desc='5G ProSe Service Table', size=(1,2), table=EF_5G_PROSE_ST_map, **kwargs)
+        # add those commands to the general commands of a TransparentEF
+        self.shell_commands += [self.AddlShellCommands()]
+
+    @with_default_category('File-Specific Commands')
+    class AddlShellCommands(CommandSet):
+        def __init__(self):
+            super().__init__()
+
+        def do_prose_service_activate(self, arg):
+            """Activate a service within EF.5G_PROSE_ST"""
+            self._cmd.card.update_ust(int(arg), 1)
+
+        def do_prose_service_deactivate(self, arg):
+            """Deactivate a service within EF.5G_PROSE_ST"""
+            self._cmd.card.update_ust(int(arg), 0)
+
+# TS 31.102 Section 4.4.13.3 (Rel 17)
+class EF_5G_PROSE_DD(TransparentEF):
+    class ServedByNgRan(BER_TLV_IE, tag=0x80):
+        pass
+    class NotServedByNgran(BER_TLV_IE, tag=0x81):
+        pass
+    class ProSeIdentifiers(BER_TLV_IE, tag=0x82):
+        pass
+    class ProSeIdToDefaultDestL2Id(BER_TLV_IE, tag=0x83):
+        pass
+    class GroupMemberDiscoveryParameters(BER_TLV_IE, tag=0x84):
+        pass
+    class ValidityTimer(BER_TLV_IE, tag=0x85):
+        pass
+    class ProSeDirectDiscoveryUeId(BER_TLV_IE, tag=0x86):
+        pass
+    class Hplmn5GDdnmfAddressInformation(BER_TLV_IE, tag=0x87):
+        pass
+    class ProSeConfigForDirectDiscovery(BER_TLV_IE, tag=0xA0,
+                                        nested=[ServedByNgRan, NotServedByNgran, ProSeIdentifiers,
+                                                ProSeIdToDefaultDestL2Id, GroupMemberDiscoveryParameters,
+                                                ValidityTimer, ProSeDirectDiscoveryUeId,
+                                                Hplmn5GDdnmfAddressInformation]):
+        pass
+    def __init__(self, fid='4f02', sfid=0x02, name='EF.5G_PROSE_DD',
+                 desc='5G ProSe configuration data for direct discovery', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        # contains TLV structure despite being TransparentEF, not BER-TLV ?!?
+        self._tlv = EF_5G_PROSE_DD.ProSeConfigForDirectDiscovery
+
+# TS 31.102 Section 4.4.13.4 (Rel 17)
+class EF_5G_PROSE_DC(TransparentEF):
+    class PrivacyConfig(BER_TLV_IE, tag=0x87):
+        pass
+    class DirectCommInNrPc5(BER_TLV_IE, tag=0x88):
+        pass
+    class ApplicationToPathPreferenceMappingRules(BER_TLV_IE, tag=0x89):
+        pass
+    class ProSeIdToNrTxProfileForBroadcastAndGroupcastMappingRules(BER_TLV_IE, tag=0x91):
+        pass
+    class ProSeConfigForDirectCommunication(BER_TLV_IE, tag=0xA0,
+                                            nested=[EF_5G_PROSE_DD.ServedByNgRan,
+                                                    EF_5G_PROSE_DD.NotServedByNgran,
+                                                    PrivacyConfig, DirectCommInNrPc5,
+                                                    ApplicationToPathPreferenceMappingRules,
+                                                    EF_5G_PROSE_DD.ValidityTimer,
+                                                    ProSeIdToNrTxProfileForBroadcastAndGroupcastMappingRules]):
+        pass
+    def __init__(self, fid='4f03', sfid=0x03, name='EF.5G_PROSE_DC',
+                 desc='5G ProSe configuration data for direct communication', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        # contains TLV structure despite being TransparentEF, not BER-TLV ?!?
+        self._tlv = EF_5G_PROSE_DC.ProSeConfigForDirectCommunication
+
+# TS 31.102 Section 4.4.13.5 (Rel 17)
+class EF_5G_PROSE_U2NRU(TransparentEF):
+    class ProSeIdToDefaultDestL2Id(BER_TLV_IE, tag=0x8a):
+        pass
+    class RxcInfoList(BER_TLV_IE, tag=0x8b):
+        pass
+    class FiveQiToPc65QosParametersMappingRules(BER_TLV_IE, tag=0x8c):
+        pass
+    class ProSeIdToAppSrvAddrMappingRules(BER_TLV_IE, tag=0x8d):
+        pass
+    class UserInfoIdForDiscovery(BER_TLV_IE, tag=0x8e):
+        pass
+    class PrivacyTimer(BER_TLV_IE, tag=0x92):
+        pass
+    class FiveGPkkmfAddressInformation(BER_TLV_IE, tag=0x93):
+        pass
+    class ProSeConfigDataForUeToNetworkRelayUe(BER_TLV_IE, tag=0xA0,
+                                               nested=[EF_5G_PROSE_DD.ServedByNgRan,
+                                                       EF_5G_PROSE_DD.NotServedByNgran,
+                                                       ProSeIdToDefaultDestL2Id,
+                                                       RxcInfoList,
+                                                       FiveQiToPc65QosParametersMappingRules,
+                                                       ProSeIdToAppSrvAddrMappingRules,
+                                                       EF_5G_PROSE_DD.ValidityTimer,
+                                                       UserInfoIdForDiscovery,
+                                                       PrivacyTimer,
+                                                       FiveGPkkmfAddressInformation]):
+        pass
+    def __init__(self, fid='4f04', sfid=0x04, name='EF.5G_PROSE_U2NRU',
+                 desc='5G ProSe configuration data for UE-to-network relay UE', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        # contains TLV structure despite being TransparentEF, not BER-TLV ?!?
+        self._tlv = EF_5G_PROSE_U2NRU.ProSeConfigDataForUeToNetworkRelayUe
+
+# TS 31.102 Section 4.4.13.6 (Rel 17)
+class EF_5G_PROSE_RU(TransparentEF):
+    class DefaultDestL2Ids(BER_TLV_IE, tag=0x8f):
+        pass
+    class N3IwfSelectionInfoFor5GProSeL3RemoteUE(BER_TLV_IE, tag=0x90):
+        pass
+    class ProSeConfigDataForRemoteUe(BER_TLV_IE, tag=0xa0,
+                                     nested=[EF_5G_PROSE_DD.ServedByNgRan,
+                                             EF_5G_PROSE_DD.NotServedByNgran,
+                                             DefaultDestL2Ids,
+                                             EF_5G_PROSE_U2NRU.RxcInfoList,
+                                             N3IwfSelectionInfoFor5GProSeL3RemoteUE,
+                                             EF_5G_PROSE_DD.ValidityTimer,
+                                             EF_5G_PROSE_U2NRU.UserInfoIdForDiscovery,
+                                             EF_5G_PROSE_U2NRU.PrivacyTimer,
+                                             EF_5G_PROSE_U2NRU.FiveGPkkmfAddressInformation]):
+        pass
+    def __init__(self, fid='4f05', sfid=0x05, name='EF.5G_PROSE_RU',
+                 desc='5G ProSe configuration data for remote UE', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        # contains TLV structure despite being TransparentEF, not BER-TLV ?!?
+        self._tlv = EF_5G_PROSE_RU.ProSeConfigDataForRemoteUe
+
+# TS 31.102 Section 4.4.13.7 (Rel 17)
+class EF_5G_PROSE_UIR(TransparentEF):
+    class CollectionPeriod(BER_TLV_IE, tag=0x94):
+        pass
+    class ReportingWindow(BER_TLV_IE, tag=0x95):
+        pass
+    class ReportingIndicators(BER_TLV_IE, tag=0x96):
+        pass
+    class FiveGDdnmfCtfAddrForUploading(BER_TLV_IE, tag=0x97):
+        pass
+    class ProSeConfigDataForUeToNetworkRelayUE(BER_TLV_IE, tag=0xa0,
+                                               nested=[EF_5G_PROSE_DD.ValidityTimer,
+                                                       CollectionPeriod, ReportingWindow,
+                                                       ReportingIndicators,
+                                                       FiveGDdnmfCtfAddrForUploading]):
+        pass
+    def __init__(self, fid='4f06', sfid=0x06, name='EF.5G_PROSE_UIR',
+                 desc='5G ProSe configuration data for usage information reporting', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        # contains TLV structure despite being TransparentEF, not BER-TLV ?!?
+        self._tlv = EF_5G_PROSE_UIR.ProSeConfigDataForUeToNetworkRelayUE
+
+# TS 31.102 Section 4.4.13 (Rel 17)
+class DF_5G_ProSe(CardDF):
+    def __init__(self, fid='5ff0', name='DF.5G_ProSe', desc='Files for 5G ProSe purpose', **kwargs):
+        super().__init__(fid=fid, name=name, desc=desc, **kwargs)
+        files = [
+            EF_5G_PROSE_ST(),
+            EF_5G_PROSE_DD(service=1),
+            EF_5G_PROSE_DC(service=2),
+            EF_5G_PROSE_U2NRU(service=3),
+            EF_5G_PROSE_RU(service=4),
+            EF_5G_PROSE_UIR(service=5),
+        ]
+        self.add_files(files)
+
+# TS 31.102 Section 4.4.11.18 (Rel 17)
+class EF_5GSEDRX(TransparentEF):
+    def __init__(self, fid='4f10', sfid=0x10, name='EF.5GSEDRX',
+                 desc='5GS eDRX Parameters', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._construct = Struct('5gs_rat_type'/FlagsEnum(Byte, ng_ran=1, sat_ng_ran=2),
+                                 'edrx_cycle_length'/Int8ub)
+
+# TS 31.102 Section 4.4.11.19 (Rel 17)
+class EF_5GNSWO_CONF(TransparentEF):
+    def __init__(self, fid='4f11', sfid=0x11, name='EF.5GNSWO_CONF',
+                 desc='5G Non-Seamless WLAN Offload configuration', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._construct = Struct('5g_nswo_usage_ind'/Enum(Byte, disabled=0, enabled=1))
+
+# TS 31.102 Section 4.4.11.20 (Rel 17)
+class EF_MCHPPLMN(TransparentEF):
+    def __init__(self, fid='4f12', sfid=0x12, name='EF.MCHPPLMN',
+                 desc='Multiplier Coefficient for Higher Priority PLMN search', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._construct = Struct('multiplier_coefficient'/Int8ub)
+
+# TS 31.102 Section 4.4.11.21 (Rel 17)
+class EF_KAUSF_DERIVATION(TransparentEF):
+    def __init__(self, fid='4f16', sfid=0x16, name='EF.KAUSF_DERIVATION',
+                 desc='K_AUSF derivation configuration', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._construct = Struct('k_ausf_deriv_cfg'/FlagsEnum(Byte, use_msk=1), 'rfu'/HexAdapter(GreedyBytes))
 
 # TS 31.102 Section 4.4.5
 class DF_WLAN(CardDF):
@@ -1160,6 +1439,14 @@ class DF_USIM_5GS(CardDF):
             TransparentEF('4F0B', 0x0b, 'EF.URSP',
                           'UE Route Selector Policies per PLMN', service=132),
             EF_TN3GPPSNN(service=133),
+            # Rel-17 additions below
+            EF_CAG(service=137),
+            EF_SOR_CMCI(service=138),
+            EF_DRI(service=140),
+            EF_5GSEDRX(service=141),
+            EF_5GNSWO_CONF(service=142),
+            EF_MCHPPLMN(service=144),
+            EF_KAUSF_DERIVATION(service=145),
         ]
         self.add_files(files)
 
@@ -1277,6 +1564,7 @@ class ADF_USIM(CardADF):
             EF_ePDGId(service=(106, 107)),
             # FIXME: from EF_ePDGSelection onwards
             EF_FromPreferred(service=114),
+            EF_eAKA(),
             # FIXME: DF_SoLSA service=23
             DF_PHONEBOOK(),
             DF_GSM_ACCESS(),
@@ -1286,6 +1574,8 @@ class ADF_USIM(CardADF):
             # FIXME: DF_ACDC service=108
             # FIXME: DF_TV service=116
             DF_USIM_5GS(service=[122, 123, 124, 125, 126, 127, 129, 130]),
+            DF_SNPN(service=[143,146]),
+            DF_5G_ProSe(service=139),
         ]
         self.add_files(files)
 
