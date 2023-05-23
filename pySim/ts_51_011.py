@@ -643,6 +643,7 @@ class EF_ServiceTable(TransparentEF):
     def __init__(self, fid, sfid, name, desc, size, table):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self.table = table
+        self.shell_commands += [self.AddlShellCommands()]
 
     @staticmethod
     def _bit_byte_offset_for_service(service: int) -> Tuple[int, int]:
@@ -685,6 +686,42 @@ class EF_ServiceTable(TransparentEF):
                 bits |= 2
             out[byte_offset] |= ((bits & 3) << bit_offset)
         return out
+
+    @with_default_category('File-Specific Commands')
+    class AddlShellCommands(CommandSet):
+        def _adjust_service(self, service_nr: int, allocate: Optional[bool] = None, activate : Optional[bool] = None):
+            (byte_offset, bit_offset) = EF_ServiceTable._bit_byte_offset_for_service(service_nr)
+            hex_data, sw = self._cmd.lchan.read_binary(length=1, offset=byte_offset)
+            data = h2b(hex_data)
+            if allocate is not None:
+                if allocate:
+                    data[0] |= (1 << bit_offset)
+                else:
+                    data[0] &= ~(1 << bit_offset)
+            if activate is not None:
+                if activate:
+                    data[0] |= (2 << bit_offset)
+                else:
+                    data[0] &= ~(2 << bit_offset)
+            total_data, sw = self._cmd.lchan.update_binary(b2h(data), offset=byte_offset)
+            return sw
+
+        def do_sst_service_allocate(self, arg):
+            """Allocate a service within EF.SST"""
+            self._adjust_service(int(arg), allocate = True)
+
+        def do_sst_service_deallocate(self, arg):
+            """Deallocate a service within EF.SST"""
+            self._adjust_service(int(arg), allocate = False)
+
+        def do_sst_service_activate(self, arg):
+            """Activate a service within EF.SST"""
+            self._adjust_service(int(arg), activate = True)
+
+        def do_sst_service_deactivate(self, arg):
+            """Deactivate a service within EF.SST"""
+            self._adjust_service(int(arg), activate = False)
+
 
 # TS 51.011 Section 10.3.11
 class EF_SPN(TransparentEF):

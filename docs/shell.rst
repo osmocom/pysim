@@ -555,6 +555,22 @@ EF.ARR: read_arr_records
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Read + decode all EF.ARR records in flattened, human-friendly form.
 
+DF.GSM/EF.SST: sst_service_allocate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Mark a given single service as allocated in EF.SST.  Requires service number as argument.
+
+DF.GSM/EF.SST: sst_service_activate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Mark a given single service as activated in EF.SST.  Requires service number as argument.
+
+DF.GSM/EF.SST: sst_service_deallocate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Mark a given single service as deallocated in EF.SST.  Requires service number as argument.
+
+DF.GSM/EF.SST: sst_service_deactivate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Mark a given single service as deactivated in EF.SST.  Requires service number as argument.
+
 ADF.USIM/EF.EST: est_service_enable
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enables a single service in EF.EST.  Requires service number as argument.
