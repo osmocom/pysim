@@ -1330,7 +1330,7 @@ class EF_5GNSWO_CONF(TransparentEF):
 
 # TS 31.102 Section 4.4.11.20 (Rel 17)
 class EF_MCHPPLMN(TransparentEF):
-    def __init__(self, fid='4f12', sfid=0x12, name='EF.MCHPPLMN',
+    def __init__(self, fid='4f15', sfid=0x15, name='EF.MCHPPLMN',
                  desc='Multiplier Coefficient for Higher Priority PLMN search', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._construct = Struct('multiplier_coefficient'/Int8ub)
