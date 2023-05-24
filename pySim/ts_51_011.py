@@ -1176,7 +1176,7 @@ class DF_GSM(CardDF):
                        'Forbidden PLMNs', size=(12, 12)),
             EF_LOCI(),
             EF_AD(),
-            TransparentEF('6fa3', None, 'EF.Phase',
+            TransparentEF('6fae', None, 'EF.Phase',
                           'Phase identification', size=(1, 1)),
             EF_VGCS(),
             EF_VGCSS(),
