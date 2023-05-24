@@ -1,7 +1,7 @@
 # coding=utf-8
-"""Utilities / Functions related to sysmocom SJA2 cards
+"""Utilities / Functions related to sysmocom SJA2/SJA5 cards
 
-(C) 2021 by Harald Welte <laforge@osmocom.org>
+(C) 2021-2023 by Harald Welte <laforge@osmocom.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -232,6 +232,37 @@ class SysmocomSJA2(CardModel):
     _atrs = ["3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 4C 75 30 34 05 4B A9",
              "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 4C 75 31 33 02 51 B2",
              "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 4C 52 75 31 04 51 D5"]
+
+    @classmethod
+    def add_files(cls, rs: RuntimeState):
+        """Add sysmocom SJA2 specific files to given RuntimeState."""
+        rs.mf.add_file(DF_SYSTEM())
+        # optional USIM application
+        if 'a0000000871002' in rs.mf.applications:
+            usim_adf = rs.mf.applications['a0000000871002']
+            files_adf_usim = [
+                EF_USIM_AUTH_KEY(),
+                EF_USIM_AUTH_KEY_2G(),
+                EF_GBA_SK(),
+                EF_GBA_REC_LIST(),
+                EF_GBA_INT_KEY(),
+                EF_USIM_SQN(),
+            ]
+            usim_adf.add_files(files_adf_usim)
+        # optional ISIM application
+        if 'a0000000871004' in rs.mf.applications:
+            isim_adf = rs.mf.applications['a0000000871004']
+            files_adf_isim = [
+                EF_USIM_AUTH_KEY(name='EF.ISIM_AUTH_KEY'),
+                EF_USIM_AUTH_KEY_2G(name='EF.ISIM_AUTH_KEY_2G'),
+                EF_USIM_SQN(name='EF.ISIM_SQN'),
+            ]
+            isim_adf.add_files(files_adf_isim)
+
+class SysmocomSJA5(CardModel):
+    _atrs = ["3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 35 75 30 35 02 51 CC",
+             "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 35 75 30 35 02 65 F8",
+             "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 35 75 30 35 02 59 C4"]
 
     @classmethod
     def add_files(cls, rs: RuntimeState):

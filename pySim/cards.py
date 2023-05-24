@@ -1656,11 +1656,38 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 
         return
 
+class SysmoISIMSJA5(SysmoISIMSJA2):
+    """
+    sysmocom sysmoISIM-SJA5
+    """
+
+    name = 'sysmoISIM-SJA5'
+
+    @classmethod
+    def autodetect(kls, scc):
+        try:
+            # Try card model #1 (9FJ)
+            atr = "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 35 75 30 35 02 51 CC"
+            if scc.get_atr() == toBytes(atr):
+                return kls(scc)
+            # Try card model #2 (SLM17)
+            atr = "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 35 75 30 35 02 65 F8"
+            if scc.get_atr() == toBytes(atr):
+                return kls(scc)
+            # Try card model #3 (9FV)
+            atr = "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 35 75 30 35 02 59 C4"
+            if scc.get_atr() == toBytes(atr):
+                return kls(scc)
+        except:
+            return None
+        return None
+
 
 # In order for autodetection ...
 _cards_classes = [FakeMagicSim, SuperSim, MagicSim, GrcardSim,
                   SysmoSIMgr1, SysmoSIMgr2, SysmoUSIMgr1, SysmoUSIMSJS1,
-                  FairwavesSIM, OpenCellsSim, WavemobileSim, SysmoISIMSJA2]
+                  FairwavesSIM, OpenCellsSim, WavemobileSim, SysmoISIMSJA2,
+                  SysmoISIMSJA5]
 
 
 def card_detect(ctype, scc):
