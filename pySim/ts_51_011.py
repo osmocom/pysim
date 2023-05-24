@@ -1169,7 +1169,7 @@ class DF_GSM(CardDF):
             TransparentEF('6f41', None, 'EF.PUCT',
                           'Price per unit and currency table', size=(5, 5)),
             EF_CBMI(),
-            TransparentEF('6f7f', None, 'EF.BCCH',
+            TransparentEF('6f74', None, 'EF.BCCH',
                           'Broadcast control channels', size=(16, 16)),
             EF_ACC(),
             EF_PLMNsel('6f7b', None, 'EF.FPLMN',
