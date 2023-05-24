@@ -1532,7 +1532,7 @@ class ADF_USIM(CardADF):
             EF_MMSICP(service=52),
             EF_MMSUP(service=52),
             EF_MMSUCP(service=(52, 55)),
-            EF_NIA(service=56),
+            EF_NIA(service=56, fid='6fd3'),
             EF_VGCS(service=57),
             EF_VGCSS(service=57),
             EF_VGCS('6fb3', None, 'EF.VBS', 'Voice Broadcast Service', service=58),
