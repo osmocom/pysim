@@ -1052,7 +1052,7 @@ class EF_UAC_AIC(TransparentEF):
 
 # TS 31.102 Section 4.4.11.9
 class EF_OPL5G(LinFixedEF):
-    def __init__(self, fid='6f08', sfid=0x08, name='EF.OPL5G', desc='5GS Operator PLMN List', **kwargs):
+    def __init__(self, fid='4f08', sfid=0x08, name='EF.OPL5G', desc='5GS Operator PLMN List', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(10, None), **kwargs)
         Tai = Struct('mcc_mnc'/BcdAdapter(Bytes(3)), 'tac_min'/HexAdapter(Bytes(3)),
                      'tac_max'/HexAdapter(Bytes(3)))
