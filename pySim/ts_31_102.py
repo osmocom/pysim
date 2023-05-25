@@ -1451,6 +1451,18 @@ class DF_USIM_5GS(CardDF):
         self.add_files(files)
 
 
+class DF_SAIP(CardDF):
+    """This is not really TS 31.102 but part of the eUICC Profile Package: Interoperable Format Technical
+    Specification as released by TCA (formerly SIMalliance)"""
+    def __init__(self, fid='5FD0', name='DF.SAIP', desc='SIMalliance Interoperable Profile', **kwargs):
+        super().__init__(fid=fid, name=name, desc=desc, **kwargs)
+        files = [
+            # uses the same file format as DF.5GS/EF_SUCI_Calc_Info, but different FID
+            EF_SUCI_Calc_Info(fid='4f01')
+        ]
+        self.add_files(files)
+
+
 class ADF_USIM(CardADF):
     def __init__(self, aid='a0000000871002', name='ADF.USIM', fid=None, sfid=None,
                  desc='USIM Application'):
@@ -1576,6 +1588,7 @@ class ADF_USIM(CardADF):
             DF_USIM_5GS(service=[122, 123, 124, 125, 126, 127, 129, 130]),
             DF_SNPN(service=[143,146]),
             DF_5G_ProSe(service=139),
+            DF_SAIP(),
         ]
         self.add_files(files)
 
