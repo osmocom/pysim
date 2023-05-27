@@ -1080,6 +1080,16 @@ class EF_SUPI_NAI(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_SUPI_NAI.NAI_TLV_Collection
 
+# TS 31.102 Section 4.4.11.11
+class EF_Routing_Indicator(TransparentEF):
+    def __init__(self, fid='4f0a', sfid=0x0a, name='EF.Routing_Indicator', desc='Routing Indicator', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        # 3GPP TS 24.501 Table 9.11.3.4.1:
+        # Routing Indicator shall consist of 1 to 4 digits. The coding of this field is the
+        # responsibility of home network operator but BCD coding shall be used. If a network
+        # operator decides to assign less than 4 digits to Routing Indicator, the remaining digits
+        # shall be coded as "1111" to fill the 4 digits coding of Routing Indicator
+        self._construct = Struct('routing_indicator'/BcdAdapter(Rpad(Bytes(2))), 'rfu'/HexAdapter(Bytes(2)))
 
 # TS 31.102 Section 4.4.11.13
 class EF_TN3GPPSNN(TransparentEF):
@@ -1434,8 +1444,7 @@ class DF_USIM_5GS(CardDF):
             EF_SUCI_Calc_Info(service=124),
             EF_OPL5G(service=129),
             EF_SUPI_NAI(service=130),
-            TransparentEF('4F0A', 0x0a, 'EF.Routing_Indicator',
-                          'Routing Indicator', size=(4, 4), service=124),
+            EF_Routing_Indicator(service=124),
             TransparentEF('4F0B', 0x0b, 'EF.URSP',
                           'UE Route Selector Policies per PLMN', service=132),
             EF_TN3GPPSNN(service=133),

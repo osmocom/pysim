@@ -132,10 +132,8 @@ the Routing Indicator to 0x71:
 
 ::
 
-   pySIM-shell (MF/ADF.USIM/DF.5GS/EF.Routing_Indicator)> update_binary 0071ffff
+   pySIM-shell (MF/ADF.USIM/DF.5GS/EF.Routing_Indicator)> update_binary 17ffffff
 
-(the encoding might be different, see `this
-comment <https://gist.github.com/mrlnc/01d6300f1904f154d969ff205136b753?permalink_comment_id=4050795#gistcomment-4050795>`__)
 You can also set the routing indicator to **0x0**, which is *valid* and
 means “routing indicator not specified”, leaving it to the modem.
 
