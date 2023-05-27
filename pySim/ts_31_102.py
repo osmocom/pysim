@@ -1066,11 +1066,11 @@ class EF_SUPI_NAI(TransparentEF):
 
     class GlobalLineIdentifier(TLV_IE, tag=0x81):
         # TS 23.003 clause 28.16.2
-        pass
+        _construct = GreedyString("utf8")
 
     class GlobalCableIdentifier(TLV_IE, tag=0x82):
         # TS 23.003 clause 28.15.2
-        pass
+        _construct = GreedyString("utf8")
 
     class NAI_TLV_Collection(TLV_IE_Collection,
                              nested=[NetworkSpecificIdentifier, GlobalLineIdentifier, GlobalCableIdentifier]):
