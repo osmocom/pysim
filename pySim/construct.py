@@ -87,6 +87,26 @@ class Rpad(Adapter):
                 len(obj), self.sizeof()))
         return obj + self.pattern * (self.sizeof() - len(obj))
 
+class MultiplyAdapter(Adapter):
+    """
+    Decoder multiplies by multiplicator
+    Encoder divides by multiplicator
+
+    Parameters:
+        subcon: Subconstruct as defined by construct library
+        multiplier: Multiplier to apply to raw encoded value
+    """
+
+    def __init__(self, subcon, multiplicator):
+        super().__init__(subcon)
+        self.multiplicator = multiplicator
+
+    def _decode(self, obj, context, path):
+        return obj * 8
+
+    def _encode(self, obj, context, path):
+        return obj // 8
+
 
 class GsmStringAdapter(Adapter):
     """Convert GSM 03.38 encoded bytes to a string."""

@@ -86,19 +86,15 @@ class EF_MILENAGE_CFG(TransparentEF):
 class EF_0348_KEY(LinFixedEF):
     def __init__(self, fid='6f22', name='EF.0348_KEY', desc='TS 03.48 OTA Keys'):
         super().__init__(fid, name=name, desc=desc, rec_len=(27, 35))
-
-    def _decode_record_bin(self, raw_bin_data, **kwargs):
-        u = unpack('!BBB', raw_bin_data[0:3])
-        key_algo = (u[2] >> 6) & 1
-        key_length = ((u[2] >> 3) & 3) * 8
-        return {'sec_domain': u[0],
-                'key_set_version': u[1],
-                'key_type': key_type2str[u[2] & 3],
-                'key_length': key_length,
-                'algorithm': key_algo2str[key_algo],
-                'mac_length': mac_length[(u[2] >> 7)],
-                'key': raw_bin_data[3:key_length].hex()
-                }
+        KeyLenAndType = BitStruct('mac_length'/Mapping(Bit, {8:0, 4:1}),
+                                  'algorithm'/Enum(Bit, des=0, aes=1),
+                                  'key_length'/MultiplyAdapter(BitsInteger(3), 8),
+                                  '_rfu'/BitsRFU(1),
+                                  'key_type'/Enum(BitsInteger(2), kic=0, kid=1, kik=2, any=3))
+        self._construct = Struct('security_domain'/Int8ub,
+                                 'key_set_version'/Int8ub,
+                                 'key_len_and_type'/KeyLenAndType,
+                                 'key'/HexAdapter(Bytes(this.key_len_and_type.key_length)))
 
 
 class EF_0348_COUNT(LinFixedEF):
