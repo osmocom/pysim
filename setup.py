@@ -17,11 +17,11 @@ setup(
         "construct >= 2.9.51",
         "bidict",
         "gsm0338",
-        "pyyaml >= 5.1"
+        "pyyaml >= 5.1",
         "termcolor",
         "colorlog",
-        "pycryptodome"
-        "packaging"
+        "pycryptodome",
+        "packaging",
     ],
     scripts=[
         'pySim-prog.py',
