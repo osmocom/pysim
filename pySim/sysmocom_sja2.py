@@ -183,13 +183,43 @@ class EF_USIM_SQN(TransparentEF):
 class EF_USIM_AUTH_KEY(TransparentEF):
     def __init__(self, fid='af20', name='EF.USIM_AUTH_KEY'):
         super().__init__(fid, name=name, desc='USIM authentication key')
+        Algorithm = Enum(Nibble, milenage=4, sha1_aka=5, tuak=6, xor=15)
         CfgByte = BitStruct(Padding(1), 'only_4bytes_res_in_3g'/Bit,
-                            'use_sres_deriv_func_2_in_3g'/Bit,
-                            'use_opc_instead_of_op'/Bit,
-                            'algorithm'/Enum(Nibble, milenage=4, sha1_aka=5, tuak=6, xor=15))
+                            'sres_deriv_func_2_in_3g'/Mapping(Bit, {1:0, 2:1}),
+                            'use_opc_instead_of_op'/Mapping(Bit, {False:0, True:1}),
+                            'algorithm'/Algorithm)
         self._construct = Struct('cfg'/CfgByte,
                                  'key'/HexAdapter(Bytes(16)),
                                  'op_opc' /HexAdapter(Bytes(16)))
+        # TUAK has a rather different layout for the data, so we define a different
+        # construct below and use explicit _{decode,encode}_bin() methods for separating
+        # the TUAK and non-TUAK situation
+        CfgByteTuak = BitStruct(Padding(1),
+                                'key_length'/Mapping(Bit, {128:0, 256:1}),
+                                'sres_deriv_func_in_3g'/Mapping(Bit, {1:0, 2:1}),
+                                'use_opc_instead_of_op'/Mapping(Bit, {False:0, True:1}),
+                                'algorithm'/Algorithm)
+        TuakCfgByte = BitStruct(Padding(1),
+                                'ck_and_ik_size'/Mapping(Bit, {128:0, 256:1}),
+                                'mac_size'/Mapping(BitsInteger(3), {64:0, 128:1, 256:2}),
+                                'res_size'/Mapping(BitsInteger(3), {32:0, 64:1, 128:2, 256:3}))
+        self._constr_tuak = Struct('cfg'/CfgByteTuak,
+                                   'tuak_cfg'/TuakCfgByte,
+                                   'num_of_keccak_iterations'/Int8ub,
+                                   'op_opc'/HexAdapter(Bytes(32)),
+                                   'k'/HexAdapter(Bytes(32)))
+
+    def _decode_bin(self, raw_bin_data: bytearray) -> dict:
+        if raw_bin_data[0] & 0x0F == 0x06:
+            return parse_construct(self._constr_tuak, raw_bin_data)
+        else:
+            return parse_construct(self._construct, raw_bin_data)
+
+    def _encode_bin(self, abstract_data: dict) -> bytearray:
+        if abstract_data['cfg']['algorithm'] == 'tuak':
+            return self._constr_tuak.build(abstract_data)
+        else:
+            return self._construct.build(abstract_data)
 
 
 class EF_USIM_AUTH_KEY_2G(TransparentEF):
