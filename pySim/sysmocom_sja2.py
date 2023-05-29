@@ -186,7 +186,7 @@ class EF_USIM_AUTH_KEY(TransparentEF):
         CfgByte = BitStruct(Padding(1), 'only_4bytes_res_in_3g'/Bit,
                             'use_sres_deriv_func_2_in_3g'/Bit,
                             'use_opc_instead_of_op'/Bit,
-                            'algorithm'/Enum(Nibble, milenage=4, sha1_aka=5, xor=15))
+                            'algorithm'/Enum(Nibble, milenage=4, sha1_aka=5, tuak=6, xor=15))
         self._construct = Struct('cfg'/CfgByte,
                                  'key'/HexAdapter(Bytes(16)),
                                  'op_opc' /HexAdapter(Bytes(16)))
@@ -198,7 +198,7 @@ class EF_USIM_AUTH_KEY_2G(TransparentEF):
         CfgByte = BitStruct(Padding(1), 'only_4bytes_res_in_3g'/Bit,
                             'use_sres_deriv_func_2_in_3g'/Bit,
                             'use_opc_instead_of_op'/Bit,
-                            'algorithm'/Enum(Nibble, milenage=4, comp128v1=1, comp128v2=2, comp128v3=3))
+                            'algorithm'/Enum(Nibble, milenage=4, comp128v1=1, comp128v2=2, comp128v3=3, xor=14))
         self._construct = Struct('cfg'/CfgByte,
                                  'key'/HexAdapter(Bytes(16)),
                                  'op_opc' /HexAdapter(Bytes(16)))
