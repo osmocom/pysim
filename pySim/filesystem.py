@@ -1352,7 +1352,7 @@ class RuntimeState:
                 if sw == "9000":
                     print(" %s: %s" % (f.name, f.aid))
                     apps_taken.append(f)
-            except SwMatchError:
+            except (SwMatchError, ProtocolError):
                 pass
         return apps_taken
 

@@ -148,8 +148,9 @@ class ModemATCommandLink(LinkBase):
         log.debug('Sending command: %s',  cmd)
 
         # Send AT+CSIM command to the modem
-        # TODO: also handle +CME ERROR: <err>
         rsp = self.send_at_cmd(cmd)
+        if rsp[-1].startswith(b'+CME ERROR:'):
+            raise ProtocolError('AT+CSIM failed with: %s' % str(rsp))
         if len(rsp) != 2 or rsp[-1] != b'OK':
             raise ReaderError('APDU transfer failed: %s' % str(rsp))
         rsp = rsp[0]  # Get rid of b'OK'
