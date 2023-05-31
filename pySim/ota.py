@@ -1,6 +1,6 @@
 """Code related to SIM/UICC OTA according to TS 102 225 + TS 31.115."""
 
-# (C) 2021-2022 by Harald Welte <laforge@osmocom.org>
+# (C) 2021-2023 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -305,7 +305,7 @@ class OtaAlgoCryptAES(OtaAlgoCrypt):
 class OtaAlgoAuthAES(OtaAlgoAuth):
     name = 'AES'
     enum_name = 'aes_cmac'
-    blocksize = 16 # TODO: is this needed?
+    blocksize = 1 # AES CMAC doesn't need any padding by us
     def _sign(self, data:bytes) -> bytes:
         cmac = CMAC.new(self.otak.kid, ciphermod=AES, mac_len=8)
         cmac.update(data)
