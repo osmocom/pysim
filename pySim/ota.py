@@ -150,8 +150,8 @@ class OtaDialect(abc.ABC):
         pass
 
 
-from Crypto.Cipher import DES, DES3, AES
-from Crypto.Hash import CMAC
+from Cryptodome.Cipher import DES, DES3, AES
+from Cryptodome.Hash import CMAC
 
 class OtaAlgo(abc.ABC):
     iv = property(lambda self: bytes([0] * self.blocksize))

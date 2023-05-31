@@ -20,7 +20,7 @@ setup(
         "pyyaml >= 5.1",
         "termcolor",
         "colorlog",
-        "pycryptodome",
+        "pycryptodomex",
         "packaging",
     ],
     scripts=[

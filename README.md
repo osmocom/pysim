@@ -46,7 +46,7 @@ Please install the following dependencies:
  - termcolor
  - colorlog
  - packaging
- - pycryptodome
+ - pycryptodomex
 
 Example for Debian:
 ```sh
@@ -54,6 +54,7 @@ sudo apt-get install --no-install-recommends \
 	pcscd libpcsclite-dev \
 	python3 \
 	python3-setuptools \
+	python3-pycryptodome \
 	python3-pyscard \
 	python3-pip
 pip3 install --user -r requirements.txt
