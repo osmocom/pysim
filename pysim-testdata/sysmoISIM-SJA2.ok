@@ -103,7 +103,7 @@ SIM Service Table: ff33ffff3f003f0f300cf0c3f00000
 	Service 59 - MMS User Connectivity Parameters
 
 EHPLMN:
-	00f110 # MCC: 001 MNC: 001
+	00f110 # MCC: 001 MNC: 01
 	ffffff # unused
 	ffffff # unused
 	ffffff # unused

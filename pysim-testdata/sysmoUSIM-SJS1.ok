@@ -105,10 +105,10 @@ SIM Service Table: ff3fffff3f003f1ff00c00c0f00000
 	Service 59 - MMS User Connectivity Parameters
 
 FPLMN:
-	62f201 # MCC: 262 MNC: 010
-	62f202 # MCC: 262 MNC: 020
-	62f203 # MCC: 262 MNC: 030
-	62f207 # MCC: 262 MNC: 070
+	62f201 # MCC: 262 MNC: 10
+	62f202 # MCC: 262 MNC: 20
+	62f203 # MCC: 262 MNC: 30
+	62f207 # MCC: 262 MNC: 70
 
 USIM Service Table: 9e6b1dfc67f6580000
 	Service 2 - Fixed Dialling Numbers (FDN)

@@ -594,8 +594,8 @@ def dec_xplmn(threehexbytes: Hexstr) -> dict:
     plmn_chars = 6
     # first three bytes (six ascii hex chars)
     plmn_str = threehexbytes[:plmn_chars]
-    res['mcc'] = dec_mcc_from_plmn(plmn_str)
-    res['mnc'] = dec_mnc_from_plmn(plmn_str)
+    res['mcc'] = dec_mcc_from_plmn_str(plmn_str)
+    res['mnc'] = dec_mnc_from_plmn_str(plmn_str)
     return res
 
 
@@ -603,11 +603,10 @@ def format_xplmn(hexstr: Hexstr) -> str:
     s = ""
     for rec_data in hexstr_to_Nbytearr(hexstr, 3):
         rec_info = dec_xplmn(rec_data)
-        if rec_info['mcc'] == 0xFFF and rec_info['mnc'] == 0xFFF:
+        if not rec_info['mcc'] and not rec_info['mnc']:
             rec_str = "unused"
         else:
-            rec_str = "MCC: %03d MNC: %03d" % (
-                rec_info['mcc'], rec_info['mnc'])
+            rec_str = "MCC: %s MNC: %s" % (rec_info['mcc'], rec_info['mnc'])
         s += "\t%s # %s\n" % (rec_data, rec_str)
     return s
 
