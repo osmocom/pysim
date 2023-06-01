@@ -104,6 +104,7 @@ class SerialSimLink(LinkBase):
             raise NoCardError()
         elif rv < 0:
             raise ProtocolError()
+        return rv
 
     def _reset_card(self):
         self._atr = None
