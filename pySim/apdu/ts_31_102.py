@@ -108,7 +108,7 @@ class UsimAuthenticateOdd(ApduCommand, n='AUTHENTICATE', ins=0x89, cla=['0X', '4
 class UsimGetIdentity(ApduCommand, n='GET IDENTITY', ins=0x78, cla=['8X', 'CX', 'EX']):
     _apdu_case = 4
     _construct_p2 = BitStruct('scope'/Enum(Flag, mf=0, df_adf_specific=1),
-                              'identity_context'/Enum(BitsInteger(7), suci=1))
+                              'identity_context'/Enum(BitsInteger(7), suci=1, suci_5g_nswo=2))
     _tlv_rsp = SUCI_TlvDataObject
 
 ApduCommands = ApduCommandSet('TS 31.102', cmds=[UsimAuthenticateEven, UsimAuthenticateOdd,
