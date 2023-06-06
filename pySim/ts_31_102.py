@@ -1655,7 +1655,7 @@ class ADF_USIM(CardADF):
             This emulates a terminal (modem/phone) having received a SMS
             with a PID of 'SMS for the SIM card'.  You can use this
             command in the context of testing OTA related features
-            without a modem/phone or a cellular netwokr."""
+            without a modem/phone or a cellular network."""
             tpdu_ie = SMS_TPDU()
             tpdu_ie.from_bytes(h2b(opts.TPDU))
             dev_ids = DeviceIdentities(
