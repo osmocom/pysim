@@ -219,6 +219,9 @@ class PysimApp(cmd2.Cmd):
             self._onchange_conserve_write(
                 'conserve_write', False, self.conserve_write)
             self._onchange_apdu_trace('apdu_trace', False, self.apdu_trace)
+            if self.rs.profile:
+                for cmd_set in self.rs.profile.shell_cmdsets:
+                    self.register_command_set(cmd_set)
             self.register_command_set(Iso7816Commands())
             self.register_command_set(Ts102222Commands())
             self.register_command_set(PySimCommands())
@@ -283,6 +286,9 @@ class PysimApp(cmd2.Cmd):
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_equip(self, opts):
         """Equip pySim-shell with card"""
+        if self.rs.profile:
+            for cmd_set in self.rs.profile.shell_cmdsets:
+                self.unregister_command_set(cmd_set)
         rs, card = init_card(sl)
         self.equip(card, rs)
 
@@ -934,20 +940,6 @@ class Iso7816Commands(CommandSet):
         fcp_dec = self._cmd.lchan.status()
         self._cmd.poutput_json(fcp_dec)
 
-    suspend_uicc_parser = argparse.ArgumentParser()
-    suspend_uicc_parser.add_argument('--min-duration-secs', type=int, default=60,
-                                     help='Proposed minimum duration of suspension')
-    suspend_uicc_parser.add_argument('--max-duration-secs', type=int, default=24*60*60,
-                                     help='Proposed maximum duration of suspension')
-
-    # not ISO7816-4 but TS 102 221
-    @cmd2.with_argparser(suspend_uicc_parser)
-    def do_suspend_uicc(self, opts):
-        """Perform the SUSPEND UICC command. Only supported on some UICC."""
-        (duration, token, sw) = self._cmd.card._scc.suspend_uicc(min_len_secs=opts.min_duration_secs,
-                                                                 max_len_secs=opts.max_duration_secs)
-        self._cmd.poutput(
-            'Negotiated Duration: %u secs, Token: %s, SW: %s' % (duration, token, sw))
 
 class Proact(ProactiveHandler):
     def receive_fetch(self, pcmd: ProactiveCommand):

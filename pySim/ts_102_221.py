@@ -838,7 +838,8 @@ class CardProfileUICC(CardProfile):
         }
 
         super().__init__(name, desc='ETSI TS 102 221', cla="00",
-                         sel_ctrl="0004", files_in_mf=files, sw=sw)
+                         sel_ctrl="0004", files_in_mf=files, sw=sw,
+                         shell_cmdsets = [self.AddlShellCommands()])
 
     @staticmethod
     def decode_select_response(resp_hex: str) -> object:
@@ -851,6 +852,23 @@ class CardProfileUICC(CardProfile):
     @staticmethod
     def match_with_card(scc: SimCardCommands) -> bool:
         return match_uicc(scc)
+
+    @with_default_category('TS 102 221 Specific Commands')
+    class AddlShellCommands(CommandSet):
+        suspend_uicc_parser = argparse.ArgumentParser()
+        suspend_uicc_parser.add_argument('--min-duration-secs', type=int, default=60,
+                                         help='Proposed minimum duration of suspension')
+        suspend_uicc_parser.add_argument('--max-duration-secs', type=int, default=24*60*60,
+                                         help='Proposed maximum duration of suspension')
+
+        # not ISO7816-4 but TS 102 221
+        @cmd2.with_argparser(suspend_uicc_parser)
+        def do_suspend_uicc(self, opts):
+            """Perform the SUSPEND UICC command. Only supported on some UICC."""
+            (duration, token, sw) = self._cmd.card._scc.suspend_uicc(min_len_secs=opts.min_duration_secs,
+                                                                     max_len_secs=opts.max_duration_secs)
+            self._cmd.poutput(
+                'Negotiated Duration: %u secs, Token: %s, SW: %s' % (duration, token, sw))
 
 
 class CardProfileUICCSIM(CardProfileUICC):

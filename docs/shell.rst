@@ -199,6 +199,11 @@ close_channel
    :func: Iso7816Commands.close_chan_parser
 
 
+TS 102 221 commands
+-------------------
+
+These are commands as specified in ETSI TS 102 221, the core UICC specification.
+
 suspend_uicc
 ~~~~~~~~~~~~
 This command allows you to perform the SUSPEND UICC command on the card.  This is a relatively
@@ -209,8 +214,8 @@ The pySim command just sends that SUSPEND UICC command and doesn't perform the f
 including the electrical power down.
 
 .. argparse::
-   :module: pySim-shell
-   :func: Iso7816Commands.suspend_uicc_parser
+   :module: pySim.ts_102_221
+   :func: CardProfileUICC.AddlShellCommands.suspend_uicc_parser
 
 
 
