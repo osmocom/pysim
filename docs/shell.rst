@@ -217,6 +217,20 @@ including the electrical power down.
    :module: pySim.ts_102_221
    :func: CardProfileUICC.AddlShellCommands.suspend_uicc_parser
 
+resume_uicc
+~~~~~~~~~~~
+This command allows you to perform the SUSPEND UICC command for the RESUME operation on the card.
+
+Suspend/Resume is a relatively recent power-saving addition to the UICC specifications, allowing for
+suspend/resume while maintaining state, as opposed to a full power-off (deactivate) and power-on
+(activate) of the card.
+
+The pySim command just sends that SUSPEND UICC (RESUME) command and doesn't perform the full related
+sequence including the electrical power down.
+
+.. argparse::
+   :module: pySim.ts_102_221
+   :func: CardProfileUICC.AddlShellCommands.resume_uicc_parser
 
 
 pySim commands

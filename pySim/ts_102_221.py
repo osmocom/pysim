@@ -864,11 +864,21 @@ class CardProfileUICC(CardProfile):
         # not ISO7816-4 but TS 102 221
         @cmd2.with_argparser(suspend_uicc_parser)
         def do_suspend_uicc(self, opts):
-            """Perform the SUSPEND UICC command. Only supported on some UICC."""
+            """Perform the SUSPEND UICC command. Only supported on some UICC (check EF.UMPC)."""
             (duration, token, sw) = self._cmd.card._scc.suspend_uicc(min_len_secs=opts.min_duration_secs,
                                                                      max_len_secs=opts.max_duration_secs)
             self._cmd.poutput(
                 'Negotiated Duration: %u secs, Token: %s, SW: %s' % (duration, token, sw))
+
+        resume_uicc_parser = argparse.ArgumentParser()
+        resume_uicc_parser.add_argument('token', type=str, help='Token provided during SUSPEND')
+
+        @cmd2.with_argparser(resume_uicc_parser)
+        def do_resume_uicc(self, opts):
+            """Perform the REUSME UICC operation. Only supported on some UICC. Also: A power-cycle
+            of the card is required between SUSPEND and RESUME, and only very few non-RESUME
+            commands are permitted between SUSPEND and RESUME.  See TS 102 221 Section 11.1.22."""
+            self._cmd.card._scc.resume_uicc(opts.token)
 
 
 class CardProfileUICCSIM(CardProfileUICC):

@@ -631,6 +631,13 @@ class SimCardCommands:
         resume_token = data[4:]
         return (negotiated_duration_secs, resume_token, sw)
 
+    # ETSI TS 102 221 11.1.22
+    def resume_uicc(self, token: str):
+        """Send SUSPEND UICC (resume) to the card."""
+        if len(h2b(token)) != 8:
+            raise ValueError("Token must be 8 bytes long")
+        data, sw = self._tp.send_apdu_checksw('8076010008' + token)
+
     def get_data(self, tag: int, cla: int = 0x00):
         data, sw = self._tp.send_apdu('%02xca%04x00' % (cla, tag))
         return (data, sw)
