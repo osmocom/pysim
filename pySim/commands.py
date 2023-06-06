@@ -610,7 +610,7 @@ class SimCardCommands:
 
         def decode_duration(enc: Hexstr) -> int:
             time_unit = enc[:2]
-            length = h2i(enc[2:4])
+            length = h2i(enc[2:4])[0]
             if time_unit == '04':
                 return length * 10*24*60*60
             elif time_unit == '03':
