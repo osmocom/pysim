@@ -204,7 +204,7 @@ class PysimApp(cmd2.Cmd):
         if self.rs:
             lchan = self.rs.lchan[0]
             lchan.unregister_cmds(self)
-        for cmds in [Iso7816Commands, PySimCommands]:
+        for cmds in [Iso7816Commands, Ts102222Commands, PySimCommands]:
             cmd_set = self.find_commandsets(cmds)
             if cmd_set:
                 self.unregister_command_set(cmd_set[0])
