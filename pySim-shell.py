@@ -61,6 +61,7 @@ from pySim.ts_102_221 import CardProfileUICC
 from pySim.ts_102_222 import Ts102222Commands
 from pySim.ts_31_102 import CardApplicationUSIM
 from pySim.ts_31_103 import CardApplicationISIM
+from pySim.ts_31_104 import CardApplicationHPSIM
 from pySim.ara_m import CardApplicationARAM
 from pySim.global_platform import CardApplicationISD
 from pySim.gsm_r import DF_EIRENE
@@ -123,6 +124,7 @@ def init_card(sl):
     if isinstance(profile, CardProfileUICC):
         profile.add_application(CardApplicationUSIM())
         profile.add_application(CardApplicationISIM())
+        profile.add_application(CardApplicationHPSIM())
         profile.add_application(CardApplicationARAM())
         profile.add_application(CardApplicationISD())
 
