@@ -4,6 +4,69 @@ import unittest
 from pySim.utils import h2b, b2h
 from pySim.ota import *
 
+# pre-defined SPI values for use in test cases below
+SPI_CC_POR_CIPHERED_CC = {
+    'counter':'no_counter',
+    'ciphering':True,
+    'rc_cc_ds': 'cc',
+    'por_in_submit':False,
+    'por_shall_be_ciphered':True,
+    'por_rc_cc_ds': 'cc',
+    'por': 'por_required'
+    }
+
+SPI_CC_POR_UNCIPHERED_CC = {
+    'counter':'no_counter',
+    'ciphering':True,
+    'rc_cc_ds': 'cc',
+    'por_in_submit':False,
+    'por_shall_be_ciphered':False,
+    'por_rc_cc_ds': 'cc',
+    'por': 'por_required'
+}
+
+SPI_CC_POR_UNCIPHERED_NOCC = {
+    'counter':'no_counter',
+    'ciphering':True,
+    'rc_cc_ds': 'cc',
+    'por_in_submit':False,
+    'por_shall_be_ciphered':False,
+    'por_rc_cc_ds': 'no_rc_cc_ds',
+    'por': 'por_required'
+}
+
+
+class Test_SMS_AES128(unittest.TestCase):
+    tar = h2b('B00011')
+    """Test the OtaDialectSms for AES128 algorithms."""
+    def __init__(self, foo, **kwargs):
+        super().__init__(foo, **kwargs)
+        self.od = OtaKeyset(algo_crypt='aes_cbc', kic_idx=2,
+                            algo_auth='aes_cmac', kid_idx=2,
+                            kic=h2b('200102030405060708090a0b0c0d0e0f'),
+                            kid=h2b('201102030405060708090a0b0c0d0e0f'))
+        self.dialect = OtaDialectSms()
+        self.spi_base = SPI_CC_POR_CIPHERED_CC
+
+    def _check_response(self, r, d):
+        self.assertEqual(d['number_of_commands'], 1)
+        self.assertEqual(d['last_status_word'], '6132')
+        self.assertEqual(d['last_response_data'], u'')
+        self.assertEqual(r['response_status'], 'por_ok')
+
+    def test_resp_aes128_ciphered(self):
+        spi = self.spi_base
+        r, d = self.dialect.decode_resp(self.od, spi, '027100002412b00011ebc6b497e2cad7aedf36ace0e3a29b38853f0fe9ccde81913be5702b73abce1f')
+        self._check_response(r, d)
+
+    def test_cmd_aes128_ciphered(self):
+        spi = self.spi_base
+        r = self.dialect.encode_cmd(self.od, self.tar, spi, h2b('00a40004023f00'))
+        self.assertEqual(b2h(r), '00281506192222b00011e87cceebb2d93083011ce294f93fc4d8de80da1abae8c37ca3e72ec4432e5058')
+
+
+
+
 class Test_SMS_3DES(unittest.TestCase):
     tar = h2b('b00000')
     """Test the OtaDialectSms for 3DES algorithms."""
