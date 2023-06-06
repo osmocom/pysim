@@ -1664,6 +1664,23 @@ class ADF_USIM(CardADF):
             (data, sw) = self._cmd.card._scc.envelope(b2h(sms_dl.to_tlv()))
             self._cmd.poutput('SW: %s, data: %s' % (sw, data))
 
+        get_id_parser = argparse.ArgumentParser()
+        get_id_parser.add_argument("--nswo-context", action='store_true')
+
+        @cmd2.with_argparser(get_id_parser)
+        def do_get_identity(self, opts):
+            """Send a GET IDENTITY command to the card. This is part of the
+            procedure for "SUCI calculation performed on USIM" supported
+            by USIM with support for both EF.UST service 124 and 125."""
+            context = 0x01 # SUCI
+            if opts.nswo_context:
+                context = 0x02 # SUCI 5G NSWO
+            (data, sw) = self._cmd.card._scc.get_identity(context)
+            do = SUCI_TlvDataObject()
+            do.from_tlv(h2b(data))
+            do_d = do.to_dict()
+            self._cmd.poutput('SUCI TLV Data Object: %s' % do_d['suci__tlv_data_object'])
+
 
 # TS 31.102 Section 7.3
 sw_usim = {

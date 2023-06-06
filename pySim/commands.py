@@ -641,3 +641,8 @@ class SimCardCommands:
     def get_data(self, tag: int, cla: int = 0x00):
         data, sw = self._tp.send_apdu('%02xca%04x00' % (cla, tag))
         return (data, sw)
+
+    # TS 31.102 Section 7.5.2
+    def get_identity(self, context: int):
+        data, sw = self._tp.send_apdu_checksw('807800%02x00' % (context))
+        return (data, sw)

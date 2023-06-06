@@ -566,6 +566,12 @@ envelope_sms
    :module: pySim.ts_31_102
    :func: ADF_USIM.AddlShellCommands.envelope_sms_parser
 
+get_identity
+~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.ts_31_102
+   :func: ADF_USIM.AddlShellCommands.get_id_parser
+
 
 File-specific commands
 ----------------------
