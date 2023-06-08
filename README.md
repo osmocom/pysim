@@ -22,10 +22,40 @@ network, and want to configure your own SIM/USIM/ISIM/HPSIM cards for
 that network.
 
 
-Homepage and Manual
--------------------
+Homepage
+--------
 
-Please visit the [official homepage](https://osmocom.org/projects/pysim/wiki) for usage instructions, manual and examples.  The user manual can also be built locally from this source code by ``cd docs && make html latexpdf`` for HTML and PDF format, respectively.
+Please visit the [official homepage](https://osmocom.org/projects/pysim/wiki)
+for usage instructions, manual and examples.
+
+
+Documentation
+-------------
+
+The pySim user manual can be built from this very source code by means
+of sphinx (with sphinxcontrib-napoleon and sphinx-argparse).  See the
+Makefile in the 'docs' directory.
+
+A pre-rendered HTML user manual of the current pySim 'git master' is
+available from <https://downloads.osmocom.org/docs/latest/pysim/> and
+a downloadable PDF version is published at
+<https://downloads.osmocom.org/docs/latest/osmopysim-usermanual.pdf>.
+
+A slightly dated video presentation about pySim-shell can be found at
+<https://media.ccc.de/v/osmodevcall-20210409-laforge-pysim-shell>.
+
+
+pySim-shell vs. legacy tools
+----------------------------
+
+While you will find a lot of online resources still describing the use of
+pySim-prog.py and pySim-read.py, those tools are considered legacy by
+now and have by far been superseded by the much more capable
+pySim-shell.  We strongly encourage users to adopt pySim-shell, unless
+they have very specific requirements like batch programming of large
+quantities of cards, which is about the only remaining use case for the
+legacy tools.
+
 
 Git Repository
 --------------
@@ -111,32 +141,3 @@ Our coding standards are described at
 
 We are using a gerrit-based patch review process explained at
 <https://osmocom.org/projects/cellular-infrastructure/wiki/Gerrit>
-
-
-Documentation
--------------
-
-The pySim user manual can be built from this very source code by means
-of sphinx (with sphinxcontrib-napoleon and sphinx-argparse).  See the
-Makefile in the 'docs' directory.
-
-A pre-rendered HTML user manual of the current pySim 'git master' is
-available from <https://downloads.osmocom.org/docs/latest/pysim/> and
-a downloadable PDF version is published at
-<https://downloads.osmocom.org/docs/latest/osmopysim-usermanual.pdf>.
-
-A slightly dated video presentation about pySim-shell can be found at
-<https://media.ccc.de/v/osmodevcall-20210409-laforge-pysim-shell>.
-
-
-pySim-shell vs. legacy tools
-----------------------------
-
-While you will find a lot of online resources still describing the use of
-pySim-prog.py and pySim-read.py, those tools are considered legacy by
-now and have by far been superseded by the much more capable
-pySim-shell.  We strongly encourage users to adopt pySim-shell, unless
-they have very specific requirements like batch programming of large
-quantities of cards, which is about the only remaining use case for the
-legacy tools.
-
