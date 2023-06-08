@@ -1,16 +1,25 @@
-pySim - Read, Write and Browse Programmable SIM/USIM Cards
-====================================================
+pySim - Read, Write and Browse Programmable SIM/USIM/ISIM/HPSIM Cards
+=====================================================================
 
-This repository contains Python programs that can be used
-to read, program (write) and browse certain fields/parameters on so-called programmable
-SIM/USIM cards.
+This repository contains a number of Python programs that can be used
+to read, program (write) and browse all fields/parameters/files on
+SIM/USIM/ISIM/HPSIM cards used in 3GPP cellular networks from 2G to 5G.
 
-Such SIM/USIM cards are special cards, which - unlike those issued by
-regular commercial operators - come with the kind of keys that allow you
-to write the files/fields that normally only an operator can program.
+Note that the access control configuration of normal production cards
+issue by operators will restrict significantly which files a normal
+user can read, and particularly write to.
+
+The full functionality of pySim hence can only be used with on so-called
+programmable SIM/USIM/ISIM/HPSIM cards.
+
+Such SIM/USIM/ISIM/HPSIM cards are special cards, which - unlike those
+issued by regular commercial operators - come with the kind of keys that
+allow you to write the files/fields that normally only an operator can
+program.
 
 This is useful particularly if you are running your own cellular
-network, and want to issue your own SIM/USIM cards for that network.
+network, and want to configure your own SIM/USIM/ISIM/HPSIM cards for
+that network.
 
 
 Homepage and Manual
