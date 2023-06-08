@@ -207,7 +207,7 @@ class EF_USIM_AUTH_KEY(TransparentEF):
                                    'tuak_cfg'/TuakCfgByte,
                                    'num_of_keccak_iterations'/Int8ub,
                                    'op_opc'/HexAdapter(Bytes(32)),
-                                   'k'/HexAdapter(Bytes(32)))
+                                   'k'/HexAdapter(Bytes(this.cfg.key_length//8)))
 
     def _decode_bin(self, raw_bin_data: bytearray) -> dict:
         if raw_bin_data[0] & 0x0F == 0x06:
