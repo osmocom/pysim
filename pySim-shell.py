@@ -50,7 +50,7 @@ from pySim.exceptions import *
 from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args, ProactiveHandler
 from pySim.cards import card_detect, SimCard
-from pySim.utils import h2b, swap_nibbles, rpad, b2h, JsonEncoder, bertlv_parse_one, sw_match
+from pySim.utils import h2b, b2h, i2h, swap_nibbles, rpad, JsonEncoder, bertlv_parse_one, sw_match
 from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, Hexstr
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
@@ -736,8 +736,8 @@ class PySimCommands(CommandSet):
 
     def do_reset(self, opts):
         """Reset the Card."""
-        atr = self._cmd.lchan.reset(self._cmd)
-        self._cmd.poutput('Card ATR: %s' % atr)
+        atr = self._cmd.card.reset()
+        self._cmd.poutput('Card ATR: %s' % i2h(atr))
         self._cmd.update_prompt()
 
     def do_desc(self, opts):
