@@ -98,3 +98,4 @@ pySim-read usage
 .. argparse::
    :module: pySim-read
    :func: option_parser
+   :prog: pySim-read.py

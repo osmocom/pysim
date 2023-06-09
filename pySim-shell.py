@@ -949,7 +949,7 @@ class Proact(ProactiveHandler):
 
 
 
-option_parser = argparse.ArgumentParser(prog='pySim-shell', description='interactive SIM card shell',
+option_parser = argparse.ArgumentParser(description='interactive SIM card shell',
                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 argparse_add_reader_args(option_parser)
 

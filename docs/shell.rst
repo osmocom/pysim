@@ -35,6 +35,7 @@ pySim-shell has a variety of command line arguments to control
 .. argparse::
    :module: pySim-shell
    :func: option_parser
+   :prog: pySim-shell.py
 
 Usage Examples
 --------------

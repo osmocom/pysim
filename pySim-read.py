@@ -40,8 +40,7 @@ from pySim.utils import h2b, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn
 from pySim.utils import format_xplmn_w_act, dec_st
 from pySim.utils import h2s, format_ePDGSelection
 
-option_parser = argparse.ArgumentParser(prog='pySim-read',
-                                        description='Legacy tool for reading some parts of a SIM card',
+option_parser = argparse.ArgumentParser(description='Legacy tool for reading some parts of a SIM card',
                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 argparse_add_reader_args(option_parser)
 
