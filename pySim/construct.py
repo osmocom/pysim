@@ -66,26 +66,29 @@ class InvertAdapter(Adapter):
 
 class Rpad(Adapter):
     """
-    Encoder appends padding bytes (b'\\xff') up to target size.
-    Decoder removes trailing padding bytes.
+    Encoder appends padding bytes (b'\\xff') or characters up to target size.
+    Decoder removes trailing padding bytes/characters.
 
     Parameters:
         subcon: Subconstruct as defined by construct library
         pattern: set padding pattern (default: b'\\xff')
+        num_per_byte: number of 'elements' per byte. E.g. for hex nibbles: 2
     """
 
-    def __init__(self, subcon, pattern=b'\xff'):
+    def __init__(self, subcon, pattern=b'\xff', num_per_byte=1):
         super().__init__(subcon)
         self.pattern = pattern
+        self.num_per_byte = num_per_byte
 
     def _decode(self, obj, context, path):
         return obj.rstrip(self.pattern)
 
     def _encode(self, obj, context, path):
-        if len(obj) > self.sizeof():
+        target_size = self.sizeof() * self.num_per_byte
+        if len(obj) > target_size:
             raise SizeofError("Input ({}) exceeds target size ({})".format(
-                len(obj), self.sizeof()))
-        return obj + self.pattern * (self.sizeof() - len(obj))
+                len(obj), target_size))
+        return obj + self.pattern * (target_size - len(obj))
 
 class MultiplyAdapter(Adapter):
     """

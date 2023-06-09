@@ -1089,7 +1089,8 @@ class EF_Routing_Indicator(TransparentEF):
         # responsibility of home network operator but BCD coding shall be used. If a network
         # operator decides to assign less than 4 digits to Routing Indicator, the remaining digits
         # shall be coded as "1111" to fill the 4 digits coding of Routing Indicator
-        self._construct = Struct('routing_indicator'/BcdAdapter(Rpad(Bytes(2))), 'rfu'/HexAdapter(Bytes(2)))
+        self._construct = Struct('routing_indicator'/Rpad(BcdAdapter(Bytes(2)), 'f', 2),
+                                 'rfu'/HexAdapter(Bytes(2)))
 
 # TS 31.102 Section 4.4.11.13
 class EF_TN3GPPSNN(TransparentEF):
