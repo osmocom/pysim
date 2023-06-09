@@ -31,6 +31,7 @@ pySim consists of several parts:
 * a python :ref:`library<pySim library>` containing plenty of objects and methods that can be used for
   writing custom programs interfacing with SIM cards.
 * the [new] :ref:`interactive pySim-shell command line program<pySim-shell>`
+* the [new] :ref:`pySim-trace APDU trace decoder<pySim-trace>`
 * the [legacy] :ref:`pySim-prog and pySim-read tools<Legacy tools>`
 
 .. toctree::
@@ -38,6 +39,7 @@ pySim consists of several parts:
    :caption: Contents:
 
    shell
+   trace
    legacy
    library
 
