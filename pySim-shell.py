@@ -215,6 +215,10 @@ class PysimApp(Cmd2Compat):
         if self.rs:
             lchan = self.rs.lchan[0]
             lchan.unregister_cmds(self)
+            if self.rs.profile:
+                for cmd_set in self.rs.profile.shell_cmdsets:
+                    self.unregister_command_set(cmd_set)
+
         for cmds in [Iso7816Commands, Ts102222Commands, PySimCommands]:
             cmd_set = self.find_commandsets(cmds)
             if cmd_set:
