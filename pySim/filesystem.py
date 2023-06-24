@@ -649,7 +649,7 @@ class TransparentEF(CardEF):
                 with open(filename, 'w') as text_file:
                     json.dump(orig_json, text_file, indent=4)
                 # run a text editor
-                self._cmd._run_editor(filename)
+                self._cmd.run_editor(filename)
                 with open(filename, 'r') as text_file:
                     edited_json = json.load(text_file)
                 if edited_json == orig_json:
@@ -917,7 +917,7 @@ class LinFixedEF(CardEF):
                 with open(filename, 'w') as text_file:
                     json.dump(orig_json, text_file, indent=4)
                 # run a text editor
-                self._cmd._run_editor(filename)
+                self._cmd.run_editor(filename)
                 with open(filename, 'r') as text_file:
                     edited_json = json.load(text_file)
                 if edited_json == orig_json:

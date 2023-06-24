@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List
+from typing import List, Optional
 
 import json
 import traceback
@@ -144,7 +144,18 @@ def init_card(sl):
     return rs, card
 
 
-class PysimApp(cmd2.Cmd):
+class Cmd2Compat(cmd2.Cmd):
+    """Backwards-compatibility wrapper around cmd2.Cmd to support older and newer
+    releases. See https://github.com/python-cmd2/cmd2/blob/master/CHANGELOG.md"""
+    def run_editor(self, file_path: Optional[str] = None) -> None:
+        if version.parse(cmd2.__version__) < version.parse("2.0.0"):
+            # pylint: disable=no-member
+            return self._run_editor(file_path)
+        else:
+            # pylint: disable=no-member
+            return super().run_editor(file_path)
+
+class PysimApp(Cmd2Compat):
     CUSTOM_CATEGORY = 'pySim Commands'
 
     def __init__(self, card, rs, sl, ch, script=None):
