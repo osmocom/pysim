@@ -149,11 +149,18 @@ class Cmd2Compat(cmd2.Cmd):
     releases. See https://github.com/python-cmd2/cmd2/blob/master/CHANGELOG.md"""
     def run_editor(self, file_path: Optional[str] = None) -> None:
         if version.parse(cmd2.__version__) < version.parse("2.0.0"):
-            # pylint: disable=no-member
-            return self._run_editor(file_path)
+            return self._run_editor(file_path) # pylint: disable=no-member
         else:
-            # pylint: disable=no-member
-            return super().run_editor(file_path)
+            return super().run_editor(file_path) # pylint: disable=no-member
+
+class Settable2Compat(cmd2.Settable):
+    """Backwards-compatibility wrapper around cmd2.Settable to support older and newer
+    releases. See https://github.com/python-cmd2/cmd2/blob/master/CHANGELOG.md"""
+    def __init__(self, name, val_type, description, settable_object, **kwargs):
+        if version.parse(cmd2.__version__) < version.parse("2.0.0"):
+            super().__init__(name, val_type, description, **kwargs) # pylint: disable=no-value-for-parameter
+        else:
+            super().__init__(name, val_type, description, settable_object, **kwargs) # pylint: disable=too-many-function-args
 
 class PysimApp(Cmd2Compat):
     CUSTOM_CATEGORY = 'pySim Commands'
@@ -181,26 +188,13 @@ class PysimApp(Cmd2Compat):
         self.json_pretty_print = True
         self.apdu_trace = False
 
-        if version.parse(cmd2.__version__) < version.parse("2.0.0"):
-            # pylint: disable=no-value-for-parameter
-            self.add_settable(cmd2.Settable('numeric_path', bool, 'Print File IDs instead of names',
-                                            onchange_cb=self._onchange_numeric_path))
-            # pylint: disable=no-value-for-parameter
-            self.add_settable(cmd2.Settable('conserve_write', bool, 'Read and compare before write',
-                                            onchange_cb=self._onchange_conserve_write))
-            # pylint: disable=no-value-for-parameter
-            self.add_settable(cmd2.Settable('json_pretty_print', bool, 'Pretty-Print JSON output'))
-            # pylint: disable=no-value-for-parameter
-            self.add_settable(cmd2.Settable('apdu_trace', bool, 'Trace and display APDUs exchanged with card',
-                                            onchange_cb=self._onchange_apdu_trace))
-        else:
-            self.add_settable(cmd2.Settable('numeric_path', bool, 'Print File IDs instead of names', self, \
-                                            onchange_cb=self._onchange_numeric_path)) # pylint: disable=too-many-function-args
-            self.add_settable(cmd2.Settable('conserve_write', bool, 'Read and compare before write', self, \
-                                            onchange_cb=self._onchange_conserve_write)) # pylint: disable=too-many-function-args
-            self.add_settable(cmd2.Settable('json_pretty_print', bool, 'Pretty-Print JSON output', self)) # pylint: disable=too-many-function-args
-            self.add_settable(cmd2.Settable('apdu_trace', bool, 'Trace and display APDUs exchanged with card', self, \
-                                            onchange_cb=self._onchange_apdu_trace)) # pylint: disable=too-many-function-args
+        self.add_settable(Settable2Compat('numeric_path', bool, 'Print File IDs instead of names', self,
+                                          onchange_cb=self._onchange_numeric_path))
+        self.add_settable(Settable2Compat('conserve_write', bool, 'Read and compare before write', self,
+                                          onchange_cb=self._onchange_conserve_write))
+        self.add_settable(Settable2Compat('json_pretty_print', bool, 'Pretty-Print JSON output', self))
+        self.add_settable(Settable2Compat('apdu_trace', bool, 'Trace and display APDUs exchanged with card', self,
+                                          onchange_cb=self._onchange_apdu_trace))
         self.equip(card, rs)
 
     def equip(self, card, rs):
