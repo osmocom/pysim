@@ -80,8 +80,7 @@ EF_ISIM_ADF_map = {
 
 # TS 31.103 Section 4.2.2
 class EF_IMPI(TransparentEF):
-    # FIXME: re-encode fails with "string encoding failed, expected unicode string"
-    _test_decode = [
+    _test_de_encode = [
         ( '803137333830303630303030303031303140696d732e6d6e633030302e6d63633733382e336770706e6574776f726b2e6f7267',
           { "nai": "738006000000101@ims.mnc000.mcc738.3gppnetwork.org" } ),
     ]
@@ -94,8 +93,7 @@ class EF_IMPI(TransparentEF):
 
 # TS 31.103 Section 4.2.3
 class EF_DOMAIN(TransparentEF):
-    # FIXME: re-encode fails with "string encoding failed, expected unicode string"
-    _test_decode = [
+    _test_de_encode = [
         ( '8021696d732e6d6e633030302e6d63633733382e336770706e6574776f726b2e6f7267',
           { "domain": "ims.mnc000.mcc738.3gppnetwork.org" } ),
     ]
@@ -108,8 +106,7 @@ class EF_DOMAIN(TransparentEF):
 
 # TS 31.103 Section 4.2.4
 class EF_IMPU(LinFixedEF):
-    # FIXME: re-encode fails with "string encoding failed, expected unicode string"
-    _test_decode = [
+    _test_de_encode = [
         ( '80357369703a37333830303630303030303031303140696d732e6d6e633030302e6d63633733382e336770706e6574776f726b2e6f7267',
           { "impu": "sip:738006000000101@ims.mnc000.mcc738.3gppnetwork.org" } ),
     ]
