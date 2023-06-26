@@ -161,7 +161,10 @@ class IE(Transcodable, metaclass=TlvMeta):
             self.children = self.nested_collection.from_dict(decoded)
         else:
             self.children = []
-            self.decoded = decoded
+            expected_key_name = camel_to_snake(type(self).__name__)
+            if not expected_key_name in decoded:
+                raise ValueError("Dict %s doesn't contain expected key %s" % (decoded, expected_key_name))
+            self.decoded = decoded[expected_key_name]
 
     def is_constructed(self):
         """Is this IE constructed by further nested IEs?"""
@@ -388,7 +391,7 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
                 if k in self.members_by_name:
                     cls = self.members_by_name[k]
                     inst = cls()
-                    inst.from_dict(i[k])
+                    inst.from_dict({k: i[k]})
                     res.append(inst)
                 else:
                     raise ValueError('%s: Unknown TLV Class %s in %s; expected %s' %
