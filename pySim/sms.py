@@ -69,6 +69,8 @@ def smpp_dcs_is_8bit(dcs: pdu_types.DataCoding) -> bool:
     if dcs == pdu_types.DataCoding(pdu_types.DataCodingScheme.DEFAULT,
                                    pdu_types.DataCodingDefault.OCTET_UNSPECIFIED_COMMON):
         return True
+    # pySim/sms.py:72:21: E1101: Instance of 'DataCodingScheme' has no 'GSM_MESSAGE_CLASS' member (no-member)
+    # pylint: disable=no-member
     if dcs.scheme == pdu_types.DataCodingScheme.GSM_MESSAGE_CLASS and dcs.schemeData['msgCoding'] == pdu_types.DataCodingGsmMsgCoding.DATA_8BIT:
         return True
     else:
