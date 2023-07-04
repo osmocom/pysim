@@ -49,7 +49,7 @@ from pprint import pprint as pp
 from pySim.exceptions import *
 from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args, ProactiveHandler
-from pySim.cards import card_detect, SimCard
+from pySim.cards import card_detect, SimCard, UsimCard
 from pySim.utils import h2b, b2h, i2h, swap_nibbles, rpad, JsonEncoder, bertlv_parse_one, sw_match
 from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, Hexstr
 from pySim.card_handler import CardHandler, CardHandlerAuto
@@ -127,6 +127,12 @@ def init_card(sl):
         profile.add_application(CardApplicationHPSIM())
         profile.add_application(CardApplicationARAM())
         profile.add_application(CardApplicationISD())
+        # We have chosen SimCard() above, but we now know it actually is an UICC
+        # so it's safe to assume it supports USIM application (which we're adding above).
+        # IF we don't do this, we will have a SimCard but try USIM specific commands like
+        # the update_ust method (see https://osmocom.org/issues/6055)
+        if generic_card:
+            card = UsimCard(scc)
 
     # Create runtime state with card profile
     rs = RuntimeState(card, profile)
