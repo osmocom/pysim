@@ -5,7 +5,7 @@
 
 #
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
-# Copyright (C) 2010-2021  Harald Welte <laforge@gnumonks.org>
+# Copyright (C) 2010-2023  Harald Welte <laforge@gnumonks.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,20 +21,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from typing import List, Optional, Tuple
+import typing # construct also has a Union, so we do typing.Union below
+
 from construct import *
 from pySim.construct import LV
 from pySim.utils import rpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i, str_sanitize, expand_hex
+from pySim.utils import Hexstr, SwHexstr, ResTuple
 from pySim.exceptions import SwMatchError
+from pySim.transport import LinkBase
 
+# A path can be either just a FID or a list of FID
+Path = typing.Union[Hexstr, List[Hexstr]]
 
 class SimCardCommands:
-    def __init__(self, transport):
+    def __init__(self, transport: LinkBase):
         self._tp = transport
         self.cla_byte = "a0"
         self.sel_ctrl = "0000"
 
     # Extract a single FCP item from TLV
-    def __parse_fcp(self, fcp):
+    def __parse_fcp(self, fcp: Hexstr):
         # see also: ETSI TS 102 221, chapter 11.1.1.3.1 Response for MF,
         # DF or ADF
         from pytlv.TLV import TLV
@@ -88,11 +95,11 @@ class SimCardCommands:
         else:
             return int(r[-1][4:8], 16)
 
-    def get_atr(self) -> str:
+    def get_atr(self) -> Hexstr:
         """Return the ATR of the currently inserted card."""
         return self._tp.get_atr()
 
-    def try_select_path(self, dir_list):
+    def try_select_path(self, dir_list: List[Hexstr]) -> List[ResTuple]:
         """ Try to select a specified path
 
         Args:
@@ -110,7 +117,7 @@ class SimCardCommands:
                 return rv
         return rv
 
-    def select_path(self, dir_list):
+    def select_path(self, dir_list: Path) -> List[Hexstr]:
         """Execute SELECT for an entire list/path of FIDs.
 
         Args:
@@ -127,7 +134,7 @@ class SimCardCommands:
             rv.append(data)
         return rv
 
-    def select_file(self, fid: str):
+    def select_file(self, fid: Hexstr) -> ResTuple:
         """Execute SELECT a given file by FID.
 
         Args:
@@ -136,11 +143,11 @@ class SimCardCommands:
 
         return self._tp.send_apdu_checksw(self.cla_byte + "a4" + self.sel_ctrl + "02" + fid)
 
-    def select_parent_df(self):
+    def select_parent_df(self) -> ResTuple:
         """Execute SELECT to switch to the parent DF """
         return self._tp.send_apdu_checksw(self.cla_byte + "a4030400")
 
-    def select_adf(self, aid: str):
+    def select_adf(self, aid: Hexstr) -> ResTuple:
         """Execute SELECT a given Applicaiton ADF.
 
         Args:
@@ -150,7 +157,7 @@ class SimCardCommands:
         aidlen = ("0" + format(len(aid) // 2, 'x'))[-2:]
         return self._tp.send_apdu_checksw(self.cla_byte + "a4" + "0404" + aidlen + aid)
 
-    def read_binary(self, ef, length: int = None, offset: int = 0):
+    def read_binary(self, ef: Path, length: int = None, offset: int = 0) -> ResTuple:
         """Execute READD BINARY.
 
         Args:
@@ -181,7 +188,8 @@ class SimCardCommands:
             chunk_offset += chunk_len
         return total_data, sw
 
-    def update_binary(self, ef, data: str, offset: int = 0, verify: bool = False, conserve: bool = False):
+    def update_binary(self, ef: Path, data: Hexstr, offset: int = 0, verify: bool = False,
+                      conserve: bool = False) -> ResTuple:
         """Execute UPDATE BINARY.
 
         Args:
@@ -235,7 +243,7 @@ class SimCardCommands:
             raise ValueError('Binary verification failed (expected %s, got %s)' % (
                 data.lower(), res[0].lower()))
 
-    def read_record(self, ef, rec_no: int):
+    def read_record(self, ef: Path, rec_no: int) -> ResTuple:
         """Execute READ RECORD.
 
         Args:
@@ -247,8 +255,8 @@ class SimCardCommands:
         pdu = self.cla_byte + 'b2%02x04%02x' % (rec_no, rec_length)
         return self._tp.send_apdu_checksw(pdu)
 
-    def update_record(self, ef, rec_no: int, data: str, force_len: bool = False, verify: bool = False,
-                      conserve: bool = False):
+    def update_record(self, ef: Path, rec_no: int, data: Hexstr, force_len: bool = False,
+                      verify: bool = False, conserve: bool = False) -> ResTuple:
         """Execute UPDATE RECORD.
 
         Args:
@@ -289,7 +297,7 @@ class SimCardCommands:
             self.verify_record(ef, rec_no, data)
         return res
 
-    def verify_record(self, ef, rec_no: int, data: str):
+    def verify_record(self, ef: Path, rec_no: int, data: str):
         """Verify record against given data
 
         Args:
@@ -302,7 +310,7 @@ class SimCardCommands:
             raise ValueError('Record verification failed (expected %s, got %s)' % (
                 data.lower(), res[0].lower()))
 
-    def record_size(self, ef):
+    def record_size(self, ef: Path) -> int:
         """Determine the record size of given file.
 
         Args:
@@ -311,7 +319,7 @@ class SimCardCommands:
         r = self.select_path(ef)
         return self.__record_len(r)
 
-    def record_count(self, ef):
+    def record_count(self, ef: Path) -> int:
         """Determine the number of records in given file.
 
         Args:
@@ -320,7 +328,7 @@ class SimCardCommands:
         r = self.select_path(ef)
         return self.__len(r) // self.__record_len(r)
 
-    def binary_size(self, ef):
+    def binary_size(self, ef: Path) -> int:
         """Determine the size of given transparent file.
 
         Args:
@@ -330,14 +338,14 @@ class SimCardCommands:
         return self.__len(r)
 
     # TS 102 221 Section 11.3.1 low-level helper
-    def _retrieve_data(self, tag: int, first: bool = True):
+    def _retrieve_data(self, tag: int, first: bool = True) -> ResTuple:
         if first:
             pdu = '80cb008001%02x' % (tag)
         else:
             pdu = '80cb000000'
         return self._tp.send_apdu_checksw(pdu)
 
-    def retrieve_data(self, ef, tag: int):
+    def retrieve_data(self, ef: Path, tag: int) -> ResTuple:
         """Execute RETRIEVE DATA, see also TS 102 221 Section 11.3.1.
 
         Args
@@ -357,7 +365,7 @@ class SimCardCommands:
         return total_data, sw
 
     # TS 102 221 Section 11.3.2 low-level helper
-    def _set_data(self, data: str, first: bool = True):
+    def _set_data(self, data: Hexstr, first: bool = True) -> ResTuple:
         if first:
             p1 = 0x80
         else:
@@ -367,7 +375,7 @@ class SimCardCommands:
         pdu = '80db00%02x%02x%s' % (p1, len(data)//2, data)
         return self._tp.send_apdu_checksw(pdu)
 
-    def set_data(self, ef, tag: int, value: str, verify: bool = False, conserve: bool = False):
+    def set_data(self, ef, tag: int, value: str, verify: bool = False, conserve: bool = False) -> ResTuple:
         """Execute SET DATA.
 
         Args
@@ -398,7 +406,7 @@ class SimCardCommands:
             remaining = remaining[255:]
         return rdata, sw
 
-    def run_gsm(self, rand: str):
+    def run_gsm(self, rand: Hexstr) -> ResTuple:
         """Execute RUN GSM ALGORITHM.
 
         Args:
@@ -409,7 +417,7 @@ class SimCardCommands:
         self.select_path(['3f00', '7f20'])
         return self._tp.send_apdu_checksw('a0' + '88000010' + rand, sw='9000')
 
-    def authenticate(self, rand: str, autn: str, context='3g'):
+    def authenticate(self, rand: Hexstr, autn: Hexstr, context: str = '3g') -> ResTuple:
         """Execute AUTHENTICATE (USIM/ISIM).
 
         Args:
@@ -437,15 +445,15 @@ class SimCardCommands:
             ret = {'successful_3g_authentication': data}
         return (ret, sw)
 
-    def status(self):
+    def status(self) -> ResTuple:
         """Execute a STATUS command as per TS 102 221 Section 11.1.2."""
         return self._tp.send_apdu_checksw('80F20000ff')
 
-    def deactivate_file(self):
+    def deactivate_file(self) -> ResTuple:
         """Execute DECATIVATE FILE command as per TS 102 221 Section 11.1.14."""
         return self._tp.send_apdu_constr_checksw(self.cla_byte, '04', '00', '00', None, None, None)
 
-    def activate_file(self, fid):
+    def activate_file(self, fid: Hexstr) -> ResTuple:
         """Execute ACTIVATE FILE command as per TS 102 221 Section 11.1.15.
 
         Args:
@@ -453,31 +461,31 @@ class SimCardCommands:
         """
         return self._tp.send_apdu_checksw(self.cla_byte + '44000002' + fid)
 
-    def create_file(self, payload: Hexstr):
+    def create_file(self, payload: Hexstr) -> ResTuple:
         """Execute CREEATE FILE command as per TS 102 222 Section 6.3"""
         return self._tp.send_apdu_checksw(self.cla_byte + 'e00000%02x%s' % (len(payload)//2, payload))
 
-    def resize_file(self, payload: Hexstr):
+    def resize_file(self, payload: Hexstr) -> ResTuple:
         """Execute RESIZE FILE command as per TS 102 222 Section 6.10"""
         return self._tp.send_apdu_checksw('80d40000%02x%s' % (len(payload)//2, payload))
 
-    def delete_file(self, fid):
+    def delete_file(self, fid: Hexstr) -> ResTuple:
         """Execute DELETE FILE command as per TS 102 222 Section 6.4"""
         return self._tp.send_apdu_checksw(self.cla_byte + 'e4000002' + fid)
 
-    def terminate_df(self, fid):
+    def terminate_df(self, fid: Hexstr) -> ResTuple:
         """Execute TERMINATE DF command as per TS 102 222 Section 6.7"""
         return self._tp.send_apdu_checksw(self.cla_byte + 'e6000002' + fid)
 
-    def terminate_ef(self, fid):
+    def terminate_ef(self, fid: Hexstr) -> ResTuple:
         """Execute TERMINATE EF command as per TS 102 222 Section 6.8"""
         return self._tp.send_apdu_checksw(self.cla_byte + 'e8000002' + fid)
 
-    def terminate_card_usage(self):
+    def terminate_card_usage(self) -> ResTuple:
         """Execute TERMINATE CARD USAGE command as per TS 102 222 Section 6.9"""
         return self._tp.send_apdu_checksw(self.cla_byte + 'fe000000')
 
-    def manage_channel(self, mode='open', lchan_nr=0):
+    def manage_channel(self, mode: str = 'open', lchan_nr: int =0) -> ResTuple:
         """Execute MANAGE CHANNEL command as per TS 102 221 Section 11.1.17.
 
         Args:
@@ -491,18 +499,18 @@ class SimCardCommands:
         pdu = self.cla_byte + '70%02x%02x00' % (p1, lchan_nr)
         return self._tp.send_apdu_checksw(pdu)
 
-    def reset_card(self):
+    def reset_card(self) -> Hexstr:
         """Physically reset the card"""
         return self._tp.reset_card()
 
-    def _chv_process_sw(self, op_name, chv_no, pin_code, sw):
+    def _chv_process_sw(self, op_name: str, chv_no: int, pin_code: Hexstr, sw: SwHexstr):
         if sw_match(sw, '63cx'):
             raise RuntimeError('Failed to %s chv_no 0x%02X with code 0x%s, %i tries left.' %
                                (op_name, chv_no, b2h(pin_code).upper(), int(sw[3])))
         elif (sw != '9000'):
             raise SwMatchError(sw, '9000')
 
-    def verify_chv(self, chv_no: int, code: str):
+    def verify_chv(self, chv_no: int, code: Hexstr) -> ResTuple:
         """Verify a given CHV (Card Holder Verification == PIN)
 
         Args:
@@ -529,7 +537,7 @@ class SimCardCommands:
         self._chv_process_sw('unblock', chv_no, pin_code, sw)
         return (data, sw)
 
-    def change_chv(self, chv_no: int, pin_code: str, new_pin_code: str):
+    def change_chv(self, chv_no: int, pin_code: Hexstr, new_pin_code: Hexstr) -> ResTuple:
         """Change a given CHV (Card Holder Verification == PIN)
 
         Args:
@@ -543,7 +551,7 @@ class SimCardCommands:
         self._chv_process_sw('change', chv_no, pin_code, sw)
         return (data, sw)
 
-    def disable_chv(self, chv_no: int, pin_code: str):
+    def disable_chv(self, chv_no: int, pin_code: Hexstr) -> ResTuple:
         """Disable a given CHV (Card Holder Verification == PIN)
 
         Args:
@@ -557,7 +565,7 @@ class SimCardCommands:
         self._chv_process_sw('disable', chv_no, pin_code, sw)
         return (data, sw)
 
-    def enable_chv(self, chv_no: int, pin_code: str):
+    def enable_chv(self, chv_no: int, pin_code: Hexstr) -> ResTuple:
         """Enable a given CHV (Card Holder Verification == PIN)
 
         Args:
@@ -570,7 +578,7 @@ class SimCardCommands:
         self._chv_process_sw('enable', chv_no, pin_code, sw)
         return (data, sw)
 
-    def envelope(self, payload: str):
+    def envelope(self, payload: Hexstr) -> ResTuple:
         """Send one ENVELOPE command to the SIM
 
         Args:
@@ -578,7 +586,7 @@ class SimCardCommands:
         """
         return self._tp.send_apdu_checksw('80c20000%02x%s' % (len(payload)//2, payload))
 
-    def terminal_profile(self, payload: str):
+    def terminal_profile(self, payload: Hexstr) -> ResTuple:
         """Send TERMINAL PROFILE to card
 
         Args:
@@ -589,7 +597,7 @@ class SimCardCommands:
         return (data, sw)
 
     # ETSI TS 102 221 11.1.22
-    def suspend_uicc(self, min_len_secs: int = 60, max_len_secs: int = 43200):
+    def suspend_uicc(self, min_len_secs: int = 60, max_len_secs: int = 43200) -> Tuple[int, Hexstr, SwHexstr]:
         """Send SUSPEND UICC to the card.
 
         Args:
@@ -632,17 +640,18 @@ class SimCardCommands:
         return (negotiated_duration_secs, resume_token, sw)
 
     # ETSI TS 102 221 11.1.22
-    def resume_uicc(self, token: str):
+    def resume_uicc(self, token: Hexstr) -> ResTuple:
         """Send SUSPEND UICC (resume) to the card."""
         if len(h2b(token)) != 8:
             raise ValueError("Token must be 8 bytes long")
         data, sw = self._tp.send_apdu_checksw('8076010008' + token)
+        return (data, sw)
 
     def get_data(self, tag: int, cla: int = 0x00):
         data, sw = self._tp.send_apdu('%02xca%04x00' % (cla, tag))
         return (data, sw)
 
     # TS 31.102 Section 7.5.2
-    def get_identity(self, context: int):
+    def get_identity(self, context: int) -> Tuple[Hexstr, SwHexstr]:
         data, sw = self._tp.send_apdu_checksw('807800%02x00' % (context))
         return (data, sw)

@@ -30,6 +30,7 @@ from typing import Optional, List, Dict, Any, Tuple, NewType
 Hexstr = NewType('Hexstr', str)
 SwHexstr = NewType('SwHexstr', str)
 SwMatchstr = NewType('SwMatchstr', str)
+ResTuple = Tuple[Hexstr, SwHexstr]
 
 def h2b(s: Hexstr) -> bytearray:
     """convert from a string of hex nibbles to a sequence of bytes"""
