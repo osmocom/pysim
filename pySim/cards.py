@@ -25,29 +25,31 @@
 from typing import Optional, Dict, Tuple
 from pySim.ts_102_221 import EF_DIR, EF_ICCID
 from pySim.ts_51_011 import DF_GSM
+from pySim.transport import LinkBase
 import abc
 
 from pySim.utils import *
+from pySim.commands import Path
 
 class CardBase:
     """General base class for some kind of telecommunications card."""
-    def __init__(self, scc):
+    def __init__(self, scc: LinkBase):
         self._scc = scc
         self._aids = []
 
-    def reset(self):
+    def reset(self) -> Optional[Hexstr]:
         rc = self._scc.reset_card()
         if rc == 1:
             return self._scc.get_atr()
         else:
             return None
 
-    def set_apdu_parameter(self, cla, sel_ctrl):
+    def set_apdu_parameter(self, cla: Hexstr, sel_ctrl: Hexstr) -> None:
         """Set apdu parameters (class byte and selection control bytes)"""
         self._scc.cla_byte = cla
         self._scc.sel_ctrl = sel_ctrl
 
-    def get_apdu_parameter(self):
+    def get_apdu_parameter(self) -> Tuple[Hexstr, Hexstr]:
         """Get apdu parameters (class byte and selection control bytes)"""
         return (self._scc.cla_byte, self._scc.sel_ctrl)
 
@@ -55,19 +57,19 @@ class CardBase:
         print("warning: erasing is not supported for specified card type!")
         return
 
-    def file_exists(self, fid):
+    def file_exists(self, fid: Path) -> bool:
         res_arr = self._scc.try_select_path(fid)
         for res in res_arr:
             if res[1] != '9000':
                 return False
         return True
 
-    def read_aids(self):
+    def read_aids(self) -> List[Hexstr]:
         # a non-UICC doesn't have any applications. Convenience helper to avoid
         # callers having to do hasattr('read_aids') ahead of every call.
         return []
 
-    def read_iccid(self):
+    def read_iccid(self) -> Tuple[Optional[Hexstr], SwHexstr]:
         ef_iccid = EF_ICCID()
         (res, sw) = self._scc.read_binary(ef_iccid.fid)
         if sw == '9000':
@@ -81,7 +83,7 @@ class SimCardBase(CardBase):
     any higher-layer processing."""
     name = 'SIM'
 
-    def probe(self):
+    def probe(self) -> bool:
         df_gsm = DF_GSM()
         return self.file_exists(df_gsm.fid)
 
@@ -89,17 +91,17 @@ class SimCardBase(CardBase):
 class UiccCardBase(SimCardBase):
     name = 'UICC'
 
-    def __init__(self, ssc):
+    def __init__(self, ssc: LinkBase):
         super(UiccCardBase, self).__init__(ssc)
 	    # See also: ETSI TS 102 221, Table 9.3
         self._adm_chv_num = 0xA0
 
-    def probe(self):
+    def probe(self) -> bool:
         # EF.DIR is a mandatory EF on all ICCIDs; however it *may* also exist on a TS 51.011 SIM
         ef_dir = EF_DIR()
         return self.file_exists(ef_dir.fid)
 
-    def read_aids(self):
+    def read_aids(self) -> List[Hexstr]:
         """Fetch all the AIDs present on UICC"""
         self._aids = []
         try:
@@ -118,7 +120,7 @@ class UiccCardBase(SimCardBase):
         return self._aids
 
     @staticmethod
-    def _get_aid(adf="usim") -> str:
+    def _get_aid(adf="usim") -> Optional[Hexstr]:
         aid_map = {}
         # First (known) halves of the U/ISIM AID
         aid_map["usim"] = "a0000000871002"
@@ -128,7 +130,7 @@ class UiccCardBase(SimCardBase):
             return aid_map[adf]
         return None
 
-    def _complete_aid(self, aid) -> str:
+    def _complete_aid(self, aid: Hexstr) -> Optional[Hexstr]:
         """find the complete version of an ADF.U/ISIM AID"""
         # Find full AID by partial AID:
         if is_hex(aid):
@@ -137,7 +139,7 @@ class UiccCardBase(SimCardBase):
                     return aid_known
         return None
 
-    def adf_present(self, adf="usim") -> bool:
+    def adf_present(self, adf: str = "usim") -> bool:
         """Check if the AID of the specified ADF is present in EF.DIR (call read_aids before use)"""
         aid = self._get_aid(adf)
         if aid:
@@ -146,7 +148,7 @@ class UiccCardBase(SimCardBase):
                 return True
         return False
 
-    def select_adf_by_aid(self, adf="usim"):
+    def select_adf_by_aid(self, adf: str = "usim") -> Tuple[Optional[Hexstr], Optional[SwHexstr]]:
         """Select ADF.U/ISIM in the Card using its full AID"""
         if is_hex(adf):
             aid = adf
@@ -161,7 +163,7 @@ class UiccCardBase(SimCardBase):
                 return self._scc.select_adf(aid)
         return (None, None)
 
-def card_detect(scc):
+def card_detect(scc: LinkBase) -> Optional[CardBase]:
     # UICC always has higher preference, as a UICC might also contain a SIM application
     uicc = UiccCardBase(scc)
     if uicc.probe():
