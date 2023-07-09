@@ -5,7 +5,7 @@
 
 #
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
-# Copyright (C) 2011  Harald Welte <laforge@gnumonks.org>
+# Copyright (C) 2011-2023  Harald Welte <laforge@gnumonks.org>
 # Copyright (C) 2017 Alexander.Chemeris <Alexander.Chemeris@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -25,13 +25,81 @@
 from typing import Optional, Dict, Tuple
 import abc
 
-from pySim.ts_51_011 import EF, DF, EF_AD, EF_SPN
-from pySim.ts_31_102 import EF_USIM_ADF_map
-from pySim.ts_31_103 import EF_ISIM_ADF_map
 from pySim.utils import *
+
+class CardBase:
+    """General base class for some kind of telecommunications card."""
+    def __init__(self, scc):
+        self._scc = scc
+        self._aids = []
+
+    def reset(self):
+        rc = self._scc.reset_card()
+        if rc == 1:
+            return self._scc.get_atr()
+        else:
+            return None
+
+    def set_apdu_parameter(self, cla, sel_ctrl):
+        """Set apdu parameters (class byte and selection control bytes)"""
+        self._scc.cla_byte = cla
+        self._scc.sel_ctrl = sel_ctrl
+
+    def get_apdu_parameter(self):
+        """Get apdu parameters (class byte and selection control bytes)"""
+        return (self._scc.cla_byte, self._scc.sel_ctrl)
+
+    def erase(self):
+        print("warning: erasing is not supported for specified card type!")
+        return
+
+    def file_exists(self, fid):
+        res_arr = self._scc.try_select_path(fid)
+        for res in res_arr:
+            if res[1] != '9000':
+                return False
+        return True
+
+    def read_aids(self):
+        # a non-UICC doesn't have any applications. Convenience helper to avoid
+        # callers having to do hasattr('read_aids') ahead of every call.
+        return []
+
+
+class SimCardBase(CardBase):
+
+    """Here we only add methods for commands specified in TS 51.011, without
+    any higher-layer processing."""
+
+    name = 'SIM'
+
+    def read_binary(self, ef, length=None, offset=0):
+        ef_path = ef in EF and EF[ef] or ef
+        return self._scc.read_binary(ef_path, length, offset)
+
+    def read_record(self, ef, rec_no):
+        ef_path = ef in EF and EF[ef] or ef
+        return self._scc.read_record(ef_path, rec_no)
+
+
+class UiccCardBase(SimCardBase):
+    name = 'UICC'
+
+    def __init__(self, ssc):
+        super(UiccCardBase, self).__init__(ssc)
+	    # See also: ETSI TS 102 221, Table 9.3
+        self._adm_chv_num = 0xA0
+
+################################################################################
+# LEGACY
+################################################################################
+
 from smartcard.util import toBytes
 from pytlv.TLV import *
 
+from pySim.ts_51_011 import EF, DF, EF_AD, EF_SPN
+from pySim.ts_31_102 import EF_USIM_ADF_map
+from pySim.ts_31_103 import EF_ISIM_ADF_map
 
 def format_addr(addr: str, addr_type: str) -> str:
     """
@@ -52,32 +120,13 @@ def format_addr(addr: str, addr_type: str) -> str:
     return res
 
 
-class SimCard:
 
-    name = 'SIM'
+class SimCard(SimCardBase):
+    """Higher-layer class that is used *only* by legacy pySim-{prog,read}."""
 
     def __init__(self, scc):
-        self._scc = scc
         self._adm_chv_num = 4
-        self._aids = []
-
-    def reset(self):
-        rc = self._scc.reset_card()
-        if rc == 1:
-            return self._scc.get_atr()
-        else:
-            return None
-
-    def erase(self):
-        print("warning: erasing is not supported for specified card type!")
-        return
-
-    def file_exists(self, fid):
-        res_arr = self._scc.try_select_path(fid)
-        for res in res_arr:
-            if res[1] != '9000':
-                return False
-        return True
+        super().__init__(scc)
 
     def verify_adm(self, key):
         """Authenticate with ADM key"""
@@ -252,14 +301,6 @@ class SimCard:
         data, sw = self._scc.update_binary(EF['SPN'], content)
         return sw
 
-    def read_binary(self, ef, length=None, offset=0):
-        ef_path = ef in EF and EF[ef] or ef
-        return self._scc.read_binary(ef_path, length, offset)
-
-    def read_record(self, ef, rec_no):
-        ef_path = ef in EF and EF[ef] or ef
-        return self._scc.read_record(ef_path, rec_no)
-
     def read_gid1(self):
         (res, sw) = self._scc.read_binary(EF['GID1'])
         if sw == '9000':
@@ -273,6 +314,10 @@ class SimCard:
             return (dec_msisdn(res), sw)
         else:
             return (None, sw)
+
+
+class UsimCard(UiccCardBase, SimCard):
+    """Higher-layer class that is used *only* by legacy pySim-{prog,read}."""
 
     def read_aids(self):
         """Fetch all the AIDs present on UICC"""
@@ -335,36 +380,6 @@ class SimCard:
                 return self._scc.select_adf(aid)
         return (None, None)
 
-    def erase_binary(self, ef):
-        """Erase the contents of a file"""
-        len = self._scc.binary_size(ef)
-        self._scc.update_binary(ef, "ff" * len, offset=0, verify=True)
-
-    def erase_record(self, ef, rec_no):
-        """Erase the contents of a single record"""
-        len = self._scc.record_size(ef)
-        self._scc.update_record(ef, rec_no, "ff" * len,
-                                force_len=False, verify=True)
-
-    def set_apdu_parameter(self, cla, sel_ctrl):
-        """Set apdu parameters (class byte and selection control bytes)"""
-        self._scc.cla_byte = cla
-        self._scc.sel_ctrl = sel_ctrl
-
-    def get_apdu_parameter(self):
-        """Get apdu parameters (class byte and selection control bytes)"""
-        return (self._scc.cla_byte, self._scc.sel_ctrl)
-
-
-class UsimCard(SimCard):
-
-    name = 'USIM'
-
-    def __init__(self, ssc):
-        super(UsimCard, self).__init__(ssc)
-
-	# See also: ETSI TS 102 221, Table 9.3
-        self._adm_chv_num = 0xA0
 
     def read_ehplmn(self):
         (res, sw) = self._scc.read_binary(EF_USIM_ADF_map['EHPLMN'])
@@ -469,12 +484,10 @@ class UsimCard(SimCard):
 
 
 
-class IsimCard(SimCard):
+class IsimCard(UiccCardBase):
+    """Higher-layer class that is used *only* by legacy pySim-{prog,read}."""
 
     name = 'ISIM'
-
-    def __init__(self, ssc):
-        super(IsimCard, self).__init__(ssc)
 
     def read_pcscf(self):
         rec_cnt = self._scc.record_count(EF_ISIM_ADF_map['PCSCF'])
