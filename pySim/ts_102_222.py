@@ -23,9 +23,6 @@ import cmd2
 from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 
-from pySim.ts_31_102 import EF_UST_map, EF_USIM_ADF_map
-from pySim.ts_31_103 import EF_IST_map, EF_ISIM_ADF_map
-
 from pySim.exceptions import *
 from pySim.utils import h2b, swap_nibbles, b2h, JsonEncoder
 
