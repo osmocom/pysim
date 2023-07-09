@@ -232,8 +232,7 @@ class ADF_SD(CardADF):
             self._cmd.poutput_json(ie.to_dict())
 
         def complete_get_data(self, text, line, begidx, endidx) -> List[str]:
-            #data_dict = {camel_to_snake(str(x.__name__)): x for x in DataCollection.possible_nested}
-            data_dict = {str(x.__name__): x for x in DataCollection.possible_nested}
+            data_dict = {camel_to_snake(str(x.__name__)): x for x in DataCollection.possible_nested}
             index_dict = {1: data_dict}
             return self._cmd.index_based_complete(text, line, begidx, endidx, index_dict=index_dict)
 

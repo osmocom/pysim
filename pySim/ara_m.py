@@ -349,28 +349,28 @@ class ADF_ARAM(CardADF):
             # REF
             ref_do_content = []
             if opts.aid:
-                ref_do_content += [{'AidRefDO': opts.aid}]
+                ref_do_content += [{'aid_ref_do': opts.aid}]
             elif opts.aid_empty:
-                ref_do_content += [{'AidRefEmptyDO': None}]
-            ref_do_content += [{'DevAppIdRefDO': opts.device_app_id}]
+                ref_do_content += [{'aid_ref_empty_do': None}]
+            ref_do_content += [{'dev_app_id_ref_do': opts.device_app_id}]
             if opts.pkg_ref:
-                ref_do_content += [{'PkgRefDO': opts.pkg_ref}]
+                ref_do_content += [{'pkg_ref_do': opts.pkg_ref}]
             # AR
             ar_do_content = []
             if opts.apdu_never:
-                ar_do_content += [{'ApduArDO': {'generic_access_rule': 'never'}}]
+                ar_do_content += [{'apdu_ar_od': {'generic_access_rule': 'never'}}]
             elif opts.apdu_always:
-                ar_do_content += [{'ApduArDO': {'generic_access_rule': 'always'}}]
+                ar_do_content += [{'apdu_ar_do': {'generic_access_rule': 'always'}}]
             elif opts.apdu_filter:
                 # TODO: multiple filters
-                ar_do_content += [{'ApduArDO': {'apdu_filter': [opts.apdu_filter]}}]
+                ar_do_content += [{'apdu_ar_do': {'apdu_filter': [opts.apdu_filter]}}]
             if opts.nfc_always:
-                ar_do_content += [{'NfcArDO': {'nfc_event_access_rule': 'always'}}]
+                ar_do_content += [{'nfc_ar_do': {'nfc_event_access_rule': 'always'}}]
             elif opts.nfc_never:
-                ar_do_content += [{'NfcArDO': {'nfc_event_access_rule': 'never'}}]
+                ar_do_content += [{'nfc_ar_do': {'nfc_event_access_rule': 'never'}}]
             if opts.android_permissions:
-                ar_do_content += [{'PermArDO': {'permissions': opts.android_permissions}}]
-            d = [{'RefArDO': [{'RefDO': ref_do_content}, {'ArDO': ar_do_content}]}]
+                ar_do_content += [{'perm_ar_do': {'permissions': opts.android_permissions}}]
+            d = [{'ref_ar_do': [{'ref_do': ref_do_content}, {'ar_do': ar_do_content}]}]
             csrado = CommandStoreRefArDO()
             csrado.from_dict(d)
             res_do = ADF_ARAM.store_data(self._cmd.card._scc._tp, csrado)

@@ -318,7 +318,7 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
         self.members_by_tag = {}
         self.members_by_name = {}
         self.members_by_tag = {m.tag: m for m in self.members}
-        self.members_by_name = {m.__name__: m for m in self.members}
+        self.members_by_name = {camel_to_snake(m.__name__): m for m in self.members}
         # if we are a constructed IE, [ordered] list of actual child-IE instances
         self.children = kwargs.get('children', [])
         self.encoded = None
