@@ -6,10 +6,11 @@
 import abc
 import argparse
 from typing import Optional, Tuple
+from construct import Construct
 
 from pySim.exceptions import *
 from pySim.construct import filter_dict
-from pySim.utils import sw_match, b2h, h2b, i2h, Hexstr
+from pySim.utils import sw_match, b2h, h2b, i2h, Hexstr, SwHexstr, SwMatchstr
 from pySim.cat import ProactiveCommand, CommandDetails, DeviceIdentities, Result
 
 #
@@ -60,14 +61,14 @@ class ProactiveHandler(abc.ABC):
 class LinkBase(abc.ABC):
     """Base class for link/transport to card."""
 
-    def __init__(self, sw_interpreter=None, apdu_tracer=None,
+    def __init__(self, sw_interpreter=None, apdu_tracer: Optional[ApduTracer]=None,
                  proactive_handler: Optional[ProactiveHandler]=None):
         self.sw_interpreter = sw_interpreter
         self.apdu_tracer = apdu_tracer
         self.proactive_handler = proactive_handler
 
     @abc.abstractmethod
-    def _send_apdu_raw(self, pdu: str) -> Tuple[str, str]:
+    def _send_apdu_raw(self, pdu: Hexstr) -> Tuple[Hexstr, Hexstr]:
         """Implementation specific method for sending the PDU."""
 
     def set_sw_interpreter(self, interp):
@@ -75,7 +76,7 @@ class LinkBase(abc.ABC):
         self.sw_interpreter = interp
 
     @abc.abstractmethod
-    def wait_for_card(self, timeout: int = None, newcardonly: bool = False):
+    def wait_for_card(self, timeout: Optional[int] = None, newcardonly: bool = False):
         """Wait for a card and connect to it
 
         Args:
@@ -98,7 +99,7 @@ class LinkBase(abc.ABC):
         """Resets the card (power down/up)
         """
 
-    def send_apdu_raw(self, pdu: str):
+    def send_apdu_raw(self, pdu: Hexstr) -> Tuple[Hexstr, SwHexstr]:
         """Sends an APDU with minimal processing
 
         Args:
@@ -115,7 +116,7 @@ class LinkBase(abc.ABC):
             self.apdu_tracer.trace_response(pdu, sw, data)
         return (data, sw)
 
-    def send_apdu(self, pdu):
+    def send_apdu(self, pdu: Hexstr) -> Tuple[Hexstr, SwHexstr]:
         """Sends an APDU and auto fetch response data
 
         Args:
@@ -144,7 +145,7 @@ class LinkBase(abc.ABC):
 
         return data, sw
 
-    def send_apdu_checksw(self, pdu, sw="9000"):
+    def send_apdu_checksw(self, pdu: Hexstr, sw: SwMatchstr = "9000") -> Tuple[Hexstr, SwHexstr]:
         """Sends an APDU and check returned SW
 
         Args:
@@ -212,7 +213,8 @@ class LinkBase(abc.ABC):
             raise SwMatchError(rv[1], sw.lower(), self.sw_interpreter)
         return rv
 
-    def send_apdu_constr(self, cla, ins, p1, p2, cmd_constr, cmd_data, resp_constr):
+    def send_apdu_constr(self, cla: Hexstr, ins: Hexstr, p1: Hexstr, p2: Hexstr, cmd_constr: Construct,
+                         cmd_data: Hexstr, resp_constr: Construct) -> Tuple[dict, SwHexstr]:
         """Build and sends an APDU using a 'construct' definition; parses response.
 
         Args:
@@ -237,8 +239,9 @@ class LinkBase(abc.ABC):
             rsp = None
         return (rsp, sw)
 
-    def send_apdu_constr_checksw(self, cla, ins, p1, p2, cmd_constr, cmd_data, resp_constr,
-                                 sw_exp="9000"):
+    def send_apdu_constr_checksw(self, cla: Hexstr, ins: Hexstr, p1: Hexstr, p2: Hexstr,
+                                 cmd_constr: Construct, cmd_data: Hexstr, resp_constr: Construct,
+                                 sw_exp: SwMatchstr="9000") -> Tuple[dict, SwHexstr]:
         """Build and sends an APDU using a 'construct' definition; parses response.
 
         Args:

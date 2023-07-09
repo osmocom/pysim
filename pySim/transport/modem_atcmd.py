@@ -20,7 +20,9 @@ import logging as log
 import serial
 import time
 import re
+from typing import Optional, Tuple
 
+from pySim.utils import Hexstr, SwHexstr
 from pySim.transport import LinkBase
 from pySim.exceptions import *
 
@@ -136,10 +138,10 @@ class ModemATCommandLink(LinkBase):
     def disconnect(self):
         pass  # Nothing to do really ...
 
-    def wait_for_card(self, timeout=None, newcardonly=False):
+    def wait_for_card(self, timeout: Optional[int] = None, newcardonly: bool = False):
         pass  # Nothing to do really ...
 
-    def _send_apdu_raw(self, pdu):
+    def _send_apdu_raw(self, pdu: Hexstr) -> Tuple[Hexstr, SwHexstr]:
         # Make sure pdu has upper case hex digits [A-F]
         pdu = pdu.upper()
 

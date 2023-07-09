@@ -19,10 +19,11 @@
 import serial
 import time
 import os.path
+from typing import Optional, Tuple
 
 from pySim.exceptions import NoCardError, ProtocolError
 from pySim.transport import LinkBase
-from pySim.utils import h2b, b2h
+from pySim.utils import h2b, b2h, Hexstr, SwHexstr
 
 
 class SerialSimLink(LinkBase):
@@ -51,7 +52,7 @@ class SerialSimLink(LinkBase):
         if (hasattr(self, "_sl")):
             self._sl.close()
 
-    def wait_for_card(self, timeout=None, newcardonly=False):
+    def wait_for_card(self, timeout: Optional[int] = None, newcardonly: bool = False):
         # Direct try
         existing = False
 
@@ -92,7 +93,7 @@ class SerialSimLink(LinkBase):
     def connect(self):
         self.reset_card()
 
-    def get_atr(self):
+    def get_atr(self) -> Hexstr:
         return self._atr
 
     def disconnect(self):
@@ -184,7 +185,7 @@ class SerialSimLink(LinkBase):
     def _rx_byte(self):
         return self._sl.read()
 
-    def _send_apdu_raw(self, pdu):
+    def _send_apdu_raw(self, pdu: Hexstr) -> Tuple[Hexstr, SwHexstr]:
 
         pdu = h2b(pdu)
         data_len = pdu[4]  # P3

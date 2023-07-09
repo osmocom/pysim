@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from typing import Optional, Tuple
+
 from smartcard.CardConnection import CardConnection
 from smartcard.CardRequest import CardRequest
 from smartcard.Exceptions import NoCardException, CardRequestTimeoutException, CardConnectionException, CardConnectionException
@@ -24,7 +26,7 @@ from smartcard.System import readers
 
 from pySim.exceptions import NoCardError, ProtocolError, ReaderError
 from pySim.transport import LinkBase
-from pySim.utils import h2i, i2h
+from pySim.utils import h2i, i2h, Hexstr, SwHexstr
 
 
 class PcscSimLink(LinkBase):
@@ -46,7 +48,7 @@ class PcscSimLink(LinkBase):
             pass
         return
 
-    def wait_for_card(self, timeout: int = None, newcardonly: bool = False):
+    def wait_for_card(self, timeout: Optional[int] = None, newcardonly: bool = False):
         cr = CardRequest(readers=[self._reader],
                          timeout=timeout, newcardonly=newcardonly)
         try:
@@ -68,7 +70,7 @@ class PcscSimLink(LinkBase):
         except NoCardException:
             raise NoCardError()
 
-    def get_atr(self):
+    def get_atr(self) -> Hexstr:
         return self._con.getATR()
 
     def disconnect(self):
@@ -79,7 +81,7 @@ class PcscSimLink(LinkBase):
         self.connect()
         return 1
 
-    def _send_apdu_raw(self, pdu):
+    def _send_apdu_raw(self, pdu: Hexstr) -> Tuple[Hexstr, SwHexstr]:
 
         apdu = h2i(pdu)
 

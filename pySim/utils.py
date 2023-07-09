@@ -28,7 +28,8 @@ from typing import Optional, List, Dict, Any, Tuple, NewType
 
 # just to differentiate strings of hex nibbles from everything else
 Hexstr = NewType('Hexstr', str)
-
+SwHexstr = NewType('SwHexstr', str)
+SwMatchstr = NewType('SwMatchstr', str)
 
 def h2b(s: Hexstr) -> bytearray:
     """convert from a string of hex nibbles to a sequence of bytes"""

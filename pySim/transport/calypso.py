@@ -21,9 +21,11 @@ import struct
 import socket
 import os
 
+from typing import Optional, Tuple
+
 from pySim.transport import LinkBase
 from pySim.exceptions import *
-from pySim.utils import h2b, b2h
+from pySim.utils import h2b, b2h, Hexstr, SwHexstr
 
 
 class L1CTLMessage:
@@ -91,7 +93,7 @@ class CalypsoSimLink(LinkBase):
     def __del__(self):
         self.sock.close()
 
-    def wait_for_rsp(self, exp_len=128):
+    def wait_for_rsp(self, exp_len: int = 128):
         # Wait for incoming data (timeout is 3 seconds)
         s, _, _ = select.select([self.sock], [], [], 3.0)
         if not s:
@@ -118,10 +120,10 @@ class CalypsoSimLink(LinkBase):
     def disconnect(self):
         pass  # Nothing to do really ...
 
-    def wait_for_card(self, timeout=None, newcardonly=False):
+    def wait_for_card(self, timeout: Optional[int] = None, newcardonly: bool = False):
         pass  # Nothing to do really ...
 
-    def _send_apdu_raw(self, pdu):
+    def _send_apdu_raw(self, pdu: Hexstr) -> Tuple[Hexstr, SwHexstr]:
 
         # Request FULL reset
         req_msg = L1CTLMessageSIM(h2b(pdu))
