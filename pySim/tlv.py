@@ -395,7 +395,7 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
                     res.append(inst)
                 else:
                     raise ValueError('%s: Unknown TLV Class %s in %s; expected %s' %
-                                     (self, i[0], decoded, self.members_by_name.keys()))
+                                     (self, k, decoded, self.members_by_name.keys()))
         self.children = res
         return res
 
