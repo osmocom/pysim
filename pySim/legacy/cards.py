@@ -13,8 +13,9 @@ from pySim.utils import enc_plmn, get_addr_type
 from pySim.utils import is_hex, h2b, b2h, h2s, s2h, lpad, rpad
 from pySim.legacy.utils import enc_ePDGSelection, format_xplmn_w_act, format_xplmn, dec_st, enc_st
 from pySim.legacy.utils import format_ePDGSelection
+from pySim.legacy.ts_51_011 import EF, DF
 
-from pySim.ts_51_011 import EF, DF, EF_AD, EF_SPN
+from pySim.ts_51_011 import EF_AD, EF_SPN
 from pySim.ts_31_102 import EF_USIM_ADF_map
 from pySim.ts_31_103 import EF_ISIM_ADF_map
 

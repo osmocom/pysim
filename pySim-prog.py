@@ -38,7 +38,8 @@ from pySim.commands import SimCardCommands
 from pySim.transport import init_reader
 from pySim.legacy.cards import _cards_classes, card_detect
 from pySim.utils import h2b, swap_nibbles, rpad, derive_milenage_opc, calculate_luhn, dec_iccid
-from pySim.ts_51_011 import EF, EF_AD
+from pySim.ts_51_011 import EF_AD
+from pySim.legacy.ts_51_011 import EF
 from pySim.card_handler import *
 from pySim.utils import *
 
