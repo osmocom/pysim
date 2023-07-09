@@ -19,11 +19,11 @@
 import serial
 import time
 import os.path
-from typing import Optional, Tuple
+from typing import Optional
 
 from pySim.exceptions import NoCardError, ProtocolError
 from pySim.transport import LinkBase
-from pySim.utils import h2b, b2h, Hexstr, SwHexstr
+from pySim.utils import h2b, b2h, Hexstr, ResTuple
 
 
 class SerialSimLink(LinkBase):
@@ -185,7 +185,7 @@ class SerialSimLink(LinkBase):
     def _rx_byte(self):
         return self._sl.read()
 
-    def _send_apdu_raw(self, pdu: Hexstr) -> Tuple[Hexstr, SwHexstr]:
+    def _send_apdu_raw(self, pdu: Hexstr) -> ResTuple:
 
         pdu = h2b(pdu)
         data_len = pdu[4]  # P3

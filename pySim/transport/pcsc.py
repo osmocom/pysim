@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from typing import Optional, Tuple
+from typing import Optional
 
 from smartcard.CardConnection import CardConnection
 from smartcard.CardRequest import CardRequest
@@ -26,7 +26,7 @@ from smartcard.System import readers
 
 from pySim.exceptions import NoCardError, ProtocolError, ReaderError
 from pySim.transport import LinkBase
-from pySim.utils import h2i, i2h, Hexstr, SwHexstr
+from pySim.utils import h2i, i2h, Hexstr, ResTuple
 
 
 class PcscSimLink(LinkBase):
@@ -81,7 +81,7 @@ class PcscSimLink(LinkBase):
         self.connect()
         return 1
 
-    def _send_apdu_raw(self, pdu: Hexstr) -> Tuple[Hexstr, SwHexstr]:
+    def _send_apdu_raw(self, pdu: Hexstr) -> ResTuple:
 
         apdu = h2i(pdu)
 

@@ -10,12 +10,12 @@ from construct import Construct
 
 from pySim.exceptions import *
 from pySim.construct import filter_dict
-from pySim.utils import sw_match, b2h, h2b, i2h, Hexstr, SwHexstr, SwMatchstr
+from pySim.utils import sw_match, b2h, h2b, i2h, Hexstr, SwHexstr, SwMatchstr, ResTuple
 from pySim.cat import ProactiveCommand, CommandDetails, DeviceIdentities, Result
 
 #
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
-# Copyright (C) 2021-2022 Harald Welte <laforge@osmocom.org>
+# Copyright (C) 2021-2023 Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ class LinkBase(abc.ABC):
         self.proactive_handler = proactive_handler
 
     @abc.abstractmethod
-    def _send_apdu_raw(self, pdu: Hexstr) -> Tuple[Hexstr, Hexstr]:
+    def _send_apdu_raw(self, pdu: Hexstr) -> ResTuple:
         """Implementation specific method for sending the PDU."""
 
     def set_sw_interpreter(self, interp):
@@ -99,7 +99,7 @@ class LinkBase(abc.ABC):
         """Resets the card (power down/up)
         """
 
-    def send_apdu_raw(self, pdu: Hexstr) -> Tuple[Hexstr, SwHexstr]:
+    def send_apdu_raw(self, pdu: Hexstr) -> ResTuple:
         """Sends an APDU with minimal processing
 
         Args:
@@ -116,7 +116,7 @@ class LinkBase(abc.ABC):
             self.apdu_tracer.trace_response(pdu, sw, data)
         return (data, sw)
 
-    def send_apdu(self, pdu: Hexstr) -> Tuple[Hexstr, SwHexstr]:
+    def send_apdu(self, pdu: Hexstr) -> ResTuple:
         """Sends an APDU and auto fetch response data
 
         Args:
@@ -145,7 +145,7 @@ class LinkBase(abc.ABC):
 
         return data, sw
 
-    def send_apdu_checksw(self, pdu: Hexstr, sw: SwMatchstr = "9000") -> Tuple[Hexstr, SwHexstr]:
+    def send_apdu_checksw(self, pdu: Hexstr, sw: SwMatchstr = "9000") -> ResTuple:
         """Sends an APDU and check returned SW
 
         Args:
