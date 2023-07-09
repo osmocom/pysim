@@ -28,10 +28,13 @@ import os
 import random
 import re
 import sys
+
 from pySim.ts_51_011 import EF_SST_map, EF_AD
 from pySim.legacy.ts_51_011 import EF, DF
-from pySim.ts_31_102 import EF_UST_map, EF_USIM_ADF_map
-from pySim.ts_31_103 import EF_IST_map, EF_ISIM_ADF_map
+from pySim.ts_31_102 import EF_UST_map
+from pySim.legacy.ts_31_102 import EF_USIM_ADF_map
+from pySim.ts_31_103 import EF_IST_map
+from pySim.legacy.ts_31_103 import EF_ISIM_ADF_map
 
 from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, argparse_add_reader_args
