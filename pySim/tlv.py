@@ -386,12 +386,21 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
         of dicts, where they key indicates the name of the TLV_IE subclass to use."""
         # list of instances of TLV_IE collection member classes appearing in the data
         res = []
+        # iterate over members of the list passed into "decoded"
         for i in decoded:
+            # iterate over all the keys (typically one!) within the current list item dict
             for k in i.keys():
+                # check if we have a member identified by the dict key
                 if k in self.members_by_name:
+                    # resolve the class for that name; create an instance of it
                     cls = self.members_by_name[k]
                     inst = cls()
-                    inst.from_dict({k: i[k]})
+                    if cls.nested_collection_cls:
+                        # in case of collections, we want to pass the raw "value" portion to from_dict,
+                        # as to_dict() below intentionally omits the collection-class-name as key
+                        inst.from_dict(i[k])
+                    else:
+                        inst.from_dict({k: i[k]})
                     res.append(inst)
                 else:
                     raise ValueError('%s: Unknown TLV Class %s in %s; expected %s' %
@@ -400,6 +409,8 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
         return res
 
     def to_dict(self):
+        # we intentionally return not a dict, but a list of dicts.  We could prefix by
+        # self.__class__.__name__, but that is usually some meaningless auto-generated  collection name.
         return [x.to_dict() for x in self.children]
 
     def to_bytes(self):
