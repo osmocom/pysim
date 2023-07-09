@@ -2,6 +2,7 @@
 
 import unittest
 from pySim import utils
+from pySim.legacy import utils as legacy_utils
 from pySim.ts_31_102 import EF_SUCI_Calc_Info
 
 # we don't really want to thest TS 102 221, but the underlying DataObject codebase
@@ -45,7 +46,7 @@ class DecTestCase(unittest.TestCase):
 			"ffffff0002",
 			"ffffff0001",
 		]
-		self.assertEqual(utils.hexstr_to_Nbytearr(input_str, 5), expected)
+		self.assertEqual(legacy_utils.hexstr_to_Nbytearr(input_str, 5), expected)
 
 	def testDecMCCfromPLMN(self):
 		self.assertEqual(utils.dec_mcc_from_plmn("92f501"), 295)
@@ -130,7 +131,7 @@ class DecTestCase(unittest.TestCase):
 		expected += "\tffffff0000 # unused\n"
 		expected += "\tffffff0000 # unused\n"
 		expected += "\tffffff0000 # unused\n"
-		self.assertEqual(utils.format_xplmn_w_act(input_str), expected)
+		self.assertEqual(legacy_utils.format_xplmn_w_act(input_str), expected)
 
 
 	def testDecodeSuciCalcInfo(self):

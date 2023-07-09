@@ -49,7 +49,7 @@ from pprint import pprint as pp
 from pySim.exceptions import *
 from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args, ProactiveHandler
-from pySim.cards import card_detect, SimCard, UsimCard
+from pySim.cards import card_detect, SimCardBase, UiccCardBase
 from pySim.utils import h2b, b2h, i2h, swap_nibbles, rpad, JsonEncoder, bertlv_parse_one, sw_match
 from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, Hexstr
 from pySim.card_handler import CardHandler, CardHandlerAuto
@@ -95,10 +95,10 @@ def init_card(sl):
         return None, None
 
     generic_card = False
-    card = card_detect("auto", scc)
+    card = card_detect(scc)
     if card is None:
         print("Warning: Could not detect card type - assuming a generic card type...")
-        card = SimCard(scc)
+        card = SimCardBase(scc)
         generic_card = True
 
     profile = CardProfile.pick(scc)
@@ -132,7 +132,7 @@ def init_card(sl):
         # IF we don't do this, we will have a SimCard but try USIM specific commands like
         # the update_ust method (see https://osmocom.org/issues/6055)
         if generic_card:
-            card = UsimCard(scc)
+            card = UiccCardBase(scc)
 
     # Create runtime state with card profile
     rs = RuntimeState(card, profile)

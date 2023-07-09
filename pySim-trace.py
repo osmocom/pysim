@@ -8,7 +8,7 @@ from pprint import pprint as pp
 from pySim.apdu import *
 from pySim.filesystem import RuntimeState
 
-from pySim.cards import UsimCard
+from pySim.cards import UiccCardBase
 from pySim.commands import SimCardCommands
 from pySim.profile import CardProfile
 from pySim.ts_102_221 import CardProfileUICCSIM
@@ -36,13 +36,13 @@ ApduCommands = UiccApduCommands + UsimApduCommands #+ GpApduCommands
 
 class DummySimLink(LinkBase):
     """A dummy implementation of the LinkBase abstract base class.  Currently required
-    as the UsimCard doesn't work without SimCardCommands, which in turn require
+    as the UiccCardBase doesn't work without SimCardCommands, which in turn require
     a LinkBase implementation talking to a card.
 
     In the tracer, we don't actually talk to any card, so we simply drop everything
     and claim it is successful.
 
-    The UsimCard / SimCardCommands should be refactored to make this obsolete later."""
+    The UiccCardBase / SimCardCommands should be refactored to make this obsolete later."""
     def __init__(self, debug: bool = False, **kwargs):
         super().__init__(**kwargs)
         self._debug = debug
@@ -75,7 +75,7 @@ class Tracer:
         profile.add_application(CardApplicationUSIM())
         profile.add_application(CardApplicationISIM())
         scc = SimCardCommands(transport=DummySimLink())
-        card = UsimCard(scc)
+        card = UiccCardBase(scc)
         self.rs = RuntimeState(card, profile)
         # APDU Decoder
         self.ad = ApduDecoder(ApduCommands)
