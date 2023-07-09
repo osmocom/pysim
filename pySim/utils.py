@@ -7,7 +7,7 @@ import json
 import abc
 import string
 from io import BytesIO
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Dict, Any, Tuple, NewType
 
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
 # Copyright (C) 2021 Harald Welte <laforge@osmocom.org>
@@ -27,7 +27,7 @@ from typing import Optional, List, Dict, Any, Tuple
 #
 
 # just to differentiate strings of hex nibbles from everything else
-Hexstr = str
+Hexstr = NewType('Hexstr', str)
 
 
 def h2b(s: Hexstr) -> bytearray:
