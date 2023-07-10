@@ -95,8 +95,8 @@ class SimCardBase(CardBase):
 class UiccCardBase(SimCardBase):
     name = 'UICC'
 
-    def __init__(self, ssc: LinkBase):
-        super(UiccCardBase, self).__init__(ssc)
+    def __init__(self, scc: LinkBase):
+        super(UiccCardBase, self).__init__(scc)
         self._scc.cla_byte = "00"
         # See also: ETSI TS 102 221, Table 9.3
         self._adm_chv_num = 0xA0
