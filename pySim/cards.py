@@ -83,6 +83,10 @@ class SimCardBase(CardBase):
     any higher-layer processing."""
     name = 'SIM'
 
+    def __init__(self, scc: LinkBase):
+        super(SimCardBase, self).__init__(scc)
+        self._scc.cla_byte = "A0"
+
     def probe(self) -> bool:
         df_gsm = DF_GSM()
         return self.file_exists(df_gsm.fid)
@@ -93,7 +97,8 @@ class UiccCardBase(SimCardBase):
 
     def __init__(self, ssc: LinkBase):
         super(UiccCardBase, self).__init__(ssc)
-	    # See also: ETSI TS 102 221, Table 9.3
+        self._scc.cla_byte = "00"
+        # See also: ETSI TS 102 221, Table 9.3
         self._adm_chv_num = 0xA0
 
     def probe(self) -> bool:

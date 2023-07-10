@@ -893,7 +893,6 @@ class SysmoUSIMSJS1(UsimCard):
 
     def __init__(self, ssc):
         super(SysmoUSIMSJS1, self).__init__(ssc)
-        self._scc.cla_byte = "00"
         self._scc.sel_ctrl = "0004"  # request an FCP
 
     @classmethod
@@ -1206,7 +1205,6 @@ class WavemobileSim(UsimCard):
     def __init__(self, ssc):
         super(WavemobileSim, self).__init__(ssc)
         self._adm_chv_num = 0x0A
-        self._scc.cla_byte = "00"
         self._scc.sel_ctrl = "0004"  # request an FCP
 
     @classmethod
@@ -1301,7 +1299,6 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
 
     def __init__(self, ssc):
         super(SysmoISIMSJA2, self).__init__(ssc)
-        self._scc.cla_byte = "00"
         self._scc.sel_ctrl = "0004"  # request an FCP
 
     @classmethod
