@@ -115,7 +115,7 @@ class EF_AD(TransparentEF):
     '''3.4.33 Administrative Data'''
 
     _test_de_encode = [
-        ( "000000", { 'ms_operation_mode' : 'normal', 'additional_info' : '0000', 'rfu' : '' } ),
+        ( "000000", { 'ms_operation_mode' : 'normal', 'additional_info' : '0000', 'rfu' : b'' } ),
     ]
     _test_no_pad = True
 
