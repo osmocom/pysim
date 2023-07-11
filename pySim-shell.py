@@ -982,6 +982,11 @@ adm_group.add_argument('-a', '--pin-adm', metavar='PIN_ADM1', dest='pin_adm', de
 adm_group.add_argument('-A', '--pin-adm-hex', metavar='PIN_ADM1_HEX', dest='pin_adm_hex', default=None,
                        help='ADM PIN used for provisioning, as hex string (16 characters long)')
 
+option_parser.add_argument("command", nargs='?',
+                           help="A pySim-shell command that would optionally be executed at startup")
+option_parser.add_argument('command_args', nargs=argparse.REMAINDER,
+                           help="Optional Arguments for command")
+
 
 if __name__ == '__main__':
 
@@ -1045,4 +1050,7 @@ if __name__ == '__main__':
         except Exception as e:
             print(e)
 
-    app.cmdloop()
+    if opts.command:
+        app.onecmd_plus_hooks('{} {}'.format(opts.command, ' '.join(opts.command_args)))
+    else:
+        app.cmdloop()
