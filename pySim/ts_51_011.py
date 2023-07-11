@@ -30,9 +30,10 @@ order to describe the files specified in the relevant ETSI + 3GPP specifications
 #
 
 from pySim.profile import match_sim
-from pySim.profile import CardProfile
+from pySim.profile import CardProfile, CardProfileAddon
 from pySim.filesystem import *
 from pySim.ts_31_102_telecom import DF_PHONEBOOK, DF_MULTIMEDIA, DF_MCS, DF_V2X
+from pySim.gsm_r import AddonGSMR
 import enum
 from pySim.construct import *
 from construct import Optional as COptional
@@ -1047,8 +1048,12 @@ class CardProfileSIM(CardProfile):
             },
         }
 
+        addons = [
+            AddonGSMR,
+        ]
+
         super().__init__('SIM', desc='GSM SIM Card', cla="a0",
-                         sel_ctrl="0000", files_in_mf=[DF_TELECOM(), DF_GSM()], sw=sw)
+                         sel_ctrl="0000", files_in_mf=[DF_TELECOM(), DF_GSM()], sw=sw, addons = addons)
 
     @staticmethod
     def decode_select_response(resp_hex: str) -> object:
@@ -1104,3 +1109,17 @@ class CardProfileSIM(CardProfile):
     @staticmethod
     def match_with_card(scc: SimCardCommands) -> bool:
         return match_sim(scc)
+
+
+class AddonSIM(CardProfileAddon):
+    """An add-on that can be found on a UICC in order to support classic GSM SIM."""
+    def __init__(self):
+        files = [
+            DF_GSM(),
+            DF_TELECOM(),
+        ]
+        super().__init__('SIM', desc='GSM SIM', files_in_mf=files)
+
+    def probe(self, card:'CardBase') -> bool:
+        # we assume the add-on to be present in case DF.GSM is found on the card
+        return card.file_exists(self.files_in_mf[0].fid)

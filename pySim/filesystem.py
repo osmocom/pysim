@@ -1307,6 +1307,16 @@ class RuntimeState:
         self.card.set_apdu_parameter(
             cla=self.profile.cla, sel_ctrl=self.profile.sel_ctrl)
 
+        for addon_cls in self.profile.addons:
+            addon = addon_cls()
+            if addon.probe(self.card):
+                print("Detected %s Add-on \"%s\"" % (self.profile, addon))
+                for f in addon.files_in_mf:
+                    self.mf.add_file(f)
+
+        # go back to MF before the next steps (addon probing might have changed DF)
+        self.card._scc.select_file('3F00')
+
         # add application ADFs + MF-files from profile
         apps = self._match_applications()
         for a in apps:

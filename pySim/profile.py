@@ -88,6 +88,7 @@ class CardProfile:
                 shell_cmdsets : List of cmd2 shell command sets of profile-specific commands
                 cla : class byte that should be used with cards of this profile
                 sel_ctrl : selection control bytes class byte that should be used with cards of this profile
+                addons: List of optional CardAddons that a card of this profile might have
         """
         self.name = name
         self.desc = kw.get("desc", None)
@@ -97,6 +98,8 @@ class CardProfile:
         self.shell_cmdsets = kw.get("shell_cmdsets", [])
         self.cla = kw.get("cla", "00")
         self.sel_ctrl = kw.get("sel_ctrl", "0004")
+        # list of optional addons that a card of this profile might have
+        self.addons = kw.get("addons", [])
 
     def __str__(self):
         return self.name
@@ -161,3 +164,34 @@ class CardProfile:
                 return p()
 
         return None
+
+    def add_addon(self, addon: 'CardProfileAddon'):
+        assert(addon not in self.addons)
+        # we don't install any additional files, as that is happening in the RuntimeState.
+        self.addons.append(addon)
+
+class CardProfileAddon(abc.ABC):
+    """A Card Profile Add-on is something that is not a card application or a full stand-alone
+    card profile, but an add-on to an existing profile.  Think of GSM-R specific files existing
+    on what is otherwise a SIM or USIM+SIM card."""
+
+    def __init__(self, name: str, **kw):
+        """
+        Args:
+                desc (str) : Description
+                files_in_mf : List of CardEF instances present in MF
+                shell_cmdsets : List of cmd2 shell command sets of profile-specific commands
+        """
+        self.name = name
+        self.desc = kw.get("desc", None)
+        self.files_in_mf = kw.get("files_in_mf", [])
+        self.shell_cmdsets = kw.get("shell_cmdsets", [])
+        pass
+
+    def __str__(self):
+        return self.name
+
+    @abc.abstractmethod
+    def probe(self, card: 'CardBase') -> bool:
+        """Probe a given card to determine whether or not this add-on is present/supported."""
+        pass

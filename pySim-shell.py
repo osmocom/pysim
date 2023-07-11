@@ -137,11 +137,6 @@ def init_card(sl):
     # Create runtime state with card profile
     rs = RuntimeState(card, profile)
 
-    # FIXME: This is an GSM-R related file, it needs to be added throughout,
-    # the profile. At the moment we add it for all cards, this won't hurt,
-    # but regular SIM and UICC will not have it and fail to select it.
-    rs.mf.add_file(DF_EIRENE())
-
     CardModel.apply_matching_models(scc, rs)
 
     # inform the transport that we can do context-specific SW interpretation

@@ -11,7 +11,7 @@ from pySim.filesystem import RuntimeState
 from pySim.cards import UiccCardBase
 from pySim.commands import SimCardCommands
 from pySim.profile import CardProfile
-from pySim.ts_102_221 import CardProfileUICCSIM
+from pySim.ts_102_221 import CardProfileUICC
 from pySim.ts_31_102 import CardApplicationUSIM
 from pySim.ts_31_103 import CardApplicationISIM
 from pySim.transport import LinkBase
@@ -70,8 +70,9 @@ class DummySimLink(LinkBase):
 
 class Tracer:
     def __init__(self, **kwargs):
-        # we assume a generic SIM + UICC + USIM + ISIM card
-        profile = CardProfileUICCSIM()
+        # we assume a generic UICC profile; as all APDUs return 9000 in DummySimLink above,
+        # all CardProfileAddon (including SIM) will probe successful.
+        profile = CardProfileUICC()
         profile.add_application(CardApplicationUSIM())
         profile.add_application(CardApplicationISIM())
         scc = SimCardCommands(transport=DummySimLink())

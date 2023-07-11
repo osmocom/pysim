@@ -31,7 +31,9 @@ import pySim.iso7816_4 as iso7816_4
 
 # A UICC will usually also support 2G functionality. If this is the case, we
 # need to add DF_GSM and DF_TELECOM along with the UICC related files
-from pySim.ts_51_011 import DF_GSM, DF_TELECOM
+from pySim.ts_51_011 import DF_GSM, DF_TELECOM, AddonSIM
+from pySim.gsm_r import AddonGSMR
+from pySim.cdma_ruim import AddonRUIM
 
 ts_102_22x_cmdset = CardCommandSet('TS 102 22x', [
     # TS 102 221 Section 10.1.2 Table 10.5 "Coding of Instruction Byte"
@@ -768,6 +770,11 @@ class CardProfileUICC(CardProfile):
             # FIXME: DF.CD
             EF_UMPC(),
         ]
+        addons = [
+            AddonSIM,
+            AddonGSMR,
+            AddonRUIM,
+        ]
         sw = {
             'Normal': {
                 '9000': 'Normal ending of the command',
@@ -839,7 +846,7 @@ class CardProfileUICC(CardProfile):
 
         super().__init__(name, desc='ETSI TS 102 221', cla="00",
                          sel_ctrl="0004", files_in_mf=files, sw=sw,
-                         shell_cmdsets = [self.AddlShellCommands()])
+                         shell_cmdsets = [self.AddlShellCommands()], addons = addons)
 
     @staticmethod
     def decode_select_response(resp_hex: str) -> object:
@@ -895,4 +902,5 @@ class CardProfileUICCSIM(CardProfileUICC):
 
     @staticmethod
     def match_with_card(scc: SimCardCommands) -> bool:
-        return match_uicc(scc) and match_sim(scc)
+        # don't ever select this profile, we only use this from pySim-trace
+        return False

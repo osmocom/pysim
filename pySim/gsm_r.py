@@ -35,8 +35,8 @@ from construct import Optional as COptional
 from pySim.construct import *
 import enum
 
+from pySim.profile import CardProfileAddon
 from pySim.filesystem import *
-import pySim.ts_102_221
 import pySim.ts_51_011
 
 ######################################################################
@@ -362,3 +362,15 @@ class DF_EIRENE(CardDF):
                            desc='Free Number Call Type 0 and 8'),
         ]
         self.add_files(files)
+
+
+class AddonGSMR(CardProfileAddon):
+    """An Addon that can be found on either classic GSM SIM or on UICC to support GSM-R."""
+    def __init__(self):
+        files = [
+            DF_EIRENE()
+        ]
+        super().__init__('GSM-R', desc='Railway GSM', files_in_mf=files)
+
+    def probe(self, card: 'CardBase') -> bool:
+        return card.file_exists(self.files_in_mf[0].fid)

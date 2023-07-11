@@ -22,7 +22,7 @@ import enum
 from pySim.utils import *
 from pySim.filesystem import *
 from pySim.profile import match_ruim
-from pySim.profile import CardProfile
+from pySim.profile import CardProfile, CardProfileAddon
 from pySim.ts_51_011 import CardProfileSIM
 from pySim.ts_51_011 import DF_TELECOM, DF_GSM
 from pySim.ts_51_011 import EF_ServiceTable
@@ -191,3 +191,14 @@ class CardProfileRUIM(CardProfile):
     @staticmethod
     def match_with_card(scc: SimCardCommands) -> bool:
         return match_ruim(scc)
+
+class AddonRUIM(CardProfileAddon):
+    """An Addon that can be found on on a combined SIM + RUIM or UICC + RUIM to support CDMA."""
+    def __init__(self):
+        files = [
+            DF_CDMA()
+        ]
+        super().__init__('RUIM', desc='CDMA RUIM', files_in_mf=files)
+
+    def probe(self, card: 'CardBase') -> bool:
+        return card.file_exists(self.files_in_mf[0].fid)
