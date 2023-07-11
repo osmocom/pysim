@@ -1765,14 +1765,6 @@ class RuntimeLchan:
                 cmd_app.unregister_command_set(c)
 
 
-class FileData:
-    """Represent the runtime, on-card data."""
-
-    def __init__(self, fdesc):
-        self.desc = fdesc
-        self.fcp = None
-
-
 def interpret_sw(sw_data: dict, sw: str):
     """Interpret a given status word.
 
