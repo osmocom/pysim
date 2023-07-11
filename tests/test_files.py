@@ -29,6 +29,7 @@ import pySim.ts_31_103
 import pySim.ts_51_011
 import pySim.sysmocom_sja2
 import pySim.gsm_r
+import pySim.cdma_ruim
 
 def get_qualified_name(c):
     """return the qualified (by module) name of a class."""

@@ -91,7 +91,7 @@ class EF_SPN(TransparentEF):
 
     _test_de_encode = [
         ( "010801536b796c696e6b204e57ffffffffffffffffffffffffffffffffffffffffffff",
-          { 'rfu0' : 0, 'show_in_hsa' : True, 'rfu2' : 0,
+          { 'rfu1' : 0, 'show_in_hsa' : True, 'rfu2' : 0,
             'char_encoding' : 8, 'lang_ind' : 1, 'spn' : 'Skylink NW' } ),
     ]
 
@@ -133,9 +133,9 @@ class EF_AD(TransparentEF):
             # Byte 1: Display Condition
             'ms_operation_mode'/Enum(Byte, self.OP_MODE),
             # Bytes 2-3: Additional information
-            'additional_info'/Bytes(2),
+            'additional_info'/HexAdapter(Bytes(2)),
             # Bytes 4..: RFU
-            'rfu'/GreedyBytesRFU,
+            'rfu'/HexAdapter(GreedyBytesRFU),
         )
 
 
