@@ -223,9 +223,21 @@ class ADF_SD(CardADF):
         def __init__(self):
             super().__init__()
 
+        get_data_parser = argparse.ArgumentParser()
+        get_data_parser.add_argument('data_object_name', type=str,
+            help='Name of the data object to be retrieved from the card')
+
+        @cmd2.with_argparser(get_data_parser)
         def do_get_data(self, opts):
-            tlv_cls_name = opts.arg_list[0]
-            tlv_cls = DataCollection().members_by_name[tlv_cls_name]
+            """Perform the GlobalPlatform GET DATA command in order to obtain some card-specific data."""
+            tlv_cls_name = opts.data_object_name
+            try:
+                tlv_cls = DataCollection().members_by_name[tlv_cls_name]
+            except KeyError:
+                do_names = [camel_to_snake(str(x.__name__)) for x in DataCollection.possible_nested]
+                self._cmd.poutput('Unknown data object "%s", available options: %s' % (tlv_cls_name,
+                                                                                       do_names))
+                return
             (data, sw) = self._cmd.card._scc.get_data(cla=0x80, tag=tlv_cls.tag)
             ie = tlv_cls()
             ie.from_tlv(h2b(data))

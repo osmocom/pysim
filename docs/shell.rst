@@ -795,8 +795,9 @@ projects like GlobalPlatformPro meanwhile.
 
 get_data
 ~~~~~~~~
-Performs the GET DATA command as specified by GlobalPlatform.
-
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.get_data_parser
 
 cmd2 settable parameters
 ------------------------
