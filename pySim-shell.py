@@ -41,6 +41,7 @@ import argparse
 
 import os
 import sys
+import inspect
 from pathlib import Path
 from io import StringIO
 
@@ -54,16 +55,11 @@ from pySim.utils import h2b, b2h, i2h, swap_nibbles, rpad, JsonEncoder, bertlv_p
 from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, Hexstr
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
-from pySim.filesystem import RuntimeState, CardDF, CardADF, CardModel
+from pySim.filesystem import RuntimeState, CardDF, CardADF, CardModel, CardApplication
 from pySim.profile import CardProfile
 from pySim.cdma_ruim import CardProfileRUIM
 from pySim.ts_102_221 import CardProfileUICC
 from pySim.ts_102_222 import Ts102222Commands
-from pySim.ts_31_102 import CardApplicationUSIM
-from pySim.ts_31_103 import CardApplicationISIM
-from pySim.ts_31_104 import CardApplicationHPSIM
-from pySim.ara_m import CardApplicationARAM
-from pySim.global_platform import CardApplicationISD
 from pySim.gsm_r import DF_EIRENE
 from pySim.cat import ProactiveCommand
 
@@ -71,6 +67,15 @@ from pySim.cat import ProactiveCommand
 # CardModel is created, which will add the ATR-based matching and
 # calling of SysmocomSJA2.add_files.  See  CardModel.apply_matching_models
 import pySim.sysmocom_sja2
+
+# we need to import these modules so that the various sub-classes of
+# CardProfile are created, which will be used in init_card() to iterate
+# over all known CardProfile sub-classes.
+import pySim.ts_31_102
+import pySim.ts_31_103
+import pySim.ts_31_104
+import pySim.ara_m
+import pySim.global_platform
 
 from pySim.card_key_provider import CardKeyProviderCsv, card_key_provider_register, card_key_provider_get_field
 
@@ -116,17 +121,16 @@ def init_card(sl):
 
     print("Info: Card is of type: %s" % str(profile))
 
-    # FIXME: This shouln't be here, the profile should add the applications,
-    # however, we cannot simply put his into ts_102_221.py since we would
-    # have to e.g. import CardApplicationUSIM from ts_31_102.py, which already
-    # imports from ts_102_221.py. This means we will end up with a circular
-    # import, which needs to be resolved first.
+    # FIXME: this shouldn't really be here but somewhere else/more generic.
+    # We cannot do it within pySim/profile.py as that would create circular
+    # dependencies between the individual profiles and profile.py.
     if isinstance(profile, CardProfileUICC):
-        profile.add_application(CardApplicationUSIM())
-        profile.add_application(CardApplicationISIM())
-        profile.add_application(CardApplicationHPSIM())
-        profile.add_application(CardApplicationARAM())
-        profile.add_application(CardApplicationISD())
+        for app_cls in CardApplication.__subclasses__():
+            constr_sig = inspect.signature(app_cls.__init__)
+            # skip any intermediary sub-classes such as CardApplicationSD
+            if len(constr_sig.parameters) != 1:
+                continue
+            profile.add_application(app_cls())
         # We have chosen SimCard() above, but we now know it actually is an UICC
         # so it's safe to assume it supports USIM application (which we're adding above).
         # IF we don't do this, we will have a SimCard but try USIM specific commands like
