@@ -149,6 +149,9 @@ class CardFile:
 
     def build_select_path_to(self, target: 'CardFile') -> Optional[List['CardFile']]:
         """Build the relative sequence of files we need to traverse to get from us to 'target'."""
+        # special-case handling for selecting MF while we MF is selected
+        if target == target.get_mf():
+            return [target]
         cur_fqpath = self.fully_qualified_path_fobj()
         target_fqpath = target.fully_qualified_path_fobj()
         inter_path = []
