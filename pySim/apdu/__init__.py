@@ -35,7 +35,7 @@ from construct import *
 from construct import Optional as COptional
 from pySim.construct import *
 from pySim.utils import *
-from pySim.filesystem import RuntimeLchan, RuntimeState, lchan_nr_from_cla
+from pySim.runtime import RuntimeLchan, RuntimeState, lchan_nr_from_cla
 from pySim.filesystem import CardADF, CardFile, TransparentEF, LinFixedEF
 
 """There are multiple levels of decode:

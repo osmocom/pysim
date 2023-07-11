@@ -6,7 +6,7 @@ import argparse
 from pprint import pprint as pp
 
 from pySim.apdu import *
-from pySim.filesystem import RuntimeState
+from pySim.runtime import RuntimeState
 
 from pySim.cards import UiccCardBase
 from pySim.commands import SimCardCommands

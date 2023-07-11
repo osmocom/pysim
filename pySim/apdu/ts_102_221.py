@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 from pySim.construct import *
 from pySim.filesystem import *
+from pySim.runtime import RuntimeLchan
 from pySim.apdu import ApduCommand, ApduCommandSet
 from typing import Optional, Dict, Tuple
 

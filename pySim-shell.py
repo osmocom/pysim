@@ -55,7 +55,8 @@ from pySim.utils import h2b, b2h, i2h, swap_nibbles, rpad, JsonEncoder, bertlv_p
 from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, Hexstr
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
-from pySim.filesystem import RuntimeState, CardDF, CardADF, CardModel, CardApplication
+from pySim.filesystem import CardDF, CardADF, CardModel, CardApplication
+from pySim.runtime import RuntimeState
 from pySim.profile import CardProfile
 from pySim.cdma_ruim import CardProfileRUIM
 from pySim.ts_102_221 import CardProfileUICC

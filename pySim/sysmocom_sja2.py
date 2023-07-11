@@ -21,6 +21,7 @@ from pytlv.TLV import *
 from struct import pack, unpack
 from pySim.utils import *
 from pySim.filesystem import *
+from pySim.runtime import RuntimeState
 from pySim.ts_102_221 import CardProfileUICC
 from pySim.construct import *
 from construct import *
