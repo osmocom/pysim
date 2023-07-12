@@ -886,21 +886,3 @@ class CardProfileUICC(CardProfile):
             of the card is required between SUSPEND and RESUME, and only very few non-RESUME
             commands are permitted between SUSPEND and RESUME.  See TS 102 221 Section 11.1.22."""
             self._cmd.card._scc.resume_uicc(opts.token)
-
-
-class CardProfileUICCSIM(CardProfileUICC):
-    """Same as above, but including 2G SIM support"""
-
-    ORDER = 0
-
-    def __init__(self):
-        super().__init__('UICC-SIM')
-
-        # Add GSM specific files
-        self.files_in_mf.append(DF_TELECOM())
-        self.files_in_mf.append(DF_GSM())
-
-    @staticmethod
-    def match_with_card(scc: SimCardCommands) -> bool:
-        # don't ever select this profile, we only use this from pySim-trace
-        return False
