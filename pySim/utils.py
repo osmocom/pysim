@@ -413,7 +413,7 @@ def enc_plmn(mcc: Hexstr, mnc: Hexstr) -> Hexstr:
     if len(mnc) == 0:
         mnc = "FFF"
     elif len(mnc) == 1:
-        mnc = "F0" + mnc
+        mnc = "0" + mnc + "F"
     elif len(mnc) == 2:
         mnc += "F"
 
