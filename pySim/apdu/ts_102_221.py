@@ -396,7 +396,7 @@ class ManageChannel(ApduCommand, n='MANAGE CHANNEL', ins=0x70, cla=['0X', '4X', 
             self.col_id = '%02u' % created_channel_nr
             return {'mode': mode, 'created_channel': created_channel_nr }
         elif mode == 'close_channel':
-            closed_channel_nr = self.cmd_dict['p2']
+            closed_channel_nr = self.cmd_dict['p2']['logical_channel_number']
             rs.del_lchan(closed_channel_nr)
             self.col_id = '%02u' % closed_channel_nr
             return {'mode': mode, 'closed_channel': closed_channel_nr }
