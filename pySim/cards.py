@@ -101,7 +101,7 @@ class UiccCardBase(SimCardBase):
         self._scc.cla_byte = "00"
         self._scc.sel_ctrl = "0004"  # request an FCP
         # See also: ETSI TS 102 221, Table 9.3
-        self._adm_chv_num = 0xA0
+        self._adm_chv_num = 0x0A
 
     def probe(self) -> bool:
         # EF.DIR is a mandatory EF on all ICCIDs; however it *may* also exist on a TS 51.011 SIM
