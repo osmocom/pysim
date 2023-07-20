@@ -781,7 +781,7 @@ class PySimCommands(CommandSet):
                     "cannot find ADM-PIN for ICCID '%s'" % (self._cmd.iccid))
 
         if pin_adm:
-            self._cmd.card.verify_adm(h2b(pin_adm))
+            self._cmd.card._scc.verify_chv(self._cmd.card._adm_chv_num, h2b(pin_adm))
         else:
             raise ValueError("error: cannot authenticate, no adm-pin!")
 
