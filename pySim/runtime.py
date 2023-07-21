@@ -124,7 +124,7 @@ class RuntimeState:
             cmd_app : Command Application State (for unregistering old file commands)
         """
         # delete all lchan != 0 (basic lchan)
-        for lchan_nr in self.lchan.keys():
+        for lchan_nr in list(self.lchan.keys()):
             if lchan_nr == 0:
                 continue
             del self.lchan[lchan_nr]
