@@ -872,7 +872,7 @@ class EF_ePDGId(TransparentEF):
     class ePDGId(BER_TLV_IE, tag=0x80, nested=[]):
         _construct = Struct('type_of_ePDG_address'/Enum(Byte, FQDN=0, IPv4=1, IPv6=2),
                             'ePDG_address'/Switch(this.type_of_address,
-                                                  {'FQDN': GreedyString("utf8"),
+                                                  {'FQDN': Utf8Adapter(GreedyBytes),
                                                    'IPv4': HexAdapter(GreedyBytes),
                                                    'IPv6': HexAdapter(GreedyBytes)}))
 
@@ -951,15 +951,15 @@ class EF_OPL5G(LinFixedEF):
 class EF_SUPI_NAI(TransparentEF):
     class NetworkSpecificIdentifier(TLV_IE, tag=0x80):
         # RFC 7542 encoded as UTF-8 string
-        _construct = GreedyString("utf8")
+        _construct = Utf8Adapter(GreedyBytes)
 
     class GlobalLineIdentifier(TLV_IE, tag=0x81):
         # TS 23.003 clause 28.16.2
-        _construct = GreedyString("utf8")
+        _construct = Utf8Adapter(GreedyBytes)
 
     class GlobalCableIdentifier(TLV_IE, tag=0x82):
         # TS 23.003 clause 28.15.2
-        _construct = GreedyString("utf8")
+        _construct = Utf8Adapter(GreedyBytes)
 
     class NAI_TLV_Collection(TLV_IE_Collection,
                              nested=[NetworkSpecificIdentifier, GlobalLineIdentifier, GlobalCableIdentifier]):
@@ -984,7 +984,7 @@ class EF_Routing_Indicator(TransparentEF):
 # TS 31.102 Section 4.4.11.13
 class EF_TN3GPPSNN(TransparentEF):
     class ServingNetworkName(BER_TLV_IE, tag=0x80):
-        _construct = GreedyString("utf8")
+        _construct = Utf8Adapter(GreedyBytes)
     def __init__(self, fid='4f0c', sfid=0x0c, name='EF.TN3GPPSNN',
                  desc='Trusted non-3GPP Serving network names list', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)

@@ -6,6 +6,7 @@ from construct.core import evaluate, BitwisableString
 from construct.lib import integertypes
 from pySim.utils import b2h, h2b, swap_nibbles
 import gsm0338
+import codecs
 
 """Utility code related to the integration of the 'construct' declarative parser."""
 
@@ -33,6 +34,18 @@ class HexAdapter(Adapter):
 
     def _encode(self, obj, context, path):
         return h2b(obj)
+
+class Utf8Adapter(Adapter):
+    """convert a bytes() type that contains utf8 encoded text to human readable text."""
+
+    def _decode(self, obj, context, path):
+        # In case the string contains only 0xff bytes we interpret it as an empty string
+        if obj == b'\xff' * len(obj):
+                return ""
+        return codecs.decode(obj, "utf-8")
+
+    def _encode(self, obj, context, path):
+        return codecs.encode(obj, "utf-8")
 
 
 class BcdAdapter(Adapter):

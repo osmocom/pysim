@@ -30,6 +30,7 @@ from pySim.ts_31_102 import ADF_USIM, EF_FromPreferred
 from pySim.ts_31_102_telecom import EF_UServiceTable
 import pySim.ts_102_221
 from pySim.ts_102_221 import EF_ARR
+from pySim.construct import *
 
 # Mapping between ISIM Service Number and its description
 EF_IST_map = {
@@ -62,8 +63,9 @@ class EF_IMPI(TransparentEF):
         ( '803137333830303630303030303031303140696d732e6d6e633030302e6d63633733382e336770706e6574776f726b2e6f7267',
           { "nai": "738006000000101@ims.mnc000.mcc738.3gppnetwork.org" } ),
     ]
+
     class nai(BER_TLV_IE, tag=0x80):
-        _construct = GreedyString("utf8")
+        _construct = Utf8Adapter(GreedyBytes)
 
     def __init__(self, fid='6f02', sfid=0x02, name='EF.IMPI', desc='IMS private user identity', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
@@ -76,7 +78,7 @@ class EF_DOMAIN(TransparentEF):
           { "domain": "ims.mnc000.mcc738.3gppnetwork.org" } ),
     ]
     class domain(BER_TLV_IE, tag=0x80):
-        _construct = GreedyString("utf8")
+        _construct = Utf8Adapter(GreedyBytes)
 
     def __init__(self, fid='6f03', sfid=0x05, name='EF.DOMAIN', desc='Home Network Domain Name', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
@@ -89,7 +91,7 @@ class EF_IMPU(LinFixedEF):
           { "impu": "sip:738006000000101@ims.mnc000.mcc738.3gppnetwork.org" } ),
     ]
     class impu(BER_TLV_IE, tag=0x80):
-        _construct = GreedyString("utf8")
+        _construct = Utf8Adapter(GreedyBytes)
 
     def __init__(self, fid='6f04', sfid=0x04, name='EF.IMPU', desc='IMS public user identity', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
@@ -165,7 +167,7 @@ class EF_NAFKCA(LinFixedEF):
 # TS 31.103 Section 4.2.16
 class EF_UICCIARI(LinFixedEF):
     class iari(BER_TLV_IE, tag=0x80):
-        _construct = GreedyString("utf8")
+        _construct = Utf8Adapter(GreedyBytes)
 
     def __init__(self, fid='6fe7', sfid=None, name='EF.UICCIARI', desc='UICC IARI', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
@@ -232,7 +234,7 @@ class EF_XCAPConfigData(BerTlvEF):
 # TS 31.103 Section 4.2.20
 class EF_WebRTCURI(TransparentEF):
     class uri(BER_TLV_IE, tag=0x80):
-        _construct = GreedyString("utf8")
+        _construct = Utf8Adapter(GreedyBytes)
 
     def __init__(self, fid='6ffa', sfid=None, name='EF.WebRTCURI', desc='WebRTC URI', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
