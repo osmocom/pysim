@@ -771,6 +771,10 @@ def dec_addr_tlv(hexstr):
         if tlv[1] == 0:
             continue
 
+        # Uninitialized field
+        if all([v == 0xff for v in tlv[2]]):
+            continue
+
         # First byte in the value has the address type
         addr_type = tlv[2][0]
         # TODO: Support parsing of IPv6
