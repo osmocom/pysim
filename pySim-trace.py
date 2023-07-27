@@ -100,9 +100,15 @@ class Tracer:
 
     def main(self):
         """Main loop of tracer: Iterates over all Apdu received from source."""
+        apdu_counter = 0
         while True:
             # obtain the next APDU from the source (blocking read)
-            apdu = self.source.read()
+            try:
+                apdu = self.source.read()
+                apdu_counter = apdu_counter + 1
+            except StopIteration:
+                print("%i APDUs parsed, stop iteration." % apdu_counter)
+                return 0
 
             if isinstance(apdu, CardReset):
                 self.rs.reset()
