@@ -27,8 +27,8 @@ PYTHON=python3
 
 set -e
 
-echo "pysim-test - a test program to test pysim-prog.py"
-echo "================================================="
+echo "pySim-prog_test - a test program to test pysim-prog.py"
+echo "======================================================"
 
 # Generate a list of the cards we expect to see by checking which .ok files
 # are present

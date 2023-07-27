@@ -29,7 +29,7 @@ case "$JOB_TYPE" in
 
 	# Run the test with physical cards
 	cd pysim-testdata
-	../tests/pysim-test.sh
+	../tests/pySim-prog_test.sh
 	../tests/pySim-trace_test.sh
 	;;
 "pylint")
