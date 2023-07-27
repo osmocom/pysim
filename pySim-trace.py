@@ -114,7 +114,7 @@ class Tracer:
                 continue
             if self.suppress_status and isinstance(inst, UiccStatus):
                 continue
-            #print(inst)
+
             self.format_capdu(apdu, inst)
 
 option_parser = argparse.ArgumentParser(description='Osmocom pySim high-level SIM card trace decoder',
