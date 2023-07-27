@@ -83,10 +83,13 @@ class Tracer:
         # parameters
         self.suppress_status = kwargs.get('suppress_status', True)
         self.suppress_select = kwargs.get('suppress_select', True)
+        self.show_raw_apdu = kwargs.get('show_raw_apdu', False)
         self.source = kwargs.get('source', None)
 
-    def format_capdu(self, inst: ApduCommand):
+    def format_capdu(self, apdu: Apdu, inst: ApduCommand):
         """Output a single decoded + processed ApduCommand."""
+        if self.show_raw_apdu:
+            print(apdu)
         print("%02u %-16s %-35s %-8s %s %s" % (inst.lchan_nr, inst._name, inst.path_str, inst.col_id, inst.col_sw, inst.processed))
         print("===============================")
 
@@ -95,7 +98,6 @@ class Tracer:
         while True:
             # obtain the next APDU from the source (blocking read)
             apdu = self.source.read()
-            #print(apdu)
 
             if isinstance(apdu, CardReset):
                 self.rs.reset()
@@ -113,7 +115,7 @@ class Tracer:
             if self.suppress_status and isinstance(inst, UiccStatus):
                 continue
             #print(inst)
-            self.format_capdu(inst)
+            self.format_capdu(apdu, inst)
 
 option_parser = argparse.ArgumentParser(description='Osmocom pySim high-level SIM card trace decoder',
                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -128,6 +130,9 @@ global_group.add_argument('--no-suppress-status', action='store_false', dest='su
                           help="""
     Don't suppress displaying STATUS APDUs. We normally suppress them as they don't provide any
     information that was not already received in resposne to the most recent SEELCT.""")
+global_group.add_argument('--show-raw-apdu', action='store_true', dest='show_raw_apdu',
+                          help="""Show the raw APDU in addition to its parsed form.""")
+
 
 subparsers = option_parser.add_subparsers(help='APDU Source', dest='source', required=True)
 
@@ -172,7 +177,8 @@ if __name__ == '__main__':
     elif opts.source == 'gsmtap-pyshark-pcap':
         s = PysharkGsmtapPcap(opts.pcap_file)
 
-    tracer = Tracer(source=s, suppress_status=opts.suppress_status, suppress_select=opts.suppress_select)
+    tracer = Tracer(source=s, suppress_status=opts.suppress_status, suppress_select=opts.suppress_select,
+                    show_raw_apdu=opts.show_raw_apdu)
     logger.info('Entering main loop...')
     tracer.main()
 
