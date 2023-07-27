@@ -448,4 +448,11 @@ class ApduDecoder(ApduHandler):
 
 
 class CardReset:
-    pass
+    def __init__(self, atr: bytes):
+        self.atr = atr
+
+    def __str__(self):
+        if (self.atr):
+            return '%s(%s)' % (type(self).__name__, b2h(self.atr))
+        else:
+            return '%s' % (type(self).__name__)

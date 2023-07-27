@@ -117,7 +117,8 @@ class _PysharkRspro(ApduSource):
             vccPresent, resetActive, clkActive = self.get_pstatus(slot_pstatus)
             if vccPresent and clkActive and not resetActive:
                 logger.debug("RESET")
-                return CardReset()
+                #TODO: extract ATR from RSPRO message and use it here
+                return CardReset(None)
         else:
             print("Unhandled msg type %s: %s" % (msg_type, rspro_msg))
 

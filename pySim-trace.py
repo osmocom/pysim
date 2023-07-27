@@ -93,6 +93,11 @@ class Tracer:
         print("%02u %-16s %-35s %-8s %s %s" % (inst.lchan_nr, inst._name, inst.path_str, inst.col_id, inst.col_sw, inst.processed))
         print("===============================")
 
+    def format_reset(self, apdu: CardReset):
+        """Output a single decoded CardReset."""
+        print(apdu)
+        print("===============================")
+
     def main(self):
         """Main loop of tracer: Iterates over all Apdu received from source."""
         while True:
@@ -101,6 +106,7 @@ class Tracer:
 
             if isinstance(apdu, CardReset):
                 self.rs.reset()
+                self.format_reset(apdu)
                 continue
 
             # ask ApduDecoder to look-up (INS,CLA) + instantiate an ApduCommand derived

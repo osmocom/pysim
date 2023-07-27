@@ -49,7 +49,7 @@ class GsmtapApduSource(ApduSource):
             return ApduCommands.parse_cmd_bytes(gsmtap_msg['body'])
         elif sub_type == 'atr':
             # card has been reset
-            return CardReset()
+            return CardReset(gsmtap_msg['body'])
         elif sub_type in ['pps_req', 'pps_rsp']:
             # simply ignore for now
             pass
