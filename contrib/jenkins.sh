@@ -22,6 +22,7 @@ case "$JOB_TYPE" in
 	. venv/bin/activate
 
 	pip install -r requirements.txt
+	pip install pyshark
 
 	# Execute automatically discovered unit tests first
 	python -m unittest discover -v -s tests/
@@ -29,6 +30,7 @@ case "$JOB_TYPE" in
 	# Run the test with physical cards
 	cd pysim-testdata
 	../tests/pysim-test.sh
+	../tests/pySim-trace_test.sh
 	;;
 "pylint")
 	# Print pylint version
