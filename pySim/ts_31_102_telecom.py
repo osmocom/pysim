@@ -120,7 +120,26 @@ class EF_UServiceTable(TransparentEF):
             cmd.lchan.select_file(self)
         return num_problems
 
+    def ust_update(self, cmd, activate=[], deactivate=[]):
+        service_data, sw = cmd.lchan.read_binary()
+        service_data = h2b(service_data)
 
+        for service in activate:
+            nbyte, nbit = EF_UServiceTable._bit_byte_offset_for_service(service)
+            if nbyte > len(service_data):
+                missing = nbyte - service_data
+                service_data.extend(missing * "00")
+            service_data[nbyte] |= (1 << nbit)
+
+        for service in deactivate:
+            nbyte, nbit = EF_UServiceTable._bit_byte_offset_for_service(service)
+            if nbyte > len(service_data):
+                missing = nbyte - service_data
+                service_data.extend(missing * "00")
+            service_data[nbyte] &= ~(1 << nbit)
+
+        service_data = b2h(service_data)
+        cmd.lchan.update_binary(service_data)
 
 # TS 31.102 Section 4.4.2.1
 class EF_PBR(LinFixedEF):
