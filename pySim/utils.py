@@ -537,7 +537,6 @@ def derive_milenage_opc(ki_hex: Hexstr, op_hex: Hexstr) -> Hexstr:
     from Cryptodome.Cipher import AES
     # pylint: disable=no-name-in-module
     from Cryptodome.Util.strxor import strxor
-    from pySim.utils import b2h
 
     # We pass in hex string and now need to work on bytes
     ki_bytes = bytes(h2b(ki_hex))
