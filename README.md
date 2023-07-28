@@ -101,6 +101,9 @@ pip3 install --user -r requirements.txt
 
 After installing all dependencies, the pySim applications ``pySim-read.py``, ``pySim-prog.py`` and ``pySim-shell.py`` may be started directly from the cloned repository.
 
+In addition to the dependencies above ``pySim-trace.py`` requires ``tshark`` and the python package ``pyshark`` to be installed. It is known that the ``tshark`` package
+in Debian versions before 11 may not work with pyshark.
+
 ### Archlinux Package
 
 Archlinux users may install the package ``python-pysim-git``
