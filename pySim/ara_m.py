@@ -354,7 +354,7 @@ class ADF_ARAM(CardADF):
                 ref_do_content += [{'aid_ref_empty_do': None}]
             ref_do_content += [{'dev_app_id_ref_do': opts.device_app_id}]
             if opts.pkg_ref:
-                ref_do_content += [{'pkg_ref_do': opts.pkg_ref}]
+                ref_do_content += [{'pkg_ref_do': {'package_name_string': opts.pkg_ref}}]
             # AR
             ar_do_content = []
             if opts.apdu_never:
