@@ -660,12 +660,14 @@ class EF_EST(EF_UServiceTable):
             super().__init__()
 
         def do_est_service_enable(self, arg):
-            """Enable a service within EF.UST"""
-            self._cmd.card.update_est(int(arg), 1)
+            """Enable a service within EF.EST"""
+            selected_file = self._cmd.lchan.selected_file
+            selected_file.ust_update(self._cmd, [int(arg)], [])
 
         def do_est_service_disable(self, arg):
-            """Disable a service within EF.UST"""
-            self._cmd.card.update_est(int(arg), 0)
+            """Disable a service within EF.EST"""
+            selected_file = self._cmd.lchan.selected_file
+            selected_file.ust_update(self._cmd, [], [int(arg)])
 
 # TS 31.102 Section 4.2.48
 class EF_ACL(TransparentEF):
@@ -1062,11 +1064,13 @@ class EF_5G_PROSE_ST(EF_UServiceTable):
 
         def do_prose_service_activate(self, arg):
             """Activate a service within EF.5G_PROSE_ST"""
-            self._cmd.card.update_ust(int(arg), 1)
+            selected_file = self._cmd.lchan.selected_file
+            selected_file.ust_update(self._cmd, [int(arg)], [])
 
         def do_prose_service_deactivate(self, arg):
             """Deactivate a service within EF.5G_PROSE_ST"""
-            self._cmd.card.update_ust(int(arg), 0)
+            selected_file = self._cmd.lchan.selected_file
+            selected_file.ust_update(self._cmd, [], [int(arg)])
 
 # TS 31.102 Section 4.4.13.3 (Rel 17)
 class EF_5G_PROSE_DD(TransparentEF):

@@ -111,11 +111,13 @@ class EF_IST(EF_UServiceTable):
 
         def do_ist_service_activate(self, arg):
             """Activate a service within EF.IST"""
-            self._cmd.card.update_ist(int(arg), 1)
+            selected_file = self._cmd.lchan.selected_file
+            selected_file.ust_update(self._cmd, [int(arg)], [])
 
         def do_ist_service_deactivate(self, arg):
             """Deactivate a service within EF.IST"""
-            self._cmd.card.update_ist(int(arg), 0)
+            selected_file = self._cmd.lchan.selected_file
+            selected_file.ust_update(self._cmd, [], [int(arg)])
 
         def do_ist_service_check(self, arg):
             """Check consistency between services of this file and files present/activated.
