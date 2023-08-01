@@ -1,0 +1,616 @@
+Detected UICC Add-on "SIM"
+Detected UICC Add-on "GSM-R"
+Detected UICC Add-on "RUIM"
+Can't read AIDs from SIM -- 'list' object has no attribute 'lower'
+warning: EF.DIR seems to be empty!
+ ISIM: a0000000871004
+ USIM: a0000000871002
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 READ BINARY      MF/EF.PL                            -        9000 [None, None, None, None, None]
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 READ RECORD      MF/EF.DIR                           01       9000 {'application_template': [{'application_id': b'\xa0\x00\x00\x00\x87\x10\x02\xff\xff\xff\xff\x89\x07\t\x00\x00'}, {'application_label': 'USim1'}, {'discretionary_template': b'\xa0\x0c\x80\x01\x17\x81\x02_`\x82\x03EAP'}]}
+===============================
+00 READ RECORD      MF/EF.DIR                           02       9000 {'application_template': [{'application_id': b'\xa0\x00\x00\x00\x87\x10\x04\xff\xff\xff\xff\x89\x07\t\x00\x00'}, {'application_label': 'ISim1'}]}
+===============================
+00 READ RECORD      MF/EF.DIR                           03       9000 {'application_template': None}
+===============================
+00 READ RECORD      MF/EF.DIR                           04       9000 {'application_template': None}
+===============================
+00 READ RECORD      MF/EF.DIR                           05       9000 {'application_template': None}
+===============================
+00 READ RECORD      MF/EF.DIR                           06       9000 {'application_template': None}
+===============================
+00 READ RECORD      MF/EF.DIR                           07       9000 {'application_template': None}
+===============================
+00 READ RECORD      MF/EF.DIR                           08       9000 {'application_template': None}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.ECC                  01       9000 None
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.ECC                  02       9000 None
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.ECC                  03       9000 None
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.ECC                  04       9000 None
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.ECC                  05       9000 None
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.LI                   -        9000 [None, None, None, None, None]
+===============================
+00 UNBLOCK PIN                                          -        63ca {'scope': 'global_mf', 'referenced_data_nr': 1, 'mode': 'check_remaining_attempts', 'remaining_attempts': 10}
+===============================
+00 VERIFY PIN                                           -        63c3 {'scope': 'global_mf', 'referenced_data_nr': 1, 'mode': 'check_remaining_attempts', 'remaining_attempts': 3}
+===============================
+00 UNBLOCK PIN                                          -        63ca {'scope': 'specific_df_adf', 'referenced_data_nr': 1, 'mode': 'check_remaining_attempts', 'remaining_attempts': 10}
+===============================
+00 VERIFY PIN                                           -        63c3 {'scope': 'specific_df_adf', 'referenced_data_nr': 1, 'mode': 'check_remaining_attempts', 'remaining_attempts': 3}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.AD                   -        9000 {'ms_operation_mode': 'normal', 'additional_info': {'ciphering_indicator': False, 'csg_display_control': False, 'prose_services': False, 'extended_drx': False}, 'rfu': 0, 'mnc_len': 2, 'extensions': b''}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.IMSI                 -        9000 {'imsi': '901700000046734'}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.ACC                  -        9000 {'ACC0': True, 'ACC1': False, 'ACC2': False, 'ACC3': False, 'ACC4': False, 'ACC5': False, 'ACC6': False, 'ACC7': False, 'ACC8': False, 'ACC9': False, 'ACC10': False, 'ACC11': False, 'ACC12': False, 'ACC13': False, 'ACC14': False, 'ACC15': False}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.LOCI                 -        9000 {'tmsi': 'ffffffff', 'lai': {'mcc_mnc': 'ffffff', 'lac': 'fffe'}, 'rfu': 255, 'lu_status': 3}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.PSLOCI               -        9000 {'ptmsi': 'ffffffff', 'ptmsi_sig': 'ffffff', 'rai': 'ffff00fffeff', 'rau_status': 2}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.UST                  -        9000 {1: {'activated': False, 'description': 'Local Phone Book'}, 2: {'activated': True, 'description': 'Fixed Dialling Numbers (FDN)'}, 3: {'activated': True, 'description': 'Extension 2'}, 4: {'activated': True, 'description': 'Service Dialling Numbers (SDN)'}, 5: {'activated': True, 'description': 'Extension3'}, 6: {'activated': True, 'description': 'Barred Dialling Numbers (BDN)'}, 7: {'activated': False, 'description': 'Extension4'}, 8: {'activated': True, 'description': 'Outgoing Call Information (OCI and OCT)'}, 9: {'activated': True, 'description': 'Incoming Call Information (ICI and ICT)'}, 10: {'activated': True, 'description': 'Short Message Storage (SMS)'}, 11: {'activated': True, 'description': 'Short Message Status Reports (SMSR)'}, 12: {'activated': True, 'description': 'Short Message Service Parameters (SMSP)'}, 13: {'activated': True, 'description': 'Advice of Charge (AoC)'}, 14: {'activated': True, 'description': 'Capability Configuration Parameters 2 (CCP2)'}, 15: {'activated': True, 'description': 'Cell Broadcast Message Identifier'}, 16: {'activated': True, 'description': 'Cell Broadcast Message Identifier Ranges'}, 17: {'activated': True, 'description': 'Group Identifier Level 1'}, 18: {'activated': True, 'description': 'Group Identifier Level 2'}, 19: {'activated': True, 'description': 'Service Provider Name'}, 20: {'activated': True, 'description': 'User controlled PLMN selector with Access Technology'}, 21: {'activated': True, 'description': 'MSISDN'}, 22: {'activated': False, 'description': 'Image (IMG)'}, 23: {'activated': False, 'description': 'Support of Localised Service Areas (SoLSA)'}, 24: {'activated': True, 'description': 'Enhanced Multi-Level Precedence and Pre-emption Service'}, 25: {'activated': True, 'description': 'Automatic Answer for eMLPP'}, 26: {'activated': False, 'description': 'RFU'}, 27: {'activated': True, 'description': 'GSM Access'}, 28: {'activated': True, 'description': 'Data download via SMS-PP'}, 29: {'activated': True, 'description': 'Data download via SMS-CB'}, 30: {'activated': False, 'description': 'Call Control by USIM'}, 31: {'activated': False, 'description': 'MO-SMS Control by USIM'}, 32: {'activated': True, 'description': 'RUN AT COMMAND command'}, 33: {'activated': True, 'description': 'shall be set to 1'}, 34: {'activated': True, 'description': 'Enabled Services Table'}, 35: {'activated': True, 'description': 'APN Control List (ACL)'}, 36: {'activated': False, 'description': 'Depersonalisation Control Keys'}, 37: {'activated': False, 'description': 'Co-operative Network List'}, 38: {'activated': True, 'description': 'GSM security context'}, 39: {'activated': True, 'description': 'CPBCCH Information'}, 40: {'activated': True, 'description': 'Investigation Scan'}, 41: {'activated': False, 'description': 'MexE'}, 42: {'activated': True, 'description': 'Operator controlled PLMN selector with Access Technology'}, 43: {'activated': True, 'description': 'HPLMN selector with Access Technology'}, 44: {'activated': True, 'description': 'Extension 5'}, 45: {'activated': True, 'description': 'PLMN Network Name'}, 46: {'activated': True, 'description': 'Operator PLMN List'}, 47: {'activated': False, 'description': 'Mailbox Dialling Numbers'}, 48: {'activated': False, 'description': 'Message Waiting Indication Status'}, 49: {'activated': False, 'description': 'Call Forwarding Indication Status'}, 50: {'activated': False, 'description': 'Reserved and shall be ignored'}, 51: {'activated': True, 'description': 'Service Provider Display Information'}, 52: {'activated': False, 'description': 'Multimedia Messaging Service (MMS)'}, 53: {'activated': False, 'description': 'Extension 8'}, 54: {'activated': False, 'description': 'Call control on GPRS by USIM'}, 55: {'activated': False, 'description': 'MMS User Connectivity Parameters'}, 56: {'activated': False, 'description': "Network's indication of alerting in the MS (NIA)"}, 57: {'activated': False, 'description': 'VGCS Group Identifier List (EFVGCS and EFVGCSS)'}, 58: {'activated': False, 'description': 'VBS Group Identifier List (EFVBS and EFVBSS)'}, 59: {'activated': False, 'description': 'Pseudonym'}, 60: {'activated': True, 'description': 'User Controlled PLMN selector for I-WLAN access'}, 61: {'activated': False, 'description': 'Operator Controlled PLMN selector for I-WLAN access'}, 62: {'activated': False, 'description': 'User controlled WSID list'}, 63: {'activated': False, 'description': 'Operator controlled WSID list'}, 64: {'activated': False, 'description': 'VGCS security'}, 65: {'activated': False, 'description': 'VBS security'}, 66: {'activated': False, 'description': 'WLAN Reauthentication Identity'}, 67: {'activated': False, 'description': 'Multimedia Messages Storage'}, 68: {'activated': False, 'description': 'Generic Bootstrapping Architecture (GBA)'}, 69: {'activated': False, 'description': 'MBMS security'}, 70: {'activated': False, 'description': 'Data download via USSD and USSD application mode'}, 71: {'activated': True, 'description': 'Equivalent HPLMN'}, 72: {'activated': False, 'description': 'Additional TERMINAL PROFILE after UICC activation'}, 73: {'activated': True, 'description': 'Equivalent HPLMN Presentation Indication'}, 74: {'activated': False, 'description': 'Last RPLMN Selection Indication'}, 75: {'activated': False, 'description': 'OMA BCAST Smart Card Profile'}, 76: {'activated': False, 'description': 'GBA-based Local Key Establishment Mechanism'}, 77: {'activated': False, 'description': 'Terminal Applications'}, 78: {'activated': False, 'description': 'Service Provider Name Icon'}, 79: {'activated': False, 'description': 'PLMN Network Name Icon'}, 80: {'activated': False, 'description': 'Connectivity Parameters for USIM IP connections'}, 81: {'activated': False, 'description': 'Home I-WLAN Specific Identifier List'}, 82: {'activated': False, 'description': 'I-WLAN Equivalent HPLMN Presentation Indication'}, 83: {'activated': False, 'description': 'I-WLAN HPLMN Priority Indication'}, 84: {'activated': False, 'description': 'I-WLAN Last Registered PLMN'}, 85: {'activated': True, 'description': 'EPS Mobility Management Information'}, 86: {'activated': True, 'description': 'Allowed CSG Lists and corresponding indications'}, 87: {'activated': True, 'description': 'Call control on EPS PDN connection by USIM'}, 88: {'activated': False, 'description': 'HPLMN Direct Access'}, 89: {'activated': True, 'description': 'eCall Data'}, 90: {'activated': True, 'description': 'Operator CSG Lists and corresponding indications'}, 91: {'activated': False, 'description': 'Support for SM-over-IP'}, 92: {'activated': False, 'description': 'Support of CSG Display Control'}, 93: {'activated': True, 'description': 'Communication Control for IMS by USIM'}, 94: {'activated': True, 'description': 'Extended Terminal Applications'}, 95: {'activated': False, 'description': 'Support of UICC access to IMS'}, 96: {'activated': False, 'description': 'Non-Access Stratum configuration by USIM'}, 97: {'activated': False, 'description': 'PWS configuration by USIM'}, 98: {'activated': False, 'description': 'RFU'}, 99: {'activated': False, 'description': 'URI support by UICC'}, 100: {'activated': False, 'description': 'Extended EARFCN support'}, 101: {'activated': False, 'description': 'ProSe'}, 102: {'activated': False, 'description': 'USAT Application Pairing'}, 103: {'activated': False, 'description': 'Media Type support'}, 104: {'activated': False, 'description': 'IMS call disconnection cause'}, 105: {'activated': False, 'description': 'URI support for MO SHORT MESSAGE CONTROL'}, 106: {'activated': False, 'description': 'ePDG configuration Information support'}, 107: {'activated': False, 'description': 'ePDG configuration Information configured'}, 108: {'activated': False, 'description': 'ACDC support'}, 109: {'activated': False, 'description': 'MCPTT'}, 110: {'activated': False, 'description': 'ePDG configuration Information for Emergency Service support'}, 111: {'activated': False, 'description': 'ePDG configuration Information for Emergency Service configured'}, 112: {'activated': False, 'description': 'eCall Data over IMS'}, 113: {'activated': False, 'description': 'URI support for SMS-PP DOWNLOAD as defined in 3GPP TS 31.111 [12]'}, 114: {'activated': False, 'description': 'From Preferred'}, 115: {'activated': False, 'description': 'IMS configuration data'}, 116: {'activated': False, 'description': 'TV configuration'}, 117: {'activated': False, 'description': '3GPP PS Data Off'}, 118: {'activated': False, 'description': '3GPP PS Data Off Service List'}, 119: {'activated': False, 'description': 'V2X'}, 120: {'activated': False, 'description': 'XCAP Configuration Data'}, 121: {'activated': False, 'description': 'EARFCN list for MTC/NB-IOT UEs'}, 122: {'activated': True, 'description': '5GS Mobility Management Information'}, 123: {'activated': True, 'description': '5G Security Parameters'}, 124: {'activated': True, 'description': 'Subscription identifier privacy support'}, 125: {'activated': False, 'description': 'SUCI calculation by the USIM'}, 126: {'activated': True, 'description': 'UAC Access Identities support'}, 127: {'activated': False, 'description': 'Expect control plane-based Steering of Roaming information during initial registration in VPLMN'}, 128: {'activated': False, 'description': 'Call control on PDU Session by USIM'}, 129: {'activated': False, 'description': '5GS Operator PLMN List'}, 130: {'activated': False, 'description': 'Support for SUPI of type NSI or GLI or GCI'}, 131: {'activated': False, 'description': '3GPP PS Data Off separate Home and Roaming lists'}, 132: {'activated': False, 'description': 'Support for URSP by USIM'}, 133: {'activated': False, 'description': '5G Security Parameters extended'}, 134: {'activated': False, 'description': 'MuD and MiD configuration data'}, 135: {'activated': False, 'description': 'Support for Trusted non-3GPP access networks by USIM'}, 136: {'activated': False, 'description': 'Support for multiple records of NAS security context storage for multiple registration'}, 137: {'activated': False, 'description': 'Pre-configured CAG information list'}, 138: {'activated': False, 'description': 'SOR-CMCI storage in USIM'}, 139: {'activated': False, 'description': '5G ProSe'}, 140: {'activated': False, 'description': 'Storage of disaster roaming information in USIM'}, 141: {'activated': False, 'description': 'Pre-configured eDRX parameters'}, 142: {'activated': False, 'description': '5G NSWO support'}, 143: {'activated': False, 'description': 'PWS configuration for SNPN in USIM'}, 144: {'activated': False, 'description': 'Multiplier Coefficient for Higher Priority PLMN search via NG-RAN satellite access'}, 145: {'activated': False, 'description': 'K_AUSF derivation configuration'}, 146: {'activated': False, 'description': 'Network Identifier for SNPN (NID)'}, 147: {'activated': False}, 148: {'activated': False}, 149: {'activated': False}, 150: {'activated': False}, 151: {'activated': False}, 152: {'activated': False}, 153: {'activated': False}, 154: {'activated': False}, 155: {'activated': False}, 156: {'activated': False}, 157: {'activated': False}, 158: {'activated': False}, 159: {'activated': False}, 160: {'activated': False}}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.EPSLOCI              -        9000 {'guti': '0bf6ffffffffffffffffffff', 'last_visited_registered_tai': 'fffffffffe', 'eps_update_status': 'not_updated'}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.Keys                 -        9000 {'ksi': 7, 'ck': 'ffffffffffffffffffffffffffffffff', 'ik': 'ffffffffffffffffffffffffffffffff'}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.KeysPS               -        9000 {'ksi': 7, 'ck': 'ffffffffffffffffffffffffffffffff', 'ik': 'ffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.EPSNSC               01       9000 {'eps_nas__security__context': [{'ksi_asme': 7}, {'k_asme': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}, {'uplink_nas_count': 4294967295}, {'downlink_nas_count': 4294967295}, {'i_dof_nas_algorithms': '00'}]}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.START-HFN            -        9000 {'start_cs': 0, 'start_ps': 0}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.THRESHOLD            -        9000 {'max_start': 16777215}
+===============================
+00 READ BINARY      MF/ADF.USIM/DF.GSM-ACCESS/EF.Kc     -        9000 {'kc': 'ffffffffffffffff', 'cksn': 7}
+===============================
+00 READ BINARY      MF/ADF.USIM/DF.GSM-ACCESS/EF.KcGPRS -        9000 {'kc': 'ffffffffffffffff', 'cksn': 7}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.EST                  -        9000 {1: {'activated': False, 'description': 'Fixed Dialling Numbers (FDN)'}, 2: {'activated': False, 'description': 'Barred Dialling Numbers (BDN)'}, 3: {'activated': False, 'description': 'APN Control List (ACL)'}, 4: {'activated': False}, 5: {'activated': False}, 6: {'activated': False}, 7: {'activated': False}, 8: {'activated': False}, 9: {'activated': False}, 10: {'activated': False}, 11: {'activated': False}, 12: {'activated': False}, 13: {'activated': False}, 14: {'activated': False}, 15: {'activated': False}, 16: {'activated': False}, 17: {'activated': False}, 18: {'activated': False}, 19: {'activated': False}, 20: {'activated': False}, 21: {'activated': False}, 22: {'activated': False}, 23: {'activated': False}, 24: {'activated': False}, 25: {'activated': False}, 26: {'activated': False}, 27: {'activated': False}, 28: {'activated': False}, 29: {'activated': False}, 30: {'activated': False}, 31: {'activated': False}, 32: {'activated': False}, 33: {'activated': False}, 34: {'activated': False}, 35: {'activated': False}, 36: {'activated': False}, 37: {'activated': False}, 38: {'activated': False}, 39: {'activated': False}, 40: {'activated': False}, 41: {'activated': False}, 42: {'activated': False}, 43: {'activated': False}, 44: {'activated': False}, 45: {'activated': False}, 46: {'activated': False}, 47: {'activated': False}, 48: {'activated': False}, 49: {'activated': False}, 50: {'activated': False}, 51: {'activated': False}, 52: {'activated': False}, 53: {'activated': False}, 54: {'activated': False}, 55: {'activated': False}, 56: {'activated': False}, 57: {'activated': False}, 58: {'activated': False}, 59: {'activated': False}, 60: {'activated': False}, 61: {'activated': False}, 62: {'activated': False}, 63: {'activated': False}, 64: {'activated': False}, 65: {'activated': False}, 66: {'activated': False}, 67: {'activated': False}, 68: {'activated': False}, 69: {'activated': False}, 70: {'activated': False}, 71: {'activated': False}, 72: {'activated': False}}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.GID1                 -        9000 {'raw': 'ffffffffffffffffffff'}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.GID2                 -        9000 {'raw': 'ffffffffffffffffffff'}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.NETPAR               -        9000 {'raw': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.HPPLMN               -        9000 5
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.HPLMNwAcT            -        9000 [{'mcc': '001', 'mnc': '01', 'act': ['UTRAN', 'E-UTRAN WB-S1', 'E-UTRAN NB-S1', 'NG-RAN', 'GSM', 'GSM COMPACT', 'cdma2000 HRPD', 'cdma2000 1xRTT']}, None, None, None, None, None, None, None, None, None, None, None]
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.PLMNwAcT             -        9000 [{'mcc': '001', 'mnc': '01', 'act': ['UTRAN', 'E-UTRAN WB-S1', 'E-UTRAN NB-S1', 'NG-RAN', 'GSM', 'GSM COMPACT', 'cdma2000 HRPD', 'cdma2000 1xRTT']}, None, None, None, None, None, None, None, None, None, None, None]
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.OPLMNwAcT            -        9000 [{'mcc': '001', 'mnc': '01', 'act': ['UTRAN', 'E-UTRAN WB-S1', 'E-UTRAN NB-S1', 'NG-RAN', 'GSM', 'GSM COMPACT', 'cdma2000 HRPD', 'cdma2000 1xRTT']}, None, None, None, None, None, None, None, None, None, None, None]
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.FPLMN                -        9000 [{'mcc': '262', 'mnc': '01'}, {'mcc': '262', 'mnc': '02'}, {'mcc': '262', 'mnc': '03'}, None]
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.CBMID                -        9000 [[65535], [65535], [65535], [65535], [65535], [65535], [65535], [65535], [65535], [65535]]
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.ACM                  01       9000 {'raw': '000000'}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.ACMmax               -        9000 {'acm_max': 0}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.EHPLMN               -        9000 [{'mcc': '001', 'mnc': '01'}, None, None, None]
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.EHPLMNPI             -        9000 {'presentation_ind': 'display_all'}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.EHPLMNPI             -        9000 {'presentation_ind': 'no_preference'}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.SPN                  -        9000 {'rfu': 0, 'hide_in_oplmn': True, 'show_in_hplmn': True, 'spn': 'Magic'}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.SPDI                 -        9000 {'raw': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 SEARCH RECORD    MF/ADF.USIM/EF.PNN                  01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffffffffffffffffffffffffffffffffffff'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 'sw': '9000'}}
+===============================
+00 SEARCH RECORD    MF/ADF.USIM/EF.OPL                  01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffff'}, 'rsp': {'body': [1], 'sw': '9000'}}
+===============================
+00 GET STATUS                                           -        9000 {'p1': 1, 'p2': 1, 'cmd': '8410a0000000871002ffffffff8907090000'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.ARR                  03       9000 [[{'access_mode': ['read_search_compare']}, {'control_reference_template': 'PIN1'}], [{'access_mode': ['activate_file_or_record', 'deactivate_file_or_record', 'update_erase']}, {'control_reference_template': 'ADM1'}], [{'command_header': {'INS': 212}}, {'control_reference_template': 'ADM1'}]]
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK/EF.PBR   01       9000 {'raw': 'a81ec0034f3a01c1034f3202c3034f5414c5034f0904c6034f5212c9034f2109a90ac4034f1108ca034f500daa14c2034f4a03c7034f4b06c8034f5313cb034f4f16ffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.MSISDN               01       9000 {'msisdn': None}
+===============================
+00 UPDATE RECORD    MF/ADF.USIM/EF.EPSNSC               01       9000 {'eps_nas__security__context': [{'ksi_asme': 7}, {'k_asme': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}, {'uplink_nas_count': 4294967295}, {'downlink_nas_count': 4294967295}, {'i_dof_nas_algorithms': '00'}]}
+===============================
+00 UPDATE BINARY    MF/ADF.USIM/EF.EPSLOCI              -        9000 {'guti': '0bf6ffffffffffffffffffff', 'last_visited_registered_tai': 'fffffffffe', 'eps_update_status': 'not_updated'}
+===============================
+00 UPDATE RECORD    MF/ADF.USIM/EF.EPSNSC               01       9000 {'eps_nas__security__context': [{'ksi_asme': 7}, {'k_asme': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}, {'uplink_nas_count': 4294967295}, {'downlink_nas_count': 4294967295}, {'i_dof_nas_algorithms': '00'}]}
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.CBMI                 -        9000 [[65535], [65535], [65535], [65535], [65535], [65535], [65535], [65535], [65535], [65535]]
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.CBMIR                -        9000 [[{'lower': 65535, 'upper': 65535}], [{'lower': 65535, 'upper': 65535}], [{'lower': 65535, 'upper': 65535}], [{'lower': 65535, 'upper': 65535}], [{'lower': 65535, 'upper': 65535}]]
+===============================
+00 READ BINARY      MF/ADF.USIM/EF.SMSS                 -        9000 {'last_used_tpmr': 255, 'memory_capacity_exceeded': False}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.ARR                  04       9000 [[{'access_mode': ['update_erase', 'read_search_compare']}, {'control_reference_template': 'PIN1'}], [{'access_mode': ['activate_file_or_record', 'deactivate_file_or_record']}, {'control_reference_template': 'ADM1'}], [{'command_header': {'INS': 212}}, {'control_reference_template': 'ADM1'}]]
+===============================
+00 SEARCH RECORD    MF/ADF.USIM/EF.SMSP                 01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}, 'rsp': {'body': [2], 'sw': '9000'}}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSP                 01       9000 {'alpha_id': '', 'parameter_indicators': {'tp_dest_addr': False, 'tp_sc_addr': True, 'tp_pid': True, 'tp_dcs': True, 'tp_vp': True}, 'tp_dest_addr': {'length': 255, 'ton_npi': {'ext': True, 'type_of_number': 'reserved_for_extension', 'numbering_plan_id': 'reserved_for_extension'}, 'call_number': ''}, 'tp_sc_addr': {'length': 5, 'ton_npi': {'ext': True, 'type_of_number': 'unknown', 'numbering_plan_id': 'isdn_e164'}, 'call_number': '0015555f'}, 'tp_pid': '00', 'tp_dcs': '00', 'tp_vp_minutes': 5}
+===============================
+00 SEARCH RECORD    MF/ADF.USIM/EF.SMS                  01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': '00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], 'sw': '9000'}}
+===============================
+00 SEARCH RECORD    MF/ADF.USIM/EF.SMSR                 01       6a83 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': '00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}, 'rsp': {'sw': '6a83'}}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 01       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 02       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 03       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 04       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 05       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 06       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 07       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 08       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 09       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 10       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 11       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 12       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 13       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 14       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 15       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 16       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 17       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 18       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 19       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SMSR                 20       9000 {'sms_record_id': 255, 'sms_status_report': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+00 SEARCH RECORD    MF/ADF.USIM/EF.FDN                  01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], 'sw': '9000'}}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.FDN                  01       9000 {'alpha_id': '', 'len_of_bcd': 255, 'ton_npi': {'ext': True, 'type_of_number': 'reserved_for_extension', 'numbering_plan_id': 'reserved_for_extension'}, 'dialing_nr': '', 'cap_conf_id': 255, 'ext2_record_id': 255}
+===============================
+00 SEARCH RECORD    MF/ADF.USIM/EF.SDN                  01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], 'sw': '9000'}}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.SDN                  01       9000 {'alpha_id': '', 'len_of_bcd': 255, 'ton_npi': {'ext': True, 'type_of_number': 'reserved_for_extension', 'numbering_plan_id': 'reserved_for_extension'}, 'dialing_nr': '', 'cap_conf_id': 255, 'ext3_record_id': 255}
+===============================
+00 SEARCH RECORD    MF/DF.TELECOM/EF.FDN                01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], 'sw': '9000'}}
+===============================
+00 SEARCH RECORD    MF/ADF.USIM/EF.MSISDN               01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}, 'rsp': {'body': [2, 3, 4, 5, 6], 'sw': '9000'}}
+===============================
+00 READ RECORD      MF/DF.TELECOM/EF.FDN                01       9000 {'alpha_id': '', 'len_of_bcd': 255, 'ton_npi': {'ext': True, 'type_of_number': 'reserved_for_extension', 'numbering_plan_id': 'reserved_for_extension'}, 'dialing_nr': '', 'cap_conf_id': 255, 'ext2_record_id': 255}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.MSISDN               01       9000 {'msisdn': None}
+===============================
+00 SEARCH RECORD    MF/DF.TELECOM/EF.SDN                01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], 'sw': '9000'}}
+===============================
+00 READ RECORD      MF/DF.TELECOM/EF.SDN                01       9000 {'alpha_id': '', 'len_of_bcd': 255, 'ton_npi': {'ext': True, 'type_of_number': 'reserved_for_extension', 'numbering_plan_id': 'reserved_for_extension'}, 'dialing_nr': '', 'cap_conf_id': 255, 'ext3_record_id': 255}
+===============================
+00 SEARCH RECORD    MF/DF.TELECOM/DF.PHONEBOOK          01       6a83 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffffffffffffffffffff'}, 'rsp': {'sw': '6a83'}}
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          01       9000 47726f75702031ffffffffffffffffff
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          02       9000 47726f75702032ffffffffffffffffff
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          03       9000 47726f75702033ffffffffffffffffff
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          04       9000 47726f75702034ffffffffffffffffff
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          05       9000 47726f75702035ffffffffffffffffff
+===============================
+00 SEARCH RECORD    MF/DF.TELECOM/DF.PHONEBOOK          01       6a83 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffffffff'}, 'rsp': {'sw': '6a83'}}
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          01       9000 576f726bffffffffffff
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          02       9000 486f6d65ffffffffffff
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          03       9000 4d6f62696c65ffffffff
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          04       9000 466178ffffffffffffff
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          05       9000 4d61696effffffffffff
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          06       9000 5061676572ffffffffff
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          07       9000 456d61696cffffffffff
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          08       9000 54656d70ffffffffffff
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          09       9000 4f6666696365ffffffff
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK          10       9000 4f7468657273ffffffff
+===============================
+00 READ BINARY      MF/DF.TELECOM/DF.PHONEBOOK/EF.PSC   -        9000 {'raw': '00000000'}
+===============================
+00 READ BINARY      MF/DF.TELECOM/DF.PHONEBOOK/EF.PUID  -        9000 {'raw': '0000'}
+===============================
+00 READ BINARY      MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    -        9000 {'raw': '0000'}
+===============================
+00 SEARCH RECORD    MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': '0000'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250], 'sw': '9000'}}
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 0000
+===============================
+00 SEARCH RECORD    MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': '0000'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250], 'sw': '9000'}}
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 0000
+===============================
+00 SEARCH RECORD    MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150], 'sw': '9000'}}
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+===============================
+00 SEARCH RECORD    MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffffffffffffffffffffffff'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250], 'sw': '9000'}}
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 ffffffffffffffffffffffffffffffffffff
+===============================
+00 SEARCH RECORD    MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': '000000'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250], 'sw': '9000'}}
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 000000
+===============================
+00 SEARCH RECORD    MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffffffffffffffffffffff'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250], 'sw': '9000'}}
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 ffffffffffffffffffffffffffffffffff
+===============================
+00 SEARCH RECORD    MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffff'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250], 'sw': '9000'}}
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 ffff
+===============================
+00 SEARCH RECORD    MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 {'cmd': {'file': 'currently_selected_ef', 'mode': 'forward_search', 'record_number': 1, 'search_string': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}, 'rsp': {'body': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250], 'sw': '9000'}}
+===============================
+00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK/EF.CC    01       9000 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+===============================
+01 UNBLOCK PIN                                          -        63ca {'scope': 'global_mf', 'referenced_data_nr': 1, 'mode': 'check_remaining_attempts', 'remaining_attempts': 10}
+===============================
+01 VERIFY PIN                                           -        63c3 {'scope': 'global_mf', 'referenced_data_nr': 1, 'mode': 'check_remaining_attempts', 'remaining_attempts': 3}
+===============================
+01 UNBLOCK PIN                                          -        63ca {'scope': 'specific_df_adf', 'referenced_data_nr': 1, 'mode': 'check_remaining_attempts', 'remaining_attempts': 10}
+===============================
+01 VERIFY PIN                                           -        63c3 {'scope': 'specific_df_adf', 'referenced_data_nr': 1, 'mode': 'check_remaining_attempts', 'remaining_attempts': 3}
+===============================
+00 READ RECORD      MF/EF.ARR                           02       9000 [[{'access_mode': ['read_search_compare']}, {'always': None}], [{'access_mode': ['update_erase']}, {'never': None}], [{'access_mode': ['activate_file_or_record', 'deactivate_file_or_record']}, {'control_reference_template': 'ADM1'}], [{'command_header': {'INS': 212}}, {'control_reference_template': 'ADM1'}]]
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.ARR                  06       9000 [[{'access_mode': ['read_search_compare']}, {'always': None}], [{'access_mode': ['activate_file_or_record', 'deactivate_file_or_record', 'update_erase']}, {'control_reference_template': 'ADM1'}], [{'command_header': {'INS': 212}}, {'control_reference_template': 'ADM1'}]]
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.ARR                  03       9000 [[{'access_mode': ['read_search_compare']}, {'control_reference_template': 'PIN1'}], [{'access_mode': ['activate_file_or_record', 'deactivate_file_or_record', 'update_erase']}, {'control_reference_template': 'ADM1'}], [{'command_header': {'INS': 212}}, {'control_reference_template': 'ADM1'}]]
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.ARR                  03       9000 [[{'access_mode': ['read_search_compare']}, {'control_reference_template': 'PIN1'}], [{'access_mode': ['activate_file_or_record', 'deactivate_file_or_record', 'update_erase']}, {'control_reference_template': 'ADM1'}], [{'command_header': {'INS': 212}}, {'control_reference_template': 'ADM1'}]]
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'close_channel', 'closed_channel': 2}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.ARR                  03       9000 [[{'access_mode': ['read_search_compare']}, {'control_reference_template': 'PIN1'}], [{'access_mode': ['activate_file_or_record', 'deactivate_file_or_record', 'update_erase']}, {'control_reference_template': 'ADM1'}], [{'command_header': {'INS': 212}}, {'control_reference_template': 'ADM1'}]]
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.ARR                  03       9000 [[{'access_mode': ['read_search_compare']}, {'control_reference_template': 'PIN1'}], [{'access_mode': ['activate_file_or_record', 'deactivate_file_or_record', 'update_erase']}, {'control_reference_template': 'ADM1'}], [{'command_header': {'INS': 212}}, {'control_reference_template': 'ADM1'}]]
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.ARR                  03       9000 [[{'access_mode': ['read_search_compare']}, {'control_reference_template': 'PIN1'}], [{'access_mode': ['activate_file_or_record', 'deactivate_file_or_record', 'update_erase']}, {'control_reference_template': 'ADM1'}], [{'command_header': {'INS': 212}}, {'control_reference_template': 'ADM1'}]]
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.ARR                  04       9000 [[{'access_mode': ['update_erase', 'read_search_compare']}, {'control_reference_template': 'PIN1'}], [{'access_mode': ['activate_file_or_record', 'deactivate_file_or_record']}, {'control_reference_template': 'ADM1'}], [{'command_header': {'INS': 212}}, {'control_reference_template': 'ADM1'}]]
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.MBI                  01       9000 {'mbi_voicemail': 255, 'mbi_fax': 255, 'mbi_email': 255, 'mbi_other': 255, 'mbi_videocall': None}
+===============================
+00 READ RECORD      MF/DF.TELECOM                       01       9000 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+===============================
+01 READ BINARY      MF/ADF.ISIM/EF.IMPI                 -        9000 {'nai': ''}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 01       9000 {'impu': ''}
+===============================
+01 READ BINARY      MF/ADF.ISIM/EF.DOMAIN               -        9000 {'domain': ''}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               01       9000 {'addr': None, 'addr_type': None}
+===============================
+01 READ BINARY      MF/ADF.ISIM/EF.IST                  -        9000 {1: {'activated': True, 'description': 'P-CSCF address'}, 2: {'activated': False, 'description': 'Generic Bootstrapping Architecture (GBA)'}, 3: {'activated': False, 'description': 'HTTP Digest'}, 4: {'activated': True, 'description': 'GBA-based Local Key Establishment Mechanism'}, 5: {'activated': True, 'description': 'Support of P-CSCF discovery for IMS Local Break Out'}, 6: {'activated': False, 'description': 'Short Message Storage (SMS)'}, 7: {'activated': False, 'description': 'Short Message Status Reports (SMSR)'}, 8: {'activated': False, 'description': 'Support for SM-over-IP including data download via SMS-PP as defined in TS 31.111 [31]'}, 9: {'activated': False, 'description': 'Communication Control for IMS by ISIM'}, 10: {'activated': True, 'description': 'Support of UICC access to IMS'}, 11: {'activated': False, 'description': 'URI support by UICC'}, 12: {'activated': False, 'description': 'Media Type support'}, 13: {'activated': False, 'description': 'IMS call disconnection cause'}, 14: {'activated': False, 'description': 'URI support for MO SHORT MESSAGE CONTROL'}, 15: {'activated': False, 'description': 'MCPTT'}, 16: {'activated': False, 'description': 'URI support for SMS-PP DOWNLOAD as defined in 3GPP TS 31.111 [31]'}, 17: {'activated': False, 'description': 'From Preferred'}, 18: {'activated': False, 'description': 'IMS configuration data'}, 19: {'activated': False, 'description': 'XCAP Configuration Data'}, 20: {'activated': False, 'description': 'WebRTC URI'}, 21: {'activated': False, 'description': 'MuD and MiD configuration data'}, 22: {'activated': False}, 23: {'activated': False}, 24: {'activated': False}}
+===============================
+01 READ BINARY      MF/ADF.ISIM/EF.GBABP                -        9000 {'raw': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 02       9000 {'impu': None}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               02       9000 {'addr': None, 'addr_type': None}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+00 READ RECORD      MF/ADF.USIM/EF.MSISDN               01       9000 {'msisdn': None}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 03       9000 {'impu': None}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               03       9000 {'addr': None, 'addr_type': None}
+===============================
+00 UPDATE BINARY    MF/ADF.USIM/EF.CBMI                 -        9000 [[65535], [65535], [65535], [65535], [65535], [65535], [65535], [65535], [65535], [65535]]
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'close_channel', 'closed_channel': 2}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 04       9000 {'impu': None}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               04       9000 {'addr': None, 'addr_type': None}
+===============================
+00 UPDATE BINARY    MF/ADF.USIM/EF.CBMIR                -        9000 [[{'lower': 65535, 'upper': 65535}], [{'lower': 65535, 'upper': 65535}], [{'lower': 65535, 'upper': 65535}], [{'lower': 65535, 'upper': 65535}], [{'lower': 65535, 'upper': 65535}]]
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 05       9000 {'impu': None}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               05       9000 {'addr': None, 'addr_type': None}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 06       9000 {'impu': None}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               06       9000 {'addr': None, 'addr_type': None}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 07       9000 {'impu': None}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               07       9000 {'addr': None, 'addr_type': None}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 08       9000 {'impu': None}
+===============================
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               08       9000 {'addr': None, 'addr_type': None}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'close_channel', 'closed_channel': 2}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'close_channel', 'closed_channel': 2}
+===============================
+00 GET STATUS                                           -        9000 {'p1': 0, 'p2': 12}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'close_channel', 'closed_channel': 2}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'close_channel', 'closed_channel': 2}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'close_channel', 'closed_channel': 2}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 GET STATUS                                           -        9000 {'p1': 0, 'p2': 12}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
+===============================
+00 MANAGE CHANNEL                                       02       9000 {'mode': 'close_channel', 'closed_channel': 2}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
+===============================
+00 READ BINARY      MF/EF.ICCID                         -        9000 {'iccid': '8988211000000465008'}
+===============================
+00 TERMINAL PROFILE                                     -        9000 {'p1': 0, 'p2': 0, 'cmd': 'ffffffff7f9d00dfbf00001fe2000000c36b000700004000500000000008'}
+===============================
+00 MANAGE CHANNEL                                       01       9000 {'mode': 'open_channel', 'created_channel': 1}
+===============================
+00 GET STATUS                                           -        9000 {'p1': 0, 'p2': 12}
+===============================
+00 GET STATUS                                           -        9000 {'p1': 0, 'p2': 12}
+===============================
+00 GET STATUS                                           -        9000 {'p1': 0, 'p2': 12}
+===============================
+00 GET STATUS                                           -        9000 {'p1': 0, 'p2': 12}
+===============================
+00 GET STATUS                                           -        9000 {'p1': 0, 'p2': 12}
+===============================
+00 GET STATUS                                           -        9000 {'p1': 0, 'p2': 12}
+===============================
+00 GET STATUS                                           -        9000 {'p1': 0, 'p2': 12}
+===============================
+00 GET STATUS                                           -        9000 {'p1': 0, 'p2': 12}
+===============================
+682 APDUs parsed, stop iteration.
