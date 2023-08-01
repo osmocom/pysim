@@ -108,7 +108,7 @@ class RuntimeState:
 
         # Some card applications may not be registered in EF.DIR, we will actively
         # probe for those applications
-        for f in set(apps_profile) - set(apps_taken):
+        for f in sorted(set(apps_profile) - set(apps_taken), key=str):
             try:
                 data, sw = self.card.select_adf_by_aid(f.aid)
                 if sw == "9000":
