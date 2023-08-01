@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Utility to verify the functionality of pysim-prog.py
+# Utility to verify the functionality of pySim-prog.py
 #
 # (C) 2018 by Sysmocom s.f.m.c. GmbH
 # All Rights Reserved
@@ -27,7 +27,7 @@ PYTHON=python3
 
 set -e
 
-echo "pySim-prog_test - a test program to test pysim-prog.py"
+echo "pySim-prog_test - a test program to test pySim-prog.py"
 echo "======================================================"
 
 # Generate a list of the cards we expect to see by checking which .ok files
