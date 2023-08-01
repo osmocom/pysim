@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 PYSIM_TRACE=../pySim-trace.py
 GSMTAP_TRACE=pySim-trace_test_gsmtap.pcapng
