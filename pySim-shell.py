@@ -301,7 +301,7 @@ class PysimApp(Cmd2Compat):
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_equip(self, opts):
         """Equip pySim-shell with card"""
-        if self.rs.profile:
+        if self.rs and self.rs.profile:
             for cmd_set in self.rs.profile.shell_cmdsets:
                 self.unregister_command_set(cmd_set)
         rs, card = init_card(sl)
