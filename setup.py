@@ -10,7 +10,7 @@ setup(
     description='Tools related to SIM/USIM/ISIM cards',
     install_requires=[
         "pyscard",
-        "serial",
+        "pyserial",
         "pytlv",
         "cmd2 >= 1.5.0",
         "jsonpath-ng",
