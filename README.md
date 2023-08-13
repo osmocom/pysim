@@ -73,19 +73,20 @@ Installation
 
 Please install the following dependencies:
 
+ - bidict
+ - cmd2 >= 1.5.0
+ - colorlog
+ - construct >= 2.9.51
+ - gsm0338
+ - jsonpath-ng
+ - packaging
+ - pycryptodomex
  - pyscard
  - pyserial
  - pytlv
- - cmd2 >= 1.5.0
- - jsonpath-ng
- - construct >= 2.9.51
- - bidict
- - gsm0338
  - pyyaml >= 5.1
+ - smpp.pdu (from `github.com/hologram-io/smpp.pdu`)
  - termcolor
- - colorlog
- - packaging
- - pycryptodomex
 
 Example for Debian:
 ```sh
