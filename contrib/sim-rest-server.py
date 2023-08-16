@@ -46,7 +46,9 @@ def connect_to_card(slot_nr:int):
     scc.sel_ctrl = "0004"
 
     card.read_aids()
-    card.select_adf_by_aid(adf='usim')
+
+    # ensure that MF is selected when we are done.
+    card._scc.select_file('3f00')
 
     return tp, scc, card
 
