@@ -26,7 +26,7 @@ from klein import Klein
 from pySim.transport import ApduTracer
 from pySim.transport.pcsc import PcscSimLink
 from pySim.commands import SimCardCommands
-from pySim.cards import UsimCard
+from pySim.cards import UiccCardBase
 from pySim.exceptions import *
 
 class ApduPrintTracer(ApduTracer):
@@ -39,7 +39,7 @@ def connect_to_card(slot_nr:int):
     tp.connect()
 
     scc = SimCardCommands(tp)
-    card = UsimCard(scc)
+    card = UiccCardBase(scc)
 
     # this should be part of UsimCard, but FairewavesSIM breaks with that :/
     scc.cla_byte = "00"
