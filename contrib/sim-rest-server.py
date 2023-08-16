@@ -27,6 +27,9 @@ from pySim.transport import ApduTracer
 from pySim.transport.pcsc import PcscSimLink
 from pySim.commands import SimCardCommands
 from pySim.cards import UiccCardBase
+from pySim.utils import dec_iccid, dec_imsi
+from pySim.ts_51_011 import EF_IMSI
+from pySim.ts_102_221 import EF_ICCID
 from pySim.exceptions import *
 
 class ApduPrintTracer(ApduTracer):
@@ -134,10 +137,14 @@ class SimRestServer:
 
         tp, scc, card = connect_to_card(slot)
 
+        ef_iccid = EF_ICCID()
+        (iccid, sw) = card._scc.read_binary(ef_iccid.fid)
+
         card.select_adf_by_aid(adf='usim')
-        iccid, sw = card.read_iccid()
-        imsi, sw = card.read_imsi()
-        res = {"imsi": imsi, "iccid": iccid }
+        ef_imsi = EF_IMSI()
+        (imsi, sw) = card._scc.read_binary(ef_imsi.fid)
+
+        res = {"imsi": dec_imsi(imsi), "iccid": dec_iccid(iccid) }
 
         tp.disconnect()
 
