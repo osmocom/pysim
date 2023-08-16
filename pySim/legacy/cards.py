@@ -59,6 +59,13 @@ class SimCard(SimCardBase):
         (res, sw) = self._scc.verify_chv(self._adm_chv_num, key)
         return sw
 
+    def read_iccid(self):
+        (res, sw) = self._scc.read_binary(EF['ICCID'])
+        if sw == '9000':
+            return (dec_iccid(res), sw)
+        else:
+            return (None, sw)
+
     def update_iccid(self, iccid):
         data, sw = self._scc.update_binary(EF['ICCID'], enc_iccid(iccid))
         return sw

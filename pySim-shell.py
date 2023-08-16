@@ -52,7 +52,7 @@ from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args, ProactiveHandler
 from pySim.cards import card_detect, SimCardBase, UiccCardBase
 from pySim.utils import h2b, b2h, i2h, swap_nibbles, rpad, JsonEncoder, bertlv_parse_one, sw_match
-from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, Hexstr
+from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, Hexstr, dec_iccid
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
 from pySim.filesystem import CardDF, CardADF, CardModel, CardApplication
@@ -240,7 +240,10 @@ class PysimApp(Cmd2Compat):
             self.register_command_set(Iso7816Commands())
             self.register_command_set(Ts102222Commands())
             self.register_command_set(PySimCommands())
-            self.iccid, sw = self.card.read_iccid()
+
+            self.lchan.select('MF/EF.ICCID', self)
+            self.iccid = dec_iccid(self.lchan.read_binary()[0])
+
             self.lchan.select('MF', self)
             rc = True
         else:

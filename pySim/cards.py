@@ -23,7 +23,7 @@
 #
 
 from typing import Optional, Dict, Tuple
-from pySim.ts_102_221 import EF_DIR, EF_ICCID
+from pySim.ts_102_221 import EF_DIR
 from pySim.ts_51_011 import DF_GSM
 from pySim.transport import LinkBase
 import abc
@@ -68,14 +68,6 @@ class CardBase:
         # a non-UICC doesn't have any applications. Convenience helper to avoid
         # callers having to do hasattr('read_aids') ahead of every call.
         return []
-
-    def read_iccid(self) -> Tuple[Optional[Hexstr], SwHexstr]:
-        ef_iccid = EF_ICCID()
-        (res, sw) = self._scc.read_binary(ef_iccid.fid)
-        if sw == '9000':
-            return (dec_iccid(res), sw)
-        else:
-            return (None, sw)
 
 
 class SimCardBase(CardBase):
