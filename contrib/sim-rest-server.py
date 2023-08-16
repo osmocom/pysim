@@ -101,7 +101,7 @@ class SimRestServer:
         elif sw == '6982':
             return str(ApiError("Security Status not satisfied - Card PIN enabled?", sw))
         else:
-            return str(ApiError("Card Communication Error %s" % failure.value), sw)
+            return str(ApiError("Card Communication Error %s" % failure.value, sw))
 
 
     @app.route('/sim-auth-api/v1/slot/<int:slot>')
