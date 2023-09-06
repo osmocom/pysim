@@ -1049,7 +1049,7 @@ if __name__ == '__main__':
         if not card:
             print("Card error, cannot do ADM verification with supplied ADM pin now.")
         try:
-            card.verify_adm(h2b(pin_adm))
+            card._scc.verify_chv(card._adm_chv_num, h2b(pin_adm))
         except Exception as e:
             print(e)
 
