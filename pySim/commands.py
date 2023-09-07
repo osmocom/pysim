@@ -26,7 +26,7 @@ import typing # construct also has a Union, so we do typing.Union below
 
 from construct import *
 from pySim.construct import LV
-from pySim.utils import rpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i, str_sanitize, expand_hex
+from pySim.utils import rpad, lpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i, str_sanitize, expand_hex
 from pySim.utils import Hexstr, SwHexstr, ResTuple
 from pySim.exceptions import SwMatchError
 from pySim.transport import LinkBase
@@ -269,7 +269,7 @@ class SimCardCommands:
                 data.lower(), res[0].lower()))
 
     def update_record(self, ef: Path, rec_no: int, data: Hexstr, force_len: bool = False,
-                      verify: bool = False, conserve: bool = False) -> ResTuple:
+                      verify: bool = False, conserve: bool = False, leftpad: bool = False) -> ResTuple:
         """Execute UPDATE RECORD.
 
         Args:
@@ -279,6 +279,7 @@ class SimCardCommands:
                 force_len : enforce record length by using the actual data length
                 verify : verify data by re-reading the record
                 conserve : read record and compare it with data, skip write on match
+                leftpad : apply 0xff padding from the left instead from the right side.
         """
 
         res = self.select_path(ef)
@@ -295,7 +296,10 @@ class SimCardCommands:
                 raise ValueError('Data length exceeds record length (expected max %d, got %d)' % (
                     rec_length, len(data) // 2))
             elif (len(data) // 2 < rec_length):
-                data = rpad(data, rec_length * 2)
+                if leftpad:
+                    data = lpad(data, rec_length * 2)
+                else:
+                    data = rpad(data, rec_length * 2)
 
         # Save write cycles by reading+comparing before write
         if conserve:

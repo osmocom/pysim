@@ -458,7 +458,9 @@ class RuntimeLchan:
         """
         if not isinstance(self.selected_file, LinFixedEF):
             raise TypeError("Only works with Linear Fixed EF")
-        return self.rs.card._scc.update_record(self.selected_file.fid, rec_nr, data_hex, conserve=self.rs.conserve_write)
+        return self.rs.card._scc.update_record(self.selected_file.fid, rec_nr, data_hex,
+					       conserve=self.rs.conserve_write,
+					       leftpad=self.selected_file.leftpad)
 
     def update_record_dec(self, rec_nr: int, data: dict):
         """Update a record with given abstract data.  Will encode abstract to binary data

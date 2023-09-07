@@ -920,7 +920,7 @@ class LinFixedEF(CardEF):
                         self._cmd.poutput_json(data)
 
     def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None,
-                 parent: Optional[CardDF] = None, rec_len: Size = (1, None), **kwargs):
+                 parent: Optional[CardDF] = None, rec_len: Size = (1, None), leftpad: bool = False, **kwargs):
         """
         Args:
             fid : File Identifier (4 hex digits)
@@ -929,9 +929,11 @@ class LinFixedEF(CardEF):
             desc : Description of the file
             parent : Parent CardFile object within filesystem hierarchy
             rec_len : Tuple of (minimum_length, recommended_length)
+            leftpad: On write, data must be padded from the left to fit pysical record length
         """
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, **kwargs)
         self.rec_len = rec_len
+        self.leftpad = leftpad
         self.shell_commands = [self.ShellCommands()]
         self._construct = None
         self._tlv = None

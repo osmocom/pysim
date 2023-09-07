@@ -181,7 +181,7 @@ class EF_SMS(LinFixedEF):
 # TS 51.011 Section 10.5.5
 class EF_MSISDN(LinFixedEF):
     def __init__(self, fid='6f40', sfid=None, name='EF.MSISDN', desc='MSISDN', **kwargs):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(15, 34), **kwargs)
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(15, 34), leftpad=True, **kwargs)
 
     def _decode_record_hex(self, raw_hex_data, **kwargs):
         return {'msisdn': dec_msisdn(raw_hex_data)}
@@ -192,8 +192,7 @@ class EF_MSISDN(LinFixedEF):
             encoded_msisdn = enc_msisdn(msisdn)
         else:
             encoded_msisdn = enc_msisdn(msisdn[2], msisdn[0], msisdn[1])
-        alpha_identifier = (list(self.rec_len)[
-                            0] - len(encoded_msisdn) // 2) * "ff"
+        alpha_identifier = (list(self.rec_len)[0] - len(encoded_msisdn) // 2) * "ff"
         return alpha_identifier + encoded_msisdn
 
 # TS 51.011 Section 10.5.6
