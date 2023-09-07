@@ -188,6 +188,19 @@ class SimCardCommands:
             chunk_offset += chunk_len
         return total_data, sw
 
+    def __verify_binary(self, ef, data: str, offset: int = 0):
+        """Verify contents of transparent EF.
+
+        Args:
+                ef : string or list of strings indicating name or path of transparent EF
+                data : hex string of expected data
+                offset : byte offset in file from which to start verifying
+        """
+        res = self.read_binary(ef, len(data) // 2, offset)
+        if res[0].lower() != data.lower():
+            raise ValueError('Binary verification failed (expected %s, got %s)' % (
+                data.lower(), res[0].lower()))
+
     def update_binary(self, ef: Path, data: Hexstr, offset: int = 0, verify: bool = False,
                       conserve: bool = False) -> ResTuple:
         """Execute UPDATE BINARY.
@@ -227,21 +240,8 @@ class SimCardCommands:
             total_data += data
             chunk_offset += chunk_len
         if verify:
-            self.verify_binary(ef, data, offset)
+            self.__verify_binary(ef, data, offset)
         return total_data, chunk_sw
-
-    def verify_binary(self, ef, data: str, offset: int = 0):
-        """Verify contents of transparent EF.
-
-        Args:
-                ef : string or list of strings indicating name or path of transparent EF
-                data : hex string of expected data
-                offset : byte offset in file from which to start verifying
-        """
-        res = self.read_binary(ef, len(data) // 2, offset)
-        if res[0].lower() != data.lower():
-            raise ValueError('Binary verification failed (expected %s, got %s)' % (
-                data.lower(), res[0].lower()))
 
     def read_record(self, ef: Path, rec_no: int) -> ResTuple:
         """Execute READ RECORD.
@@ -254,6 +254,19 @@ class SimCardCommands:
         rec_length = self.__record_len(r)
         pdu = self.cla_byte + 'b2%02x04%02x' % (rec_no, rec_length)
         return self._tp.send_apdu_checksw(pdu)
+
+    def __verify_record(self, ef: Path, rec_no: int, data: str):
+        """Verify record against given data
+
+        Args:
+                ef : string or list of strings indicating name or path of linear fixed EF
+                rec_no : record number to read
+                data : hex string of data to be verified
+        """
+        res = self.read_record(ef, rec_no)
+        if res[0].lower() != data.lower():
+            raise ValueError('Record verification failed (expected %s, got %s)' % (
+                data.lower(), res[0].lower()))
 
     def update_record(self, ef: Path, rec_no: int, data: Hexstr, force_len: bool = False,
                       verify: bool = False, conserve: bool = False) -> ResTuple:
@@ -294,21 +307,8 @@ class SimCardCommands:
         pdu = (self.cla_byte + 'dc%02x04%02x' % (rec_no, rec_length)) + data
         res = self._tp.send_apdu_checksw(pdu)
         if verify:
-            self.verify_record(ef, rec_no, data)
+            self.__verify_record(ef, rec_no, data)
         return res
-
-    def verify_record(self, ef: Path, rec_no: int, data: str):
-        """Verify record against given data
-
-        Args:
-                ef : string or list of strings indicating name or path of linear fixed EF
-                rec_no : record number to read
-                data : hex string of data to be verified
-        """
-        res = self.read_record(ef, rec_no)
-        if res[0].lower() != data.lower():
-            raise ValueError('Record verification failed (expected %s, got %s)' % (
-                data.lower(), res[0].lower()))
 
     def record_size(self, ef: Path) -> int:
         """Determine the record size of given file.
