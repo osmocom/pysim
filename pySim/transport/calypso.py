@@ -90,6 +90,9 @@ class CalypsoSimLink(LinkBase):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.connect(sock_path)
 
+        # Remember socket path
+        self._sock_path = sock_path
+
     def __del__(self):
         self.sock.close()
 
@@ -156,3 +159,6 @@ class CalypsoSimLink(LinkBase):
         sw = rsp[-2:]
 
         return b2h(data), b2h(sw)
+
+    def __str__(self):
+        return "osmocon:%s" % (self._sock_path)

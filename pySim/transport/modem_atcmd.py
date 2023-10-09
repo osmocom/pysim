@@ -169,3 +169,6 @@ class ModemATCommandLink(LinkBase):
         sw = rsp_pdu[-4:].decode().lower()
         log.debug('Command response: %s, %s',  data, sw)
         return data, sw
+
+    def __str__(self):
+        return "modem:%s" % self._device

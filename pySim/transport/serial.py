@@ -236,3 +236,6 @@ class SerialSimLink(LinkBase):
 
         # Return value
         return b2h(data), b2h(sw)
+
+    def __str__(self):
+        return "serial:%s" % (self._sl.name)

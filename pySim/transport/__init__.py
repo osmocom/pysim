@@ -68,6 +68,10 @@ class LinkBase(abc.ABC):
         self.proactive_handler = proactive_handler
 
     @abc.abstractmethod
+    def __str__(self):
+        """Implementation specific method for printing an information to identify the device."""
+
+    @abc.abstractmethod
     def _send_apdu_raw(self, pdu: Hexstr) -> ResTuple:
         """Implementation specific method for sending the PDU."""
 

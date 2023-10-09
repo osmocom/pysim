@@ -48,6 +48,9 @@ class DummySimLink(LinkBase):
         self._debug = debug
         self._atr = h2i('3B9F96801F878031E073FE211B674A4C753034054BA9')
 
+    def __str__(self):
+        return "dummy"
+
     def _send_apdu_raw(self, pdu):
         #print("DummySimLink-apdu: %s" % pdu)
         return [], '9000'

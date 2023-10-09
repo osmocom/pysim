@@ -39,6 +39,7 @@ class PcscSimLink(LinkBase):
             raise ReaderError('No reader found for number %d' % reader_number)
         self._reader = r[reader_number]
         self._con = self._reader.createConnection()
+        self._reader_number = reader_number
 
     def __del__(self):
         try:
@@ -91,3 +92,6 @@ class PcscSimLink(LinkBase):
 
         # Return value
         return i2h(data), i2h(sw)
+
+    def __str__(self):
+        return "PCSC:%u[%s]" % (self._reader_number,  self._reader)

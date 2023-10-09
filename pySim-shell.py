@@ -374,7 +374,7 @@ class PysimApp(Cmd2Compat):
             rc = self.equip(card, rs)
         except:
             self.poutput("")
-            self.poutput("Card initialization failed with an exception:")
+            self.poutput("Card initialization (%s) failed with an exception:" % str(self.sl))
             self.poutput("---------------------8<---------------------")
             traceback.print_exc()
             self.poutput("---------------------8<---------------------")
@@ -489,7 +489,7 @@ class PysimApp(Cmd2Compat):
                 return
             except:
                 self.poutput("")
-                self.poutput("Card handling failed with an exception:")
+                self.poutput("Card handling (%s) failed with an exception:" % str(self.sl))
                 self.poutput("---------------------8<---------------------")
                 traceback.print_exc()
                 self.poutput("---------------------8<---------------------")
@@ -1031,7 +1031,7 @@ if __name__ == '__main__':
         rs, card = init_card(sl)
         app = PysimApp(card, rs, sl, ch, opts.script)
     except:
-        print("Card initialization failed with an exception:")
+        print("Card initialization (%s) failed with an exception:" % str(sl))
         print("---------------------8<---------------------")
         traceback.print_exc()
         print("---------------------8<---------------------")
