@@ -567,7 +567,7 @@ def find_row_in_csv_file(csv_file_name:str, num=None, iccid=None, imsi=None):
     for row in cr:
         # Pick a specific row by line number (num)
         if num is not None and iccid is None and imsi is None:
-            if opts.num == i:
+            if num == i:
                 f.close()
                 return row
 
@@ -727,7 +727,7 @@ def save_batch(opts):
     fh.close()
 
 
-def process_card(opts, first, ch):
+def process_card(scc, opts, first, ch):
 
     # Connect transport
     ch.get(first)
@@ -821,7 +821,7 @@ if __name__ == '__main__':
 
     while 1:
         try:
-            rc = process_card(opts, first, ch)
+            rc = process_card(scc, opts, first, ch)
         except (KeyboardInterrupt):
             print("")
             print("Terminated by user!")

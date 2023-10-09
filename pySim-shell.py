@@ -88,6 +88,9 @@ def init_card(sl):
     state object (rs) is required for all pySim-shell commands.
     """
 
+    # Create command layer
+    scc = SimCardCommands(transport=sl)
+
     # Wait up to three seconds for a card in reader and try to detect
     # the card type.
     print("Waiting for card...")
@@ -276,7 +279,7 @@ class PysimApp(Cmd2Compat):
 
     class Cmd2ApduTracer(ApduTracer):
         def __init__(self, cmd2_app):
-            self.cmd2 = app
+            self.cmd2 = cmd2_app
 
         def trace_response(self, cmd, sw, resp):
             self.cmd2.poutput("-> %s %s" % (cmd[:10], cmd[10:]))
@@ -307,7 +310,7 @@ class PysimApp(Cmd2Compat):
         if self.rs and self.rs.profile:
             for cmd_set in self.rs.profile.shell_cmdsets:
                 self.unregister_command_set(cmd_set)
-        rs, card = init_card(sl)
+        rs, card = init_card(self.sl)
         self.equip(card, rs)
 
     apdu_cmd_parser = argparse.ArgumentParser()
@@ -440,7 +443,7 @@ class PysimApp(Cmd2Compat):
                 # In case of failure, try multiple times.
                 for i in range(opts.tries):
                     # fetch card into reader bay
-                    ch.get(first)
+                    self.ch.get(first)
 
                     # if necessary execute an action before we start processing the card
                     if(opts.pre_card_action):
@@ -463,9 +466,9 @@ class PysimApp(Cmd2Compat):
                 # Depending on success or failure, the card goes either in the "error" bin or in the
                 # "done" bin.
                 if rc < 0:
-                    ch.error()
+                    self.ch.error()
                 else:
-                    ch.done()
+                    self.ch.done()
 
                 # In most cases it is possible to proceed with the next card, but the
                 # user may decide to halt immediately when an error occurs
@@ -559,7 +562,7 @@ class PySimCommands(CommandSet):
 
         if isinstance(self._cmd.lchan.selected_file, CardDF):
             if action_df:
-                action_df(context, opts)
+                action_df(context, **kwargs)
 
         files = self._cmd.lchan.selected_file.get_selectables(
             flags=['FNAMES', 'ANAMES'])
@@ -1014,9 +1017,6 @@ if __name__ == '__main__':
     sl = init_reader(opts, proactive_handler = Proact())
     if sl is None:
         exit(1)
-
-    # Create command layer
-    scc = SimCardCommands(transport=sl)
 
     # Create a card handler (for bulk provisioning)
     if opts.card_handler_config:
