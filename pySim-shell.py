@@ -1015,8 +1015,6 @@ if __name__ == '__main__':
 
     # Init card reader driver
     sl = init_reader(opts, proactive_handler = Proact())
-    if sl is None:
-        exit(1)
 
     # Create a card handler (for bulk provisioning)
     if opts.card_handler_config:
