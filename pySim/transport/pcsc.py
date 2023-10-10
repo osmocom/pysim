@@ -93,5 +93,5 @@ class PcscSimLink(LinkBase):
         # Return value
         return i2h(data), i2h(sw)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "PCSC:%u[%s]" % (self._reader_number,  self._reader)

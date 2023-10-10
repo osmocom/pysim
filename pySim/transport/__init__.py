@@ -68,7 +68,7 @@ class LinkBase(abc.ABC):
         self.proactive_handler = proactive_handler
 
     @abc.abstractmethod
-    def __str__(self):
+    def __str__(self) -> str:
         """Implementation specific method for printing an information to identify the device."""
 
     @abc.abstractmethod

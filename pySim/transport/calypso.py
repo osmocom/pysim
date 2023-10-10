@@ -160,5 +160,5 @@ class CalypsoSimLink(LinkBase):
 
         return b2h(data), b2h(sw)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "osmocon:%s" % (self._sock_path)

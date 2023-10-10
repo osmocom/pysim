@@ -170,5 +170,5 @@ class ModemATCommandLink(LinkBase):
         log.debug('Command response: %s, %s',  data, sw)
         return data, sw
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "modem:%s" % self._device
