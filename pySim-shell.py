@@ -244,8 +244,11 @@ class PysimApp(Cmd2Compat):
             self.register_command_set(Ts102222Commands())
             self.register_command_set(PySimCommands())
 
-            self.lchan.select('MF/EF.ICCID', self)
-            self.iccid = dec_iccid(self.lchan.read_binary()[0])
+            try:
+                self.lchan.select('MF/EF.ICCID', self)
+                self.iccid = dec_iccid(self.lchan.read_binary()[0])
+            except:
+                self.iccid = None
 
             self.lchan.select('MF', self)
             rc = True
