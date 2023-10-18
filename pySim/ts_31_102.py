@@ -1331,10 +1331,10 @@ class DF_USIM_5GS(CardDF):
             # I'm looking at 31.102 R16.6
             EF_5GS3GPPLOCI(service=122),
             EF_5GS3GPPLOCI('4f02', 0x02, 'EF.5GSN3GPPLOCI',
-                           '5GS non-3GPP location information', service=122),
+                           desc='5GS non-3GPP location information', service=122),
             EF_5GS3GPPNSC(service=122),
             EF_5GS3GPPNSC('4f04', 0x04, 'EF.5GSN3GPPNSC',
-                          '5GS non-3GPP Access NAS Security Context', service=122),
+                          desc='5GS non-3GPP Access NAS Security Context', service=122),
             EF_5GAUTHKEYS(service=123),
             EF_UAC_AIC(service=126),
             EF_SUCI_Calc_Info(service=124),
@@ -1342,7 +1342,7 @@ class DF_USIM_5GS(CardDF):
             EF_SUPI_NAI(service=130),
             EF_Routing_Indicator(service=124),
             TransparentEF('4F0B', 0x0b, 'EF.URSP',
-                          'UE Route Selector Policies per PLMN', service=132),
+                          desc='UE Route Selector Policies per PLMN', service=132),
             EF_TN3GPPSNN(service=133),
             # Rel-17 additions below
             EF_CAG(service=137),
