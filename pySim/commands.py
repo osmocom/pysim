@@ -26,7 +26,7 @@ import typing # construct also has a Union, so we do typing.Union below
 
 from construct import *
 from pySim.construct import LV
-from pySim.utils import rpad, lpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i, str_sanitize, expand_hex
+from pySim.utils import rpad, lpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i, i2h, str_sanitize, expand_hex
 from pySim.utils import Hexstr, SwHexstr, ResTuple
 from pySim.exceptions import SwMatchError
 from pySim.transport import LinkBase
@@ -34,11 +34,70 @@ from pySim.transport import LinkBase
 # A path can be either just a FID or a list of FID
 Path = typing.Union[Hexstr, List[Hexstr]]
 
+def lchan_nr_to_cla(cla: int, lchan_nr: int) -> int:
+    """Embed a logical channel number into the CLA byte."""
+    # TS 102 221 10.1.1 Coding of Class Byte
+    if lchan_nr < 4:
+        # standard logical channel number
+        if cla >> 4 in [0x0, 0xA, 0x8]:
+            return (cla & 0xFC) | (lchan_nr & 3)
+        else:
+            raise ValueError('Undefined how to use CLA %2X with logical channel %u' % (cla, lchan_nr))
+    elif lchan_nr < 16:
+        # extended logical channel number
+        if cla >> 6 in [1, 3]:
+            return (cla & 0xF0) | ((lchan_nr - 4) & 0x0F)
+        else:
+            raise ValueError('Undefined how to use CLA %2X with logical channel %u' % (cla, lchan_nr))
+    else:
+        raise ValueError('logical channel outside of range 0 .. 15')
+
+def cla_with_lchan(cla_byte: Hexstr, lchan_nr: int) -> Hexstr:
+    """Embed a logical channel number into the hex-string encoded CLA value."""
+    cla_int = h2i(cla_byte)[0]
+    return i2h([lchan_nr_to_cla(cla_int, lchan_nr)])
+
 class SimCardCommands:
-    def __init__(self, transport: LinkBase):
+    """Class providing methods for various card-specific commands such as SELECT, READ BINARY, etc.
+    Historically one instance exists below CardBase, but with the introduction of multiple logical
+    channels there can be multiple instances.  The lchan number will then be patched into the CLA
+    byte by the respective instance. """
+    def __init__(self, transport: LinkBase, lchan_nr: int = 0):
         self._tp = transport
-        self.cla_byte = "a0"
+        self._cla_byte = None
         self.sel_ctrl = "0000"
+        self.lchan_nr = lchan_nr
+        # invokes the setter below
+        self.cla_byte = "a0"
+
+    def fork_lchan(self, lchan_nr: int) -> 'SimCardCommands':
+        """Fork a per-lchan specific SimCardCommands instance off the current instance."""
+        ret = SimCardCommands(transport = self._tp, lchan_nr = lchan_nr)
+        ret.cla_byte = self._cla_byte
+        return ret
+
+    @property
+    def cla_byte(self) -> Hexstr:
+        """Return the (cached) patched default CLA byte for this card."""
+        return self._cla4lchan
+
+    @cla_byte.setter
+    def cla_byte(self, new_val: Hexstr):
+        """Set the (raw, without lchan) default CLA value for this card."""
+        self._cla_byte = new_val
+        # compute cached result
+        self._cla4lchan = cla_with_lchan(self._cla_byte, self.lchan_nr)
+
+    def cla4lchan(self, cla: Hexstr) -> Hexstr:
+        """Compute the lchan-patched value of the given CLA value. If no CLA
+        value is provided as argument, the lchan-patched version of the SimCardCommands._cla_byte
+        value is used. Most commands will use the latter, while some wish to override it and
+        can pass it as argument here."""
+        if not cla:
+            # return cached result to avoid re-computing this over and over again
+            return self._cla4lchan
+        else:
+            return cla_with_lchan(cla, self.lchan_nr)
 
     # Extract a single FCP item from TLV
     def __parse_fcp(self, fcp: Hexstr):
@@ -344,9 +403,9 @@ class SimCardCommands:
     # TS 102 221 Section 11.3.1 low-level helper
     def _retrieve_data(self, tag: int, first: bool = True) -> ResTuple:
         if first:
-            pdu = '80cb008001%02x' % (tag)
+            pdu = self.cla4lchan('80') + 'cb008001%02x' % (tag)
         else:
-            pdu = '80cb000000'
+            pdu = self.cla4lchan('80') + 'cb000000'
         return self._tp.send_apdu_checksw(pdu)
 
     def retrieve_data(self, ef: Path, tag: int) -> ResTuple:
@@ -376,7 +435,7 @@ class SimCardCommands:
             p1 = 0x00
         if isinstance(data, bytes) or isinstance(data, bytearray):
             data = b2h(data)
-        pdu = '80db00%02x%02x%s' % (p1, len(data)//2, data)
+        pdu = self.cla4lchan('80') + 'db00%02x%02x%s' % (p1, len(data)//2, data)
         return self._tp.send_apdu_checksw(pdu)
 
     def set_data(self, ef, tag: int, value: str, verify: bool = False, conserve: bool = False) -> ResTuple:
@@ -419,7 +478,7 @@ class SimCardCommands:
         if len(rand) != 32:
             raise ValueError('Invalid rand')
         self.select_path(['3f00', '7f20'])
-        return self._tp.send_apdu_checksw('a0' + '88000010' + rand, sw='9000')
+        return self._tp.send_apdu_checksw(self.cla4lchan('a0') + '88000010' + rand, sw='9000')
 
     def authenticate(self, rand: Hexstr, autn: Hexstr, context: str = '3g') -> ResTuple:
         """Execute AUTHENTICATE (USIM/ISIM).
@@ -451,7 +510,7 @@ class SimCardCommands:
 
     def status(self) -> ResTuple:
         """Execute a STATUS command as per TS 102 221 Section 11.1.2."""
-        return self._tp.send_apdu_checksw('80F20000ff')
+        return self._tp.send_apdu_checksw(self.cla4lchan('80') + 'F20000ff')
 
     def deactivate_file(self) -> ResTuple:
         """Execute DECATIVATE FILE command as per TS 102 221 Section 11.1.14."""
@@ -471,7 +530,7 @@ class SimCardCommands:
 
     def resize_file(self, payload: Hexstr) -> ResTuple:
         """Execute RESIZE FILE command as per TS 102 222 Section 6.10"""
-        return self._tp.send_apdu_checksw('80d40000%02x%s' % (len(payload)//2, payload))
+        return self._tp.send_apdu_checksw(self.cla4lchan('80') + 'd40000%02x%s' % (len(payload)//2, payload))
 
     def delete_file(self, fid: Hexstr) -> ResTuple:
         """Execute DELETE FILE command as per TS 102 222 Section 6.4"""
