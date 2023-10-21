@@ -25,15 +25,14 @@
 from typing import Optional, Dict, Tuple
 from pySim.ts_102_221 import EF_DIR
 from pySim.ts_51_011 import DF_GSM
-from pySim.transport import LinkBase
 import abc
 
 from pySim.utils import *
-from pySim.commands import Path
+from pySim.commands import Path, SimCardCommands
 
 class CardBase:
     """General base class for some kind of telecommunications card."""
-    def __init__(self, scc: LinkBase):
+    def __init__(self, scc: SimCardCommands):
         self._scc = scc
         self._aids = []
 
@@ -75,7 +74,7 @@ class SimCardBase(CardBase):
     any higher-layer processing."""
     name = 'SIM'
 
-    def __init__(self, scc: LinkBase):
+    def __init__(self, scc: SimCardCommands):
         super(SimCardBase, self).__init__(scc)
         self._scc.cla_byte = "A0"
         self._scc.sel_ctrl = "0000"
@@ -88,7 +87,7 @@ class SimCardBase(CardBase):
 class UiccCardBase(SimCardBase):
     name = 'UICC'
 
-    def __init__(self, scc: LinkBase):
+    def __init__(self, scc: SimCardCommands):
         super(UiccCardBase, self).__init__(scc)
         self._scc.cla_byte = "00"
         self._scc.sel_ctrl = "0004"  # request an FCP
@@ -162,7 +161,7 @@ class UiccCardBase(SimCardBase):
                 return self._scc.select_adf(aid)
         return (None, None)
 
-def card_detect(scc: LinkBase) -> Optional[CardBase]:
+def card_detect(scc: SimCardCommands) -> Optional[CardBase]:
     # UICC always has higher preference, as a UICC might also contain a SIM application
     uicc = UiccCardBase(scc)
     if uicc.probe():
