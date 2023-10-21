@@ -963,6 +963,18 @@ class Iso7816Commands(CommandSet):
         # this is executed only in successful case, as unsuccessful raises exception
         self._cmd.rs.del_lchan(opts.chan_nr)
 
+    switch_chan_parser = argparse.ArgumentParser()
+    switch_chan_parser.add_argument(
+        'chan_nr', type=int, default=0, help='Channel Number')
+
+    @cmd2.with_argparser(switch_chan_parser)
+    def do_switch_channel(self, opts):
+        """Switch currently active logical channel."""
+        self._cmd.lchan._select_pre(self._cmd)
+        self._cmd.lchan = self._cmd.rs.lchan[opts.chan_nr]
+        self._cmd.lchan._select_post(self._cmd)
+        self._cmd.update_prompt()
+
     def do_status(self, opts):
         """Perform the STATUS command."""
         fcp_dec = self._cmd.lchan.status()

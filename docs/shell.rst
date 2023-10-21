@@ -199,6 +199,12 @@ close_channel
    :module: pySim-shell
    :func: Iso7816Commands.close_chan_parser
 
+switch_channel
+~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: Iso7816Commands.switch_chan_parser
+
 
 TS 102 221 commands
 -------------------
