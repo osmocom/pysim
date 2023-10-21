@@ -948,6 +948,8 @@ class Iso7816Commands(CommandSet):
         """Open a logical channel."""
         (data, sw) = self._cmd.card._scc.manage_channel(
             mode='open', lchan_nr=opts.chan_nr)
+        # this is executed only in successful case, as unsuccessful raises exception
+        self._cmd.lchan.add_lchan(opts.chan_nr)
 
     close_chan_parser = argparse.ArgumentParser()
     close_chan_parser.add_argument(
@@ -958,6 +960,8 @@ class Iso7816Commands(CommandSet):
         """Close a logical channel."""
         (data, sw) = self._cmd.card._scc.manage_channel(
             mode='close', lchan_nr=opts.chan_nr)
+        # this is executed only in successful case, as unsuccessful raises exception
+        self._cmd.rs.del_lchan(opts.chan_nr)
 
     def do_status(self, opts):
         """Perform the STATUS command."""
