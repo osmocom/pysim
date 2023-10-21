@@ -38,7 +38,7 @@ def lchan_nr_from_cla(cla: int) -> int:
 class RuntimeState:
     """Represent the runtime state of a session with a card."""
 
-    def __init__(self, card, profile: 'CardProfile'):
+    def __init__(self, card: 'CardBase', profile: 'CardProfile'):
         """
         Args:
             card : pysim.cards.Card instance
