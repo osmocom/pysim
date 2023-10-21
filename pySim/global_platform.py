@@ -238,7 +238,7 @@ class ADF_SD(CardADF):
                 self._cmd.poutput('Unknown data object "%s", available options: %s' % (tlv_cls_name,
                                                                                        do_names))
                 return
-            (data, sw) = self._cmd.card._scc.get_data(cla=0x80, tag=tlv_cls.tag)
+            (data, sw) = self._cmd.lchan.scc.get_data(cla=0x80, tag=tlv_cls.tag)
             ie = tlv_cls()
             ie.from_tlv(h2b(data))
             self._cmd.poutput_json(ie.to_dict())

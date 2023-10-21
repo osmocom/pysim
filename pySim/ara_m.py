@@ -306,13 +306,13 @@ class ADF_ARAM(CardADF):
 
         def do_aram_get_all(self, opts):
             """GET DATA [All] on the ARA-M Applet"""
-            res_do = ADF_ARAM.get_all(self._cmd.card._scc._tp)
+            res_do = ADF_ARAM.get_all(self._cmd.lchan.scc._tp)
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
 
         def do_aram_get_config(self, opts):
             """Perform GET DATA [Config] on the ARA-M Applet: Tell it our version and retrieve its version."""
-            res_do = ADF_ARAM.get_config(self._cmd.card._scc._tp)
+            res_do = ADF_ARAM.get_config(self._cmd.lchan.scc._tp)
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
 
@@ -373,14 +373,14 @@ class ADF_ARAM(CardADF):
             d = [{'ref_ar_do': [{'ref_do': ref_do_content}, {'ar_do': ar_do_content}]}]
             csrado = CommandStoreRefArDO()
             csrado.from_dict(d)
-            res_do = ADF_ARAM.store_data(self._cmd.card._scc._tp, csrado)
+            res_do = ADF_ARAM.store_data(self._cmd.lchan.scc._tp, csrado)
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
 
         def do_aram_delete_all(self, opts):
             """Perform STORE DATA [Command-Delete[all]] to delete all access rules."""
             deldo = CommandDelete()
-            res_do = ADF_ARAM.store_data(self._cmd.card._scc._tp, deldo)
+            res_do = ADF_ARAM.store_data(self._cmd.lchan.scc._tp, deldo)
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
 

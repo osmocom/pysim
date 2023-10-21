@@ -326,7 +326,7 @@ class PysimApp(Cmd2Compat):
         DANGEROUS: pySim-shell will not know any card state changes, and
         not continue to work as expected if you e.g. select a different
         file."""
-        data, sw = self.card._scc._tp.send_apdu(opts.APDU)
+        data, sw = self.lchan.scc._tp.send_apdu(opts.APDU)
         if data:
             self.poutput("SW: %s, RESP: %s" % (sw, data))
         else:
@@ -790,7 +790,7 @@ class PySimCommands(CommandSet):
                     "cannot find ADM-PIN for ICCID '%s'" % (self._cmd.iccid))
 
         if pin_adm:
-            self._cmd.card._scc.verify_chv(self._cmd.card._adm_chv_num, h2b(pin_adm))
+            self._cmd.lchan.scc.verify_chv(self._cmd.card._adm_chv_num, h2b(pin_adm))
         else:
             raise ValueError("error: cannot authenticate, no adm-pin!")
 
@@ -798,10 +798,10 @@ class PySimCommands(CommandSet):
         """Display information about the currently inserted card"""
         self._cmd.poutput("Card info:")
         self._cmd.poutput(" Name: %s" % self._cmd.card.name)
-        self._cmd.poutput(" ATR: %s" % b2h(self._cmd.card._scc.get_atr()))
+        self._cmd.poutput(" ATR: %s" % b2h(self._cmd.lchan.scc.get_atr()))
         self._cmd.poutput(" ICCID: %s" % self._cmd.iccid)
-        self._cmd.poutput(" Class-Byte: %s" % self._cmd.card._scc.cla_byte)
-        self._cmd.poutput(" Select-Ctrl: %s" % self._cmd.card._scc.sel_ctrl)
+        self._cmd.poutput(" Class-Byte: %s" % self._cmd.lchan.scc.cla_byte)
+        self._cmd.poutput(" Select-Ctrl: %s" % self._cmd.lchan.scc.sel_ctrl)
         self._cmd.poutput(" AIDs:")
         for a in self._cmd.rs.mf.applications:
                 self._cmd.poutput("  %s" % a)
@@ -859,7 +859,7 @@ class Iso7816Commands(CommandSet):
         call it if you authenticate yourself using the specified PIN.  There usually is at least PIN1 and
         PIN2."""
         pin = self.get_code(opts.pin_code)
-        (data, sw) = self._cmd.card._scc.verify_chv(opts.pin_nr, h2b(pin))
+        (data, sw) = self._cmd.lchan.scc.verify_chv(opts.pin_nr, h2b(pin))
         self._cmd.poutput("CHV verification successful")
 
     unblock_chv_parser = argparse.ArgumentParser()
@@ -875,7 +875,7 @@ class Iso7816Commands(CommandSet):
         """Unblock PIN code using specified PUK code"""
         new_pin = self.get_code(opts.new_pin_code)
         puk = self.get_code(opts.puk_code)
-        (data, sw) = self._cmd.card._scc.unblock_chv(
+        (data, sw) = self._cmd.lchan.scc.unblock_chv(
             opts.pin_nr, h2b(puk), h2b(new_pin))
         self._cmd.poutput("CHV unblock successful")
 
@@ -892,7 +892,7 @@ class Iso7816Commands(CommandSet):
         """Change PIN code to a new PIN code"""
         new_pin = self.get_code(opts.new_pin_code)
         pin = self.get_code(opts.pin_code)
-        (data, sw) = self._cmd.card._scc.change_chv(
+        (data, sw) = self._cmd.lchan.scc.change_chv(
             opts.pin_nr, h2b(pin), h2b(new_pin))
         self._cmd.poutput("CHV change successful")
 
@@ -906,7 +906,7 @@ class Iso7816Commands(CommandSet):
     def do_disable_chv(self, opts):
         """Disable PIN code using specified PIN code"""
         pin = self.get_code(opts.pin_code)
-        (data, sw) = self._cmd.card._scc.disable_chv(opts.pin_nr, h2b(pin))
+        (data, sw) = self._cmd.lchan.scc.disable_chv(opts.pin_nr, h2b(pin))
         self._cmd.poutput("CHV disable successful")
 
     enable_chv_parser = argparse.ArgumentParser()
@@ -919,12 +919,12 @@ class Iso7816Commands(CommandSet):
     def do_enable_chv(self, opts):
         """Enable PIN code using specified PIN code"""
         pin = self.get_code(opts.pin_code)
-        (data, sw) = self._cmd.card._scc.enable_chv(opts.pin_nr, h2b(pin))
+        (data, sw) = self._cmd.lchan.scc.enable_chv(opts.pin_nr, h2b(pin))
         self._cmd.poutput("CHV enable successful")
 
     def do_deactivate_file(self, opts):
         """Deactivate the currently selected EF"""
-        (data, sw) = self._cmd.card._scc.deactivate_file()
+        (data, sw) = self._cmd.lchan.scc.deactivate_file()
 
     activate_file_parser = argparse.ArgumentParser()
     activate_file_parser.add_argument('NAME', type=str, help='File name or FID of file to activate')
@@ -946,7 +946,7 @@ class Iso7816Commands(CommandSet):
     @cmd2.with_argparser(open_chan_parser)
     def do_open_channel(self, opts):
         """Open a logical channel."""
-        (data, sw) = self._cmd.card._scc.manage_channel(
+        (data, sw) = self._cmd.lchan.scc.manage_channel(
             mode='open', lchan_nr=opts.chan_nr)
         # this is executed only in successful case, as unsuccessful raises exception
         self._cmd.lchan.add_lchan(opts.chan_nr)
@@ -958,7 +958,7 @@ class Iso7816Commands(CommandSet):
     @cmd2.with_argparser(close_chan_parser)
     def do_close_channel(self, opts):
         """Close a logical channel."""
-        (data, sw) = self._cmd.card._scc.manage_channel(
+        (data, sw) = self._cmd.lchan.scc.manage_channel(
             mode='close', lchan_nr=opts.chan_nr)
         # this is executed only in successful case, as unsuccessful raises exception
         self._cmd.rs.del_lchan(opts.chan_nr)

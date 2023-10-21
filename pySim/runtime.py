@@ -167,6 +167,7 @@ class RuntimeLchan:
         self.selected_adf = None
         self.selected_file_fcp = None
         self.selected_file_fcp_hex = None
+        self.scc = self.rs.card._scc.fork_lchan(lchan_nr)
 
     def add_lchan(self, lchan_nr: int) -> 'RuntimeLchan':
         """Add a new logical channel from the current logical channel. Just affects
@@ -246,7 +247,7 @@ class RuntimeLchan:
                 "Cannot select unknown file by name %s, only hexadecimal 4 digit FID is allowed" % fid)
 
         try:
-            (data, sw) = self.rs.card._scc.select_file(fid)
+            (data, sw) = self.scc.select_file(fid)
         except SwMatchError as swm:
             k = self.interpret_sw(swm.sw_actual)
             if not k:
@@ -301,7 +302,7 @@ class RuntimeLchan:
                     (data, sw) = self.rs.card.select_adf_by_aid(p.aid)
                     self.selected_adf = p
                 else:
-                    (data, sw) = self.rs.card._scc.select_file(p.fid)
+                    (data, sw) = self.scc.select_file(p.fid)
                 self.selected_file = p
             except SwMatchError as swm:
                 self._select_post(cmd_app)
@@ -344,7 +345,7 @@ class RuntimeLchan:
                 if isinstance(f, CardADF):
                     (data, sw) = self.rs.card.select_adf_by_aid(f.aid)
                 else:
-                    (data, sw) = self.rs.card._scc.select_file(f.fid)
+                    (data, sw) = self.scc.select_file(f.fid)
                 self.selected_file = f
             except SwMatchError as swm:
                 k = self.interpret_sw(swm.sw_actual)
@@ -364,7 +365,7 @@ class RuntimeLchan:
 
     def status(self):
         """Request STATUS (current selected file FCP) from card."""
-        (data, sw) = self.rs.card._scc.status()
+        (data, sw) = self.scc.status()
         return self.selected_file.decode_select_response(data)
 
     def get_file_for_selectable(self, name: str):
@@ -375,7 +376,7 @@ class RuntimeLchan:
         """Request ACTIVATE FILE of specified file."""
         sels = self.selected_file.get_selectables()
         f = sels[name]
-        data, sw = self.rs.card._scc.activate_file(f.fid)
+        data, sw = self.scc.activate_file(f.fid)
         return data, sw
 
     def read_binary(self, length: int = None, offset: int = 0):
@@ -389,7 +390,7 @@ class RuntimeLchan:
         """
         if not isinstance(self.selected_file, TransparentEF):
             raise TypeError("Only works with TransparentEF")
-        return self.rs.card._scc.read_binary(self.selected_file.fid, length, offset)
+        return self.scc.read_binary(self.selected_file.fid, length, offset)
 
     def read_binary_dec(self) -> Tuple[dict, str]:
         """Read [part of] a transparent EF binary data and decode it.
@@ -413,7 +414,7 @@ class RuntimeLchan:
         """
         if not isinstance(self.selected_file, TransparentEF):
             raise TypeError("Only works with TransparentEF")
-        return self.rs.card._scc.update_binary(self.selected_file.fid, data_hex, offset, conserve=self.rs.conserve_write)
+        return self.scc.update_binary(self.selected_file.fid, data_hex, offset, conserve=self.rs.conserve_write)
 
     def update_binary_dec(self, data: dict):
         """Update transparent EF from abstract data. Encodes the data to binary and
@@ -436,7 +437,7 @@ class RuntimeLchan:
         if not isinstance(self.selected_file, LinFixedEF):
             raise TypeError("Only works with Linear Fixed EF")
         # returns a string of hex nibbles
-        return self.rs.card._scc.read_record(self.selected_file.fid, rec_nr)
+        return self.scc.read_record(self.selected_file.fid, rec_nr)
 
     def read_record_dec(self, rec_nr: int = 0) -> Tuple[dict, str]:
         """Read a record and decode it to abstract data.
@@ -458,7 +459,7 @@ class RuntimeLchan:
         """
         if not isinstance(self.selected_file, LinFixedEF):
             raise TypeError("Only works with Linear Fixed EF")
-        return self.rs.card._scc.update_record(self.selected_file.fid, rec_nr, data_hex,
+        return self.scc.update_record(self.selected_file.fid, rec_nr, data_hex,
 					       conserve=self.rs.conserve_write,
 					       leftpad=self.selected_file.leftpad)
 
@@ -484,7 +485,7 @@ class RuntimeLchan:
         if not isinstance(self.selected_file, BerTlvEF):
             raise TypeError("Only works with BER-TLV EF")
         # returns a string of hex nibbles
-        return self.rs.card._scc.retrieve_data(self.selected_file.fid, tag)
+        return self.scc.retrieve_data(self.selected_file.fid, tag)
 
     def retrieve_tags(self):
         """Retrieve tags available on BER-TLV EF.
@@ -494,7 +495,7 @@ class RuntimeLchan:
         """
         if not isinstance(self.selected_file, BerTlvEF):
             raise TypeError("Only works with BER-TLV EF")
-        data, sw = self.rs.card._scc.retrieve_data(self.selected_file.fid, 0x5c)
+        data, sw = self.scc.retrieve_data(self.selected_file.fid, 0x5c)
         tag, length, value, remainder = bertlv_parse_one(h2b(data))
         return list(value)
 
@@ -507,7 +508,7 @@ class RuntimeLchan:
         """
         if not isinstance(self.selected_file, BerTlvEF):
             raise TypeError("Only works with BER-TLV EF")
-        return self.rs.card._scc.set_data(self.selected_file.fid, tag, data_hex, conserve=self.rs.conserve_write)
+        return self.scc.set_data(self.selected_file.fid, tag, data_hex, conserve=self.rs.conserve_write)
 
     def unregister_cmds(self, cmd_app=None):
         """Unregister all file specific commands."""

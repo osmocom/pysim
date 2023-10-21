@@ -74,6 +74,7 @@ class SimCardCommands:
         """Fork a per-lchan specific SimCardCommands instance off the current instance."""
         ret = SimCardCommands(transport = self._tp, lchan_nr = lchan_nr)
         ret.cla_byte = self._cla_byte
+        ret.sel_ctrl = self.sel_ctrl
         return ret
 
     @property

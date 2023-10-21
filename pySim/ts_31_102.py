@@ -1512,7 +1512,7 @@ class ADF_USIM(CardADF):
         @cmd2.with_argparser(authenticate_parser)
         def do_authenticate(self, opts):
             """Perform Authentication and Key Agreement (AKA)."""
-            (data, sw) = self._cmd.card._scc.authenticate(opts.rand, opts.autn)
+            (data, sw) = self._cmd.lchan.scc.authenticate(opts.rand, opts.autn)
             self._cmd.poutput_json(data)
 
         term_prof_parser = argparse.ArgumentParser()
@@ -1526,7 +1526,7 @@ class ADF_USIM(CardADF):
             in the context of SIM Toolkit, Proactive SIM and OTA.  You
             must specify a hex-string with the encoded terminal profile
             you want to send to the card."""
-            (data, sw) = self._cmd.card._scc.terminal_profile(opts.PROFILE)
+            (data, sw) = self._cmd.lchan.scc.terminal_profile(opts.PROFILE)
             self._cmd.poutput('SW: %s, data: %s' % (sw, data))
 
         envelope_parser = argparse.ArgumentParser()
@@ -1538,7 +1538,7 @@ class ADF_USIM(CardADF):
             variety of information is communicated from the terminal
             (modem/phone) to the card, particularly in the context of
             SIM Toolkit, Proactive SIM and OTA."""
-            (data, sw) = self._cmd.card._scc.envelope(opts.PAYLOAD)
+            (data, sw) = self._cmd.lchan.scc.envelope(opts.PAYLOAD)
             self._cmd.poutput('SW: %s, data: %s' % (sw, data))
 
         envelope_sms_parser = argparse.ArgumentParser()
@@ -1556,7 +1556,7 @@ class ADF_USIM(CardADF):
             dev_ids = DeviceIdentities(
                 decoded={'source_dev_id': 'network', 'dest_dev_id': 'uicc'})
             sms_dl = SMSPPDownload(children=[dev_ids, tpdu_ie])
-            (data, sw) = self._cmd.card._scc.envelope(b2h(sms_dl.to_tlv()))
+            (data, sw) = self._cmd.lchan.scc.envelope(b2h(sms_dl.to_tlv()))
             self._cmd.poutput('SW: %s, data: %s' % (sw, data))
 
         get_id_parser = argparse.ArgumentParser()
@@ -1570,7 +1570,7 @@ class ADF_USIM(CardADF):
             context = 0x01 # SUCI
             if opts.nswo_context:
                 context = 0x02 # SUCI 5G NSWO
-            (data, sw) = self._cmd.card._scc.get_identity(context)
+            (data, sw) = self._cmd.lchan.scc.get_identity(context)
             do = SUCI_TlvDataObject()
             do.from_tlv(h2b(data))
             do_d = do.to_dict()

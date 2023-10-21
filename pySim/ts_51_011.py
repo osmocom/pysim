@@ -1001,7 +1001,7 @@ class DF_GSM(CardDF):
         @cmd2.with_argparser(authenticate_parser)
         def do_authenticate(self, opts):
             """Perform GSM Authentication."""
-            (data, sw) = self._cmd.card._scc.run_gsm(opts.rand)
+            (data, sw) = self._cmd.lchan.scc.run_gsm(opts.rand)
             self._cmd.poutput_json(data)
 
 
