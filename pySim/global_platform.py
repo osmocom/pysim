@@ -174,11 +174,14 @@ class ProprietaryData(BER_TLV_IE, tag=0xA5, nested=[SecurityDomainManagementData
                                                     MaximumLengthOfDataFieldInCommandMessage]):
     pass
 
+# explicitly define this list and give it a name so pySim.euicc can reference it
+FciTemplateNestedList = [ApplicationID, SecurityDomainManagementData,
+                         ApplicationProductionLifeCycleData,
+                         MaximumLengthOfDataFieldInCommandMessage,
+                         ProprietaryData]
+
 # GlobalPlatform 2.1.1 Section 9.9.3.1
-class FciTemplate(BER_TLV_IE, tag=0x6f, nested=[ApplicationID, SecurityDomainManagementData,
-                                                ApplicationProductionLifeCycleData,
-                                                MaximumLengthOfDataFieldInCommandMessage,
-                                                ProprietaryData]):
+class FciTemplate(BER_TLV_IE, tag=0x6f, nested=FciTemplateNestedList):
     pass
 
 class IssuerIdentificationNumber(BER_TLV_IE, tag=0x42):

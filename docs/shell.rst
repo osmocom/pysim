@@ -805,6 +805,118 @@ get_data
    :module: pySim.global_platform
    :func: ADF_SD.AddlShellCommands.get_data_parser
 
+
+eUICC ISD-R commands
+--------------------
+
+These commands are to perform a variety of operations against eUICC for GSMA consumer eSIM. They
+implement the so-called ES10a, ES10b and ES10c interface.  Basically they perform the tasks that usually would
+be done by the LPAd in the UE.
+
+In order to use those commands, you need to go through the specified steps as documented in GSMA SGP.22:
+
+* open a new logical channel (and start to use it)
+* select the ISD-R application
+
+::
+
+  pySIM-shell (00:MF)> open_channel 2
+  pySIM-shell (00:MF)> switch_channel 2
+  pySIM-shell (02:MF)> select ADF.ISD-R
+  {
+      "application_id": "a0000005591010ffffffff8900000100",
+      "proprietary_data": {
+          "maximum_length_of_data_field_in_command_message": 255
+      },
+      "isdr_proprietary_application_template": {
+          "supported_version_number": "020200"
+      }
+  }
+  pySIM-shell (02:ADF.ISD-R)>
+
+Once you are at this stage, you can issue the various eUICC related commands against the ISD-R application
+
+
+es10x_store_data
+~~~~~~~~~~~~~~~~
+
+.. argparse::
+   :module: pySim.euicc
+   :func: ADF_ISDR.AddlShellCommands.es10x_store_data_parser
+
+get_euicc_configured_addresses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Obtain the configured SM-DP+ and/or SM-DS addresses using the ES10a GetEuiccConfiguredAddresses() function.
+
+set_default_dp_address
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. argparse::
+   :module: pySim.euicc
+   :func: ADF_ISDR.AddlShellCommands.set_def_dp_addr_parser
+
+get_euicc_challenge
+~~~~~~~~~~~~~~~~~~~
+
+Obtain an authentication challenge from the eUICC using the ES10b GetEUICCChallenge() function.
+
+get_euicc_info1
+~~~~~~~~~~~~~~~
+
+Obtain EUICC Information (1) from the eUICC using the ES10b GetEUICCCInfo() function.
+
+get_euicc_info2
+~~~~~~~~~~~~~~~
+
+Obtain EUICC Information (2) from the eUICC using the ES10b GetEUICCCInfo() function.
+
+list_notification
+~~~~~~~~~~~~~~~~~
+
+Obtain the list of notifications from the eUICC using the ES10b ListNotification() function.
+
+remove_notification_from_list
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. argparse::
+   :module: pySim.euicc
+   :func: ADF_ISDR.AddlShellCommands.rem_notif_parser
+
+enable_profile
+~~~~~~~~~~~~~~
+
+.. argparse::
+   :module: pySim.euicc
+   :func: ADF_ISDR.AddlShellCommands.en_prof_parser
+
+disable_profile
+~~~~~~~~~~~~~~~
+
+.. argparse::
+   :module: pySim.euicc
+   :func: ADF_ISDR.AddlShellCommands.dis_prof_parser
+
+delete_profile
+~~~~~~~~~~~~~~
+
+.. argparse::
+   :module: pySim.euicc
+   :func: ADF_ISDR.AddlShellCommands.del_prof_parser
+
+get_eid
+~~~~~~~
+
+Obtain the EID of the eUICC using the ES10c GetEID() function.
+
+set_nickname
+~~~~~~~~~~~~
+
+.. argparse::
+   :module: pySim.euicc
+   :func: ADF_ISDR.AddlShellCommands.set_nickname_parser
+
+
 cmd2 settable parameters
 ------------------------
 
