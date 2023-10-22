@@ -299,7 +299,7 @@ class RuntimeLchan:
         for p in inter_path:
             try:
                 if isinstance(p, CardADF):
-                    (data, sw) = self.rs.card.select_adf_by_aid(p.aid)
+                    (data, sw) = self.rs.card.select_adf_by_aid(p.aid, scc=self.scc)
                     self.selected_adf = p
                 else:
                     (data, sw) = self.scc.select_file(p.fid)
@@ -343,7 +343,7 @@ class RuntimeLchan:
             f = sels[name]
             try:
                 if isinstance(f, CardADF):
-                    (data, sw) = self.rs.card.select_adf_by_aid(f.aid)
+                    (data, sw) = self.rs.card.select_adf_by_aid(f.aid, scc=self.scc)
                 else:
                     (data, sw) = self.scc.select_file(f.fid)
                 self.selected_file = f

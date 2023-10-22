@@ -146,8 +146,10 @@ class UiccCardBase(SimCardBase):
                 return True
         return False
 
-    def select_adf_by_aid(self, adf: str = "usim") -> Tuple[Optional[Hexstr], Optional[SwHexstr]]:
+    def select_adf_by_aid(self, adf: str = "usim", scc: Optional[SimCardCommands] = None) -> Tuple[Optional[Hexstr], Optional[SwHexstr]]:
         """Select ADF.U/ISIM in the Card using its full AID"""
+        # caller may pass a custom scc; we fall back to default
+        scc = scc or self._scc
         if is_hex(adf):
             aid = adf
         else:
@@ -155,10 +157,10 @@ class UiccCardBase(SimCardBase):
         if aid:
             aid_full = self._complete_aid(aid)
             if aid_full:
-                return self._scc.select_adf(aid_full)
+                return scc.select_adf(aid_full)
             else:
                 # If we cannot get the full AID, try with short AID
-                return self._scc.select_adf(aid)
+                return scc.select_adf(aid)
         return (None, None)
 
 def card_detect(scc: SimCardCommands) -> Optional[CardBase]:
