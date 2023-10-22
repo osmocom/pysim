@@ -291,7 +291,7 @@ class PysimApp(Cmd2Compat):
     def update_prompt(self):
         if self.lchan:
             path_str = self.lchan.selected_file.fully_qualified_path_str(not self.numeric_path)
-            self.prompt = 'pySIM-shell (%s)> ' % (path_str)
+            self.prompt = 'pySIM-shell (%02u:%s)> ' % (self.lchan.lchan_nr, path_str)
         else:
             if self.card:
                 self.prompt = 'pySIM-shell (no card profile)> '

@@ -55,13 +55,13 @@ Launch pySIM:
     Using PC/SC reader interface
     Autodetected card type: sysmoISIM-SJA2
     Welcome to pySim-shell!
-    pySIM-shell (MF)>
+    pySIM-shell (00:MF)>
 
 Enter the ADM PIN:
 
 ::
 
-   pySIM-shell (MF)> verify_adm XXXXXXXX
+   pySIM-shell (00:MF)> verify_adm XXXXXXXX
 
 Otherwise, write commands will fail with ``SW Mismatch: Expected 9000 and got 6982.``
 
@@ -70,16 +70,16 @@ Key Provisioning
 
 ::
 
-   pySIM-shell (MF)> select MF
-   pySIM-shell (MF)> select ADF.USIM
-   pySIM-shell (MF/ADF.USIM)> select DF.5GS
-   pySIM-shell (MF/ADF.USIM/DF.5GS)> select EF.SUCI_Calc_Info
+   pySIM-shell (00:MF)> select MF
+   pySIM-shell (00:MF)> select ADF.USIM
+   pySIM-shell (00:MF/ADF.USIM)> select DF.5GS
+   pySIM-shell (00:MF/ADF.USIM/DF.5GS)> select EF.SUCI_Calc_Info
 
 By default, the file is present but empty:
 
 ::
 
-   pySIM-shell (MF/ADF.USIM/DF.5GS/EF.SUCI_Calc_Info)> read_binary_decoded
+   pySIM-shell (00:MF/ADF.USIM/DF.5GS/EF.SUCI_Calc_Info)> read_binary_decoded
    missing Protection Scheme Identifier List data object tag
    9000: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff -> {}
 
@@ -106,7 +106,7 @@ Write the config to file (must be single-line input as for now):
 
 ::
 
-   pySIM-shell (MF/ADF.USIM/DF.5GS/EF.SUCI_Calc_Info)> update_binary_decoded '{ "prot_scheme_id_list": [ {"priority": 0, "identifier": 2, "key_index": 1}, {"priority": 1, "identifier": 1, "key_index": 2}, {"priority": 2, "identifier": 0, "key_index": 0}], "hnet_pubkey_list": [ {"hnet_pubkey_identifier": 27, "hnet_pubkey": "0272DA71976234CE833A6907425867B82E074D44EF907DFB4B3E21C1C2256EBCD1"}, {"hnet_pubkey_identifier": 30, "hnet_pubkey": "5A8D38864820197C3394B92613B20B91633CBD897119273BF8E4A6F4EEC0A650"}]}'
+   pySIM-shell (00:MF/ADF.USIM/DF.5GS/EF.SUCI_Calc_Info)> update_binary_decoded '{ "prot_scheme_id_list": [ {"priority": 0, "identifier": 2, "key_index": 1}, {"priority": 1, "identifier": 1, "key_index": 2}, {"priority": 2, "identifier": 0, "key_index": 0}], "hnet_pubkey_list": [ {"hnet_pubkey_identifier": 27, "hnet_pubkey": "0272DA71976234CE833A6907425867B82E074D44EF907DFB4B3E21C1C2256EBCD1"}, {"hnet_pubkey_identifier": 30, "hnet_pubkey": "5A8D38864820197C3394B92613B20B91633CBD897119273BF8E4A6F4EEC0A650"}]}'
 
 WARNING: These are TEST KEYS with publicly known/specified private keys, and hence unsafe for live/secure
 deployments! For use in production networks, you need to generate your own set[s] of keys.
@@ -119,11 +119,11 @@ the contents of the file is **invalid** (ffffffff):
 
 ::
 
-   pySIM-shell (MF)> select MF
-   pySIM-shell (MF)> select ADF.USIM
-   pySIM-shell (MF/ADF.USIM)> select DF.5GS
-   pySIM-shell (MF/ADF.USIM/DF.5GS)> select EF.Routing_Indicator
-   pySIM-shell (MF/ADF.USIM/DF.5GS/EF.Routing_Indicator)> read_binary_decoded
+   pySIM-shell (00:MF)> select MF
+   pySIM-shell (00:MF)> select ADF.USIM
+   pySIM-shell (00:MF/ADF.USIM)> select DF.5GS
+   pySIM-shell (00:MF/ADF.USIM/DF.5GS)> select EF.Routing_Indicator
+   pySIM-shell (00:MF/ADF.USIM/DF.5GS/EF.Routing_Indicator)> read_binary_decoded
    9000: ffffffff -> {'raw': 'ffffffff'}
 
 The Routing Indicator is a four-byte file but the actual Routing
@@ -132,7 +132,7 @@ the Routing Indicator to 0x71:
 
 ::
 
-   pySIM-shell (MF/ADF.USIM/DF.5GS/EF.Routing_Indicator)> update_binary 17ffffff
+   pySIM-shell (00:MF/ADF.USIM/DF.5GS/EF.Routing_Indicator)> update_binary 17ffffff
 
 You can also set the routing indicator to **0x0**, which is *valid* and
 means “routing indicator not specified”, leaving it to the modem.
@@ -144,10 +144,10 @@ First, check out the USIM Service Table (UST):
 
 ::
 
-   pySIM-shell (MF)> select MF
-   pySIM-shell (MF)> select ADF.USIM
-   pySIM-shell (MF/ADF.USIM)> select EF.UST
-   pySIM-shell (MF/ADF.USIM/EF.UST)> read_binary_decoded
+   pySIM-shell (00:MF)> select MF
+   pySIM-shell (00:MF)> select ADF.USIM
+   pySIM-shell (00:MF/ADF.USIM)> select EF.UST
+   pySIM-shell (00:MF/ADF.USIM/EF.UST)> read_binary_decoded
    9000: beff9f9de73e0408400170730000002e00000000 -> [2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 25, 27, 28, 29, 33, 34, 35, 38, 39, 42, 43, 44, 45, 46, 51, 60, 71, 73, 85, 86, 87, 89, 90, 93, 94, 95, 122, 123, 124, 126]
 
 .. list-table:: From TS31.102
@@ -173,9 +173,9 @@ If you’d like to enable/disable any UST service:
 
 ::
 
-   pySIM-shell (MF/ADF.USIM/EF.UST)> ust_service_deactivate 124
-   pySIM-shell (MF/ADF.USIM/EF.UST)> ust_service_activate 124
-   pySIM-shell (MF/ADF.USIM/EF.UST)> ust_service_deactivate 125
+   pySIM-shell (00:MF/ADF.USIM/EF.UST)> ust_service_deactivate 124
+   pySIM-shell (00:MF/ADF.USIM/EF.UST)> ust_service_activate 124
+   pySIM-shell (00:MF/ADF.USIM/EF.UST)> ust_service_deactivate 125
 
 In this case, UST Service 124 is already enabled and you’re good to go. The
 sysmoISIM-SJA2 does not support on-SIM calculation, so service 125 must

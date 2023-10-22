@@ -68,7 +68,7 @@ Try ``select`` with tab-completion to get a list of all current selectable items
 
 ::
 
-  pySIM-shell (MF)> select
+  pySIM-shell (00:MF)> select
   ..                2fe2              a0000000871004    EF.ARR            MF
   2f00              3f00              ADF.ISIM          EF.DIR
   2f05              7f10              ADF.USIM          EF.ICCID
@@ -85,7 +85,7 @@ This will
 
 ::
 
-  pySIM-shell (MF)> select ADF.USIM
+  pySIM-shell (00:MF)> select ADF.USIM
   {
       "file_descriptor": {
           "file_descriptor_byte": {
@@ -103,7 +103,7 @@ This will
       "security_attrib_compact": "00",
       "pin_status_template_do": "90017083010183018183010A83010B"
   }
-  pySIM-shell (MF/ADF.USIM)>
+  pySIM-shell (00:MF/ADF.USIM)>
 
 
 status
@@ -116,7 +116,7 @@ Example:
 
 ::
 
-  pySIM-shell (MF/ADF.ISIM)> status
+  pySIM-shell (00:MF/ADF.ISIM)> status
   {
       "file_descriptor": {
           "file_descriptor_byte": {
@@ -261,7 +261,7 @@ dir
 Example:
 ::
 
-  pySIM-shell (MF)> dir
+  pySIM-shell (00:MF)> dir
   MF
   3f00
    ..          ADF.USIM    DF.SYSTEM   EF.DIR      EF.UMPC
@@ -295,7 +295,7 @@ a given file really exists on a given card, you have to try to select that file.
 Example:
 ::
 
-  pySIM-shell (MF)> tree --help
+  pySIM-shell (00:MF)> tree --help
   EF.DIR                    2f00 Application Directory
   EF.ICCID                  2fe2 ICC Identification
   EF.PL                     2f05 Preferred Languages
@@ -467,7 +467,7 @@ Th below example demonstrates this by modifying the ofm field within EF.AD:
 
 ::
 
-  pySIM-shell (MF/ADF.USIM/EF.AD)> read_binary_decoded
+  pySIM-shell (00:MF/ADF.USIM/EF.AD)> read_binary_decoded
   {
       "ms_operation_mode": "normal",
       "specific_facilities": {
@@ -475,8 +475,8 @@ Th below example demonstrates this by modifying the ofm field within EF.AD:
       },
       "len_of_mnc_in_imsi": 2
   }
-  pySIM-shell (MF/ADF.USIM/EF.AD)> update_binary_decoded --json-path specific_facilities.ofm false
-  pySIM-shell (MF/ADF.USIM/EF.AD)> read_binary_decoded
+  pySIM-shell (00:MF/ADF.USIM/EF.AD)> update_binary_decoded --json-path specific_facilities.ofm false
+  pySIM-shell (00:MF/ADF.USIM/EF.AD)> read_binary_decoded
   {
       "ms_operation_mode": "normal",
       "specific_facilities": {
@@ -731,7 +731,7 @@ it doesn't yet implement fragmentation/reassembly on rule retrieval. YMMV
 
 ::
 
-  pySIM-shell (MF/ADF.ARA-M)> aram_get_all
+  pySIM-shell (00:MF/ADF.ARA-M)> aram_get_all
   [
       {
           "ResponseAllRefArDO": [
@@ -783,7 +783,7 @@ aram_store_ref_ar_do
 For example, to store an Android UICC carrier privilege rule for the SHA1 hash of the certificate used to sign the CoIMS android app of Supreeth Herle (https://github.com/herlesupreeth/CoIMS_Wiki) you can use the following command:
 ::
 
-  pySIM-shell (MF/ADF.ARA-M)> aram_store_ref_ar_do --aid FFFFFFFFFFFF --device-app-id E46872F28B350B7E1F140DE535C2A8D5804F0BE3 --android-permissions 0000000000000001 --apdu-always
+  pySIM-shell (00:MF/ADF.ARA-M)> aram_store_ref_ar_do --aid FFFFFFFFFFFF --device-app-id E46872F28B350B7E1F140DE535C2A8D5804F0BE3 --android-permissions 0000000000000001 --apdu-always
 
 
 aram_delete_all
@@ -845,10 +845,10 @@ Boolean variable that determines if path (e.g. in prompt) is displayed with nume
 
 ::
 
-  pySIM-shell (MF/EF.ICCID)> set numeric_path True
+  pySIM-shell (00:MF/EF.ICCID)> set numeric_path True
   numeric_path - was: False
   now: True
-  pySIM-shell (3f00/2fe2)> set numeric_path False
+  pySIM-shell (00:3f00/2fe2)> set numeric_path False
   numeric_path - was: True
   now: False
-  pySIM-shell (MF/EF.ICCID)> help set
+  pySIM-shell (00:MF/EF.ICCID)> help set
