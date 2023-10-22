@@ -262,15 +262,22 @@ def bertlv_encode_tag(t) -> bytes:
         remainder = inp & ~ (inp << (remain_bits - bitcnt))
         return outp, remainder
 
+    def count_int_bytes(inp: int) -> int:
+        """count the number of bytes require to represent the given integer."""
+        i = 1
+        inp = inp >> 8
+        while inp:
+            i += 1
+            inp = inp >> 8
+        return i
+
     if isinstance(t, int):
-        # FIXME: multiple byte tags
-        tag = t & 0x1f
-        constructed = True if t & 0x20 else False
-        cls = t >> 6
-    else:
-        tag = t['tag']
-        constructed = t['constructed']
-        cls = t['class']
+        # first convert to a dict representation
+        tag_size = count_int_bytes(t)
+        t, remainder = bertlv_parse_tag(t.to_bytes(tag_size, 'big'))
+    tag = t['tag']
+    constructed = t['constructed']
+    cls = t['class']
     if tag <= 30:
         t = tag & 0x1f
         if constructed:
