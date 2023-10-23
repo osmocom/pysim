@@ -32,6 +32,7 @@ class SerialSimLink(LinkBase):
     def __init__(self, device: str = '/dev/ttyUSB0', baudrate: int = 9600, rst: str = '-rts',
                  debug: bool = False, **kwargs):
         super().__init__(**kwargs)
+        print("Using serial reader interface")
         if not os.path.exists(device):
             raise ValueError("device file %s does not exist -- abort" % device)
         self._sl = serial.Serial(

@@ -79,6 +79,8 @@ class CalypsoSimLink(LinkBase):
 
     def __init__(self, sock_path: str = "/tmp/osmocom_l2", **kwargs):
         super().__init__(**kwargs)
+        print("Using Calypso-based (OsmocomBB) reader interface")
+
         # Make sure that a given socket path exists
         if not os.path.exists(sock_path):
             raise ReaderError(

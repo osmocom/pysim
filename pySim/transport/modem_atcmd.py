@@ -35,6 +35,7 @@ class ModemATCommandLink(LinkBase):
 
     def __init__(self, device: str = '/dev/ttyUSB0', baudrate: int = 115200, **kwargs):
         super().__init__(**kwargs)
+        print("Using modem for Generic SIM Access (3GPP TS 27.007)")
         self._sl = serial.Serial(device, baudrate, timeout=5)
         self._echo = False		# this will be auto-detected by _check_echo()
         self._device = device

@@ -34,6 +34,7 @@ class PcscSimLink(LinkBase):
 
     def __init__(self, reader_number: int = 0, **kwargs):
         super().__init__(**kwargs)
+        print("Using PC/SC reader interface")
         r = readers()
         if reader_number >= len(r):
             raise ReaderError('No reader found for number %d' % reader_number)
