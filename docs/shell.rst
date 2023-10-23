@@ -342,7 +342,7 @@ apdu
 ~~~~
 .. argparse::
    :module: pySim-shell
-   :func: PySimCommands.apdu_cmd_parser
+   :func: PysimApp.apdu_cmd_parser
 
 
 
