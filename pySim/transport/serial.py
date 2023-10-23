@@ -19,6 +19,7 @@
 import serial
 import time
 import os.path
+import argparse
 from typing import Optional
 
 from pySim.exceptions import NoCardError, ProtocolError
@@ -240,3 +241,11 @@ class SerialSimLink(LinkBase):
 
     def __str__(self) -> str:
         return "serial:%s" % (self._sl.name)
+
+    @staticmethod
+    def argparse_add_reader_args(arg_parser: argparse.ArgumentParser):
+        serial_group = arg_parser.add_argument_group('Serial Reader')
+        serial_group.add_argument('-d', '--device', metavar='DEV', default='/dev/ttyUSB0',
+                                  help='Serial Device for SIM access')
+        serial_group.add_argument('-b', '--baud', dest='baudrate', type=int, metavar='BAUD', default=9600,
+                                  help='Baud rate used for SIM access')

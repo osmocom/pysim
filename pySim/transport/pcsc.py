@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import argparse
 from typing import Optional
 
 from smartcard.CardConnection import CardConnection
@@ -96,3 +97,9 @@ class PcscSimLink(LinkBase):
 
     def __str__(self) -> str:
         return "PCSC:%u[%s]" % (self._reader_number,  self._reader)
+
+    @staticmethod
+    def argparse_add_reader_args(arg_parser: argparse.ArgumentParser):
+        pcsc_group = arg_parser.add_argument_group('PC/SC Reader')
+        pcsc_group.add_argument('-p', '--pcsc-device', type=int, dest='pcsc_dev', metavar='PCSC', default=None,
+                                help='PC/SC reader number to use for SIM access')

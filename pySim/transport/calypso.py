@@ -20,7 +20,7 @@ import select
 import struct
 import socket
 import os
-
+import argparse
 from typing import Optional
 
 from pySim.transport import LinkBase
@@ -164,3 +164,9 @@ class CalypsoSimLink(LinkBase):
 
     def __str__(self) -> str:
         return "osmocon:%s" % (self._sock_path)
+
+    @staticmethod
+    def argparse_add_reader_args(arg_parser: argparse.ArgumentParser):
+        osmobb_group = arg_parser.add_argument_group('OsmocomBB Reader')
+        osmobb_group.add_argument('--osmocon', dest='osmocon_sock', metavar='PATH', default=None,
+                                  help='Socket path for Calypso (e.g. Motorola C1XX) based reader (via OsmocomBB)')

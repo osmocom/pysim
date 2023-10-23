@@ -20,6 +20,7 @@ import logging as log
 import serial
 import time
 import re
+import argparse
 from typing import Optional
 
 from pySim.utils import Hexstr, ResTuple
@@ -173,3 +174,11 @@ class ModemATCommandLink(LinkBase):
 
     def __str__(self) -> str:
         return "modem:%s" % self._device
+
+    @staticmethod
+    def argparse_add_reader_args(arg_parser: argparse.ArgumentParser):
+        modem_group = arg_parser.add_argument_group('AT Command Modem Reader')
+        modem_group.add_argument('--modem-device', dest='modem_dev', metavar='DEV', default=None,
+                                 help='Serial port of modem for Generic SIM Access (3GPP TS 27.007)')
+        modem_group.add_argument('--modem-baud', type=int, metavar='BAUD', default=115200,
+                                 help='Baud rate used for modem port')
