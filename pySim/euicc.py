@@ -167,11 +167,41 @@ class NotificationSentResp(BER_TLV_IE, tag=0xbf30, nested=[DeleteNotificationSta
 class LoadCRL(BER_TLV_IE, tag=0xbf35, nested=[]): # FIXME
     pass
 
+# SGP.22 Section 5.7.15: GetProfilesInfo
+class TagList(BER_TLV_IE, tag=0x5c):
+    _construct = GreedyRange(Int8ub) # FIXME: tags could be multi-byte
+class ProfileInfoListReq(BER_TLV_IE, tag=0xbf2d, nested=[TagList]): # FIXME: SearchCriteria
+    pass
+class IsdpAid(BER_TLV_IE, tag=0x4f):
+    _construct = HexAdapter(GreedyBytes)
+class ProfileState(BER_TLV_IE, tag=0x9f70):
+    _construct = Enum(Int8ub, disabled=0, enabled=1)
+class ProfileNickname(BER_TLV_IE, tag=0x90):
+    _construct = Utf8Adapter(GreedyBytes)
+class ServiceProviderName(BER_TLV_IE, tag=0x91):
+    _construct = Utf8Adapter(GreedyBytes)
+class ProfileName(BER_TLV_IE, tag=0x92):
+    _construct = Utf8Adapter(GreedyBytes)
+class IconType(BER_TLV_IE, tag=0x93):
+    _construct = Enum(Int8ub, jpg=0, png=1)
+class Icon(BER_TLV_IE, tag=0x94):
+    _construct = GreedyBytes
+class ProfileClass(BER_TLV_IE, tag=0x95):
+    _construct = Enum(Int8ub, test=0, provisioning=1, operational=2)
+class ProfileInfo(BER_TLV_IE, tag=0xe3, nested=[Iccid, IsdpAid, ProfileState, ProfileNickname,
+                                                ServiceProviderName, ProfileName, IconType, Icon,
+                                                ProfileClass]): # FIXME: more IEs
+    pass
+class ProfileInfoSeq(BER_TLV_IE, tag=0xa0, nested=[ProfileInfo]):
+    pass
+class ProfileInfoListError(BER_TLV_IE, tag=0x81):
+    _construct = Enum(Int8ub, incorrectInputValues=1, undefinedError=2)
+class ProfileInfoListResp(BER_TLV_IE, tag=0xbf2d, nested=[ProfileInfoSeq, ProfileInfoListError]):
+    pass
+
 # SGP.22 Section 5.7.16:: EnableProfile
 class RefreshFlag(BER_TLV_IE, tag=0x88): # FIXME
     _construct = Int8ub # FIXME
-class IsdpAid(BER_TLV_IE, tag=0x4f):
-    _construct = HexAdapter(GreedyBytes)
 class EnableResult(BER_TLV_IE, tag=0x80):
     _construct = Enum(Int8ub, ok=0, iccidOrAidNotFound=1, profileNotInDisabledState=2,
                       disallowedByPolicy=3, wrongProfileReenabling=4, catBusy=5, undefinedError=127)
@@ -199,17 +229,15 @@ class DeleteProfileResp(BER_TLV_IE, tag=0xbf33, nested=[DeleteResult]):
     pass
 
 # SGP.22 Section 5.7.20 GetEID
-class TagList(BER_TLV_IE, tag=0x5c):
-    _construct = GreedyRange(Int8ub)
 class EidValue(BER_TLV_IE, tag=0x5a):
     _construct = HexAdapter(GreedyBytes)
 class GetEuiccData(BER_TLV_IE, tag=0xbf3e, nested=[TagList, EidValue]):
     pass
 
 # SGP.22 Section 5.7.21: ES10c SetNickname
-class ProfileNickname(BER_TLV_IE, tag=0x8f):
+class SnrProfileNickname(BER_TLV_IE, tag=0x8f):
     _construct = Utf8Adapter(GreedyBytes)
-class SetNicknameReq(BER_TLV_IE, tag=0xbf29, children=[Iccid, ProfileNickname]):
+class SetNicknameReq(BER_TLV_IE, tag=0xbf29, children=[Iccid, SnrProfileNickname]):
     pass
 class SetNicknameResult(BER_TLV_IE, tag=0x80):
     _construct = Enum(Int8ub, ok=0, iccidNotFound=1, undefinedError=127)
@@ -320,6 +348,12 @@ class ADF_ISDR(CardADF):
             rn = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, rn_cmd, NotificationSentResp)
             d = rn.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['notification_sent_resp']))
+
+        def do_get_profiles_info(self, opts):
+            """Perform an ES10c GetProfilesInfo function."""
+            pi = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, ProfileInfoListReq(), ProfileInfoListResp)
+            d = pi.to_dict()
+            self._cmd.poutput_json(flatten_dict_lists(d['profile_info_list_resp']))
 
         en_prof_parser = argparse.ArgumentParser()
         en_prof_grp = en_prof_parser.add_mutually_exclusive_group()

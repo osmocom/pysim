@@ -883,6 +883,11 @@ remove_notification_from_list
    :module: pySim.euicc
    :func: ADF_ISDR.AddlShellCommands.rem_notif_parser
 
+get_profiles_info
+~~~~~~~~~~~~~~~~~
+
+Obtain information about the profiles present on the eUICC using the ES10c GetProfilesInfo() function.
+
 enable_profile
 ~~~~~~~~~~~~~~
 
