@@ -921,6 +921,16 @@ set_nickname
    :module: pySim.euicc
    :func: ADF_ISDR.AddlShellCommands.set_nickname_parser
 
+get_certs
+~~~~~~~~~
+
+Obtain the certificates from an IoT eUICC using the ES10c GetCerts() function.
+
+get_eim_configuration_data
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Obtain the eIM configuration data from an IoT eUICC using the ES10b GetEimConfigurationData() function.
+
 
 cmd2 settable parameters
 ------------------------

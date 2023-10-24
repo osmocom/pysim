@@ -124,14 +124,20 @@ class PpVersion(BER_TLV_IE, tag=0x04):
     _construct = VersionType
 class SsAcreditationNumber(BER_TLV_IE, tag=0x0c):
     _construct = Utf8Adapter(GreedyBytes)
-
+class IpaMode(BER_TLV_IE, tag=0x90):    # see SGP.32 v1.0
+    _construct = Enum(Int8ub, ipad=0, ipea=1)
+class IotVersion(BER_TLV_IE, tag=0x80): # see SGP.32 v1.0
+    _construct = VersionType
+class IotVersionSeq(BER_TLV_IE, tag=0xa0, nested=[IotVersion]): # see SGP.32 v1.0
+    pass
+class IotSpecificInfo(BER_TLV_IE, tag=0x94, nested=[IotVersionSeq]): # see SGP.32 v1.0
+    pass
 class EuiccInfo2(BER_TLV_IE, tag=0xbf22, nested=[ProfileVersion, SVN, EuiccFirmwareVer, ExtCardResource,
                                                  UiccCapability, TS102241Version, GlobalPlatformVersion,
                                                  RspCapability, EuiccCiPkiListForVerification,
                                                  EuiccCiPkiListForSigning, EuiccCategory, PpVersion,
-                                                 SsAcreditationNumber]):
+                                                 SsAcreditationNumber, IpaMode, IotSpecificInfo]):
     pass
-
 
 # SGP.22 Section 5.7.9: ListNotification
 class ProfileMgmtOperation(BER_TLV_IE, tag=0x81):
@@ -244,6 +250,40 @@ class SetNicknameResult(BER_TLV_IE, tag=0x80):
 class SetNicknameResp(BER_TLV_IE, tag=0xbf29, children=[SetNicknameResult]):
     pass
 
+# SGP.32 Section 5.9.10: ES10b: GetCerts
+class GetCertsReq(BER_TLV_IE, tag=0xbf56):
+    pass
+class EumCertificate(BER_TLV_IE, tag=0xa5):
+    _construct = GreedyBytes
+class EuiccCertificate(BER_TLV_IE, tag=0xa6):
+    _construct = GreedyBytes
+class GetCertsError(BER_TLV_IE, tag=0x80):
+    _construct = Enum(Int8ub, invalidCiPKId=1, undefinedError=127)
+class GetCertsResp(BER_TLV_IE, tag=0xbf56, nested=[EumCertificate, EuiccCertificate, GetCertsError]):
+    pass
+
+# SGP.32 Section 5.9.18: ES10b: GetEimConfigurationData
+class EimId(BER_TLV_IE, tag=0x80):
+    _construct = Utf8Adapter(GreedyBytes)
+class EimFqdn(BER_TLV_IE, tag=0x81):
+    _construct = Utf8Adapter(GreedyBytes)
+class EimIdType(BER_TLV_IE, tag=0x82):
+    _construct = Enum(Int8ub, eimIdTypeOid=1, eimIdTypeFqdn=2, eimIdTypeProprietary=3)
+class CounterValue(BER_TLV_IE, tag=0x83):
+    _construct = GreedyInteger
+class AssociationToken(BER_TLV_IE, tag=0x84):
+    _construct = GreedyInteger
+class EimSupportedProtocol(BER_TLV_IE, tag=0x87):
+    _construct = Enum(Int8ub, eimRetrieveHttps=0, eimRetrieveCoaps=1, eimInjectHttps=2, eimInjectCoaps=3,
+                      eimProprietary=4)
+# FIXME: eimPublicKeyData, trustedPublicKeyDataTls, euiccCiPKId
+class EimConfigurationData(BER_TLV_IE, tag=0x80, nested=[EimId, EimFqdn, EimIdType, CounterValue,
+                                                         AssociationToken, EimSupportedProtocol]):
+    pass
+class EimConfigurationDataSeq(BER_TLV_IE, tag=0xa0, nested=[EimConfigurationData]):
+    pass
+class GetEimConfigurationData(BER_TLV_IE, tag=0xbf55, nested=[EimConfigurationDataSeq]):
+    pass
 
 class ADF_ISDR(CardADF):
     def __init__(self, aid=AID_ISD_R, name='ADF.ISD-R', fid=None, sfid=None,
@@ -437,6 +477,20 @@ class ADF_ISDR(CardADF):
             sn = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, sn_cmd, SetNicknameResp)
             d = sn.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['set_nickname_resp']))
+
+        def do_get_certs(self, opts):
+            """Perform an ES10c GetCerts() function on an IoT eUICC."""
+            gc = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, GetCertsReq(), GetCertsResp)
+            d = gc.to_dict()
+            self._cmd.poutput_json(flatten_dict_lists(d['get_certficiates_resp']))
+
+        def do_get_eim_configuration_data(self, opts):
+            """Perform an ES10b GetEimConfigurationData function on an Iot eUICC."""
+            gec = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, GetEimConfigurationData(),
+                                          GetEimConfigurationData)
+            d = gec.to_dict()
+            self._cmd.poutput_json(flatten_dict_lists(d['get_eim_configuration_data']))
+
 
 class ADF_ECASD(CardADF):
     def __init__(self, aid=AID_ECASD, name='ADF.ECASD', fid=None, sfid=None,
