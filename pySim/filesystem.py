@@ -504,11 +504,12 @@ class CardMF(CardDF):
 class CardADF(CardDF):
     """ADF (Application Dedicated File) in the smart card filesystem"""
 
-    def __init__(self, aid: str, **kwargs):
+    def __init__(self, aid: str, has_fs: bool=False, **kwargs):
         super().__init__(**kwargs)
         # reference to CardApplication may be set from CardApplication constructor
         self.application = None  # type: Optional[CardApplication]
         self.aid = aid           # Application Identifier
+        self.has_fs = has_fs     # Flag to tell whether the ADF supports a filesystem or not
         mf = self.get_mf()
         if mf:
             mf.add_application_df(self)

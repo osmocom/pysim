@@ -258,9 +258,9 @@ class EF_MuDMiDConfigData(BerTlvEF):
 
 
 class ADF_ISIM(CardADF):
-    def __init__(self, aid='a0000000871004', name='ADF.ISIM', fid=None, sfid=None,
+    def __init__(self, aid='a0000000871004', has_fs=True, name='ADF.ISIM', fid=None, sfid=None,
                  desc='ISIM Application'):
-        super().__init__(aid=aid, fid=fid, sfid=sfid, name=name, desc=desc)
+        super().__init__(aid=aid, has_fs=has_fs, fid=fid, sfid=sfid, name=name, desc=desc)
 
         files = [
             EF_IMPI(),

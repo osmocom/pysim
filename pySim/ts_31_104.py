@@ -30,9 +30,9 @@ from pySim.ts_102_221 import EF_ARR
 
 
 class ADF_HPSIM(CardADF):
-    def __init__(self, aid='a000000087100A', name='ADF.HPSIM', fid=None, sfid=None,
+    def __init__(self, aid='a000000087100A', has_fs=True, name='ADF.HPSIM', fid=None, sfid=None,
                  desc='HPSIM Application'):
-        super().__init__(aid=aid, fid=fid, sfid=sfid, name=name, desc=desc)
+        super().__init__(aid=aid, has_fs=has_fs, fid=fid, sfid=sfid, name=name, desc=desc)
 
         files = [
             EF_ARR(fid='6f06', sfid=0x06),

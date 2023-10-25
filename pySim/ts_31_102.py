@@ -1369,9 +1369,9 @@ class DF_SAIP(CardDF):
 
 
 class ADF_USIM(CardADF):
-    def __init__(self, aid='a0000000871002', name='ADF.USIM', fid=None, sfid=None,
+    def __init__(self, aid='a0000000871002', has_fs=True,  name='ADF.USIM', fid=None, sfid=None,
                  desc='USIM Application'):
-        super().__init__(aid=aid, fid=fid, sfid=sfid, name=name, desc=desc)
+        super().__init__(aid=aid, has_fs=has_fs, fid=fid, sfid=sfid, name=name, desc=desc)
         # add those commands to the general commands of a TransparentEF
         self.shell_commands += [self.AddlShellCommands()]
 
