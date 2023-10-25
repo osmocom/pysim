@@ -111,6 +111,7 @@ class RuntimeState:
         for f in sorted(set(apps_profile) - set(apps_taken), key=str):
             try:
                 data, sw = self.card.select_adf_by_aid(f.aid)
+                self.selected_adf = f
                 if sw == "9000":
                     print(" %s: %s" % (f.name, f.aid))
                     apps_taken.append(f)
@@ -344,6 +345,7 @@ class RuntimeLchan:
             try:
                 if isinstance(f, CardADF):
                     (data, sw) = self.rs.card.select_adf_by_aid(f.aid, scc=self.scc)
+                    self.selected_adf = f
                 else:
                     (data, sw) = self.scc.select_file(f.fid)
                 self.selected_file = f
