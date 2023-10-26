@@ -18,6 +18,7 @@
 #
 
 import argparse
+import os
 from typing import Optional
 
 from smartcard.CardConnection import CardConnection
@@ -35,7 +36,10 @@ class PcscSimLink(LinkBase):
 
     def __init__(self, reader_number: int = 0, **kwargs):
         super().__init__(**kwargs)
-        print("Using PC/SC reader interface")
+        if os.environ.get('PYSIM_INTEGRATION_TEST') == "1":
+            print("Using PC/SC reader interface")
+        else:
+            print("Using PC/SC reader number %u" % reader_number)
         r = readers()
         if reader_number >= len(r):
             raise ReaderError('No reader found for number %d' % reader_number)

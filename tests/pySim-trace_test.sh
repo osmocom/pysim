@@ -24,6 +24,8 @@ PYSIM_TRACE=../pySim-trace.py
 GSMTAP_TRACE=pySim-trace_test_gsmtap.pcapng
 TEMPFILE=temp.tmp
 
+export PYSIM_INTEGRATION_TEST=1
+
 echo "pySim-trace_test - a test program to test pySim-trace.py"
 echo "========================================================"
 

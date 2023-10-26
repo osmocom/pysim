@@ -25,6 +25,7 @@ PYSIM_READ=../pySim-read.py
 TEMPFILE=temp.tmp
 PYTHON=python3
 
+export PYSIM_INTEGRATION_TEST=1
 set -e
 
 echo "pySim-prog_test - a test program to test pySim-prog.py"
