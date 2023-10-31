@@ -143,7 +143,6 @@ class CardFile:
         cur_fqpath = self.fully_qualified_path_fobj()
         target_fqpath = target.fully_qualified_path_fobj()
         inter_path = []
-        cur_fqpath.pop()  # drop last element (currently selected file, doesn't need re-selection
         cur_fqpath.reverse()
         for ce in cur_fqpath:
             inter_path.append(ce)
@@ -153,7 +152,7 @@ class CardFile:
                     for te2 in target_fqpath[i+1:]:
                         inter_path.append(te2)
                     # we found our common ancestor
-                    return inter_path
+                    return inter_path[1:]
         return None
 
     def get_mf(self) -> Optional['CardMF']:
