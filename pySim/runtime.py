@@ -241,7 +241,7 @@ class RuntimeLchan:
 
     def probe_file(self, fid: str, cmd_app=None):
         """Blindly try to select a file and automatically add a matching file
-               object if the file actually exists."""
+           object if the file actually exists."""
         if not is_hex(fid, 4, 4):
             raise ValueError(
                 "Cannot select unknown file by name %s, only hexadecimal 4 digit FID is allowed" % fid)
