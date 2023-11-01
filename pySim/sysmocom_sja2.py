@@ -70,18 +70,20 @@ class EF_PIN(TransparentEF):
 
 
 class EF_MILENAGE_CFG(TransparentEF):
+    _test_de_encode = [
+        ( '40002040600000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000020000000000000000000000000000000400000000000000000000000000000008',
+          {"r1": 64, "r2": 0, "r3": 32, "r4": 64, "r5": 96, "c1": "00000000000000000000000000000000", "c2":
+           "00000000000000000000000000000001", "c3": "00000000000000000000000000000002", "c4":
+           "00000000000000000000000000000004", "c5": "00000000000000000000000000000008"} ),
+      ]
     def __init__(self, fid='6f21', name='EF.MILENAGE_CFG', desc='Milenage connfiguration'):
         super().__init__(fid, name=name, desc=desc)
-
-    def _decode_bin(self, raw_bin_data):
-        u = unpack('!BBBBB16s16s16s16s16s', raw_bin_data)
-        return {'r1': u[0], 'r2': u[1], 'r3': u[2], 'r4': u[3], 'r5': u[4],
-                'c1': u[5].hex(),
-                'c2': u[6].hex(),
-                'c3': u[7].hex(),
-                'c4': u[8].hex(),
-                'c5': u[9].hex(),
-                }
+        self._construct = Struct('r1'/Int8ub, 'r2'/Int8ub, 'r3'/Int8ub, 'r4'/Int8ub, 'r5'/Int8ub,
+                                 'c1'/HexAdapter(Bytes(16)),
+                                 'c2'/HexAdapter(Bytes(16)),
+                                 'c3'/HexAdapter(Bytes(16)),
+                                 'c4'/HexAdapter(Bytes(16)),
+                                 'c5'/HexAdapter(Bytes(16)))
 
 
 class EF_0348_KEY(LinFixedEF):
@@ -99,12 +101,14 @@ class EF_0348_KEY(LinFixedEF):
 
 
 class EF_0348_COUNT(LinFixedEF):
+    _test_de_encode = [
+        ( 'fe010000000000', {"sec_domain": 254, "key_set_version": 1, "counter": "0000000000"} ),
+      ]
     def __init__(self, fid='6f23', name='EF.0348_COUNT', desc='TS 03.48 OTA Counters'):
         super().__init__(fid, name=name, desc=desc, rec_len=(7, 7))
-
-    def _decode_record_bin(self, raw_bin_data, **kwargs):
-        u = unpack('!BB5s', raw_bin_data)
-        return {'sec_domain': u[0], 'key_set_version': u[1], 'counter': u[2]}
+        self._construct = Struct('sec_domain'/Int8ub,
+                                 'key_set_version'/Int8ub,
+                                 'counter'/HexAdapter(Bytes(5)))
 
 
 class EF_SIM_AUTH_COUNTER(TransparentEF):
@@ -114,13 +118,15 @@ class EF_SIM_AUTH_COUNTER(TransparentEF):
 
 
 class EF_GP_COUNT(LinFixedEF):
+    _test_de_encode = [
+        ( '0070000000', {"sec_domain": 0, "key_set_version": 112, "counter": 0, "rfu": 0} ),
+      ]
     def __init__(self, fid='6f26', name='EF.GP_COUNT', desc='GP SCP02 Counters'):
         super().__init__(fid, name=name, desc=desc, rec_len=(5, 5))
-
-    def _decode_record_bin(self, raw_bin_data, **kwargs):
-        u = unpack('!BBHB', raw_bin_data)
-        return {'sec_domain': u[0], 'key_set_version': u[1], 'counter': u[2], 'rfu': u[3]}
-
+        self._construct = Struct('sec_domain'/Int8ub,
+                                 'key_set_version'/Int8ub,
+                                 'counter'/Int16ub,
+                                 'rfu'/Int8ub)
 
 class EF_GP_DIV_DATA(LinFixedEF):
     def __init__(self, fid='6f27', name='EF.GP_DIV_DATA', desc='GP SCP02 key diversification data'):
@@ -132,6 +138,11 @@ class EF_GP_DIV_DATA(LinFixedEF):
 
 
 class EF_SIM_AUTH_KEY(TransparentEF):
+    _test_de_encode = [
+        ( '14000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+          {"cfg": {"use_sres_deriv_func_2": 0, "use_opc_instead_of_op": 1, "algorithm": "milenage"}, "key":
+           "000102030405060708090a0b0c0d0e0f", "op_opc": "101112131415161718191a1b1c1d1e1f"} ),
+      ]
     def __init__(self, fid='6f20', name='EF.SIM_AUTH_KEY'):
         super().__init__(fid, name=name, desc='USIM authentication key')
         CfgByte = BitStruct(Padding(2),
@@ -168,6 +179,14 @@ class DF_SYSTEM(CardDF):
 
 
 class EF_USIM_SQN(TransparentEF):
+    _test_de_encode = [
+        ( 'd503000200000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+          {"flag1": {"skip_next_sqn_check": 1, "delta_max_check": 1, "age_limit_check": 0, "sqn_check": 1,
+                     "ind_len": 5}, "flag2": {"rfu": 0, "dont_clear_amf_for_macs": 0, "aus_concealed": 1,
+                                              "autn_concealed": 1}, "delta_max": 8589934592, "age_limit":
+           8589934592, "freshness": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                     0, 0, 0, 0, 0, 0, 0, 0]} ),
+      ]
     def __init__(self, fid='af30', name='EF.USIM_SQN'):
         super().__init__(fid, name=name, desc='SQN parameters for AKA')
         Flag1 = BitStruct('skip_next_sqn_check'/Bit, 'delta_max_check'/Bit,
@@ -224,6 +243,12 @@ class EF_USIM_AUTH_KEY(TransparentEF):
 
 
 class EF_USIM_AUTH_KEY_2G(TransparentEF):
+    _test_de_encode = [
+        ( '14000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+          {"cfg": {"only_4bytes_res_in_3g": 0, "use_sres_deriv_func_2_in_3g": 0, "use_opc_instead_of_op": 1,
+                   "algorithm": "milenage"}, "key": "000102030405060708090a0b0c0d0e0f", "op_opc":
+           "101112131415161718191a1b1c1d1e1f"} ),
+      ]
     def __init__(self, fid='af22', name='EF.USIM_AUTH_KEY_2G'):
         super().__init__(fid, name=name, desc='USIM authentication key in 2G context')
         CfgByte = BitStruct(Padding(1), 'only_4bytes_res_in_3g'/Bit,
