@@ -101,6 +101,19 @@ Furthermore, it is strongly advised to first enter the ADM1 pin
 all/most files.
 
 
+Example:
+::
+
+  pySIM-shell (00:MF)> export --json > /tmp/export.json
+  EXCEPTION of type 'RuntimeError' occurred with message: 'unable to export 50 elementary file(s) and 2 dedicated file(s), also had to stop early due to exception:6e00: ARA-M - Invalid class'
+  To enable full traceback, run the following command: 'set debug true'
+  pySIM-shell (00:MF)>
+
+The exception above is more or less expected.  It just means that 50 files which are defined (most likely as
+optional files in some later 3GPP release) were not found on the card, or were invalidated/disabled when
+trying to SELECT them.
+
+
 tree
 ~~~~
 Display a tree of the card filesystem.  It is important to note that this displays a tree
@@ -110,7 +123,7 @@ a given file really exists on a given card, you have to try to select that file.
 Example:
 ::
 
-  pySIM-shell (00:MF)> tree --help
+  pySIM-shell (00:MF)> tree
   EF.DIR                    2f00 Application Directory
   EF.ICCID                  2fe2 ICC Identification
   EF.PL                     2f05 Preferred Languages
@@ -129,10 +142,61 @@ to get write/update permissions to most of the files on SIM cards.
 
 Currently only ADM1 is supported.
 
+Example (successful):
+::
+
+  pySIM-shell (00:MF)> verify_adm 11111111
+  pySIM-shell (00:MF)>
+
+In the above case, the ADM was successfully verified. Please make always sure to use the correct ADM1 for the
+specific card you have inserted! If you present a wrong ADM1 value several times consecutively, your card
+ADM1 will likely be permanently locked, meaning you will never be able to reach ADM1 privilege level.
+For sysmoUSIM/ISIM products, three consecutive wrong ADM1 values will lock the ADM1.
+
+Example (erroneous):
+::
+
+  pySIM-shell (00:MF)> verify_adm 1
+  EXCEPTION of type 'RuntimeError' occurred with message: 'Failed to verify chv_no 0x0A with code 0x31FFFFFFFFFFFFFF, 2 tries left.'
+  To enable full traceback, run the following command: 'set debug true'
+
+If you frequently work with the same set of cards that you need to modify using their ADM1, you can put a CSV
+file with those cards ICCID + ADM1 values into a CSV (comma separated value) file at ``~/.osmocom/pysim/card_data.csv``.  In this case,
+you can use the ``verify_adm`` command *without specifying an ADM1 value*.
+
+Example (successful):
+
+::
+
+  pySIM-shell (00:MF)> verify_adm
+  found ADM-PIN '11111111' for ICCID '898821190000000512'
+  pySIM-shell (00:MF)>
+
+In this case, the CSV file contained a record for the ICCID of the card (11111111) and that value was used to
+successfully verify ADM1.
+
+
+Example (erroneous):
+::
+
+  pySIM-shell (00:MF)> verify_adm
+  EXCEPTION of type 'ValueError' occurred with message: 'cannot find ADM-PIN for ICCID '898821190000000512''
+  To enable full traceback, run the following command: 'set debug true'
+
+In this case there was no record for the ICCID of the card in the CSV file.
+
 
 reset
 ~~~~~
 Perform card reset and display the card ATR.
+
+Example:
+::
+
+  pySIM-shell (00:MF)> reset
+  Card ATR: 3b9f96801f878031e073fe211b674a357530350259c4
+  pySIM-shell (00:MF)> reset
+
 
 intro
 ~~~~~
@@ -165,6 +229,18 @@ apdu
    :module: pySim-shell
    :func: PysimApp.apdu_cmd_parser
 
+Example:
+
+::
+
+  pySIM-shell (00:MF)> apdu 00a40400023f00
+  SW: 6700
+
+In the above case the raw APDU hex-string ``00a40400023f00`` was sent to the card, to which it responded with
+status word ``6700``.  Keep in mind that pySim-shell has no idea what kind of raw commands you are sending to the
+card, and it hence is unable to synchronize its internal state (such as the currently selected file) with the
+card.  The use of this command should hence be constrained to commands that do not have any high-level support
+in pySim-shell yet.
 
 
 ISO7816 commands
