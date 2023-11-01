@@ -776,11 +776,19 @@ class PySimCommands(CommandSet):
         else:
             self._cmd.poutput("no description available")
 
-    def do_verify_adm(self, arg):
-        """VERIFY the ADM1 PIN"""
-        if arg:
+    verify_adm_parser = argparse.ArgumentParser()
+    verify_adm_parser.add_argument('ADM1', nargs='?', type=str,
+                                   help='ADM1 pin value. If none given, CSV file will be queried')
+
+    @cmd2.with_argparser(verify_adm_parser)
+    def do_verify_adm(self, opts):
+        """Verify the ADM (Administrator) PIN specified as argument.  This is typically needed in order
+to get write/update permissions to most of the files on SIM cards.
+
+Currently only ADM1 is supported."""
+        if opts.ADM1:
             # use specified ADM-PIN
-            pin_adm = sanitize_pin_adm(arg)
+            pin_adm = sanitize_pin_adm(opts.ADM1)
         else:
             # try to find an ADM-PIN if none is specified
             result = card_key_provider_get_field(

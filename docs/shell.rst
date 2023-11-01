@@ -137,10 +137,11 @@ Example:
 
 verify_adm
 ~~~~~~~~~~
-Verify the ADM (Administrator) PIN specified as argument.  This is typically needed in order
-to get write/update permissions to most of the files on SIM cards.
 
-Currently only ADM1 is supported.
+.. argparse::
+   :module: pySim-shell
+   :func: PySimCommands.verify_adm_parser
+
 
 Example (successful):
 ::
