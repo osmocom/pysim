@@ -53,7 +53,7 @@ from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args, P
 from pySim.cards import card_detect, SimCardBase, UiccCardBase
 from pySim.utils import h2b, b2h, i2h, swap_nibbles, rpad, JsonEncoder, bertlv_parse_one, sw_match
 from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, Hexstr, dec_iccid
-from pySim.utils import is_hexstr_or_decimal
+from pySim.utils import is_hexstr_or_decimal, is_hexstr
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
 from pySim.filesystem import CardDF, CardADF, CardModel, CardApplication
@@ -322,7 +322,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         self.equip(card, rs)
 
     apdu_cmd_parser = argparse.ArgumentParser()
-    apdu_cmd_parser.add_argument('APDU', type=str, help='APDU as hex string')
+    apdu_cmd_parser.add_argument('APDU', type=is_hexstr, help='APDU as hex string')
     apdu_cmd_parser.add_argument('--expect-sw', help='expect a specified status word', type=str, default=None)
 
     @cmd2.with_argparser(apdu_cmd_parser)
