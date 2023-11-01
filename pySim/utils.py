@@ -1467,3 +1467,14 @@ class CardCommandSet:
 def all_subclasses(cls) -> set:
     """Recursively get all subclasses of a specified class"""
     return set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in all_subclasses(c)])
+
+def is_hexstr_or_decimal(instr: str) -> str:
+    """Method that can be used as 'type' in argparse.add_argument() to validate the value consists of
+    [hexa]decimal digits only."""
+    if instr.isdecimal():
+        return instr
+    if not all(c in string.hexdigits for c in instr):
+        raise ValueError('Input must be [hexa]decimal')
+    if len(instr) & 1:
+        raise ValueError('Input has un-even number of hex digits')
+    return instr

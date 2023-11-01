@@ -53,6 +53,7 @@ from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args, P
 from pySim.cards import card_detect, SimCardBase, UiccCardBase
 from pySim.utils import h2b, b2h, i2h, swap_nibbles, rpad, JsonEncoder, bertlv_parse_one, sw_match
 from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, Hexstr, dec_iccid
+from pySim.utils import is_hexstr_or_decimal
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
 from pySim.filesystem import CardDF, CardADF, CardModel, CardApplication
@@ -777,7 +778,7 @@ class PySimCommands(CommandSet):
             self._cmd.poutput("no description available")
 
     verify_adm_parser = argparse.ArgumentParser()
-    verify_adm_parser.add_argument('ADM1', nargs='?', type=str,
+    verify_adm_parser.add_argument('ADM1', nargs='?', type=is_hexstr_or_decimal,
                                    help='ADM1 pin value. If none given, CSV file will be queried')
 
     @cmd2.with_argparser(verify_adm_parser)
