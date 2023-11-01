@@ -174,6 +174,9 @@ class Settable2Compat(cmd2.Settable):
 
 class PysimApp(Cmd2Compat):
     CUSTOM_CATEGORY = 'pySim Commands'
+    BANNER = """Welcome to pySim-shell!
+(C) 2021-2023 by Harald Welte, sysmocom - s.f.m.c. GmbH and contributors
+Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/shell.html """
 
     def __init__(self, card, rs, sl, ch, script=None):
         if version.parse(cmd2.__version__) < version.parse("2.0.0"):
@@ -184,7 +187,7 @@ class PysimApp(Cmd2Compat):
         # pylint: disable=unexpected-keyword-arg
         super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
                          auto_load_commands=False, startup_script=script, **kwargs)
-        self.intro = style('Welcome to pySim-shell!', fg=RED)
+        self.intro = style(self.BANNER, fg=RED)
         self.default_category = 'pySim-shell built-in commands'
         self.card = None
         self.rs = None

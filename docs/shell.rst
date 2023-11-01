@@ -202,6 +202,14 @@ intro
 ~~~~~
 [Re-]Display the introductory banner
 
+Example:
+::
+
+  pySIM-shell (00:MF)> intro
+  Welcome to pySim-shell!
+  (C) 2021-2023 by Harald Welte, sysmocom - s.f.m.c. GmbH and contributors
+  Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/shell.html
+
 
 equip
 ~~~~~
