@@ -53,7 +53,7 @@ from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args, P
 from pySim.cards import card_detect, SimCardBase, UiccCardBase
 from pySim.utils import h2b, b2h, i2h, swap_nibbles, rpad, JsonEncoder, bertlv_parse_one, sw_match
 from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, Hexstr, dec_iccid
-from pySim.utils import is_hexstr_or_decimal, is_hexstr
+from pySim.utils import is_hexstr_or_decimal, is_hexstr, is_decimal
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
 from pySim.filesystem import CardDF, CardADF, CardModel, CardApplication
@@ -864,7 +864,7 @@ class Iso7816Commands(CommandSet):
     verify_chv_parser.add_argument(
         '--pin-nr', type=int, default=1, help='PIN Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
     verify_chv_parser.add_argument(
-        'pin_code', type=str, help='PIN code digits, \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+        'pin_code', type=is_decimal, help='PIN code digits, \"PIN1\" or \"PIN2\" to get PIN code from external data source')
 
     @cmd2.with_argparser(verify_chv_parser)
     def do_verify_chv(self, opts):
@@ -879,9 +879,9 @@ class Iso7816Commands(CommandSet):
     unblock_chv_parser.add_argument(
         '--pin-nr', type=int, default=1, help='PUK Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
     unblock_chv_parser.add_argument(
-        'puk_code', type=str, help='PUK code digits \"PUK1\" or \"PUK2\" to get PUK code from external data source')
+        'puk_code', type=is_decimal, help='PUK code digits \"PUK1\" or \"PUK2\" to get PUK code from external data source')
     unblock_chv_parser.add_argument(
-        'new_pin_code', type=str, help='PIN code digits \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+        'new_pin_code', type=is_decimal, help='PIN code digits \"PIN1\" or \"PIN2\" to get PIN code from external data source')
 
     @cmd2.with_argparser(unblock_chv_parser)
     def do_unblock_chv(self, opts):
@@ -896,9 +896,9 @@ class Iso7816Commands(CommandSet):
     change_chv_parser.add_argument(
         '--pin-nr', type=int, default=1, help='PUK Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
     change_chv_parser.add_argument(
-        'pin_code', type=str, help='PIN code digits \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+        'pin_code', type=is_decimal, help='PIN code digits \"PIN1\" or \"PIN2\" to get PIN code from external data source')
     change_chv_parser.add_argument(
-        'new_pin_code', type=str, help='PIN code digits \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+        'new_pin_code', type=is_decimal, help='PIN code digits \"PIN1\" or \"PIN2\" to get PIN code from external data source')
 
     @cmd2.with_argparser(change_chv_parser)
     def do_change_chv(self, opts):
@@ -913,7 +913,7 @@ class Iso7816Commands(CommandSet):
     disable_chv_parser.add_argument(
         '--pin-nr', type=int, default=1, help='PIN Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
     disable_chv_parser.add_argument(
-        'pin_code', type=str, help='PIN code digits, \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+        'pin_code', type=is_decimal, help='PIN code digits, \"PIN1\" or \"PIN2\" to get PIN code from external data source')
 
     @cmd2.with_argparser(disable_chv_parser)
     def do_disable_chv(self, opts):
@@ -926,7 +926,7 @@ class Iso7816Commands(CommandSet):
     enable_chv_parser.add_argument(
         '--pin-nr', type=int, default=1, help='PIN Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
     enable_chv_parser.add_argument(
-        'pin_code', type=str, help='PIN code digits, \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+        'pin_code', type=is_decimal, help='PIN code digits, \"PIN1\" or \"PIN2\" to get PIN code from external data source')
 
     @cmd2.with_argparser(enable_chv_parser)
     def do_enable_chv(self, opts):

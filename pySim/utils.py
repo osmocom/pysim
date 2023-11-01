@@ -1487,3 +1487,10 @@ def is_hexstr(instr: str) -> str:
     if len(instr) & 1:
         raise ValueError('Input has un-even number of hex digits')
     return instr
+
+def is_decimal(instr: str) -> str:
+    """Method that can be used as 'type' in argparse.add_argument() to validate the value consists of
+    an even sequence of decimal digits only."""
+    if not instr.isdecimal():
+        raise ValueError('Input must decimal')
+    return instr
