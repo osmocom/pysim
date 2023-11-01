@@ -55,6 +55,117 @@ want to check out the `cmd2 Builtin commands <https://cmd2.readthedocs.io/en/sta
 to learn about those.
 
 
+pySim commands
+--------------
+
+Commands in this category are pySim specific; they do not have a 1:1 correspondence to ISO 7816
+or 3GPP commands. Mostly they will operate either only on local (in-memory) state, or execute
+a complex sequence of card-commands.
+
+desc
+~~~~
+Display human readable file description for the currently selected file.
+
+
+dir
+~~~
+.. argparse::
+   :module: pySim-shell
+   :func: PySimCommands.dir_parser
+
+Example:
+::
+
+  pySIM-shell (00:MF)> dir
+  MF
+  3f00
+   ..          ADF.USIM    DF.SYSTEM   EF.DIR      EF.UMPC
+   ADF.ARA-M   DF.EIRENE   DF.TELECOM  EF.ICCID    MF
+   ADF.ISIM    DF.GSM      EF.ARR      EF.PL
+  14 files
+
+
+export
+~~~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: PySimCommands.export_parser
+
+Please note that `export` works relative to the current working
+directory, so if you are in `MF`, then the export will contain all known
+files on the card.  However, if you are in `ADF.ISIM`, only files below
+that ADF will be part of the export.
+
+Furthermore, it is strongly advised to first enter the ADM1 pin
+(`verify_adm`) to maximize the chance of having permission to read
+all/most files.
+
+
+tree
+~~~~
+Display a tree of the card filesystem.  It is important to note that this displays a tree
+of files that might potentially exist (based on the card profile).  In order to determine if
+a given file really exists on a given card, you have to try to select that file.
+
+Example:
+::
+
+  pySIM-shell (00:MF)> tree --help
+  EF.DIR                    2f00 Application Directory
+  EF.ICCID                  2fe2 ICC Identification
+  EF.PL                     2f05 Preferred Languages
+  EF.ARR                    2f06 Access Rule Reference
+  EF.UMPC                   2f08 UICC Maximum Power Consumption
+  DF.TELECOM                7f10 None
+    EF.ADN                  6f3a Abbreviated Dialing Numbers
+  ...
+
+
+
+verify_adm
+~~~~~~~~~~
+Verify the ADM (Administrator) PIN specified as argument.  This is typically needed in order
+to get write/update permissions to most of the files on SIM cards.
+
+Currently only ADM1 is supported.
+
+
+reset
+~~~~~
+Perform card reset and display the card ATR.
+
+intro
+~~~~~
+[Re-]Display the introductory banner
+
+
+equip
+~~~~~
+Equip pySim-shell with a card; particularly useful if the program was
+started before a card was present, or after a card has been replaced by
+the user while pySim-shell was kept running.
+
+bulk_script
+~~~~~~~~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: PysimApp.bulk_script_parser
+
+
+echo
+~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: PysimApp.echo_parser
+
+
+apdu
+~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: PysimApp.apdu_cmd_parser
+
+
 
 ISO7816 commands
 ----------------
@@ -242,116 +353,6 @@ sequence including the electrical power down.
    :module: pySim.ts_102_221
    :func: CardProfileUICC.AddlShellCommands.resume_uicc_parser
 
-
-pySim commands
---------------
-
-Commands in this category are pySim specific; they do not have a 1:1 correspondence to ISO 7816
-or 3GPP commands. Mostly they will operate either only on local (in-memory) state, or execute
-a complex sequence of card-commands.
-
-desc
-~~~~
-Display human readable file description for the currently selected file.
-
-
-dir
-~~~
-.. argparse::
-   :module: pySim-shell
-   :func: PySimCommands.dir_parser
-
-Example:
-::
-
-  pySIM-shell (00:MF)> dir
-  MF
-  3f00
-   ..          ADF.USIM    DF.SYSTEM   EF.DIR      EF.UMPC
-   ADF.ARA-M   DF.EIRENE   DF.TELECOM  EF.ICCID    MF
-   ADF.ISIM    DF.GSM      EF.ARR      EF.PL
-  14 files
-
-
-export
-~~~~~~
-.. argparse::
-   :module: pySim-shell
-   :func: PySimCommands.export_parser
-
-Please note that `export` works relative to the current working
-directory, so if you are in `MF`, then the export will contain all known
-files on the card.  However, if you are in `ADF.ISIM`, only files below
-that ADF will be part of the export.
-
-Furthermore, it is strongly advised to first enter the ADM1 pin
-(`verify_adm`) to maximize the chance of having permission to read
-all/most files.
-
-
-tree
-~~~~
-Display a tree of the card filesystem.  It is important to note that this displays a tree
-of files that might potentially exist (based on the card profile).  In order to determine if
-a given file really exists on a given card, you have to try to select that file.
-
-Example:
-::
-
-  pySIM-shell (00:MF)> tree --help
-  EF.DIR                    2f00 Application Directory
-  EF.ICCID                  2fe2 ICC Identification
-  EF.PL                     2f05 Preferred Languages
-  EF.ARR                    2f06 Access Rule Reference
-  EF.UMPC                   2f08 UICC Maximum Power Consumption
-  DF.TELECOM                7f10 None
-    EF.ADN                  6f3a Abbreviated Dialing Numbers
-  ...
-
-
-
-verify_adm
-~~~~~~~~~~
-Verify the ADM (Administrator) PIN specified as argument.  This is typically needed in order
-to get write/update permissions to most of the files on SIM cards.
-
-Currently only ADM1 is supported.
-
-
-reset
-~~~~~
-Perform card reset and display the card ATR.
-
-intro
-~~~~~
-[Re-]Display the introductory banner
-
-
-equip
-~~~~~
-Equip pySim-shell with a card; particularly useful if the program was
-started before a card was present, or after a card has been replaced by
-the user while pySim-shell was kept running.
-
-bulk_script
-~~~~~~~~~~~
-.. argparse::
-   :module: pySim-shell
-   :func: PysimApp.bulk_script_parser
-
-
-echo
-~~~~
-.. argparse::
-   :module: pySim-shell
-   :func: PysimApp.echo_parser
-
-
-apdu
-~~~~
-.. argparse::
-   :module: pySim-shell
-   :func: PysimApp.apdu_cmd_parser
 
 
 
