@@ -50,7 +50,9 @@ Usage Examples
 cmd2 basics
 -----------
 
-FIXME
+As pySim-shell is built upon ``cmd2``, some generic cmd2 commands/features are available.  You may
+want to check out the `cmd2 Builtin commands <https://cmd2.readthedocs.io/en/stable/features/builtin_commands.html>`_
+to learn about those.
 
 
 
