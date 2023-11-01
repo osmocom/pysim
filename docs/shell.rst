@@ -215,7 +215,11 @@ This will
       },
       "life_cycle_status_int": "operational_activated",
       "security_attrib_compact": "00",
-      "pin_status_template_do": "90017083010183018183010A83010B"
+      "pin_status_template_do": {
+          "ps_do": "70",
+          "key_reference": 11
+      }
+
   }
   pySIM-shell (00:MF/ADF.USIM)>
 
@@ -467,28 +471,39 @@ input.  This can be inconvenient if you want to keep 99% of the content but just
 parameter.   That's where the JSONpath support comes in handy:  You can specify a JSONpath to an element
 inside the document as well as a new value for tat field:
 
-Th below example demonstrates this by modifying the ofm field within EF.AD:
+The below example demonstrates this by modifying the ciphering indicator field within EF.AD:
 
 ::
 
   pySIM-shell (00:MF/ADF.USIM/EF.AD)> read_binary_decoded
+
   {
-      "ms_operation_mode": "normal",
-      "specific_facilities": {
-          "ofm": true
+      "ms_operation_mode": "normal_and_specific_facilities",
+      "additional_info": {
+          "ciphering_indicator": false,
+          "csg_display_control": false,
+          "prose_services": false,
+          "extended_drx": true
       },
-      "len_of_mnc_in_imsi": 2
+      "rfu": 0,
+      "mnc_len": 2,
+      "extensions": "ff"
   }
-  pySIM-shell (00:MF/ADF.USIM/EF.AD)> update_binary_decoded --json-path specific_facilities.ofm false
+  pySIM-shell (00:MF/ADF.USIM/EF.AD)> update_binary_decoded --json-path additional_info.ciphering_indicator true
+  "01000902ff"
   pySIM-shell (00:MF/ADF.USIM/EF.AD)> read_binary_decoded
   {
-      "ms_operation_mode": "normal",
-      "specific_facilities": {
-          "ofm": false
+      "ms_operation_mode": "normal_and_specific_facilities",
+      "additional_info": {
+          "ciphering_indicator": true,
+          "csg_display_control": false,
+          "prose_services": false,
+          "extended_drx": true
       },
-      "len_of_mnc_in_imsi": 2
+      "rfu": 0,
+      "mnc_len": 2,
+      "extensions": "ff"
   }
-
 
 edit_binary_decoded
 ~~~~~~~~~~~~~~~~~~~
@@ -736,30 +751,31 @@ it doesn't yet implement fragmentation/reassembly on rule retrieval. YMMV
 ::
 
   pySIM-shell (00:MF/ADF.ARA-M)> aram_get_all
+
   [
       {
-          "ResponseAllRefArDO": [
+          "response_all_ref_ar_do": [
               {
-                  "RefArDO": [
+                  "ref_ar_do": [
                       {
-                          "RefDO": [
+                          "ref_do": [
                               {
-                                  "AidRefDO": "ffffffffffff"
+                                  "aid_ref_do": "ffffffffffff"
                               },
                               {
-                                  "DevAppIdRefDO": "e46872f28b350b7e1f140de535c2a8d5804f0be3"
+                                  "dev_app_id_ref_do": "e46872f28b350b7e1f140de535c2a8d5804f0be3"
                               }
                           ]
                       },
                       {
-                          "ArDO": [
+                          "ar_do": [
                               {
-                                  "ApduArDO": {
+                                  "apdu_ar_do": {
                                       "generic_access_rule": "always"
                                   }
                               },
                               {
-                                  "PermArDO": {
+                                  "perm_ar_do": {
                                       "permissions": "0000000000000001"
                                   }
                               }
