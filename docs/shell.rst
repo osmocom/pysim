@@ -1,7 +1,8 @@
 pySim-shell
 ===========
 
-pySim-shell is an interactive command line shell for all kind of interactions with SIM cards.
+pySim-shell is an interactive command line shell for all kind of interactions with SIM cards,
+including classic GSM SIM, GSM-R SIM, UICC, USIM, ISIM, HPSIM and recently even eUICC.
 
 The interactive shell provides command for
 
