@@ -178,7 +178,7 @@ class IE(Transcodable, metaclass=TlvMeta):
         """Convert the internal representation to entire IE including IE header."""
 
     def to_bytes(self) -> bytes:
-        """Convert the internal representation _of the value part_ to binary bytes."""
+        """Convert the internal representation *of the value part* to binary bytes."""
         if self.is_constructed():
             # concatenate the encoded IE of all children to form the value part
             out = b''
@@ -189,7 +189,7 @@ class IE(Transcodable, metaclass=TlvMeta):
             return super().to_bytes()
 
     def from_bytes(self, do: bytes):
-        """Parse _the value part_ from binary bytes to internal representation."""
+        """Parse *the value part* from binary bytes to internal representation."""
         if self.nested_collection:
             self.children = self.nested_collection.from_bytes(do)
         else:
