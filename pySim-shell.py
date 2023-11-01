@@ -510,13 +510,13 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
             first = False
 
     echo_parser = argparse.ArgumentParser()
-    echo_parser.add_argument('string', help="string to echo on the shell")
+    echo_parser.add_argument('string', help="string to echo on the shell", nargs='+')
 
     @cmd2.with_argparser(echo_parser)
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_echo(self, opts):
         """Echo (print) a string on the console"""
-        self.poutput(opts.string)
+        self.poutput(' '.join(opts.string))
 
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_version(self, opts):
