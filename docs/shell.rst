@@ -11,9 +11,9 @@ The interactive shell provides command for
 * CHV/PIN management (VERIFY, ENABLE, DISABLE, UNBLOCK)
 * decoding of SELECT response (file control parameters)
 * reading and writing of files and records in raw, hex-encoded binary format
-* for some files where related support has been developed:
+* for most files (where related file-specific encoder/decoder classes have been developed):
 
- * decoded reading (display file data in JSON format)
+ * decoded reading (display file data represented in human and machine readable JSON format)
  * decoded writing (encode from JSON to binary format, then write)
 
 By means of using the python ``cmd2`` module, various useful features improve usability:
