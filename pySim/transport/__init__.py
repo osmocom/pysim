@@ -287,7 +287,7 @@ def init_reader(opts, **kwargs) -> LinkBase:
     """
     Init card reader driver
     """
-    if opts.pcsc_dev is not None:
+    if opts.pcsc_dev is not None or opts.pcsc_regex is not None:
         from pySim.transport.pcsc import PcscSimLink
         sl = PcscSimLink(opts, **kwargs)
     elif opts.osmocon_sock is not None:

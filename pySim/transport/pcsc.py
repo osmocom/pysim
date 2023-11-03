@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
-# Copyright (C) 2010  Harald Welte <laforge@gnumonks.org>
+# Copyright (C) 2010-2023  Harald Welte <laforge@gnumonks.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,8 @@
 
 import argparse
 import os
-from typing import Optional
+import re
+from typing import Optional, Union
 
 from smartcard.CardConnection import CardConnection
 from smartcard.CardRequest import CardRequest
@@ -36,16 +37,30 @@ class PcscSimLink(LinkBase):
 
     def __init__(self, opts: argparse.Namespace = argparse.Namespace(pcsc_dev=0), **kwargs):
         super().__init__(**kwargs)
+        self._reader = None
+        r = readers()
+        if opts.pcsc_dev is not None:
+            # actual reader index number (integer)
+            reader_number = opts.pcsc_dev
+            if reader_number >= len(r):
+                raise ReaderError('No reader found for number %d' % reader_number)
+            self._reader = r[reader_number]
+        else:
+            # reader regex string
+            cre = re.compile(opts.pcsc_regex)
+            for reader in r:
+                if cre.search(reader.name):
+                    self._reader = reader
+                    break
+            if not self._reader:
+                raise ReaderError('No matching reader found for regex %s' % opts.pcsc_regex)
+
+        self._con = self._reader.createConnection()
+
         if os.environ.get('PYSIM_INTEGRATION_TEST') == "1":
             print("Using PC/SC reader interface")
         else:
-            print("Using PC/SC reader number %u" % opts.pcsc_dev)
-        r = readers()
-        if opts.pcsc_dev >= len(r):
-            raise ReaderError('No reader found for number %d' % opts.pcsc_dev)
-        self._reader = r[opts.pcsc_dev]
-        self._con = self._reader.createConnection()
-        self._reader_number = opts.pcsc_dev
+            print("Using PC/SC reader %s" % self)
 
     def __del__(self):
         try:
@@ -100,10 +115,13 @@ class PcscSimLink(LinkBase):
         return i2h(data), i2h(sw)
 
     def __str__(self) -> str:
-        return "PCSC:%u[%s]" % (self._reader_number,  self._reader)
+        return "PCSC[%s]" % (self._reader)
 
     @staticmethod
     def argparse_add_reader_args(arg_parser: argparse.ArgumentParser):
         pcsc_group = arg_parser.add_argument_group('PC/SC Reader')
-        pcsc_group.add_argument('-p', '--pcsc-device', type=int, dest='pcsc_dev', metavar='PCSC', default=None,
-                                help='PC/SC reader number to use for SIM access')
+        dev_group = pcsc_group.add_mutually_exclusive_group()
+        dev_group.add_argument('-p', '--pcsc-device', type=int, dest='pcsc_dev', metavar='PCSC', default=None,
+                               help='Number of PC/SC reader to use for SIM access')
+        dev_group.add_argument('--pcsc-regex', type=str, dest='pcsc_regex', metavar='REGEX', default=None,
+                               help='Regex matching PC/SC reader to use for SIM access')
