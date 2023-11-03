@@ -297,6 +297,7 @@ def init_reader(opts, **kwargs) -> LinkBase:
         sl = ModemATCommandLink(
              device=opts.modem_dev, baudrate=opts.modem_baud, **kwargs)
     else:  # Serial reader is default
+        print("No reader/driver specified; falling back to default (Serial reader)")
         from pySim.transport.serial import SerialSimLink
         sl = SerialSimLink(device=opts.device,
                            baudrate=opts.baudrate, **kwargs)
