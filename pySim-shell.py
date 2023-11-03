@@ -2,7 +2,7 @@
 
 # Interactive shell for working with SIM / UICC / USIM / ISIM cards
 #
-# (C) 2021-2022 by Harald Welte <laforge@osmocom.org>
+# (C) 2021-2023 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,111 +48,20 @@ from io import StringIO
 from pprint import pprint as pp
 
 from pySim.exceptions import *
-from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args, ProactiveHandler
-from pySim.cards import card_detect, SimCardBase, UiccCardBase
 from pySim.utils import h2b, b2h, i2h, swap_nibbles, rpad, JsonEncoder, bertlv_parse_one, sw_match
 from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, Hexstr, dec_iccid
 from pySim.utils import is_hexstr_or_decimal, is_hexstr, is_decimal
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
-from pySim.filesystem import CardDF, CardADF, CardModel, CardApplication
-from pySim.runtime import RuntimeState
-from pySim.profile import CardProfile
-from pySim.cdma_ruim import CardProfileRUIM
-from pySim.ts_102_221 import CardProfileUICC
+from pySim.filesystem import CardDF, CardADF
 from pySim.ts_102_222 import Ts102222Commands
 from pySim.gsm_r import DF_EIRENE
 from pySim.cat import ProactiveCommand
 
-# we need to import this module so that the SysmocomSJA2 sub-class of
-# CardModel is created, which will add the ATR-based matching and
-# calling of SysmocomSJA2.add_files.  See  CardModel.apply_matching_models
-import pySim.sysmocom_sja2
-
-# we need to import these modules so that the various sub-classes of
-# CardProfile are created, which will be used in init_card() to iterate
-# over all known CardProfile sub-classes.
-import pySim.ts_31_102
-import pySim.ts_31_103
-import pySim.ts_31_104
-import pySim.ara_m
-import pySim.global_platform
-import pySim.euicc
-
 from pySim.card_key_provider import CardKeyProviderCsv, card_key_provider_register, card_key_provider_get_field
 
-
-def init_card(sl):
-    """
-    Detect card in reader and setup card profile and runtime state. This
-    function must be called at least once on startup. The card and runtime
-    state object (rs) is required for all pySim-shell commands.
-    """
-
-    # Create command layer
-    scc = SimCardCommands(transport=sl)
-
-    # Wait up to three seconds for a card in reader and try to detect
-    # the card type.
-    print("Waiting for card...")
-    try:
-        sl.wait_for_card(3)
-    except NoCardError:
-        print("No card detected!")
-        return None, None
-    except:
-        print("Card not readable!")
-        return None, None
-
-    generic_card = False
-    card = card_detect(scc)
-    if card is None:
-        print("Warning: Could not detect card type - assuming a generic card type...")
-        card = SimCardBase(scc)
-        generic_card = True
-
-    profile = CardProfile.pick(scc)
-    if profile is None:
-        print("Unsupported card type!")
-        return None, card
-
-    # ETSI TS 102 221, Table 9.3 specifies a default for the PIN key
-    # references, however card manufactures may still decide to pick an
-    # arbitrary key reference. In case we run on a generic card class that is
-    # detected as an UICC, we will pick the key reference that is officially
-    # specified.
-    if generic_card and isinstance(profile, CardProfileUICC):
-        card._adm_chv_num = 0x0A
-
-    print("Info: Card is of type: %s" % str(profile))
-
-    # FIXME: this shouldn't really be here but somewhere else/more generic.
-    # We cannot do it within pySim/profile.py as that would create circular
-    # dependencies between the individual profiles and profile.py.
-    if isinstance(profile, CardProfileUICC):
-        for app_cls in CardApplication.__subclasses__():
-            constr_sig = inspect.signature(app_cls.__init__)
-            # skip any intermediary sub-classes such as CardApplicationSD
-            if len(constr_sig.parameters) != 1:
-                continue
-            profile.add_application(app_cls())
-        # We have chosen SimCard() above, but we now know it actually is an UICC
-        # so it's safe to assume it supports USIM application (which we're adding above).
-        # IF we don't do this, we will have a SimCard but try USIM specific commands like
-        # the update_ust method (see https://osmocom.org/issues/6055)
-        if generic_card:
-            card = UiccCardBase(scc)
-
-    # Create runtime state with card profile
-    rs = RuntimeState(card, profile)
-
-    CardModel.apply_matching_models(scc, rs)
-
-    # inform the transport that we can do context-specific SW interpretation
-    sl.set_sw_interpreter(rs)
-
-    return rs, card
+from pySim.app import init_card
 
 
 class Cmd2Compat(cmd2.Cmd):
