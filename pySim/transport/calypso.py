@@ -76,14 +76,11 @@ class L1CTLMessageSIM(L1CTLMessage):
 
 class CalypsoSimLink(LinkBase):
     """Transport Link for Calypso based phones."""
+    name = 'Calypso-based (OsmocomBB) reader'
 
     def __init__(self, opts: argparse.Namespace = argparse.Namespace(osmocon_sock="/tmp/osmocom_l2"), **kwargs):
         sock_path = opts.osmocon_sock
         super().__init__(**kwargs)
-        if os.environ.get('PYSIM_INTEGRATION_TEST') == "1":
-            print("Using Calypso-based (OsmocomBB) reader interface")
-        else:
-            print("Using Calypso-based (OsmocomBB) reader at socket %s" % sock_path)
         # Make sure that a given socket path exists
         if not os.path.exists(sock_path):
             raise ReaderError(

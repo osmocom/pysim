@@ -18,7 +18,6 @@
 #
 
 import argparse
-import os
 import re
 from typing import Optional, Union
 
@@ -34,6 +33,7 @@ from pySim.utils import h2i, i2h, Hexstr, ResTuple
 
 class PcscSimLink(LinkBase):
     """ pySim: PCSC reader transport link."""
+    name = 'PC/SC'
 
     def __init__(self, opts: argparse.Namespace = argparse.Namespace(pcsc_dev=0), **kwargs):
         super().__init__(**kwargs)
@@ -56,11 +56,6 @@ class PcscSimLink(LinkBase):
                 raise ReaderError('No matching reader found for regex %s' % opts.pcsc_regex)
 
         self._con = self._reader.createConnection()
-
-        if os.environ.get('PYSIM_INTEGRATION_TEST') == "1":
-            print("Using PC/SC reader interface")
-        else:
-            print("Using PC/SC reader %s" % self)
 
     def __del__(self):
         try:

@@ -3,6 +3,7 @@
 """ pySim: PCSC reader transport link base
 """
 
+import os
 import abc
 import argparse
 from typing import Optional, Tuple
@@ -300,4 +301,10 @@ def init_reader(opts, **kwargs) -> LinkBase:
         print("No reader/driver specified; falling back to default (Serial reader)")
         from pySim.transport.serial import SerialSimLink
         sl = SerialSimLink(opts, **kwargs)
+
+    if os.environ.get('PYSIM_INTEGRATION_TEST') == "1":
+        print("Using %s reader interface" % (sl.name))
+    else:
+        print("Using reader %s" % sl)
+
     return sl
