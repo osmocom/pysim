@@ -140,14 +140,14 @@ class EF_GP_DIV_DATA(LinFixedEF):
 class EF_SIM_AUTH_KEY(TransparentEF):
     _test_de_encode = [
         ( '14000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
-          {"cfg": {"use_sres_deriv_func_2": 0, "use_opc_instead_of_op": 1, "algorithm": "milenage"}, "key":
+          {"cfg": {"sres_deriv_func": 1, "use_opc_instead_of_op": True, "algorithm": "milenage"}, "key":
            "000102030405060708090a0b0c0d0e0f", "op_opc": "101112131415161718191a1b1c1d1e1f"} ),
       ]
     def __init__(self, fid='6f20', name='EF.SIM_AUTH_KEY'):
         super().__init__(fid, name=name, desc='USIM authentication key')
         CfgByte = BitStruct(Padding(2),
-                            'use_sres_deriv_func_2'/Bit,
-                            'use_opc_instead_of_op'/Bit,
+                            'sres_deriv_func'/Mapping(Bit, {1:0, 2:1}),
+                            'use_opc_instead_of_op'/Flag,
                             'algorithm'/Enum(Nibble, milenage=4, comp128v1=1, comp128v2=2, comp128v3=3))
         self._construct = Struct('cfg'/CfgByte,
                                  'key'/HexAdapter(Bytes(16)),
@@ -181,19 +181,19 @@ class DF_SYSTEM(CardDF):
 class EF_USIM_SQN(TransparentEF):
     _test_de_encode = [
         ( 'd503000200000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
-          {"flag1": {"skip_next_sqn_check": 1, "delta_max_check": 1, "age_limit_check": 0, "sqn_check": 1,
-                     "ind_len": 5}, "flag2": {"rfu": 0, "dont_clear_amf_for_macs": 0, "aus_concealed": 1,
-                                              "autn_concealed": 1}, "delta_max": 8589934592, "age_limit":
+          {"flag1": {"skip_next_sqn_check": True, "delta_max_check": True, "age_limit_check": False, "sqn_check": True,
+                     "ind_len": 5}, "flag2": {"rfu": 0, "dont_clear_amf_for_macs": False, "aus_concealed": True,
+                                              "autn_concealed": True}, "delta_max": 8589934592, "age_limit":
            8589934592, "freshness": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                      0, 0, 0, 0, 0, 0, 0, 0]} ),
       ]
     def __init__(self, fid='af30', name='EF.USIM_SQN'):
         super().__init__(fid, name=name, desc='SQN parameters for AKA')
-        Flag1 = BitStruct('skip_next_sqn_check'/Bit, 'delta_max_check'/Bit,
-                          'age_limit_check'/Bit, 'sqn_check'/Bit,
+        Flag1 = BitStruct('skip_next_sqn_check'/Flag, 'delta_max_check'/Flag,
+                          'age_limit_check'/Flag, 'sqn_check'/Flag,
                           'ind_len'/BitsInteger(4))
-        Flag2 = BitStruct('rfu'/BitsRFU(5), 'dont_clear_amf_for_macs'/Bit,
-                          'aus_concealed'/Bit, 'autn_concealed'/Bit)
+        Flag2 = BitStruct('rfu'/BitsRFU(5), 'dont_clear_amf_for_macs'/Flag,
+                          'aus_concealed'/Flag, 'autn_concealed'/Flag)
         self._construct = Struct('flag1'/Flag1, 'flag2'/Flag2,
                                  'delta_max' /
                                  BytesInteger(6), 'age_limit'/BytesInteger(6),
@@ -204,8 +204,8 @@ class EF_USIM_AUTH_KEY(TransparentEF):
     def __init__(self, fid='af20', name='EF.USIM_AUTH_KEY'):
         super().__init__(fid, name=name, desc='USIM authentication key')
         Algorithm = Enum(Nibble, milenage=4, sha1_aka=5, tuak=6, xor=15)
-        CfgByte = BitStruct(Padding(1), 'only_4bytes_res_in_3g'/Bit,
-                            'sres_deriv_func_2_in_3g'/Mapping(Bit, {1:0, 2:1}),
+        CfgByte = BitStruct(Padding(1), 'only_4bytes_res_in_3g'/Flag,
+                            'sres_deriv_func_in_2g'/Mapping(Bit, {1:0, 2:1}),
                             'use_opc_instead_of_op'/Mapping(Bit, {False:0, True:1}),
                             'algorithm'/Algorithm)
         self._construct = Struct('cfg'/CfgByte,
@@ -216,7 +216,7 @@ class EF_USIM_AUTH_KEY(TransparentEF):
         # the TUAK and non-TUAK situation
         CfgByteTuak = BitStruct(Padding(1),
                                 'key_length'/Mapping(Bit, {128:0, 256:1}),
-                                'sres_deriv_func_in_3g'/Mapping(Bit, {1:0, 2:1}),
+                                'sres_deriv_func_in_2g'/Mapping(Bit, {1:0, 2:1}),
                                 'use_opc_instead_of_op'/Mapping(Bit, {False:0, True:1}),
                                 'algorithm'/Algorithm)
         TuakCfgByte = BitStruct(Padding(1),
@@ -245,15 +245,15 @@ class EF_USIM_AUTH_KEY(TransparentEF):
 class EF_USIM_AUTH_KEY_2G(TransparentEF):
     _test_de_encode = [
         ( '14000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
-          {"cfg": {"only_4bytes_res_in_3g": 0, "use_sres_deriv_func_2_in_3g": 0, "use_opc_instead_of_op": 1,
+          {"cfg": {"only_4bytes_res_in_3g": False, "sres_deriv_func_in_2g": 1, "use_opc_instead_of_op": True,
                    "algorithm": "milenage"}, "key": "000102030405060708090a0b0c0d0e0f", "op_opc":
            "101112131415161718191a1b1c1d1e1f"} ),
       ]
     def __init__(self, fid='af22', name='EF.USIM_AUTH_KEY_2G'):
         super().__init__(fid, name=name, desc='USIM authentication key in 2G context')
-        CfgByte = BitStruct(Padding(1), 'only_4bytes_res_in_3g'/Bit,
-                            'use_sres_deriv_func_2_in_3g'/Bit,
-                            'use_opc_instead_of_op'/Bit,
+        CfgByte = BitStruct(Padding(1), 'only_4bytes_res_in_3g'/Flag,
+                            'sres_deriv_func_in_2g'/Mapping(Bit, {1:0, 2:1}),
+                            'use_opc_instead_of_op'/Flag,
                             'algorithm'/Enum(Nibble, milenage=4, comp128v1=1, comp128v2=2, comp128v3=3, xor=14))
         self._construct = Struct('cfg'/CfgByte,
                                  'key'/HexAdapter(Bytes(16)),

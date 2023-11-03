@@ -889,14 +889,14 @@ class EF_FromPreferred(TransparentEF):
     def __init__(self, fid='6ff7', sfid=None, name='EF.FromPreferred', size=(1, 1),
                  desc='From Preferred', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
-        self._construct = BitStruct('rfu'/BitsRFU(7), 'from_preferred'/Bit)
+        self._construct = BitStruct('rfu'/BitsRFU(7), 'from_preferred'/Flag)
 
 # TS 31.102 Section 4.2.114
 class EF_eAKA(TransparentEF):
     def __init__(self, fid='6f01', sfid=None, name='EF.eAKA', size=(1, 1),
                  desc='enhanced AKA support', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
-        self._construct = BitStruct('rfu'/BitsRFU(7), 'enhanced_sqn_calculation_supported'/Bit)
+        self._construct = BitStruct('rfu'/BitsRFU(7), 'enhanced_sqn_calculation_supported'/Flag)
 
 
 ######################################################################
