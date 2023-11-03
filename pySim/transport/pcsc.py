@@ -114,7 +114,12 @@ class PcscSimLink(LinkBase):
 
     @staticmethod
     def argparse_add_reader_args(arg_parser: argparse.ArgumentParser):
-        pcsc_group = arg_parser.add_argument_group('PC/SC Reader')
+        pcsc_group = arg_parser.add_argument_group('PC/SC Reader',
+        """Use a PC/SC card reader to talk to the SIM card.  PC/SC is a standard API for how applications
+access smart card readers, and is available on a variety of operating systems, such as Microsoft
+Windows, MacOS X and Linux.  Most vendors of smart card readers provide drivers that offer a PC/SC
+interface, if not even a generic USB CCID driver is used.  You can use a tool like ``pcsc_scan -r``
+to obtain a list of readers available on your system. """)
         dev_group = pcsc_group.add_mutually_exclusive_group()
         dev_group.add_argument('-p', '--pcsc-device', type=int, dest='pcsc_dev', metavar='PCSC', default=None,
                                help='Number of PC/SC reader to use for SIM access')

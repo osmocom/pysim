@@ -180,7 +180,9 @@ class ModemATCommandLink(LinkBase):
 
     @staticmethod
     def argparse_add_reader_args(arg_parser: argparse.ArgumentParser):
-        modem_group = arg_parser.add_argument_group('AT Command Modem Reader')
+        modem_group = arg_parser.add_argument_group('AT Command Modem Reader', """Talk to a SIM Card inside a
+mobile phone or cellular modem which is attached to this computer and offers an AT command interface including
+the AT+CSIM interface for Generic SIM access as specified in 3GPP TS 27.007.""")
         modem_group.add_argument('--modem-device', dest='modem_dev', metavar='DEV', default=None,
                                  help='Serial port of modem for Generic SIM Access (3GPP TS 27.007)')
         modem_group.add_argument('--modem-baud', type=int, metavar='BAUD', default=115200,

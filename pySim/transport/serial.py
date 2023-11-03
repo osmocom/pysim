@@ -244,7 +244,9 @@ class SerialSimLink(LinkBase):
 
     @staticmethod
     def argparse_add_reader_args(arg_parser: argparse.ArgumentParser):
-        serial_group = arg_parser.add_argument_group('Serial Reader')
+        serial_group = arg_parser.add_argument_group('Serial Reader', """Use a simple/ultra-low-cost serial reader
+attached to a (physical or USB/virtual) RS232 port.  This doesn't work with all RS232-attached smart card
+readers, only with the very primitive readers following the ancient `Phoenix` or `Smart Mouse` design.""")
         serial_group.add_argument('-d', '--device', metavar='DEV', default='/dev/ttyUSB0',
                                   help='Serial Device for SIM access')
         serial_group.add_argument('-b', '--baud', dest='baudrate', type=int, metavar='BAUD', default=9600,

@@ -167,6 +167,9 @@ class CalypsoSimLink(LinkBase):
 
     @staticmethod
     def argparse_add_reader_args(arg_parser: argparse.ArgumentParser):
-        osmobb_group = arg_parser.add_argument_group('OsmocomBB Reader')
+        osmobb_group = arg_parser.add_argument_group('OsmocomBB Reader', """Use an OsmocomBB compatible phone
+to access the SIM inserted to the phone SIM slot.  This will require you to run the OsmocomBB firmware inside
+the phone (can be ram-loaded).  It also requires that you run the ``osmocon`` program, which provides a unix
+domain socket to which this reader driver can attach.""")
         osmobb_group.add_argument('--osmocon', dest='osmocon_sock', metavar='PATH', default=None,
                                   help='Socket path for Calypso (e.g. Motorola C1XX) based reader (via OsmocomBB)')
