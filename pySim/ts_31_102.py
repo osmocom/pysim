@@ -880,7 +880,7 @@ class EF_ePDGId(TransparentEF):
                                                    'IPv4': HexAdapter(GreedyBytes),
                                                    'IPv6': HexAdapter(GreedyBytes)}))
 
-    def __init__(self, fid='6ff3', sfid=None, name='EF.eDPDGId', desc='Home ePDG Identifier', **kwargs):
+    def __init__(self, fid='6ff3', sfid=None, name='EF.ePDGId', desc='Home ePDG Identifier', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_ePDGId.ePDGId
 
