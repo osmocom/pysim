@@ -979,7 +979,9 @@ if __name__ == '__main__':
             " it should also be noted that some readers may behave strangely when no card")
         print(" is inserted.)")
         print("")
-        app = PysimApp(None, None, sl, ch, opts.script)
+        if opts.script:
+            print("will not execute startup script due to card initialization errors!")
+        app = PysimApp(None, None, sl, ch)
 
     # If the user supplies an ADM PIN at via commandline args authenticate
     # immediately so that the user does not have to use the shell commands
