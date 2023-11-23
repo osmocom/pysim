@@ -55,14 +55,7 @@ def init_card(sl: LinkBase) -> Tuple[RuntimeState, SimCardBase]:
     # Wait up to three seconds for a card in reader and try to detect
     # the card type.
     print("Waiting for card...")
-    try:
-        sl.wait_for_card(3)
-    except NoCardError:
-        print("No card detected!")
-        return None, None
-    except:
-        print("Card not readable!")
-        return None, None
+    sl.wait_for_card(3)
 
     generic_card = False
     card = card_detect(scc)
@@ -73,6 +66,10 @@ def init_card(sl: LinkBase) -> Tuple[RuntimeState, SimCardBase]:
 
     profile = CardProfile.pick(scc)
     if profile is None:
+        # It is not an unrecoverable error in case profile detection fails. It
+        # just means that pySim was unable to recognize the card profile. This
+        # may happen in particular with unprovisioned cards that do not have
+        # any files on them yet.
         print("Unsupported card type!")
         return None, card
 
