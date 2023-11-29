@@ -237,10 +237,15 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
     @cmd2.with_argparser(apdu_cmd_parser)
     def do_apdu(self, opts):
         """Send a raw APDU to the card, and print SW + Response.
-        DANGEROUS: pySim-shell will not know any card state changes, and
-        not continue to work as expected if you e.g. select a different
-        file."""
-        data, sw = self.lchan.scc._tp.send_apdu(opts.APDU)
+        CAUTION: this command bypasses the logical channel handling of pySim-shell and card state changes are not
+        tracked. Dpending on the raw APDU sent, pySim-shell may not continue to work as expected if you e.g. select
+        a different file."""
+
+        # When sending raw APDUs we access the scc object through _scc member of the card object. It should also be
+        # noted that the apdu command plays an exceptional role since it is the only card accessing command that
+        # can be executed without the presence of a runtime state (self.rs) object. However, this also means that
+        # self.lchan is also not present (see method equip).
+        data, sw = self.card._scc._tp.send_apdu(opts.APDU)
         if data:
             self.poutput("SW: %s, RESP: %s" % (sw, data))
         else:
