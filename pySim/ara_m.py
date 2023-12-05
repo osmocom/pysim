@@ -295,7 +295,7 @@ class ADF_ARAM(CardADF):
     @staticmethod
     def get_config(tp, v_major=0, v_minor=0, v_patch=1):
         cmd_do = DeviceConfigDO()
-        cmd_do.from_dict([{'DeviceInterfaceVersionDO': {
+        cmd_do.from_dict([{'device_interface_version_do': {
                          'major': v_major, 'minor': v_minor, 'patch': v_patch}}])
         return ADF_ARAM.xceive_apdu_tlv(tp, '80cadf21', cmd_do, ResponseAramConfigDO)
 
