@@ -435,8 +435,12 @@ def flatten_dict_lists(inp):
                 return False
         return True
 
+    def are_elements_unique(lod):
+        set_of_keys = set([list(x.keys())[0] for x in lod])
+        return len(lod) == len(set_of_keys)
+
     if isinstance(inp, list):
-        if are_all_elements_dict(inp):
+        if are_all_elements_dict(inp) and are_elements_unique(inp):
             # flatten into one shared dict
             newdict = {}
             for e in inp:
