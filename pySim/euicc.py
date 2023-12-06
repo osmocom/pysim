@@ -206,12 +206,14 @@ class ProfileInfoListResp(BER_TLV_IE, tag=0xbf2d, nested=[ProfileInfoSeq, Profil
     pass
 
 # SGP.22 Section 5.7.16:: EnableProfile
-class RefreshFlag(BER_TLV_IE, tag=0x88): # FIXME
+class RefreshFlag(BER_TLV_IE, tag=0x81): # FIXME
     _construct = Int8ub # FIXME
 class EnableResult(BER_TLV_IE, tag=0x80):
     _construct = Enum(Int8ub, ok=0, iccidOrAidNotFound=1, profileNotInDisabledState=2,
                       disallowedByPolicy=3, wrongProfileReenabling=4, catBusy=5, undefinedError=127)
-class EnableProfileReq(BER_TLV_IE, tag=0xbf31, nested=[IsdpAid, Iccid, RefreshFlag]):
+class ProfileIdentifier(BER_TLV_IE, tag=0xa0, nested=[IsdpAid, Iccid]):
+    pass
+class EnableProfileReq(BER_TLV_IE, tag=0xbf31, nested=[ProfileIdentifier, RefreshFlag]):
     pass
 class EnableProfileResp(BER_TLV_IE, tag=0xbf31, nested=[EnableResult]):
     pass
@@ -220,7 +222,7 @@ class EnableProfileResp(BER_TLV_IE, tag=0xbf31, nested=[EnableResult]):
 class DisableResult(BER_TLV_IE, tag=0x80):
     _construct = Enum(Int8ub, ok=0, iccidOrAidNotFound=1, profileNotInEnabledState=2,
                       disallowedByPolicy=3, catBusy=5, undefinedError=127)
-class DisableProfileReq(BER_TLV_IE, tag=0xbf32, nested=[IsdpAid, Iccid, RefreshFlag]):
+class DisableProfileReq(BER_TLV_IE, tag=0xbf32, nested=[ProfileIdentifier, RefreshFlag]):
     pass
 class DisableProfileResp(BER_TLV_IE, tag=0xbf32, nested=[DisableResult]):
     pass
@@ -229,7 +231,7 @@ class DisableProfileResp(BER_TLV_IE, tag=0xbf32, nested=[DisableResult]):
 class DeleteResult(BER_TLV_IE, tag=0x80):
     _construct = Enum(Int8ub, ok=0, iccidOrAidNotFound=1, profileNotInDisabledState=2,
                       disallowedByPolicy=3, undefinedError=127)
-class DeleteProfileReq(BER_TLV_IE, tag=0xbf33, nested=[IsdpAid, Iccid]):
+class DeleteProfileReq(BER_TLV_IE, tag=0xbf33, nested=[ProfileIdentifier]):
     pass
 class DeleteProfileResp(BER_TLV_IE, tag=0xbf33, nested=[DeleteResult]):
     pass
@@ -404,13 +406,11 @@ class ADF_ISDR(CardADF):
         @cmd2.with_argparser(en_prof_parser)
         def do_enable_profile(self, opts):
             """Perform an ES10c EnableProfile function."""
-            ep_cmd_contents = []
             if opts.isdp_aid:
-                ep_cmd_contents.append(IsdpAid(decoded=opts.isdp_aid))
+                p_id = ProfileIdentifier(children=[IsdpAid(decoded=opts.isdp_aid)])
             if opts.iccid:
-                ep_cmd_contents.append(Iccid(decoded=opts.iccid))
-            if opts.refresh_required:
-                ep_cmd_contents.append(RefreshFlag())
+                p_id = ProfileIdentifier(children=[Iccid(decoded=opts.iccid)])
+            ep_cmd_contents = [p_id, RefreshFlag(decoded=opts.refresh_required)]
             ep_cmd = EnableProfileReq(children=ep_cmd_contents)
             ep = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, ep_cmd, EnableProfileResp)
             d = ep.to_dict()
@@ -425,13 +425,11 @@ class ADF_ISDR(CardADF):
         @cmd2.with_argparser(dis_prof_parser)
         def do_disable_profile(self, opts):
             """Perform an ES10c DisableProfile function."""
-            dp_cmd_contents = []
             if opts.isdp_aid:
-                dp_cmd_contents.append(IsdpAid(decoded=opts.isdp_aid))
+                p_id = ProfileIdentifier(children=[IsdpAid(decoded=opts.isdp_aid)])
             if opts.iccid:
-                dp_cmd_contents.append(Iccid(decoded=opts.iccid))
-            if opts.refresh_required:
-                dp_cmd_contents.append(RefreshFlag())
+                p_id = ProfileIdentifier(children=[Iccid(decoded=opts.iccid)])
+            dp_cmd_contents = [p_id, RefreshFlag(decoded=opts.refresh_required)]
             dp_cmd = DisableProfileReq(children=dp_cmd_contents)
             dp = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, dp_cmd, DisableProfileResp)
             d = dp.to_dict()
@@ -445,11 +443,11 @@ class ADF_ISDR(CardADF):
         @cmd2.with_argparser(del_prof_parser)
         def do_delete_profile(self, opts):
             """Perform an ES10c DeleteProfile function."""
-            dp_cmd_contents = []
             if opts.isdp_aid:
-                dp_cmd_contents.append(IsdpAid(decoded=opts.isdp_aid))
+                p_id = ProfileIdentifier(children=[IsdpAid(decoded=opts.isdp_aid)])
             if opts.iccid:
-                dp_cmd_contents.append(Iccid(decoded=opts.iccid))
+                p_id = ProfileIdentifier(children=[Iccid(decoded=opts.iccid)])
+            dp_cmd_contents = [p_id]
             dp_cmd = DeleteProfileReq(children=dp_cmd_contents)
             dp = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, dp_cmd, DeleteProfileResp)
             d = dp.to_dict()
