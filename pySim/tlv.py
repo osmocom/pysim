@@ -87,7 +87,7 @@ class Transcodable(abc.ABC):
     def to_bytes(self) -> bytes:
         """Convert from internal representation to binary bytes.  Store the binary result
         in the internal state and return it."""
-        if not self.decoded:
+        if self.decoded == None:
             do = b''
         elif self._construct:
             do = self._construct.build(self.decoded, total_len=None)
