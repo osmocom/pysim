@@ -256,6 +256,12 @@ class RuntimeLchan:
                 "Cannot select unknown file by name %s, only hexadecimal 4 digit FID is allowed" % fid)
 
         try:
+            # We access the card through the select_file method of the scc object.
+            # If we succeed, we know that the file exists on the card and we may
+            # proceed with creating a new CardEF object in the local file model at
+            # run time. In case the file does not exist on the card, we just abort.
+            # The state on the card (selected file/application) wont't be changed,
+            # so we do not have to update any state in that case.
             (data, sw) = self.scc.select_file(fid)
         except SwMatchError as swm:
             k = self.interpret_sw(swm.sw_actual)
