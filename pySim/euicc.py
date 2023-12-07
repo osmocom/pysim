@@ -245,11 +245,11 @@ class GetEuiccData(BER_TLV_IE, tag=0xbf3e, nested=[TagList, EidValue]):
 # SGP.22 Section 5.7.21: ES10c SetNickname
 class SnrProfileNickname(BER_TLV_IE, tag=0x8f):
     _construct = Utf8Adapter(GreedyBytes)
-class SetNicknameReq(BER_TLV_IE, tag=0xbf29, children=[Iccid, SnrProfileNickname]):
+class SetNicknameReq(BER_TLV_IE, tag=0xbf29, nested=[Iccid, SnrProfileNickname]):
     pass
 class SetNicknameResult(BER_TLV_IE, tag=0x80):
     _construct = Enum(Int8ub, ok=0, iccidNotFound=1, undefinedError=127)
-class SetNicknameResp(BER_TLV_IE, tag=0xbf29, children=[SetNicknameResult]):
+class SetNicknameResp(BER_TLV_IE, tag=0xbf29, nested=[SetNicknameResult]):
     pass
 
 # SGP.32 Section 5.9.10: ES10b: GetCerts
