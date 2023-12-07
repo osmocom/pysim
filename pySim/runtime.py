@@ -64,7 +64,7 @@ class RuntimeState:
                     self.mf.add_file(f)
 
         # go back to MF before the next steps (addon probing might have changed DF)
-        self.card._scc.select_file('3F00')
+        self.lchan[0].select('MF')
 
         # add application ADFs + MF-files from profile
         apps = self._match_applications()
