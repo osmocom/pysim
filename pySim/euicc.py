@@ -149,7 +149,7 @@ class SeqNumber(BER_TLV_IE, tag=0x80):
 class NotificationAddress(BER_TLV_IE, tag=0x82):
     _construct = Utf8Adapter(GreedyBytes)
 class Iccid(BER_TLV_IE, tag=0x5a):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = BcdAdapter(GreedyBytes)
 class NotificationMetadata(BER_TLV_IE, tag=0xbf2f, nested=[SeqNumber, ProfileMgmtOperation,
                                                            NotificationAddress, Iccid]):
     pass
