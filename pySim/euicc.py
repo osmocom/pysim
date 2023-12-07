@@ -297,7 +297,7 @@ class ADF_ISDR(CardADF):
     def store_data(scc: SimCardCommands, tx_do: Hexstr) -> Tuple[Hexstr, SwHexstr]:
         """Perform STORE DATA according to Table 47+48 in Section 5.7.2 of SGP.22.
         Only single-block store supported for now."""
-        capdu = '%sE29100%02u%s' % (scc.cla4lchan('80'), len(tx_do)//2, tx_do)
+        capdu = '%sE29100%02x%s' % (scc.cla4lchan('80'), len(tx_do)//2, tx_do)
         return scc._tp.send_apdu_checksw(capdu)
 
     @staticmethod
