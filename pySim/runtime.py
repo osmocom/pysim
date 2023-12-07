@@ -170,11 +170,13 @@ class RuntimeLchan:
     def __init__(self, lchan_nr: int, rs: RuntimeState):
         self.lchan_nr = lchan_nr
         self.rs = rs
+        self.scc = self.rs.card._scc.fork_lchan(lchan_nr)
+
+        # File reference data
         self.selected_file = self.rs.mf
         self.selected_adf = None
         self.selected_file_fcp = None
         self.selected_file_fcp_hex = None
-        self.scc = self.rs.card._scc.fork_lchan(lchan_nr)
 
     def add_lchan(self, lchan_nr: int) -> 'RuntimeLchan':
         """Add a new logical channel from the current logical channel. Just affects
