@@ -255,6 +255,8 @@ class RuntimeLchan:
             raise ValueError(
                 "Cannot select unknown file by name %s, only hexadecimal 4 digit FID is allowed" % fid)
 
+        self._select_pre(cmd_app)
+
         try:
             # We access the card through the select_file method of the scc object.
             # If we succeed, we know that the file exists on the card and we may
@@ -264,6 +266,7 @@ class RuntimeLchan:
             # so we do not have to update any state in that case.
             (data, sw) = self.scc.select_file(fid)
         except SwMatchError as swm:
+            self._select_post(cmd_app)
             k = self.interpret_sw(swm.sw_actual)
             if not k:
                 raise(swm)
@@ -282,8 +285,8 @@ class RuntimeLchan:
                                desc="elementary file, manually added at runtime")
 
         self.selected_file.add_files([f])
-        self.selected_file = f
-        return select_resp, data
+
+        self._select_post(cmd_app, f, data)
 
     def _select_pre(self, cmd_app):
         # unregister commands of old file
@@ -291,7 +294,17 @@ class RuntimeLchan:
             for c in self.selected_file.shell_commands:
                 cmd_app.unregister_command_set(c)
 
-    def _select_post(self, cmd_app):
+    def _select_post(self, cmd_app, file:Optional[CardFile] = None, select_resp_data = None):
+        # we store some reference data (see above) about the currently selected file.
+        # This data must be updated after every select.
+        if file:
+            self.selected_file = file
+            if isinstance(file, CardADF):
+                self.selected_adf = file
+            if select_resp_data:
+                self.selected_file_fcp_hex = select_resp_data
+                self.selected_file_fcp = self.selected_file.decode_select_response(select_resp_data)
+
         # register commands of new file
         if cmd_app and self.selected_file.shell_commands:
             for c in self.selected_file.shell_commands:
@@ -308,22 +321,31 @@ class RuntimeLchan:
         inter_path = self.selected_file.build_select_path_to(file)
         if not inter_path:
             raise RuntimeError('Cannot determine path from %s to %s' % (self.selected_file, file))
-
         self._select_pre(cmd_app)
 
-        for p in inter_path:
+        # be sure the variables that we pass to _select_post contain valid values.
+        selected_file = self.selected_file
+        data = self.selected_file_fcp_hex
+
+        for f in inter_path:
             try:
-                if isinstance(p, CardADF):
-                    (data, sw) = self.rs.card.select_adf_by_aid(p.aid, scc=self.scc)
-                    self.selected_adf = p
+                # We now directly accessing the card to perform the selection. This
+                # will change the state of the card, so we must take care to update
+                # the local state (lchan) as well. This is done in the method
+                # _select_post. It should be noted that the caller must always use
+                # the methods select_file or select. The caller must not access the
+                # card directly since this would lead into an incoherence of the
+                # card state and the state of the lchan.
+                if isinstance(f, CardADF):
+                    (data, sw) = self.rs.card.select_adf_by_aid(f.aid, scc=self.scc)
                 else:
-                    (data, sw) = self.scc.select_file(p.fid)
-                self.selected_file = p
+                    (data, sw) = self.scc.select_file(f.fid)
+                selected_file = f
             except SwMatchError as swm:
-                self._select_post(cmd_app)
+                self._select_post(cmd_app, selected_file, data)
                 raise(swm)
 
-        self._select_post(cmd_app)
+        self._select_post(cmd_app, f, data)
 
     def select(self, name: str, cmd_app=None):
         """Select a file (EF, DF, ADF, MF, ...).
@@ -332,9 +354,11 @@ class RuntimeLchan:
             name : Name of file to select
             cmd_app : Command Application State (for unregistering old file commands)
         """
+        # if any intermediate step fails, we must be able to go back where we were
+        prev_sel_file = self.selected_file
+
         # handling of entire paths with multiple directories/elements
         if '/' in name:
-            prev_sel_file = self.selected_file
             pathlist = name.split('/')
             # treat /DF.GSM/foo like MF/DF.GSM/foo
             if pathlist[0] == '':
@@ -342,42 +366,28 @@ class RuntimeLchan:
             try:
                 for p in pathlist:
                     self.select(p, cmd_app)
-                return
+                return self.selected_file_fcp
             except Exception as e:
-                # if any intermediate step fails, go back to where we were
                 self.select_file(prev_sel_file, cmd_app)
                 raise e
 
+        # we are now in the directory where the target file is located
+        # so we can now refer to the get_selectables() method to get the
+        # file object and select it using select_file()
         sels = self.selected_file.get_selectables()
         if is_hex(name):
             name = name.lower()
 
-        self._select_pre(cmd_app)
+        try:
+            if name in sels:
+                self.select_file(sels[name], cmd_app)
+            else:
+                self.probe_file(name, cmd_app)
+        except Exception as e:
+            self.select_file(prev_sel_file, cmd_app)
+            raise e
 
-        if name in sels:
-            f = sels[name]
-            try:
-                if isinstance(f, CardADF):
-                    (data, sw) = self.rs.card.select_adf_by_aid(f.aid, scc=self.scc)
-                    self.selected_adf = f
-                else:
-                    (data, sw) = self.scc.select_file(f.fid)
-                self.selected_file = f
-            except SwMatchError as swm:
-                k = self.interpret_sw(swm.sw_actual)
-                if not k:
-                    raise(swm)
-                raise RuntimeError("%s: %s - %s" % (swm.sw_actual, k[0], k[1]))
-            select_resp = f.decode_select_response(data)
-        else:
-            (select_resp, data) = self.probe_file(name, cmd_app)
-
-        # store the raw + decoded FCP for later reference
-        self.selected_file_fcp_hex = data
-        self.selected_file_fcp = select_resp
-
-        self._select_post(cmd_app)
-        return select_resp
+        return self.selected_file_fcp
 
     def status(self):
         """Request STATUS (current selected file FCP) from card."""
