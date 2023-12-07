@@ -110,6 +110,12 @@ class RuntimeState:
         # probe for those applications
         for f in sorted(set(apps_profile) - set(apps_taken), key=str):
             try:
+                # we can not use the lchan provided methods select, or select_file
+                # since those method work on an already finished file model. At
+                # this point we are still in the initialization process, so it is
+                # no problem when we access the card object directly without caring
+                # about updating other states. For normal selects at runtime, the
+                # caller must use the lchan provided methods select or select_file!
                 data, sw = self.card.select_adf_by_aid(f.aid)
                 self.selected_adf = f
                 if sw == "9000":
