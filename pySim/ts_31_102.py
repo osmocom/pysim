@@ -873,9 +873,13 @@ class EF_IPS(CyclicEF):
 
 # TS 31.102 Section 4.2.103
 class EF_ePDGId(TransparentEF):
-    class ePDGId(BER_TLV_IE, tag=0x80, nested=[]):
+    _test_de_encode = [
+        ( '801100657064672e6f736d6f636f6d2e6f7267', {'e_pdg_id': {"type_of_ePDG_address": "FQDN", "ePDG_address" : "epdg.osmocom.org" } } ),
+        ( '800501c0a8a001', {'e_pdg_id': {"type_of_ePDG_address": "IPv4", "ePDG_address" : "c0a8a001" } } ),
+    ]
+    class ePDGId(BER_TLV_IE, tag=0x80):
         _construct = Struct('type_of_ePDG_address'/Enum(Byte, FQDN=0, IPv4=1, IPv6=2),
-                            'ePDG_address'/Switch(this.type_of_address,
+                            'ePDG_address'/Switch(this.type_of_ePDG_address,
                                                   {'FQDN': Utf8Adapter(GreedyBytes),
                                                    'IPv4': HexAdapter(GreedyBytes),
                                                    'IPv6': HexAdapter(GreedyBytes)}))
@@ -886,7 +890,11 @@ class EF_ePDGId(TransparentEF):
 
 # TS 31.102 Section 4.2.104
 class EF_ePDGSelection(TransparentEF):
-    class ePDGSelection(BER_TLV_IE, tag=0x80, nested=[]):
+    _test_de_encode = [
+        ( '80060001f1000100', {'e_pdg_selection': [{'plmn': '00101f', 'epdg_priority': 1, 'epdg_fqdn_format': 'operator_identified' }] }),
+        ( '800600011000a001', {'e_pdg_selection': [{'plmn': '001001', 'epdg_priority': 160, 'epdg_fqdn_format': 'location_based' }] }),
+    ]
+    class ePDGSelection(BER_TLV_IE, tag=0x80):
         _construct = GreedyRange(Struct('plmn'/BcdAdapter(Bytes(3)),
                                         'epdg_priority'/Int16ub,
                                         'epdg_fqdn_format'/Enum(Int8ub, operator_identified=0, location_based=1)))
