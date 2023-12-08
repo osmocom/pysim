@@ -20,7 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pySim.utils import Hexstr, rpad, enc_plmn
+from pySim.utils import Hexstr, rpad, enc_plmn, h2i, i2s, s2h
 from pySim.utils import dec_xplmn_w_act, dec_xplmn, dec_mcc_from_plmn, dec_mnc_from_plmn
 
 def hexstr_to_Nbytearr(s, nbytes):
@@ -210,3 +210,123 @@ def dec_ePDGSelection(sixhexbytes):
     res['epdg_priority'] = epdg_priority_str
     res['epdg_fqdn_format'] = epdg_fqdn_format_str == '00' and 'Operator Identifier FQDN' or 'Location based FQDN'
     return res
+
+
+def first_TLV_parser(bytelist):
+    '''
+    first_TLV_parser([0xAA, 0x02, 0xAB, 0xCD, 0xFF, 0x00]) -> (170, 2, [171, 205])
+
+    parses first TLV format record in a list of bytelist
+    returns a 3-Tuple: Tag, Length, Value
+    Value is a list of bytes
+    parsing of length is ETSI'style 101.220
+    '''
+    Tag = bytelist[0]
+    if bytelist[1] == 0xFF:
+        Len = bytelist[2]*256 + bytelist[3]
+        Val = bytelist[4:4+Len]
+    else:
+        Len = bytelist[1]
+        Val = bytelist[2:2+Len]
+    return (Tag, Len, Val)
+
+
+def TLV_parser(bytelist):
+    '''
+    TLV_parser([0xAA, ..., 0xFF]) -> [(T, L, [V]), (T, L, [V]), ...]
+
+    loops on the input list of bytes with the "first_TLV_parser()" function
+    returns a list of 3-Tuples
+    '''
+    ret = []
+    while len(bytelist) > 0:
+        T, L, V = first_TLV_parser(bytelist)
+        if T == 0xFF:
+            # padding bytes
+            break
+        ret.append((T, L, V))
+        # need to manage length of L
+        if L > 0xFE:
+            bytelist = bytelist[L+4:]
+        else:
+            bytelist = bytelist[L+2:]
+    return ret
+
+
+def dec_addr_tlv(hexstr):
+    """
+    Decode hex string to get EF.P-CSCF Address or EF.ePDGId or EF.ePDGIdEm.
+    See 3GPP TS 31.102 version 13.4.0 Release 13, section 4.2.8, 4.2.102 and 4.2.104.
+    """
+
+    # Convert from hex str to int bytes list
+    addr_tlv_bytes = h2i(hexstr)
+
+    # Get list of tuples containing parsed TLVs
+    tlvs = TLV_parser(addr_tlv_bytes)
+
+    for tlv in tlvs:
+        # tlv = (T, L, [V])
+        # T = Tag
+        # L = Length
+        # [V] = List of value
+
+        # Invalid Tag value scenario
+        if tlv[0] != 0x80:
+            continue
+
+        # Empty field - Zero length
+        if tlv[1] == 0:
+            continue
+
+        # Uninitialized field
+        if all([v == 0xff for v in tlv[2]]):
+            continue
+
+        # First byte in the value has the address type
+        addr_type = tlv[2][0]
+        # TODO: Support parsing of IPv6
+        # Address Type: 0x00 (FQDN), 0x01 (IPv4), 0x02 (IPv6), other (Reserved)
+        if addr_type == 0x00:  # FQDN
+            # Skip address tye byte i.e. first byte in value list
+            content = tlv[2][1:]
+            return (i2s(content), '00')
+
+        elif addr_type == 0x01:  # IPv4
+            # Skip address tye byte i.e. first byte in value list
+            # Skip the unused byte in Octect 4 after address type byte as per 3GPP TS 31.102
+            ipv4 = tlv[2][2:]
+            content = '.'.join(str(x) for x in ipv4)
+            return (content, '01')
+        else:
+            raise ValueError("Invalid address type")
+
+    return (None, None)
+
+
+def enc_addr_tlv(addr, addr_type='00'):
+    """
+    Encode address TLV object used in EF.P-CSCF Address, EF.ePDGId and EF.ePDGIdEm.
+    See 3GPP TS 31.102 version 13.4.0 Release 13, section 4.2.8, 4.2.102 and 4.2.104.
+
+    Default values:
+      - addr_type: 00 - FQDN format of Address
+    """
+
+    s = ""
+
+    # TODO: Encoding of IPv6 address
+    if addr_type == '00':  # FQDN
+        hex_str = s2h(addr)
+        s += '80' + ('%02x' % ((len(hex_str)//2)+1)) + '00' + hex_str
+    elif addr_type == '01':  # IPv4
+        ipv4_list = addr.split('.')
+        ipv4_str = ""
+        for i in ipv4_list:
+            ipv4_str += ('%02x' % (int(i)))
+
+        # Unused bytes shall be set to 'ff'. i.e 4th Octet after Address Type is not used
+        # IPv4 Address is in octet 5 to octet 8 of the TLV data object
+        s += '80' + ('%02x' % ((len(ipv4_str)//2)+2)) + '01' + 'ff' + ipv4_str
+
+    return s
