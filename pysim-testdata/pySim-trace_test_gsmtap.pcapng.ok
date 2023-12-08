@@ -343,7 +343,7 @@ CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
 ===============================
 01 READ BINARY      MF/ADF.ISIM/EF.DOMAIN               -        9000 {'domain': ''}
 ===============================
-01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               01       9000 {'addr': None, 'addr_type': None}
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               01       9000 {'pcscf_address': None}
 ===============================
 01 READ BINARY      MF/ADF.ISIM/EF.IST                  -        9000 {1: {'activated': True, 'description': 'P-CSCF address'}, 2: {'activated': False, 'description': 'Generic Bootstrapping Architecture (GBA)'}, 3: {'activated': False, 'description': 'HTTP Digest'}, 4: {'activated': True, 'description': 'GBA-based Local Key Establishment Mechanism'}, 5: {'activated': True, 'description': 'Support of P-CSCF discovery for IMS Local Break Out'}, 6: {'activated': False, 'description': 'Short Message Storage (SMS)'}, 7: {'activated': False, 'description': 'Short Message Status Reports (SMSR)'}, 8: {'activated': False, 'description': 'Support for SM-over-IP including data download via SMS-PP as defined in TS 31.111 [31]'}, 9: {'activated': False, 'description': 'Communication Control for IMS by ISIM'}, 10: {'activated': True, 'description': 'Support of UICC access to IMS'}, 11: {'activated': False, 'description': 'URI support by UICC'}, 12: {'activated': False, 'description': 'Media Type support'}, 13: {'activated': False, 'description': 'IMS call disconnection cause'}, 14: {'activated': False, 'description': 'URI support for MO SHORT MESSAGE CONTROL'}, 15: {'activated': False, 'description': 'MCPTT'}, 16: {'activated': False, 'description': 'URI support for SMS-PP DOWNLOAD as defined in 3GPP TS 31.111 [31]'}, 17: {'activated': False, 'description': 'From Preferred'}, 18: {'activated': False, 'description': 'IMS configuration data'}, 19: {'activated': False, 'description': 'XCAP Configuration Data'}, 20: {'activated': False, 'description': 'WebRTC URI'}, 21: {'activated': False, 'description': 'MuD and MiD configuration data'}, 22: {'activated': False}, 23: {'activated': False}, 24: {'activated': False}}
 ===============================
@@ -351,7 +351,7 @@ CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
 ===============================
 01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 02       9000 {'impu': None}
 ===============================
-01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               02       9000 {'addr': None, 'addr_type': None}
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               02       9000 {'pcscf_address': {'type_of_address': 255, 'address': None}}
 ===============================
 00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
 ===============================
@@ -359,7 +359,7 @@ CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
 ===============================
 01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 03       9000 {'impu': None}
 ===============================
-01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               03       9000 {'addr': None, 'addr_type': None}
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               03       9000 {'pcscf_address': {'type_of_address': 255, 'address': None}}
 ===============================
 00 UPDATE BINARY    MF/ADF.USIM/EF.CBMI                 -        9000 [[65535], [65535], [65535], [65535], [65535], [65535], [65535], [65535], [65535], [65535]]
 ===============================
@@ -393,25 +393,25 @@ CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
 ===============================
 01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 04       9000 {'impu': None}
 ===============================
-01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               04       9000 {'addr': None, 'addr_type': None}
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               04       9000 {'pcscf_address': {'type_of_address': 255, 'address': None}}
 ===============================
 00 UPDATE BINARY    MF/ADF.USIM/EF.CBMIR                -        9000 [[{'lower': 65535, 'upper': 65535}], [{'lower': 65535, 'upper': 65535}], [{'lower': 65535, 'upper': 65535}], [{'lower': 65535, 'upper': 65535}], [{'lower': 65535, 'upper': 65535}]]
 ===============================
 01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 05       9000 {'impu': None}
 ===============================
-01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               05       9000 {'addr': None, 'addr_type': None}
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               05       9000 {'pcscf_address': {'type_of_address': 255, 'address': None}}
 ===============================
 01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 06       9000 {'impu': None}
 ===============================
-01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               06       9000 {'addr': None, 'addr_type': None}
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               06       9000 {'pcscf_address': {'type_of_address': 255, 'address': None}}
 ===============================
 01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 07       9000 {'impu': None}
 ===============================
-01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               07       9000 {'addr': None, 'addr_type': None}
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               07       9000 {'pcscf_address': {'type_of_address': 255, 'address': None}}
 ===============================
 01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 08       9000 {'impu': None}
 ===============================
-01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               08       9000 {'addr': None, 'addr_type': None}
+01 READ RECORD      MF/ADF.ISIM/EF.P-CSCF               08       9000 {'pcscf_address': {'type_of_address': 255, 'address': None}}
 ===============================
 00 MANAGE CHANNEL                                       02       9000 {'mode': 'open_channel', 'created_channel': 2}
 ===============================

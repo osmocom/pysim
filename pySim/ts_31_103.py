@@ -135,19 +135,18 @@ class EF_IST(EF_UServiceTable):
 class EF_PCSCF(LinFixedEF):
     _test_de_encode = [
         ( '802c0070637363662e696d732e6d6e633030302e6d63633733382e7075622e336770706e6574776f726b2e6f7267',
-          { "addr": "pcscf.ims.mnc000.mcc738.pub.3gppnetwork.org", "addr_type": "00" } ),
+          {'pcscf_address': { "address": "pcscf.ims.mnc000.mcc738.pub.3gppnetwork.org", "type_of_address": "FQDN" } } ),
     ]
+    class PcscfAddress(BER_TLV_IE, tag=0x80):
+        _construct = Struct('type_of_address'/Enum(Byte, FQDN=0, IPv4=1, IPv6=2),
+                            'address'/Switch(this.type_of_address,
+                                             {'FQDN': Utf8Adapter(GreedyBytes),
+                                              'IPv4': Ipv4Adapter(GreedyBytes),
+                                              'IPv6': Ipv6Adapter(GreedyBytes)}))
+
     def __init__(self, fid='6f09', sfid=None, name='EF.P-CSCF', desc='P-CSCF Address', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
-
-    def _decode_record_hex(self, raw_hex, **kwargs):
-        addr, addr_type = dec_addr_tlv(raw_hex)
-        return {"addr": addr, "addr_type": addr_type}
-
-    def _encode_record_hex(self, json_in, **kwargs):
-        addr = json_in['addr']
-        addr_type = json_in['addr_type']
-        return enc_addr_tlv(addr, addr_type)
+        self._tlv = EF_PCSCF.PcscfAddress
 
 # TS 31.103 Section 4.2.9
 class EF_GBABP(TransparentEF):
