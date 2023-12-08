@@ -884,6 +884,17 @@ class EF_ePDGId(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_ePDGId.ePDGId
 
+# TS 31.102 Section 4.2.104
+class EF_ePDGSelection(TransparentEF):
+    class ePDGSelection(BER_TLV_IE, tag=0x80, nested=[]):
+        _construct = GreedyRange(Struct('plmn'/BcdAdapter(Bytes(3)),
+                                        'epdg_priority'/Int16ub,
+                                        'epdg_fqdn_format'/Enum(Int8ub, operator_identified=0, location_based=1)))
+
+    def __init__(self, fid='6ff4', sfid=None, name='EF.ePDGSelection', desc='ePDG Selection Information', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._tlv = EF_ePDGSelection.ePDGSelection
+
 # TS 31.102 Section 4.2.106
 class EF_FromPreferred(TransparentEF):
     def __init__(self, fid='6ff7', sfid=None, name='EF.FromPreferred', size=(1, 1),
@@ -1478,8 +1489,10 @@ class ADF_USIM(CardADF):
             # EF_IWL (IMEI(SV) White List)
             EF_IPS(),
             EF_ePDGId(service=(106, 107)),
-            # FIXME: from EF_ePDGSelection onwards
+            EF_ePDGSelection(service=(106, 107)),
             EF_ePDGId('6ff5', None, 'EF.ePDGIdEm', desc='Emergency ePDG Identifier', service=(110, 111)),
+            EF_ePDGSelection('6ff6', None, 'EF.ePDGSelectionEm',
+                             desc='ePDG Selection Information for Emergency Services', service=(110, 111)),
             EF_FromPreferred(service=114),
             EF_eAKA(),
             # FIXME: DF_SoLSA service=23
