@@ -314,6 +314,8 @@ def bertlv_parse_len(binary: bytes) -> Tuple[int, bytes]:
     else:
         num_len_oct = binary[0] & 0x7f
         length = 0
+        if len(binary) < num_len_oct + 1:
+            return (0, b'')
         for i in range(1, 1+num_len_oct):
             length <<= 8
             length |= binary[i]
