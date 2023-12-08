@@ -1479,6 +1479,7 @@ class ADF_USIM(CardADF):
             EF_IPS(),
             EF_ePDGId(service=(106, 107)),
             # FIXME: from EF_ePDGSelection onwards
+            EF_ePDGId('6ff5', None, 'EF.ePDGIdEm', desc='Emergency ePDG Identifier', service=(110, 111)),
             EF_FromPreferred(service=114),
             EF_eAKA(),
             # FIXME: DF_SoLSA service=23
