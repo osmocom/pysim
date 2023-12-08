@@ -875,14 +875,15 @@ class EF_IPS(CyclicEF):
 class EF_ePDGId(TransparentEF):
     _test_de_encode = [
         ( '801100657064672e6f736d6f636f6d2e6f7267', {'e_pdg_id': {"type_of_ePDG_address": "FQDN", "ePDG_address" : "epdg.osmocom.org" } } ),
-        ( '800501c0a8a001', {'e_pdg_id': {"type_of_ePDG_address": "IPv4", "ePDG_address" : "c0a8a001" } } ),
+        ( '800501c0a8a001', {'e_pdg_id': {"type_of_ePDG_address": "IPv4", "ePDG_address" : "192.168.160.1" } } ),
+        ( '80110220010db8000000000000000000000023', {'e_pdg_id': {"type_of_ePDG_address": "IPv6", "ePDG_address" : "2001:db8::23" } } ),
     ]
     class ePDGId(BER_TLV_IE, tag=0x80):
         _construct = Struct('type_of_ePDG_address'/Enum(Byte, FQDN=0, IPv4=1, IPv6=2),
                             'ePDG_address'/Switch(this.type_of_ePDG_address,
                                                   {'FQDN': Utf8Adapter(GreedyBytes),
-                                                   'IPv4': HexAdapter(GreedyBytes),
-                                                   'IPv6': HexAdapter(GreedyBytes)}))
+                                                   'IPv4': Ipv4Adapter(GreedyBytes),
+                                                   'IPv6': Ipv6Adapter(GreedyBytes)}))
 
     def __init__(self, fid='6ff3', sfid=None, name='EF.ePDGId', desc='Home ePDG Identifier', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)

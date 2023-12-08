@@ -7,6 +7,7 @@ from construct.lib import integertypes
 from pySim.utils import b2h, h2b, swap_nibbles
 import gsm0338
 import codecs
+import ipaddress
 
 """Utility code related to the integration of the 'construct' declarative parser."""
 
@@ -137,6 +138,32 @@ class GsmStringAdapter(Adapter):
 
     def _encode(self, obj, context, path):
         return obj.encode(self.codec, self.err)
+
+class Ipv4Adapter(Adapter):
+    """
+    Encoder converts from 4 bytes to string representation (A.B.C.D).
+    Decoder converts from string representation (A.B.C.D) to four bytes.
+    """
+    def _decode(self, obj, context, path):
+        ia = ipaddress.IPv4Address(obj)
+        return ia.compressed
+
+    def _encode(self, obj, context, path):
+        ia = ipaddress.IPv4Address(obj)
+        return ia.packed
+
+class Ipv6Adapter(Adapter):
+    """
+    Encoder converts from 16 bytes to string representation.
+    Decoder converts from string representation to 16 bytes.
+    """
+    def _decode(self, obj, context, path):
+        ia = ipaddress.IPv6Address(obj)
+        return ia.compressed
+
+    def _encode(self, obj, context, path):
+        ia = ipaddress.IPv6Address(obj)
+        return ia.packed
 
 
 def filter_dict(d, exclude_prefix='_'):
