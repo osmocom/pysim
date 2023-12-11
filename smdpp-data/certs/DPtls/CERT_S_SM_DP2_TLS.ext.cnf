@@ -1,0 +1,14 @@
+######################################################################################################################################################################
+# Extensions for a DPTLS
+keyUsage = critical, digitalSignature
+extendedKeyUsage = critical, serverAuth, clientAuth
+certificatePolicies = 2.23.146.1.2.1.3
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+
+# RID shall be aligend with SGP.23 value SM-DP+OID2 
+# DNS name shall be aligned with SGP.23 value #TEST_DP_ADDRESS2
+subjectAltName =  DNS:testsmdpplus2.example.com, RID:2.999.12
+
+crlDistributionPoints=URI:http://ci.test.example.com/CRL-A.crl, URI:http://ci.test.example.com/CRL-B.crl
+

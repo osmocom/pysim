@@ -1,0 +1,25 @@
+#openssl x509 extfile params
+extensions = extend
+# This prevent the user to be prompted for values
+prompt = no
+
+distinguished_name = dn-param
+[dn-param] # DN fields
+CN = Test CI
+OU = TESTCERT
+O = RSPTEST
+C = IT
+
+# Extensions for the Test CI 
+[extend] # openssl extensions
+subjectKeyIdentifier = hash
+
+basicConstraints = critical, CA:true
+
+certificatePolicies=critical,2.23.146.1.2.1.0
+
+keyUsage =critical, keyCertSign, cRLSign
+
+subjectAltName = RID:2.999.1
+
+crlDistributionPoints=URI:http://ci.test.example.com/CRL-A.crl, URI:http://ci.test.example.com/CRL-B.crl

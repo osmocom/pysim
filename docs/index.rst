@@ -42,6 +42,7 @@ pySim consists of several parts:
    trace
    legacy
    library
+   osmo-smdpp
 
 
 Indices and tables
