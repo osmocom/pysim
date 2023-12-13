@@ -147,7 +147,7 @@ class CardFile:
             return inter_path
 
         """Build the relative sequence of files we need to traverse to get from us to 'target'."""
-        # special-case handling for selecting MF while we MF is selected
+        # special-case handling for selecting MF while the MF is selected
         if target == target.get_mf():
             return [target]
         cur_fqpath = self.fully_qualified_path_fobj()
