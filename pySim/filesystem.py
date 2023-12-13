@@ -136,6 +136,16 @@ class CardFile:
         return ret
 
     def build_select_path_to(self, target: 'CardFile') -> Optional[List['CardFile']]:
+
+        # special-case handling for applications. Applications may be selected
+        # any time from any location. If there is an ADF somewhere in the path,
+        # we may clip everything before that ADF.
+        def clip_path(inter_path):
+            for i in reversed(range(0, len(inter_path))):
+                if isinstance(inter_path[i], CardADF):
+                    return inter_path[i:]
+            return inter_path
+
         """Build the relative sequence of files we need to traverse to get from us to 'target'."""
         # special-case handling for selecting MF while we MF is selected
         if target == target.get_mf():
@@ -152,7 +162,7 @@ class CardFile:
                     for te2 in target_fqpath[i+1:]:
                         inter_path.append(te2)
                     # we found our common ancestor
-                    return inter_path[1:]
+                    return clip_path(inter_path[1:])
         return None
 
     def get_mf(self) -> Optional['CardMF']:
