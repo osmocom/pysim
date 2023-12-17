@@ -200,13 +200,16 @@ def normalize_construct(c):
     return r
 
 
-def parse_construct(c, raw_bin_data: bytes, length: typing.Optional[int] = None, exclude_prefix: str = '_'):
+def parse_construct(c, raw_bin_data: bytes, length: typing.Optional[int] = None, exclude_prefix: str = '_', context: dict = {}):
     """Helper function to wrap around normalize_construct() and filter_dict()."""
     if not length:
         length = len(raw_bin_data)
-    parsed = c.parse(raw_bin_data, total_len=length)
+    parsed = c.parse(raw_bin_data, total_len=length, **context)
     return normalize_construct(parsed)
 
+def build_construct(c, decoded_data, context: dict = {}):
+    """Helper function to handle total_len."""
+    return c.build(decoded_data, total_len=None, **context)
 
 # here we collect some shared / common definitions of data types
 LV = Prefixed(Int8ub, HexAdapter(GreedyBytes))
