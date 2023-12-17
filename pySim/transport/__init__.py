@@ -289,17 +289,15 @@ def init_reader(opts, **kwargs) -> LinkBase:
     """
     if opts.pcsc_dev is not None:
         from pySim.transport.pcsc import PcscSimLink
-        sl = PcscSimLink(opts.pcsc_dev, **kwargs)
+        sl = PcscSimLink(opts, **kwargs)
     elif opts.osmocon_sock is not None:
         from pySim.transport.calypso import CalypsoSimLink
-        sl = CalypsoSimLink(sock_path=opts.osmocon_sock, **kwargs)
+        sl = CalypsoSimLink(opts, **kwargs)
     elif opts.modem_dev is not None:
         from pySim.transport.modem_atcmd import ModemATCommandLink
-        sl = ModemATCommandLink(
-             device=opts.modem_dev, baudrate=opts.modem_baud, **kwargs)
+        sl = ModemATCommandLink(opts, **kwargs)
     else:  # Serial reader is default
         print("No reader/driver specified; falling back to default (Serial reader)")
         from pySim.transport.serial import SerialSimLink
-        sl = SerialSimLink(device=opts.device,
-                           baudrate=opts.baudrate, **kwargs)
+        sl = SerialSimLink(opts, **kwargs)
     return sl

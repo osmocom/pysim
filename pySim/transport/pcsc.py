@@ -34,18 +34,18 @@ from pySim.utils import h2i, i2h, Hexstr, ResTuple
 class PcscSimLink(LinkBase):
     """ pySim: PCSC reader transport link."""
 
-    def __init__(self, reader_number: int = 0, **kwargs):
+    def __init__(self, opts: argparse.Namespace = argparse.Namespace(pcsc_dev=0), **kwargs):
         super().__init__(**kwargs)
         if os.environ.get('PYSIM_INTEGRATION_TEST') == "1":
             print("Using PC/SC reader interface")
         else:
-            print("Using PC/SC reader number %u" % reader_number)
+            print("Using PC/SC reader number %u" % opts.pcsc_dev)
         r = readers()
-        if reader_number >= len(r):
-            raise ReaderError('No reader found for number %d' % reader_number)
-        self._reader = r[reader_number]
+        if opts.pcsc_dev >= len(r):
+            raise ReaderError('No reader found for number %d' % opts.pcsc_dev)
+        self._reader = r[opts.pcsc_dev]
         self._con = self._reader.createConnection()
-        self._reader_number = reader_number
+        self._reader_number = opts.pcsc_dev
 
     def __del__(self):
         try:

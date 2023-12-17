@@ -30,24 +30,24 @@ from pySim.utils import h2b, b2h, Hexstr, ResTuple
 class SerialSimLink(LinkBase):
     """ pySim: Transport Link for serial (RS232) based readers included with simcard"""
 
-    def __init__(self, device: str = '/dev/ttyUSB0', baudrate: int = 9600, rst: str = '-rts',
+    def __init__(self, opts = argparse.Namespace(device='/dev/ttyUSB0', baudrate=9600), rst: str = '-rts',
                  debug: bool = False, **kwargs):
         super().__init__(**kwargs)
         if os.environ.get('PYSIM_INTEGRATION_TEST') == "1":
             print("Using serial reader interface")
         else:
-            print("Using serial reader interface at port %s" % device)
-        if not os.path.exists(device):
-            raise ValueError("device file %s does not exist -- abort" % device)
+            print("Using serial reader interface at port %s" % opts.device)
+        if not os.path.exists(opts.device):
+            raise ValueError("device file %s does not exist -- abort" % opts.device)
         self._sl = serial.Serial(
-            port=device,
+            port=opts.device,
             parity=serial.PARITY_EVEN,
             bytesize=serial.EIGHTBITS,
             stopbits=serial.STOPBITS_TWO,
             timeout=1,
             xonxoff=0,
             rtscts=0,
-            baudrate=baudrate,
+            baudrate=opts.baudrate,
         )
         self._rst_pin = rst
         self._debug = debug

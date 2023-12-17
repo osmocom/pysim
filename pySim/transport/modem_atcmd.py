@@ -35,7 +35,10 @@ from pySim.exceptions import *
 class ModemATCommandLink(LinkBase):
     """Transport Link for 3GPP TS 27.007 compliant modems."""
 
-    def __init__(self, device: str = '/dev/ttyUSB0', baudrate: int = 115200, **kwargs):
+    def __init__(self, opts: argparse.Namespace = argparse.Namespace(modem_dev='/dev/ttyUSB0',
+                                                                     modem_baud=115200), **kwargs):
+        device = opts.modem_dev
+        baudrate = opts.modem_baud
         super().__init__(**kwargs)
         if os.environ.get('PYSIM_INTEGRATION_TEST') == "1":
             print("Using modem for Generic SIM Access (3GPP TS 27.007)")

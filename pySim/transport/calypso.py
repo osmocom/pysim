@@ -77,7 +77,8 @@ class L1CTLMessageSIM(L1CTLMessage):
 class CalypsoSimLink(LinkBase):
     """Transport Link for Calypso based phones."""
 
-    def __init__(self, sock_path: str = "/tmp/osmocom_l2", **kwargs):
+    def __init__(self, opts: argparse.Namespace = argparse.Namespace(osmocon_sock="/tmp/osmocom_l2"), **kwargs):
+        sock_path = opts.osmocon_sock
         super().__init__(**kwargs)
         if os.environ.get('PYSIM_INTEGRATION_TEST') == "1":
             print("Using Calypso-based (OsmocomBB) reader interface")
