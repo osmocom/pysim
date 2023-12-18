@@ -4,7 +4,9 @@ pySim-shell
 pySim-shell is an interactive command line shell for all kind of interactions with SIM cards,
 including classic GSM SIM, GSM-R SIM, UICC, USIM, ISIM, HPSIM and recently even eUICC.
 
-The interactive shell provides command for
+If you're familiar with Unix/Linux shells: Think of it like *the bash for SIM cards*.
+
+The pySim-shell interactive shell provides commands for
 
 * navigating the on-card filesystem hierarchy
 * authenticating with PINs such as ADM1
@@ -16,13 +18,30 @@ The interactive shell provides command for
  * decoded reading (display file data represented in human and machine readable JSON format)
  * decoded writing (encode from JSON to binary format, then write)
 
+* if your card supports it, and you have the related privileges: resizing, creating, enabling and disabling of
+  files
+
 By means of using the python ``cmd2`` module, various useful features improve usability:
 
 * history of commands (persistent across restarts)
 * output re-direction to files on your computer
-* output piping through external tools like 'grep'
+* output piping through external tools like ``grep``
 * tab completion of commands and SELECT-able files/directories
 * interactive help for all commands
+
+A typical interactive pySim workflow would look like this:
+
+* starting the program, specifying which smart card interface to use to talk to the card
+* verifying the PIN (if needed) or the ADM1 PIN in case you want to write/modify the card
+* selecting on-card application dedicated files like ADF.USIM and navigating the tree of DFs
+* reading and potentially modifying file contents, in raw binary (hex) or decoded JSON format
+
+Video Presentation
+------------------
+
+There is a `video recording of the presentation back when pySim-shell was originally released
+<https://media.ccc.de/v/osmodevcall-20210409-laforge-pysim-shell>`_.  While it is slightly dated, it should
+still provide a good introduction.
 
 Running pySim-shell
 -------------------
