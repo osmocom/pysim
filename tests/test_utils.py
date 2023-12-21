@@ -95,13 +95,13 @@ class DecTestCase(unittest.TestCase):
 		self.assertEqual(utils.dec_act("8000"), ["UTRAN"])
 
 	def testDecAct_onlyEUtran(self):
-		self.assertEqual(utils.dec_act("4000"), ["E-UTRAN"])
+		self.assertEqual(utils.dec_act("4000"), ["E-UTRAN NB-S1", "E-UTRAN WB-S1"])
 
 	def testDecAct_onlyNgRan(self):
 		self.assertEqual(utils.dec_act("0800"), ["NG-RAN"])
 
 	def testDecAct_onlyGsm(self):
-		self.assertEqual(utils.dec_act("0080"), ["GSM"])
+		self.assertEqual(utils.dec_act("0084"), ["GSM"])
 
 	def testDecAct_onlyGsmCompact(self):
 		self.assertEqual(utils.dec_act("0040"), ["GSM COMPACT"])
@@ -113,7 +113,7 @@ class DecTestCase(unittest.TestCase):
 		self.assertEqual(utils.dec_act("0010"), ["cdma2000 1xRTT"])
 
 	def testDecAct_allSet(self):
-		self.assertEqual(utils.dec_act("ffff"), ["UTRAN", "E-UTRAN WB-S1", "E-UTRAN NB-S1", "NG-RAN", "GSM", "GSM COMPACT", "cdma2000 HRPD", "cdma2000 1xRTT"])
+		self.assertEqual(utils.dec_act("ffff"), ['E-UTRAN NB-S1', 'E-UTRAN WB-S1', 'EC-GSM-IoT', 'GSM', 'GSM COMPACT', 'NG-RAN', 'UTRAN', 'cdma2000 1xRTT', 'cdma2000 HRPD'])
 
 	def testDecxPlmn_w_act(self):
 		expected = {'mcc': '295', 'mnc': '10', 'act': ["UTRAN"]}

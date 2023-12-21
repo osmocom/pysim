@@ -728,7 +728,7 @@ class EF_LOCIGPRS(TransparentEF):
 # TS 51.011 Section 10.3.35..37
 class EF_xPLMNwAcT(TransRecEF):
     _test_de_encode = [
-        ( '62F2104000', { "mcc": "262", "mnc": "01", "act": [ "E-UTRAN" ] } ),
+        ( '62F2104000', { "mcc": "262", "mnc": "01", "act": [ "E-UTRAN NB-S1", "E-UTRAN WB-S1" ] } ),
         ( '62F2108000', { "mcc": "262", "mnc": "01", "act": [ "UTRAN" ] } ),
     ]
     def __init__(self, fid='1234', sfid=None, name=None, desc=None, size=(40, None), rec_len=5, **kwargs):
@@ -763,18 +763,18 @@ class EF_xPLMNwAcT(TransRecEF):
         if 'cdma2000 1xRTT' in in_list:
             u16 |= 0x0010
         # E-UTRAN
-        if 'E-UTRAN' in in_list:
+        if 'E-UTRAN WB-S1' in in_list and 'E-UTRAN NB-S1' in in_list:
             u16 |= 0x4000
-        if 'E-UTRAN WB-S1' in in_list:
+        elif 'E-UTRAN WB-S1' in in_list:
             u16 |= 0x6000
-        if 'E-UTRAN NB-S1' in in_list:
+        elif 'E-UTRAN NB-S1' in in_list:
             u16 |= 0x5000
         # GSM mess
         if 'GSM' in in_list and 'EC-GSM-IoT' in in_list:
             u16 |= 0x008C
         elif 'GSM' in in_list:
             u16 |= 0x0084
-        elif 'EC-GSM-IuT' in in_list:
+        elif 'EC-GSM-IoT' in in_list:
             u16 |= 0x0088
         return '%04X' % (u16)
 

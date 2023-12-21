@@ -89,11 +89,11 @@ CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
 ===============================
 00 READ BINARY      MF/ADF.USIM/EF.HPPLMN               -        9000 5
 ===============================
-00 READ BINARY      MF/ADF.USIM/EF.HPLMNwAcT            -        9000 [{'mcc': '001', 'mnc': '01', 'act': ['UTRAN', 'E-UTRAN WB-S1', 'E-UTRAN NB-S1', 'NG-RAN', 'GSM', 'GSM COMPACT', 'cdma2000 HRPD', 'cdma2000 1xRTT']}, None, None, None, None, None, None, None, None, None, None, None]
+00 READ BINARY      MF/ADF.USIM/EF.HPLMNwAcT            -        9000 [{'mcc': '001', 'mnc': '01', 'act': ['E-UTRAN NB-S1', 'E-UTRAN WB-S1', 'EC-GSM-IoT', 'GSM', 'GSM COMPACT', 'NG-RAN', 'UTRAN', 'cdma2000 1xRTT', 'cdma2000 HRPD']}, None, None, None, None, None, None, None, None, None, None, None]
 ===============================
-00 READ BINARY      MF/ADF.USIM/EF.PLMNwAcT             -        9000 [{'mcc': '001', 'mnc': '01', 'act': ['UTRAN', 'E-UTRAN WB-S1', 'E-UTRAN NB-S1', 'NG-RAN', 'GSM', 'GSM COMPACT', 'cdma2000 HRPD', 'cdma2000 1xRTT']}, None, None, None, None, None, None, None, None, None, None, None]
+00 READ BINARY      MF/ADF.USIM/EF.PLMNwAcT             -        9000 [{'mcc': '001', 'mnc': '01', 'act': ['E-UTRAN NB-S1', 'E-UTRAN WB-S1', 'EC-GSM-IoT', 'GSM', 'GSM COMPACT', 'NG-RAN', 'UTRAN', 'cdma2000 1xRTT', 'cdma2000 HRPD']}, None, None, None, None, None, None, None, None, None, None, None]
 ===============================
-00 READ BINARY      MF/ADF.USIM/EF.OPLMNwAcT            -        9000 [{'mcc': '001', 'mnc': '01', 'act': ['UTRAN', 'E-UTRAN WB-S1', 'E-UTRAN NB-S1', 'NG-RAN', 'GSM', 'GSM COMPACT', 'cdma2000 HRPD', 'cdma2000 1xRTT']}, None, None, None, None, None, None, None, None, None, None, None]
+00 READ BINARY      MF/ADF.USIM/EF.OPLMNwAcT            -        9000 [{'mcc': '001', 'mnc': '01', 'act': ['E-UTRAN NB-S1', 'E-UTRAN WB-S1', 'EC-GSM-IoT', 'GSM', 'GSM COMPACT', 'NG-RAN', 'UTRAN', 'cdma2000 1xRTT', 'cdma2000 HRPD']}, None, None, None, None, None, None, None, None, None, None, None]
 ===============================
 00 READ BINARY      MF/ADF.USIM/EF.FPLMN                -        9000 [{'mcc': '262', 'mnc': '01'}, {'mcc': '262', 'mnc': '02'}, {'mcc': '262', 'mnc': '03'}, None]
 ===============================

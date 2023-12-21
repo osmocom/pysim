@@ -486,33 +486,37 @@ def dec_mnc_from_plmn_str(plmn: Hexstr) -> str:
 def dec_act(twohexbytes: Hexstr) -> List[str]:
     act_list = [
         {'bit': 15, 'name': "UTRAN"},
-        {'bit': 14, 'name': "E-UTRAN"},
         {'bit': 11, 'name': "NG-RAN"},
-        {'bit':  7, 'name': "GSM"},
         {'bit':  6, 'name': "GSM COMPACT"},
         {'bit':  5, 'name': "cdma2000 HRPD"},
         {'bit':  4, 'name': "cdma2000 1xRTT"},
     ]
     ia = h2i(twohexbytes)
     u16t = (ia[0] << 8) | ia[1]
-    sel = []
+    sel = set()
+    # only the simple single-bit ones
     for a in act_list:
         if u16t & (1 << a['bit']):
-            if a['name'] == "E-UTRAN":
-                # The Access technology identifier of E-UTRAN
-                # allows a more detailed specification:
-                if u16t & (1 << 13) and u16t & (1 << 12):
-                    sel.append("E-UTRAN WB-S1")
-                    sel.append("E-UTRAN NB-S1")
-                elif u16t & (1 << 13):
-                    sel.append("E-UTRAN WB-S1")
-                elif u16t & (1 << 12):
-                    sel.append("E-UTRAN NB-S1")
-                else:
-                    sel.append("E-UTRAN")
-            else:
-                sel.append(a['name'])
-    return sel
+            sel.add(a['name'])
+    # TS 31.102 Section 4.2.5 Table 4.2.5.1
+    eutran_bits = u16t & 0x7000
+    if eutran_bits == 0x4000 or eutran_bits == 0x7000:
+        sel.add("E-UTRAN WB-S1")
+        sel.add("E-UTRAN NB-S1")
+    elif eutran_bits == 0x5000:
+        sel.add("E-UTRAN NB-S1")
+    elif eutran_bits == 0x6000:
+        sel.add("E-UTRAN WB-S1")
+    # TS 31.102 Section 4.2.5 Table 4.2.5.2
+    gsm_bits = u16t & 0x008C
+    if gsm_bits == 0x0080 or gsm_bits == 0x008C:
+        sel.add("GSM")
+        sel.add("EC-GSM-IoT")
+    elif u16t & 0x008C == 0x0084:
+        sel.add("GSM")
+    elif u16t & 0x008C == 0x0086:
+        sel.add("EC-GSM-IoT")
+    return sorted(list(sel))
 
 
 def dec_xplmn_w_act(fivehexbytes: Hexstr) -> Dict[str, Any]:
