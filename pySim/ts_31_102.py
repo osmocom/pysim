@@ -267,33 +267,6 @@ class EF_5GAUTHKEYS(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._tlv = EF_5GAUTHKEYS.FiveGAuthKeys
 
-# 3GPP TS 31.102 Section 4.4.11.8
-class ProtSchemeIdList(BER_TLV_IE, tag=0xa0):
-    # FIXME: 3GPP TS 24.501 Protection Scheme Identifier
-    # repeated sequence of (id, index) tuples
-    _construct = GreedyRange(
-        Struct('id'/Enum(Byte, null=0, A=1, B=2), 'index'/Int8ub))
-
-
-class HomeNetPubKeyId(BER_TLV_IE, tag=0x80):
-    # 3GPP TS 24.501 / 3GPP TS 23.003
-    _construct = Int8ub
-
-
-class HomeNetPubKey(BER_TLV_IE, tag=0x81):
-    # FIXME: RFC 5480
-    _construct = HexAdapter(GreedyBytes)
-
-
-class HomeNetPubKeyList(BER_TLV_IE, tag=0xa1,
-                        nested=[HomeNetPubKeyId, HomeNetPubKey]):
-    pass
-
-# 3GPP TS 31.102 Section 4.4.11.6
-class SUCI_CalcInfo(TLV_IE_Collection, nested=[ProtSchemeIdList, HomeNetPubKeyList]):
-    pass
-
-
 # TS 31.102 4.4.11.8
 class EF_SUCI_Calc_Info(TransparentEF):
     _test_de_encode = [
@@ -306,6 +279,31 @@ class EF_SUCI_Calc_Info(TransparentEF):
                                 {"hnet_pubkey_identifier": 11, "hnet_pubkey":
                                  "d1bc365f4997d17ce4374e72181431cbfeba9e1b98d7618f79d48561b144672a"}]} ),
     ]
+    # 3GPP TS 31.102 Section 4.4.11.8
+    class ProtSchemeIdList(BER_TLV_IE, tag=0xa0):
+        # FIXME: 3GPP TS 24.501 Protection Scheme Identifier
+        # repeated sequence of (id, index) tuples
+        _construct = GreedyRange(
+            Struct('identifier'/Enum(Byte, null=0, A=1, B=2), 'key_index'/Int8ub))
+
+
+    class HnetPubkeyIdentifier(BER_TLV_IE, tag=0x80):
+        # 3GPP TS 24.501 / 3GPP TS 23.003
+        _construct = Int8ub
+
+
+    class HnetPubkey(BER_TLV_IE, tag=0x81):
+        # FIXME: RFC 5480
+        _construct = HexAdapter(GreedyBytes)
+
+
+    class HnetPubkeyList(BER_TLV_IE, tag=0xa1, nested=[HnetPubkeyIdentifier, HnetPubkey]):
+        pass
+
+    # 3GPP TS 31.102 Section 4.4.11.6
+    class SUCI_CalcInfo(TLV_IE_Collection, nested=[ProtSchemeIdList, HnetPubkeyList]):
+        pass
+
     def __init__(self, fid="4f07", sfid=0x07, name='EF.SUCI_Calc_Info', size=(2, None),
                  desc='SUCI Calc Info', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
