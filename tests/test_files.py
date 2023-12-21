@@ -37,6 +37,7 @@ def get_qualified_name(c):
 
 class LinFixed_Test(unittest.TestCase):
     classes = all_subclasses(LinFixedEF)
+    maxDiff = None
 
     def test_decode_record(self):
         """Test the decoder for a linear-fixed EF.  Requires the given LinFixedEF subclass
@@ -124,6 +125,7 @@ class LinFixed_Test(unittest.TestCase):
 
 class TransRecEF_Test(unittest.TestCase):
     classes = all_subclasses(TransRecEF)
+    maxDiff = None
 
     def test_decode_record(self):
         """Test the decoder for a transparent record-oriented EF.  Requires the given TransRecEF subclass
@@ -186,6 +188,8 @@ class TransRecEF_Test(unittest.TestCase):
 
 
 class TransparentEF_Test(unittest.TestCase):
+    maxDiff = None
+
     @classmethod
     def get_classes(cls):
         """get list of TransparentEF sub-classes which are not a TransRecEF subclass."""
