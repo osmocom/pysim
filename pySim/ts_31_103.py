@@ -156,11 +156,23 @@ class EF_PCSCF(LinFixedEF):
 class EF_GBABP(TransparentEF):
     def __init__(self, fid='6fd5', sfid=None, name='EF.GBABP', desc='GBA Bootstrapping', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._construct = Struct('rand'/LV,
+                                 'b_tid'/LV,
+                                 'key_lifetime'/LV)
 
 # TS 31.103 Section 4.2.10
 class EF_GBANL(LinFixedEF):
+    class NAF_ID(BER_TLV_IE, tag=0x80):
+        _construct = Struct('fqdn'/Utf8Adapter(Bytes(this._.total_len-5)),
+                            'ua_spi'/HexAdapter(Bytes(5)))
+    class B_TID(BER_TLV_IE, tag=0x81):
+        _construct = Utf8Adapter(GreedyBytes)
+    # pylint: disable=undefined-variable
+    class GbaNlCollection(TLV_IE_Collection, nested=[NAF_ID, B_TID]):
+        pass
     def __init__(self, fid='6fd7', sfid=None, name='EF.GBANL', desc='GBA NAF List', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._tlv = EF_GBANL.GbaNlCollection
 
 # TS 31.103 Section 4.2.11
 class EF_NAFKCA(LinFixedEF):
