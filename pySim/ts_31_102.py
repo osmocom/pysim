@@ -286,16 +286,13 @@ class EF_SUCI_Calc_Info(TransparentEF):
         _construct = GreedyRange(
             Struct('identifier'/Enum(Byte, null=0, A=1, B=2), 'key_index'/Int8ub))
 
-
     class HnetPubkeyIdentifier(BER_TLV_IE, tag=0x80):
         # 3GPP TS 24.501 / 3GPP TS 23.003
         _construct = Int8ub
 
-
     class HnetPubkey(BER_TLV_IE, tag=0x81):
-        # FIXME: RFC 5480
+        # contents according to RFC 7748 / RFC 5480
         _construct = HexAdapter(GreedyBytes)
-
 
     class HnetPubkeyList(BER_TLV_IE, tag=0xa1, nested=[HnetPubkeyIdentifier, HnetPubkey]):
         pass
@@ -319,30 +316,35 @@ class EF_SUCI_Calc_Info(TransparentEF):
 
         return out_bytes
 
-    def _encode_hnet_pubkey_list(self, hnet_pubkey_list):
-        out_bytes = [0xa1]  # pubkey list tag
-        out_bytes.append(0x00)  # length filled later
-        length = 0
+    @staticmethod
+    def _compact_pubkey_list(l: List[dict]) -> List[dict]:
+        """conversion method to generate list of {hnet_pubkey_identifier, hnet_pubkey} dicts
+        from flat [{hnet_pubkey_identifier: }, {net_pubkey: }, ...] list"""
+        out = []
+        while len(l):
+            a = l.pop(0)
+            b = l.pop(0)
+            z = {**a, **b}
+            out.append(z)
+        return out
 
-        for key in hnet_pubkey_list:
-            out_bytes.append(0x80)  # identifier tag
-            out_bytes.append(0x01)  # TODO size, fixed to 1 byte
-            out_bytes.append(key["hnet_pubkey_identifier"])
-            out_bytes.append(0x81)  # key tag
-            out_bytes.append(len(key["hnet_pubkey"])//2)
-            length += 5+len(key["hnet_pubkey"])//2
-
-            pubkey_bytes = h2b(key["hnet_pubkey"])
-            out_bytes += pubkey_bytes
-
-        # fill length
-        out_bytes[1] = length
-        return out_bytes
+    @staticmethod
+    def _expand_pubkey_list(l: List[dict]) -> List[dict]:
+        """conversion method to generate flat [{hnet_pubkey_identifier: }, {net_pubkey: }, ...] list
+        from compacted list of {hnet_pubkey_identifier, hnet_pubkey} dicts"""
+        out = []
+        for d in l:
+            for k, v in d.items():
+                out.append({k: v})
+        return out
 
     def _encode_hex(self, in_json):
         out_bytes = self._encode_prot_scheme_id_list(
             in_json['prot_scheme_id_list'])
-        out_bytes += self._encode_hnet_pubkey_list(in_json['hnet_pubkey_list'])
+        d = self._expand_pubkey_list(in_json['hnet_pubkey_list'])
+        hpkl = EF_SUCI_Calc_Info.HnetPubkeyList()
+        hpkl.from_dict({'hnet_pubkey_list': d})
+        out_bytes += hpkl.to_tlv()
         return "".join(["%02X" % i for i in out_bytes])
 
     def _decode_prot_scheme_id_list(self, in_bytes):
@@ -358,42 +360,6 @@ class EF_SUCI_Calc_Info(TransparentEF):
             pos += 2
             prot_scheme_id_list.append(prot_scheme)
         return prot_scheme_id_list
-
-    def _decode_hnet_pubkey_list(self, in_bytes):
-        hnet_pubkey_list = []
-        pos = 0
-        if in_bytes[pos] != 0xa1:
-            print("missing Home Network Public Key List data object")
-            return {}
-        pos += 1
-        hnet_pubkey_list_len = in_bytes[pos]
-        pos += 1
-
-        while pos < hnet_pubkey_list_len:
-            if in_bytes[pos] != 0x80:
-                print("missing Home Network Public Key Identifier tag")
-                return {}
-            pos += 1
-            # TODO might be more than 1 byte?
-            hnet_pubkey_id_len = in_bytes[pos]
-            pos += 1
-            hnet_pubkey_id = in_bytes[pos:pos+hnet_pubkey_id_len][0]
-            pos += hnet_pubkey_id_len
-            if in_bytes[pos] != 0x81:
-                print("missing Home Network Public Key tag")
-                return {}
-            pos += 1
-            hnet_pubkey_len = in_bytes[pos]
-            pos += 1
-            hnet_pubkey = in_bytes[pos:pos+hnet_pubkey_len]
-            pos += hnet_pubkey_len
-
-            hnet_pubkey_list.append({
-                'hnet_pubkey_identifier': hnet_pubkey_id,
-                'hnet_pubkey':            b2h(hnet_pubkey)
-            })
-
-        return hnet_pubkey_list
 
     def _decode_bin(self, in_bin):
         return self._decode_hex(b2h(in_bin))
@@ -415,7 +381,9 @@ class EF_SUCI_Calc_Info(TransparentEF):
         pos += prot_scheme_id_list_len
 
         # remaining data holds Home Network Public Key Data Object
-        hnet_pubkey_list = self._decode_hnet_pubkey_list(in_bytes[pos:])
+        hpkl = EF_SUCI_Calc_Info.HnetPubkeyList()
+        hpkl.from_tlv(in_bytes[pos:])
+        hnet_pubkey_list = self._compact_pubkey_list(hpkl.to_dict()['hnet_pubkey_list'])
 
         return {
             'prot_scheme_id_list': prot_scheme_id_list,

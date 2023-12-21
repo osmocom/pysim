@@ -136,12 +136,12 @@ class DecTestCase(unittest.TestCase):
 
 	def testDecodeSuciCalcInfo(self):
 		suci_calc_info = EF_SUCI_Calc_Info()
-		decoded = suci_calc_info._decode_hex(self.testfile_suci_calc_info)
+		decoded = suci_calc_info.decode_hex(self.testfile_suci_calc_info)
 		self.assertDictEqual(self.decoded_testfile_suci, decoded)
 
 	def testEncodeSuciCalcInfo(self):
 		suci_calc_info = EF_SUCI_Calc_Info()
-		encoded = suci_calc_info._encode_hex(self.decoded_testfile_suci)
+		encoded = suci_calc_info.encode_hex(self.decoded_testfile_suci)
 		self.assertEqual(encoded.lower(), self.testfile_suci_calc_info.lower())
 
 	def testEnc_msisdn(self):
