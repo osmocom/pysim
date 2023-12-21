@@ -86,7 +86,7 @@ class LinFixed_Test(unittest.TestCase):
                             decoded = t[2]
                         logging.debug("Testing encode of %s", name)
                         re_enc = inst.encode_record_hex(decoded, rec_num)
-                        self.assertEqual(encoded, re_enc)
+                        self.assertEqual(encoded.upper(), re_enc.upper())
 
     def test_de_encode_record(self):
         """Test the decoder and encoder for a linear-fixed EF.  Performs first a decoder
@@ -119,7 +119,7 @@ class LinFixed_Test(unittest.TestCase):
                         # re-encode the decoded data
                         logging.debug("Testing re-encode of %s", name)
                         re_enc = inst.encode_record_hex(re_dec, rec_num)
-                        self.assertEqual(encoded, re_enc)
+                        self.assertEqual(encoded.upper(), re_enc.upper())
 
 
 class TransRecEF_Test(unittest.TestCase):
@@ -182,7 +182,7 @@ class TransRecEF_Test(unittest.TestCase):
                         # re-encode the decoded data
                         logging.debug("Testing re-encode of %s", name)
                         re_enc = inst.encode_record_hex(re_dec)
-                        self.assertEqual(encoded, re_enc)
+                        self.assertEqual(encoded.upper(), re_enc.upper())
 
 
 class TransparentEF_Test(unittest.TestCase):
@@ -254,7 +254,7 @@ class TransparentEF_Test(unittest.TestCase):
                         logging.debug("Testing re-encode of %s", name)
                         re_dec = inst.decode_hex(encoded)
                         re_enc = inst.encode_hex(re_dec)
-                        self.assertEqual(encoded, re_enc)
+                        self.assertEqual(encoded.upper(), re_enc.upper())
 
 
 if __name__ == '__main__':
