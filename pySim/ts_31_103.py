@@ -176,10 +176,17 @@ class EF_GBANL(LinFixedEF):
 
 # TS 31.103 Section 4.2.11
 class EF_NAFKCA(LinFixedEF):
-    # TODO: 80296273662e696d732e6d6e633030302e6d63633733382e7075622e336770706e6574776f726b2e6f7267ffffffffffffff
-    # TODO: 8030656e65746e61667830312e696d732e6d6e633030302e6d63633733382e7075622e336770706e6574776f726b2e6f7267
+    _test_de_encode = [
+        ( '80296273662e696d732e6d6e633030302e6d63633733382e7075622e336770706e6574776f726b2e6f7267',
+          { 'naf_key_centre_address': 'bsf.ims.mnc000.mcc738.pub.3gppnetwork.org' } ),
+        ( '8030656e65746e61667830312e696d732e6d6e633030302e6d63633733382e7075622e336770706e6574776f726b2e6f7267',
+          { 'naf_key_centre_address': 'enetnafx01.ims.mnc000.mcc738.pub.3gppnetwork.org' }),
+    ]
+    class NafKeyCentreAddress(BER_TLV_IE, tag=0x80):
+        _construct = Utf8Adapter(GreedyBytes)
     def __init__(self, fid='6fdd', sfid=None, name='EF.NAFKCA', desc='NAF Key Centre Address', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._tlv = EF_NAFKCA.NafKeyCentreAddress
 
 # TS 31.103 Section 4.2.16
 class EF_UICCIARI(LinFixedEF):
