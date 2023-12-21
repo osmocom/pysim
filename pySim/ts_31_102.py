@@ -296,6 +296,16 @@ class SUCI_CalcInfo(TLV_IE_Collection, nested=[ProtSchemeIdList, HomeNetPubKeyLi
 
 # TS 31.102 4.4.11.8
 class EF_SUCI_Calc_Info(TransparentEF):
+    _test_de_encode = [
+        ( 'A00401010000A14A80010A81204E858C4D49D1343E6181284C47CA721730C98742CB7C6182D2E8126E08088D3680010B8120D1BC365F4997D17CE4374E72181431CBFEBA9E1B98D7618F79D48561B144672A',
+          {"prot_scheme_id_list": [{"priority": 0, "identifier": 1, "key_index": 1}, {"priority": 1,
+                                                                                      "identifier": 0,
+                                                                                      "key_index": 0}],
+           "hnet_pubkey_list": [{"hnet_pubkey_identifier": 10, "hnet_pubkey":
+                                 "4e858c4d49d1343e6181284c47ca721730c98742cb7c6182d2e8126e08088d36"},
+                                {"hnet_pubkey_identifier": 11, "hnet_pubkey":
+                                 "d1bc365f4997d17ce4374e72181431cbfeba9e1b98d7618f79d48561b144672a"}]} ),
+    ]
     def __init__(self, fid="4f07", sfid=0x07, name='EF.SUCI_Calc_Info', size=(2, None),
                  desc='SUCI Calc Info', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
@@ -558,6 +568,8 @@ class EF_LOCI(TransparentEF):
         ( '47d1264a62f21037211e00',
           { "tmsi": "47d1264a", "lai": { "mcc_mnc": "262f01", "lac": "3721" },
             "rfu": 30, "lu_status": 0 } ),
+        ( 'ffffffff62f2200000ff01',
+          {"tmsi": "ffffffff", "lai": {"mcc_mnc": "262f02", "lac": "0000"}, "rfu": 255, "lu_status": 1} ),
     ]
     def __init__(self, fid='6f7e', sfid=0x0b, name='EF.LOCI', desc='Location information', size=(11, 11)):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
@@ -766,6 +778,7 @@ class EF_GBANL(LinFixedEF):
 # TS 31.102 Section 4.2.85
 class EF_EHPLMNPI(TransparentEF):
     _test_de_encode = [
+        ( '00', {"presentation_ind": "no_preference"} ),
         ( '02', { "presentation_ind": "display_all" } ),
     ]
     def __init__(self, fid='6fdb', sfid=None, name='EF.EHPLMNPI', size=(1, 1),
@@ -1488,6 +1501,7 @@ class ADF_USIM(CardADF):
             EF_NCP_IP(service=80),
             EF_EPSLOCI('6fe3', 0x1e, 'EF.EPSLOCI', desc='EPS location information', service=85),
             EF_EPSNSC(service=85),
+            # EF.UFC Test data: 801e60c01e900080040000000000000000f0000000004000000000000080
             TransparentEF('6fe6', None, 'EF.UFC', desc='USAT Facility Control', size=(1, 16)),
             TransparentEF('6fe8', None, 'EF.NASCONFIG', desc='Non Access Stratum Configuration', service=96),
             # UICC IARI (only in cards that have no ISIM) service=95

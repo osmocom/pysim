@@ -135,7 +135,12 @@ class EF_ADN(LinFixedEF):
                                                                        "unknown", "numbering_plan_id":
                                                                        "isdn_e164" }, "dialing_nr":
                "6082658001", "cap_conf_id": 255, "ext1_record_id": 255 }),
-         ]
+            ( '4B756E64656E626574726575756E67FFFFFF0791947112122721ffffffffffff',
+              {"alpha_id": "Kundenbetreuung", "len_of_bcd": 7, "ton_npi": {"ext": True, "type_of_number":
+                                                                           "international",
+                                                                           "numbering_plan_id": "isdn_e164"},
+               "dialing_nr": "491721217212", "cap_conf_id": 255, "ext1_record_id": 255} )
+        ]
 
     def __init__(self, fid='6f3a', sfid=None, name='EF.ADN', desc='Abbreviated Dialing Numbers', ext=1, **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(14, 30), **kwargs)
@@ -730,6 +735,7 @@ class EF_xPLMNwAcT(TransRecEF):
     _test_de_encode = [
         ( '62F2104000', { "mcc": "262", "mnc": "01", "act": [ "E-UTRAN NB-S1", "E-UTRAN WB-S1" ] } ),
         ( '62F2108000', { "mcc": "262", "mnc": "01", "act": [ "UTRAN" ] } ),
+        ( '62F220488C', { "mcc": "262", "mnc": "02", "act": ['E-UTRAN NB-S1', 'E-UTRAN WB-S1', 'EC-GSM-IoT', 'GSM', 'NG-RAN'] } ),
     ]
     def __init__(self, fid='1234', sfid=None, name=None, desc=None, size=(40, None), rec_len=5, **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
@@ -859,6 +865,12 @@ class EF_MBI(LinFixedEF):
 
 # TS 51.011 Section 10.3.45 + TS 31.102 4.2.63
 class EF_MWIS(LinFixedEF):
+    _test_de_encode = [
+        ( '0000000000',
+          {"mwi_status": {"voicemail": False, "fax": False, "email": False, "other": False, "videomail":
+                          False}, "num_waiting_voicemail": 0, "num_waiting_fax": 0, "num_waiting_email": 0,
+           "num_waiting_other": 0, "num_waiting_videomail": None} ),
+    ]
     def __init__(self, fid='6fca', sfid=None, name='EF.MWIS', rec_len=(5, 6),
                  desc='Message Waiting Indication Status', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)

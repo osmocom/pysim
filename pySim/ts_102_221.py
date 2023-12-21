@@ -748,6 +748,8 @@ class EF_UMPC(TransparentEF):
     _test_de_encode = [
         ( '3cff02', { "max_current_mA": 60, "t_op_s": 255,
                       "addl_info": { "req_inc_idle_current": False, "support_uicc_suspend": True } } ),
+        ( '320500', { "max_current_mA": 50, "t_op_s": 5, "addl_info": {"req_inc_idle_current": False,
+                                                                       "support_uicc_suspend": False } } ),
     ]
     def __init__(self, fid='2f08', sfid=0x08, name='EF.UMPC', desc='UICC Maximum Power Consumption'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=(5, 5))

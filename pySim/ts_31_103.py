@@ -136,6 +136,10 @@ class EF_PCSCF(LinFixedEF):
     _test_de_encode = [
         ( '802c0070637363662e696d732e6d6e633030302e6d63633733382e7075622e336770706e6574776f726b2e6f7267',
           {'pcscf_address': { "address": "pcscf.ims.mnc000.mcc738.pub.3gppnetwork.org", "type_of_address": "FQDN" } } ),
+        ( '800501c0a80c22',
+          {'pcscf_address': { "address": "192.168.12.34", "type_of_address": "IPv4" } } ),
+        ( '801102fe800000000000000042d7fffe530335',
+          {'pcscf_address': { "address": "fe80::42:d7ff:fe53:335", "type_of_address": "IPv6" } } ),
     ]
     class PcscfAddress(BER_TLV_IE, tag=0x80):
         _construct = Struct('type_of_address'/Enum(Byte, FQDN=0, IPv4=1, IPv6=2),
