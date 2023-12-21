@@ -31,7 +31,7 @@ import pySim.ts_102_221
 from pySim.ts_51_011 import EF_ACMmax, EF_AAeM, EF_eMLPP, EF_CMI, EF_PNN
 from pySim.ts_51_011 import EF_MMSN, EF_MMSICP, EF_MMSUP, EF_MMSUCP, EF_VGCS, EF_VGCSS, EF_NIA
 from pySim.ts_51_011 import EF_SMSR, EF_DCK, EF_EXT, EF_CNL, EF_OPL, EF_MBI, EF_MWIS
-from pySim.ts_51_011 import EF_CBMID, EF_CBMIR, EF_ADN, EF_SMS, EF_MSISDN, EF_SMSP, EF_SMSS
+from pySim.ts_51_011 import EF_CBMID, EF_CBMIR, EF_ADN, EF_CFIS, EF_SMS, EF_MSISDN, EF_SMSP, EF_SMSS
 from pySim.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_PLMNsel
 from pySim.ts_51_011 import EF_Kc, EF_CPBCCH, EF_InvScan
 from pySim.ts_102_221 import EF_ARR
@@ -1460,7 +1460,7 @@ class ADF_USIM(CardADF):
             EF_EXT('6fc8', None, 'EF.EXT6', desc='Extension6 (MBDN)'),
             EF_MBI(service=47),
             EF_MWIS(service=48),
-            EF_ADN('6fcb', None, 'EF.CFIS', desc='Call Forwarding Indication Status', service=49, ext=7),
+            EF_CFIS(service=49, ext=7),
             EF_EXT('6fcc', None, 'EF.EXT7', desc='Extension7 (CFIS)'),
             TransparentEF('6fcd', None, 'EF.SPDI', desc='Service Provider Display Information', service=51),
             EF_MMSN(service=52),

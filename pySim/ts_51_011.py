@@ -793,6 +793,27 @@ class EF_InvScan(TransparentEF):
         self._construct = FlagsEnum(
             Byte, in_limited_service_mode=1, after_successful_plmn_selection=2)
 
+# TS 51.011 Section 10.3.46
+class EF_CFIS(LinFixedEF):
+    _test_decode = [
+        ( '0100ffffffffffffffffffffffffffff',
+          {"msp_number": 1, "cfu_indicator_status": { "voice": False, "fax": False, "data": False, "rfu": 0 },
+                                                      "len_of_bcd": 255, "ton_npi": {"ext": True,
+                                                                                     "type_of_number": "reserved_for_extension",
+                                                                                     "numbering_plan_id": "reserved_for_extension"},
+                                                      "dialing_nr": "", "cap_conf_id": 255, "ext7_record_id": 255} ),
+    ]
+    def __init__(self, fid='6fcb', sfid=None, name='EF.CFIS', desc='Call Forwarding Indication Status', ext=7, **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(16, 30), **kwargs)
+        ext_name = 'ext%u_record_id' % ext
+        self._construct = Struct('msp_number'/Int8ub,
+                                 'cfu_indicator_status'/BitStruct('voice'/Flag, 'fax'/Flag, 'data'/Flag, 'rfu'/BitsRFU(5)),
+                                 'len_of_bcd'/Int8ub,
+                                 'ton_npi'/TonNpi,
+                                 'dialing_nr'/ExtendedBcdAdapter(BcdAdapter(Rpad(Bytes(10)))),
+                                 'cap_conf_id'/Int8ub,
+                                 ext_name/Int8ub)
+
 # TS 51.011 Section 4.2.58
 class EF_PNN(LinFixedEF):
     # TODO: 430a82d432bbbc7eb75de432450a82d432bbbc7eb75de432ffffffff
@@ -977,8 +998,7 @@ class DF_GSM(CardDF):
             EF_ADN('6fc7', None, 'EF.MBDN', desc='Mailbox Dialling Numbers'),
             EF_MBI(),
             EF_MWIS(),
-            EF_ADN('6fcb', None, 'EF.CFIS',
-                   desc='Call Forwarding Indication Status'),
+            EF_CFIS(),
             EF_EXT('6fc8', None, 'EF.EXT6', desc='Externsion6 (MBDN)'),
             EF_EXT('6fcc', None, 'EF.EXT7', desc='Externsion7 (CFIS)'),
             EF_SPDI(),
