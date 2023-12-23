@@ -39,7 +39,7 @@ from typing import cast, Optional, Iterable, List, Dict, Tuple, Union
 from smartcard.util import toBytes
 
 from pySim.utils import sw_match, h2b, b2h, i2h, is_hex, auto_int, bertlv_parse_one, Hexstr
-from pySim.construct import filter_dict, parse_construct
+from pySim.construct import filter_dict, parse_construct, build_construct
 from pySim.exceptions import *
 from pySim.jsonpath import js_path_find, js_path_modify
 from pySim.commands import SimCardCommands
@@ -749,7 +749,7 @@ class TransparentEF(CardEF):
         if callable(method):
             return h2b(method(abstract_data))
         if self._construct:
-            return self._construct.build(abstract_data)
+            return build_construct(self._construct, abstract_data)
         elif self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
@@ -777,7 +777,7 @@ class TransparentEF(CardEF):
             raw_bin_data = method(abstract_data)
             return b2h(raw_bin_data)
         if self._construct:
-            return b2h(self._construct.build(abstract_data))
+            return b2h(build_construct(self._construct, abstract_data))
         elif self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
@@ -1025,7 +1025,7 @@ class LinFixedEF(CardEF):
             raw_bin_data = method(abstract_data, record_nr=record_nr)
             return b2h(raw_bin_data)
         if self._construct:
-            return b2h(self._construct.build(abstract_data))
+            return b2h(build_construct(self._construct, abstract_data))
         elif self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
@@ -1053,7 +1053,7 @@ class LinFixedEF(CardEF):
         if callable(method):
             return h2b(method(abstract_data, record_nr=record_nr))
         if self._construct:
-            return self._construct.build(abstract_data)
+            return build_construct(self._construct, abstract_data)
         elif self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
@@ -1169,7 +1169,7 @@ class TransRecEF(TransparentEF):
         if callable(method):
             return b2h(method(abstract_data))
         if self._construct:
-            return b2h(filter_dict(self._construct.build(abstract_data)))
+            return b2h(filter_dict(build_construct(self._construct, abstract_data)))
         elif self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
@@ -1196,7 +1196,7 @@ class TransRecEF(TransparentEF):
         if callable(method):
             return h2b(method(abstract_data))
         if self._construct:
-            return filter_dict(self._construct.build(abstract_data))
+            return filter_dict(build_construct(self._construct, abstract_data))
         elif self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
