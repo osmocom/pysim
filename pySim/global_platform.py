@@ -95,8 +95,9 @@ KeyType = Enum(Byte,    des=0x80,
 #       c0 04 02038010
 #       c0 04 03038010
 class KeyInformationData(BER_TLV_IE, tag=0xc0):
+    KeyTypeLen = Struct('type'/KeyType, 'length'/Int8ub)
     _construct = Struct('key_identifier'/Byte, 'key_version_number'/Byte,
-                        'key_types'/GreedyRange(KeyType))
+                        'key_types'/GreedyRange(KeyTypeLen))
 class KeyInformation(BER_TLV_IE, tag=0xe0, nested=[KeyInformationData]):
     pass
 
