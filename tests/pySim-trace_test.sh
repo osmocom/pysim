@@ -25,6 +25,8 @@ GSMTAP_TRACE=pySim-trace_test_gsmtap.pcapng
 TEMPFILE=temp.tmp
 
 export PYSIM_INTEGRATION_TEST=1
+# to avoid termcolor.colored generating colors; https://github.com/termcolor/termcolor
+export ANSI_COLORS_DISABLED=1
 
 echo "pySim-trace_test - a test program to test pySim-trace.py"
 echo "========================================================"
