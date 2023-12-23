@@ -90,14 +90,24 @@ class TotalFileSize(BER_TLV_IE, tag=0x81):
 
 # ETSI TS 102 221 11.1.1.4.3
 class FileDescriptor(BER_TLV_IE, tag=0x82):
+    _test_decode = [
+        # FIXME: this doesn't work as _encode test for some strange reason.
+        ( '82027921', { "file_descriptor_byte": { "shareable": True, "structure": "ber_tlv" }, "record_len": None, "num_of_rec": None } ),
+    ]
+    _test_de_encode = [
+        ( '82027821', { "file_descriptor_byte": { "shareable": True, "file_type": "df", "structure": "no_info_given" }, "record_len": None, "num_of_rec": None }),
+        ( '82024121', { "file_descriptor_byte": { "shareable": True, "file_type": "working_ef", "structure": "transparent" }, "record_len": None, "num_of_rec": None } ),
+        ( '82054221006e05', { "file_descriptor_byte": { "shareable": True, "file_type": "working_ef", "structure": "linear_fixed" }, "record_len": 110, "num_of_rec": 5 } ),
+    ]
     class BerTlvAdapter(Adapter):
         def _parse(self, obj, context, path):
-            if obj == 0x39:
+            data = obj.read()
+            if data == b'\x01\x01\x01\x00\x00\x01':
                 return 'ber_tlv'
             raise ValidationError
         def _build(self, obj, context, path):
             if obj == 'ber_tlv':
-                return 0x39
+                return b'\x01\x01\x01\x00\x00\x01'
             raise ValidationError
 
     FDB = Select(BitStruct(Const(0, Bit), 'shareable'/Flag, 'structure'/BerTlvAdapter(Const(0x39, BitsInteger(6)))),
@@ -200,6 +210,9 @@ class ShortFileIdentifier(BER_TLV_IE, tag=0x88):
 
 # ETSI TS 102 221 11.1.1.4.9
 class LifeCycleStatusInteger(BER_TLV_IE, tag=0x8A):
+    _test_de_encode = [
+        ( '8a0105', 'operational_activated' ),
+    ]
     def _from_bytes(self, do: bytes):
         lcsi = int.from_bytes(do, 'big')
         if lcsi == 0x00:
@@ -582,6 +595,10 @@ class EF_DIR(LinFixedEF):
           { "application_template": [ { "application_id": h2b("a0000000871002ffffffff8907090000") },
                                       { "application_label": "USim1" },
                                       { "discretionary_template": h2b("a00c80011781025f608203454150") } ] }
+        ),
+        ( '61194f10a0000000871004ffffffff890709000050054953696d31',
+          { "application_template": [ { "application_id": h2b("a0000000871004ffffffff8907090000") },
+                                      { "application_label": "ISim1" } ] }
         ),
     ]
     class ApplicationLabel(BER_TLV_IE, tag=0x50):
