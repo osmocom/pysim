@@ -14,7 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import inspect
 from typing import Tuple
 
 from pySim.transport import LinkBase
@@ -26,6 +25,7 @@ from pySim.runtime import RuntimeState
 from pySim.profile import CardProfile
 from pySim.cdma_ruim import CardProfileRUIM
 from pySim.ts_102_221 import CardProfileUICC
+from pySim.utils import all_subclasses
 
 # we need to import this module so that the SysmocomSJA2 sub-class of
 # CardModel is created, which will add the ATR-based matching and
@@ -87,10 +87,9 @@ def init_card(sl: LinkBase) -> Tuple[RuntimeState, SimCardBase]:
     # We cannot do it within pySim/profile.py as that would create circular
     # dependencies between the individual profiles and profile.py.
     if isinstance(profile, CardProfileUICC):
-        for app_cls in CardApplication.__subclasses__():
-            constr_sig = inspect.signature(app_cls.__init__)
+        for app_cls in all_subclasses(CardApplication):
             # skip any intermediary sub-classes such as CardApplicationSD
-            if len(constr_sig.parameters) != 1:
+            if hasattr(app_cls, '_' + app_cls.__name__ + '__intermediate'):
                 continue
             profile.add_application(app_cls())
         # We have chosen SimCard() above, but we now know it actually is an UICC

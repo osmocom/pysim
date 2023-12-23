@@ -267,6 +267,7 @@ class ADF_SD(CardADF):
 
 # Card Application of a Security Domain
 class CardApplicationSD(CardApplication):
+    __intermediate = True
     def __init__(self, aid: str, name: str, desc: str):
         super().__init__(name, adf=ADF_SD(aid, name, desc), sw=sw_table)
 
