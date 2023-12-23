@@ -80,21 +80,20 @@ KeyType = Enum(Byte,    des=0x80,
                         not_available=0xff)
 
 # GlobalPlatform 2.1.1 Section 9.3.3.1
-# example:
-#   e0 48
-#       c0 04 01708010
-#       c0 04 02708010
-#       c0 04 03708010
-#       c0 04 01018010
-#       c0 04 02018010
-#       c0 04 03018010
-#       c0 04 01028010
-#       c0 04 02028010
-#       c0 04 03028010
-#       c0 04 01038010
-#       c0 04 02038010
-#       c0 04 03038010
 class KeyInformationData(BER_TLV_IE, tag=0xc0):
+    _test_de_encode = [
+        ( 'c00401708010', {"key_identifier": 1, "key_version_number": 112, "key_types": [ {"length": 16, "type": "des"} ]} ),
+        ( 'c00402708010', {"key_identifier": 2, "key_version_number": 112, "key_types": [ {"length": 16, "type": "des"} ]} ),
+        ( 'c00403708010', {"key_identifier": 3, "key_version_number": 112, "key_types": [ {"length": 16, "type": "des"} ]} ),
+        ( 'c00401018010', {"key_identifier": 1, "key_version_number": 1, "key_types": [ {"length": 16, "type": "des"} ]} ),
+        ( 'c00402018010', {"key_identifier": 2, "key_version_number": 1, "key_types": [ {"length": 16, "type": "des"} ]} ),
+        ( 'c00403018010', {"key_identifier": 3, "key_version_number": 1, "key_types": [ {"length": 16, "type": "des"} ]} ),
+        ( 'c00401028010', {"key_identifier": 1, "key_version_number": 2, "key_types": [ {"length": 16, "type": "des"} ]} ),
+        ( 'c00402028010', {"key_identifier": 2, "key_version_number": 2, "key_types": [ {"length": 16, "type": "des"} ]} ),
+        ( 'c00403038010', {"key_identifier": 3, "key_version_number": 3, "key_types": [ {"length": 16, "type": "des"} ]} ),
+        ( 'c00401038010', {"key_identifier": 1, "key_version_number": 3, "key_types": [ {"length": 16, "type": "des"} ]} ),
+        ( 'c00402038010', {"key_identifier": 2, "key_version_number": 3, "key_types": [ {"length": 16, "type": "des"} ]} ),
+    ]
     KeyTypeLen = Struct('type'/KeyType, 'length'/Int8ub)
     _construct = Struct('key_identifier'/Byte, 'key_version_number'/Byte,
                         'key_types'/GreedyRange(KeyTypeLen))
