@@ -1,7 +1,7 @@
 # coding=utf-8
 """Partial Support for GlobalPLatform Card Spec (currently 2.1.1)
 
-(C) 2022 by Harald Welte <laforge@osmocom.org>
+(C) 2022-2023 by Harald Welte <laforge@osmocom.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -68,6 +68,10 @@ sw_table = {
 
 # GlobalPlatform 2.1.1 Section 9.1.6
 KeyType = Enum(Byte,    des=0x80,
+                        tls_psk=0x85,                           # v2.3.1 Section 11.1.8
+                        aes=0x88,                               # v2.3.1 Section 11.1.8
+                        hmac_sha1=0x90,                         # v2.3.1 Section 11.1.8
+                        hmac_sha1_160=0x91,                     # v2.3.1 Section 11.1.8
                         rsa_public_exponent_e_cleartex=0xA0,
                         rsa_modulus_n_cleartext=0xA1,
                         rsa_modulus_n=0xA2,
@@ -77,6 +81,15 @@ KeyType = Enum(Byte,    des=0x80,
                         rsa_chines_remainder_pq=0xA6,
                         rsa_chines_remainder_dpi=0xA7,
                         rsa_chines_remainder_dqi=0xA8,
+                        ecc_public_key=0xB0,                    # v2.3.1 Section 11.1.8
+                        ecc_private_key=0xB1,                   # v2.3.1 Section 11.1.8
+                        ecc_field_parameter_p=0xB2,             # v2.3.1 Section 11.1.8
+                        ecc_field_parameter_a=0xB3,             # v2.3.1 Section 11.1.8
+                        ecc_field_parameter_b=0xB4,             # v2.3.1 Section 11.1.8
+                        ecc_field_parameter_g=0xB5,             # v2.3.1 Section 11.1.8
+                        ecc_field_parameter_n=0xB6,             # v2.3.1 Section 11.1.8
+                        ecc_field_parameter_k=0xB7,             # v2.3.1 Section 11.1.8
+                        ecc_key_parameters_reference=0xF0,      # v2.3.1 Section 11.1.8
                         not_available=0xff)
 
 # GlobalPlatform 2.1.1 Section 9.3.3.1
@@ -93,6 +106,7 @@ class KeyInformationData(BER_TLV_IE, tag=0xc0):
         ( 'c00403038010', {"key_identifier": 3, "key_version_number": 3, "key_types": [ {"length": 16, "type": "des"} ]} ),
         ( 'c00401038010', {"key_identifier": 1, "key_version_number": 3, "key_types": [ {"length": 16, "type": "des"} ]} ),
         ( 'c00402038010', {"key_identifier": 2, "key_version_number": 3, "key_types": [ {"length": 16, "type": "des"} ]} ),
+        ( 'c00402038810', {"key_identifier": 2, "key_version_number": 3, "key_types": [ {"length": 16, "type": "aes"} ]} ),
     ]
     KeyTypeLen = Struct('type'/KeyType, 'length'/Int8ub)
     _construct = Struct('key_identifier'/Byte, 'key_version_number'/Byte,
