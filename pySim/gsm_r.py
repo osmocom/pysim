@@ -202,12 +202,12 @@ class EF_Shunting(TransparentEF):
 class EF_GsmrPLMN(LinFixedEF):
     """Section 7.7"""
     _test_de_encode = [
-        ( "22f860f86f8d6f8e01", { "plmn": "228f06", "class_of_network": {
+        ( "22f860f86f8d6f8e01", { "plmn": "228-06", "class_of_network": {
                                     "supported": { "vbs": True, "vgcs": True, "emlpp": True,
                                     "fn": True, "eirene": True }, "preference": 0 },
                                   "ic_incoming_ref_tbl": "6f8d", "outgoing_ref_tbl": "6f8e",
                                   "ic_table_ref": "01" } ),
-        ( "22f810416f8d6f8e02", { "plmn": "228f01", "class_of_network": {
+        ( "22f810416f8d6f8e02", { "plmn": "228-01", "class_of_network": {
                                     "supported": { "vbs": False, "vgcs": False, "emlpp": False,
                                     "fn": True, "eirene": False }, "preference": 1 },
                                   "ic_incoming_ref_tbl": "6f8d", "outgoing_ref_tbl": "6f8e",
@@ -216,7 +216,7 @@ class EF_GsmrPLMN(LinFixedEF):
     def __init__(self):
         super().__init__(fid='6ff5', sfid=None, name='EF.GsmrPLMN',
                          desc='GSM-R network selection', rec_len=(9, 9))
-        self._construct = Struct('plmn'/BcdAdapter(Bytes(3)),
+        self._construct = Struct('plmn'/PlmnAdapter(Bytes(3)),
                                  'class_of_network'/BitStruct('supported'/FlagsEnum(BitsInteger(5), vbs=1, vgcs=2, emlpp=4, fn=8, eirene=16),
                                                               'preference'/BitsInteger(3)),
                                  'ic_incoming_ref_tbl'/HexAdapter(Bytes(2)),

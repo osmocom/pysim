@@ -57,7 +57,7 @@ CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
 ===============================
 00 READ BINARY      MF/ADF.USIM/EF.ACC                  -        9000 {'ACC0': True, 'ACC1': False, 'ACC2': False, 'ACC3': False, 'ACC4': False, 'ACC5': False, 'ACC6': False, 'ACC7': False, 'ACC8': False, 'ACC9': False, 'ACC10': False, 'ACC11': False, 'ACC12': False, 'ACC13': False, 'ACC14': False, 'ACC15': False}
 ===============================
-00 READ BINARY      MF/ADF.USIM/EF.LOCI                 -        9000 {'tmsi': 'ffffffff', 'lai': {'mcc_mnc': 'ffffff', 'lac': 'fffe'}, 'rfu': 255, 'lu_status': 3}
+00 READ BINARY      MF/ADF.USIM/EF.LOCI                 -        9000 {'tmsi': 'ffffffff', 'lai': {'mcc_mnc': 'fff-ff', 'lac': 'fffe'}, 'rfu': 255, 'lu_status': 3}
 ===============================
 00 READ BINARY      MF/ADF.USIM/EF.PSLOCI               -        9000 {'ptmsi': 'ffffffff', 'ptmsi_sig': 'ffffff', 'rai': 'ffff00fffeff', 'rau_status': 2}
 ===============================

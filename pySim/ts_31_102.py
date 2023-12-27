@@ -566,14 +566,14 @@ class EF_ECC(LinFixedEF):
 class EF_LOCI(TransparentEF):
     _test_de_encode = [
         ( '47d1264a62f21037211e00',
-          { "tmsi": "47d1264a", "lai": { "mcc_mnc": "262f01", "lac": "3721" },
+          { "tmsi": "47d1264a", "lai": { "mcc_mnc": "262-01", "lac": "3721" },
             "rfu": 30, "lu_status": 0 } ),
         ( 'ffffffff62f2200000ff01',
-          {"tmsi": "ffffffff", "lai": {"mcc_mnc": "262f02", "lac": "0000"}, "rfu": 255, "lu_status": 1} ),
+          {"tmsi": "ffffffff", "lai": {"mcc_mnc": "262-02", "lac": "0000"}, "rfu": 255, "lu_status": 1} ),
     ]
     def __init__(self, fid='6f7e', sfid=0x0b, name='EF.LOCI', desc='Location information', size=(11, 11)):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
-        Lai = Struct('mcc_mnc'/BcdAdapter(Bytes(3)), 'lac'/HexAdapter(Bytes(2)))
+        Lai = Struct('mcc_mnc'/PlmnAdapter(Bytes(3)), 'lac'/HexAdapter(Bytes(2)))
         self._construct = Struct('tmsi'/HexAdapter(Bytes(4)), 'lai'/Lai, 'rfu'/Int8ub, 'lu_status'/Int8ub)
 
 # TS 31.102 Section 4.2.18
@@ -905,11 +905,11 @@ class EF_ePDGId(TransparentEF):
 # TS 31.102 Section 4.2.104
 class EF_ePDGSelection(TransparentEF):
     _test_de_encode = [
-        ( '80060001f1000100', {'e_pdg_selection': [{'plmn': '00101f', 'epdg_priority': 1, 'epdg_fqdn_format': 'operator_identified' }] }),
-        ( '800600011000a001', {'e_pdg_selection': [{'plmn': '001001', 'epdg_priority': 160, 'epdg_fqdn_format': 'location_based' }] }),
+        ( '800600f110000100', {'e_pdg_selection': [{'plmn': '001-01', 'epdg_priority': 1, 'epdg_fqdn_format': 'operator_identified' }] }),
+        ( '800600011000a001', {'e_pdg_selection': [{'plmn': '001-001', 'epdg_priority': 160, 'epdg_fqdn_format': 'location_based' }] }),
     ]
     class ePDGSelection(BER_TLV_IE, tag=0x80):
-        _construct = GreedyRange(Struct('plmn'/BcdAdapter(Bytes(3)),
+        _construct = GreedyRange(Struct('plmn'/PlmnAdapter(Bytes(3)),
                                         'epdg_priority'/Int16ub,
                                         'epdg_fqdn_format'/Enum(Int8ub, operator_identified=0, location_based=1)))
 
@@ -980,7 +980,7 @@ class EF_UAC_AIC(TransparentEF):
 class EF_OPL5G(LinFixedEF):
     def __init__(self, fid='4f08', sfid=0x08, name='EF.OPL5G', desc='5GS Operator PLMN List', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(10, None), **kwargs)
-        Tai = Struct('mcc_mnc'/BcdAdapter(Bytes(3)), 'tac_min'/HexAdapter(Bytes(3)),
+        Tai = Struct('mcc_mnc'/PlmnAdapter(Bytes(3)), 'tac_min'/HexAdapter(Bytes(3)),
                      'tac_max'/HexAdapter(Bytes(3)))
         self._construct = Struct('tai'/Tai, 'pnn_record_id'/Int8ub)
 

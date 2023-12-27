@@ -22,7 +22,7 @@ from bidict import bidict
 from typing import List
 from pySim.utils import b2h, h2b, dec_xplmn_w_act
 from pySim.tlv import TLV_IE, COMPR_TLV_IE, BER_TLV_IE, TLV_IE_Collection
-from pySim.construct import BcdAdapter, HexAdapter, GsmStringAdapter, TonNpi
+from pySim.construct import PlmnAdapter, BcdAdapter, HexAdapter, GsmStringAdapter, TonNpi
 from construct import Int8ub, Int16ub, Byte, Bytes, Bit, Flag, BitsInteger
 from construct import Struct, Enum, Tell, BitStruct, this, Padding, RepeatUntil
 from construct import GreedyBytes, Switch, GreedyRange, FlagsEnum
@@ -597,7 +597,7 @@ class ContactlessFunctionalityState(COMPR_TLV_IE, tag=0xD4):
 
 # TS 31.111 Section 8.91
 class RoutingAreaIdentification(COMPR_TLV_IE, tag=0xF3):
-    _construct = Struct('mcc_mnc'/BcdAdapter(Bytes(3)),
+    _construct = Struct('mcc_mnc'/PlmnAdapter(Bytes(3)),
                         'lac'/HexAdapter(Bytes(2)),
                         'rac'/Int8ub)
 
@@ -645,7 +645,7 @@ class GeographicalLocationParameters(COMPR_TLV_IE, tag=0xF6):
 
 # TS 31.111 Section 8.97
 class PlmnList(COMPR_TLV_IE, tag=0xF9):
-    _construct = GreedyRange('mcc_mnc'/HexAdapter(Bytes(3)))
+    _construct = GreedyRange('mcc_mnc'/PlmnAdapter(Bytes(3)))
 
 # TS 102 223 Section 8.98
 class EcatSequenceNumber(COMPR_TLV_IE, tag=0xA1):

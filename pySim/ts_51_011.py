@@ -845,11 +845,11 @@ class EF_PNN(LinFixedEF):
 class EF_OPL(LinFixedEF):
     _test_de_encode = [
         ( '62f2100000fffe01',
-          { "lai": { "mcc_mnc": "262f01", "lac_min": "0000", "lac_max": "fffe" }, "pnn_record_id": 1 } ),
+          { "lai": { "mcc_mnc": "262-01", "lac_min": "0000", "lac_max": "fffe" }, "pnn_record_id": 1 } ),
     ]
     def __init__(self, fid='6fc6', sfid=None, name='EF.OPL', rec_len=(8, 8), desc='Operator PLMN List', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
-        self._construct = Struct('lai'/Struct('mcc_mnc'/BcdAdapter(Bytes(3)),
+        self._construct = Struct('lai'/Struct('mcc_mnc'/PlmnAdapter(Bytes(3)),
                                  'lac_min'/HexAdapter(Bytes(2)), 'lac_max'/HexAdapter(Bytes(2))), 'pnn_record_id'/Int8ub)
 
 # TS 51.011 Section 10.3.44 + TS 31.102 4.2.62
@@ -884,7 +884,7 @@ class EF_SPDI(TransparentEF):
     # TODO: a305800337f800ffffffffffffffffffffffffffffffffffffffffffffff
     class ServiceProviderPLMN(BER_TLV_IE, tag=0x80):
         # flexible numbers of 3-byte PLMN records
-        _construct = GreedyRange(BcdAdapter(Bytes(3)))
+        _construct = GreedyRange(PlmnAdapter(Bytes(3)))
 
     class SPDI(BER_TLV_IE, tag=0xA3, nested=[ServiceProviderPLMN]):
         pass

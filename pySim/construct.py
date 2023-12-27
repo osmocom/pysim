@@ -58,6 +58,23 @@ class BcdAdapter(Adapter):
     def _encode(self, obj, context, path):
         return h2b(swap_nibbles(obj))
 
+class PlmnAdapter(BcdAdapter):
+    """convert a bytes(3) type to BCD string like 262-02 or 262-002."""
+    def _decode(self, obj, context, path):
+        bcd = super()._decode(obj, context, path)
+        if bcd[3] == 'f':
+            return '-'.join([bcd[:3], bcd[4:]])
+        else:
+            return '-'.join([bcd[:3], bcd[3:]])
+
+    def _encode(self, obj, context, path):
+        l = obj.split('-')
+        if len(l[1]) == 2:
+            bcd = l[0] + 'f' + l[1]
+        else:
+            bcd = l[0] + l[1]
+        return super()._encode(bcd, context, path)
+
 class InvertAdapter(Adapter):
     """inverse logic (false->true, true->false)."""
     @staticmethod
