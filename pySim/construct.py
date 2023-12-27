@@ -48,6 +48,164 @@ class Utf8Adapter(Adapter):
     def _encode(self, obj, context, path):
         return codecs.encode(obj, "utf-8")
 
+class Ucs2Adapter(Adapter):
+    """convert a bytes() type that contains UCS2 encoded characters encoded as defined in TS 102 221
+    Annex A to normal python string representation (and back)."""
+    def _decode(self, obj, context, path):
+        # In case the string contains only 0xff bytes we interpret it as an empty string
+        if obj == b'\xff' * len(obj):
+                return ""
+        if obj[0] == 0x80:
+            # TS 102 221 Annex A Variant 1
+            return codecs.decode(obj[1:], 'utf_16_be')
+        elif obj[0] == 0x81:
+            # TS 102 221 Annex A Variant 2
+            out = ""
+            # second byte contains a value indicating the number of characters
+            num_of_chars = obj[1]
+            # the third byte contains an 8 bit number which defines bits 15 to 8 of a 16 bit base
+            # pointer, where bit 16 is set to zero, and bits 7 to 1 are also set to zero. These
+            # sixteen bits constitute a base pointer to a "half-page" in the UCS2 code space
+            base_ptr = obj[2] << 7
+            for ch in obj[3:3+num_of_chars]:
+                # if bit 8 of the byte is set to zero, the remaining 7 bits of the byte contain a
+                # GSM Default Alphabet character, whereas if bit 8 of the byte is set to one, then
+                # the remaining seven bits are an offset value added to the 16 bit base pointer
+                # defined earlier, and the resultant 16 bit value is a UCS2 code point
+                if ch & 0x80:
+                    codepoint = (ch & 0x7f) + base_ptr
+                    out += codecs.decode(codepoint.to_bytes(2, byteorder='big'), 'utf_16_be')
+                else:
+                    out += codecs.decode(bytes([ch]), 'gsm03.38')
+            return out
+        elif obj[0] == 0x82:
+            # TS 102 221 Annex A Variant 3
+            out = ""
+            # second byte contains a value indicating the number of characters
+            num_of_chars = obj[1]
+            # third and fourth bytes contain a 16 bit number which defines the complete 16 bit base
+            # pointer to a half-page in the UCS2 code space, for use with some or all of the
+            # remaining bytes in the string
+            base_ptr = obj[2] << 8 | obj[3]
+            for ch in obj[4:4+num_of_chars]:
+                # if bit 8 of the byte is set to zero, the remaining 7 bits of the byte contain a
+                # GSM Default Alphabet character, whereas if bit 8 of the byte is set to one, the
+                # remaining seven bits are an offset value added to the base pointer defined in
+                # bytes three and four, and the resultant 16 bit value is a UCS2 code point, else: #
+                # GSM default alphabet
+                if ch & 0x80:
+                    codepoint = (ch & 0x7f) + base_ptr
+                    out += codecs.decode(codepoint.to_bytes(2, byteorder='big'), 'utf_16_be')
+                else:
+                    out += codecs.decode(bytes([ch]), 'gsm03.38')
+            return out
+        else:
+            raise ValueError('First byte of TS 102 221 UCS-2 must be 0x80, 0x81 or 0x82')
+
+    def _encode(self, obj, context, path):
+        def encodable_in_gsm338(instr: str) -> bool:
+            """Determine if given input string is encode-ale in gsm03.38."""
+            try:
+                # TODO: figure out if/how we can constrain to default alphabet.  The gsm0338
+                # library seems to include the spanish lock/shift table
+                codecs.encode(instr, 'gsm03.38')
+            except ValueError:
+                return False
+            return True
+
+        def codepoints_not_in_gsm338(instr: str) -> typing.List[int]:
+            """Return an integer list of UCS2 codepoints for all characters of 'inster'
+            which are not representable in the GSM 03.38 default alphabet."""
+            codepoint_list = []
+            for c in instr:
+                if encodable_in_gsm338(c):
+                    continue
+                c_codepoint = int.from_bytes(codecs.encode(c, 'utf_16_be'), byteorder='big')
+                codepoint_list.append(c_codepoint)
+            return codepoint_list
+
+        def diff_between_min_and_max_of_list(inlst: typing.List) -> int:
+            return max(inlst) - min(inlst)
+
+        def encodable_in_variant2(instr: str) -> bool:
+            codepoint_prefix = None
+            for c in instr:
+                if encodable_in_gsm338(c):
+                    continue
+                c_codepoint = int.from_bytes(codecs.encode(c, 'utf_16_be'), byteorder='big')
+                if c_codepoint >= 0x8000:
+                    return False
+                c_prefix = c_codepoint >> 7
+                if codepoint_prefix is None:
+                    codepoint_prefix = c_prefix
+                else:
+                    if c_prefix != codepoint_prefix:
+                        return False
+            return True
+
+        def encodable_in_variant3(instr: str) -> bool:
+            codepoint_list = codepoints_not_in_gsm338(instr)
+            # compute delta between max and min; check if it's encodable in 7 bits
+            if diff_between_min_and_max_of_list(codepoint_list) >= 0x80:
+                return False
+            return True
+
+        def _encode_variant1(instr: str) -> bytes:
+            """Encode according to TS 102 221 Annex A Variant 1"""
+            return b'\x80' + codecs.encode(obj, 'utf_16_be')
+
+        def _encode_variant2(instr: str) -> bytes:
+            """Encode according to TS 102 221 Annex A Variant 2"""
+            codepoint_prefix = None
+            # second byte contains a value indicating the number of characters
+            hdr = b'\x81' + len(instr).to_bytes(1, byteorder='big')
+            chars = b''
+            for c in instr:
+                try:
+                    enc = codecs.encode(c, 'gsm03.38')
+                except ValueError:
+                    c_codepoint = int.from_bytes(codecs.encode(c, 'utf_16_be'), byteorder='big')
+                    c_prefix = c_codepoint >> 7
+                    if codepoint_prefix is None:
+                        codepoint_prefix = c_prefix
+                    assert codepoint_prefix == c_prefix
+                    enc = (0x80 + (c_codepoint & 0x7f)).to_bytes(1, byteorder='big')
+                chars += enc
+            if codepoint_prefix == None:
+                codepoint_prefix = 0
+            return hdr + codepoint_prefix.to_bytes(1, byteorder='big') + chars
+
+        def _encode_variant3(instr: str) -> bytes:
+            """Encode according to TS 102 221 Annex A Variant 3"""
+            # second byte contains a value indicating the number of characters
+            hdr = b'\x82' + len(instr).to_bytes(1, byteorder='big')
+            chars = b''
+            codepoint_list = codepoints_not_in_gsm338(instr)
+            codepoint_base = min(codepoint_list)
+            for c in instr:
+                try:
+                    # if bit 8 of the byte is set to zero, the remaining 7 bits of the byte contain a GSM
+                    # Default # Alphabet character
+                    enc = codecs.encode(c, 'gsm03.38')
+                except ValueError:
+                    # if bit 8 of the byte is set to one, the remaining seven bits are an offset
+                    # value added to the base pointer defined in bytes three and four, and the
+                    # resultant 16 bit value is a UCS2 code point
+                    c_codepoint = int.from_bytes(codecs.encode(c, 'utf_16_be'), byteorder='big')
+                    c_codepoint_delta = c_codepoint - codepoint_base
+                    assert c_codepoint_delta < 0x80
+                    enc = (0x80 + c_codepoint_delta).to_bytes(1, byteorder='big')
+                chars += enc
+            # third and fourth bytes contain a 16 bit number which defines the complete 16 bit base
+            # pointer to a half-page in the UCS2 code space
+            return hdr + codepoint_base.to_bytes(2, byteorder='big') + chars
+
+        if encodable_in_variant2(obj):
+            return _encode_variant2(obj)
+        elif encodable_in_variant3(obj):
+            return _encode_variant3(obj)
+        else:
+            return _encode_variant1(obj)
 
 class BcdAdapter(Adapter):
     """convert a bytes() type to a string of BCD nibbles."""
