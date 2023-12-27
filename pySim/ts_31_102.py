@@ -949,6 +949,83 @@ class DF_GSM_ACCESS(CardDF):
 
 
 ######################################################################
+# DF.NHB
+######################################################################
+
+# 3GPP TS 31.102 Section 4.4.6.2
+class EF_ACSGL(LinFixedEF):
+    _test_de_encode = [
+        ( 'a00d800362f21081060000000002e0',
+          {'csg_list': [{'plmn': '262-01'},
+                        {'csg_information': { 'csg_type': 'from_other_sources',
+                                              'hnb_name_indication': 'from_other_sources',
+                                              'csg_id': { 'id': 23 } } } ] } ),
+    ]
+    class Plmn(BER_TLV_IE, tag=0x80):
+        _construct = PlmnAdapter(Bytes(3))
+    class CsgInformation(BER_TLV_IE, tag=0x81):
+        _construct = Struct('csg_type'/Enum(Int8ub, from_other_sources=0),
+                            'hnb_name_indication'/Enum(Int8ub, from_other_sources=0),
+                            'csg_id'/BitStruct('id'/BitsInteger(27), Padding(5)))
+    class CsgList(BER_TLV_IE, tag=0xa0, nested=[Plmn, CsgInformation]):
+        pass
+    def __init__(self, fid='4f81', sfid=0x01, name='EF.ACSGL', desc='Allowed CSG Lists', service=86, **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, service=service, rec_len=(1, None), **kwargs)
+        self._tlv = EF_ACSGL.CsgList
+
+# 3GPP TS 31.102 Section 4.4.6.3
+class EF_CSGT(LinFixedEF):
+    _test_de_encode = [
+        ( '8906810300666f6f', [{ 'text_csg_type': 'foo' }] ),
+        ( '8906810300666f6f801068747470733a2f2f666f6f2e6261722f',
+          [{ 'text_csg_type': 'foo' }, { "graphics_csg_type_uri": "https://foo.bar/" }] ),
+    ]
+    class TextCsgType(BER_TLV_IE, tag=0x89):
+        _construct = Ucs2Adapter(GreedyBytes)
+    class GraphicsCsgTypeURI(BER_TLV_IE, tag=0x80):
+        _construct = Utf8Adapter(GreedyBytes)
+    class GraphicsCsgTypeEfImg(BER_TLV_IE, tag=0x81):
+        _construct = Int8ub
+    class Csgt_TLV_Collection(TLV_IE_Collection,
+                              nested=[TextCsgType, GraphicsCsgTypeURI, GraphicsCsgTypeEfImg]):
+        pass
+    def __init__(self, fid='4f82', sfid=0x02, name='EF.CSGT', desc='CSG Types', service=86, **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, service=service, rec_len=(1, None), **kwargs)
+        self._tlv = EF_CSGT.Csgt_TLV_Collection
+
+
+# 3GPP TS 31.102 Section 4.4.6.4
+class EF_HNBN(LinFixedEF):
+    _test_de_encode = [
+            ( '800b8108006d61686c7a656974', { 'hnb_name': 'mahlzeit' }),
+    ]
+    class HnbName(BER_TLV_IE, tag=0x80):
+        _construct = Ucs2Adapter(GreedyBytes)
+    def __init__(self, fid='4f83', sfid=0x03, name='EF.HNBN', desc='Home NodeB Name', service=86, **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, service=service, rec_len=(1, None), **kwargs)
+        self._tlv = EF_HNBN.HnbName
+
+# 3GPP TS 31.102 Section 4.4.6.5
+class EF_OCSGL(LinFixedEF):
+    _test_de_encode = [
+        ( 'a010800362f21081060000000002e0820100',
+          {'operator_csg_list': [{'plmn': '262-01'},
+                                 {'csg_information': { 'csg_type': 'from_other_sources',
+                                              'hnb_name_indication': 'from_other_sources',
+                                              'csg_id': { 'id': 23 } } },
+                                 {'csg_display_indicator': 'all_available_csg_ids' } ] } ),
+
+    ]
+    class CsgDisplayIndicator(BER_TLV_IE, tag=0x82):
+        _construct = Enum(Int8ub, all_available_csg_ids=0, only_ocsgl_csg_ids=1)
+    class OperatorCsgList(BER_TLV_IE, tag=0xa0, nested=[EF_ACSGL.Plmn, EF_ACSGL.CsgInformation, CsgDisplayIndicator]):
+        pass
+    def __init__(self, fid='4f84', sfid=0x04, name='EF.OCSGL', desc='Operator CSG Lists', service=90, **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, service=service, rec_len=(1, None), **kwargs)
+        self._tlv = EF_OCSGL.OperatorCsgList
+
+
+######################################################################
 # DF.5GS
 ######################################################################
 
@@ -1315,12 +1392,12 @@ class DF_HNB(CardDF):
     def __init__(self, fid='5f50', name='DF.HNB', desc='Files for HomeNodeB purpose', **kwargs):
         super().__init__(fid=fid, name=name, desc=desc, **kwargs)
         files = [
-            LinFixedEF('4f81', 0x01, 'EF.ACSGL', 'Allowed CSG Lists', service=86),
-            LinFixedEF('4f82', 0x02, 'EF.CSGTL', 'CSG Types', service=86),
-            LinFixedEF('4f83', 0x03, 'EF.HNBN', 'Home NodeB Name', service=86),
-            LinFixedEF('4f84', 0x04, 'EF.OCSGL', 'Operator CSG Lists', service=90),
-            LinFixedEF('4f85', 0x05, 'EF.OCSGT', 'Operator CSG Type', service=90),
-            LinFixedEF('4f86', 0x06, 'EF.OHNBN', 'Operator Home NodeB Name', service=90),
+            EF_ACSGL(),
+            EF_CSGT(),
+            EF_HNBN(),
+            EF_OCSGL(),
+            EF_CSGT('4f85', 0x05, 'EF.OCSGT', 'Operator CSG Type', service=90),
+            EF_HNBN('4f86', 0x06, 'EF.OHNBN', 'Operator Home NodeB Name', service=90),
         ]
         self.add_files(files)
 
