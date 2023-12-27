@@ -48,6 +48,29 @@ class Utf8Adapter(Adapter):
     def _encode(self, obj, context, path):
         return codecs.encode(obj, "utf-8")
 
+class GsmOrUcs2Adapter(Adapter):
+    """Try to encode into a GSM 03.38 string; if that fails, fall back to UCS-2 as described
+    in TS 102 221 Annex A."""
+    def _decode(self, obj, context, path):
+        # In case the string contains only 0xff bytes we interpret it as an empty string
+        if obj == b'\xff' * len(obj):
+                return ""
+        # one of the magic bytes of TS 102 221 Annex A
+        if obj[0] in [0x80, 0x81, 0x82]:
+            ad = Ucs2Adapter(GreedyBytes)
+        else:
+            ad = GsmString(GreedyBytes)
+        return ad._decode(obj, context, path)
+
+    def _encode(self, obj, context, path):
+        # first try GSM 03.38; then fall back to TS 102 221 Annex A UCS-2
+        try:
+            ad = GsmString(GreedyBytes)
+            return ad._encode(obj, context, path)
+        except:
+            ad = Ucs2Adapter(GreedyBytes)
+            return ad._encode(obj, context, path)
+
 class Ucs2Adapter(Adapter):
     """convert a bytes() type that contains UCS2 encoded characters encoded as defined in TS 102 221
     Annex A to normal python string representation (and back)."""
@@ -446,6 +469,20 @@ def GsmString(n):
         n (Integer): Fixed length of the encoded byte string
     '''
     return GsmStringAdapter(Rpad(Bytes(n), pattern=b'\xff'), codec='gsm03.38')
+
+def GsmOrUcs2String(n):
+    '''
+    GSM 03.38 or UCS-2 (TS 102 221 Annex A) encoded byte string of fixed length n.
+    Encoder appends padding bytes (b'\\xff') to maintain
+    length. Decoder removes those trailing bytes.
+
+    Exceptions are raised for invalid characters
+    and length excess.
+
+    Parameters:
+        n (Integer): Fixed length of the encoded byte string
+    '''
+    return GsmOrUcs2Adapter(Rpad(Bytes(n), pattern=b'\xff'))
 
 class GreedyInteger(Construct):
     """A variable-length integer implementation, think of combining GrredyBytes with BytesInteger."""

@@ -145,7 +145,7 @@ class EF_ADN(LinFixedEF):
     def __init__(self, fid='6f3a', sfid=None, name='EF.ADN', desc='Abbreviated Dialing Numbers', ext=1, **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(14, 30), **kwargs)
         ext_name = 'ext%u_record_id' % ext
-        self._construct = Struct('alpha_id'/COptional(GsmStringAdapter(Rpad(Bytes(this._.total_len-14)), codec='ascii')),
+        self._construct = Struct('alpha_id'/COptional(GsmOrUcs2Adapter(Rpad(Bytes(this._.total_len-14)))),
                                  'len_of_bcd'/Int8ub,
                                  'ton_npi'/TonNpi,
                                  'dialing_nr'/ExtendedBcdAdapter(BcdAdapter(Rpad(Bytes(10)))),
@@ -514,7 +514,7 @@ class EF_SPN(TransparentEF):
             'hide_in_oplmn'/Flag,
             'show_in_hplmn'/Flag,
             # Bytes 2..17
-            'spn'/Bytewise(GsmString(16))
+            'spn'/Bytewise(GsmOrUcs2String(16))
         )
 
 # TS 51.011 Section 10.3.13
@@ -929,7 +929,7 @@ class EF_MMSICP(TransparentEF):
 # TS 51.011 Section 10.3.54
 class EF_MMSUP(LinFixedEF):
     class MMS_UserPref_ProfileName(BER_TLV_IE, tag=0x81):
-        pass
+        _construct = GsmOrUcs2Adapter(GreedyBytes)
 
     class MMS_UserPref_Info(BER_TLV_IE, tag=0x82):
         pass

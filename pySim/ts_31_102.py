@@ -529,7 +529,7 @@ class EF_ECC(LinFixedEF):
     cc_construct = BcdAdapter(Rpad(Bytes(3)))
     category_construct = FlagsEnum(Byte, police=1, ambulance=2, fire_brigade=3, marine_guard=4,
                                    mountain_rescue=5, manual_ecall=6, automatic_ecall=7)
-    alpha_construct = GsmStringAdapter(Rpad(GreedyBytes))
+    alpha_construct = GsmOrUcs2Adapter(Rpad(GreedyBytes))
 
     def __init__(self, fid='6fb7', sfid=0x01, name='EF.ECC',
                  desc='Emergency Call Codes'):
