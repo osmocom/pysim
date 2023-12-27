@@ -157,13 +157,13 @@ class IE(Transcodable, metaclass=TlvMeta):
     def from_dict(self, decoded: dict):
         """Set the IE internal decoded representation to data from the argument.
         If this is a nested IE, the child IE instance list is re-created."""
+        expected_key_name = camel_to_snake(type(self).__name__)
+        if not expected_key_name in decoded:
+            raise ValueError("Dict %s doesn't contain expected key %s" % (decoded, expected_key_name))
         if self.nested_collection:
-            self.children = self.nested_collection.from_dict(decoded)
+            self.children = self.nested_collection.from_dict(decoded[expected_key_name])
         else:
             self.children = []
-            expected_key_name = camel_to_snake(type(self).__name__)
-            if not expected_key_name in decoded:
-                raise ValueError("Dict %s doesn't contain expected key %s" % (decoded, expected_key_name))
             self.decoded = decoded[expected_key_name]
 
     def is_constructed(self):
