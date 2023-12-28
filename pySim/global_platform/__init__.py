@@ -601,3 +601,22 @@ class CardApplicationISD(CardApplicationSD):
 #
 #    def __init__(self, name='GlobalPlatform'):
 #        super().__init__(name, desc='GlobalPlatfomr 2.1.1', cla=['00','80','84'], sw=sw_table)
+
+
+class GpCardKeyset:
+    """A single set of GlobalPlatform card keys and the associated KVN."""
+    def __init__(self, kvn: int, enc: bytes, mac: bytes, dek: bytes):
+        assert kvn >= 0 and kvn < 256
+        assert len(enc) == len(mac) == len(dek)
+        self.kvn = kvn
+        self.enc = enc
+        self.mac = mac
+        self.dek = dek
+
+    @classmethod
+    def from_single_key(cls, kvn: int, base_key: bytes) -> 'GpCardKeyset':
+        return cls(int, base_key, base_key, base_key)
+
+    def __str__(self):
+        return "%s(KVN=%u, ENC=%s, MAC=%s, DEK=%s)" % (self.__class__.__name__,
+                self.kvn, b2h(self.enc), b2h(self.mac), b2h(self.dek))
