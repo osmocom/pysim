@@ -46,27 +46,31 @@ mac_length = {
 
 
 class EF_PIN(TransparentEF):
-    def __init__(self, fid, name):
+    _test_de_encode = [
+        ( 'f1030331323334ffffffff0a0a3132333435363738',
+          { 'state': { 'valid': True, 'change_able': True, 'unblock_able': True, 'disable_able': True,
+                       'not_initialized': False, 'disabled': True },
+           'attempts_remaining': 3, 'maximum_attempts': 3, 'pin': '31323334',
+           'puk': { 'attempts_remaining': 10, 'maximum_attempts': 10, 'puk': '3132333435363738' }
+          } ),
+        ( 'f003039999999999999999',
+          { 'state': { 'valid': True, 'change_able': True, 'unblock_able': True, 'disable_able': True,
+                       'not_initialized': False, 'disabled': False },
+           'attempts_remaining': 3, 'maximum_attempts': 3, 'pin': '9999999999999999',
+           'puk': None } ),
+    ]
+    def __init__(self, fid='6f01', name='EF.CHV1'):
         super().__init__(fid, name=name, desc='%s PIN file' % name)
-
-    def _decode_bin(self, raw_bin_data):
-        u = unpack('!BBB8s', raw_bin_data[:11])
-        res = {'enabled': (True, False)[u[0] & 0x01],
-               'initialized': (True, False)[u[0] & 0x02],
-               'disable_able': (False, True)[u[0] & 0x10],
-               'unblock_able': (False, True)[u[0] & 0x20],
-               'change_able': (False, True)[u[0] & 0x40],
-               'valid': (False, True)[u[0] & 0x80],
-               'attempts_remaining': u[1],
-               'maximum_attempts': u[2],
-               'pin': u[3].hex(),
-               }
-        if len(raw_bin_data) == 21:
-            u2 = unpack('!BB8s', raw_bin_data[11:10])
-            res['attempts_remaining_puk'] = u2[0]
-            res['maximum_attempts_puk'] = u2[1]
-            res['puk'] = u2[2].hex()
-        return res
+        StateByte = FlagsEnum(Byte, disabled=1, not_initialized=2, disable_able=0x10, unblock_able=0x20,
+                                    change_able=0x40, valid=0x80)
+        PukStruct = Struct('attempts_remaining'/Int8ub,
+                           'maximum_attempts'/Int8ub,
+                           'puk'/HexAdapter(Rpad(Bytes(8))))
+        self._construct = Struct('state'/StateByte,
+                                 'attempts_remaining'/Int8ub,
+                                 'maximum_attempts'/Int8ub,
+                                 'pin'/HexAdapter(Rpad(Bytes(8))),
+                                 'puk'/Optional(PukStruct))
 
 
 class EF_MILENAGE_CFG(TransparentEF):
