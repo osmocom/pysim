@@ -279,9 +279,16 @@ class SimCardCommands:
 
         # Save write cycles by reading+comparing before write
         if conserve:
-            data_current, sw = self.read_binary(ef, data_length, offset)
-            if data_current == data:
-                return None, sw
+            try:
+                data_current, sw = self.read_binary(ef, data_length, offset)
+                if data_current == data:
+                    return None, sw
+            except Exception:
+                # cannot read data. This is not a fatal error, as reading is just done to
+                # conserve the amount of smart card writes.  The access conditions of the file
+                # may well permit us to UPDATE but not permit us to READ.  So let's ignore
+                # any such exception during READ.
+                pass
 
         self.select_path(ef)
         total_data = ''
@@ -363,10 +370,17 @@ class SimCardCommands:
 
         # Save write cycles by reading+comparing before write
         if conserve:
-            data_current, sw = self.read_record(ef, rec_no)
-            data_current = data_current[0:rec_length*2]
-            if data_current == data:
-                return None, sw
+            try:
+                data_current, sw = self.read_record(ef, rec_no)
+                data_current = data_current[0:rec_length*2]
+                if data_current == data:
+                    return None, sw
+            except Exception:
+                # cannot read data. This is not a fatal error, as reading is just done to
+                # conserve the amount of smart card writes.  The access conditions of the file
+                # may well permit us to UPDATE but not permit us to READ.  So let's ignore
+                # any such exception during READ.
+                pass
 
         pdu = (self.cla_byte + 'dc%02x04%02x' % (rec_no, rec_length)) + data
         res = self._tp.send_apdu_checksw(pdu)
