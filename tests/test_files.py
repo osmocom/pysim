@@ -39,6 +39,20 @@ class LinFixed_Test(unittest.TestCase):
     classes = all_subclasses(LinFixedEF)
     maxDiff = None
 
+    @staticmethod
+    def _parse_t(t):
+        """Parse a test description which can either be a 2-tuple of (enc, dec) or
+        a 3-tuple of (enc, rec_nr, dec)."""
+        if len(t) == 2:
+            encoded = t[0]
+            rec_num = 1
+            decoded = t[1]
+        else:
+            encoded = t[0]
+            rec_num = t[1]
+            decoded = t[2]
+        return encoded, rec_num, decoded
+
     def test_decode_record(self):
         """Test the decoder for a linear-fixed EF.  Requires the given LinFixedEF subclass
         to have an '_test_decode' attribute, containing a list of tuples. Each tuple can
@@ -52,14 +66,7 @@ class LinFixed_Test(unittest.TestCase):
                 for t in c._test_decode:
                     with self.subTest(name, test_decode=t):
                         inst = c()
-                        if len(t) == 2:
-                            encoded = t[0]
-                            rec_num = 1
-                            decoded = t[1]
-                        else:
-                            encoded = t[0]
-                            rec_num = t[1]
-                            decoded = t[2]
+                        encoded, rec_num, decoded = self._parse_t(t)
                         logging.debug("Testing decode of %s", name)
                         re_dec = inst.decode_record_hex(encoded, rec_num)
                         self.assertEqual(decoded, re_dec)
@@ -77,14 +84,7 @@ class LinFixed_Test(unittest.TestCase):
                 for t in c._test_encode:
                     with self.subTest(name, test_encode=t):
                         inst = c()
-                        if len(t) == 2:
-                            encoded = t[0]
-                            rec_num = 1
-                            decoded = t[1]
-                        else:
-                            encoded = t[0]
-                            rec_num = t[1]
-                            decoded = t[2]
+                        encoded, rec_num, decoded = self._parse_t(t)
                         logging.debug("Testing encode of %s", name)
                         re_enc = inst.encode_record_hex(decoded, rec_num)
                         self.assertEqual(encoded.upper(), re_enc.upper())
@@ -106,14 +106,7 @@ class LinFixed_Test(unittest.TestCase):
                 for t in c._test_de_encode:
                     with self.subTest(name, test_de_encode=t):
                         inst = c()
-                        if len(t) == 2:
-                            encoded = t[0]
-                            rec_num = 1
-                            decoded = t[1]
-                        else:
-                            encoded = t[0]
-                            rec_num = t[1]
-                            decoded = t[2]
+                        encoded, rec_num, decoded = self._parse_t(t)
                         logging.debug("Testing decode of %s", name)
                         re_dec = inst.decode_record_hex(encoded, rec_num)
                         self.assertEqual(decoded, re_dec)
