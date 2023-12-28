@@ -959,6 +959,16 @@ put_key
    :module: pySim.global_platform
    :func: ADF_SD.AddlShellCommands.put_key_parser
 
+establish_scp02
+~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.est_scp02_parser
+
+release_scp
+~~~~~~~~~~~
+Release any previously established SCP (Secure Channel Protocol)
+
 
 eUICC ISD-R commands
 --------------------

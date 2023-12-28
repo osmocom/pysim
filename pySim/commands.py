@@ -69,6 +69,7 @@ class SimCardCommands:
         self.lchan_nr = lchan_nr
         # invokes the setter below
         self.cla_byte = "a0"
+        self.scp = None # Secure Channel Protocol
 
     def fork_lchan(self, lchan_nr: int) -> 'SimCardCommands':
         """Fork a per-lchan specific SimCardCommands instance off the current instance."""
@@ -110,7 +111,10 @@ class SimCardCommands:
                         data : string (in hex) of returned data (ex. "074F4EFFFF")
                         sw   : string (in hex) of status word (ex. "9000")
         """
-        return self._tp.send_apdu(pdu)
+        if self.scp:
+            return self.scp.send_apdu_wrapper(self._tp.send_apdu, pdu)
+        else:
+            return self._tp.send_apdu(pdu)
 
     def send_apdu_checksw(self, pdu: Hexstr, sw: SwMatchstr = "9000") -> ResTuple:
         """Sends an APDU and check returned SW
@@ -124,7 +128,10 @@ class SimCardCommands:
                         data : string (in hex) of returned data (ex. "074F4EFFFF")
                         sw   : string (in hex) of status word (ex. "9000")
         """
-        return self._tp.send_apdu_checksw(pdu, sw)
+        if self.scp:
+            return self.scp.send_apdu_wrapper(self._tp.send_apdu_checksw, pdu, sw)
+        else:
+            return self._tp.send_apdu_checksw(pdu, sw)
 
     def send_apdu_constr(self, cla: Hexstr, ins: Hexstr, p1: Hexstr, p2: Hexstr, cmd_constr: Construct,
                          cmd_data: Hexstr, resp_constr: Construct) -> Tuple[dict, SwHexstr]:

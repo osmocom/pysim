@@ -1,7 +1,7 @@
 # coding=utf-8
 """Partial Support for GlobalPLatform Card Spec (currently 2.1.1)
 
-(C) 2022-2023 by Harald Welte <laforge@osmocom.org>
+(C) 2022-2024 by Harald Welte <laforge@osmocom.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,6 +21,8 @@ from typing import Optional, List, Dict, Tuple
 from construct import Optional as COptional
 from construct import *
 from bidict import bidict
+from Cryptodome.Random import get_random_bytes
+from pySim.global_platform.scp02 import SCP02
 from pySim.construct import *
 from pySim.utils import *
 from pySim.filesystem import *
@@ -582,6 +584,48 @@ class ADF_SD(CardADF):
                     p2 |= 0x01
             return grd_list
 
+        est_scp02_parser = argparse.ArgumentParser()
+        est_scp02_parser.add_argument('--key-ver', type=auto_uint8, required=True,
+                                      help='Key Version Number (KVN)')
+        est_scp02_parser.add_argument('--key-enc', type=is_hexstr, required=True,
+                                      help='Secure Channel Encryption Key')
+        est_scp02_parser.add_argument('--key-mac', type=is_hexstr, required=True,
+                                      help='Secure Channel MAC Key')
+        est_scp02_parser.add_argument('--key-dek', type=is_hexstr, required=True,
+                                      help='Data Encryption Key')
+        est_scp02_parser.add_argument('--host-challenge', type=is_hexstr,
+                                      help='Hard-code the host challenge; default: random')
+        est_scp02_parser.add_argument('--security-level', type=auto_uint8, default=0x01,
+                                      help='Security Level. Default: 0x01 (C-MAC only)')
+
+        @cmd2.with_argparser(est_scp02_parser)
+        def do_establish_scp02(self, opts):
+            """Establish a secure channel using the GlobalPlatform SCP02 protocol.  It can be released
+            again by using `release_scp`."""
+            if self._cmd.lchan.scc.scp:
+                self._cmd.poutput("Cannot establish SCP02 as this lchan already has a SCP instance!")
+                return
+            host_challenge = h2b(opts.host_challenge) if opts.host_challenge else get_random_bytes(8)
+            kset = GpCardKeyset(opts.key_ver, h2b(opts.key_enc), h2b(opts.key_mac), h2b(opts.key_dek))
+            scp02 = SCP02(card_keys=kset)
+            init_update_apdu = scp02.gen_init_update_apdu(host_challenge=host_challenge)
+            init_update_resp, sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(init_update_apdu))
+            scp02.parse_init_update_resp(h2b(init_update_resp))
+            ext_auth_apdu = scp02.gen_ext_auth_apdu(opts.security_level)
+            ext_auth_resp, sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(ext_auth_apdu))
+            self._cmd.poutput("Successfully established a SCP02 secure channel")
+            # store a reference to the SCP instance
+            self._cmd.lchan.scc.scp = scp02
+            self._cmd.update_prompt()
+
+        def do_release_scp(self, opts):
+            """Release a previously establiehed secure channel."""
+            if not self._cmd.lchan.scc.scp:
+                self._cmd.poutput("Cannot release SCP as none is established")
+                return
+            self._cmd.lchan.scc.scp = None
+            self._cmd.update_prompt()
+
 
 # Card Application of a Security Domain
 class CardApplicationSD(CardApplication):
@@ -601,3 +645,22 @@ class CardApplicationISD(CardApplicationSD):
 #
 #    def __init__(self, name='GlobalPlatform'):
 #        super().__init__(name, desc='GlobalPlatfomr 2.1.1', cla=['00','80','84'], sw=sw_table)
+
+
+class GpCardKeyset:
+    """A single set of GlobalPlatform card keys and the associated KVN."""
+    def __init__(self, kvn: int, enc: bytes, mac: bytes, dek: bytes):
+        assert kvn >= 0 and kvn < 256
+        assert len(enc) == len(mac) == len(dek)
+        self.kvn = kvn
+        self.enc = enc
+        self.mac = mac
+        self.dek = dek
+
+    @classmethod
+    def from_single_key(cls, kvn: int, base_key: bytes) -> 'GpCardKeyset':
+        return cls(int, base_key, base_key, base_key)
+
+    def __str__(self):
+        return "%s(KVN=%u, ENC=%s, MAC=%s, DEK=%s)" % (self.__class__.__name__,
+                self.kvn, b2h(self.enc), b2h(self.mac), b2h(self.dek))
