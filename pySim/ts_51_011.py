@@ -141,6 +141,7 @@ class EF_ADN(LinFixedEF):
                                                                            "numbering_plan_id": "isdn_e164"},
                "dialing_nr": "491721217212", "cap_conf_id": 255, "ext1_record_id": 255} )
         ]
+    _test_no_pad = True
 
     def __init__(self, fid='6f3a', sfid=None, name='EF.ADN', desc='Abbreviated Dialing Numbers', ext=1, **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(14, 30), **kwargs)
@@ -215,6 +216,7 @@ class EF_SMSP(LinFixedEF):
                             "call_number": "" },
             "tp_pid": "00", "tp_dcs": "00", "tp_vp_minutes": 1440 } ),
     ]
+    _test_no_pad = True
     class ValidityPeriodAdapter(Adapter):
         def _decode(self, obj, context, path):
             if obj <= 143:
@@ -565,6 +567,8 @@ class EF_AD(TransparentEF):
             ( "00ffff",
               { "ms_operation_mode": "normal", "rfu1": 255, "rfu2": 127, "ofm": True, "extensions": None } ),
         ]
+    _test_no_pad = True
+
     class OP_MODE(enum.IntEnum):
         normal = 0x00
         type_approval = 0x80
@@ -871,6 +875,8 @@ class EF_MWIS(LinFixedEF):
                           False}, "num_waiting_voicemail": 0, "num_waiting_fax": 0, "num_waiting_email": 0,
            "num_waiting_other": 0, "num_waiting_videomail": None} ),
     ]
+    _test_no_pad = True
+
     def __init__(self, fid='6fca', sfid=None, name='EF.MWIS', rec_len=(5, 6),
                  desc='Message Waiting Indication Status', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)

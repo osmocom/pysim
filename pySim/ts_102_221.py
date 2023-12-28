@@ -639,6 +639,7 @@ class EF_PL(TransRecEF):
         ( '656e', "en" ),
         ( 'ffff', None ),
     ]
+
     def __init__(self, fid='2f05', sfid=0x05, name='EF.PL', desc='Preferred Languages'):
         super().__init__(fid, sfid=sfid, name=name,
                          desc=desc, rec_len=2, size=(2, None))

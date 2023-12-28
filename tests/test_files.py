@@ -64,10 +64,18 @@ class LinFixed_Test(unittest.TestCase):
             name = get_qualified_name(c)
             if hasattr(c, '_test_decode'):
                 for t in c._test_decode:
+                    encoded, rec_num, decoded = self._parse_t(t)
                     with self.subTest(name, test_decode=t):
                         inst = c()
-                        encoded, rec_num, decoded = self._parse_t(t)
                         logging.debug("Testing decode of %s", name)
+                        re_dec = inst.decode_record_hex(encoded, rec_num)
+                        self.assertEqual(decoded, re_dec)
+                    if hasattr(c, '_test_no_pad') and c._test_no_pad:
+                        continue
+                    with self.subTest(name, test_decode_padded=t):
+                        encoded = encoded + 'ff'
+                        inst = c()
+                        logging.debug("Testing padded decode of %s", name)
                         re_dec = inst.decode_record_hex(encoded, rec_num)
                         self.assertEqual(decoded, re_dec)
 
@@ -104,9 +112,9 @@ class LinFixed_Test(unittest.TestCase):
             name = get_qualified_name(c)
             if hasattr(c, '_test_de_encode'):
                 for t in c._test_de_encode:
+                    encoded, rec_num, decoded = self._parse_t(t)
                     with self.subTest(name, test_de_encode=t):
                         inst = c()
-                        encoded, rec_num, decoded = self._parse_t(t)
                         logging.debug("Testing decode of %s", name)
                         re_dec = inst.decode_record_hex(encoded, rec_num)
                         self.assertEqual(decoded, re_dec)
@@ -114,6 +122,14 @@ class LinFixed_Test(unittest.TestCase):
                         logging.debug("Testing re-encode of %s", name)
                         re_enc = inst.encode_record_hex(re_dec, rec_num)
                         self.assertEqual(encoded.upper(), re_enc.upper())
+                    if hasattr(c, '_test_no_pad') and c._test_no_pad:
+                        continue
+                    with self.subTest(name, test_decode_padded=t):
+                        encoded = encoded + 'ff'
+                        inst = c()
+                        logging.debug("Testing padded decode of %s", name)
+                        re_dec = inst.decode_record_hex(encoded, rec_num)
+                        self.assertEqual(decoded, re_dec)
 
 
 class TransRecEF_Test(unittest.TestCase):
@@ -136,6 +152,8 @@ class TransRecEF_Test(unittest.TestCase):
                         logging.debug("Testing decode of %s", name)
                         re_dec = inst.decode_record_hex(encoded)
                         self.assertEqual(decoded, re_dec)
+                    # there's no point in testing padded input, as TransRecEF have a fixed record
+                    # size and we cannot ever receive more input data than that size.
 
     def test_encode_record(self):
         """Test the encoder for a transparent record-oriented EF.  Requires the given TransRecEF subclass
@@ -178,6 +196,8 @@ class TransRecEF_Test(unittest.TestCase):
                         logging.debug("Testing re-encode of %s", name)
                         re_enc = inst.encode_record_hex(re_dec)
                         self.assertEqual(encoded.upper(), re_enc.upper())
+                    # there's no point in testing padded input, as TransRecEF have a fixed record
+                    # size and we cannot ever receive more input data than that size.
 
 
 class TransparentEF_Test(unittest.TestCase):
@@ -204,11 +224,19 @@ class TransparentEF_Test(unittest.TestCase):
             name = get_qualified_name(c)
             if hasattr(c, '_test_decode'):
                 for t in c._test_decode:
+                    encoded = t[0]
+                    decoded = t[1]
                     with self.subTest(name, test_decode=t):
                         inst = c()
-                        encoded = t[0]
-                        decoded = t[1]
                         logging.debug("Testing decode of %s", name)
+                        re_dec = inst.decode_hex(encoded)
+                        self.assertEqual(decoded, re_dec)
+                    if hasattr(c, '_test_no_pad') and c._test_no_pad:
+                        continue
+                    with self.subTest(name, test_decode_padded=t):
+                        encoded = encoded + 'ff'
+                        inst = c()
+                        logging.debug("Testing padded decode of %s", name)
                         re_dec = inst.decode_hex(encoded)
                         self.assertEqual(decoded, re_dec)
 
@@ -241,10 +269,10 @@ class TransparentEF_Test(unittest.TestCase):
             name = get_qualified_name(c)
             if hasattr(c, '_test_de_encode'):
                 for t in c._test_de_encode:
+                    encoded = t[0]
+                    decoded = t[1]
                     with self.subTest(name, test_de_encode=t):
                         inst = c()
-                        encoded = t[0]
-                        decoded = t[1]
                         logging.debug("Testing decode of %s", name)
                         re_dec = inst.decode_hex(encoded)
                         self.assertEqual(decoded, re_dec)
@@ -252,7 +280,14 @@ class TransparentEF_Test(unittest.TestCase):
                         re_dec = inst.decode_hex(encoded)
                         re_enc = inst.encode_hex(re_dec)
                         self.assertEqual(encoded.upper(), re_enc.upper())
-
+                    if hasattr(c, '_test_no_pad') and c._test_no_pad:
+                        continue
+                    with self.subTest(name, test_decode_padded=t):
+                        encoded = encoded + 'ff'
+                        inst = c()
+                        logging.debug("Testing padded decode of %s", name)
+                        re_dec = inst.decode_hex(encoded)
+                        self.assertEqual(decoded, re_dec)
 
 if __name__ == '__main__':
     logger = logging.getLogger()

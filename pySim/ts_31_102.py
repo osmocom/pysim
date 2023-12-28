@@ -526,6 +526,7 @@ class EF_ECC(LinFixedEF):
                                               "marine_guard": False, "mountain_rescue": False,
                                               "manual_ecall": False, "automatic_ecall": False } } ),
     ]
+    _test_no_pad = True
     cc_construct = BcdAdapter(Rpad(Bytes(3)))
     category_construct = FlagsEnum(Byte, police=1, ambulance=2, fire_brigade=3, marine_guard=4,
                                    mountain_rescue=5, manual_ecall=6, automatic_ecall=7)
@@ -588,6 +589,8 @@ class EF_AD(TransparentEF):
                                              "prose_services": False, "extended_drx": False },
                         "rfu": 0, "mnc_len": 2, "extensions": b'' } ),
     ]
+    _test_no_pad = True
+
     class OP_MODE(enum.IntEnum):
         normal = 0x00
         type_approval = 0x80

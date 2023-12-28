@@ -117,6 +117,7 @@ class EF_AD(TransparentEF):
     _test_de_encode = [
         ( "000000", { 'ms_operation_mode' : 'normal', 'additional_info' : '0000', 'rfu' : '' } ),
     ]
+    _test_no_pad = True
 
     class OP_MODE(enum.IntEnum):
         normal = 0x00
