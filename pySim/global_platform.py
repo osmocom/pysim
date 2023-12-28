@@ -114,6 +114,60 @@ class KeyInformationData(BER_TLV_IE, tag=0xc0):
 class KeyInformation(BER_TLV_IE, tag=0xe0, nested=[KeyInformationData]):
     pass
 
+# GlobalPlatform v2.3.1 Section H.4
+class ScpInformation(BER_TLV_IE, tag=0xa0):
+    pass
+class PrivilegesAvailableSSD(BER_TLV_IE, tag=0x81):
+    pass
+class PrivilegesAvailableApplication(BER_TLV_IE, tag=0x82):
+    pass
+class SupportedLFDBHAlgorithms(BER_TLV_IE, tag=0x83):
+    pass
+class CiphersForLFDBEncryption(BER_TLV_IE, tag=0x84):
+    pass
+class CiphersForTokens(BER_TLV_IE, tag=0x85):
+    pass
+class CiphersForReceipts(BER_TLV_IE, tag=0x86):
+    pass
+class CiphersForDAPs(BER_TLV_IE, tag=0x87):
+    pass
+class KeyParameterReferenceList(BER_TLV_IE, tag=0x88):
+    pass
+class CardCapabilityInformation(BER_TLV_IE, tag=0x67, nested=[ScpInformation, PrivilegesAvailableSSD,
+                                                              PrivilegesAvailableApplication,
+                                                              SupportedLFDBHAlgorithms,
+                                                              CiphersForLFDBEncryption, CiphersForTokens,
+                                                              CiphersForReceipts, CiphersForDAPs,
+                                                              KeyParameterReferenceList]):
+    pass
+
+class CurrentSecurityLevel(BER_TLV_IE, tag=0xd3):
+    _construct = Int8ub
+
+# GlobalPlatform v2.3.1 Section 11.3.3.1.3
+class ApplicationAID(BER_TLV_IE, tag=0x4f):
+    _construct = HexAdapter(GreedyBytes)
+class ApplicationTemplate(BER_TLV_IE, tag=0x61, ntested=[ApplicationAID]):
+    pass
+class ListOfApplications(BER_TLV_IE, tag=0x2f00, nested=[ApplicationTemplate]):
+    pass
+
+# GlobalPlatform v2.3.1 Section 11.3.3.1.2 + TS 102 226
+class NumberOFInstalledApp(BER_TLV_IE, tag=0x81):
+    _construct = GreedyInteger()
+class FreeNonVolatileMemory(BER_TLV_IE, tag=0x82):
+    _construct = GreedyInteger()
+class FreeVolatileMemory(BER_TLV_IE, tag=0x83):
+    _construct = GreedyInteger()
+class ExtendedCardResourcesInfo(BER_TLV_IE, tag=0xff21, nested=[NumberOFInstalledApp, FreeNonVolatileMemory,
+                                                                FreeVolatileMemory]):
+    pass
+
+# GlobalPlatform v2.3.1 Section 7.4.2.4 + GP SPDM
+class SecurityDomainManagerURL(BER_TLV_IE, tag=0x5f50):
+    pass
+
+
 # card data sample, returned in response to GET DATA (80ca006600):
 # 66 31
 #    73 2f
@@ -216,7 +270,13 @@ class DataCollection(TLV_IE_Collection, nested=[IssuerIdentificationNumber,
                                                 CardData,
                                                 KeyInformation,
                                                 SequenceCounterOfDefaultKvn,
-                                                ConfirmationCounter]):
+                                                ConfirmationCounter,
+                                                # v2.3.1
+                                                CardCapabilityInformation,
+                                                CurrentSecurityLevel,
+                                                ListOfApplications,
+                                                ExtendedCardResourcesInfo,
+                                                SecurityDomainManagerURL]):
     pass
 
 def decode_select_response(resp_hex: str) -> object:
