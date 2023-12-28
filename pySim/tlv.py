@@ -361,7 +361,7 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
             # obtain the tag at the start of the remainder
             tag, r = first._parse_tag_raw(remainder)
             if tag == None:
-                return res
+                break
             if tag in self.members_by_tag:
                 cls = self.members_by_tag[tag]
                 # create an instance and parse accordingly
