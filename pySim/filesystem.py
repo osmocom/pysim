@@ -38,7 +38,7 @@ from typing import cast, Optional, Iterable, List, Dict, Tuple, Union
 
 from smartcard.util import toBytes
 
-from pySim.utils import sw_match, h2b, b2h, i2h, is_hex, auto_int, bertlv_parse_one, Hexstr
+from pySim.utils import sw_match, h2b, b2h, i2h, is_hex, auto_int, Hexstr
 from pySim.construct import filter_dict, parse_construct, build_construct
 from pySim.exceptions import *
 from pySim.jsonpath import js_path_find, js_path_modify

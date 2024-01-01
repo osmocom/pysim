@@ -23,7 +23,6 @@ from construct import *
 
 from pySim.utils import bertlv_encode_len, bertlv_parse_len, bertlv_encode_tag, bertlv_parse_tag
 from pySim.utils import comprehensiontlv_encode_tag, comprehensiontlv_parse_tag
-from pySim.utils import bertlv_parse_one, comprehensiontlv_parse_one
 from pySim.utils import bertlv_parse_tag_raw, comprehensiontlv_parse_tag_raw
 
 from pySim.construct import build_construct, parse_construct, LV, HexAdapter, BcdAdapter, BitsRFU, GsmStringAdapter
