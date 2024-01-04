@@ -402,7 +402,16 @@ def parse_construct(c, raw_bin_data: bytes, length: typing.Optional[int] = None,
     """Helper function to wrap around normalize_construct() and filter_dict()."""
     if not length:
         length = len(raw_bin_data)
-    parsed = c.parse(raw_bin_data, total_len=length, **context)
+    try:
+        parsed = c.parse(raw_bin_data, total_len=length, **context)
+    except StreamError as e:
+        # if the input is all-ff, this means the content is undefined.  Let's avoid passing StreamError
+        # exceptions in those situations (which might occur if a length field 0xff is 255 but then there's
+        # actually less bytes in the remainder of the file.
+        if all([v == 0xff for v in raw_bin_data]):
+            return None
+        else:
+            raise e
     return normalize_construct(parsed)
 
 def build_construct(c, decoded_data, context: dict = {}):
