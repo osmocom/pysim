@@ -10,5 +10,6 @@ pyyaml>=5.1
 termcolor
 colorlog
 pycryptodomex
+cryptography
 packaging
 git+https://github.com/hologram-io/smpp.pdu
