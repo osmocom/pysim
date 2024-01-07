@@ -942,7 +942,7 @@ In order to use those commands, you need to go through the specified steps as do
 * open a new logical channel (and start to use it)
 * select the ISD-R application
 
-::
+Example::
 
   pySIM-shell (00:MF)> open_channel 2
   pySIM-shell (00:MF)> switch_channel 2
@@ -973,6 +973,13 @@ get_euicc_configured_addresses
 
 Obtain the configured SM-DP+ and/or SM-DS addresses using the ES10a GetEuiccConfiguredAddresses() function.
 
+Example::
+
+  pySIM-shell (00:MF/ADF.ISD-R)> get_euicc_configured_addresses
+  {
+      "root_ds_address": "testrootsmds.gsma.com"
+  }
+
 set_default_dp_address
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -985,20 +992,136 @@ get_euicc_challenge
 
 Obtain an authentication challenge from the eUICC using the ES10b GetEUICCChallenge() function.
 
+Example::
+
+  pySIM-shell (00:MF/ADF.ISD-R)> get_euicc_challenge
+  {
+      "euicc_challenge": "3668f20d4e6c8e85609bbca8c14873fd"
+  }
+
 get_euicc_info1
 ~~~~~~~~~~~~~~~
 
 Obtain EUICC Information (1) from the eUICC using the ES10b GetEUICCCInfo() function.
+
+Example::
+
+  pySIM-shell (00:MF/ADF.ISD-R)> get_euicc_info1
+  {
+      "svn": "2.2.0",
+      "euicc_ci_pki_list_for_verification": [
+          {
+              "subject_key_identifier_seq": {
+                  "unknown_ber_tlv_ie_c0": null
+              }
+          },
+          {
+              "subject_key_identifier_seq": {
+                  "unknown_ber_tlv_ie_f5": {
+                      "raw": "72bdf98a95d65cbeb88a38a1c11d800a85c3"
+                  }
+              }
+          }
+      ],
+      "euicc_ci_pki_list_for_signing": [
+          {
+              "subject_key_identifier_seq": {
+                  "unknown_ber_tlv_ie_c0": null
+              }
+          },
+          {
+              "subject_key_identifier_seq": {
+                  "unknown_ber_tlv_ie_f5": {
+                      "raw": "72bdf98a95d65cbeb88a38a1c11d800a85c3"
+                  }
+              }
+          }
+      ]
+  }
+
 
 get_euicc_info2
 ~~~~~~~~~~~~~~~
 
 Obtain EUICC Information (2) from the eUICC using the ES10b GetEUICCCInfo() function.
 
+Example::
+
+  pySIM-shell (00:MF/ADF.ISD-R)> get_euicc_info2
+  {
+      "profile_version": "2.1.0",
+      "svn": "2.2.0",
+      "euicc_firmware_ver": "4.4.0",
+      "ext_card_resource": "81010082040006ddc68304000016e0",
+      "uicc_capability": "067f36c0",
+      "ts102241_version": "9.2.0",
+      "global_platform_version": "2.3.0",
+      "rsp_capability": "0490",
+      "euicc_ci_pki_list_for_verification": [
+          {
+              "subject_key_identifier_seq": {
+                  "unknown_ber_tlv_ie_c0": null
+              }
+          },
+          {
+              "subject_key_identifier_seq": {
+                  "unknown_ber_tlv_ie_f5": {
+                      "raw": "72bdf98a95d65cbeb88a38a1c11d800a85c3"
+                  }
+              }
+          }
+      ],
+      "euicc_ci_pki_list_for_signing": [
+          {
+              "subject_key_identifier_seq": {
+                  "unknown_ber_tlv_ie_c0": null
+              }
+          },
+          {
+              "subject_key_identifier_seq": {
+                  "unknown_ber_tlv_ie_f5": {
+                      "raw": "72bdf98a95d65cbeb88a38a1c11d800a85c3"
+                  }
+              }
+          }
+      ],
+      "unknown_ber_tlv_ie_99": {
+          "raw": "06c0"
+      },
+      "pp_version": "0.0.1",
+      "ss_acreditation_number": "G&DAccreditationNbr",
+      "unknown_ber_tlv_ie_ac": {
+          "raw": "801f312e322e3834302e313233343536372f6d79506c6174666f726d4c6162656c812568747470733a2f2f6d79636f6d70616e792e636f6d2f6d79444c4f41526567697374726172"
+      }
+  }
+
+
 list_notification
 ~~~~~~~~~~~~~~~~~
 
 Obtain the list of notifications from the eUICC using the ES10b ListNotification() function.
+
+Example::
+
+  pySIM-shell (00:MF/ADF.ISD-R)> list_notification
+  {
+      "notification_metadata_list": {
+          "notification_metadata": {
+              "seq_number": 61,
+              "profile_mgmt_operation": {
+                  "pmo": {
+                      "install": true,
+                      "enable": false,
+                      "disable": false,
+                      "delete": false
+                  }
+              },
+              "notification_address": "testsmdpplus1.example.com",
+              "iccid": "89000123456789012358"
+          }
+      }
+  }
+
 
 remove_notification_from_list
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1007,10 +1130,47 @@ remove_notification_from_list
    :module: pySim.euicc
    :func: ADF_ISDR.AddlShellCommands.rem_notif_parser
 
+Example::
+
+  pySIM-shell (00:MF/ADF.ISD-R)> remove_notification_from_list 60
+  {
+      "delete_notification_status": "ok"
+  }
+
+
 get_profiles_info
 ~~~~~~~~~~~~~~~~~
 
 Obtain information about the profiles present on the eUICC using the ES10c GetProfilesInfo() function.
+
+Example::
+
+  pySIM-shell (00:MF/ADF.ISD-R)> get_profiles_info
+  {
+      "profile_info_seq": [
+          {
+              "profile_info": {
+                  "iccid": "89000123456789012341",
+                  "isdp_aid": "a0000005591010ffffffff8900001100",
+                  "profile_state": "disabled",
+                  "service_provider_name": "GSMA Test 1A",
+                  "profile_name": "GSMA Generic eUICC Test Profile 1A",
+                  "profile_class": "operational"
+              }
+          },
+          {
+              "profile_info": {
+                  "iccid": "89000123456789012358",
+                  "isdp_aid": "a0000005591010ffffffff8900001200",
+                  "profile_state": "disabled",
+                  "service_provider_name": "OsmocomSPN",
+                  "profile_name": "OsmocomProfile",
+                  "profile_class": "operational"
+              }
+          }
+      ]
+  }
+
 
 enable_profile
 ~~~~~~~~~~~~~~
@@ -1019,12 +1179,34 @@ enable_profile
    :module: pySim.euicc
    :func: ADF_ISDR.AddlShellCommands.en_prof_parser
 
+Example (successful)::
+
+  pySIM-shell (00:MF/ADF.ISD-R)> enable_profile --iccid 89000123456789012358
+  {
+      "enable_result": "ok"
+  }
+
+
+Example (failed attempt enabling a profile that's already enabled)::
+
+  pySIM-shell (00:MF/ADF.ISD-R)> enable_profile --iccid 89000123456789012358
+  {
+      "enable_result": "profileNotInDisabledState"
+  }
+
 disable_profile
 ~~~~~~~~~~~~~~~
 
 .. argparse::
    :module: pySim.euicc
    :func: ADF_ISDR.AddlShellCommands.dis_prof_parser
+
+Example (successful)::
+
+  pySIM-shell (00:MF/ADF.ISD-R)> disable_profile --iccid 89000123456789012358
+  {
+      "disable_result": "ok"
+  }
 
 delete_profile
 ~~~~~~~~~~~~~~
@@ -1033,10 +1215,25 @@ delete_profile
    :module: pySim.euicc
    :func: ADF_ISDR.AddlShellCommands.del_prof_parser
 
+Example::
+
+  pySIM-shell (00:MF/ADF.ISD-R)> delete_profile --iccid 89000123456789012358
+  {
+      "delete_result": "ok"
+  }
+
+
 get_eid
 ~~~~~~~
 
 Obtain the EID of the eUICC using the ES10c GetEID() function.
+
+Example::
+
+  pySIM-shell (00:MF/ADF.ISD-R)> get_eid
+  {
+      "eid_value": "89049032123451234512345678901235"
+  }
 
 set_nickname
 ~~~~~~~~~~~~
@@ -1044,6 +1241,14 @@ set_nickname
 .. argparse::
    :module: pySim.euicc
    :func: ADF_ISDR.AddlShellCommands.set_nickname_parser
+
+Example::
+
+  pySIM-shell (00:MF/ADF.ISD-R)> set_nickname --profile-nickname asdf 89000123456789012358
+  {
+      "set_nickname_result": "ok"
+  }
+
 
 get_certs
 ~~~~~~~~~
