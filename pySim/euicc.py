@@ -141,12 +141,13 @@ class EuiccInfo2(BER_TLV_IE, tag=0xbf22, nested=[ProfileVersion, SVN, EuiccFirmw
 
 # SGP.22 Section 5.7.9: ListNotification
 class ProfileMgmtOperation(BER_TLV_IE, tag=0x81):
-    _construct = FlagsEnum(Byte, install=1, enable=2, disable=4, delete=8)
+    # we have to ignore the first byte which tells us how many padding bits are used in the last octet
+    _construct = Struct(Byte, "pmo"/FlagsEnum(Byte, install=0x80, enable=0x40, disable=0x20, delete=0x10))
 class ListNotificationReq(BER_TLV_IE, tag=0xbf28, nested=[ProfileMgmtOperation]):
     pass
 class SeqNumber(BER_TLV_IE, tag=0x80):
-    _construct = GreedyInteger
-class NotificationAddress(BER_TLV_IE, tag=0x82):
+    _construct = GreedyInteger()
+class NotificationAddress(BER_TLV_IE, tag=0x0c):
     _construct = Utf8Adapter(GreedyBytes)
 class Iccid(BER_TLV_IE, tag=0x5a):
     _construct = BcdAdapter(GreedyBytes)
