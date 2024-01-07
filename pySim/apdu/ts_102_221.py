@@ -77,7 +77,7 @@ class UiccSelect(ApduCommand, n='SELECT', ins=0xA4, cla=['0X', '4X', '6X']):
                             pass
                         # iterate to next element in path
                         continue
-                logger.warning('SELECT UNKNOWN FID %s (%s)' % (file_hex, '/'.join([b2h(x) for x in path])))
+                logger.warning('SELECT UNKNOWN FID %s (%s)', file_hex, '/'.join([b2h(x) for x in path]))
         elif mode == 'df_ef_or_mf_by_file_id':
             if len(self.cmd_data) != 2:
                 raise ValueError('Expecting a 2-byte FID')
@@ -91,7 +91,7 @@ class UiccSelect(ApduCommand, n='SELECT', ins=0xA4, cla=['0X', '4X', '6X']):
                     #print("\tSELECT %s FAILED" % sels[file_hex])
                     pass
             else:
-                logger.warning('SELECT UNKNOWN FID %s' % (file_hex))
+                logger.warning('SELECT UNKNOWN FID %s', file_hex)
         elif mode == 'df_name':
             # Select by AID (can be sub-string!)
             aid = self.cmd_dict['body']
@@ -102,7 +102,7 @@ class UiccSelect(ApduCommand, n='SELECT', ins=0xA4, cla=['0X', '4X', '6X']):
                 lchan.selected_file = lchan.selected_adf
                 #print("\tSELECT AID %s" % adf)
             else:
-                logger.warning('SELECT UNKNOWN AID %s' % aid)
+                logger.warning('SELECT UNKNOWN AID %s', aid)
                 pass
         else:
             raise ValueError('Select Mode %s not implemented' % mode)
@@ -490,7 +490,7 @@ class RetrieveData(ApduCommand, n='RETRIEVE DATA', ins=0xCB, cla=['8X', 'CX', 'E
         elif self.p2 & 0xdf == 0x40:
             c['mode'] = 'retransmit_previous_block'
         else:
-            logger.warning('%s: invalid P2=%02x' % (self, self.p2))
+            logger.warning('%s: invalid P2=%02x', self, self.p2)
         return c
 
     def _decode_cmd(self):

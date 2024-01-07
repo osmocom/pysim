@@ -182,7 +182,7 @@ if __name__ == '__main__':
 
     opts = option_parser.parse_args()
 
-    logger.info('Opening source %s...' % opts.source)
+    logger.info('Opening source %s...', opts.source)
     if opts.source == 'gsmtap-udp':
         s = GsmtapApduSource(opts.bind_ip, opts.bind_port)
     elif opts.source == 'rspro-pyshark-pcap':

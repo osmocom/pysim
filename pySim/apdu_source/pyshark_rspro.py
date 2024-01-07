@@ -89,7 +89,7 @@ class _PysharkRspro(ApduSource):
             bsl = self.get_bank_slot(bank_slot)
             self._set_or_verify_bank_slot(bsl)
             data = modem2card.get_field('data').replace(':','')
-            logger.debug("C(%u:%u) -> B(%u:%u): %s" % (csl[0], csl[1], bsl[0], bsl[1], data))
+            logger.debug("C(%u:%u) -> B(%u:%u): %s", csl[0], csl[1], bsl[0], bsl[1], data)
             # store the CMD portion until the RSP portion arrives later
             self.cmd_tpdu = h2b(data)
         elif msg_type == '13': # tpduCardToModem
@@ -101,7 +101,7 @@ class _PysharkRspro(ApduSource):
             bsl = self.get_bank_slot(bank_slot)
             self._set_or_verify_bank_slot(bsl)
             data = card2modem.get_field('data').replace(':','')
-            logger.debug("C(%u:%u) <- B(%u:%u): %s" % (csl[0], csl[1], bsl[0], bsl[1], data))
+            logger.debug("C(%u:%u) <- B(%u:%u): %s", csl[0], csl[1], bsl[0], bsl[1], data)
             rsp_tpdu = h2b(data)
             if self.cmd_tpdu:
                 # combine this R-TPDU with the C-TPDU we saw earlier
