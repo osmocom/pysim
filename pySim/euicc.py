@@ -231,7 +231,7 @@ class DisableProfileResp(BER_TLV_IE, tag=0xbf32, nested=[DisableResult]):
 class DeleteResult(BER_TLV_IE, tag=0x80):
     _construct = Enum(Int8ub, ok=0, iccidOrAidNotFound=1, profileNotInDisabledState=2,
                       disallowedByPolicy=3, undefinedError=127)
-class DeleteProfileReq(BER_TLV_IE, tag=0xbf33, nested=[ProfileIdentifier]):
+class DeleteProfileReq(BER_TLV_IE, tag=0xbf33, nested=[IsdpAid, Iccid]):
     pass
 class DeleteProfileResp(BER_TLV_IE, tag=0xbf33, nested=[DeleteResult]):
     pass
@@ -444,9 +444,9 @@ class ADF_ISDR(CardADF):
         def do_delete_profile(self, opts):
             """Perform an ES10c DeleteProfile function."""
             if opts.isdp_aid:
-                p_id = ProfileIdentifier(children=[IsdpAid(decoded=opts.isdp_aid)])
+                p_id = IsdpAid(decoded=opts.isdp_aid)
             if opts.iccid:
-                p_id = ProfileIdentifier(children=[Iccid(decoded=opts.iccid)])
+                p_id = Iccid(decoded=opts.iccid)
             dp_cmd_contents = [p_id]
             dp_cmd = DeleteProfileReq(children=dp_cmd_contents)
             dp = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, dp_cmd, DeleteProfileResp)
