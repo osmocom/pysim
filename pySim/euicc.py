@@ -94,13 +94,11 @@ class GetEuiccChallenge(BER_TLV_IE, tag=0xbf2e, nested=[EuiccChallenge]):
 # SGP.22 Section 5.7.8: GetEUICCInfo
 class SVN(BER_TLV_IE, tag=0x82):
     _construct = VersionType
-class SubjectKeyIdentifier(BER_TLV_IE, tag=0x81):
+class SubjectKeyIdentifier(BER_TLV_IE, tag=0x04):
     _construct = HexAdapter(GreedyBytes)
-class SubjectKeyIdentifierSeq(BER_TLV_IE, tag=0x04, nested=[SubjectKeyIdentifier]):
+class EuiccCiPkiListForVerification(BER_TLV_IE, tag=0xa9, nested=[SubjectKeyIdentifier]):
     pass
-class EuiccCiPkiListForVerification(BER_TLV_IE, tag=0xa9, nested=[SubjectKeyIdentifierSeq]):
-    pass
-class EuiccCiPkiListForSigning(BER_TLV_IE, tag=0xaa, nested=[SubjectKeyIdentifierSeq]):
+class EuiccCiPkiListForSigning(BER_TLV_IE, tag=0xaa, nested=[SubjectKeyIdentifier]):
     pass
 class EuiccInfo1(BER_TLV_IE, tag=0xbf20, nested=[SVN, EuiccCiPkiListForVerification, EuiccCiPkiListForSigning]):
     pass
