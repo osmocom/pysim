@@ -287,6 +287,12 @@ def decode_select_response(resp_hex: str) -> object:
 
 # Application Dedicated File of a Security Domain
 class ADF_SD(CardADF):
+    StoreData = BitStruct('last_block'/Flag,
+                          'encryption'/Enum(BitsInteger(2), none=0, application_dependent=1, rfu=2, encrypted=3),
+                          'structure'/Enum(BitsInteger(2), none=0, dgi=1, ber_tlv=2, rfu=3),
+                          '_pad'/Padding(2),
+                          'response'/Enum(Bit, not_expected=0, may_be_returned=1))
+
     def __init__(self, aid: str, name: str, desc: str):
         super().__init__(aid=aid, fid=None, sfid=None, name=name, desc=desc)
         self.shell_commands += [self.AddlShellCommands()]
@@ -324,6 +330,41 @@ class ADF_SD(CardADF):
             data_dict = {camel_to_snake(str(x.__name__)): x for x in DataCollection.possible_nested}
             index_dict = {1: data_dict}
             return self._cmd.index_based_complete(text, line, begidx, endidx, index_dict=index_dict)
+
+        store_data_parser = argparse.ArgumentParser()
+        store_data_parser.add_argument('--data-structure', type=str, choices=['none','dgi','ber_tlv','rfu'], default='none')
+        store_data_parser.add_argument('--encryption', type=str, choices=['none','application_dependent', 'rfu', 'encrypted'], default='none')
+        store_data_parser.add_argument('--response', type=str, choices=['not_expected','may_be_returned'], default='not_expected')
+        store_data_parser.add_argument('DATA', type=is_hexstr)
+
+        @cmd2.with_argparser(store_data_parser)
+        def do_store_data(self, opts):
+            """Perform the GlobalPlatform GET DATA command in order to store some card-specific data.
+            See GlobalPlatform CardSpecification v2.3Section 11.11 for details."""
+            response_permitted = opts.response == 'may_be_returned'
+            self.store_data(h2b(opts.DATA), opts.data_structure, opts.encryption, response_permitted)
+
+        def store_data(self, data: bytes, structure:str = 'none', encryption:str = 'none', response_permitted: bool = False) -> bytes:
+            """Perform the GlobalPlatform GET DATA command in order to store some card-specific data.
+            See GlobalPlatform CardSpecification v2.3Section 11.11 for details."""
+            # Table 11-89 of GP Card Specification v2.3
+            remainder = data
+            block_nr = 0
+            response = ''
+            while len(remainder):
+                chunk = remainder[:255]
+                remainder = remainder[255:]
+                p1b = build_construct(ADF_SD.StoreData,
+                                      {'last_block': len(remainder) == 0, 'encryption': encryption,
+                                       'structure': structure, 'response': response_permitted})
+                hdr = "80E2%02x%02x%02x" % (p1b[0], block_nr, len(chunk))
+                data, sw = self._cmd.lchan.scc._tp.send_apdu_checksw(hdr + b2h(chunk))
+                block_nr += 1
+                response += data
+            return data
+
+
+
 
 # Card Application of a Security Domain
 class CardApplicationSD(CardApplication):
