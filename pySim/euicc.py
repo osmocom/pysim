@@ -49,15 +49,6 @@ AID_ECASD           = "A0000005591010FFFFFFFF8900000200"
 AID_ISD_P_FILE      = "A0000005591010FFFFFFFF8900000D00"
 AID_ISD_P_MODULE    = "A0000005591010FFFFFFFF8900000E00"
 
-sw_isdr = {
-    'ISD-R': {
-        '6a80': 'Incorrect values in command data',
-        '6a82': 'Profile not found',
-        '6a88': 'Reference data not found',
-        '6985': 'Conditions of use not satisfied',
-    }
-}
-
 class SupportedVersionNumber(BER_TLV_IE, tag=0x82):
     _construct = GreedyBytes
 
@@ -286,11 +277,12 @@ class EimConfigurationDataSeq(BER_TLV_IE, tag=0xa0, nested=[EimConfigurationData
 class GetEimConfigurationData(BER_TLV_IE, tag=0xbf55, nested=[EimConfigurationDataSeq]):
     pass
 
-class ADF_ISDR(CardADF):
-    def __init__(self, aid=AID_ISD_R, name='ADF.ISD-R', fid=None, sfid=None,
-                 desc='ISD-R (Issuer Security Domain Root) Application'):
-        super().__init__(aid=aid, fid=fid, sfid=sfid, name=name, desc=desc)
-        self.shell_commands += [self.AddlShellCommands()]
+class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
+    def __init__(self):
+        super().__init__(name='ADF.ISD-R', aid=AID_ISD_R,
+                         desc='ISD-R (Issuer Security Domain Root) Application')
+        self.adf.decode_select_response = self.decode_select_response
+        self.adf.shell_commands += [self.AddlShellCommands()]
 
     @staticmethod
     def store_data(scc: SimCardCommands, tx_do: Hexstr) -> Tuple[Hexstr, SwHexstr]:
@@ -310,7 +302,7 @@ class ADF_ISDR(CardADF):
                 return ValueError('DO > 255 bytes not supported yet')
         else:
             cmd_do_enc = b''
-        (data, sw) = ADF_ISDR.store_data(scc, b2h(cmd_do_enc))
+        (data, sw) = CardApplicationISDR.store_data(scc, b2h(cmd_do_enc))
         if data:
             if resp_cls:
                 resp_do = resp_cls()
@@ -336,11 +328,11 @@ class ADF_ISDR(CardADF):
         @cmd2.with_argparser(es10x_store_data_parser)
         def do_es10x_store_data(self, opts):
             """Perform a raw STORE DATA command as defined for the ES10x eUICC interface."""
-            (data, sw) = ADF_ISDR.store_data(self._cmd.lchan.scc, opts.TX_DO)
+            (data, sw) = CardApplicationISDR.store_data(self._cmd.lchan.scc, opts.TX_DO)
 
         def do_get_euicc_configured_addresses(self, opts):
             """Perform an ES10a GetEuiccConfiguredAddresses function."""
-            eca = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, EuiccConfiguredAddresses(), EuiccConfiguredAddresses)
+            eca = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, EuiccConfiguredAddresses(), EuiccConfiguredAddresses)
             d = eca.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['euicc_configured_addresses']))
 
@@ -351,31 +343,31 @@ class ADF_ISDR(CardADF):
         def do_set_default_dp_address(self, opts):
             """Perform an ES10a SetDefaultDpAddress function."""
             sdda_cmd = SetDefaultDpAddress(children=[DefaultDpAddress(decoded=opts.DP_ADDRESS)])
-            sdda = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, sdda_cmd, SetDefaultDpAddress)
+            sdda = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, sdda_cmd, SetDefaultDpAddress)
             d = sdda.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['set_default_dp_address']))
 
         def do_get_euicc_challenge(self, opts):
             """Perform an ES10b GetEUICCChallenge function."""
-            gec = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, GetEuiccChallenge(), GetEuiccChallenge)
+            gec = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, GetEuiccChallenge(), GetEuiccChallenge)
             d = gec.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['get_euicc_challenge']))
 
         def do_get_euicc_info1(self, opts):
             """Perform an ES10b GetEUICCInfo (1) function."""
-            ei1 = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, EuiccInfo1(), EuiccInfo1)
+            ei1 = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, EuiccInfo1(), EuiccInfo1)
             d = ei1.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['euicc_info1']))
 
         def do_get_euicc_info2(self, opts):
             """Perform an ES10b GetEUICCInfo (2) function."""
-            ei2 = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, EuiccInfo2(), EuiccInfo2)
+            ei2 = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, EuiccInfo2(), EuiccInfo2)
             d = ei2.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['euicc_info2']))
 
         def do_list_notification(self, opts):
             """Perform an ES10b ListNotification function."""
-            ln = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, ListNotificationReq(), ListNotificationResp)
+            ln = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, ListNotificationReq(), ListNotificationResp)
             d = ln.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['list_notification_resp']))
 
@@ -386,13 +378,13 @@ class ADF_ISDR(CardADF):
         def do_remove_notification_from_list(self, opts):
             """Perform an ES10b RemoveNotificationFromList function."""
             rn_cmd = NotificationSentReq(children=[SeqNumber(decoded=opts.SEQ_NR)])
-            rn = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, rn_cmd, NotificationSentResp)
+            rn = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, rn_cmd, NotificationSentResp)
             d = rn.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['notification_sent_resp']))
 
         def do_get_profiles_info(self, opts):
             """Perform an ES10c GetProfilesInfo function."""
-            pi = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, ProfileInfoListReq(), ProfileInfoListResp)
+            pi = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, ProfileInfoListReq(), ProfileInfoListResp)
             d = pi.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['profile_info_list_resp']))
 
@@ -411,7 +403,7 @@ class ADF_ISDR(CardADF):
                 p_id = ProfileIdentifier(children=[Iccid(decoded=opts.iccid)])
             ep_cmd_contents = [p_id, RefreshFlag(decoded=opts.refresh_required)]
             ep_cmd = EnableProfileReq(children=ep_cmd_contents)
-            ep = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, ep_cmd, EnableProfileResp)
+            ep = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, ep_cmd, EnableProfileResp)
             d = ep.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['enable_profile_resp']))
 
@@ -430,7 +422,7 @@ class ADF_ISDR(CardADF):
                 p_id = ProfileIdentifier(children=[Iccid(decoded=opts.iccid)])
             dp_cmd_contents = [p_id, RefreshFlag(decoded=opts.refresh_required)]
             dp_cmd = DisableProfileReq(children=dp_cmd_contents)
-            dp = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, dp_cmd, DisableProfileResp)
+            dp = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, dp_cmd, DisableProfileResp)
             d = dp.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['disable_profile_resp']))
 
@@ -448,16 +440,16 @@ class ADF_ISDR(CardADF):
                 p_id = Iccid(decoded=opts.iccid)
             dp_cmd_contents = [p_id]
             dp_cmd = DeleteProfileReq(children=dp_cmd_contents)
-            dp = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, dp_cmd, DeleteProfileResp)
+            dp = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, dp_cmd, DeleteProfileResp)
             d = dp.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['delete_profile_resp']))
 
 
         def do_get_eid(self, opts):
             """Perform an ES10c GetEID function."""
-            (data, sw) = ADF_ISDR.store_data(self._cmd.lchan.scc, 'BF3E035C015A')
+            (data, sw) = CardApplicationISDR.store_data(self._cmd.lchan.scc, 'BF3E035C015A')
             ged_cmd = GetEuiccData(children=[TagList(decoded=[0x5A])])
-            ged = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, ged_cmd, GetEuiccData)
+            ged = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, ged_cmd, GetEuiccData)
             d = ged.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['get_euicc_data']))
 
@@ -471,46 +463,36 @@ class ADF_ISDR(CardADF):
             nickname = opts.profile_nickname or ''
             sn_cmd_contents = [Iccid(decoded=opts.ICCID), ProfileNickname(decoded=nickname)]
             sn_cmd = SetNicknameReq(children=sn_cmd_contents)
-            sn = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, sn_cmd, SetNicknameResp)
+            sn = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, sn_cmd, SetNicknameResp)
             d = sn.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['set_nickname_resp']))
 
         def do_get_certs(self, opts):
             """Perform an ES10c GetCerts() function on an IoT eUICC."""
-            gc = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, GetCertsReq(), GetCertsResp)
+            gc = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, GetCertsReq(), GetCertsResp)
             d = gc.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['get_certficiates_resp']))
 
         def do_get_eim_configuration_data(self, opts):
             """Perform an ES10b GetEimConfigurationData function on an Iot eUICC."""
-            gec = ADF_ISDR.store_data_tlv(self._cmd.lchan.scc, GetEimConfigurationData(),
-                                          GetEimConfigurationData)
+            gec = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, GetEimConfigurationData(),
+                                                     GetEimConfigurationData)
             d = gec.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['get_eim_configuration_data']))
 
-
-class ADF_ECASD(CardADF):
-    def __init__(self, aid=AID_ECASD, name='ADF.ECASD', fid=None, sfid=None,
-                 desc='ECASD (eUICC Controlling Authority Security Domain) Application'):
-        super().__init__(aid=aid, fid=fid, sfid=sfid, name=name, desc=desc)
-        self.shell_commands += [self.AddlShellCommands()]
-
+class CardApplicationECASD(pySim.global_platform.CardApplicationSD):
     def decode_select_response(self, data_hex: Hexstr) -> object:
         t = FciTemplate()
         t.from_tlv(h2b(data_hex))
         d = t.to_dict()
         return flatten_dict_lists(d['fci_template'])
 
+    def __init__(self):
+        super().__init__(name='ADF.ECASD', aid=AID_ECASD,
+                         desc='ECASD (eUICC Controlling Authority Security Domain) Application')
+        self.adf.decode_select_response = self.decode_select_response
+        self.adf.shell_commands += [self.AddlShellCommands()]
+
     @with_default_category('Application-Specific Commands')
     class AddlShellCommands(CommandSet):
         pass
-
-
-
-class CardApplicationISDR(CardApplication):
-    def __init__(self):
-        super().__init__('ISD-R', adf=ADF_ISDR(), sw=sw_isdr)
-
-class CardApplicationECASD(CardApplication):
-    def __init__(self):
-        super().__init__('ECASD', adf=ADF_ECASD(), sw=sw_isdr)
