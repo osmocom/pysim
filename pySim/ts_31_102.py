@@ -39,6 +39,7 @@ from pySim.tlv import *
 from pySim.filesystem import *
 from pySim.ts_31_102_telecom import DF_PHONEBOOK, EF_UServiceTable
 from pySim.construct import *
+from pySim.utils import is_hexstr
 from pySim.cat import SMS_TPDU, DeviceIdentities, SMSPPDownload
 from construct import Optional as COptional
 from construct import *
@@ -1588,8 +1589,8 @@ class ADF_USIM(CardADF):
             super().__init__()
 
         authenticate_parser = argparse.ArgumentParser()
-        authenticate_parser.add_argument('rand', help='Random challenge')
-        authenticate_parser.add_argument('autn', help='Authentication Nonce')
+        authenticate_parser.add_argument('rand', type=is_hexstr, help='Random challenge')
+        authenticate_parser.add_argument('autn', type=is_hexstr, help='Authentication Nonce')
         #authenticate_parser.add_argument('--context', help='Authentication context', default='3G')
 
         @cmd2.with_argparser(authenticate_parser)
@@ -1599,7 +1600,7 @@ class ADF_USIM(CardADF):
             self._cmd.poutput_json(data)
 
         term_prof_parser = argparse.ArgumentParser()
-        term_prof_parser.add_argument('PROFILE', help='Hexstring of encoded terminal profile')
+        term_prof_parser.add_argument('PROFILE', type=is_hexstr, help='Hexstring of encoded terminal profile')
 
         @cmd2.with_argparser(term_prof_parser)
         def do_terminal_profile(self, opts):
@@ -1613,7 +1614,7 @@ class ADF_USIM(CardADF):
             self._cmd.poutput('SW: %s, data: %s' % (sw, data))
 
         envelope_parser = argparse.ArgumentParser()
-        envelope_parser.add_argument('PAYLOAD', help='Hexstring of encoded payload to ENVELOPE')
+        envelope_parser.add_argument('PAYLOAD', type=is_hexstr, help='Hexstring of encoded payload to ENVELOPE')
 
         @cmd2.with_argparser(envelope_parser)
         def do_envelope(self, opts):
@@ -1625,7 +1626,7 @@ class ADF_USIM(CardADF):
             self._cmd.poutput('SW: %s, data: %s' % (sw, data))
 
         envelope_sms_parser = argparse.ArgumentParser()
-        envelope_sms_parser.add_argument('TPDU', help='Hexstring of encoded SMS TPDU')
+        envelope_sms_parser.add_argument('TPDU', type=is_hexstr, help='Hexstring of encoded SMS TPDU')
 
         @cmd2.with_argparser(envelope_sms_parser)
         def do_envelope_sms(self, opts):

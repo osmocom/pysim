@@ -107,7 +107,7 @@ class Ts102222Commands(CommandSet):
         (data, sw) = self._cmd.lchan.scc.terminate_card_usage()
 
     create_parser = argparse.ArgumentParser()
-    create_parser.add_argument('FILE_ID', type=str, help='File Identifier as 4-character hex string')
+    create_parser.add_argument('FILE_ID', type=is_hexstr, help='File Identifier as 4-character hex string')
     create_parser._action_groups.pop()
     create_required = create_parser.add_argument_group('required arguments')
     create_optional = create_parser.add_argument_group('optional arguments')
@@ -154,7 +154,7 @@ class Ts102222Commands(CommandSet):
         self._cmd.lchan.select_file(self._cmd.lchan.selected_file)
 
     createdf_parser = argparse.ArgumentParser()
-    createdf_parser.add_argument('FILE_ID', type=str, help='File Identifier as 4-character hex string')
+    createdf_parser.add_argument('FILE_ID', type=is_hexstr, help='File Identifier as 4-character hex string')
     createdf_parser._action_groups.pop()
     createdf_required = createdf_parser.add_argument_group('required arguments')
     createdf_optional = createdf_parser.add_argument_group('optional arguments')
@@ -162,7 +162,7 @@ class Ts102222Commands(CommandSet):
     createdf_required.add_argument('--ef-arr-file-id', required=True, type=str, help='Referenced Security: File Identifier of EF.ARR')
     createdf_required.add_argument('--ef-arr-record-nr', required=True, type=int, help='Referenced Security: Record Number within EF.ARR')
     createdf_optional.add_argument('--shareable', action='store_true', help='Should the file be shareable?')
-    createdf_optional.add_argument('--aid', type=str, help='Application ID (creates an ADF, instead of a DF)')
+    createdf_optional.add_argument('--aid', type=is_hexstr, help='Application ID (creates an ADF, instead of a DF)')
     # mandatory by spec, but ignored by several OS, so don't force the user
     createdf_optional.add_argument('--total-file-size', type=int, help='Physical memory allocated for DF/ADi in octets')
     createdf_sja_optional.add_argument('--permit-rfm-create', action='store_true')

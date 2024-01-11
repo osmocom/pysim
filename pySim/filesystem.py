@@ -38,7 +38,7 @@ from typing import cast, Optional, Iterable, List, Dict, Tuple, Union
 
 from smartcard.util import toBytes
 
-from pySim.utils import sw_match, h2b, b2h, i2h, is_hex, auto_int, Hexstr
+from pySim.utils import sw_match, h2b, b2h, i2h, is_hex, auto_int, Hexstr, is_hexstr
 from pySim.construct import filter_dict, parse_construct, build_construct
 from pySim.exceptions import *
 from pySim.jsonpath import js_path_find, js_path_modify
@@ -579,7 +579,7 @@ class TransparentEF(CardEF):
         dec_hex_parser = argparse.ArgumentParser()
         dec_hex_parser.add_argument('--oneline', action='store_true',
                                     help='No JSON pretty-printing, dump as a single line')
-        dec_hex_parser.add_argument('HEXSTR', help='Hex-string of encoded data to decode')
+        dec_hex_parser.add_argument('HEXSTR', type=is_hexstr, help='Hex-string of encoded data to decode')
 
         @cmd2.with_argparser(dec_hex_parser)
         def do_decode_hex(self, opts):
@@ -612,8 +612,7 @@ class TransparentEF(CardEF):
         upd_bin_parser = argparse.ArgumentParser()
         upd_bin_parser.add_argument(
             '--offset', type=int, default=0, help='Byte offset for start of read')
-        upd_bin_parser.add_argument(
-            'data', help='Data bytes (hex format) to write')
+        upd_bin_parser.add_argument('data', type=is_hexstr, help='Data bytes (hex format) to write')
 
         @cmd2.with_argparser(upd_bin_parser)
         def do_update_binary(self, opts):
@@ -623,8 +622,7 @@ class TransparentEF(CardEF):
                 self._cmd.poutput(data)
 
         upd_bin_dec_parser = argparse.ArgumentParser()
-        upd_bin_dec_parser.add_argument(
-            'data', help='Abstract data (JSON format) to write')
+        upd_bin_dec_parser.add_argument('data', type=is_hexstr, help='Abstract data (JSON format) to write')
         upd_bin_dec_parser.add_argument('--json-path', type=str,
                                         help='JSON path to modify specific element of file only')
 
@@ -802,7 +800,7 @@ class LinFixedEF(CardEF):
         dec_hex_parser = argparse.ArgumentParser()
         dec_hex_parser.add_argument('--oneline', action='store_true',
                                     help='No JSON pretty-printing, dump as a single line')
-        dec_hex_parser.add_argument('HEXSTR', help='Hex-string of encoded data to decode')
+        dec_hex_parser.add_argument('HEXSTR', type=is_hexstr, help='Hex-string of encoded data to decode')
 
         @cmd2.with_argparser(dec_hex_parser)
         def do_decode_hex(self, opts):
@@ -872,8 +870,7 @@ class LinFixedEF(CardEF):
         upd_rec_parser = argparse.ArgumentParser()
         upd_rec_parser.add_argument(
             'record_nr', type=int, help='Number of record to be read')
-        upd_rec_parser.add_argument(
-            'data', help='Data bytes (hex format) to write')
+        upd_rec_parser.add_argument('data', type=is_hexstr, help='Data bytes (hex format) to write')
 
         @cmd2.with_argparser(upd_rec_parser)
         def do_update_record(self, opts):
@@ -885,8 +882,7 @@ class LinFixedEF(CardEF):
         upd_rec_dec_parser = argparse.ArgumentParser()
         upd_rec_dec_parser.add_argument(
             'record_nr', type=int, help='Number of record to be read')
-        upd_rec_dec_parser.add_argument(
-            'data', help='Abstract data (JSON format) to write')
+        upd_rec_dec_parser.add_argument('data', type=is_hexstr, help='Abstract data (JSON format) to write')
         upd_rec_dec_parser.add_argument('--json-path', type=str,
                                         help='JSON path to modify specific element of record only')
 
@@ -1248,8 +1244,7 @@ class BerTlvEF(CardEF):
         set_data_parser = argparse.ArgumentParser()
         set_data_parser.add_argument(
             'tag', type=auto_int, help='BER-TLV Tag of value to set')
-        set_data_parser.add_argument(
-            'data', help='Data bytes (hex format) to write')
+        set_data_parser.add_argument('data', type=is_hexstr, help='Data bytes (hex format) to write')
 
         @cmd2.with_argparser(set_data_parser)
         def do_set_data(self, opts):

@@ -1034,7 +1034,7 @@ class DF_GSM(CardDF):
             super().__init__()
 
         authenticate_parser = argparse.ArgumentParser()
-        authenticate_parser.add_argument('rand', help='Random challenge')
+        authenticate_parser.add_argument('rand', type=is_hexstr, help='Random challenge')
 
         @cmd2.with_argparser(authenticate_parser)
         def do_authenticate(self, opts):
