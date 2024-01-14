@@ -358,6 +358,42 @@ def bertlv_parse_one(binary: bytes) -> Tuple[dict, int, bytes, bytes]:
     return (tagdict, length, value, remainder)
 
 
+def dgi_parse_tag_raw(binary: bytes) -> Tuple[int, bytes]:
+    # In absence of any clear spec guidance we assume it's always 16 bit
+    return int.from_bytes(binary[:2], 'big'), binary[2:]
+
+def dgi_encode_tag(t: int) -> bytes:
+    return t.to_bytes(2, 'big')
+
+def dgi_encode_len(length: int) -> bytes:
+    """Encode a single Length value according to GlobalPlatform Systems Scripting Language
+    Specification v1.1.0 Annex B.
+    Args:
+            length : length value to be encoded
+    Returns:
+            binary output data of encoded length field
+    """
+    if length < 255:
+        return length.to_bytes(1, 'big')
+    elif length <= 0xffff:
+        return b'\xff' + length.to_bytes(2, 'big')
+    else:
+        raise ValueError("Length > 32bits not supported")
+
+def dgi_parse_len(binary: bytes) -> Tuple[int, bytes]:
+    """Parse a single Length value according to  GlobalPlatform Systems Scripting Language
+    Specification v1.1.0 Annex B.
+    Args:
+            binary : binary input data of BER-TLV length field
+    Returns:
+            Tuple of (length, remainder)
+    """
+    if binary[0] == 255:
+        assert len(binary) >= 3
+        return ((binary[1] << 8) | binary[2]), binary[3:]
+    else:
+        return binary[0], binary[1:]
+
 # IMSI encoded format:
 # For IMSI 0123456789ABCDE:
 #

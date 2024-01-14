@@ -24,6 +24,7 @@ from construct import *
 from pySim.utils import bertlv_encode_len, bertlv_parse_len, bertlv_encode_tag, bertlv_parse_tag
 from pySim.utils import comprehensiontlv_encode_tag, comprehensiontlv_parse_tag
 from pySim.utils import bertlv_parse_tag_raw, comprehensiontlv_parse_tag_raw
+from pySim.utils import dgi_parse_tag_raw, dgi_parse_len, dgi_encode_tag, dgi_encode_len
 
 from pySim.construct import build_construct, parse_construct, LV, HexAdapter, BcdAdapter, BitsRFU, GsmStringAdapter
 from pySim.exceptions import *
@@ -300,6 +301,27 @@ class COMPR_TLV_IE(TLV_IE):
 
     def _encode_len(self, val: bytes) -> bytes:
         return bertlv_encode_len(len(val))
+
+
+class DGI_TLV_IE(TLV_IE):
+    """TLV_IE formated as  GlobalPlatform Systems Scripting Language Specification v1.1.0 Annex B."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    @classmethod
+    def _parse_tag_raw(cls, do: bytes) -> Tuple[int, bytes]:
+        return dgi_parse_tag_raw(do)
+
+    @classmethod
+    def _parse_len(cls, do: bytes) -> Tuple[int, bytes]:
+        return dgi_parse_len(do)
+
+    def _encode_tag(self) -> bytes:
+        return dgi_encode_tag(self._compute_tag())
+
+    def _encode_len(self, val: bytes) -> bytes:
+        return dgi_encode_len(len(val))
 
 
 class TLV_IE_Collection(metaclass=TlvCollectionMeta):

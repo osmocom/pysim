@@ -222,5 +222,19 @@ class TestComprTlv(unittest.TestCase):
         res  = utils.comprehensiontlv_encode_tag({'tag': 0x1234, 'comprehension':True})
         self.assertEqual(res, b'\x7f\x92\x34')
 
+class TestDgiTlv(unittest.TestCase):
+    def test_DgiTlvLenEnc(self):
+        self.assertEqual(utils.dgi_encode_len(10), b'\x0a')
+        self.assertEqual(utils.dgi_encode_len(254), b'\xfe')
+        self.assertEqual(utils.dgi_encode_len(255), b'\xff\x00\xff')
+        self.assertEqual(utils.dgi_encode_len(65535), b'\xff\xff\xff')
+        with self.assertRaises(ValueError):
+            utils.dgi_encode_len(65536)
+
+    def testDgiTlvLenDec(self):
+        self.assertEqual(utils.dgi_parse_len(b'\x0a\x0b'), (10, b'\x0b'))
+        self.assertEqual(utils.dgi_parse_len(b'\xfe\x0b'), (254, b'\x0b'))
+        self.assertEqual(utils.dgi_parse_len(b'\xff\x00\xff\x0b'), (255, b'\x0b'))
+
 if __name__ == "__main__":
 	unittest.main()
