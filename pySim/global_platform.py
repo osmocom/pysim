@@ -114,8 +114,82 @@ class KeyInformationData(BER_TLV_IE, tag=0xc0):
 class KeyInformation(BER_TLV_IE, tag=0xe0, nested=[KeyInformationData]):
     pass
 
-# GlobalPlatform v2.3.1 Section H.4
-class ScpInformation(BER_TLV_IE, tag=0xa0):
+# GP v2.3 11.1.9
+KeyUsageQualifier = Struct('byte1'/FlagsEnum(Byte, verification_encryption=0x80,
+                                             computation_decipherment=0x40,
+                                             sm_response=0x20,
+                                             sm_command=0x10,
+                                             confidentiality=0x08,
+                                             crypto_checksum=0x04,
+                                             digital_signature=0x02,
+                                             crypto_authorization=0x01),
+                           'byte2'/COptional(FlagsEnum(Byte, key_agreement=0x80)))
+
+# GP v2.3 11.1.10
+KeyAccess = Enum(Byte, sd_and_any_assoc_app=0x00, sd_only=0x01, any_assoc_app_but_not_sd=0x02,
+                 not_available=0xff)
+
+class KeyLoading:
+    # Global Platform Specification v2.3 Section 11.11.4.2.2.3 DGIs for the CC Private Key
+
+    class KeyUsageQualifier(BER_TLV_IE, tag=0x95):
+        _construct = KeyUsageQualifier
+
+    class KeyAccess(BER_TLV_IE, tag=0x96):
+        _construct = KeyAccess
+
+    class KeyType(BER_TLV_IE, tag=0x80):
+        _construct = KeyType
+
+    class KeyLength(BER_TLV_IE, tag=0x81):
+        _construct = GreedyInteger()
+
+    class KeyIdentifier(BER_TLV_IE, tag=0x82):
+        _construct = Int8ub
+
+    class KeyVersionNumber(BER_TLV_IE, tag=0x83):
+        _construct = Int8ub
+
+    class KeyParameterReferenceValue(BER_TLV_IE, tag=0x85):
+        _construct = Enum(Byte, secp256r1=0x00, secp384r1=0x01, secp521r1=0x02, brainpoolP256r1=0x03,
+                          brainpoolP256t1=0x04, brainpoolP384r1=0x05, brainpoolP384t1=0x06,
+                          brainpoolP512r1=0x07, brainpoolP512t1=0x08)
+
+    # pylint: disable=undefined-variable
+    class ControlReferenceTemplate(BER_TLV_IE, tag=0xb9,
+                                   nested=[KeyUsageQualifier,
+                                           KeyAccess,
+                                           KeyType,
+                                           KeyLength,
+                                           KeyIdentifier,
+                                           KeyVersionNumber,
+                                           KeyParameterReferenceValue]):
+        pass
+
+    # Table 11-103
+    class EccPublicKey(DGI_TLV_IE, tag=0x0036):
+        _construct = GreedyBytes
+
+    # Table 11-105
+    class EccPrivateKey(DGI_TLV_IE, tag=0x8137):
+        _construct = GreedyBytes
+
+    # Global Platform Specification v2.3 Section 11.11.4 / Table 11-91
+    class KeyControlReferenceTemplate(DGI_TLV_IE, tag=0x00b9, nested=[ControlReferenceTemplate]):
+        pass
+
+
+# GlobalPlatform v2.3.1 Section H.4 / Table H-6
+class ScpType(BER_TLV_IE, tag=0x80):
+    _construct = HexAdapter(Byte)
+class ListOfSupportedOptions(BER_TLV_IE, tag=0x81):
+    _construct = GreedyBytes
+class SupportedKeysForScp03(BER_TLV_IE, tag=0x82):
+    _construct = FlagsEnum(Byte, aes128=0x01, aes192=0x02, aes256=0x04)
+class SupportedTlsCipherSuitesForScp81(BER_TLV_IE, tag=0x83):
+    _consuruct = GreedyRange(Int16ub)
+class ScpInformation(BER_TLV_IE, tag=0xa0, nested=[ScpType, ListOfSupportedOptions, SupportedKeysForScp03,
+                                                   SupportedTlsCipherSuitesForScp81]):
     pass
 class PrivilegesAvailableSSD(BER_TLV_IE, tag=0x81):
     pass
@@ -123,15 +197,24 @@ class PrivilegesAvailableApplication(BER_TLV_IE, tag=0x82):
     pass
 class SupportedLFDBHAlgorithms(BER_TLV_IE, tag=0x83):
     pass
+# GlobalPlatform Card Specification v2.3 / Table H-8
 class CiphersForLFDBEncryption(BER_TLV_IE, tag=0x84):
-    pass
+    _construct = Enum(Byte, tripledes16=0x01, aes128=0x02, aes192=0x04, aes256=0x08,
+                      icv_supported_for_lfdb=0x80)
+CipherSuitesForSignatures = Struct('byte1'/FlagsEnum(Byte, rsa1024_pkcsv15_sha1=0x01,
+                                                     rsa_gt1024_pss_sha256=0x02,
+                                                     single_des_plus_final_triple_des_mac_16b=0x04,
+                                                     cmac_aes128=0x08, cmac_aes192=0x10, cmac_aes256=0x20,
+                                                     ecdsa_ecc256_sha256=0x40, ecdsa_ecc384_sha384=0x80),
+                                   'byte2'/COptional(FlagsEnum(Byte, ecdsa_ecc512_sha512=0x01,
+                                                               ecdsa_ecc_521_sha512=0x02)))
 class CiphersForTokens(BER_TLV_IE, tag=0x85):
-    pass
+    _construct = CipherSuitesForSignatures
 class CiphersForReceipts(BER_TLV_IE, tag=0x86):
-    pass
+    _construct = CipherSuitesForSignatures
 class CiphersForDAPs(BER_TLV_IE, tag=0x87):
-    pass
-class KeyParameterReferenceList(BER_TLV_IE, tag=0x88):
+    _construct = CipherSuitesForSignatures
+class KeyParameterReferenceList(BER_TLV_IE, tag=0x88, nested=[KeyLoading.KeyParameterReferenceValue]):
     pass
 class CardCapabilityInformation(BER_TLV_IE, tag=0x67, nested=[ScpInformation, PrivilegesAvailableSSD,
                                                               PrivilegesAvailableApplication,
@@ -253,10 +336,10 @@ class FciTemplate(BER_TLV_IE, tag=0x6f, nested=FciTemplateNestedList):
     pass
 
 class IssuerIdentificationNumber(BER_TLV_IE, tag=0x42):
-    _construct = BcdAdapter(GreedyBytes)
+    _construct = HexAdapter(GreedyBytes)
 
 class CardImageNumber(BER_TLV_IE, tag=0x45):
-    _construct = BcdAdapter(GreedyBytes)
+    _construct = HexAdapter(GreedyBytes)
 
 class SequenceCounterOfDefaultKvn(BER_TLV_IE, tag=0xc1):
     _construct = GreedyInteger()
