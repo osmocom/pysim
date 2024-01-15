@@ -32,6 +32,36 @@ from pySim.filesystem import CardADF, CardApplication
 from pySim.utils import Hexstr, SwHexstr
 import pySim.global_platform
 
+def compute_eid_checksum(eid) -> str:
+    """Compute and add/replace check digits of an EID value according to GSMA SGP.29 Section 10."""
+    if type(eid) == str:
+        if len(eid) == 30:
+            # first pad by 2 digits
+            eid += "00"
+        elif len(eid) == 32:
+            # zero the last two digits
+            eid = eid[:-2] + "00"
+        else:
+            raise ValueError("and EID must be 30 or 32 digits")
+        eid_int = int(eid)
+    elif type(eid) == int:
+        eid_int = eid
+        if eid_int % 100:
+            # zero the last two digits
+            eid_int -= eid_int % 100
+    # Using the resulting 32 digits as a decimal integer, compute the remainder of that number on division by
+    # 97, Subtract the remainder from 98, and use the decimal result for the two check digits, if the result
+    # is one digit long, its value SHALL be prefixed by one digit of 0.
+    csum = 98 - (eid_int % 97)
+    eid_int += csum
+    return str(eid_int)
+
+def verify_eid_checksum(eid) -> bool:
+    """Verify the check digits of an EID value according to GSMA SGP.29 Section 10."""
+    # Using the 32 digits as a decimal integer, compute the remainder of that number on division by 97. If the
+    # remainder of the division is 1, the verification is successful; otherwise the EID is invalid.
+    return int(eid) % 97 == 1
+
 class VersionAdapter(Adapter):
     """convert an EUICC Version (3-int array) to a textual representation."""
 
