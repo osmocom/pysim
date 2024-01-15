@@ -882,8 +882,15 @@ class Iso7816Commands(CommandSet):
     activate_file_parser.add_argument('NAME', type=str, help='File name or FID of file to activate')
     @cmd2.with_argparser(activate_file_parser)
     def do_activate_file(self, opts):
-        """Activate the specified EF. This used to be called REHABILITATE in TS 11.11 for classic
-        SIM.  You need to specify the name or FID of the file to activate."""
+        """Activate the specified EF by sending an ACTIVATE FILE apdu command (used to be called REHABILITATE
+in TS 11.11 for classic SIM).
+
+This command is used to (re-)activate a file that is currently in deactivated (sometimes also called
+"invalidated") state.  You need to call this from the DF above the to-be-activated EF and specify the name or
+FID of the file to activate.
+
+Note that for *deactivation* the to-be-deactivated EF must be selected, but for *activation*, the DF
+above the to-be-activated EF must be selected!"""
         (data, sw) = self._cmd.lchan.activate_file(opts.NAME)
 
     def complete_activate_file(self, text, line, begidx, endidx) -> List[str]:

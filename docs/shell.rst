@@ -400,7 +400,19 @@ verify_chv
 
 deactivate_file
 ~~~~~~~~~~~~~~~
-Deactivate the currently selected file.  This used to be called INVALIDATE in TS 11.11.
+Deactivate the currently selected file.  A deactivated file can no longer be accessed
+for any further operation (such as selecting and subsequently reading or writing).
+
+Any access to a file that is deactivated will trigger the error
+*SW 6283 'Selected file invalidated/disabled'*
+
+In order to re-access a deactivated file, you need to activate it again, see the
+`activate_file` command below.  Note that for *deactivation* the to-be-deactivated
+EF must be selected, but for *activation*, the DF above the to-be-activated
+EF must be selected!
+
+This command sends a DEACTIVATE FILE APDU to
+the card (used to be called INVALIDATE in TS 11.11 for classic SIM).
 
 
 activate_file

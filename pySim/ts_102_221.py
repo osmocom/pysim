@@ -808,7 +808,7 @@ class CardProfileUICC(CardProfile):
                 '6200': 'No information given, state of non-volatile memory unchanged',
                 '6281': 'Part of returned data may be corrupted',
                 '6282': 'End of file/record reached before reading Le bytes or unsuccessful search',
-                '6283': 'Selected file invalidated',
+                '6283': 'Selected file invalidated/disabled; needs to be activated before use',
                 '6284': 'Selected file in termination state',
                 '62f1': 'More data available',
                 '62f2': 'More data available and proactive command pending',
