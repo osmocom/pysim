@@ -254,6 +254,13 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
             if not sw_match(sw, opts.expect_sw):
                 raise SwMatchError(sw, opts.expect_sw)
 
+    @cmd2.with_category(CUSTOM_CATEGORY)
+    def do_reset(self, opts):
+        """Reset the Card."""
+        atr = self.card.reset()
+        self.poutput('Card ATR: %s' % i2h(atr))
+        self.update_prompt()
+
     class InterceptStderr(list):
         def __init__(self):
             self._stderr_backup = sys.stderr
@@ -701,12 +708,6 @@ class PySimCommands(CommandSet):
         elif context['DF_SKIP']:
             raise RuntimeError(
                     "unable to export %i dedicated files(s)%s" % (context['ERR'], exception_str_add))
-
-    def do_reset(self, opts):
-        """Reset the Card."""
-        atr = self._cmd.card.reset()
-        self._cmd.poutput('Card ATR: %s' % i2h(atr))
-        self._cmd.update_prompt()
 
     def do_desc(self, opts):
         """Display human readable file description for the currently selected file"""
