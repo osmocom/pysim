@@ -252,13 +252,13 @@ class SmDppHttpServer:
             # TODO: reject any non-JSON Content-type
 
             content = json.loads(request.content.read())
-            print("Rx JSON: %s" % content)
+            print("Rx JSON: %s" % json.dumps(content))
             set_headers(request)
 
             output = func(self, request, content) or {}
 
             build_resp_header(output)
-            print("Tx JSON: %s" % output)
+            print("Tx JSON: %s" % json.dumps(output))
             return json.dumps(output)
         return _api_wrapper
 
