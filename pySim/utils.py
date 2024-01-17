@@ -6,6 +6,7 @@
 import json
 import abc
 import string
+import datetime
 from io import BytesIO
 from typing import Optional, List, Dict, Any, Tuple, NewType
 
@@ -973,6 +974,8 @@ class JsonEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, BytesIO) or isinstance(o, bytes) or isinstance(o, bytearray):
             return b2h(o)
+        elif isinstance(o, datetime.datetime):
+            return o.isoformat()
         return json.JSONEncoder.default(self, o)
 
 
