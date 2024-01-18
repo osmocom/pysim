@@ -622,7 +622,7 @@ class TransparentEF(CardEF):
                 self._cmd.poutput(data)
 
         upd_bin_dec_parser = argparse.ArgumentParser()
-        upd_bin_dec_parser.add_argument('data', type=is_hexstr, help='Abstract data (JSON format) to write')
+        upd_bin_dec_parser.add_argument('data', help='Abstract data (JSON format) to write')
         upd_bin_dec_parser.add_argument('--json-path', type=str,
                                         help='JSON path to modify specific element of file only')
 
@@ -882,7 +882,7 @@ class LinFixedEF(CardEF):
         upd_rec_dec_parser = argparse.ArgumentParser()
         upd_rec_dec_parser.add_argument(
             'record_nr', type=int, help='Number of record to be read')
-        upd_rec_dec_parser.add_argument('data', type=is_hexstr, help='Abstract data (JSON format) to write')
+        upd_rec_dec_parser.add_argument('data', help='Abstract data (JSON format) to write')
         upd_rec_dec_parser.add_argument('--json-path', type=str,
                                         help='JSON path to modify specific element of record only')
 
