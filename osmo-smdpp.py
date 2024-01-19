@@ -36,7 +36,8 @@ from pySim.utils import h2b, b2h, swap_nibbles
 
 import pySim.esim.rsp as rsp
 from pySim.esim.es8p import *
-from pySim.esim.x509_cert import oid, cert_policy_has_oid, CertAndPrivkey
+from pySim.esim.x509_cert import oid, cert_policy_has_oid, cert_get_auth_key_id
+from pySim.esim.x509_cert import CertAndPrivkey, CertificateSet, cert_get_subject_key_id, VerifyError
 
 # HACK: make this configurable
 DATA_DIR = './smdpp-data'
@@ -214,7 +215,12 @@ class SmDppHttpServer:
         if 'euiccCiPKIdListForSigningV3' in euiccInfo1:
             pkid_list = pkid_list + euiccInfo1['euiccCiPKIdListForSigningV3']
         # verify it supports one of the keys indicated by euiccCiPKIdListForSigning
-        if not any(self.ci_get_cert_for_pkid(x) for x in pkid_list):
+        ci_cert = None
+        for x in pkid_list:
+            ci_cert = self.ci_get_cert_for_pkid(x)
+            if ci_cert:
+                break
+        if not ci_cert:
            raise ApiError('8.8.2', '3.1', 'None of the proposed Public Key Identifiers is supported by the SM-DP+')
 
         # TODO: Determine the set of CERT.DPauth.SIG that satisfy the following criteria:
@@ -257,7 +263,8 @@ class SmDppHttpServer:
         #output['otherCertsInChain'] = b64encode2str()
 
         # create SessionState and store it in rss
-        self.rss[transactionId] = rsp.RspSessionState(transactionId, serverChallenge)
+        self.rss[transactionId] = rsp.RspSessionState(transactionId, serverChallenge,
+                                                      cert_get_subject_key_id(ci_cert))
 
         return output
 
@@ -292,29 +299,35 @@ class SmDppHttpServer:
         euicc_cert = x509.load_der_x509_certificate(euiccCertificate_bin)
         eum_cert = x509.load_der_x509_certificate(eumCertificate_bin)
 
-        # TODO: Verify the validity of the eUICC certificate chain
-        #   raise ApiError('8.1.3', '6.1', 'Verification failed')
-        #   raise ApiError('8.1.3', '6.3', 'Expired')
-
-        # TODO: Verify that the Root Certificate of the eUICC certificate chain corresponds to the
-        # euiccCiPKIdToBeUsed or euiccCiPKIdToBeUsedV3
-        #   raise ApiError('8.11.1', '3.9', 'Unknown')
-
-        # Verify euiccSignature1 over euiccSigned1 using pubkey from euiccCertificate.
-        # Otherwise, the SM-DP+ SHALL return a status code "eUICC - Verification failed"
-        if not self._ecdsa_verify(euicc_cert, euiccSignature1_bin, euiccSigned1_bin):
-            raise ApiError('8.1', '6.1', 'Verification failed')
-
         # Verify that the transactionId is known and relates to an ongoing RSP session.  Otherwise, the SM-DP+
         # SHALL return a status code "TransactionId - Unknown"
         ss = self.rss.get(transactionId, None)
         if ss is None:
             raise ApiError('8.10.1', '3.9', 'Unknown')
         ss.euicc_cert = euicc_cert
-        ss.eum_cert = eum_cert # do we need this in the state?
+        ss.eum_cert = eum_cert # TODO: do we need this in the state?
 
-        # TODO: verify eUICC cert is signed by EUM cert
-        # TODO: verify EUM cert is signed by CI cert
+        # Verify that the Root Certificate of the eUICC certificate chain corresponds to the
+        # euiccCiPKIdToBeUsed or TODO: euiccCiPKIdToBeUsedV3
+        if cert_get_auth_key_id(eum_cert) != ss.ci_cert_id:
+            raise ApiError('8.11.1', '3.9', 'Unknown')
+
+        # Verify the validity of the eUICC certificate chain
+        cs = CertificateSet(self.ci_get_cert_for_pkid(ss.ci_cert_id))
+        cs.add_intermediate_cert(eum_cert)
+        # TODO v3: otherCertsInChain
+        try:
+            cs.verify_cert_chain(euicc_cert)
+        except VerifyError:
+            raise ApiError('8.1.3', '6.1', 'Verification failed')
+        #   raise ApiError('8.1.3', '6.3', 'Expired')
+
+
+        # Verify euiccSignature1 over euiccSigned1 using pubkey from euiccCertificate.
+        # Otherwise, the SM-DP+ SHALL return a status code "eUICC - Verification failed"
+        if not self._ecdsa_verify(euicc_cert, euiccSignature1_bin, euiccSigned1_bin):
+            raise ApiError('8.1', '6.1', 'Verification failed')
+
         # TODO: verify EID of eUICC cert is  within permitted range of EUM cert
 
         ss.eid = ss.euicc_cert.subject.get_attributes_for_oid(x509.oid.NameOID.SERIAL_NUMBER)[0].value

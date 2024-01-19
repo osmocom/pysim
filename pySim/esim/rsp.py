@@ -35,10 +35,11 @@ class RspSessionState:
     and subsequently used by further API calls using the same transactionId.  The session state
     is removed either after cancelSession or after notification.
     TODO: add some kind of time based expiration / garbage collection."""
-    def __init__(self, transactionId: str, serverChallenge: bytes):
+    def __init__(self, transactionId: str, serverChallenge: bytes, ci_cert_id: bytes):
         self.transactionId = transactionId
         self.serverChallenge = serverChallenge
         #  used at a later point between API calsl
+        self.ci_cert_id = ci_cert_id
         self.euicc_cert: Optional[x509.Certificate] = None
         self.eum_cert: Optional[x509.Certificate] = None
         self.eid: Optional[bytes] = None
