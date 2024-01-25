@@ -941,6 +941,12 @@ get_data
    :module: pySim.global_platform
    :func: ADF_SD.AddlShellCommands.get_data_parser
 
+store_data
+~~~~~~~~~~
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.store_data_parser
+
 
 eUICC ISD-R commands
 --------------------
