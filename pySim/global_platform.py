@@ -446,7 +446,52 @@ class ADF_SD(CardADF):
                 response += data
             return data
 
+        put_key_parser = argparse.ArgumentParser()
+        put_key_parser.add_argument('--old-key-version-nr', type=auto_int, default=0, help='Old Key Version Number')
+        put_key_parser.add_argument('--key-version-nr', type=auto_int, required=True, help='Key Version Number')
+        put_key_parser.add_argument('--key-id', type=auto_int, required=True, help='Key Identifier (base)')
+        put_key_parser.add_argument('--key-type', choices=KeyType.ksymapping.values(), action='append', required=True, help='Key Type')
+        put_key_parser.add_argument('--key-data', type=is_hexstr, action='append', required=True, help='Key Data Block')
+        put_key_parser.add_argument('--key-check', type=is_hexstr, action='append', help='Key Check Value')
 
+        @cmd2.with_argparser(put_key_parser)
+        def do_put_key(self, opts):
+            """Perform the GlobalPlatform PUT KEY command in order to store a new key on the card.
+            See GlobalPlatform CardSpecification v2.3 Section 11.8 for details.
+
+            Example (SCP80 KIC/KID/KIK):
+                put_key --key-version-nr 1 --key-id 0x81    --key-type aes --key-data 000102030405060708090a0b0c0d0e0f
+                                                            --key-type aes --key-data 101112131415161718191a1b1c1d1e1f
+                                                            --key-type aes --key-data 202122232425262728292a2b2c2d2e2f
+
+            Example (SCP81 TLS-PSK/KEK):
+                put_key --key-version-nr 0x40 --key-id 0x81 --key-type tls_psk --key-data 303132333435363738393a3b3c3d3e3f
+                                                            --key-type des --key-data 404142434445464748494a4b4c4d4e4f
+
+            """
+            if len(opts.key_type) != len(opts.key_data):
+                raise ValueError('There must be an equal number of key-type and key-data arguments')
+            kdb = []
+            for i in range(0, len(opts.key_type)):
+                if opts.key_check and len(opts.key_check) > i:
+                    kcv = opts.key_check[i]
+                else:
+                    kcv = ''
+                kdb.append({'key_type': opts.key_type[i], 'kcb': opts.key_data[i], 'kcv': kcv})
+            return self.put_key(opts.old_key_version_nr, opts.key_version_nr, opts.key_id, kdb)
+
+        # Table 11-68: Key Data Field - Format 1 (Basic Format)
+        KeyDataBasic = GreedyRange(Struct('key_type'/KeyType,
+                                          'kcb'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+                                          'kcv'/HexAdapter(Prefixed(Int8ub, GreedyBytes))))
+
+        def put_key(self, old_kvn:int, kvn: int, kid: int, key_dict: dict) -> bytes:
+            """Perform the GlobalPlatform PUT KEY command in order to store a new key on the card.
+            See GlobalPlatform CardSpecification v2.3 Section 11.8 for details."""
+            key_data = kvn.to_bytes(1, 'big') + build_construct(ADF_SD.AddlShellCommands.KeyDataBasic, key_dict)
+            hdr = "80D8%02x%02x%02x" % (old_kvn, kid, len(key_data))
+            data, sw = self._cmd.lchan.scc._tp.send_apdu_checksw(hdr + b2h(key_data))
+            return data
 
 
 # Card Application of a Security Domain

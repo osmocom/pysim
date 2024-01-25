@@ -947,6 +947,12 @@ store_data
    :module: pySim.global_platform
    :func: ADF_SD.AddlShellCommands.store_data_parser
 
+put_key
+~~~~~~~
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.put_key_parser
+
 
 eUICC ISD-R commands
 --------------------
