@@ -19,6 +19,8 @@ support for profile personalization yet.
 
 osmo-smdpp currently
 
+* uses test certificates copied from GSMA SGP.26 into `./smdpp-data/certs`, assuming that your osmo-smdppp
+  would be running at the host name `testsmdpplus1.example.com`
 * always provides the exact same profile to every request.  The profile always has the same IMSI and
   ICCID.
 * **is absolutely insecure**, as it
@@ -91,3 +93,20 @@ The LPA must resolve `testsmdpplus1.example.com` to the IP address of your TLS p
 
 It must also accept the TLS certificates used by your TLS proxy.
 
+Supported eUICC
+~~~~~~~~~~~~~~~
+
+If you run osmo-smdpp with the included SGP.26 certificates, you must use an eUICC with matching SGP.26
+certificates, i.e. the EUM certificate must be signed by a SGP.26 test root CA and the eUICC certificate
+in turn must be signed by that SGP.26 EUM certificate.
+
+sysmocom (sponsoring development and maintenance of pySim and osmo-smdpp) is selling SGP.26 test eUICC
+as `sysmoEUICC1-C2T`.  They are publicly sold in the `sysmocom webshop <https://shop.sysmocom.de/eUICC-for-consumer-eSIM-RSP-with-SGP.26-Test-Certificates/sysmoEUICC1-C2T>`_.
+
+In general you can use osmo-smdpp also with certificates signed by any other certificate authority.  You
+just always must ensure that the certificates of the SM-DP+ are signed by the same root CA as those of your
+eUICCs.
+
+Hypothetically, osmo-smdpp could also be operated with GSMA production certificates, but it would require
+that somebody brings the code in-line with all the GSMA security requirements (HSM support, ...) and operate
+it in a GSMA SAS-SM accredited environment and pays for the related audits.
