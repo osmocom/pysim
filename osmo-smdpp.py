@@ -218,8 +218,13 @@ class SmDppHttpServer:
         ci_cert = None
         for x in pkid_list:
             ci_cert = self.ci_get_cert_for_pkid(x)
-            if ci_cert:
+            # we already support multiple CI certificates but only one set of DPauth + DPpb keys. So we must
+            # make sure we choose a CI key-id which has issued both the eUICC as well as our own SM-DP side
+            # certs.
+            if ci_cert and cert_get_subject_key_id(ci_cert) == self.dp_auth.get_authority_key_identifier().key_identifier:
                 break
+            else:
+                ci_cert = None
         if not ci_cert:
            raise ApiError('8.8.2', '3.1', 'None of the proposed Public Key Identifiers is supported by the SM-DP+')
 
