@@ -304,6 +304,9 @@ class RuntimeLchan:
             if select_resp_data:
                 self.selected_file_fcp_hex = select_resp_data
                 self.selected_file_fcp = self.selected_file.decode_select_response(select_resp_data)
+            else:
+                self.selected_file_fcp_hex = None
+                self.selected_file_fcp = None
 
         # register commands of new file
         if cmd_app and self.selected_file.shell_commands:
