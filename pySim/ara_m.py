@@ -116,6 +116,7 @@ class NfcArDO(BER_TLV_IE, tag=0xd1):
 
 class PermArDO(BER_TLV_IE, tag=0xdb):
     # Android UICC Carrier Privileges specific extension, see https://source.android.com/devices/tech/config/uicc
+    # based on Table 6-8 of GlobalPlatform Device API Access Control v1.0
     _construct = Struct('permissions'/HexAdapter(Bytes(8)))
 
 
