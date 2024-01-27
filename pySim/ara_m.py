@@ -31,6 +31,7 @@ from construct import Optional as COptional
 from pySim.construct import *
 from pySim.filesystem import *
 from pySim.tlv import *
+import pySim.global_platform
 
 # various BER-TLV encoded Data Objects (DOs)
 
@@ -258,6 +259,9 @@ class ADF_ARAM(CardADF):
         self.shell_commands += [self.AddlShellCommands()]
         files = []
         self.add_files(files)
+
+    def decode_select_response(self, data_hex):
+        return pySim.global_platform.decode_select_response(data_hex)
 
     @staticmethod
     def xceive_apdu_tlv(tp, hdr: Hexstr, cmd_do, resp_cls, exp_sw='9000'):
