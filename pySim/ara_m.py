@@ -348,7 +348,7 @@ class ADF_ARAM(CardADF):
             """Perform STORE DATA [Command-Store-REF-AR-DO] to store a (new) access rule."""
             # REF
             ref_do_content = []
-            if opts.aid:
+            if opts.aid != None:
                 ref_do_content += [{'aid_ref_do': opts.aid}]
             elif opts.aid_empty:
                 ref_do_content += [{'aid_ref_empty_do': None}]
