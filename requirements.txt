@@ -11,6 +11,6 @@ termcolor
 colorlog
 pycryptodomex
 cryptography
-asn1tools
+git+https://github.com/osmocom/asn1tools
 packaging
 git+https://github.com/hologram-io/smpp.pdu
