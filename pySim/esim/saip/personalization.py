@@ -20,13 +20,13 @@ from typing import List, Tuple, Optional
 
 from pySim.esim.saip import ProfileElement, ProfileElementSequence
 
-def remove_unwanted_tuples_from_list(l: List[Tuple], unwanted_key:str) -> List[Tuple]:
+def remove_unwanted_tuples_from_list(l: List[Tuple], unwanted_keys: List[str]) -> List[Tuple]:
     """In a list of tuples, remove all tuples whose first part equals 'unwanted_key'."""
-    return list(filter(lambda x: x[0] != unwanted_key, l))
+    return list(filter(lambda x: x[0] not in unwanted_keys, l))
 
 def file_replace_content(file: List[Tuple], new_content: bytes):
     """Completely replace all fillFileContent of a decoded 'File' with the new_content."""
-    file = remove_unwanted_tuples_from_list(file, 'fillFileContent')
+    file = remove_unwanted_tuples_from_list(file, ['fillFileContent', 'fillFileOffset'])
     file.append(('fillFileContent', new_content))
     return file
 
