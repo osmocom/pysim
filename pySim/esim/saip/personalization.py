@@ -26,7 +26,8 @@ def remove_unwanted_tuples_from_list(l: List[Tuple], unwanted_keys: List[str]) -
 
 def file_replace_content(file: List[Tuple], new_content: bytes):
     """Completely replace all fillFileContent of a decoded 'File' with the new_content."""
-    file = remove_unwanted_tuples_from_list(file, ['fillFileContent', 'fillFileOffset'])
+    # use [:] to avoid making a copy, as we're doing in-place modification of the list here
+    file[:] = remove_unwanted_tuples_from_list(file, ['fillFileContent', 'fillFileOffset'])
     file.append(('fillFileContent', new_content))
     return file
 
@@ -54,9 +55,9 @@ class Iccid(ConfigurableParameter):
     name = 'iccid'
     def apply(self, pes: ProfileElementSequence):
         # patch the header; FIXME: swap nibbles!
-        pes.get_pe_by_type('header').decoded['iccid'] = self.value
+        pes.get_pe_for_type('header').decoded['iccid'] = self.value
         # patch MF/EF.ICCID
-        file_replace_content(pes.get_pe_by_type('mf').decoded['ef-iccid'], self.value)
+        file_replace_content(pes.get_pe_for_type('mf').decoded['ef-iccid'], bytes(self.value))
 
 class Imsi(ConfigurableParameter):
     """Configurable IMSI. Expects value to be n EF.IMSI format."""
