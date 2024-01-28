@@ -16,16 +16,117 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
+import io
 from typing import Tuple, List, Optional, Dict, Union
 
 import asn1tools
 
 from pySim.utils import bertlv_parse_tag, bertlv_parse_len
+from pySim.ts_102_221 import FileDescriptor
+from pySim.construct import build_construct
 from pySim.esim import compile_asn1_subdir
+import pySim.esim.saip.templates as templates
 
 asn1 = compile_asn1_subdir('saip')
 
+class File:
+    """Internal representation of a file in a profile filesystem."""
+    def __init__(self, pename: str, l: Optional[List[Tuple]] = None, template: Optional[templates.FileTemplate] = None):
+        self.pe_name = pename
+        self.template = template
+        self.fileDescriptor = {}
+        self.stream = None
+        # apply some defaults from profile
+        if self.template:
+            self.from_template(self.template)
+        print("after template: %s" % repr(self))
+        if l:
+            self.from_tuples(l)
+
+    def from_template(self, template: templates.FileTemplate):
+        """Determine defaults for file based on given FileTemplate."""
+        fdb_dec = {}
+        self.rec_len = None
+        if template.fid:
+            self.fileDescriptor['fileID'] = template.fid.to_bytes(2, 'big')
+        if template.sfi:
+            self.fileDescriptor['shortEFID'] = bytes([template.sfi])
+        if template.arr:
+            self.fileDescriptor['securityAttributesReferenced'] = bytes([template.arr])
+        # All the files defined in the templates shall have, by default, shareable/not-shareable bit in the file descriptor set to "shareable".
+        fdb_dec['shareable'] = True
+        if template.file_type in ['LF', 'CY']:
+            fdb_dec['file_type'] = 'working_ef'
+            if template.rec_len:
+                self.record_len = template.rec_len
+            if template.nb_rec and template.rec_len:
+                self.fileDescriptor['efFileSize'] = (template.nb_rec * template.rec_len).to_bytes(2, 'big') # FIXME
+            if template.file_type == 'LF':
+                fdb_dec['structure'] = 'linear_fixed'
+            elif template.file_type == 'CY':
+                fdb_dec['structure'] = 'cyclic'
+        elif template.file_type in ['TR', 'BT']:
+            fdb_dec['file_type'] = 'working_ef'
+            if template.file_size:
+                self.fileDescriptor['efFileSize'] = template.file_size.to_bytes(2, 'big') # FIXME
+            if template.file_type == 'BT':
+                fdb_dec['structure'] = 'ber_tlv'
+            elif template.file_type == 'TR':
+                fdb_dec['structure'] = 'transparent'
+        elif template.file_type in ['MF', 'DF', 'ADF']:
+            fdb_dec['file_type'] = 'df'
+            fdb_dec['structure'] = 'no_info_given'
+        # build file descriptor based on above input data
+        fd_dict = {'file_descriptor_byte': fdb_dec}
+        if self.rec_len:
+            fd_dict['record_len'] = self.rec_len
+        self.fileDescriptor['fileDescriptor'] = build_construct(FileDescriptor._construct, fd_dict)
+        # FIXME: default_val
+        # FIXME: high_update
+        # FIXME: params?
+
+    def from_tuples(self, l:List[Tuple]):
+        """Parse a list of fileDescriptor, fillFileContent, fillFileOffset tuples into this instance."""
+        def get_fileDescriptor(l:List[Tuple]):
+            for k, v in l:
+                if k == 'fileDescriptor':
+                    return v
+        fd = get_fileDescriptor(l)
+        if not fd:
+            raise ValueError("No fileDescriptor found")
+        self.fileDescriptor.update(dict(fd))
+        self.stream = self.linearize_file_content(l)
+
+    def to_tuples(self) -> List[Tuple]:
+        """Generate a list of fileDescriptor, fillFileContent, fillFileOffset tuples into this instance."""
+        raise NotImplementedError
+
+    @staticmethod
+    def linearize_file_content(l: List[Tuple]) -> Optional[io.BytesIO]:
+        """linearize a list of fillFileContent + fillFileOffset tuples."""
+        stream = io.BytesIO()
+        for k, v in l:
+            if k == 'doNotCreate':
+                return None
+            if k == 'fileDescriptor':
+                pass
+            elif k == 'fillFileOffset':
+                stream.write(b'\xff' * v)
+            elif k == 'fillFileContent':
+                stream.write(v)
+            else:
+                return ValueError("Unknown key '%s' in tuple list" % k)
+        return stream
+
+    def __str__(self) -> str:
+        return "File(%s)" % self.pe_name
+
+    def __repr__(self) -> str:
+        return "File(%s): %s" % (self.pe_name, self.fileDescriptor)
+
 class ProfileElement:
+    FILE_BEARING = ['mf', 'cd', 'telecom', 'usim', 'opt-usim', 'isim', 'opt-isim', 'phonebook', 'gsm-access',
+                    'csim', 'opt-csim', 'eap', 'df-5gs', 'df-saip', 'df-snpn', 'df-5gprose', 'iot', 'opt-iot']
     def _fixup_sqnInit_dec(self) -> None:
         """asn1tools has a bug when working with SEQUENCE OF that have DEFAULT values. Let's work around
         this."""
@@ -58,6 +159,29 @@ class ProfileElement:
         self.type, self.decoded = asn1.decode('ProfileElement', der)
         # work around asn1tools bug regarding DEFAULT for a SEQUENCE OF
         self._fixup_sqnInit_dec()
+
+    @property
+    def header_name(self) -> str:
+        # unneccessarry compliaction by inconsistent naming :(
+        if self.type.startswith('opt-'):
+            return self.type.replace('-','') + '-header'
+        else:
+            return self.type + '-header'
+
+    @property
+    def header(self):
+        return self.decoded.get(self.header_name, None)
+
+    @property
+    def templateID(self):
+        return self.decoded.get('templateID', None)
+
+    @property
+    def files(self):
+        """Return dict of decoded 'File' ASN.1 items."""
+        if not self.type in self.FILE_BEARING:
+            return {}
+        return {k:v for (k,v) in self.decoded.items() if k not in ['templateID', self.header_name]}
 
     @classmethod
     def from_der(cls, der: bytes) -> 'ProfileElement':
