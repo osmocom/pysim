@@ -22,6 +22,10 @@ class OID:
     def intlist_from_str(instr: str) -> List[int]:
         return [int(x) for x in instr.split('.')]
 
+    @staticmethod
+    def str_from_intlist(intlist: List[int]) -> str:
+        return '.'.join([str(x) for x in intlist])
+
     def __init__(self, initializer: Union[List[int], str]):
         if type(initializer) == str:
             self.intlist = self.intlist_from_str(initializer)
@@ -29,7 +33,7 @@ class OID:
             self.intlist = initializer
 
     def __str__(self) -> str:
-        return '.'.join([str(x) for x in self.intlist])
+        return self.str_from_intlist(self.intlist)
 
     def __repr__(self) -> str:
         return 'OID(%s)' % (str(self))
