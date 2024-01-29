@@ -25,63 +25,6 @@ from pySim.esim import compile_asn1_subdir
 
 asn1 = compile_asn1_subdir('saip')
 
-class oid:
-    class OID:
-        @staticmethod
-        def intlist_from_str(instr: str) -> List[int]:
-            return [int(x) for x in instr.split('.')]
-
-        def __init__(self, initializer):
-            if type(initializer) == str:
-                self.intlist = self.intlist_from_str(initializer)
-            else:
-                self.intlist = initializer
-
-        def __str__(self):
-            return '.'.join([str(x) for x in self.intlist])
-
-        def __repr__(self):
-            return 'OID(%s)' % (str(self))
-
-
-    class eOID(OID):
-        """OID helper for TCA eUICC prefix"""
-        __prefix = [2,23,143,1]
-        def __init__(self, initializer):
-            if type(initializer) == str:
-                initializer = self.intlist_from_str(initializer)
-            super().__init__(self.__prefix + initializer)
-
-    MF = eOID("2.1")
-    DF_CD = eOID("2.2")
-    DF_TELECOM = eOID("2.3")
-    DF_TELECOM_v2 = eOID("2.3.2")
-    ADF_USIM_by_default = eOID("2.4")
-    ADF_USIM_by_default_v2 = eOID("2.4.2")
-    ADF_USIM_not_by_default = eOID("2.5")
-    ADF_USIM_not_by_default_v2 = eOID("2.5.2")
-    ADF_USIM_not_by_default_v3 = eOID("2.5.3")
-    DF_PHONEBOOK_ADF_USIM = eOID("2.6")
-    DF_GSM_ACCESS_ADF_USIM = eOID("2.7")
-    ADF_ISIM_by_default = eOID("2.8")
-    ADF_ISIM_not_by_default = eOID("2.9")
-    ADF_ISIM_not_by_default_v2 = eOID("2.9.2")
-    ADF_CSIM_by_default = eOID("2.10")
-    ADF_CSIM_by_default_v2 = eOID("2.10.2")
-    ADF_CSIM_not_by_default = eOID("2.11")
-    ADF_CSIM_not_by_default_v2 = eOID("2.11.2")
-    DF_EAP = eOID("2.12")
-    DF_5GS = eOID("2.13")
-    DF_5GS_v2 = eOID("2.13.2")
-    DF_5GS_v3 = eOID("2.13.3")
-    DF_5GS_v4 = eOID("2.13.4")
-    DF_SAIP = eOID("2.14")
-    DF_SNPN = eOID("2.15")
-    DF_5GProSe = eOID("2.16")
-    IoT_default = eOID("2.17")
-    IoT_default = eOID("2.18")
-
-
 class ProfileElement:
     def _fixup_sqnInit_dec(self):
         """asn1tools has a bug when working with SEQUENCE OF that have DEFAULT values. Let's work around
