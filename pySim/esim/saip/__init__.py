@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
-from typing import Tuple, List, Optional, Dict
+from typing import Tuple, List, Optional, Dict, Union
 
 import asn1tools
 
@@ -26,7 +26,7 @@ from pySim.esim import compile_asn1_subdir
 asn1 = compile_asn1_subdir('saip')
 
 class ProfileElement:
-    def _fixup_sqnInit_dec(self):
+    def _fixup_sqnInit_dec(self) -> None:
         """asn1tools has a bug when working with SEQUENCE OF that have DEFAULT values. Let's work around
         this."""
         if self.type != 'akaParameter':
@@ -39,7 +39,7 @@ class ProfileElement:
             # SEQUENCE (SIZE (32)) OF OCTET STRING (SIZE (6))
             self.decoded['sqnInit'] = [b'\x00'*6] * 32
 
-    def _fixup_sqnInit_enc(self):
+    def _fixup_sqnInit_enc(self) -> None:
         """asn1tools has a bug when working with SEQUENCE OF that have DEFAULT values. Let's work around
         this."""
         if self.type != 'akaParameter':
@@ -53,7 +53,7 @@ class ProfileElement:
         # none of the fields were initialized with a non-default (non-zero) value, so we can skip it
         del self.decoded['sqnInit']
 
-    def parse_der(self, der: bytes):
+    def parse_der(self, der: bytes) -> None:
         """Parse a sequence of PE and store the result in instance attributes."""
         self.type, self.decoded = asn1.decode('ProfileElement', der)
         # work around asn1tools bug regarding DEFAULT for a SEQUENCE OF
@@ -72,7 +72,7 @@ class ProfileElement:
         self._fixup_sqnInit_enc()
         return asn1.encode('ProfileElement', (self.type, self.decoded))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.type
 
 
@@ -102,7 +102,7 @@ class ProfileElementSequence:
         assert len(l) == 1
         return l[0]
 
-    def parse_der(self, der: bytes):
+    def parse_der(self, der: bytes) -> None:
         """Parse a sequence of PE and store the result in self.pe_list."""
         self.pe_list = []
         remainder = der
@@ -111,11 +111,11 @@ class ProfileElementSequence:
             self.pe_list.append(ProfileElement.from_der(first_tlv))
         self._process_pelist()
 
-    def _process_pelist(self):
+    def _process_pelist(self) -> None:
         self._rebuild_pe_by_type()
         self._rebuild_pes_by_naa()
 
-    def _rebuild_pe_by_type(self):
+    def _rebuild_pe_by_type(self) -> None:
         self.pe_by_type = {}
         # build a dict {pe_type: [pe, pe, pe]}
         for pe in self.pe_list:
@@ -124,7 +124,7 @@ class ProfileElementSequence:
             else:
                 self.pe_by_type[pe.type] = [pe]
 
-    def _rebuild_pes_by_naa(self):
+    def _rebuild_pes_by_naa(self) -> None:
         """rebuild the self.pes_by_naa dict {naa: [ [pe, pe, pe], [pe, pe] ]} form,
         which basically means for every NAA there's a lsit of instances, and each consists
         of a list of a list of PEs."""
@@ -165,8 +165,8 @@ class ProfileElementSequence:
             out += pe.to_der()
         return out
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "PESequence(%s)" % ', '.join([str(x) for x in self.pe_list])
 
-    def __iter__(self):
+    def __iter__(self) -> str:
         yield from self.pe_list
