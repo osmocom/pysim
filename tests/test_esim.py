@@ -22,8 +22,21 @@ import base64
 from pySim.utils import b2h, h2b
 from pySim.esim.bsp import *
 import pySim.esim.rsp as rsp
+from pySim.esim import ActivationCode
 
 from cryptography.hazmat.primitives.asymmetric import ec
+
+class TestActivationCode(unittest.TestCase):
+    def test_de_encode(self):
+        STRS = ['1$SMDP.GSMA.COM$04386-AGYFT-A74Y8-3F815',
+                '1$SMDP.GSMA.COM$04386-AGYFT-A74Y8-3F815$$1',
+                '1$SMDP.GSMA.COM$04386-AGYFT-A74Y8-3F815$1.3.6.1.4.1.31746$1',
+                '1$SMDP.GSMA.COM$04386-AGYFT-A74Y8-3F815$1.3.6.1.4.1.31746',
+                '1$SMDP.GSMA.COM$$1.3.6.1.4.1.31746']
+        for s in STRS:
+            ac = ActivationCode.from_string(s)
+            self.assertEqual(s, ac.to_string())
+
 
 class TestECKA(unittest.TestCase):
     def test_mode51(self):
