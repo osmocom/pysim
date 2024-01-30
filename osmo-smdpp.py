@@ -135,6 +135,7 @@ class SmDppHttpServer:
 
     def __init__(self, server_hostname: str, ci_certs_path: str, use_brainpool: bool = False):
         self.server_hostname = server_hostname
+        self.upp_dir = os.path.realpath(os.path.join(DATA_DIR, 'upp'))
         self.ci_certs = self.load_certs_from_path(ci_certs_path)
         # load DPauth cert + key
         self.dp_auth = CertAndPrivkey(oid.id_rspRole_dp_auth_v2)
@@ -344,6 +345,27 @@ class SmDppHttpServer:
         if euiccSigned1['serverChallenge'] != ss.serverChallenge:
             raise ApiError('8.1', '6.1', 'Verification failed')
 
+        # If ctxParams1 contains a ctxParamsForCommonAuthentication data object, the SM-DP+ Shall [...]
+        # TODO: We really do a very simplistic job here, this needs to be properly implemented later,
+        # considering all the various cases, profile state, etc.
+        if euiccSigned1['ctxParams1'][0] == 'ctxParamsForCommonAuthentication':
+            cpca = euiccSigned1['ctxParams1'][1]
+            matchingId = cpca.get('matchingId', None)
+            if not matchingId:
+                # TODO: check if any pending profile downloads for the EID
+                raise ApiError('8.2.6', '3.8', 'Refused')
+            if matchingId:
+                # look up profile based on matchingID.  We simply check if a given file exists for now..
+                path = os.path.join(self.upp_dir, matchingId) + '.der'
+                # prevent directory traversal attack
+                if os.path.commonprefix((os.path.realpath(path),self.upp_dir)) != self.upp_dir:
+                    raise ApiError('8.2.6', '3.8', 'Refused')
+                if not os.path.isfile(path) or not os.access(path, os.R_OK):
+                    raise ApiError('8.2.6', '3.8', 'Refused')
+                ss.matchingId = matchingId
+
+        # FIXME: we actually want to perform the profile binding herr, and read the profile metadat from the profile
+
         # Put together profileMetadata + _bin
         ss.profileMetadata = ProfileMetadata(iccid_bin= h2b(swap_nibbles('89000123456789012358')), spn="OsmocomSPN", profile_name="OsmocomProfile")
         profileMetadata_bin = ss.profileMetadata.gen_store_metadata_request()
@@ -425,7 +447,7 @@ class SmDppHttpServer:
         # TODO: Check if this order requires a Confirmation Code verification
 
         #  Perform actual protection + binding of profile package (or return  pre-bound one)
-        with open(os.path.join(DATA_DIR, 'upp', 'TS48 V2 eSIM_GTP_SAIP2.1_NoBERTLV.rename2der'), 'rb') as f:
+        with open(os.path.join(self.upp_dir, ss.matchingId)+'.der', 'rb') as f:
             upp = UnprotectedProfilePackage.from_der(f.read(), metadata=ss.profileMetadata)
             # HACK: Use empty PPP as we're still debuggin the configureISDP step, and we want to avoid
             # cluttering the log with stuff happening after the failure

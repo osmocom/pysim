@@ -26,7 +26,7 @@ from pprint import pprint as pp
 
 
 class SaipTest(unittest.TestCase):
-    with open('smdpp-data/upp/TS48 V2 eSIM_GTP_SAIP2.3_NoBERTLV.rename2der', 'rb') as f:
+    with open('smdpp-data/upp/TS48v2_SAIP2.3_NoBERTLV.der', 'rb') as f:
         per_input = f.read()
     pes = ProfileElementSequence.from_der(per_input)
     expected_pet_list = ['header', 'mf', 'pukCodes', 'pinCodes', 'telecom', 'pinCodes', 'genericFileManagement', 'usim', 'opt-usim', 'pinCodes', 'akaParameter', 'gsm-access', 'df-5gs', 'df-saip','csim', 'opt-csim', 'pinCodes', 'cdmaParameter', 'isim', 'opt-isim', 'pinCodes', 'akaParameter', 'genericFileManagement', 'genericFileManagement', 'securityDomain', 'rfm', 'rfm', 'rfm', 'rfm', 'end']

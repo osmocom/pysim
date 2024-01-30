@@ -21,8 +21,9 @@ osmo-smdpp currently
 
 * uses test certificates copied from GSMA SGP.26 into `./smdpp-data/certs`, assuming that your osmo-smdppp
   would be running at the host name `testsmdpplus1.example.com`
-* always provides the exact same profile to every request.  The profile always has the same IMSI and
-  ICCID.
+* doesn't understand profile state. Any profile can always be downloaded any number of times, irrespective
+  of the EID or whether it was donwloaded before
+* doesn't perform any personalization, so the IMSI/ICCID etc. are always identical
 * **is absolutely insecure**, as it
 
  * does not perform any certificate verification
@@ -83,7 +84,8 @@ and it will bind its plain-HTTP ES9+ interface to local TCP port 8000.
 The `smdpp-data/certs`` directory contains the DPtls, DPauth and DPpb as well as CI certificates
 used; they are copied from GSMA SGP.26 v2.
 
-The `smdpp-data/upp` directory contains the UPP (Unprotected Profile Package) used.
+The `smdpp-data/upp` directory contains the UPP (Unprotected Profile Package) used.  The file names (without
+.der suffix) are looked up by the matchingID parameter from the activation code presented by the LPA.
 
 
 DNS setup for your LPA
