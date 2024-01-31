@@ -368,6 +368,60 @@ def decode_select_response(resp_hex: str) -> object:
     d = t.to_dict()
     return flatten_dict_lists(d['fci_template'])
 
+# 11.4.2.1
+StatusSubset = Enum(Byte, isd=0x80, applications=0x40, files=0x20, files_and_modules=0x10)
+
+
+# Section 11.4.3.1 Table 11-36
+class LifeCycleState(BER_TLV_IE, tag=0x9f70):
+    _construct = Int8ub
+
+# Section 11.4.3.1 Table 11-36 + Section 11.1.2
+class Privileges(BER_TLV_IE, tag=0xc5):
+    _construct = Struct('byte1'/FlagsEnum(Byte, security_domain=0x80, dap_verification=0x40,
+                                          delegated_management=0x20, card_lock=0x10, card_terminate=0x08,
+                                          card_reset=0x04, cvm_management=0x02,
+                                          mandated_dap_verification=0x01),
+                        'byte2'/COptional(FlagsEnum(Byte, trusted_path=0x80, authorized_management=0x40,
+                                          token_management=0x20, global_delete=0x10, global_lock=0x08,
+                                          global_registry=0x04, final_application=0x02, global_service=0x01)),
+                        'byte3'/COptional(FlagsEnum(Byte, receipt_generation=0x80, ciphered_load_file_data_block=0x40,
+                                          contactless_activation=0x20, contactless_self_activation=0x10)))
+
+# Section 11.4.3.1 Table 11-36 + Section 11.1.7
+class ImplicitSelectionParameter(BER_TLV_IE, tag=0xcf):
+    _construct = BitStruct('contactless_io'/Flag,
+                           'contact_io'/Flag,
+                           '_rfu'/Flag,
+                           'logical_channel_number'/BitsInteger(5))
+
+# Section 11.4.3.1 Table 11-36
+class ExecutableLoadFileAID(BER_TLV_IE, tag=0xc4):
+    _construct = HexAdapter(GreedyBytes)
+
+# Section 11.4.3.1 Table 11-36
+class ExecutableLoadFileVersionNumber(BER_TLV_IE, tag=0xce):
+    # Note: the Executable Load File Version Number format and contents are beyond the scope of this
+    # specification. It shall consist of the version information contained in the original Load File: on a
+    # Java Card based card, this version number represents the major and minor version attributes of the
+    # original Load File Data Block.
+    _construct = HexAdapter(GreedyBytes)
+
+# Section 11.4.3.1 Table 11-36
+class ExecutableModuleAID(BER_TLV_IE, tag=0x84):
+    _construct = HexAdapter(GreedyBytes)
+
+# Section 11.4.3.1 Table 11-36
+class AssociatedSecurityDomainAID(BER_TLV_IE, tag=0xcc):
+    _construct = HexAdapter(GreedyBytes)
+
+# Section 11.4.3.1 Table 11-36
+class GpRegistryRelatedData(BER_TLV_IE, tag=0xe3, nested=[ApplicationAID, LifeCycleState, Privileges,
+                                                          ImplicitSelectionParameter, ExecutableLoadFileAID,
+                                                          ExecutableLoadFileVersionNumber,
+                                                          ExecutableModuleAID, AssociatedSecurityDomainAID]):
+    pass
+
 # Application Dedicated File of a Security Domain
 class ADF_SD(CardADF):
     StoreData = BitStruct('last_block'/Flag,
@@ -492,6 +546,41 @@ class ADF_SD(CardADF):
             hdr = "80D8%02x%02x%02x" % (old_kvn, kid, len(key_data))
             data, sw = self._cmd.lchan.scc._tp.send_apdu_checksw(hdr + b2h(key_data))
             return data
+
+        get_status_parser = argparse.ArgumentParser()
+        get_status_parser.add_argument('subset', choices=StatusSubset.ksymapping.values(),
+                                       help='Subset of statuses to be included in the response')
+        get_status_parser.add_argument('--aid', type=is_hexstr, default='',
+                                       help='AID Search Qualifier (search only for given AID)')
+
+        @cmd2.with_argparser(get_status_parser)
+        def do_get_status(self, opts):
+            """Perform GlobalPlatform GET STATUS command in order to retriev status information
+            on Issuer Security Domain, Executable Load File, Executable Module or Applications."""
+            grd_list = self.get_status(opts.subset, opts.aid)
+            for grd in grd_list:
+                self._cmd.poutput_json(grd.to_dict())
+
+        def get_status(self, subset:str, aid_search_qualifier:Hexstr = '') -> List[GpRegistryRelatedData]:
+            subset_hex = b2h(build_construct(StatusSubset, subset))
+            aid = ApplicationAID(decoded=aid_search_qualifier)
+            cmd_data = aid.to_tlv() + h2b('5c054f9f70c5cc')
+            p2 = 0x02 # TLV format according to Table 11-36
+            grd_list = []
+            while True:
+                hdr = "80F2%s%02x%02x" % (subset_hex, p2, len(cmd_data))
+                data, sw = self._cmd.lchan.scc._tp.send_apdu(hdr + b2h(cmd_data))
+                remainder = h2b(data)
+                while len(remainder):
+                    # tlv sequence, each element is one GpRegistryRelatedData()
+                    grd = GpRegistryRelatedData()
+                    dec, remainder = grd.from_tlv(remainder)
+                    grd_list.append(grd)
+                if sw != '6310':
+                    return grd_list
+                else:
+                    p2 |= 0x01
+            return grd_list
 
 
 # Card Application of a Security Domain
