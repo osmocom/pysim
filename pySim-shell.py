@@ -205,7 +205,11 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
     def update_prompt(self):
         if self.lchan:
             path_str = self.lchan.selected_file.fully_qualified_path_str(not self.numeric_path)
-            self.prompt = 'pySIM-shell (%02u:%s)> ' % (self.lchan.lchan_nr, path_str)
+            scp = self.lchan.scc.scp
+            if scp:
+                self.prompt = 'pySIM-shell (%s:%02u:%s)> ' % (str(scp), self.lchan.lchan_nr, path_str)
+            else:
+                self.prompt = 'pySIM-shell (%02u:%s)> ' % (self.lchan.lchan_nr, path_str)
         else:
             if self.card:
                 self.prompt = 'pySIM-shell (no card profile)> '
@@ -258,6 +262,8 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
     def do_reset(self, opts):
         """Reset the Card."""
         atr = self.card.reset()
+        if self.lchan and self.lchan.scc.scp:
+            self.lchan.scc.scp = None
         self.poutput('Card ATR: %s' % i2h(atr))
         self.update_prompt()
 

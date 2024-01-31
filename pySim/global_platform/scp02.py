@@ -108,6 +108,13 @@ class SCP02(SCP):
         self.card_keys = card_keys
         self.sk = None
         self.mac_on_unmodified = False
+        self.security_level = None
+
+    def __str__(self) -> str:
+        if self.security_level:
+            return "%s[%02x]" % (self.__class__.__name__, self.security_level)
+        else:
+            return "%s[??]" % (self.__class__.__name__)
 
     def _cla(self, sm: bool = False, b8: bool = True) -> int:
         ret = 0x80 if b8 else 0x00
