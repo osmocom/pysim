@@ -495,7 +495,7 @@ class ADF_SD(CardADF):
                                       {'last_block': len(remainder) == 0, 'encryption': encryption,
                                        'structure': structure, 'response': response_permitted})
                 hdr = "80E2%02x%02x%02x" % (p1b[0], block_nr, len(chunk))
-                data, sw = self._cmd.lchan.scc._tp.send_apdu_checksw(hdr + b2h(chunk))
+                data, sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(chunk))
                 block_nr += 1
                 response += data
             return data
@@ -532,7 +532,7 @@ class ADF_SD(CardADF):
                 else:
                     kcv = ''
                 kdb.append({'key_type': opts.key_type[i], 'kcb': opts.key_data[i], 'kcv': kcv})
-            return self.put_key(opts.old_key_version_nr, opts.key_version_nr, opts.key_id, kdb)
+            self.put_key(opts.old_key_version_nr, opts.key_version_nr, opts.key_id, kdb)
 
         # Table 11-68: Key Data Field - Format 1 (Basic Format)
         KeyDataBasic = GreedyRange(Struct('key_type'/KeyType,
@@ -544,7 +544,7 @@ class ADF_SD(CardADF):
             See GlobalPlatform CardSpecification v2.3 Section 11.8 for details."""
             key_data = kvn.to_bytes(1, 'big') + build_construct(ADF_SD.AddlShellCommands.KeyDataBasic, key_dict)
             hdr = "80D8%02x%02x%02x" % (old_kvn, kid, len(key_data))
-            data, sw = self._cmd.lchan.scc._tp.send_apdu_checksw(hdr + b2h(key_data))
+            data, sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(key_data))
             return data
 
         get_status_parser = argparse.ArgumentParser()
@@ -569,7 +569,7 @@ class ADF_SD(CardADF):
             grd_list = []
             while True:
                 hdr = "80F2%s%02x%02x" % (subset_hex, p2, len(cmd_data))
-                data, sw = self._cmd.lchan.scc._tp.send_apdu(hdr + b2h(cmd_data))
+                data, sw = self._cmd.lchan.scc.send_apdu(hdr + b2h(cmd_data))
                 remainder = h2b(data)
                 while len(remainder):
                     # tlv sequence, each element is one GpRegistryRelatedData()

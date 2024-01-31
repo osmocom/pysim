@@ -5,7 +5,7 @@
 
 #
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
-# Copyright (C) 2010-2023  Harald Welte <laforge@gnumonks.org>
+# Copyright (C) 2010-2024  Harald Welte <laforge@gnumonks.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@ from typing import List, Optional, Tuple
 import typing # construct also has a Union, so we do typing.Union below
 
 from construct import *
-from pySim.construct import LV
-from pySim.utils import rpad, lpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i, i2h, str_sanitize, expand_hex
+from pySim.construct import LV, filter_dict
+from pySim.utils import rpad, lpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i, i2h, str_sanitize, expand_hex, SwMatchstr
 from pySim.utils import Hexstr, SwHexstr, ResTuple
 from pySim.exceptions import SwMatchError
 from pySim.transport import LinkBase
@@ -100,6 +100,81 @@ class SimCardCommands:
         else:
             return cla_with_lchan(cla, self.lchan_nr)
 
+    def send_apdu(self, pdu: Hexstr) -> ResTuple:
+        """Sends an APDU and auto fetch response data
+
+        Args:
+           pdu : string of hexadecimal characters (ex. "A0A40000023F00")
+        Returns:
+           tuple(data, sw), where
+                        data : string (in hex) of returned data (ex. "074F4EFFFF")
+                        sw   : string (in hex) of status word (ex. "9000")
+        """
+        return self._tp.send_apdu(pdu)
+
+    def send_apdu_checksw(self, pdu: Hexstr, sw: SwMatchstr = "9000") -> ResTuple:
+        """Sends an APDU and check returned SW
+
+        Args:
+           pdu : string of hexadecimal characters (ex. "A0A40000023F00")
+           sw : string of 4 hexadecimal characters (ex. "9000"). The user may mask out certain
+                        digits using a '?' to add some ambiguity if needed.
+        Returns:
+                tuple(data, sw), where
+                        data : string (in hex) of returned data (ex. "074F4EFFFF")
+                        sw   : string (in hex) of status word (ex. "9000")
+        """
+        return self._tp.send_apdu_checksw(pdu, sw)
+
+    def send_apdu_constr(self, cla: Hexstr, ins: Hexstr, p1: Hexstr, p2: Hexstr, cmd_constr: Construct,
+                         cmd_data: Hexstr, resp_constr: Construct) -> Tuple[dict, SwHexstr]:
+        """Build and sends an APDU using a 'construct' definition; parses response.
+
+        Args:
+                cla : string (in hex) ISO 7816 class byte
+                ins : string (in hex) ISO 7816 instruction byte
+                p1 : string (in hex) ISO 7116 Parameter 1 byte
+                p2 : string (in hex) ISO 7116 Parameter 2 byte
+                cmd_cosntr : defining how to generate binary APDU command data
+                cmd_data : command data passed to cmd_constr
+                resp_cosntr : defining how to decode  binary APDU response data
+        Returns:
+                Tuple of (decoded_data, sw)
+        """
+        cmd = cmd_constr.build(cmd_data) if cmd_data else ''
+        p3 = i2h([len(cmd)])
+        pdu = ''.join([cla, ins, p1, p2, p3, b2h(cmd)])
+        (data, sw) = self.send_apdu(pdu)
+        if data:
+            # filter the resulting dict to avoid '_io' members inside
+            rsp = filter_dict(resp_constr.parse(h2b(data)))
+        else:
+            rsp = None
+        return (rsp, sw)
+
+    def send_apdu_constr_checksw(self, cla: Hexstr, ins: Hexstr, p1: Hexstr, p2: Hexstr,
+                                 cmd_constr: Construct, cmd_data: Hexstr, resp_constr: Construct,
+                                 sw_exp: SwMatchstr="9000") -> Tuple[dict, SwHexstr]:
+        """Build and sends an APDU using a 'construct' definition; parses response.
+
+        Args:
+                cla : string (in hex) ISO 7816 class byte
+                ins : string (in hex) ISO 7816 instruction byte
+                p1 : string (in hex) ISO 7116 Parameter 1 byte
+                p2 : string (in hex) ISO 7116 Parameter 2 byte
+                cmd_cosntr : defining how to generate binary APDU command data
+                cmd_data : command data passed to cmd_constr
+                resp_cosntr : defining how to decode  binary APDU response data
+                exp_sw : string (in hex) of status word (ex. "9000")
+        Returns:
+                Tuple of (decoded_data, sw)
+        """
+        (rsp, sw) = self.send_apdu_constr(cla, ins,
+                                          p1, p2, cmd_constr, cmd_data, resp_constr)
+        if not sw_match(sw, sw_exp):
+            raise SwMatchError(sw, sw_exp.lower(), self._tp.sw_interpreter)
+        return (rsp, sw)
+
     # Extract a single FCP item from TLV
     def __parse_fcp(self, fcp: Hexstr):
         # see also: ETSI TS 102 221, chapter 11.1.1.3.1 Response for MF,
@@ -170,8 +245,7 @@ class SimCardCommands:
         if type(dir_list) is not list:
             dir_list = [dir_list]
         for i in dir_list:
-            data, sw = self._tp.send_apdu(
-                self.cla_byte + "a4" + self.sel_ctrl + "02" + i)
+            data, sw = self.send_apdu(self.cla_byte + "a4" + self.sel_ctrl + "02" + i)
             rv.append((data, sw))
             if sw != '9000':
                 return rv
@@ -201,11 +275,11 @@ class SimCardCommands:
                 fid : file identifier as hex string
         """
 
-        return self._tp.send_apdu_checksw(self.cla_byte + "a4" + self.sel_ctrl + "02" + fid)
+        return self.send_apdu_checksw(self.cla_byte + "a4" + self.sel_ctrl + "02" + fid)
 
     def select_parent_df(self) -> ResTuple:
         """Execute SELECT to switch to the parent DF """
-        return self._tp.send_apdu_checksw(self.cla_byte + "a4030400")
+        return self.send_apdu_checksw(self.cla_byte + "a4030400")
 
     def select_adf(self, aid: Hexstr) -> ResTuple:
         """Execute SELECT a given Applicaiton ADF.
@@ -215,7 +289,7 @@ class SimCardCommands:
         """
 
         aidlen = ("0" + format(len(aid) // 2, 'x'))[-2:]
-        return self._tp.send_apdu_checksw(self.cla_byte + "a4" + "0404" + aidlen + aid)
+        return self.send_apdu_checksw(self.cla_byte + "a4" + "0404" + aidlen + aid)
 
     def read_binary(self, ef: Path, length: int = None, offset: int = 0) -> ResTuple:
         """Execute READD BINARY.
@@ -240,7 +314,7 @@ class SimCardCommands:
             pdu = self.cla_byte + \
                 'b0%04x%02x' % (offset + chunk_offset, chunk_len)
             try:
-                data, sw = self._tp.send_apdu_checksw(pdu)
+                data, sw = self.send_apdu_checksw(pdu)
             except Exception as e:
                 raise ValueError('%s, failed to read (offset %d)' %
                                  (str_sanitize(str(e)), offset))
@@ -300,7 +374,7 @@ class SimCardCommands:
                 'd6%04x%02x' % (offset + chunk_offset, chunk_len) + \
                 data[chunk_offset*2: (chunk_offset+chunk_len)*2]
             try:
-                chunk_data, chunk_sw = self._tp.send_apdu_checksw(pdu)
+                chunk_data, chunk_sw = self.send_apdu_checksw(pdu)
             except Exception as e:
                 raise ValueError('%s, failed to write chunk (chunk_offset %d, chunk_len %d)' %
                                  (str_sanitize(str(e)), chunk_offset, chunk_len))
@@ -320,7 +394,7 @@ class SimCardCommands:
         r = self.select_path(ef)
         rec_length = self.__record_len(r)
         pdu = self.cla_byte + 'b2%02x04%02x' % (rec_no, rec_length)
-        return self._tp.send_apdu_checksw(pdu)
+        return self.send_apdu_checksw(pdu)
 
     def __verify_record(self, ef: Path, rec_no: int, data: str):
         """Verify record against given data
@@ -383,7 +457,7 @@ class SimCardCommands:
                 pass
 
         pdu = (self.cla_byte + 'dc%02x04%02x' % (rec_no, rec_length)) + data
-        res = self._tp.send_apdu_checksw(pdu)
+        res = self.send_apdu_checksw(pdu)
         if verify:
             self.__verify_record(ef, rec_no, data)
         return res
@@ -421,7 +495,7 @@ class SimCardCommands:
             pdu = self.cla4lchan('80') + 'cb008001%02x' % (tag)
         else:
             pdu = self.cla4lchan('80') + 'cb000000'
-        return self._tp.send_apdu_checksw(pdu)
+        return self.send_apdu_checksw(pdu)
 
     def retrieve_data(self, ef: Path, tag: int) -> ResTuple:
         """Execute RETRIEVE DATA, see also TS 102 221 Section 11.3.1.
@@ -451,7 +525,7 @@ class SimCardCommands:
         if isinstance(data, bytes) or isinstance(data, bytearray):
             data = b2h(data)
         pdu = self.cla4lchan('80') + 'db00%02x%02x%s' % (p1, len(data)//2, data)
-        return self._tp.send_apdu_checksw(pdu)
+        return self.send_apdu_checksw(pdu)
 
     def set_data(self, ef, tag: int, value: str, verify: bool = False, conserve: bool = False) -> ResTuple:
         """Execute SET DATA.
@@ -493,7 +567,7 @@ class SimCardCommands:
         if len(rand) != 32:
             raise ValueError('Invalid rand')
         self.select_path(['3f00', '7f20'])
-        return self._tp.send_apdu_checksw(self.cla4lchan('a0') + '88000010' + rand, sw='9000')
+        return self.send_apdu_checksw(self.cla4lchan('a0') + '88000010' + rand, sw='9000')
 
     def authenticate(self, rand: Hexstr, autn: Hexstr, context: str = '3g') -> ResTuple:
         """Execute AUTHENTICATE (USIM/ISIM).
@@ -515,7 +589,7 @@ class SimCardCommands:
             p2 = '81'
         elif context == 'gsm':
             p2 = '80'
-        (data, sw) = self._tp.send_apdu_constr_checksw(
+        (data, sw) = self.send_apdu_constr_checksw(
             self.cla_byte, '88', '00', p2, AuthCmd3G, cmd_data, AuthResp3G)
         if 'auts' in data:
             ret = {'synchronisation_failure': data}
@@ -525,11 +599,11 @@ class SimCardCommands:
 
     def status(self) -> ResTuple:
         """Execute a STATUS command as per TS 102 221 Section 11.1.2."""
-        return self._tp.send_apdu_checksw(self.cla4lchan('80') + 'F20000ff')
+        return self.send_apdu_checksw(self.cla4lchan('80') + 'F20000ff')
 
     def deactivate_file(self) -> ResTuple:
         """Execute DECATIVATE FILE command as per TS 102 221 Section 11.1.14."""
-        return self._tp.send_apdu_constr_checksw(self.cla_byte, '04', '00', '00', None, None, None)
+        return self.send_apdu_constr_checksw(self.cla_byte, '04', '00', '00', None, None, None)
 
     def activate_file(self, fid: Hexstr) -> ResTuple:
         """Execute ACTIVATE FILE command as per TS 102 221 Section 11.1.15.
@@ -537,31 +611,31 @@ class SimCardCommands:
         Args:
                 fid : file identifier as hex string
         """
-        return self._tp.send_apdu_checksw(self.cla_byte + '44000002' + fid)
+        return self.send_apdu_checksw(self.cla_byte + '44000002' + fid)
 
     def create_file(self, payload: Hexstr) -> ResTuple:
         """Execute CREEATE FILE command as per TS 102 222 Section 6.3"""
-        return self._tp.send_apdu_checksw(self.cla_byte + 'e00000%02x%s' % (len(payload)//2, payload))
+        return self.send_apdu_checksw(self.cla_byte + 'e00000%02x%s' % (len(payload)//2, payload))
 
     def resize_file(self, payload: Hexstr) -> ResTuple:
         """Execute RESIZE FILE command as per TS 102 222 Section 6.10"""
-        return self._tp.send_apdu_checksw(self.cla4lchan('80') + 'd40000%02x%s' % (len(payload)//2, payload))
+        return self.send_apdu_checksw(self.cla4lchan('80') + 'd40000%02x%s' % (len(payload)//2, payload))
 
     def delete_file(self, fid: Hexstr) -> ResTuple:
         """Execute DELETE FILE command as per TS 102 222 Section 6.4"""
-        return self._tp.send_apdu_checksw(self.cla_byte + 'e4000002' + fid)
+        return self.send_apdu_checksw(self.cla_byte + 'e4000002' + fid)
 
     def terminate_df(self, fid: Hexstr) -> ResTuple:
         """Execute TERMINATE DF command as per TS 102 222 Section 6.7"""
-        return self._tp.send_apdu_checksw(self.cla_byte + 'e6000002' + fid)
+        return self.send_apdu_checksw(self.cla_byte + 'e6000002' + fid)
 
     def terminate_ef(self, fid: Hexstr) -> ResTuple:
         """Execute TERMINATE EF command as per TS 102 222 Section 6.8"""
-        return self._tp.send_apdu_checksw(self.cla_byte + 'e8000002' + fid)
+        return self.send_apdu_checksw(self.cla_byte + 'e8000002' + fid)
 
     def terminate_card_usage(self) -> ResTuple:
         """Execute TERMINATE CARD USAGE command as per TS 102 222 Section 6.9"""
-        return self._tp.send_apdu_checksw(self.cla_byte + 'fe000000')
+        return self.send_apdu_checksw(self.cla_byte + 'fe000000')
 
     def manage_channel(self, mode: str = 'open', lchan_nr: int =0) -> ResTuple:
         """Execute MANAGE CHANNEL command as per TS 102 221 Section 11.1.17.
@@ -575,7 +649,7 @@ class SimCardCommands:
         else:
             p1 = 0x00
         pdu = self.cla_byte + '70%02x%02x00' % (p1, lchan_nr)
-        return self._tp.send_apdu_checksw(pdu)
+        return self.send_apdu_checksw(pdu)
 
     def reset_card(self) -> Hexstr:
         """Physically reset the card"""
@@ -596,8 +670,7 @@ class SimCardCommands:
                 code : chv code as hex string
         """
         fc = rpad(b2h(code), 16)
-        data, sw = self._tp.send_apdu(
-            self.cla_byte + '2000' + ('%02X' % chv_no) + '08' + fc)
+        data, sw = self.send_apdu(self.cla_byte + '2000' + ('%02X' % chv_no) + '08' + fc)
         self._chv_process_sw('verify', chv_no, code, sw)
         return (data, sw)
 
@@ -610,8 +683,7 @@ class SimCardCommands:
                 pin_code : new chv code as hex string
         """
         fc = rpad(b2h(puk_code), 16) + rpad(b2h(pin_code), 16)
-        data, sw = self._tp.send_apdu(
-            self.cla_byte + '2C00' + ('%02X' % chv_no) + '10' + fc)
+        data, sw = self.send_apdu(self.cla_byte + '2C00' + ('%02X' % chv_no) + '10' + fc)
         self._chv_process_sw('unblock', chv_no, pin_code, sw)
         return (data, sw)
 
@@ -624,8 +696,7 @@ class SimCardCommands:
                 new_pin_code : new chv code as hex string
         """
         fc = rpad(b2h(pin_code), 16) + rpad(b2h(new_pin_code), 16)
-        data, sw = self._tp.send_apdu(
-            self.cla_byte + '2400' + ('%02X' % chv_no) + '10' + fc)
+        data, sw = self.send_apdu(self.cla_byte + '2400' + ('%02X' % chv_no) + '10' + fc)
         self._chv_process_sw('change', chv_no, pin_code, sw)
         return (data, sw)
 
@@ -638,8 +709,7 @@ class SimCardCommands:
                 new_pin_code : new chv code as hex string
         """
         fc = rpad(b2h(pin_code), 16)
-        data, sw = self._tp.send_apdu(
-            self.cla_byte + '2600' + ('%02X' % chv_no) + '08' + fc)
+        data, sw = self.send_apdu(self.cla_byte + '2600' + ('%02X' % chv_no) + '08' + fc)
         self._chv_process_sw('disable', chv_no, pin_code, sw)
         return (data, sw)
 
@@ -651,8 +721,7 @@ class SimCardCommands:
                 pin_code : chv code as hex string
         """
         fc = rpad(b2h(pin_code), 16)
-        data, sw = self._tp.send_apdu(
-            self.cla_byte + '2800' + ('%02X' % chv_no) + '08' + fc)
+        data, sw = self.send_apdu(self.cla_byte + '2800' + ('%02X' % chv_no) + '08' + fc)
         self._chv_process_sw('enable', chv_no, pin_code, sw)
         return (data, sw)
 
@@ -662,7 +731,7 @@ class SimCardCommands:
         Args:
                 payload : payload as hex string
         """
-        return self._tp.send_apdu_checksw('80c20000%02x%s' % (len(payload)//2, payload))
+        return self.send_apdu_checksw('80c20000%02x%s' % (len(payload)//2, payload))
 
     def terminal_profile(self, payload: Hexstr) -> ResTuple:
         """Send TERMINAL PROFILE to card
@@ -671,7 +740,7 @@ class SimCardCommands:
                 payload : payload as hex string
         """
         data_length = len(payload) // 2
-        data, sw = self._tp.send_apdu(('80100000%02x' % data_length) + payload)
+        data, sw = self.send_apdu(('80100000%02x' % data_length) + payload)
         return (data, sw)
 
     # ETSI TS 102 221 11.1.22
@@ -711,8 +780,7 @@ class SimCardCommands:
                 raise ValueError('Time unit must be 0x00..0x04')
         min_dur_enc = encode_duration(min_len_secs)
         max_dur_enc = encode_duration(max_len_secs)
-        data, sw = self._tp.send_apdu_checksw(
-            '8076000004' + min_dur_enc + max_dur_enc)
+        data, sw = self.send_apdu_checksw('8076000004' + min_dur_enc + max_dur_enc)
         negotiated_duration_secs = decode_duration(data[:4])
         resume_token = data[4:]
         return (negotiated_duration_secs, resume_token, sw)
@@ -722,14 +790,14 @@ class SimCardCommands:
         """Send SUSPEND UICC (resume) to the card."""
         if len(h2b(token)) != 8:
             raise ValueError("Token must be 8 bytes long")
-        data, sw = self._tp.send_apdu_checksw('8076010008' + token)
+        data, sw = self.send_apdu_checksw('8076010008' + token)
         return (data, sw)
 
     def get_data(self, tag: int, cla: int = 0x00):
-        data, sw = self._tp.send_apdu('%02xca%04x00' % (cla, tag))
+        data, sw = self.send_apdu('%02xca%04x00' % (cla, tag))
         return (data, sw)
 
     # TS 31.102 Section 7.5.2
     def get_identity(self, context: int) -> Tuple[Hexstr, SwHexstr]:
-        data, sw = self._tp.send_apdu_checksw('807800%02x00' % (context))
+        data, sw = self.send_apdu_checksw('807800%02x00' % (context))
         return (data, sw)

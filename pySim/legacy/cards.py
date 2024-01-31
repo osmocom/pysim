@@ -753,7 +753,7 @@ class GrcardSim(SimCard):
 
         # Set the Ki using proprietary command
         pdu = '80d4020010' + p['ki']
-        data, sw = self._scc._tp.send_apdu(pdu)
+        data, sw = self._scc.send_apdu(pdu)
 
         # EF.HPLMN
         r = self._scc.select_path(['3f00', '7f20', '6f30'])
@@ -803,7 +803,7 @@ class SysmoUSIMgr1(UsimCard):
         # TODO: check if verify_chv could be used or what it needs
         # self._scc.verify_chv(0x0A, [0x33,0x32,0x32,0x31,0x33,0x32,0x33,0x32])
         # Unlock the card..
-        data, sw = self._scc._tp.send_apdu_checksw(
+        data, sw = self._scc.send_apdu_checksw(
             "0020000A083332323133323332")
 
         # TODO: move into SimCardCommands
@@ -812,7 +812,7 @@ class SysmoUSIMgr1(UsimCard):
                enc_iccid(p['iccid']) +  # 10b  ICCID
                enc_imsi(p['imsi'])  # 9b  IMSI_len + id_type(9) + IMSI
                )
-        data, sw = self._scc._tp.send_apdu_checksw("0099000033" + par)
+        data, sw = self._scc.send_apdu_checksw("0099000033" + par)
 
 
 class SysmoSIMgr2(SimCard):
@@ -851,7 +851,7 @@ class SysmoSIMgr2(SimCard):
             pin = h2b("4444444444444444")
 
         pdu = 'A0D43A0508' + b2h(pin)
-        data, sw = self._scc._tp.send_apdu(pdu)
+        data, sw = self._scc.send_apdu(pdu)
 
         # authenticate as ADM (enough to write file, and can set PINs)
 

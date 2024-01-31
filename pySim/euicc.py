@@ -319,7 +319,7 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
         """Perform STORE DATA according to Table 47+48 in Section 5.7.2 of SGP.22.
         Only single-block store supported for now."""
         capdu = '%sE29100%02x%s' % (scc.cla4lchan('80'), len(tx_do)//2, tx_do)
-        return scc._tp.send_apdu_checksw(capdu)
+        return scc.send_apdu_checksw(capdu)
 
     @staticmethod
     def store_data_tlv(scc: SimCardCommands, cmd_do, resp_cls, exp_sw='9000'):
