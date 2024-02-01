@@ -584,6 +584,20 @@ class ADF_SD(CardADF):
                     p2 |= 0x01
             return grd_list
 
+        inst_perso_parser = argparse.ArgumentParser()
+        inst_perso_parser.add_argument('application-aid', type=is_hexstr, help='Application AID')
+
+        @cmd2.with_argparser(inst_perso_parser)
+        def do_install_for_personalization(self, opts):
+            """Perform GlobalPlatform INSTALL [for personalization] command in order toinform a Security
+            Domain that the following STORE DATA commands are meant for a specific AID (specified here)."""
+            # Section 11.5.2.3.6 / Table 11-47
+            self.install(0x20, 0x00, "0000%02u%s000000" % (len(opts.application_aid)//2, opts.application_aid))
+
+        def install(self, p1:int, p2:int, data:Hexstr) -> ResTuple:
+            cmd_hex = "80E6%02x%02x%02x%s" % (p1, p2, len(data)//2, data)
+            return self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
+
         est_scp02_parser = argparse.ArgumentParser()
         est_scp02_parser.add_argument('--key-ver', type=auto_uint8, required=True,
                                       help='Key Version Number (KVN)')
