@@ -959,6 +959,12 @@ put_key
    :module: pySim.global_platform
    :func: ADF_SD.AddlShellCommands.put_key_parser
 
+install_for_personalization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.inst_for_perso_parser
+
 establish_scp02
 ~~~~~~~~~~~~~~~
 .. argparse::
