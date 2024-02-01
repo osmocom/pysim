@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import abc
 import logging
 from Cryptodome.Cipher import DES3, DES
 from Cryptodome.Util.strxor import strxor
@@ -94,33 +95,47 @@ INS_INIT_UPDATE = 0x50
 INS_EXT_AUTH = 0x82
 CLA_SM = 0x04
 
-class SCP(SecureChannel):
-    pass
-
-class SCP02(SCP):
-    """An instance of the GlobalPlatform SCP02 secure channel protocol."""
-
-    constr_iur = Struct('key_div_data'/Bytes(10), 'key_ver'/Int8ub, Const(b'\x02'),
-                        'seq_counter'/Int16ub, 'card_challenge'/Bytes(6), 'card_cryptogram'/Bytes(8))
-
+class SCP(SecureChannel, abc.ABC):
+    """Abstract base class containing some common interface + functionality for SCP protocols."""
     def __init__(self, card_keys: 'GpCardKeyset', lchan_nr: int = 0):
+        if hasattr(self, 'kvn_range'):
+            if not card_keys.kvn in range(self.kvn_range[0], self.kvn_range[1]+1):
+                raise ValueError('%s cannot be used with KVN outside range 0x%02x..0x%02x' %
+                                 (self.__class__.__name__, self.kvn_range[0], self.kvn_range[1]))
         self.lchan_nr = lchan_nr
         self.card_keys = card_keys
         self.sk = None
         self.mac_on_unmodified = False
-        self.security_level = None
+        self.security_level = 0x00
 
     def __str__(self) -> str:
-        if self.security_level:
-            return "%s[%02x]" % (self.__class__.__name__, self.security_level)
-        else:
-            return "%s[??]" % (self.__class__.__name__)
+        return "%s[%02x]" % (self.__class__.__name__, self.security_level)
 
     def _cla(self, sm: bool = False, b8: bool = True) -> int:
         ret = 0x80 if b8 else 0x00
         if sm:
             ret = ret | CLA_SM
         return ret + self.lchan_nr
+
+    def wrap_cmd_apdu(self, apdu: bytes) -> bytes:
+        # only protect those APDUs that actually are global platform commands
+        if apdu[0] & 0x80:
+            return self._wrap_cmd_apdu(apdu)
+        else:
+            return apdu
+
+    @abc.abstractmethod
+    def _wrap_cmd_apdu(self, apdu: bytes, *args, **kwargs) -> bytes:
+        """Method implementation to be provided by derived class."""
+        pass
+
+
+class SCP02(SCP):
+    """An instance of the GlobalPlatform SCP02 secure channel protocol."""
+
+    constr_iur = Struct('key_div_data'/Bytes(10), 'key_ver'/Int8ub, Const(b'\x02'),
+                        'seq_counter'/Int16ub, 'card_challenge'/Bytes(6), 'card_cryptogram'/Bytes(8))
+    kvn_range = [0x20, 0x2f]
 
     def _compute_cryptograms(self, card_challenge: bytes, host_challenge: bytes):
         logger.debug("host_challenge(%s), card_challenge(%s)", b2h(host_challenge), b2h(card_challenge))
@@ -156,7 +171,7 @@ class SCP02(SCP):
         mac = self.sk.calc_mac_1des(header + self.host_cryptogram, True)
         return bytes([self._cla(True), INS_EXT_AUTH, self.security_level, 0, 16]) + self.host_cryptogram + mac
 
-    def wrap_cmd_apdu(self, apdu: bytes) -> bytes:
+    def _wrap_cmd_apdu(self, apdu: bytes) -> bytes:
         """Wrap Command APDU for SCP02: calculate MAC and encrypt."""
         lc = len(apdu) - 5
         assert len(apdu) >= 5, "Wrong APDU length: %d" % len(apdu)

@@ -25,7 +25,7 @@ from pySim.utils import b2h, h2b
 KIC = h2b('100102030405060708090a0b0c0d0e0f') # enc
 KID = h2b('101102030405060708090a0b0c0d0e0f') # MAC
 KIK = h2b('102102030405060708090a0b0c0d0e0f') # DEK
-ck_3des_70 = GpCardKeyset(0x70, KIC, KID, KIK)
+ck_3des_70 = GpCardKeyset(0x20, KIC, KID, KIK)
 
 class SCP02_Auth_Test(unittest.TestCase):
     host_challenge = h2b('40A62C37FA6304F8')
@@ -36,14 +36,14 @@ class SCP02_Auth_Test(unittest.TestCase):
 
     def test_mutual_auth_success(self):
         init_upd_cmd = self.scp02.gen_init_update_apdu(host_challenge=self.host_challenge)
-        self.assertEqual(b2h(init_upd_cmd).upper(), '805070000840A62C37FA6304F8')
+        self.assertEqual(b2h(init_upd_cmd).upper(), '805020000840A62C37FA6304F8')
         self.scp02.parse_init_update_resp(self.init_update_resp)
         ext_auth_cmd = self.scp02.gen_ext_auth_apdu()
         self.assertEqual(b2h(ext_auth_cmd).upper(), '8482010010BA6961667737C5BCEBECE14C7D6A4376')
 
     def test_mutual_auth_fail_card_cryptogram(self):
         init_upd_cmd = self.scp02.gen_init_update_apdu(host_challenge=self.host_challenge)
-        self.assertEqual(b2h(init_upd_cmd).upper(), '805070000840A62C37FA6304F8')
+        self.assertEqual(b2h(init_upd_cmd).upper(), '805020000840A62C37FA6304F8')
         wrong_init_update_resp = self.init_update_resp.copy()
         wrong_init_update_resp[-1:] = b'\xff'
         with self.assertRaises(ValueError):
