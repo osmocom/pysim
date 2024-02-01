@@ -237,6 +237,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
     apdu_cmd_parser = argparse.ArgumentParser()
     apdu_cmd_parser.add_argument('APDU', type=is_hexstr, help='APDU as hex string')
     apdu_cmd_parser.add_argument('--expect-sw', help='expect a specified status word', type=str, default=None)
+    apdu_cmd_parser.add_argument('--raw', help='Bypass the logical channel (and secure channel)', action='store_true')
 
     @cmd2.with_argparser(apdu_cmd_parser)
     def do_apdu(self, opts):
@@ -249,7 +250,10 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         # noted that the apdu command plays an exceptional role since it is the only card accessing command that
         # can be executed without the presence of a runtime state (self.rs) object. However, this also means that
         # self.lchan is also not present (see method equip).
-        data, sw = self.card._scc.send_apdu(opts.APDU)
+        if opts.raw:
+            data, sw = self.card._scc.send_apdu(opts.APDU)
+        else:
+            data, sw = self.lchan.scc.send_apdu(opts.APDU)
         if data:
             self.poutput("SW: %s, RESP: %s" % (sw, data))
         else:
