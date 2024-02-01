@@ -947,6 +947,12 @@ get_status
    :module: pySim.global_platform
    :func: ADF_SD.AddlShellCommands.get_status_parser
 
+set_status
+~~~~~~~~~~
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.set_status_parser
+
 store_data
 ~~~~~~~~~~
 .. argparse::

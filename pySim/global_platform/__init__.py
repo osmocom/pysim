@@ -94,6 +94,12 @@ KeyType = Enum(Byte,    des=0x80,
                         ecc_key_parameters_reference=0xF0,      # v2.3.1 Section 11.1.8
                         not_available=0xff)
 
+# GlobalPlatform 2.3 Section 11.10.2.1 Table 11-86
+SetStatusScope = Enum(Byte, isd=0x80, app_or_ssd=0x40, isd_and_assoc_apps=0xc0)
+
+# GlobalPlatform 2.3 section 11.1.1
+CLifeCycleState = Enum(Byte, loaded=0x01, installed=0x03, selectable=0x07, personalized=0x0f, locked=0x83)
+
 # GlobalPlatform 2.1.1 Section 9.3.3.1
 class KeyInformationData(BER_TLV_IE, tag=0xc0):
     _test_de_encode = [
@@ -376,7 +382,7 @@ StatusSubset = Enum(Byte, isd=0x80, applications=0x40, files=0x20, files_and_mod
 
 # Section 11.4.3.1 Table 11-36
 class LifeCycleState(BER_TLV_IE, tag=0x9f70):
-    _construct = Int8ub
+    _construct = CLifeCycleState
 
 # Section 11.4.3.1 Table 11-36 + Section 11.1.2
 class Privileges(BER_TLV_IE, tag=0xc5):
@@ -557,7 +563,7 @@ class ADF_SD(CardADF):
 
         @cmd2.with_argparser(get_status_parser)
         def do_get_status(self, opts):
-            """Perform GlobalPlatform GET STATUS command in order to retriev status information
+            """Perform GlobalPlatform GET STATUS command in order to retrieve status information
             on Issuer Security Domain, Executable Load File, Executable Module or Applications."""
             grd_list = self.get_status(opts.subset, opts.aid)
             for grd in grd_list:
@@ -583,6 +589,28 @@ class ADF_SD(CardADF):
                 else:
                     p2 |= 0x01
             return grd_list
+
+        set_status_parser = argparse.ArgumentParser()
+        set_status_parser.add_argument('scope', choices=SetStatusScope.ksymapping.values(),
+                                       help='Defines the scope of the requested status change')
+        set_status_parser.add_argument('status', choices=CLifeCycleState.ksymapping.values(),
+                                       help='Specify the new intended status')
+        set_status_parser.add_argument('--aid', type=is_hexstr,
+                                       help='AID of the target Application or Security Domain')
+
+        @cmd2.with_argparser(set_status_parser)
+        def do_set_status(self, opts):
+            """Perform GlobalPlatform SET STATUS command in order to change the life cycle state of the
+            Issuer Security Domain, Supplementary Security Domain or Application.  This normally requires
+            prior authentication with a Secure Channel Protocol."""
+            self.set_status(opts.scope, opts.status, opts.aid)
+
+        def set_status(self, scope:str, status:str, aid:Hexstr = ''):
+            SetStatus = Struct(Const(0x80, Byte), Const(0xF0, Byte),
+                               'scope'/SetStatusScope, 'status'/CLifeCycleState,
+                               'aid'/HexAdapter(Prefixed(Int8ub, Optional(GreedyBytes))))
+            apdu = build_construct(SetStatus, {'scope':scope, 'status':status, 'aid':aid})
+            data, sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(apdu))
 
         inst_perso_parser = argparse.ArgumentParser()
         inst_perso_parser.add_argument('application-aid', type=is_hexstr, help='Application AID')
