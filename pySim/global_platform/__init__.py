@@ -20,9 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from typing import Optional, List, Dict, Tuple
 from construct import Optional as COptional
 from construct import *
+from copy import deepcopy
 from bidict import bidict
 from Cryptodome.Random import get_random_bytes
-from pySim.global_platform.scp import SCP02
+from pySim.global_platform.scp import SCP02, SCP03
 from pySim.construct import *
 from pySim.utils import *
 from pySim.filesystem import *
@@ -692,15 +693,36 @@ class ADF_SD(CardADF):
             host_challenge = h2b(opts.host_challenge) if opts.host_challenge else get_random_bytes(8)
             kset = GpCardKeyset(opts.key_ver, h2b(opts.key_enc), h2b(opts.key_mac), h2b(opts.key_dek))
             scp02 = SCP02(card_keys=kset)
-            init_update_apdu = scp02.gen_init_update_apdu(host_challenge=host_challenge)
+            self._establish_scp(scp02, host_challenge, opts.security_level)
+
+        est_scp03_parser = deepcopy(est_scp02_parser)
+        est_scp03_parser.add_argument('--s16-mode', action='store_true', help='S16 mode (S8 is default)')
+
+        @cmd2.with_argparser(est_scp03_parser)
+        def do_establish_scp03(self, opts):
+            """Establish a secure channel using the GlobalPlatform SCP03 protocol.  It can be released
+            again by using `release_scp`."""
+            if self._cmd.lchan.scc.scp:
+                self._cmd.poutput("Cannot establish SCP03 as this lchan already has a SCP instance!")
+                return
+            s_mode = 16 if opts.s16_mode else 8
+            host_challenge = h2b(opts.host_challenge) if opts.host_challenge else get_random_bytes(s_mode)
+            kset = GpCardKeyset(opts.key_ver, h2b(opts.key_enc), h2b(opts.key_mac), h2b(opts.key_dek))
+            scp03 = SCP03(card_keys=kset, s_mode = s_mode)
+            self._establish_scp(scp03, host_challenge, opts.security_level)
+
+        def _establish_scp(self, scp, host_challenge, security_level):
+            # perform the common functionality shared by SCP02 and SCP03 establishment
+            init_update_apdu = scp.gen_init_update_apdu(host_challenge=host_challenge)
             init_update_resp, sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(init_update_apdu))
-            scp02.parse_init_update_resp(h2b(init_update_resp))
-            ext_auth_apdu = scp02.gen_ext_auth_apdu(opts.security_level)
+            scp.parse_init_update_resp(h2b(init_update_resp))
+            ext_auth_apdu = scp.gen_ext_auth_apdu(security_level)
             ext_auth_resp, sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(ext_auth_apdu))
-            self._cmd.poutput("Successfully established a SCP02 secure channel")
+            self._cmd.poutput("Successfully established a %s secure channel" % str(scp))
             # store a reference to the SCP instance
-            self._cmd.lchan.scc.scp = scp02
+            self._cmd.lchan.scc.scp = scp
             self._cmd.update_prompt()
+
 
         def do_release_scp(self, opts):
             """Release a previously establiehed secure channel."""
