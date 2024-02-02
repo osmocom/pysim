@@ -1,4 +1,4 @@
-# Global Platform SCP02 (Secure Channel Protocol) implementation
+# Global Platform SCP02 + SCP03 (Secure Channel Protocol) implementation
 #
 # (C) 2023-2024 by Harald Welte <laforge@osmocom.org>
 #
@@ -17,13 +17,16 @@
 
 import abc
 import logging
+from typing import Optional
 from Cryptodome.Cipher import DES3, DES
 from Cryptodome.Util.strxor import strxor
-from construct import *
+from construct import Struct, Bytes, Int8ub, Int16ub, Const
+from construct import Optional as COptional
 from pySim.utils import b2h
 from pySim.secure_channel import SecureChannel
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 def scp02_key_derivation(constant: bytes, counter: int, base_key: bytes) -> bytes:
     assert(len(constant) == 2)
@@ -34,11 +37,20 @@ def scp02_key_derivation(constant: bytes, counter: int, base_key: bytes) -> byte
     cipher = DES3.new(base_key, DES.MODE_CBC, b'\x00' * 8)
     return cipher.encrypt(derivation_data)
 
-# FIXME: overlap with BspAlgoCryptAES128
+# TODO: resolve duplication with BspAlgoCryptAES128
 def pad80(s: bytes, BS=8) -> bytes:
     """ Pad bytestring s: add '\x80' and '\0'* so the result to be multiple of BS."""
     l = BS-1 - len(s) % BS
     return s + b'\x80' + b'\0'*l
+
+# TODO: resolve duplication with BspAlgoCryptAES128
+def unpad80(padded: bytes) -> bytes:
+    """Remove the customary 80 00 00 ... padding used for AES."""
+    # first remove any trailing zero bytes
+    stripped = padded.rstrip(b'\0')
+    # then remove the final 80
+    assert stripped[-1] == 0x80
+    return stripped[:-1]
 
 class Scp02SessionKeys:
     """A single set of GlobalPlatform session keys."""
@@ -108,6 +120,26 @@ class SCP(SecureChannel, abc.ABC):
         self.mac_on_unmodified = False
         self.security_level = 0x00
 
+    @property
+    def do_cmac(self) -> bool:
+        """Should we perform C-MAC?"""
+        return self.security_level & 0x01
+
+    @property
+    def do_rmac(self) -> bool:
+        """Should we perform R-MAC?"""
+        return self.security_level & 0x10
+
+    @property
+    def do_cenc(self) -> bool:
+        """Should we perform C-ENC?"""
+        return self.security_level & 0x02
+
+    @property
+    def do_renc(self) -> bool:
+        """Should we perform R-ENC?"""
+        return self.security_level & 0x20
+
     def __str__(self) -> str:
         return "%s[%02x]" % (self.__class__.__name__, self.security_level)
 
@@ -117,16 +149,29 @@ class SCP(SecureChannel, abc.ABC):
             ret = ret | CLA_SM
         return ret + self.lchan_nr
 
-    def wrap_cmd_apdu(self, apdu: bytes) -> bytes:
+    def wrap_cmd_apdu(self, apdu: bytes, *args, **kwargs) -> bytes:
+        # Generic handling of GlobalPlatform SCP, implements SecureChannel.wrap_cmd_apdu
         # only protect those APDUs that actually are global platform commands
         if apdu[0] & 0x80:
-            return self._wrap_cmd_apdu(apdu)
+            return self._wrap_cmd_apdu(apdu, *args, **kwargs)
         else:
             return apdu
 
     @abc.abstractmethod
     def _wrap_cmd_apdu(self, apdu: bytes, *args, **kwargs) -> bytes:
         """Method implementation to be provided by derived class."""
+        pass
+
+    @abc.abstractmethod
+    def gen_init_update_apdu(self, host_challenge: Optional[bytes]) -> bytes:
+        pass
+
+    @abc.abstractmethod
+    def parse_init_update_resp(self, resp_bin: bytes):
+        pass
+
+    @abc.abstractmethod
+    def gen_ext_auth_apdu(self, security_level: int = 0x01) -> bytes:
         pass
 
 
@@ -206,3 +251,227 @@ class SCP02(SCP):
     def unwrap_rsp_apdu(self, sw: bytes, apdu: bytes) -> bytes:
         # TODO: Implement R-MAC / R-ENC
         return apdu
+
+
+
+from Cryptodome.Cipher import AES
+from Cryptodome.Hash import CMAC
+
+def scp03_key_derivation(constant: bytes, context: bytes, base_key: bytes, l: Optional[int] = None) -> bytes:
+    """SCP03 Key Derivation Function as specified in Annex D 4.1.5."""
+    # Data derivation shall use KDF in counter mode as specified in NIST SP 800-108 ([NIST 800-108]). The PRF
+    # used in the KDF shall be CMAC as specified in [NIST 800-38B], used with full 16-byte output length.
+    def prf(key: bytes, data:bytes):
+        return CMAC.new(key, data, AES).digest()
+
+    if l == None:
+        l = len(base_key) * 8
+
+    logger.debug("scp03_kdf(constant=%s, context=%s, base_key=%s, l=%u)", b2h(constant), b2h(context), b2h(base_key), l)
+    output_len = l // 8
+    # SCP03 Section 4.1.5 defines a different parameter order than NIST SP 800-108, so we cannot use the
+    # existing Cryptodome.Protocol.KDF.SP800_108_Counter function :(
+    # A 12-byte “label” consisting of 11 bytes with value '00' followed by a 1-byte derivation constant
+    assert len(constant) == 1
+    label = b'\x00' *11 + constant
+    i = 1
+    dk = b''
+    while len(dk) < output_len:
+        # 12B label, 1B separation, 2B L, 1B i, Context
+        info = label + b'\x00' + l.to_bytes(2, 'big') + bytes([i]) + context
+        dk += prf(base_key, info)
+        i += 1
+        if i > 0xffff:
+            raise ValueError("Overflow in SP800 108 counter")
+    return dk[:output_len]
+
+
+class Scp03SessionKeys:
+    # GPC 2.3 Amendment D v1.2 Section 4.1.5 Table 4-1
+    DERIV_CONST_AUTH_CGRAM_CARD = b'\x00'
+    DERIV_CONST_AUTH_CGRAM_HOST = b'\x01'
+    DERIV_CONST_CARD_CHLG_GEN = b'\x02'
+    DERIV_CONST_KDERIV_S_ENC = b'\x04'
+    DERIV_CONST_KDERIV_S_MAC = b'\x06'
+    DERIV_CONST_KDERIV_S_RMAC = b'\x07'
+    blocksize = 16
+
+    def __init__(self, card_keys: 'GpCardKeyset', host_challenge: bytes, card_challenge: bytes):
+        # GPC 2.3 Amendment D v1.2 Section 6.2.1
+        context = host_challenge + card_challenge
+        self.s_enc = scp03_key_derivation(self.DERIV_CONST_KDERIV_S_ENC, context, card_keys.enc)
+        self.s_mac = scp03_key_derivation(self.DERIV_CONST_KDERIV_S_MAC, context, card_keys.mac)
+        self.s_rmac = scp03_key_derivation(self.DERIV_CONST_KDERIV_S_RMAC, context, card_keys.mac)
+
+
+        # The first MAC chaining value is set to 16 bytes '00'
+        self.mac_chaining_value = b'\x00' * 16
+        # The encryption counter’s start value shall be set to 1 (we set it immediately before generating ICV)
+        self.block_nr = 0
+
+    def calc_cmac(self, apdu: bytes):
+        """Compute C-MAC for given to-be-transmitted APDU.
+        Returns the full 16-byte MAC, caller must truncate it if needed for S8 mode."""
+        cmac_input = self.mac_chaining_value + apdu
+        cmac_val = CMAC.new(self.s_mac, cmac_input, ciphermod=AES).digest()
+        self.mac_chaining_value = cmac_val
+        return cmac_val
+
+    def calc_rmac(self, rdata_and_sw: bytes):
+        """Compute R-MAC for given received R-APDU data section.
+        Returns the full 16-byte MAC, caller must truncate it if needed for S8 mode."""
+        rmac_input = self.mac_chaining_value + rdata_and_sw
+        return CMAC.new(self.s_rmac, rmac_input, ciphermod=AES).digest()
+
+    def _get_icv(self, is_response: bool = False):
+        """Obtain the ICV value computed as described in 6.2.6.
+        This method has two modes:
+            * is_response=False for computing the ICV for C-ENC. Will pre-increment the counter.
+            * is_response=False for computing the ICV for R-DEC."""
+        if not is_response:
+            self.block_nr += 1
+        # The binary value of this number SHALL be left padded with zeroes to form a full block.
+        data = self.block_nr.to_bytes(self.blocksize, "big")
+        if is_response:
+            # Section 6.2.7: additional intermediate step: Before encryption, the most significant byte of
+            # this block shall be set to '80'.
+            data = b'\x80' + data[1:]
+        iv = bytes([0] * self.blocksize)
+        # This block SHALL be encrypted with S-ENC to produce the ICV for command encryption.
+        cipher = AES.new(self.s_enc, AES.MODE_CBC, iv)
+        icv = cipher.encrypt(data)
+        logger.debug("_get_icv(data=%s, is_resp=%s) -> icv=%s", b2h(data), is_response, b2h(icv))
+        return icv
+
+    # TODO: Resolve duplication with pySim.esim.bsp.BspAlgoCryptAES128 which provides pad80-wrapping
+    def _encrypt(self, data: bytes, is_response: bool = False) -> bytes:
+        cipher = AES.new(self.s_enc, AES.MODE_CBC, self._get_icv(is_response))
+        return cipher.encrypt(data)
+
+    # TODO: Resolve duplication with pySim.esim.bsp.BspAlgoCryptAES128 which provides pad80-unwrapping
+    def _decrypt(self, data: bytes, is_response: bool = True) -> bytes:
+        cipher = AES.new(self.s_enc, AES.MODE_CBC, self._get_icv(is_response))
+        return cipher.decrypt(data)
+
+
+class SCP03(SCP):
+    """Secure Channel Protocol (SCP) 03 as specified in GlobalPlatform v2.3 Amendment D."""
+
+    # Section 7.1.1.6 / Table 7-3
+    constr_iur = Struct('key_div_data'/Bytes(10), 'key_ver'/Int8ub, Const(b'\x03'), 'i_param'/Int8ub,
+                        'card_challenge'/Bytes(lambda ctx: ctx._.s_mode),
+                        'card_cryptogram'/Bytes(lambda ctx: ctx._.s_mode),
+                        'sequence_counter'/COptional(Bytes(3)))
+    kvn_range = [0x30, 0x3f]
+
+    def __init__(self, *args, **kwargs):
+        self.s_mode = kwargs.pop('s_mode', 8)
+        super().__init__(*args, **kwargs)
+
+    def _compute_cryptograms(self):
+        logger.debug("host_challenge(%s), card_challenge(%s)", b2h(self.host_challenge), b2h(self.card_challenge))
+        # Card + Host Authentication Cryptogram: Section 6.2.2.2 + 6.2.2.3
+        context = self.host_challenge + self.card_challenge
+        self.card_cryptogram = scp03_key_derivation(self.sk.DERIV_CONST_AUTH_CGRAM_CARD, context, self.sk.s_mac, l=self.s_mode*8)
+        self.host_cryptogram = scp03_key_derivation(self.sk.DERIV_CONST_AUTH_CGRAM_HOST, context, self.sk.s_mac, l=self.s_mode*8)
+        logger.debug("host_cryptogram(%s), card_cryptogram(%s)", b2h(self.host_cryptogram), b2h(self.card_cryptogram))
+
+    def gen_init_update_apdu(self, host_challenge: Optional[bytes] = None) -> bytes:
+        """Generate INITIALIZE UPDATE APDU."""
+        if host_challenge == None:
+            host_challenge = b'\x00' * self.s_mode
+        if len(host_challenge) != self.s_mode:
+            raise ValueError('Host Challenge must be %u bytes long' % self.s_mode)
+        self.host_challenge = host_challenge
+        return bytes([self._cla(), INS_INIT_UPDATE, self.card_keys.kvn, 0, len(host_challenge)]) + host_challenge
+
+    def parse_init_update_resp(self, resp_bin: bytes):
+        """Parse response to INITIALIZE UPDATE."""
+        if len(resp_bin) not in [10+3+8+8, 10+3+16+16, 10+3+8+8+3, 10+3+16+16+3]:
+            raise ValueError('Invalid length of Initialize Update Response')
+        resp = self.constr_iur.parse(resp_bin, s_mode=self.s_mode)
+        self.card_challenge = resp['card_challenge']
+        self.i_param = resp['i_param']
+        # derive session keys and compute cryptograms
+        self.sk = Scp03SessionKeys(self.card_keys, self.host_challenge, self.card_challenge)
+        logger.debug(self.sk)
+        self._compute_cryptograms()
+        # verify computed cryptogram matches received cryptogram
+        if self.card_cryptogram != resp['card_cryptogram']:
+            raise ValueError("card cryptogram doesn't match")
+
+    def gen_ext_auth_apdu(self, security_level: int = 0x01) -> bytes:
+        """Generate EXTERNAL AUTHENTICATE APDU."""
+        self.security_level = security_level
+        header = bytes([self._cla(), INS_EXT_AUTH, self.security_level, 0, self.s_mode])
+        # bypass encryption for EXTERNAL AUTHENTICATE
+        return self.wrap_cmd_apdu(header + self.host_cryptogram, skip_cenc=True)
+
+    def _wrap_cmd_apdu(self, apdu: bytes, skip_cenc: bool = False) -> bytes:
+        """Wrap Command APDU for SCP02: calculate MAC and encrypt."""
+        cla = apdu[0]
+        ins = apdu[1]
+        p1 = apdu[2]
+        p2 = apdu[3]
+        lc = apdu[4]
+        assert lc == len(apdu) - 5
+        cmd_data = apdu[5:]
+
+        if self.do_cenc and not skip_cenc:
+            assert self.do_cmac
+            if lc == 0:
+                # No encryption shall be applied to a command where there is no command data field. In this
+                # case, the encryption counter shall still be incremented
+                self.sk.block_nr += 1
+            else:
+                # data shall be padded as defined in [GPCS] section B.2.3
+                padded_data = pad80(cmd_data, 16)
+                lc = len(padded_data)
+                if lc >= 256:
+                    raise ValueError('Modified Lc (%u) would exceed maximum when appending padding' % (lc))
+                # perform AES-CBC with ICV + S_ENC
+                cmd_data = self.sk._encrypt(padded_data)
+
+        if self.do_cmac:
+            # The length of the command message (Lc) shall be incremented by 8 (in S8 mode) or 16 (in S16
+            # mode) to indicate the inclusion of the C-MAC in the data field of the command message.
+            mlc = lc + self.s_mode
+            if mlc >= 256:
+                raise ValueError('Modified Lc (%u) would exceed maximum when appending %u bytes of mac' % (mlc, self.s_mode))
+            # The class byte shall be modified for the generation or verification of the C-MAC: The logical
+            # channel number shall be set to zero, bit 4 shall be set to 0 and bit 3 shall be set to 1 to indicate
+            # GlobalPlatform proprietary secure messaging.
+            mcla = (cla & 0xF0) | CLA_SM
+            mapdu = bytes([mcla, ins, p1, p2, mlc]) + cmd_data
+            cmac = self.sk.calc_cmac(mapdu)
+            mapdu += cmac[:self.s_mode]
+
+        return mapdu
+
+    def unwrap_rsp_apdu(self, sw: bytes, apdu: bytes) -> bytes:
+        # No R-MAC shall be generated and no protection shall be applied to a response that includes an error
+        # status word: in this case only the status word shall be returned in the response. All status words
+        # except '9000' and warning status words (i.e. '62xx' and '63xx') shall be interpreted as error status
+        # words.
+        logger.debug("unwrap_rsp_apdu(sw=%s, apdu=%s)", sw, apdu)
+        if not self.do_rmac:
+            assert not self.do_renc
+            return apdu
+
+        if sw != b'\x90\x00' and sw[0] not in [0x62, 0x63]:
+            return apdu
+        response_data = apdu[:-self.s_mode]
+        rmac = apdu[-self.s_mode:]
+        rmac_exp = self.sk.calc_rmac(response_data + sw)[:self.s_mode]
+        if rmac != rmac_exp:
+            raise ValueError("R-MAC value not matching: received: %s, computed: %s" % (rmac, rmac_exp))
+
+        if self.do_renc:
+            # decrypt response data
+            decrypted = self.sk._decrypt(response_data)
+            logger.debug("decrypted: %s", b2h(decrypted))
+            # remove padding
+            response_data = unpad80(decrypted)
+            logger.debug("response_data: %s", b2h(response_data))
+
+        return response_data

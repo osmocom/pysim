@@ -989,6 +989,12 @@ establish_scp02
    :module: pySim.global_platform
    :func: ADF_SD.AddlShellCommands.est_scp02_parser
 
+establish_scp03
+~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.est_scp03_parser
+
 release_scp
 ~~~~~~~~~~~
 Release any previously established SCP (Secure Channel Protocol)
