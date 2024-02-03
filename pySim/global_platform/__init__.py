@@ -626,6 +626,45 @@ class ADF_SD(CardADF):
             cmd_hex = "80E6%02x%02x%02x%s" % (p1, p2, len(data)//2, data)
             return self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
 
+        del_cc_parser = argparse.ArgumentParser()
+        del_cc_parser.add_argument('aid', type=is_hexstr,
+                                   help='Executable Load File or Application AID')
+        del_cc_parser.add_argument('--delete-related-objects', action='store_true',
+                                   help='Delete not only the object but also its related objects')
+
+        @cmd2.with_argparser(del_cc_parser)
+        def do_delete_card_content(self, opts):
+            """Perform a GlobalPlatform DELETE [card content] command in order to delete an Executable Load
+            File, an Application or an Executable Load File and its related Applications."""
+            p2 = 0x80 if opts.delete_related_objects else 0x00
+            aid = ApplicationAID(decoded=opts.aid)
+            self.delete(0x00, p2, b2h(aid.to_tlv()))
+
+        del_key_parser = argparse.ArgumentParser()
+        del_key_parser.add_argument('--key-id', type=auto_uint7, help='Key Identifier (KID)')
+        del_key_parser.add_argument('--key-ver', type=auto_uint8, help='Key Version Number (KVN)')
+        del_key_parser.add_argument('--delete-related-objects', action='store_true',
+                                   help='Delete not only the object but also its related objects')
+
+        @cmd2.with_argparser(del_key_parser)
+        def do_delete_key(self, opts):
+            """Perform GlobalPlaform DELETE (Key) command.
+            If both KID and KVN are specified, exactly one key is deleted. If only either of the two is
+            specified, multiple matching keys may be deleted."""
+            if opts.key_id == None and opts.key_ver == None:
+                raise ValueError('At least one of KID or KVN must be specified')
+            p2 = 0x80 if opts.delete_related_objects else 0x00
+            cmd = ""
+            if opts.key_id != None:
+                cmd += "d001%02x" % opts.key_id
+            if opts.key_ver != None:
+                cmd += "d201%02x" % opts.key_ver
+            self.delete(0x00, p2, cmd)
+
+        def delete(self, p1:int, p2:int, data:Hexstr) -> ResTuple:
+            cmd_hex = "80E4%02x%02x%02x%s" % (p1, p2, len(data)//2, data)
+            return self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
+
         est_scp02_parser = argparse.ArgumentParser()
         est_scp02_parser.add_argument('--key-ver', type=auto_uint8, required=True,
                                       help='Key Version Number (KVN)')
