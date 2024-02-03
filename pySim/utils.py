@@ -7,6 +7,7 @@ import json
 import abc
 import string
 import datetime
+import argparse
 from io import BytesIO
 from typing import Optional, List, Dict, Any, Tuple, NewType
 
@@ -913,6 +914,18 @@ def auto_int(x):
     """Helper function for argparse to accept hexadecimal integers."""
     return int(x, 0)
 
+def _auto_uint(x, max_val: int):
+    """Helper function for argparse to accept hexadecimal or decimal integers."""
+    ret = int(x, 0)
+    if ret < 0 or ret > max_val:
+        raise argparse.ArgumentTypeError('Number exceeds permited value range (0, %u)' %  max_val)
+    return ret
+
+def auto_uint7(x):
+    return _auto_uint(x, 127)
+
+def auto_uint8(x):
+    return _auto_uint(x, 255)
 
 def expand_hex(hexstring, length):
     """Expand a given hexstring to a specified length by replacing "." or ".."

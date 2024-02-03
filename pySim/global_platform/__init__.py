@@ -501,9 +501,9 @@ class ADF_SD(CardADF):
             return data
 
         put_key_parser = argparse.ArgumentParser()
-        put_key_parser.add_argument('--old-key-version-nr', type=auto_int, default=0, help='Old Key Version Number')
-        put_key_parser.add_argument('--key-version-nr', type=auto_int, required=True, help='Key Version Number')
-        put_key_parser.add_argument('--key-id', type=auto_int, required=True, help='Key Identifier (base)')
+        put_key_parser.add_argument('--old-key-version-nr', type=auto_uint8, default=0, help='Old Key Version Number')
+        put_key_parser.add_argument('--key-version-nr', type=auto_uint8, required=True, help='Key Version Number')
+        put_key_parser.add_argument('--key-id', type=auto_uint7, required=True, help='Key Identifier (base)')
         put_key_parser.add_argument('--key-type', choices=KeyType.ksymapping.values(), action='append', required=True, help='Key Type')
         put_key_parser.add_argument('--key-data', type=is_hexstr, action='append', required=True, help='Key Data Block')
         put_key_parser.add_argument('--key-check', type=is_hexstr, action='append', help='Key Check Value')
