@@ -965,11 +965,23 @@ put_key
    :module: pySim.global_platform
    :func: ADF_SD.AddlShellCommands.put_key_parser
 
+delete_key
+~~~~~~~~~~
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.del_key_parser
+
 install_for_personalization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. argparse::
    :module: pySim.global_platform
    :func: ADF_SD.AddlShellCommands.inst_perso_parser
+
+delete_card_content
+~~~~~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.del_cc_parser
 
 establish_scp02
 ~~~~~~~~~~~~~~~
