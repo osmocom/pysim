@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from construct import Optional as COptional
-from construct import Struct, GreedyRange, FlagsEnum, Int16ub, Padding, Bit, Const
+from construct import Struct, GreedyRange, FlagsEnum, Int16ub, Int24ub, Padding, Bit, Const
 from typing import Optional, List, Dict, Tuple
 from copy import deepcopy
 from bidict import bidict
@@ -388,7 +388,8 @@ class LifeCycleState(BER_TLV_IE, tag=0x9f70):
 
 # Section 11.4.3.1 Table 11-36 + Section 11.1.2
 class Privileges(BER_TLV_IE, tag=0xc5):
-    _construct = FlagsEnum(StripTrailerAdapter(GreedyBytes, 3),
+    # we only support 3-byte encoding. Can't use StripTrailerAdapter as length==2 is not permitted. sigh.
+    _construct = FlagsEnum(Int24ub,
                            security_domain=0x800000, dap_verification=0x400000,
                            delegated_management=0x200000, card_lock=0x100000, card_terminate=0x080000,
                            card_reset=0x040000, cvm_management=0x020000,
@@ -624,10 +625,45 @@ class ADF_SD(CardADF):
 
         @cmd2.with_argparser(inst_perso_parser)
         def do_install_for_personalization(self, opts):
-            """Perform GlobalPlatform INSTALL [for personalization] command in order toinform a Security
+            """Perform GlobalPlatform INSTALL [for personalization] command in order to inform a Security
             Domain that the following STORE DATA commands are meant for a specific AID (specified here)."""
             # Section 11.5.2.3.6 / Table 11-47
             self.install(0x20, 0x00, "0000%02u%s000000" % (len(opts.application_aid)//2, opts.application_aid))
+
+        inst_inst_parser = argparse.ArgumentParser()
+        inst_inst_parser.add_argument('--load-file-aid', type=is_hexstr, default='',
+                                      help='Executable Load File AID')
+        inst_inst_parser.add_argument('--module-aid', type=is_hexstr, default='',
+                                      help='Executable Module AID')
+        inst_inst_parser.add_argument('--application-aid', type=is_hexstr, required=True,
+                                      help='Application AID')
+        inst_inst_parser.add_argument('--install-parameters', type=is_hexstr, default='',
+                                      help='Install Parameters')
+        inst_inst_parser.add_argument('--privilege', action='append', dest='privileges', default=[],
+                                      choices=Privileges._construct.flags.keys(),
+                                      help='Privilege granted to newly installed Application')
+        inst_inst_parser.add_argument('--install-token', type=is_hexstr, default='',
+                                      help='Install Token (Section GPCS C.4.2/C.4.7)')
+        inst_inst_parser.add_argument('--make-selectable', action='store_true',
+                                      help='Install and make selectable')
+
+        @cmd2.with_argparser(inst_inst_parser)
+        def do_install_for_install(self, opts):
+            """Perform GlobalPlatform INSTALL [for install] command in order to install an application."""
+            InstallForInstallCD = Struct('load_file_aid'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+                                         'module_aid'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+                                         'application_aid'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+                                         'privileges'/Prefixed(Int8ub, Privileges._construct),
+                                         'install_parameters'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+                                         'install_token'/HexAdapter(Prefixed(Int8ub, GreedyBytes)))
+            p1 = 0x04
+            if opts.make_selectable:
+                p1 |= 0x08
+            decoded = vars(opts)
+            # convert from list to "true-dict" as required by construct.FlagsEnum
+            decoded['privileges'] = {x: True for x in decoded['privileges']}
+            ifi_bytes = build_construct(InstallForInstallCD, decoded)
+            self.install(p1, 0x00, b2h(ifi_bytes))
 
         def install(self, p1:int, p2:int, data:Hexstr) -> ResTuple:
             cmd_hex = "80E6%02x%02x%02x%s" % (p1, p2, len(data)//2, data)

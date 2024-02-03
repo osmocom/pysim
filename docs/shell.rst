@@ -977,6 +977,12 @@ install_for_personalization
    :module: pySim.global_platform
    :func: ADF_SD.AddlShellCommands.inst_perso_parser
 
+install_for_install
+~~~~~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.inst_inst_parser
+
 delete_card_content
 ~~~~~~~~~~~~~~~~~~~
 .. argparse::
