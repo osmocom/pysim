@@ -24,7 +24,7 @@ from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 
 from pySim.exceptions import *
-from pySim.utils import h2b, swap_nibbles, b2h, JsonEncoder
+from pySim.utils import h2b, swap_nibbles, b2h, JsonEncoder, auto_uint8, auto_uint16
 
 from pySim.ts_102_221 import *
 
@@ -112,13 +112,13 @@ class Ts102222Commands(CommandSet):
     create_required = create_parser.add_argument_group('required arguments')
     create_optional = create_parser.add_argument_group('optional arguments')
     create_required.add_argument('--ef-arr-file-id', required=True, type=str, help='Referenced Security: File Identifier of EF.ARR')
-    create_required.add_argument('--ef-arr-record-nr', required=True, type=int, help='Referenced Security: Record Number within EF.ARR')
-    create_required.add_argument('--file-size', required=True, type=int, help='Size of file in octets')
+    create_required.add_argument('--ef-arr-record-nr', required=True, type=auto_uint8, help='Referenced Security: Record Number within EF.ARR')
+    create_required.add_argument('--file-size', required=True, type=auto_uint16, help='Size of file in octets')
     create_required.add_argument('--structure', required=True, type=str, choices=['transparent', 'linear_fixed', 'ber_tlv'],
                                  help='Structure of the to-be-created EF')
     create_optional.add_argument('--short-file-id', type=str, help='Short File Identifier as 2-digit hex string')
     create_optional.add_argument('--shareable', action='store_true', help='Should the file be shareable?')
-    create_optional.add_argument('--record-length', type=int, help='Length of each record in octets')
+    create_optional.add_argument('--record-length', type=auto_uint16, help='Length of each record in octets')
 
     @cmd2.with_argparser(create_parser)
     def do_create_ef(self, opts):
@@ -160,11 +160,11 @@ class Ts102222Commands(CommandSet):
     createdf_optional = createdf_parser.add_argument_group('optional arguments')
     createdf_sja_optional = createdf_parser.add_argument_group('sysmoISIM-SJA optional arguments')
     createdf_required.add_argument('--ef-arr-file-id', required=True, type=str, help='Referenced Security: File Identifier of EF.ARR')
-    createdf_required.add_argument('--ef-arr-record-nr', required=True, type=int, help='Referenced Security: Record Number within EF.ARR')
+    createdf_required.add_argument('--ef-arr-record-nr', required=True, type=auto_uint8, help='Referenced Security: Record Number within EF.ARR')
     createdf_optional.add_argument('--shareable', action='store_true', help='Should the file be shareable?')
     createdf_optional.add_argument('--aid', type=is_hexstr, help='Application ID (creates an ADF, instead of a DF)')
     # mandatory by spec, but ignored by several OS, so don't force the user
-    createdf_optional.add_argument('--total-file-size', type=int, help='Physical memory allocated for DF/ADi in octets')
+    createdf_optional.add_argument('--total-file-size', type=auto_uint16, help='Physical memory allocated for DF/ADi in octets')
     createdf_sja_optional.add_argument('--permit-rfm-create', action='store_true')
     createdf_sja_optional.add_argument('--permit-rfm-delete-terminate', action='store_true')
     createdf_sja_optional.add_argument('--permit-other-applet-create', action='store_true')
@@ -208,7 +208,7 @@ class Ts102222Commands(CommandSet):
     resize_ef_parser.add_argument('NAME', type=str, help='Name or FID of file to be resized')
     resize_ef_parser._action_groups.pop()
     resize_ef_required = resize_ef_parser.add_argument_group('required arguments')
-    resize_ef_required.add_argument('--file-size', required=True, type=int, help='Size of file in octets')
+    resize_ef_required.add_argument('--file-size', required=True, type=auto_uint16, help='Size of file in octets')
 
     @cmd2.with_argparser(resize_ef_parser)
     def do_resize_ef(self, opts):

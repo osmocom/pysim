@@ -927,6 +927,9 @@ def auto_uint7(x):
 def auto_uint8(x):
     return _auto_uint(x, 255)
 
+def auto_uint16(x):
+    return _auto_uint(x, 65535)
+
 def expand_hex(hexstring, length):
     """Expand a given hexstring to a specified length by replacing "." or ".."
        with a filler that is derived from the neighboring nibbles respective
