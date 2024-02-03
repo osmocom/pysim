@@ -38,7 +38,7 @@ from typing import cast, Optional, Iterable, List, Dict, Tuple, Union
 
 from smartcard.util import toBytes
 
-from pySim.utils import sw_match, h2b, b2h, i2h, is_hex, auto_int, Hexstr, is_hexstr
+from pySim.utils import sw_match, h2b, b2h, i2h, is_hex, auto_int, auto_uint8, auto_uint16, Hexstr, is_hexstr
 from pySim.construct import filter_dict, parse_construct, build_construct
 from pySim.exceptions import *
 from pySim.jsonpath import js_path_find, js_path_modify
@@ -589,9 +589,9 @@ class TransparentEF(CardEF):
 
         read_bin_parser = argparse.ArgumentParser()
         read_bin_parser.add_argument(
-            '--offset', type=int, default=0, help='Byte offset for start of read')
+            '--offset', type=auto_uint16, default=0, help='Byte offset for start of read')
         read_bin_parser.add_argument(
-            '--length', type=int, help='Number of bytes to read')
+            '--length', type=auto_uint16, help='Number of bytes to read')
 
         @cmd2.with_argparser(read_bin_parser)
         def do_read_binary(self, opts):
@@ -611,7 +611,7 @@ class TransparentEF(CardEF):
 
         upd_bin_parser = argparse.ArgumentParser()
         upd_bin_parser.add_argument(
-            '--offset', type=int, default=0, help='Byte offset for start of read')
+            '--offset', type=auto_uint16, default=0, help='Byte offset for start of read')
         upd_bin_parser.add_argument('data', type=is_hexstr, help='Data bytes (hex format) to write')
 
         @cmd2.with_argparser(upd_bin_parser)
@@ -810,9 +810,9 @@ class LinFixedEF(CardEF):
 
         read_rec_parser = argparse.ArgumentParser()
         read_rec_parser.add_argument(
-            'record_nr', type=int, help='Number of record to be read')
+            'record_nr', type=auto_uint8, help='Number of record to be read')
         read_rec_parser.add_argument(
-            '--count', type=int, default=1, help='Number of records to be read, beginning at record_nr')
+            '--count', type=auto_uint8, default=1, help='Number of records to be read, beginning at record_nr')
 
         @cmd2.with_argparser(read_rec_parser)
         def do_read_record(self, opts):
@@ -828,7 +828,7 @@ class LinFixedEF(CardEF):
 
         read_rec_dec_parser = argparse.ArgumentParser()
         read_rec_dec_parser.add_argument(
-            'record_nr', type=int, help='Number of record to be read')
+            'record_nr', type=auto_uint8, help='Number of record to be read')
         read_rec_dec_parser.add_argument('--oneline', action='store_true',
                                          help='No JSON pretty-printing, dump as a single line')
 
@@ -869,7 +869,7 @@ class LinFixedEF(CardEF):
 
         upd_rec_parser = argparse.ArgumentParser()
         upd_rec_parser.add_argument(
-            'record_nr', type=int, help='Number of record to be read')
+            'record_nr', type=auto_uint8, help='Number of record to be read')
         upd_rec_parser.add_argument('data', type=is_hexstr, help='Data bytes (hex format) to write')
 
         @cmd2.with_argparser(upd_rec_parser)
@@ -881,7 +881,7 @@ class LinFixedEF(CardEF):
 
         upd_rec_dec_parser = argparse.ArgumentParser()
         upd_rec_dec_parser.add_argument(
-            'record_nr', type=int, help='Number of record to be read')
+            'record_nr', type=auto_uint8, help='Number of record to be read')
         upd_rec_dec_parser.add_argument('data', help='Abstract data (JSON format) to write')
         upd_rec_dec_parser.add_argument('--json-path', type=str,
                                         help='JSON path to modify specific element of record only')
@@ -902,7 +902,7 @@ class LinFixedEF(CardEF):
 
         edit_rec_dec_parser = argparse.ArgumentParser()
         edit_rec_dec_parser.add_argument(
-            'record_nr', type=int, help='Number of record to be edited')
+            'record_nr', type=auto_uint8, help='Number of record to be edited')
 
         @cmd2.with_argparser(edit_rec_dec_parser)
         def do_edit_record_decoded(self, opts):
