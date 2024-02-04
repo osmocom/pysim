@@ -9,12 +9,12 @@ APDU commands of 3GPP TS 31.102 V16.6.0
 """
 from typing import Dict
 
-from construct import *
+from construct import BitStruct, Enum, BitsInteger, Int8ub, Bytes, this, Struct, If, Switch, Const
 from construct import Optional as COptional
+
 from pySim.filesystem import *
 from pySim.construct import *
 from pySim.ts_31_102 import SUCI_TlvDataObject
-
 from pySim.apdu import ApduCommand, ApduCommandSet
 
 # Copyright (C) 2022 Harald Welte <laforge@osmocom.org>
@@ -34,8 +34,6 @@ from pySim.apdu import ApduCommand, ApduCommandSet
 #
 
 # Mapping between USIM Service Number and its description
-
-from pySim.apdu import ApduCommand, ApduCommandSet
 
 # TS 31.102 Section 7.1
 class UsimAuthenticateEven(ApduCommand, n='AUTHENTICATE', ins=0x88, cla=['0X', '4X', '6X']):
