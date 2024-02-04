@@ -21,20 +21,20 @@ Related Specs: GSMA SGP.22, GSMA SGP.02, etc.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import argparse
+
+from construct import Array, Struct, FlagsEnum, GreedyRange
+from cmd2 import cmd2, CommandSet, with_default_category
+
 from pySim.tlv import *
 from pySim.construct import *
-from construct import Optional as COptional
-from construct import *
-import argparse
-from cmd2 import cmd2, CommandSet, with_default_category
 from pySim.commands import SimCardCommands
-from pySim.filesystem import CardADF, CardApplication
-from pySim.utils import Hexstr, SwHexstr
+from pySim.utils import Hexstr, SwHexstr, SwMatchstr
 import pySim.global_platform
 
 def compute_eid_checksum(eid) -> str:
     """Compute and add/replace check digits of an EID value according to GSMA SGP.29 Section 10."""
-    if type(eid) == str:
+    if isinstance(eid, str):
         if len(eid) == 30:
             # first pad by 2 digits
             eid += "00"
@@ -44,7 +44,7 @@ def compute_eid_checksum(eid) -> str:
         else:
             raise ValueError("and EID must be 30 or 32 digits")
         eid_int = int(eid)
-    elif type(eid) == int:
+    elif isinstance(eid, int):
         eid_int = eid
         if eid_int % 100:
             # zero the last two digits
@@ -315,14 +315,14 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
         self.adf.shell_commands += [self.AddlShellCommands()]
 
     @staticmethod
-    def store_data(scc: SimCardCommands, tx_do: Hexstr) -> Tuple[Hexstr, SwHexstr]:
+    def store_data(scc: SimCardCommands, tx_do: Hexstr, exp_sw: SwMatchstr ="9000") -> Tuple[Hexstr, SwHexstr]:
         """Perform STORE DATA according to Table 47+48 in Section 5.7.2 of SGP.22.
         Only single-block store supported for now."""
         capdu = '%sE29100%02x%s' % (scc.cla4lchan('80'), len(tx_do)//2, tx_do)
-        return scc.send_apdu_checksw(capdu)
+        return scc.send_apdu_checksw(capdu, exp_sw)
 
     @staticmethod
-    def store_data_tlv(scc: SimCardCommands, cmd_do, resp_cls, exp_sw='9000'):
+    def store_data_tlv(scc: SimCardCommands, cmd_do, resp_cls, exp_sw: SwMatchstr = '9000'):
         """Transceive STORE DATA APDU with the card, transparently encoding the command data from TLV
         and decoding the response data tlv."""
         if cmd_do:
@@ -332,7 +332,7 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
                 return ValueError('DO > 255 bytes not supported yet')
         else:
             cmd_do_enc = b''
-        (data, sw) = CardApplicationISDR.store_data(scc, b2h(cmd_do_enc))
+        (data, _sw) = CardApplicationISDR.store_data(scc, b2h(cmd_do_enc), exp_sw=exp_sw)
         if data:
             if resp_cls:
                 resp_do = resp_cls()
@@ -358,9 +358,9 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
         @cmd2.with_argparser(es10x_store_data_parser)
         def do_es10x_store_data(self, opts):
             """Perform a raw STORE DATA command as defined for the ES10x eUICC interface."""
-            (data, sw) = CardApplicationISDR.store_data(self._cmd.lchan.scc, opts.TX_DO)
+            (_data, _sw) = CardApplicationISDR.store_data(self._cmd.lchan.scc, opts.TX_DO)
 
-        def do_get_euicc_configured_addresses(self, opts):
+        def do_get_euicc_configured_addresses(self, _opts):
             """Perform an ES10a GetEuiccConfiguredAddresses function."""
             eca = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, EuiccConfiguredAddresses(), EuiccConfiguredAddresses)
             d = eca.to_dict()
@@ -377,25 +377,25 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
             d = sdda.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['set_default_dp_address']))
 
-        def do_get_euicc_challenge(self, opts):
+        def do_get_euicc_challenge(self, _opts):
             """Perform an ES10b GetEUICCChallenge function."""
             gec = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, GetEuiccChallenge(), GetEuiccChallenge)
             d = gec.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['get_euicc_challenge']))
 
-        def do_get_euicc_info1(self, opts):
+        def do_get_euicc_info1(self, _opts):
             """Perform an ES10b GetEUICCInfo (1) function."""
             ei1 = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, EuiccInfo1(), EuiccInfo1)
             d = ei1.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['euicc_info1']))
 
-        def do_get_euicc_info2(self, opts):
+        def do_get_euicc_info2(self, _opts):
             """Perform an ES10b GetEUICCInfo (2) function."""
             ei2 = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, EuiccInfo2(), EuiccInfo2)
             d = ei2.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['euicc_info2']))
 
-        def do_list_notification(self, opts):
+        def do_list_notification(self, _opts):
             """Perform an ES10b ListNotification function."""
             ln = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, ListNotificationReq(), ListNotificationResp)
             d = ln.to_dict()
@@ -412,7 +412,7 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
             d = rn.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['notification_sent_resp']))
 
-        def do_get_profiles_info(self, opts):
+        def do_get_profiles_info(self, _opts):
             """Perform an ES10c GetProfilesInfo function."""
             pi = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, ProfileInfoListReq(), ProfileInfoListResp)
             d = pi.to_dict()
@@ -475,9 +475,9 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
             self._cmd.poutput_json(flatten_dict_lists(d['delete_profile_resp']))
 
 
-        def do_get_eid(self, opts):
+        def do_get_eid(self, _opts):
             """Perform an ES10c GetEID function."""
-            (data, sw) = CardApplicationISDR.store_data(self._cmd.lchan.scc, 'BF3E035C015A')
+            (_data, _sw) = CardApplicationISDR.store_data(self._cmd.lchan.scc, 'BF3E035C015A')
             ged_cmd = GetEuiccData(children=[TagList(decoded=[0x5A])])
             ged = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, ged_cmd, GetEuiccData)
             d = ged.to_dict()
@@ -497,13 +497,13 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
             d = sn.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['set_nickname_resp']))
 
-        def do_get_certs(self, opts):
+        def do_get_certs(self, _opts):
             """Perform an ES10c GetCerts() function on an IoT eUICC."""
             gc = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, GetCertsReq(), GetCertsResp)
             d = gc.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['get_certficiates_resp']))
 
-        def do_get_eim_configuration_data(self, opts):
+        def do_get_eim_configuration_data(self, _opts):
             """Perform an ES10b GetEimConfigurationData function on an Iot eUICC."""
             gec = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, GetEimConfigurationData(),
                                                      GetEimConfigurationData)
