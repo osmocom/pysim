@@ -1,13 +1,10 @@
-# -*- coding: utf-8 -*-
-
-# without this, pylint will fail when inner classes are used
-# within the 'nested' kwarg of our TlvMeta metaclass on python 3.7 :(
-# pylint: disable=undefined-variable
-
 """
 The File (and its derived classes) uses the classes of pySim.filesystem in
 order to describe the files specified in UIC Reference P38 T 9001 5.0 "FFFIS for GSM-R SIM Cards"
 """
+# without this, pylint will fail when inner classes are used
+# within the 'nested' kwarg of our TlvMeta metaclass on python 3.7 :(
+# pylint: disable=undefined-variable
 
 #
 # Copyright (C) 2021 Harald Welte <laforge@osmocom.org>
@@ -28,16 +25,13 @@ order to describe the files specified in UIC Reference P38 T 9001 5.0 "FFFIS for
 
 
 from pySim.utils import *
-#from pySim.tlv import *
 from struct import pack, unpack
-from construct import *
+from construct import Struct, Bytes, Int8ub, Int16ub, Int24ub, Int32ub, FlagsEnum
 from construct import Optional as COptional
-from pySim.construct import *
-import enum
 
+from pySim.construct import *
 from pySim.profile import CardProfileAddon
 from pySim.filesystem import *
-import pySim.ts_51_011
 
 ######################################################################
 # DF.EIRENE (FFFIS for GSM-R SIM Cards)
@@ -77,15 +71,15 @@ class PlConfAdapter(Adapter):
         num = int(obj) & 0x7
         if num == 0:
             return 'None'
-        elif num == 1:
+        if num == 1:
             return 4
-        elif num == 2:
+        if num == 2:
             return 3
-        elif num == 3:
+        if num == 3:
             return 2
-        elif num == 4:
+        if num == 4:
             return 1
-        elif num == 5:
+        if num == 5:
             return 0
 
     def _encode(self, obj, context, path):
@@ -94,13 +88,13 @@ class PlConfAdapter(Adapter):
         obj = int(obj)
         if obj == 4:
             return 1
-        elif obj == 3:
+        if obj == 3:
             return 2
-        elif obj == 2:
+        if obj == 2:
             return 3
-        elif obj == 1:
+        if obj == 1:
             return 4
-        elif obj == 0:
+        if obj == 0:
             return 5
 
 
@@ -111,19 +105,19 @@ class PlCallAdapter(Adapter):
         num = int(obj) & 0x7
         if num == 0:
             return 'None'
-        elif num == 1:
+        if num == 1:
             return 4
-        elif num == 2:
+        if num == 2:
             return 3
-        elif num == 3:
+        if num == 3:
             return 2
-        elif num == 4:
+        if num == 4:
             return 1
-        elif num == 5:
+        if num == 5:
             return 0
-        elif num == 6:
+        if num == 6:
             return 'B'
-        elif num == 7:
+        if num == 7:
             return 'A'
 
     def _encode(self, obj, context, path):
@@ -131,17 +125,17 @@ class PlCallAdapter(Adapter):
             return 0
         if obj == 4:
             return 1
-        elif obj == 3:
+        if obj == 3:
             return 2
-        elif obj == 2:
+        if obj == 2:
             return 3
-        elif obj == 1:
+        if obj == 1:
             return 4
-        elif obj == 0:
+        if obj == 0:
             return 5
-        elif obj == 'B':
+        if obj == 'B':
             return 6
-        elif obj == 'A':
+        if obj == 'A':
             return 7
 
 
