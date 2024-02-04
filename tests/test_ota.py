@@ -270,8 +270,8 @@ class SmsOtaTestCase(OtaTestCase):
                 tpdu = SMS_DELIVER(tp_udhi=True, tp_oa=self.da, tp_pid=0x7F, tp_dcs=0xF6,
                                    tp_scts=h2b('22705200000000'), tp_udl=3, tp_ud=with_udh)
                 #print("TPDU: %s" % tpdu)
-                #print("tpdu: %s" % b2h(tpdu.toBytes()))
-                self.assertEqual(b2h(tpdu.toBytes()), t['request']['encoded_tpdu'])
+                #print("tpdu: %s" % b2h(tpdu.to_bytes()))
+                self.assertEqual(b2h(tpdu.to_bytes()), t['request']['encoded_tpdu'])
 
     def test_decode_resp(self):
         for t in SmsOtaTestCase.testdatasets:

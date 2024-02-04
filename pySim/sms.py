@@ -20,7 +20,7 @@
 import typing
 import abc
 from bidict import bidict
-from construct import Int8ub, Byte, Bytes, Bit, Flag, BitsInteger, Flag
+from construct import Int8ub, Byte, Bytes, Bit, Flag, BitsInteger
 from construct import Struct, Enum, Tell, BitStruct, this, Padding
 from construct import Prefixed, GreedyRange, GreedyBytes
 
@@ -51,13 +51,13 @@ class UserDataHeader:
         return False
 
     @classmethod
-    def fromBytes(cls, inb: BytesOrHex) -> typing.Tuple['UserDataHeader', bytes]:
+    def from_bytes(cls, inb: BytesOrHex) -> typing.Tuple['UserDataHeader', bytes]:
         if isinstance(inb, str):
             inb = h2b(inb)
         res = cls._construct.parse(inb)
         return cls(res['ies']), res['data']
 
-    def toBytes(self) -> bytes:
+    def to_bytes(self) -> bytes:
         return self._construct.build({'ies':self.ies, 'data':b''})
 
 
@@ -117,7 +117,7 @@ class AddressField:
         return 'AddressField(TON=%s, NPI=%s, %s)' % (self.ton, self.npi, self.digits)
 
     @classmethod
-    def fromBytes(cls, inb: BytesOrHex) -> typing.Tuple['AddressField', bytes]:
+    def from_bytes(cls, inb: BytesOrHex) -> typing.Tuple['AddressField', bytes]:
         """Construct an AddressField instance from the binary T-PDU address format."""
         if isinstance(inb, str):
             inb = h2b(inb)
@@ -129,16 +129,16 @@ class AddressField:
         return cls(res['digits'][:res['addr_len']], ton, npi), inb[res['tell']:]
 
     @classmethod
-    def fromSmpp(cls, addr, ton, npi) -> 'AddressField':
+    def from_smpp(cls, addr, ton, npi) -> 'AddressField':
         """Construct an AddressField from {source,dest}_addr_{,ton,npi} attributes of smpp.pdu."""
         # return the resulting instance
         return cls(addr.decode('ascii'), AddressField.smpp_map_ton[ton.name], AddressField.smpp_map_npi[npi.name])
 
-    def toSmpp(self):
+    def to_smpp(self):
         """Return smpp.pdo.*.source,dest}_addr_{,ton,npi} attributes for given AddressField."""
         return (self.digits, self.smpp_map_ton.inverse[self.ton], self.smpp_map_npi.inverse[self.npi])
 
-    def toBytes(self) -> bytes:
+    def to_bytes(self) -> bytes:
         """Encode the AddressField into the binary representation as used in T-PDU."""
         num_digits = len(self.digits)
         if num_digits % 2:
@@ -185,13 +185,12 @@ class SMS_DELIVER(SMS_TPDU):
         return '%s(MTI=%s, MMS=%s, LP=%s, RP=%s, UDHI=%s, SRI=%s, OA=%s, PID=%2x, DCS=%x, SCTS=%s, UDL=%u, UD=%s)' % (self.__class__.__name__, self.tp_mti, self.tp_mms, self.tp_lp, self.tp_rp, self.tp_udhi, self.tp_sri, self.tp_oa, self.tp_pid, self.tp_dcs, self.tp_scts, self.tp_udl, self.tp_ud)
 
     @classmethod
-    def fromBytes(cls, inb: BytesOrHex) -> 'SMS_DELIVER':
+    def from_bytes(cls, inb: BytesOrHex) -> 'SMS_DELIVER':
         """Construct a SMS_DELIVER instance from the binary encoded format as used in T-PDU."""
         if isinstance(inb, str):
             inb = h2b(inb)
-        flags = inb[0]
         d = SMS_DELIVER.flags_construct.parse(inb)
-        oa, remainder = AddressField.fromBytes(inb[1:])
+        oa, remainder = AddressField.from_bytes(inb[1:])
         d['tp_oa'] = oa
         offset = 0
         d['tp_pid'] = remainder[offset]
@@ -206,7 +205,7 @@ class SMS_DELIVER(SMS_TPDU):
         d['tp_ud'] = remainder[offset:]
         return cls(**d)
 
-    def toBytes(self) -> bytes:
+    def to_bytes(self) -> bytes:
         """Encode a SMS_DELIVER instance to the binary encoded format as used in T-PDU."""
         outb = bytearray()
         d = {
@@ -215,7 +214,7 @@ class SMS_DELIVER(SMS_TPDU):
             }
         flags = SMS_DELIVER.flags_construct.build(d)
         outb.extend(flags)
-        outb.extend(self.tp_oa.toBytes())
+        outb.extend(self.tp_oa.to_bytes())
         outb.append(self.tp_pid)
         outb.append(self.tp_dcs)
         outb.extend(self.tp_scts)
@@ -225,18 +224,18 @@ class SMS_DELIVER(SMS_TPDU):
         return outb
 
     @classmethod
-    def fromSmpp(cls, smpp_pdu) -> 'SMS_DELIVER':
+    def from_smpp(cls, smpp_pdu) -> 'SMS_DELIVER':
         """Construct a SMS_DELIVER instance from the deliver format used by smpp.pdu."""
         if smpp_pdu.id == pdu_types.CommandId.submit_sm:
-            return cls.fromSmppSubmit(smpp_pdu)
+            return cls.from_smpp_submit(smpp_pdu)
         else:
             raise ValueError('Unsupported SMPP commandId %s' % smpp_pdu.id)
 
     @classmethod
-    def fromSmppSubmit(cls, smpp_pdu) -> 'SMS_DELIVER':
+    def from_smpp_submit(cls, smpp_pdu) -> 'SMS_DELIVER':
         """Construct a SMS_DELIVER instance from the submit format used by smpp.pdu."""
         ensure_smpp_is_8bit(smpp_pdu.params['data_coding'])
-        tp_oa = AddressField.fromSmpp(smpp_pdu.params['source_addr'],
+        tp_oa = AddressField.from_smpp(smpp_pdu.params['source_addr'],
                                       smpp_pdu.params['source_addr_ton'],
                                       smpp_pdu.params['source_addr_npi'])
         tp_ud = smpp_pdu.params['short_message']
@@ -276,7 +275,7 @@ class SMS_SUBMIT(SMS_TPDU):
         return '%s(MTI=%s, RD=%s, VPF=%u, RP=%s, UDHI=%s, SRR=%s, DA=%s, PID=%2x, DCS=%x, VP=%s, UDL=%u, UD=%s)' % (self.__class__.__name__, self.tp_mti, self.tp_rd, self.tp_vpf, self.tp_rp, self.tp_udhi, self.tp_srr, self.tp_da, self.tp_pid, self.tp_dcs, self.tp_vp, self.tp_udl, self.tp_ud)
 
     @classmethod
-    def fromBytes(cls, inb:BytesOrHex) -> 'SMS_SUBMIT':
+    def from_bytes(cls, inb:BytesOrHex) -> 'SMS_SUBMIT':
         """Construct a SMS_SUBMIT instance from the binary encoded format as used in T-PDU."""
         offset = 0
         if isinstance(inb, str):
@@ -285,7 +284,7 @@ class SMS_SUBMIT(SMS_TPDU):
         offset += 1
         d['tp_mr']= inb[offset]
         offset += 1
-        da, remainder = AddressField.fromBytes(inb[2:])
+        da, remainder = AddressField.from_bytes(inb[2:])
         d['tp_da'] = da
 
         offset = 0
@@ -303,12 +302,10 @@ class SMS_SUBMIT(SMS_TPDU):
             # TODO: further decode
             d['tp_vp'] = remainder[offset:offset+7]
             offset += 7
-            pass
         elif d['tp_vpf'] == 'absolute':
             # TODO: further decode
             d['tp_vp'] = remainder[offset:offset+7]
             offset += 7
-            pass
         else:
             raise ValueError('Invalid VPF: %s' % d['tp_vpf'])
         d['tp_udl'] = remainder[offset]
@@ -316,7 +313,7 @@ class SMS_SUBMIT(SMS_TPDU):
         d['tp_ud'] = remainder[offset:]
         return cls(**d)
 
-    def toBytes(self) -> bytes:
+    def to_bytes(self) -> bytes:
         """Encode a SMS_SUBMIT instance to the binary encoded format as used in T-PDU."""
         outb = bytearray()
         d = {
@@ -326,7 +323,7 @@ class SMS_SUBMIT(SMS_TPDU):
         flags = SMS_SUBMIT.flags_construct.build(d)
         outb.extend(flags)
         outb.append(self.tp_mr)
-        outb.extend(self.tp_da.toBytes())
+        outb.extend(self.tp_da.to_bytes())
         outb.append(self.tp_pid)
         outb.append(self.tp_dcs)
         if self.tp_vpf != 'none':
@@ -336,20 +333,20 @@ class SMS_SUBMIT(SMS_TPDU):
         return outb
 
     @classmethod
-    def fromSmpp(cls, smpp_pdu) -> 'SMS_SUBMIT':
+    def from_smpp(cls, smpp_pdu) -> 'SMS_SUBMIT':
         """Construct a SMS_SUBMIT instance from the format used by smpp.pdu."""
         if smpp_pdu.id == pdu_types.CommandId.submit_sm:
-            return cls.fromSmppSubmit(smpp_pdu)
+            return cls.from_smpp_submit(smpp_pdu)
         else:
             raise ValueError('Unsupported SMPP commandId %s' % smpp_pdu.id)
 
     @classmethod
-    def fromSmppSubmit(cls, smpp_pdu) -> 'SMS_SUBMIT':
+    def from_smpp_submit(cls, smpp_pdu) -> 'SMS_SUBMIT':
         """Construct a SMS_SUBMIT instance from the submit format used by smpp.pdu."""
         ensure_smpp_is_8bit(smpp_pdu.params['data_coding'])
-        tp_da = AddressField.fromSmpp(smpp_pdu.params['destination_addr'],
-                                      smpp_pdu.params['dest_addr_ton'],
-                                      smpp_pdu.params['dest_addr_npi'])
+        tp_da = AddressField.from_smpp(smpp_pdu.params['destination_addr'],
+                                       smpp_pdu.params['dest_addr_ton'],
+                                       smpp_pdu.params['dest_addr_npi'])
         tp_ud = smpp_pdu.params['short_message']
         #vp_smpp = smpp_pdu.params['validity_period']
         #if not vp_smpp:
@@ -370,7 +367,7 @@ class SMS_SUBMIT(SMS_TPDU):
             }
         return cls(**d)
 
-    def toSmpp(self) -> pdu_types.PDU:
+    def to_smpp(self) -> pdu_types.PDU:
         """Translate a SMS_SUBMIT instance to a smpp.pdu.operations.SubmitSM instance."""
         esm_class = pdu_types.EsmClass(pdu_types.EsmClassMode.DEFAULT, pdu_types.EsmClassType.DEFAULT)
         reg_del = pdu_types.RegisteredDelivery(pdu_types.RegisteredDeliveryReceipt.NO_SMSC_DELIVERY_RECEIPT_REQUESTED)
@@ -382,7 +379,7 @@ class SMS_SUBMIT(SMS_TPDU):
         if self.tp_dcs != 0xF6:
             raise ValueError('Unsupported DCS: We only support DCS=0xF6 for now')
         dc = pdu_types.DataCoding(pdu_types.DataCodingScheme.DEFAULT, pdu_types.DataCodingDefault.OCTET_UNSPECIFIED)
-        (daddr, ton, npi) = self.tp_da.toSmpp()
+        (daddr, ton, npi) = self.tp_da.to_smpp()
         return operations.SubmitSM(service_type='',
                                    source_addr_ton=pdu_types.AddrTon.ALPHANUMERIC,
                                    source_addr_npi=pdu_types.AddrNpi.UNKNOWN,

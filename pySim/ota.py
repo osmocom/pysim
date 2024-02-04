@@ -397,7 +397,7 @@ class OtaDialectSms(OtaDialect):
         # POR with CC+CIPH: 027100001c12b000119660ebdb81be189b5e4389e9e7ab2bc0954f963ad869ed7c
         if data[0] != 0x02:
             raise ValueError('Unexpected UDL=0x%02x' % data[0])
-        udhd, remainder = UserDataHeader.fromBytes(data)
+        udhd, remainder = UserDataHeader.from_bytes(data)
         if not udhd.has_ie(0x71):
             raise ValueError('RPI 0x71 not found in UDH')
         rph_rhl_tar = remainder[:6] # RPH+RHL+TAR; not ciphered
