@@ -26,11 +26,12 @@ Needs to be a separate python module to avoid cyclic imports
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from construct import Optional as COptional
+from construct import Struct, Int16ub, Int32ub
+
 from pySim.tlv import *
 from pySim.filesystem import *
 from pySim.construct import *
-from construct import Optional as COptional
-from construct import *
 
 # TS 31.102 Section 4.2.8
 class EF_UServiceTable(TransparentEF):
@@ -42,7 +43,7 @@ class EF_UServiceTable(TransparentEF):
     def _bit_byte_offset_for_service(service: int) -> Tuple[int, int]:
         i = service - 1
         byte_offset = i//8
-        bit_offset = (i % 8)
+        bit_offset = i % 8
         return (byte_offset, bit_offset)
 
     def _decode_bin(self, in_bin):
@@ -73,7 +74,7 @@ class EF_UServiceTable(TransparentEF):
             service_nr = int(srv)
             (byte_offset, bit_offset) = EF_UServiceTable._bit_byte_offset_for_service(
                 service_nr)
-            if in_json[srv]['activated'] == True:
+            if in_json[srv]['activated'] is True:
                 bit = 1
             else:
                 bit = 0
@@ -82,7 +83,7 @@ class EF_UServiceTable(TransparentEF):
 
     def get_active_services(self, cmd):
         # obtain list of currently active services
-        (service_data, sw) = cmd.lchan.read_binary_dec()
+        (service_data, _sw) = cmd.lchan.read_binary_dec()
         active_services = []
         for s in service_data.keys():
             if service_data[s]['activated']:
@@ -121,7 +122,7 @@ class EF_UServiceTable(TransparentEF):
         return num_problems
 
     def ust_update(self, cmd, activate=[], deactivate=[]):
-        service_data, sw = cmd.lchan.read_binary()
+        service_data, _sw = cmd.lchan.read_binary()
         service_data = h2b(service_data)
 
         for service in activate:
