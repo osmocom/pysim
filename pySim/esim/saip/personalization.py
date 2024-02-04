@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 
 from pySim.esim.saip import ProfileElement, ProfileElementSequence
 
@@ -47,7 +47,7 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
         self.value = value
 
     @abc.abstractmethod
-    def apply(self, pe_seq: ProfileElementSequence):
+    def apply(self, pes: ProfileElementSequence):
         pass
 
 class Iccid(ConfigurableParameter):
