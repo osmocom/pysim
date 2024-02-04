@@ -25,7 +25,7 @@ from pySim.utils import bertlv_parse_tag, bertlv_parse_len
 from pySim.ts_102_221 import FileDescriptor
 from pySim.construct import build_construct
 from pySim.esim import compile_asn1_subdir
-import pySim.esim.saip.templates as templates
+from pySim.esim.saip import templates
 
 asn1 = compile_asn1_subdir('saip')
 
@@ -165,8 +165,7 @@ class ProfileElement:
         # unneccessarry compliaction by inconsistent naming :(
         if self.type.startswith('opt-'):
             return self.type.replace('-','') + '-header'
-        else:
-            return self.type + '-header'
+        return self.type + '-header'
 
     @property
     def header(self):
@@ -203,7 +202,7 @@ class ProfileElement:
 def bertlv_first_segment(binary: bytes) -> Tuple[bytes, bytes]:
     """obtain the first segment of a binary concatenation of BER-TLV objects.
         Returns: tuple of first TLV and remainder."""
-    tagdict, remainder = bertlv_parse_tag(binary)
+    _tagdict, remainder = bertlv_parse_tag(binary)
     length, remainder = bertlv_parse_len(remainder)
     tl_length = len(binary) - len(remainder)
     tlv_length = tl_length + length
@@ -270,7 +269,7 @@ class ProfileElementSequence:
                 cur_naa_list = []
             cur_naa_list.append(pe)
         # append the final one
-        if cur_naa and len(cur_naa_list):
+        if cur_naa and len(cur_naa_list) > 0:
             if not cur_naa in self.pes_by_naa:
                 self.pes_by_naa[cur_naa] = []
             self.pes_by_naa[cur_naa].append(cur_naa_list)
