@@ -92,7 +92,7 @@ class CheckBasicStructure(ProfileConstraintChecker):
             raise ProfileError('get-identity mandatory, but no usim or isim')
         if 'profile-a-x25519' in m_svcs and not ('usim' in m_svcs or 'isim' in m_svcs):
             raise ProfileError('profile-a-x25519 mandatory, but no usim or isim')
-        if 'profile-a-p256' in m_svcs and not not ('usim' in m_svcs or 'isim' in m_svcs):
+        if 'profile-a-p256' in m_svcs and not ('usim' in m_svcs or 'isim' in m_svcs):
             raise ProfileError('profile-a-p256 mandatory, but no usim or isim')
 
 FileChoiceList = List[Tuple]
@@ -126,4 +126,3 @@ class FileCheckBasicStructure(FileConstraintChecker):
 
     def check_forbidden(self, l: FileChoiceList):
         """Perform checks for forbidden parameters as described in Section 8.3.3."""
-
