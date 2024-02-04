@@ -136,7 +136,7 @@ class LinkBase(abc.ABC):
         # available. There are two SWs commonly used for this 9fxx (sim) and 61xx (usim), where
         # xx is the number of response bytes available.
         # See also:
-        if (sw is not None):
+        if sw is not None:
             while ((sw[0:2] == '9f') or (sw[0:2] == '61')):
                 # SW1=9F: 3GPP TS 51.011 9.4.1, Responses to commands which are correctly executed
                 # SW1=61: ISO/IEC 7816-4, Table 5 — General meaning of the interindustry values of SW1-SW2
