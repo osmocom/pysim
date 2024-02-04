@@ -53,9 +53,9 @@ class FileTemplate:
         return "FileTemplate(%s)" % (self.name)
 
     def __repr__(self) -> str:
-        s_fid = "%04x" % self.fid if self.fid != None else 'None'
-        s_arr = self.arr if self.arr != None else 'None'
-        s_sfi = "%02x" % self.sfi if self.sfi != None else 'None'
+        s_fid = "%04x" % self.fid if self.fid is not None else 'None'
+        s_arr = self.arr if self.arr is not None else 'None'
+        s_sfi = "%02x" % self.sfi if self.sfi is not None else 'None'
         return "FileTemplate(%s/%s, %s, %s, arr=%s, sfi=%s)" % (self.name, self.pe_name, s_fid,
                                                                 self.file_type, s_arr, s_sfi)
 
@@ -93,7 +93,7 @@ class ProfileTemplateRegistry:
     def get_by_oid(cls, oid: Union[List[int], str]) -> Optional[ProfileTemplate]:
         """Look-up the ProfileTemplate based on its OID.  The OID can be given either in dotted-string format,
         or as a list of integers."""
-        if type(oid) is not str:
+        if not isinstance(oid, str):
             oid = OID.OID.str_from_intlist(oid)
         return cls.by_oid.get(oid, None)
 
@@ -103,7 +103,7 @@ class ProfileTemplateRegistry:
 # Section 9.2
 class FilesAtMF(ProfileTemplate):
     created_by_default = True
-    oid = OID.MF,
+    oid = OID.MF
     files = [
         FileTemplate(0x3f00, 'MF',           'MF', None, None,  14, None, None, None, params=['pinStatusTemplateDO']),
         FileTemplate(0x2f05, 'EF.PL',        'TR', None,    2,   1, 0x05, 'FF...FF', None),
@@ -588,7 +588,7 @@ class FilesIsimMandatory(ProfileTemplate):
     created_by_default = True
     oid = OID.ADF_ISIM_by_default
     files = [
-        FileTemplate(  None, 'ADF.ISIM',      'ADF', None, None,  14, None, None, False, ['aid','temporary_fid''pinStatusTemplateDO']),
+        FileTemplate(  None, 'ADF.ISIM',      'ADF', None, None,  14, None, None, False, ['aid','temporary_fid','pinStatusTemplateDO']),
         FileTemplate(0x6f02, 'EF.IMPI',        'TR', None, None,   2, 0x02, None, True, ['size']),
         FileTemplate(0x6f04, 'EF.IMPU',        'LF',    1, None,   2, 0x04, None, True, ['size']),
         FileTemplate(0x6f03, 'EF.Domain',      'TR', None, None,   2, 0x05, None, True, ['size']),
