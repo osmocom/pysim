@@ -21,12 +21,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 import typing # construct also has a Union, so we do typing.Union below
 
-from construct import *
+from construct import Construct, Struct, Const, Select
+from construct import Optional as COptional
 from pySim.construct import LV, filter_dict
-from pySim.utils import rpad, lpad, b2h, h2b, sw_match, bertlv_encode_len, Hexstr, h2i, i2h, str_sanitize, expand_hex, SwMatchstr
+from pySim.utils import rpad, lpad, b2h, h2b, sw_match, bertlv_encode_len, h2i, i2h, str_sanitize, expand_hex, SwMatchstr
 from pySim.utils import Hexstr, SwHexstr, ResTuple
 from pySim.exceptions import SwMatchError
 from pySim.transport import LinkBase
@@ -249,7 +250,7 @@ class SimCardCommands:
         """
 
         rv = []
-        if type(dir_list) is not list:
+        if not isinstance(dir_list, list):
             dir_list = [dir_list]
         for i in dir_list:
             data, sw = self.send_apdu(self.cla_byte + "a4" + self.sel_ctrl + "02" + i)
@@ -268,10 +269,10 @@ class SimCardCommands:
                 list of return values (FCP in hex encoding) for each element of the path
         """
         rv = []
-        if type(dir_list) is not list:
+        if not isinstance(dir_list, list):
             dir_list = [dir_list]
         for i in dir_list:
-            data, sw = self.select_file(i)
+            data, _sw = self.select_file(i)
             rv.append(data)
         return rv
 
@@ -324,7 +325,7 @@ class SimCardCommands:
                 data, sw = self.send_apdu_checksw(pdu)
             except Exception as e:
                 raise ValueError('%s, failed to read (offset %d)' %
-                                 (str_sanitize(str(e)), offset))
+                                 (str_sanitize(str(e)), offset)) from e
             total_data += data
             chunk_offset += chunk_len
         return total_data, sw
@@ -384,7 +385,7 @@ class SimCardCommands:
                 chunk_data, chunk_sw = self.send_apdu_checksw(pdu)
             except Exception as e:
                 raise ValueError('%s, failed to write chunk (chunk_offset %d, chunk_len %d)' %
-                                 (str_sanitize(str(e)), chunk_offset, chunk_len))
+                                 (str_sanitize(str(e)), chunk_offset, chunk_len)) from e
             total_data += data
             chunk_offset += chunk_len
         if verify:
@@ -440,10 +441,10 @@ class SimCardCommands:
         else:
             # make sure the input data is padded to the record length using 0xFF.
             # In cases where the input data exceed we throw an exception.
-            if (len(data) // 2 > rec_length):
+            if len(data) // 2 > rec_length:
                 raise ValueError('Data length exceeds record length (expected max %d, got %d)' % (
                     rec_length, len(data) // 2))
-            elif (len(data) // 2 < rec_length):
+            elif len(data) // 2 < rec_length:
                 if leftpad:
                     data = lpad(data, rec_length * 2)
                 else:
@@ -518,7 +519,7 @@ class SimCardCommands:
         # retrieve first block
         data, sw = self._retrieve_data(tag, first=True)
         total_data += data
-        while sw == '62f1' or sw == '62f2':
+        while sw in ['62f1', '62f2']:
             data, sw = self._retrieve_data(tag, first=False)
             total_data += data
         return total_data, sw
@@ -529,7 +530,7 @@ class SimCardCommands:
             p1 = 0x80
         else:
             p1 = 0x00
-        if isinstance(data, bytes) or isinstance(data, bytearray):
+        if isinstance(data, (bytes, bytearray)):
             data = b2h(data)
         pdu = self.cla4lchan('80') + 'db00%02x%02x%s' % (p1, len(data)//2, data)
         return self.send_apdu_checksw(pdu)
@@ -585,10 +586,9 @@ class SimCardCommands:
                 context : 16 byte random data ('3g' or 'gsm')
         """
         # 3GPP TS 31.102 Section 7.1.2.1
-        AuthCmd3G = Struct('rand'/LV, 'autn'/Optional(LV))
+        AuthCmd3G = Struct('rand'/LV, 'autn'/COptional(LV))
         AuthResp3GSyncFail = Struct(Const(b'\xDC'), 'auts'/LV)
-        AuthResp3GSuccess = Struct(
-            Const(b'\xDB'), 'res'/LV, 'ck'/LV, 'ik'/LV, 'kc'/Optional(LV))
+        AuthResp3GSuccess = Struct(Const(b'\xDB'), 'res'/LV, 'ck'/LV, 'ik'/LV, 'kc'/COptional(LV))
         AuthResp3G = Select(AuthResp3GSyncFail, AuthResp3GSuccess)
         # build parameters
         cmd_data = {'rand': rand, 'autn': autn}
@@ -666,7 +666,7 @@ class SimCardCommands:
         if sw_match(sw, '63cx'):
             raise RuntimeError('Failed to %s chv_no 0x%02X with code 0x%s, %i tries left.' %
                                (op_name, chv_no, b2h(pin_code).upper(), int(sw[3])))
-        elif (sw != '9000'):
+        if sw != '9000':
             raise SwMatchError(sw, '9000')
 
     def verify_chv(self, chv_no: int, code: Hexstr) -> ResTuple:
@@ -761,30 +761,28 @@ class SimCardCommands:
         def encode_duration(secs: int) -> Hexstr:
             if secs >= 10*24*60*60:
                 return '04%02x' % (secs // (10*24*60*60))
-            elif secs >= 24*60*60:
+            if secs >= 24*60*60:
                 return '03%02x' % (secs // (24*60*60))
-            elif secs >= 60*60:
+            if secs >= 60*60:
                 return '02%02x' % (secs // (60*60))
-            elif secs >= 60:
+            if secs >= 60:
                 return '01%02x' % (secs // 60)
-            else:
-                return '00%02x' % secs
+            return '00%02x' % secs
 
         def decode_duration(enc: Hexstr) -> int:
             time_unit = enc[:2]
             length = h2i(enc[2:4])[0]
             if time_unit == '04':
                 return length * 10*24*60*60
-            elif time_unit == '03':
+            if time_unit == '03':
                 return length * 24*60*60
-            elif time_unit == '02':
+            if time_unit == '02':
                 return length * 60*60
-            elif time_unit == '01':
+            if time_unit == '01':
                 return length * 60
-            elif time_unit == '00':
+            if time_unit == '00':
                 return length
-            else:
-                raise ValueError('Time unit must be 0x00..0x04')
+            raise ValueError('Time unit must be 0x00..0x04')
         min_dur_enc = encode_duration(min_len_secs)
         max_dur_enc = encode_duration(max_len_secs)
         data, sw = self.send_apdu_checksw('8076000004' + min_dur_enc + max_dur_enc)
