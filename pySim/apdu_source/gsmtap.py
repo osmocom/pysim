@@ -16,12 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from pySim.gsmtap import GsmtapMessage, GsmtapSource
-from . import ApduSource, PacketType, CardReset
+from pySim.gsmtap import GsmtapSource
 
 from pySim.apdu.ts_102_221 import ApduCommands as UiccApduCommands
 from pySim.apdu.ts_31_102 import ApduCommands as UsimApduCommands
 from pySim.apdu.global_platform import ApduCommands as GpApduCommands
+
+from . import ApduSource, PacketType, CardReset
+
 ApduCommands = UiccApduCommands + UsimApduCommands + GpApduCommands
 
 class GsmtapApduSource(ApduSource):
@@ -41,16 +43,16 @@ class GsmtapApduSource(ApduSource):
         self.gsmtap = GsmtapSource(bind_ip, bind_port)
 
     def read_packet(self) -> PacketType:
-        gsmtap_msg, addr = self.gsmtap.read_packet()
+        gsmtap_msg, _addr = self.gsmtap.read_packet()
         if gsmtap_msg['type'] != 'sim':
             raise ValueError('Unsupported GSMTAP type %s' % gsmtap_msg['type'])
         sub_type = gsmtap_msg['sub_type']
         if sub_type == 'apdu':
             return ApduCommands.parse_cmd_bytes(gsmtap_msg['body'])
-        elif sub_type == 'atr':
+        if sub_type == 'atr':
             # card has been reset
             return CardReset(gsmtap_msg['body'])
-        elif sub_type in ['pps_req', 'pps_rsp']:
+        if sub_type in ['pps_req', 'pps_rsp']:
             # simply ignore for now
             pass
         else:
