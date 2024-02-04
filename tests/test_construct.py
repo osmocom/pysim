@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import unittest
+from pySim.utils import b2h, h2b
 from pySim.construct import *
+from construct import FlagsEnum
 
 tests = [
         ( b'\x80', 0x80 ),
@@ -74,6 +76,26 @@ class TestUcs2Adapter(unittest.TestCase):
             encoded = h2b(encoded_hex)
             re_enc = self.ad._encode(string, None, None)
             self.assertEqual(encoded, re_enc)
+
+class TestTrailerAdapter(unittest.TestCase):
+    Privileges = FlagsEnum(StripTrailerAdapter(GreedyBytes, 3), security_domain=0x800000,
+                                          dap_verification=0x400000,
+                                          delegated_management=0x200000, card_lock=0x100000,
+                                          card_terminate=0x080000, card_reset=0x040000,
+                                          cvm_management=0x020000, mandated_dap_verification=0x010000,
+                                          trusted_path=0x8000, authorized_management=0x4000,
+                                          token_management=0x2000, global_delete=0x1000,
+                                          global_lock=0x0800, global_registry=0x0400,
+                                          final_application=0x0200, global_service=0x0100,
+                                          receipt_generation=0x80, ciphered_load_file_data_block=0x40,
+                                          contactless_activation=0x20, contactless_self_activation=0x10)
+    examples = ['00', '80', '8040', '400010']
+    def test_examples(self):
+        for e in self.examples:
+            dec = self.Privileges.parse(h2b(e))
+            reenc = self.Privileges.build(dec)
+            self.assertEqual(e, b2h(reenc))
+
 
 
 

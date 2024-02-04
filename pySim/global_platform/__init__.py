@@ -124,15 +124,16 @@ class KeyInformation(BER_TLV_IE, tag=0xe0, nested=[KeyInformationData]):
     pass
 
 # GP v2.3 11.1.9
-KeyUsageQualifier = Struct('byte1'/FlagsEnum(Byte, verification_encryption=0x80,
-                                             computation_decipherment=0x40,
-                                             sm_response=0x20,
-                                             sm_command=0x10,
-                                             confidentiality=0x08,
-                                             crypto_checksum=0x04,
-                                             digital_signature=0x02,
-                                             crypto_authorization=0x01),
-                           'byte2'/COptional(FlagsEnum(Byte, key_agreement=0x80)))
+KeyUsageQualifier = FlagsEnum(StripTrailerAdapter(GreedyBytes, 2),
+                              verification_encryption=0x8000,
+                              computation_decipherment=0x4000,
+                              sm_response=0x2000,
+                              sm_command=0x1000,
+                              confidentiality=0x0800,
+                              crypto_checksum=0x0400,
+                              digital_signature=0x0200,
+                              crypto_authorization=0x0100,
+                              key_agreement=0x0080)
 
 # GP v2.3 11.1.10
 KeyAccess = Enum(Byte, sd_and_any_assoc_app=0x00, sd_only=0x01, any_assoc_app_but_not_sd=0x02,
@@ -210,13 +211,13 @@ class SupportedLFDBHAlgorithms(BER_TLV_IE, tag=0x83):
 class CiphersForLFDBEncryption(BER_TLV_IE, tag=0x84):
     _construct = Enum(Byte, tripledes16=0x01, aes128=0x02, aes192=0x04, aes256=0x08,
                       icv_supported_for_lfdb=0x80)
-CipherSuitesForSignatures = Struct('byte1'/FlagsEnum(Byte, rsa1024_pkcsv15_sha1=0x01,
-                                                     rsa_gt1024_pss_sha256=0x02,
-                                                     single_des_plus_final_triple_des_mac_16b=0x04,
-                                                     cmac_aes128=0x08, cmac_aes192=0x10, cmac_aes256=0x20,
-                                                     ecdsa_ecc256_sha256=0x40, ecdsa_ecc384_sha384=0x80),
-                                   'byte2'/COptional(FlagsEnum(Byte, ecdsa_ecc512_sha512=0x01,
-                                                               ecdsa_ecc_521_sha512=0x02)))
+CipherSuitesForSignatures = FlagsEnum(StripTrailerAdapter(GreedyBytes, 2),
+                                      rsa1024_pkcsv15_sha1=0x0100,
+                                      rsa_gt1024_pss_sha256=0x0200,
+                                      single_des_plus_final_triple_des_mac_16b=0x0400,
+                                      cmac_aes128=0x0800, cmac_aes192=0x1000, cmac_aes256=0x2000,
+                                      ecdsa_ecc256_sha256=0x4000, ecdsa_ecc384_sha384=0x8000,
+                                      ecdsa_ecc512_sha512=0x0001, ecdsa_ecc_521_sha512=0x0002)
 class CiphersForTokens(BER_TLV_IE, tag=0x85):
     _construct = CipherSuitesForSignatures
 class CiphersForReceipts(BER_TLV_IE, tag=0x86):
@@ -387,15 +388,16 @@ class LifeCycleState(BER_TLV_IE, tag=0x9f70):
 
 # Section 11.4.3.1 Table 11-36 + Section 11.1.2
 class Privileges(BER_TLV_IE, tag=0xc5):
-    _construct = Struct('byte1'/FlagsEnum(Byte, security_domain=0x80, dap_verification=0x40,
-                                          delegated_management=0x20, card_lock=0x10, card_terminate=0x08,
-                                          card_reset=0x04, cvm_management=0x02,
-                                          mandated_dap_verification=0x01),
-                        'byte2'/COptional(FlagsEnum(Byte, trusted_path=0x80, authorized_management=0x40,
-                                          token_management=0x20, global_delete=0x10, global_lock=0x08,
-                                          global_registry=0x04, final_application=0x02, global_service=0x01)),
-                        'byte3'/COptional(FlagsEnum(Byte, receipt_generation=0x80, ciphered_load_file_data_block=0x40,
-                                          contactless_activation=0x20, contactless_self_activation=0x10)))
+    _construct = FlagsEnum(StripTrailerAdapter(GreedyBytes, 3),
+                           security_domain=0x800000, dap_verification=0x400000,
+                           delegated_management=0x200000, card_lock=0x100000, card_terminate=0x080000,
+                           card_reset=0x040000, cvm_management=0x020000,
+                           mandated_dap_verification=0x010000,
+                           trusted_path=0x8000, authorized_management=0x4000,
+                           token_management=0x2000, global_delete=0x1000, global_lock=0x0800,
+                           global_registry=0x0400, final_application=0x0200, global_service=0x0100,
+                           receipt_generation=0x80, ciphered_load_file_data_block=0x40,
+                           contactless_activation=0x20, contactless_self_activation=0x10)
 
 # Section 11.4.3.1 Table 11-36 + Section 11.1.7
 class ImplicitSelectionParameter(BER_TLV_IE, tag=0xcf):

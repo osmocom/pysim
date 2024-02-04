@@ -365,6 +365,37 @@ class Ipv6Adapter(Adapter):
         ia = ipaddress.IPv6Address(obj)
         return ia.packed
 
+class StripTrailerAdapter(Adapter):
+    """
+    Encoder removes all trailing bytes matching the default_value
+    Decoder pads input data up to total_length with default_value
+
+    This is used in constellations like "FlagsEnum(StripTrailerAdapter(GreedyBytes, 3), ..."
+    where you have a bit-mask that may have 1, 2 or 3 bytes, depending on whether or not any
+    of the LSBs are actually set.
+    """
+    def __init__(self, subcon, total_length:int, default_value=b'\x00', min_len=1):
+        super().__init__(subcon)
+        assert len(default_value) == 1
+        self.total_length = total_length
+        self.default_value = default_value
+        self.min_len = min_len
+
+    def _decode(self, obj, context, path):
+        assert type(obj) == bytes
+        # pad with suppressed/missing bytes
+        if len(obj) < self.total_length:
+            obj += self.default_value * (self.total_length - len(obj))
+        return int.from_bytes(obj, 'big')
+
+    def _encode(self, obj, context, path):
+        assert type(obj) == int
+        obj = obj.to_bytes(self.total_length, 'big')
+        # remove trailing bytes if they are zero
+        while len(obj) > self.min_len and obj[-1] == self.default_value[0]:
+            obj = obj[:-1]
+        return obj
+
 
 def filter_dict(d, exclude_prefix='_'):
     """filter the input dict to ensure no keys starting with 'exclude_prefix' remain."""
