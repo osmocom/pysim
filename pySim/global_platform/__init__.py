@@ -522,12 +522,12 @@ class ADF_SD(CardADF):
             See GlobalPlatform CardSpecification v2.3 Section 11.8 for details.
 
             Example (SCP80 KIC/KID/KIK):
-                put_key --key-version-nr 1 --key-id 0x81    --key-type aes --key-data 000102030405060708090a0b0c0d0e0f
+                put_key --key-version-nr 1 --key-id 0x01    --key-type aes --key-data 000102030405060708090a0b0c0d0e0f
                                                             --key-type aes --key-data 101112131415161718191a1b1c1d1e1f
                                                             --key-type aes --key-data 202122232425262728292a2b2c2d2e2f
 
             Example (SCP81 TLS-PSK/KEK):
-                put_key --key-version-nr 0x40 --key-id 0x81 --key-type tls_psk --key-data 303132333435363738393a3b3c3d3e3f
+                put_key --key-version-nr 0x40 --key-id 0x01 --key-type tls_psk --key-data 303132333435363738393a3b3c3d3e3f
                                                             --key-type des --key-data 404142434445464748494a4b4c4d4e4f
 
             """
@@ -540,7 +540,10 @@ class ADF_SD(CardADF):
                 else:
                     kcv = ''
                 kdb.append({'key_type': opts.key_type[i], 'kcb': opts.key_data[i], 'kcv': kcv})
-            self.put_key(opts.old_key_version_nr, opts.key_version_nr, opts.key_id, kdb)
+            p2 = opts.key_id
+            if len(opts.key_type) > 1:
+                p2 |= 0x80
+            self.put_key(opts.old_key_version_nr, opts.key_version_nr, p2, kdb)
 
         # Table 11-68: Key Data Field - Format 1 (Basic Format)
         KeyDataBasic = GreedyRange(Struct('key_type'/KeyType,
