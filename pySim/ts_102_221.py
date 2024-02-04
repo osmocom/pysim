@@ -16,22 +16,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+from bidict import bidict
 
-from construct import *
+from construct import Select, Const, Bit, Struct, Int16ub, FlagsEnum, GreedyString, ValidationError
 from construct import Optional as COptional
+
 from pySim.construct import *
 from pySim.utils import *
 from pySim.filesystem import *
 from pySim.tlv import *
-from bidict import bidict
 from pySim.profile import CardProfile
 from pySim.profile import match_uicc
-from pySim.profile import match_sim
-import pySim.iso7816_4 as iso7816_4
+from pySim import iso7816_4
 
 # A UICC will usually also support 2G functionality. If this is the case, we
 # need to add DF_GSM and DF_TELECOM along with the UICC related files
-from pySim.ts_51_011 import DF_GSM, DF_TELECOM, AddonSIM
+from pySim.ts_51_011 import AddonSIM
 from pySim.gsm_r import AddonGSMR
 from pySim.cdma_ruim import AddonRUIM
 
@@ -234,20 +234,19 @@ class LifeCycleStatusInteger(BER_TLV_IE, tag=0x8A):
     def _to_bytes(self):
         if self.decoded == 'no_information':
             return b'\x00'
-        elif self.decoded == 'creation':
+        if self.decoded == 'creation':
             return b'\x01'
-        elif self.decoded == 'initialization':
+        if self.decoded == 'initialization':
             return b'\x03'
-        elif self.decoded == 'operational_activated':
+        if self.decoded == 'operational_activated':
             return b'\x05'
-        elif self.decoded == 'operational_deactivated':
+        if self.decoded == 'operational_deactivated':
             return b'\x04'
-        elif self.decoded == 'termination':
+        if self.decoded == 'termination':
             return b'\x0c'
-        elif isinstance(self.decoded, int):
+        if isinstance(self.decoded, int):
             return self.decoded.to_bytes(1, 'big')
-        else:
-            raise ValueError
+        raise ValueError
 
 # ETSI TS 102 221 11.1.1.4.9
 class PS_DO(BER_TLV_IE, tag=0x90):
@@ -481,12 +480,11 @@ class CRT_DO(DataObject):
     def from_bytes(self, do: bytes):
         """Decode a Control Reference Template DO."""
         if len(do) != 6:
-            raise ValueError('Unsupported CRT DO length: %s', do)
+            raise ValueError('Unsupported CRT DO length: %s' %do)
         if do[0] != 0x83 or do[1] != 0x01:
-            raise ValueError('Unsupported Key Ref Tag or Len in CRT DO %s', do)
+            raise ValueError('Unsupported Key Ref Tag or Len in CRT DO %s' % do)
         if do[3:] != b'\x95\x01\x08':
-            raise ValueError(
-                'Unsupported Usage Qualifier Tag or Len in CRT DO %s', do)
+            raise ValueError('Unsupported Usage Qualifier Tag or Len in CRT DO %s' % do)
         self.encoded = do[0:6]
         self.decoded = pin_names[do[2]]
         return do[6:]
@@ -520,7 +518,7 @@ class SecCondByte_DO(DataObject):
         if inb & 0x10:
             res.append('user_auth')
         rd = {'mode': cond}
-        if len(res):
+        if len(res) > 0:
             rd['conditions'] = res
         self.decoded = rd
 
@@ -723,7 +721,7 @@ class EF_ARR(LinFixedEF):
                 raise ValueError
         return by_mode
 
-    def _decode_record_bin(self, raw_bin_data, **kwargs):
+    def _decode_record_bin(self, raw_bin_data, **_kwargs):
         # we can only guess if we should decode for EF or DF here :(
         arr_seq = DataObjectSequence('arr', sequence=[AM_DO_EF, SC_DO])
         dec = arr_seq.decode_multi(raw_bin_data)
@@ -731,20 +729,17 @@ class EF_ARR(LinFixedEF):
         # 'un-flattening' decoder, and hence would be unable to encode :(
         return dec[0]
 
-    def _encode_record_bin(self, in_json, **kwargs):
+    def _encode_record_bin(self, in_json, **_kwargs):
         # we can only guess if we should decode for EF or DF here :(
         arr_seq = DataObjectSequence('arr', sequence=[AM_DO_EF, SC_DO])
         return arr_seq.encode_multi(in_json)
 
     @with_default_category('File-Specific Commands')
     class AddlShellCommands(CommandSet):
-        def __init__(self):
-            super().__init__()
-
         @cmd2.with_argparser(LinFixedEF.ShellCommands.read_rec_dec_parser)
         def do_read_arr_record(self, opts):
             """Read one EF.ARR record in flattened, human-friendly form."""
-            (data, sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
+            (data, _sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
             data = self._cmd.lchan.selected_file.flatten(data)
             self._cmd.poutput_json(data, opts.oneline)
 
@@ -755,7 +750,7 @@ class EF_ARR(LinFixedEF):
             # collect all results in list so they are rendered as JSON list when printing
             data_list = []
             for recnr in range(1, 1 + num_of_rec):
-                (data, sw) = self._cmd.lchan.read_record_dec(recnr)
+                (data, _sw) = self._cmd.lchan.read_record_dec(recnr)
                 data = self._cmd.lchan.selected_file.flatten(data)
                 data_list.append(data)
             self._cmd.poutput_json(data_list, opts.oneline)
@@ -869,10 +864,10 @@ class CardProfileUICC(CardProfile):
                          shell_cmdsets = [self.AddlShellCommands()], addons = addons)
 
     @staticmethod
-    def decode_select_response(resp_hex: str) -> object:
+    def decode_select_response(data_hex: str) -> object:
         """ETSI TS 102 221 Section 11.1.1.3"""
         t = FcpTemplate()
-        t.from_tlv(h2b(resp_hex))
+        t.from_tlv(h2b(data_hex))
         d = t.to_dict()
         return flatten_dict_lists(d['fcp_template'])
 
