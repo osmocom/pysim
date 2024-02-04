@@ -19,12 +19,10 @@
 
 from typing import Optional
 import shelve
-import copyreg
 
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography import x509
-from collections.abc import MutableMapping
 
 from pySim.esim import compile_asn1_subdir
 
@@ -98,4 +96,3 @@ class RspSessionState:
 class RspSessionStore(shelve.DbfilenameShelf):
     """A derived class as wrapper around the database-backed non-volatile storage 'shelve', in case we might
     need to extend it in the future. We use it to store RspSessionState objects indexed by transactionId."""
-    pass
