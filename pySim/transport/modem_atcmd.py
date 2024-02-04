@@ -17,15 +17,15 @@
 #
 
 import logging as log
-import serial
 import time
 import re
 import argparse
 from typing import Optional
+import serial
 
 from pySim.utils import Hexstr, ResTuple
 from pySim.transport import LinkBase
-from pySim.exceptions import *
+from pySim.exceptions import ReaderError, ProtocolError
 
 # HACK: if somebody needs to debug this thing
 # log.root.setLevel(log.DEBUG)
@@ -57,7 +57,7 @@ class ModemATCommandLink(LinkBase):
 
     def send_at_cmd(self, cmd, timeout=0.2, patience=0.002):
         # Convert from string to bytes, if needed
-        bcmd = cmd if type(cmd) is bytes else cmd.encode()
+        bcmd = cmd if isinstance(cmd, bytes) else cmd.encode()
         bcmd += b'\r'
 
         # Clean input buffer from previous/unexpected data
@@ -67,9 +67,9 @@ class ModemATCommandLink(LinkBase):
         log.debug('Sending AT command: %s', cmd)
         try:
             wlen = self._sl.write(bcmd)
-            assert(wlen == len(bcmd))
-        except:
-            raise ReaderError('Failed to send AT command: %s' % cmd)
+            assert wlen == len(bcmd)
+        except Exception as exc:
+            raise ReaderError('Failed to send AT command: %s' % cmd) from exc
 
         rsp = b''
         its = 1
@@ -91,8 +91,7 @@ class ModemATCommandLink(LinkBase):
                 break
             time.sleep(patience)
             its += 1
-        log.debug('Command took %0.6fs (%d cycles a %fs)',
-                  time.time() - t_start, its, patience)
+        log.debug('Command took %0.6fs (%d cycles a %fs)', time.time() - t_start, its, patience)
 
         if self._echo:
             # Skip echo chars
@@ -120,11 +119,10 @@ class ModemATCommandLink(LinkBase):
             if result[-1] == b'OK':
                 self._echo = False
                 return
-            elif result[-1] == b'AT\r\r\nOK':
+            if result[-1] == b'AT\r\r\nOK':
                 self._echo = True
                 return
-        raise ReaderError(
-            'Interface \'%s\' does not respond to \'AT\' command' % self._device)
+        raise ReaderError('Interface \'%s\' does not respond to \'AT\' command' % self._device)
 
     def reset_card(self):
         # Reset the modem, just to be sure
@@ -135,7 +133,7 @@ class ModemATCommandLink(LinkBase):
         if self.send_at_cmd('AT+CSIM=?') != [b'OK']:
             raise ReaderError('The modem does not seem to support SIM access')
 
-        log.info('Modem at \'%s\' is ready!' % self._device)
+        log.info('Modem at \'%s\' is ready!', self._device)
 
     def connect(self):
         pass  # Nothing to do really ...
@@ -165,9 +163,9 @@ class ModemATCommandLink(LinkBase):
         # Make sure that the response has format: b'+CSIM: %d,\"%s\"'
         try:
             result = re.match(b'\+CSIM: (\d+),\"([0-9A-F]+)\"', rsp)
-            (rsp_pdu_len, rsp_pdu) = result.groups()
-        except:
-            raise ReaderError('Failed to parse response from modem: %s' % rsp)
+            (_rsp_pdu_len, rsp_pdu) = result.groups()
+        except Exception as exc:
+            raise ReaderError('Failed to parse response from modem: %s' % rsp) from exc
 
         # TODO: make sure we have at least SW
         data = rsp_pdu[:-4].decode().lower()
