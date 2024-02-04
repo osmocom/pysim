@@ -16,11 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import serial
 import time
 import os
 import argparse
 from typing import Optional
+import serial
 
 from pySim.exceptions import NoCardError, ProtocolError
 from pySim.transport import LinkBase
@@ -51,7 +51,7 @@ class SerialSimLink(LinkBase):
         self._atr = None
 
     def __del__(self):
-        if (hasattr(self, "_sl")):
+        if hasattr(self, "_sl"):
             self._sl.close()
 
     def wait_for_card(self, timeout: Optional[int] = None, newcardonly: bool = False):
@@ -62,8 +62,7 @@ class SerialSimLink(LinkBase):
             self.reset_card()
             if not newcardonly:
                 return
-            else:
-                existing = True
+            existing = True
         except NoCardError:
             pass
 
@@ -86,7 +85,7 @@ class SerialSimLink(LinkBase):
                     # Tolerate a couple of protocol error ... can happen if
                     # we try when the card is 'half' inserted
                     pe += 1
-                    if (pe > 2):
+                    if pe > 2:
                         raise
 
         # Timed out ...
@@ -105,7 +104,7 @@ class SerialSimLink(LinkBase):
         rv = self._reset_card()
         if rv == 0:
             raise NoCardError()
-        elif rv < 0:
+        if rv < 0:
             raise ProtocolError()
         return rv
 
@@ -120,8 +119,8 @@ class SerialSimLink(LinkBase):
         try:
             rst_meth = rst_meth_map[self._rst_pin[1:]]
             rst_val = rst_val_map[self._rst_pin[0]]
-        except:
-            raise ValueError('Invalid reset pin %s' % self._rst_pin)
+        except Exception as exc:
+            raise ValueError('Invalid reset pin %s' % self._rst_pin) from exc
 
         rst_meth(rst_val)
         time.sleep(0.1)  # 100 ms
@@ -203,7 +202,7 @@ class SerialSimLink(LinkBase):
             b = self._rx_byte()
             if ord(b) == pdu[1]:
                 break
-            elif b != '\x60':
+            if b != '\x60':
                 # Ok, it 'could' be SW1
                 sw1 = b
                 sw2 = self._rx_byte()
@@ -222,7 +221,7 @@ class SerialSimLink(LinkBase):
         to_recv = data_len - len(pdu) + 5 + 2
 
         data = bytes(0)
-        while (len(data) < to_recv):
+        while len(data) < to_recv:
             b = self._rx_byte()
             if (to_recv == 2) and (b == '\x60'):  # Ignore NIL if we have no RX data (hack ?)
                 continue
