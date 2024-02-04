@@ -23,7 +23,6 @@
 
 # SGP.22 v3.0 Section 2.5.3:
 # That block of data is split into segments of a maximum size of 1020 bytes (including the tag, length field and MAC).
-MAX_SEGMENT_SIZE = 1020
 
 import abc
 from typing import List
@@ -42,6 +41,8 @@ from pySim.utils import bertlv_encode_len, bertlv_parse_one, b2h
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+MAX_SEGMENT_SIZE = 1020
+
 class BspAlgo(abc.ABC):
     blocksize: int
 
@@ -50,11 +51,11 @@ class BspAlgo(abc.ABC):
         if in_len % multiple == 0:
             return b''
         pad_cnt = multiple - (in_len % multiple)
-        return b'\x00' * pad_cnt
+        return bytes([padding]) * pad_cnt
 
     def _pad_to_multiple(self, indat: bytes, multiple: int, padding: int = 0) -> bytes:
         """Pad the input data to multiples of 'multiple'."""
-        return indat + self._get_padding(len(indat), self.blocksize, padding)
+        return indat + self._get_padding(len(indat), multiple, padding)
 
     def __str__(self):
         return self.__class__.__name__
@@ -81,17 +82,14 @@ class BspAlgoCrypt(BspAlgo, abc.ABC):
     @abc.abstractmethod
     def _unpad(self, padded: bytes) -> bytes:
         """Remove the padding from padded data."""
-        pass
 
     @abc.abstractmethod
     def _encrypt(self, data:bytes) -> bytes:
         """Actual implementation, to be implemented by derived class."""
-        pass
 
     @abc.abstractmethod
     def _decrypt(self, data:bytes) -> bytes:
         """Actual implementation, to be implemented by derived class."""
-        pass
 
 class BspAlgoCryptAES128(BspAlgoCrypt):
     name = 'AES-CBC-128'
@@ -166,7 +164,6 @@ class BspAlgoMac(BspAlgo, abc.ABC):
     @abc.abstractmethod
     def _auth(self, temp_data: bytes) -> bytes:
         """To be implemented by algorithm specific derived class."""
-        pass
 
 class BspAlgoMacAES128(BspAlgoMac):
     name = 'AES-CMAC-128'
@@ -289,7 +286,7 @@ class BspInstance:
 
     def demac_only_one(self, ciphertext: bytes) -> bytes:
         payload = self.m_algo.verify(ciphertext)
-        tdict, l, val, remain = bertlv_parse_one(payload)
+        _tdict, _l, val, _remain = bertlv_parse_one(payload)
         return val
 
     def demac_only(self, ciphertext_list: List[bytes]) -> bytes:
