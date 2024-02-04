@@ -21,13 +21,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pySim.commands import SimCardCommands
-from pySim.filesystem import CardApplication, interpret_sw
-from pySim.utils import all_subclasses
 import abc
 import operator
 from typing import List
 
+from pySim.commands import SimCardCommands
+from pySim.filesystem import CardApplication, interpret_sw
+from pySim.utils import all_subclasses
 
 def _mf_select_test(scc: SimCardCommands,
                     cla_byte: str, sel_ctrl: str,
@@ -166,7 +166,7 @@ class CardProfile:
         return None
 
     def add_addon(self, addon: 'CardProfileAddon'):
-        assert(addon not in self.addons)
+        assert addon not in self.addons
         # we don't install any additional files, as that is happening in the RuntimeState.
         self.addons.append(addon)
 
@@ -186,7 +186,6 @@ class CardProfileAddon(abc.ABC):
         self.desc = kw.get("desc", None)
         self.files_in_mf = kw.get("files_in_mf", [])
         self.shell_cmdsets = kw.get("shell_cmdsets", [])
-        pass
 
     def __str__(self):
         return self.name
@@ -194,4 +193,3 @@ class CardProfileAddon(abc.ABC):
     @abc.abstractmethod
     def probe(self, card: 'CardBase') -> bool:
         """Probe a given card to determine whether or not this add-on is present/supported."""
-        pass
