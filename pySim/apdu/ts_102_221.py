@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import logging
+from construct import GreedyRange, Struct
 from pySim.construct import *
 from pySim.filesystem import *
 from pySim.runtime import RuntimeLchan

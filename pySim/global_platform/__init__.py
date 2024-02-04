@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Optional, List, Dict, Tuple
 from construct import Optional as COptional
-from construct import *
+from construct import Struct, GreedyRange, FlagsEnum, Int16ub, Padding, Bit, Const
+from typing import Optional, List, Dict, Tuple
 from copy import deepcopy
 from bidict import bidict
 from Cryptodome.Random import get_random_bytes
@@ -612,7 +612,7 @@ class ADF_SD(CardADF):
         def set_status(self, scope:str, status:str, aid:Hexstr = ''):
             SetStatus = Struct(Const(0x80, Byte), Const(0xF0, Byte),
                                'scope'/SetStatusScope, 'status'/CLifeCycleState,
-                               'aid'/HexAdapter(Prefixed(Int8ub, Optional(GreedyBytes))))
+                               'aid'/HexAdapter(Prefixed(Int8ub, COptional(GreedyBytes))))
             apdu = build_construct(SetStatus, {'scope':scope, 'status':status, 'aid':aid})
             data, sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(apdu))
 

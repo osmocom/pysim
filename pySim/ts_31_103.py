@@ -22,6 +22,7 @@ Various constants from 3GPP TS 31.103 V16.1.0
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from construct import Struct, Switch, this, Bytes, GreedyString
 from pySim.filesystem import *
 from pySim.utils import *
 from pySim.tlv import *

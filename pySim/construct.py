@@ -1,7 +1,9 @@
 from construct.lib.containers import Container, ListContainer
 from construct.core import EnumIntegerString
 import typing
-from construct import *
+from construct import Adapter, Prefixed, Int8ub, GreedyBytes, Default, Flag, Byte, Construct, Enum
+from construct import BitsInteger, BitStruct, Bytes, StreamError, stream_read_entire, stream_write
+from construct import SizeofError, IntegerError, swapbytes
 from construct.core import evaluate, BitwisableString
 from construct.lib import integertypes
 from pySim.utils import b2h, h2b, swap_nibbles

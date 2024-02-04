@@ -19,7 +19,6 @@
 
 from typing import Optional, List, Dict, Any, Tuple
 from bidict import bidict
-from construct import *
 
 from pySim.utils import bertlv_encode_len, bertlv_parse_len, bertlv_encode_tag, bertlv_parse_tag
 from pySim.utils import comprehensiontlv_encode_tag, comprehensiontlv_parse_tag
