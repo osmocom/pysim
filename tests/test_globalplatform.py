@@ -71,6 +71,14 @@ class SCP03_Test:
     get_eid_cmd_plain = h2b('80E2910006BF3E035C015A')
     get_eid_rsp_plain = h2b('bf3e125a1089882119900000000000000000000005')
 
+    # must be overridden by derived classes
+    init_upd_cmd = b''
+    init_upd_rsp = b''
+    ext_auth_cmd = b''
+    get_eid_cmd = b''
+    get_eid_rsp = b''
+    keyset = None
+
     @property
     def host_challenge(self) -> bytes:
         return self.init_upd_cmd[5:]
@@ -102,18 +110,22 @@ class SCP03_Test:
         cls.scp = SCP03(card_keys = cls.keyset)
 
     def test_01_initialize_update(self):
+        # pylint: disable=no-member
         self.assertEqual(self.init_upd_cmd, self.scp.gen_init_update_apdu(self.host_challenge))
 
     def test_02_parse_init_upd_resp(self):
         self.scp.parse_init_update_resp(self.init_upd_rsp)
 
     def test_03_gen_ext_auth_apdu(self):
+        # pylint: disable=no-member
         self.assertEqual(self.ext_auth_cmd, self.scp.gen_ext_auth_apdu(self.security_level))
 
     def test_04_wrap_cmd_apdu_get_eid(self):
+        # pylint: disable=no-member
         self.assertEqual(self.get_eid_cmd, self.scp.wrap_cmd_apdu(self.get_eid_cmd_plain))
 
     def test_05_unwrap_rsp_apdu_get_eid(self):
+        # pylint: disable=no-member
         self.assertEqual(self.get_eid_rsp_plain, self.scp.unwrap_rsp_apdu(h2b('9000'), self.get_eid_rsp))
 
 

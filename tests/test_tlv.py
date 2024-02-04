@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+from construct import Int8ub
 from pySim.tlv import *
 
 class TestUtils(unittest.TestCase):
