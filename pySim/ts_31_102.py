@@ -26,7 +26,12 @@ Various constants from 3GPP TS 31.102 V17.9.0
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Mapping between USIM Service Number and its description
+import enum
+
+from construct import Optional as COptional
+from construct import Int32ub, Nibble, GreedyRange, Struct, FlagsEnum, Switch, this, Int16ub, Padding
+from construct import Bytewise, Int24ub, PaddedString
+
 import pySim.ts_102_221
 from pySim.ts_51_011 import EF_ACMmax, EF_AAeM, EF_eMLPP, EF_CMI, EF_PNN
 from pySim.ts_51_011 import EF_MMSN, EF_MMSICP, EF_MMSUP, EF_MMSUCP, EF_VGCS, EF_VGCSS, EF_NIA
@@ -41,11 +46,8 @@ from pySim.ts_31_102_telecom import DF_PHONEBOOK, EF_UServiceTable
 from pySim.construct import *
 from pySim.utils import is_hexstr
 from pySim.cat import SMS_TPDU, DeviceIdentities, SMSPPDownload
-from construct import Optional as COptional
-from construct import *
-from typing import Tuple
-from struct import unpack, pack
-import enum
+
+# Mapping between USIM Service Number and its description
 EF_UST_map = {
     1: 'Local Phone Book',
     2: 'Fixed Dialling Numbers (FDN)',
@@ -400,15 +402,15 @@ class EF_LI(TransRecEF):
                  desc='Language Indication'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len)
 
-    def _decode_record_bin(self, in_bin, **kwargs):
+    def _decode_record_bin(self, in_bin, **_kwargs):
         if in_bin == b'\xff\xff':
             return None
         else:
             # officially this is 7-bit GSM alphabet with one padding bit in each byte
             return in_bin.decode('ascii')
 
-    def _encode_record_bin(self, in_json, **kwargs):
-        if in_json == None:
+    def _encode_record_bin(self, in_json, **_kwargs):
+        if in_json is None:
             return b'\xff\xff'
         else:
             # officially this is 7-bit GSM alphabet with one padding bit in each byte
@@ -438,9 +440,6 @@ class EF_UST(EF_UServiceTable):
 
     @with_default_category('File-Specific Commands')
     class AddlShellCommands(CommandSet):
-        def __init__(self):
-            super().__init__()
-
         def do_ust_service_activate(self, arg):
             """Activate a service within EF.UST"""
             selected_file = self._cmd.lchan.selected_file
@@ -451,7 +450,7 @@ class EF_UST(EF_UServiceTable):
             selected_file = self._cmd.lchan.selected_file
             selected_file.ust_update(self._cmd, [], [int(arg)])
 
-        def do_ust_service_check(self, arg):
+        def do_ust_service_check(self, _arg):
             """Check consistency between services of this file and files present/activated.
 
             Many services determine if one or multiple files shall be present/activated or if they shall be
@@ -503,7 +502,7 @@ class EF_ECC(LinFixedEF):
                  desc='Emergency Call Codes'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(4, 20))
 
-    def _decode_record_bin(self, in_bin, **kwargs):
+    def _decode_record_bin(self, in_bin, **_kwargs):
         # mandatory parts
         code = in_bin[:3]
         if code == b'\xff\xff\xff':
@@ -517,7 +516,7 @@ class EF_ECC(LinFixedEF):
             ret['alpha_id'] = parse_construct(EF_ECC.alpha_construct, alpha_id)
         return ret
 
-    def _encode_record_bin(self, in_json, **kwargs):
+    def _encode_record_bin(self, in_json, **_kwargs):
         if in_json is None:
             return b'\xff\xff\xff\xff'
         code = EF_ECC.cc_construct.build(in_json['call_code'])
@@ -638,9 +637,6 @@ class EF_EST(EF_UServiceTable):
 
     @with_default_category('File-Specific Commands')
     class AddlShellCommands(CommandSet):
-        def __init__(self):
-            super().__init__()
-
         def do_est_service_enable(self, arg):
             """Enable a service within EF.EST"""
             selected_file = self._cmd.lchan.selected_file
@@ -683,7 +679,7 @@ class EF_RPLMNAcT(TransRecEF):
     def __init__(self, fid='6f65', sfid=None, name='EF.RPLMNAcTD', size=(2, 4), rec_len=2,
                  desc='RPLMN Last used Access Technology', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
-    def _decode_record_hex(self, in_hex, **kwargs):
+    def _decode_record_hex(self, in_hex, **_kwargs):
         return dec_act(in_hex)
     # TODO: Encode
 
@@ -1139,9 +1135,6 @@ class EF_5G_PROSE_ST(EF_UServiceTable):
 
     @with_default_category('File-Specific Commands')
     class AddlShellCommands(CommandSet):
-        def __init__(self):
-            super().__init__()
-
         def do_prose_service_activate(self, arg):
             """Activate a service within EF.5G_PROSE_ST"""
             selected_file = self._cmd.lchan.selected_file
@@ -1585,9 +1578,6 @@ class ADF_USIM(CardADF):
 
     @with_default_category('Application-Specific Commands')
     class AddlShellCommands(CommandSet):
-        def __init__(self):
-            super().__init__()
-
         authenticate_parser = argparse.ArgumentParser()
         authenticate_parser.add_argument('rand', type=is_hexstr, help='Random challenge')
         authenticate_parser.add_argument('autn', type=is_hexstr, help='Authentication Nonce')
@@ -1596,7 +1586,7 @@ class ADF_USIM(CardADF):
         @cmd2.with_argparser(authenticate_parser)
         def do_authenticate(self, opts):
             """Perform Authentication and Key Agreement (AKA)."""
-            (data, sw) = self._cmd.lchan.scc.authenticate(opts.rand, opts.autn)
+            (data, _sw) = self._cmd.lchan.scc.authenticate(opts.rand, opts.autn)
             self._cmd.poutput_json(data)
 
         term_prof_parser = argparse.ArgumentParser()
@@ -1654,7 +1644,7 @@ class ADF_USIM(CardADF):
             context = 0x01 # SUCI
             if opts.nswo_context:
                 context = 0x02 # SUCI 5G NSWO
-            (data, sw) = self._cmd.lchan.scc.get_identity(context)
+            (data, _sw) = self._cmd.lchan.scc.get_identity(context)
             do = SUCI_TlvDataObject()
             do.from_tlv(h2b(data))
             do_d = do.to_dict()
