@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import io
 from copy import deepcopy
 from typing import Optional, List, Dict, Tuple
 from construct import Optional as COptional
@@ -434,6 +435,23 @@ class GpRegistryRelatedData(BER_TLV_IE, tag=0xe3, nested=[ApplicationAID, LifeCy
                                                           ExecutableModuleAID, AssociatedSecurityDomainAID]):
     pass
 
+
+# Section 11.6.2.3 / Table 11-58
+class SecurityDomainAid(BER_TLV_IE, tag=0x4f):
+    _construct = GreedyBytes
+class LoadFileDataBlockSignature(BER_TLV_IE, tag=0xc3):
+    _construct = GreedyBytes
+class DapBlock(BER_TLV_IE, tag=0xe2, nested=[SecurityDomainAid, LoadFileDataBlockSignature]):
+    pass
+class LoadFileDataBlock(BER_TLV_IE, tag=0xc4):
+    _construct = GreedyBytes
+class Icv(BER_TLV_IE, tag=0xd3):
+    _construct = GreedyBytes
+class CipheredLoadFileDataBlock(BER_TLV_IE, tag=0xd4):
+    _construct = GreedyBytes
+class LoadFile(TLV_IE_Collection, nested=[DapBlock, LoadFileDataBlock, Icv, CipheredLoadFileDataBlock]):
+    pass
+
 # Application Dedicated File of a Security Domain
 class ADF_SD(CardADF):
     StoreData = BitStruct('last_block'/Flag,
@@ -675,6 +693,31 @@ class ADF_SD(CardADF):
             ifi_bytes = build_construct(InstallForInstallCD, decoded)
             self.install(p1, 0x00, b2h(ifi_bytes))
 
+        inst_load_parser = argparse.ArgumentParser()
+        inst_load_parser.add_argument('--load-file-aid', type=is_hexstr, required=True,
+                                      help='AID of the loded file')
+        inst_load_parser.add_argument('--security-domain-aid', type=is_hexstr, default='',
+                                      help='AID of the Security Domain into which the file shalle be added')
+        inst_load_parser.add_argument('--load-file-hash', type=is_hexstr, default='',
+                                      help='Load File Data Block Hash')
+        inst_inst_parser.add_argument('--load-parameters', type=is_hexstr, default='',
+                                      help='Load Token (Section GPCS C.4.1)')
+        inst_inst_parser.add_argument('--load-token', type=is_hexstr, default='',
+                                      help='Load Token (Section GPCS C.4.1)')
+
+        @cmd2.with_argparser(inst_load_parser)
+        def do_install_for_load(self, opts):
+            """Perform GlobalPlatform INSTALL [for load] command."""
+            if opts.load_token != '' and opts.load_file_hash == '':
+                raise ValueError('Load File Data Block Hash is mandatory if a Load Token is present')
+            InstallForLoadCD = Struct('load_file_aid'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+                                      'security_domain_aid'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+                                      'load_file_hash'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+                                      'load_parameters'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+                                      'load_token'/HexAdapter(Prefixed(Int8ub, GreedyBytes)))
+            ifl_bytes = build_construct(InstallForLoadCD, vars(opts))
+            self.install(0x02, 0x00, b2h(ifl_bytes))
+
         def install(self, p1:int, p2:int, data:Hexstr) -> ResTuple:
             cmd_hex = "80E6%02x%02x%02x%s" % (p1, p2, len(data)//2, data)
             return self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
@@ -717,6 +760,37 @@ class ADF_SD(CardADF):
         def delete(self, p1:int, p2:int, data:Hexstr) -> ResTuple:
             cmd_hex = "80E4%02x%02x%02x%s" % (p1, p2, len(data)//2, data)
             return self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
+
+        load_parser = argparse.ArgumentParser()
+        # we make this a required --optional argument now, so we can later have other sources for load data
+        load_parser.add_argument('--from-file', required=True)
+
+        @cmd2.with_argparser(load_parser)
+        def do_load(self, opts):
+            """Perform a GlobalPlatform LOAD command. We currently only support loading without DAP and
+            without ciphering."""
+            with open(opts.from_file, 'rb') as f:
+                self.load(f)
+
+        def load(self, stream: io.RawIOBase, chunk_len:int = 240):
+            # we might want to tune chunk_len based on the overhead of the used SCP?
+            contents = stream.readall()
+            # build TLV according to 11.6.2.3 / Table 11-58 for unencrypted case
+            remainder = b'\xC4' + bertlv_encode_len(len(contents)) + contents
+            # transfer this in vaious chunks to the card
+            total_size = len(remainder)
+            block_nr = 0
+            while len(remainder):
+                block = remainder[:chunk_len]
+                remainder = remainder[chunk_len:]
+                # build LOAD command APDU according to 11.6.2 / Table 11-56
+                p1 = 0x80 if len(remainder) else 0x00
+                p2 = block_nr % 256
+                block_nr += 1
+                cmd_hex = "80E8%02x%02x%02x%s" % (p1, p2, len(block), b2h(block))
+                _rsp_hex, _sw = self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
+            self._cmd.poutput("Loaded a total of %u bytes in %u blocks. Don't forget install_for_load now!" % (total_size, block_nr))
+
 
         est_scp02_parser = argparse.ArgumentParser()
         est_scp02_parser.add_argument('--key-ver', type=auto_uint8, required=True,
