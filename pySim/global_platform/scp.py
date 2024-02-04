@@ -22,7 +22,7 @@ from Cryptodome.Cipher import DES3, DES
 from Cryptodome.Util.strxor import strxor
 from construct import Struct, Bytes, Int8ub, Int16ub, Const
 from construct import Optional as COptional
-from pySim.utils import b2h
+from pySim.utils import b2h, bertlv_parse_len, bertlv_encode_len
 from pySim.secure_channel import SecureChannel
 from typing import Optional
 
@@ -59,6 +59,7 @@ class Scp02SessionKeys:
     DERIV_CONST_RMAC = b'\x01\x02'
     DERIV_CONST_ENC = b'\x01\x82'
     DERIV_CONST_DENC = b'\x01\x81'
+    blocksize = 8
 
     def calc_mac_1des(self, data: bytes, reset_icv: bool = False) -> bytes:
         """Pad and calculate MAC according to B.1.2.2 - Single DES plus final 3DES"""
@@ -175,6 +176,43 @@ class SCP(SecureChannel, abc.ABC):
     def gen_ext_auth_apdu(self, security_level: int = 0x01) -> bytes:
         pass
 
+    def encrypt_key(self, key: bytes) -> bytes:
+        """Encrypt a key with the DEK."""
+        num_pad = len(key) % self.sk.blocksize
+        if num_pad:
+            return bertlv_encode_len(len(key)) + self.dek_encrypt(key + b'\x00'*num_pad)
+        else:
+            return self.dek_encrypt(key)
+
+    def decrypt_key(self, encrypted_key:bytes) -> bytes:
+        """Decrypt a key with the DEK."""
+        if len(encrypted_key) % self.sk.blocksize:
+            # If the length of the Key Component Block is not a multiple of the block size of the encryption #
+            # algorithm (i.e. 8 bytes for DES, 16 bytes for AES), then it shall be assumed that the key
+            # component value was right-padded prior to encryption and that the Key Component Block was
+            # formatted as described in Table 11-70. In this case, the first byte(s) of the Key Component
+            # Block provides the actual length of the key component value, which allows recovering the
+            # clear-text key component value after decryption of the encrypted key component value and removal
+            # of padding bytes.
+            decrypted = self.dek_decrypt(encrypted_key)
+            key_len, remainder = bertlv_parse_len(decrypted)
+            return remainder[:key_len]
+        else:
+            # If the length of the Key Component Block is a multiple of the block size of the encryption
+            # algorithm (i.e.  8 bytes for DES, 16 bytes for AES), then it shall be assumed that no padding
+            # bytes were added before encrypting the key component value and that the Key Component Block is
+            # only composed of the encrypted key component value (as shown in Table 11-71). In this case, the
+            # clear-text key component value is simply recovered by decrypting the Key Component Block.
+            return self.dek_decrypt(encrypted_key)
+
+    @abc.abstractmethod
+    def dek_encrypt(self, plaintext:bytes) -> bytes:
+        pass
+
+    @abc.abstractmethod
+    def dek_decrypt(self, ciphertext:bytes) -> bytes:
+        pass
+
 
 class SCP02(SCP):
     """An instance of the GlobalPlatform SCP02 secure channel protocol."""
@@ -182,6 +220,14 @@ class SCP02(SCP):
     constr_iur = Struct('key_div_data'/Bytes(10), 'key_ver'/Int8ub, Const(b'\x02'),
                         'seq_counter'/Int16ub, 'card_challenge'/Bytes(6), 'card_cryptogram'/Bytes(8))
     kvn_range = [0x20, 0x2f]
+
+    def dek_encrypt(self, plaintext:bytes) -> bytes:
+        cipher = DES.new(self.card_keys.dek, DES.MODE_ECB)
+        return cipher.encrypt(plaintext)
+
+    def dek_decrypt(self, ciphertext:bytes) -> bytes:
+        cipher = DES.new(self.card_keys.dek, DES.MODE_ECB)
+        return cipher.decrypt(ciphertext)
 
     def _compute_cryptograms(self, card_challenge: bytes, host_challenge: bytes):
         logger.debug("host_challenge(%s), card_challenge(%s)", b2h(host_challenge), b2h(card_challenge))
@@ -368,6 +414,14 @@ class SCP03(SCP):
     def __init__(self, *args, **kwargs):
         self.s_mode = kwargs.pop('s_mode', 8)
         super().__init__(*args, **kwargs)
+
+    def dek_encrypt(self, plaintext:bytes) -> bytes:
+        cipher = AES.new(self.card_keys.dek, AES.MODE_CBC, b'\x00'*16)
+        return cipher.encrypt(plaintext)
+
+    def dek_decrypt(self, ciphertext:bytes) -> bytes:
+        cipher = AES.new(self.card_keys.dek, AES.MODE_CBC, b'\x00'*16)
+        return cipher.decrypt(ciphertext)
 
     def _compute_cryptograms(self):
         logger.debug("host_challenge(%s), card_challenge(%s)", b2h(self.host_challenge), b2h(self.card_challenge))
