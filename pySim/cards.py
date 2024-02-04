@@ -22,10 +22,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from typing import Optional, Dict, Tuple
+from typing import Optional, Tuple
 from pySim.ts_102_221 import EF_DIR
 from pySim.ts_51_011 import DF_GSM
-import abc
 
 from pySim.utils import *
 from pySim.commands import Path, SimCardCommands
@@ -40,8 +39,7 @@ class CardBase:
         rc = self._scc.reset_card()
         if rc == 1:
             return self._scc.get_atr()
-        else:
-            return None
+        return None
 
     def set_apdu_parameter(self, cla: Hexstr, sel_ctrl: Hexstr) -> None:
         """Set apdu parameters (class byte and selection control bytes)"""
@@ -54,7 +52,6 @@ class CardBase:
 
     def erase(self):
         print("warning: erasing is not supported for specified card type!")
-        return
 
     def file_exists(self, fid: Path) -> bool:
         res_arr = self._scc.try_select_path(fid)
@@ -75,7 +72,7 @@ class SimCardBase(CardBase):
     name = 'SIM'
 
     def __init__(self, scc: SimCardCommands):
-        super(SimCardBase, self).__init__(scc)
+        super().__init__(scc)
         self._scc.cla_byte = "A0"
         self._scc.sel_ctrl = "0000"
 
@@ -88,7 +85,7 @@ class UiccCardBase(SimCardBase):
     name = 'UICC'
 
     def __init__(self, scc: SimCardCommands):
-        super(UiccCardBase, self).__init__(scc)
+        super().__init__(scc)
         self._scc.cla_byte = "00"
         self._scc.sel_ctrl = "0004"  # request an FCP
         # See also: ETSI TS 102 221, Table 9.3
@@ -158,9 +155,8 @@ class UiccCardBase(SimCardBase):
             aid_full = self._complete_aid(aid)
             if aid_full:
                 return scc.select_adf(aid_full)
-            else:
-                # If we cannot get the full AID, try with short AID
-                return scc.select_adf(aid)
+            # If we cannot get the full AID, try with short AID
+            return scc.select_adf(aid)
         return (None, None)
 
 def card_detect(scc: SimCardCommands) -> Optional[CardBase]:
