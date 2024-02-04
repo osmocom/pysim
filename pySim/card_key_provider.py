@@ -54,11 +54,11 @@ class CardKeyProvider(abc.ABC):
                 dictionary of {field, value} strings for each requested field from 'fields'
         """
         for f in fields:
-            if (f not in self.VALID_FIELD_NAMES):
+            if f not in self.VALID_FIELD_NAMES:
                 raise ValueError("Requested field name '%s' is not a valid field name, valid field names are: %s" %
                                  (f, str(self.VALID_FIELD_NAMES)))
 
-        if (key not in self.VALID_FIELD_NAMES):
+        if key not in self.VALID_FIELD_NAMES:
             raise ValueError("Key field name '%s' is not a valid field name, valid field names are: %s" %
                              (key, str(self.VALID_FIELD_NAMES)))
 

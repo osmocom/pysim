@@ -24,12 +24,11 @@ there are also automatic card feeders.
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pySim.transport import LinkBase
-
 import subprocess
 import sys
 import yaml
 
+from pySim.transport import LinkBase
 
 class CardHandlerBase:
     """Abstract base class representing a mechanism for card insertion/removal."""
@@ -97,7 +96,7 @@ class CardHandlerAuto(CardHandlerBase):
         print("Card handler Config-file: " + str(config_file))
         with open(config_file) as cfg:
             self.cmds = yaml.load(cfg, Loader=yaml.FullLoader)
-        self.verbose = (self.cmds.get('verbose') == True)
+        self.verbose = self.cmds.get('verbose') is True
 
     def __print_outout(self, out):
         print("")

@@ -1,14 +1,11 @@
-# coding=utf-8
-import json
-import pprint
-import jsonpath_ng
-
 """JSONpath utility functions as needed within pysim.
 
 As pySim-sell has the ability to represent SIM files as JSON strings,
 adding JSONpath allows us to conveniently modify individual sub-fields
 of a file or record in its JSON representation.
 """
+
+import jsonpath_ng
 
 # (C) 2021 by Harald Welte <laforge@osmocom.org>
 #
