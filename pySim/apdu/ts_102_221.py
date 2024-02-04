@@ -17,13 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from typing import Optional, Dict
 import logging
+
 from construct import GreedyRange, Struct
+
 from pySim.construct import *
 from pySim.filesystem import *
 from pySim.runtime import RuntimeLchan
 from pySim.apdu import ApduCommand, ApduCommandSet
-from typing import Optional, Dict, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +106,6 @@ class UiccSelect(ApduCommand, n='SELECT', ins=0xA4, cla=['0X', '4X', '6X']):
                 #print("\tSELECT AID %s" % adf)
             else:
                 logger.warning('SELECT UNKNOWN AID %s', aid)
-                pass
         else:
             raise ValueError('Select Mode %s not implemented' % mode)
         # decode the SELECT response
@@ -291,12 +292,9 @@ class VerifyPin(ApduCommand, n='VERIFY PIN', ins=0x20, cla=['0X', '4X', '6X']):
 
     @staticmethod
     def _pin_is_success(sw):
-        if sw[0] == 0x63:
-            return True
-        else:
-            return False
+        return bool(sw[0] == 0x63)
 
-    def process_on_lchan(self, lchan: RuntimeLchan):
+    def process_on_lchan(self, _lchan: RuntimeLchan):
         return VerifyPin._pin_process(self)
 
     def _is_success(self):
@@ -308,7 +306,7 @@ class ChangePin(ApduCommand, n='CHANGE PIN', ins=0x24, cla=['0X', '4X', '6X']):
     _apdu_case = 3
     _construct_p2 = PinConstructP2
 
-    def process_on_lchan(self, lchan: RuntimeLchan):
+    def process_on_lchan(self, _lchan: RuntimeLchan):
         return VerifyPin._pin_process(self)
 
     def _is_success(self):
@@ -320,7 +318,7 @@ class DisablePin(ApduCommand, n='DISABLE PIN', ins=0x26, cla=['0X', '4X', '6X'])
     _apdu_case = 3
     _construct_p2 = PinConstructP2
 
-    def process_on_lchan(self, lchan: RuntimeLchan):
+    def process_on_lchan(self, _lchan: RuntimeLchan):
         return VerifyPin._pin_process(self)
 
     def _is_success(self):
@@ -331,7 +329,7 @@ class DisablePin(ApduCommand, n='DISABLE PIN', ins=0x26, cla=['0X', '4X', '6X'])
 class EnablePin(ApduCommand, n='ENABLE PIN', ins=0x28, cla=['0X', '4X', '6X']):
     _apdu_case = 3
     _construct_p2 = PinConstructP2
-    def process_on_lchan(self, lchan: RuntimeLchan):
+    def process_on_lchan(self, _lchan: RuntimeLchan):
         return VerifyPin._pin_process(self)
 
     def _is_success(self):
@@ -343,7 +341,7 @@ class UnblockPin(ApduCommand, n='UNBLOCK PIN', ins=0x2C, cla=['0X', '4X', '6X'])
     _apdu_case = 3
     _construct_p2 = PinConstructP2
 
-    def process_on_lchan(self, lchan: RuntimeLchan):
+    def process_on_lchan(self, _lchan: RuntimeLchan):
         return VerifyPin._pin_process(self)
 
     def _is_success(self):
@@ -396,13 +394,12 @@ class ManageChannel(ApduCommand, n='MANAGE CHANNEL', ins=0x70, cla=['0X', '4X', 
             manage_channel.add_lchan(created_channel_nr)
             self.col_id = '%02u' % created_channel_nr
             return {'mode': mode, 'created_channel': created_channel_nr }
-        elif mode == 'close_channel':
+        if mode == 'close_channel':
             closed_channel_nr = self.cmd_dict['p2']['logical_channel_number']
             rs.del_lchan(closed_channel_nr)
             self.col_id = '%02u' % closed_channel_nr
             return {'mode': mode, 'closed_channel': closed_channel_nr }
-        else:
-            raise ValueError('Unsupported MANAGE CHANNEL P1=%02X' % self.p1)
+        raise ValueError('Unsupported MANAGE CHANNEL P1=%02X' % self.p1)
 
 # TS 102 221 Section 11.1.18
 class GetChallenge(ApduCommand, n='GET CHALLENGE', ins=0x84, cla=['0X', '4X', '6X']):
@@ -420,13 +417,13 @@ class ManageSecureChannel(ApduCommand, n='MANAGE SECURE CHANNEL', ins=0x73, cla=
         p2 = hdr[3]
         if p1 & 0x7 == 0:   # retrieve UICC Endpoints
             return 2
-        elif p1 & 0xf in [1,2,3]:   # establish sa, start secure channel SA
+        if p1 & 0xf in [1,2,3]:   # establish sa, start secure channel SA
             p2_cmd = p2 >> 5
             if p2_cmd in [0,2,4]:   # command data
                 return 3
-            elif p2_cmd in [1,3,5]: # response data
+            if p2_cmd in [1,3,5]: # response data
                 return 2
-        elif p1 & 0xf == 4:         # terminate secure channel SA
+        if p1 & 0xf == 4:         # terminate secure channel SA
             return 3
         raise ValueError('%s: Unable to detect APDU case for %s' % (cls.__name__, b2h(hdr)))
 
@@ -437,8 +434,7 @@ class TransactData(ApduCommand, n='TRANSACT DATA', ins=0x75, cla=['0X', '4X', '6
         p1 = hdr[2]
         if p1 & 0x04:
             return 3
-        else:
-            return 2
+        return 2
 
 # TS 102 221 Section 11.1.22
 class SuspendUicc(ApduCommand, n='SUSPEND UICC', ins=0x76, cla=['80']):
