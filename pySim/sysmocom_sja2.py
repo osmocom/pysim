@@ -17,14 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pytlv.TLV import *
-from struct import pack, unpack
+from struct import unpack
+from construct import FlagsEnum, Byte, Struct, Int8ub, Bytes, Mapping, Enum, Padding, BitsInteger
+from construct import Bit, this, Int32ub, Int16ub, Nibble, BytesInteger, GreedyRange
+from construct import Optional as COptional
+
 from pySim.utils import *
 from pySim.filesystem import *
 from pySim.runtime import RuntimeState
-from pySim.ts_102_221 import CardProfileUICC
 from pySim.construct import *
-from construct import *
 import pySim
 
 key_type2str = {
@@ -70,7 +71,7 @@ class EF_PIN(TransparentEF):
                                  'attempts_remaining'/Int8ub,
                                  'maximum_attempts'/Int8ub,
                                  'pin'/HexAdapter(Rpad(Bytes(8))),
-                                 'puk'/Optional(PukStruct))
+                                 'puk'/COptional(PukStruct))
 
 
 class EF_MILENAGE_CFG(TransparentEF):
