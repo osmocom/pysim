@@ -18,14 +18,14 @@ as described in 3GPP TS 31.111."""
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from bidict import bidict
 from typing import List
-from pySim.utils import b2h, h2b, dec_xplmn_w_act
+from bidict import bidict
+from construct import Int8ub, Int16ub, Byte, Bytes, BitsInteger
+from construct import Struct, Enum, BitStruct, this
+from construct import GreedyBytes, Switch, GreedyRange, FlagsEnum
 from pySim.tlv import TLV_IE, COMPR_TLV_IE, BER_TLV_IE, TLV_IE_Collection
 from pySim.construct import PlmnAdapter, BcdAdapter, HexAdapter, GsmStringAdapter, TonNpi
-from construct import Int8ub, Int16ub, Byte, Bytes, Bit, Flag, BitsInteger
-from construct import Struct, Enum, Tell, BitStruct, this, Padding, RepeatUntil
-from construct import GreedyBytes, Switch, GreedyRange, FlagsEnum
+from pySim.utils import b2h, dec_xplmn_w_act
 
 # Tag values as per TS 101 220 Table 7.23
 
@@ -583,11 +583,11 @@ class ActivateDescriptor(COMPR_TLV_IE, tag=0xFB):
 
 # TS 31.111 Section 8.90
 class PlmnWactList(COMPR_TLV_IE, tag=0xF2):
-    def _from_bytes(self, x):
+    def _from_bytes(self, do: bytes):
         r = []
         i = 0
-        while i < len(x):
-            r.append(dec_xplmn_w_act(b2h(x[i:i+5])))
+        while i < len(do):
+            r.append(dec_xplmn_w_act(b2h(do[i:i+5])))
             i += 5
         return r
 
@@ -978,8 +978,8 @@ class ProactiveCommandBase(BER_TLV_IE, tag=0xD0, nested=[CommandDetails]):
         for c in self.children:
             if type(c).__name__ == 'CommandDetails':
                 return c
-        else:
-            return None
+            else:
+                return None
 
 class ProactiveCommand(TLV_IE_Collection,
                        nested=[Refresh, MoreTime, PollInterval, PollingOff, SetUpEventList, SetUpCall,
@@ -997,7 +997,7 @@ class ProactiveCommand(TLV_IE_Collection,
     more difficult than any normal TLV IE Collection, because the content of one of the IEs defines the
     definitions of all the other IEs.  So we first need to find the CommandDetails, and then parse according
     to the command type indicated in that IE data."""
-    def from_bytes(self, binary: bytes) -> List[TLV_IE]:
+    def from_bytes(self, binary: bytes, context: dict = {}) -> List[TLV_IE]:
         # do a first parse step to get the CommandDetails
         pcmd = ProactiveCommandBase()
         pcmd.from_tlv(binary)
@@ -1007,7 +1007,7 @@ class ProactiveCommand(TLV_IE_Collection,
         if cmd_type in self.members_by_tag:
             cls = self.members_by_tag[cmd_type]
             inst = cls()
-            dec, remainder = inst.from_tlv(binary)
+            _dec, remainder = inst.from_tlv(binary)
             self.decoded = inst
         else:
             self.decoded = pcmd
@@ -1019,7 +1019,7 @@ class ProactiveCommand(TLV_IE_Collection,
     def to_dict(self):
         return self.decoded.to_dict()
 
-    def to_bytes(self):
+    def to_bytes(self, context: dict = {}):
         return self.decoded.to_tlv()
 
 
