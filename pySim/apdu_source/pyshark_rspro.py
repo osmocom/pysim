@@ -16,13 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import sys
 import logging
-from pprint import pprint as pp
 from typing import Tuple
 import pyshark
 
-from pySim.utils import h2b, b2h
+from pySim.utils import h2b
 from pySim.apdu import Tpdu
 from . import ApduSource, PacketType, CardReset
 
