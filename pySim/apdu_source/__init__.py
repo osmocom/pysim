@@ -14,7 +14,6 @@ class ApduSource(abc.ABC):
     @abc.abstractmethod
     def read_packet(self) -> PacketType:
         """Read one packet from the source."""
-        pass
 
     def read(self) -> Union[Apdu, CardReset]:
         """Main function to call by the user: Blocking read, returns Apdu or CardReset."""
@@ -31,5 +30,5 @@ class ApduSource(abc.ABC):
             elif isinstance(r, CardReset):
                 apdu = r
             else:
-                ValueError('Unknown read_packet() return %s' % r)
+                raise ValueError('Unknown read_packet() return %s' % r)
         return apdu
