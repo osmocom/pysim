@@ -214,6 +214,12 @@ class SCP03_Test_AES256_33(SCP03_Test, unittest.TestCase):
 # FIXME: test auth with random (0x60) vs pseudo-random (0x70) challenge
 
 
+class SCP03_KCV_Test(unittest.TestCase):
+    def test_kcv(self):
+        self.assertEqual(compute_kcv('aes', KEYSET_AES128.enc), h2b('C35280'))
+        self.assertEqual(compute_kcv('aes', KEYSET_AES128.mac), h2b('013808'))
+        self.assertEqual(compute_kcv('aes', KEYSET_AES128.dek), h2b('840DE5'))
+
 
 if __name__ == "__main__":
 	unittest.main()

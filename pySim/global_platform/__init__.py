@@ -539,7 +539,8 @@ class ADF_SD(CardADF):
                 if opts.key_check and len(opts.key_check) > i:
                     kcv = opts.key_check[i]
                 else:
-                    kcv = ''
+                    kcv_bin = compute_kcv(opts.key_type[i], h2b(opts.key_data[i])) or b''
+                    kcv = b2h(kcv_bin)
                 kdb.append({'key_type': opts.key_type[i], 'kcb': opts.key_data[i], 'kcv': kcv})
             p2 = opts.key_id
             if len(opts.key_type) > 1:
@@ -770,3 +771,35 @@ class GpCardKeyset:
     def __str__(self):
         return "%s(KVN=%u, ENC=%s, MAC=%s, DEK=%s)" % (self.__class__.__name__,
                 self.kvn, b2h(self.enc), b2h(self.mac), b2h(self.dek))
+
+from Cryptodome.Cipher import DES, DES3, AES
+
+def compute_kcv_des(key:bytes) -> bytes:
+    # GP Card Spec B.6: For a DES key, the key check value is computed by encrypting 8 bytes, each with
+    # value '00', with the key to be checked and retaining the 3 highest-order bytes of the encrypted
+    # result.
+    plaintext = b'\x00' * 8
+    cipher = DES3.new(key, DES.MODE_ECB)
+    return cipher.encrypt(plaintext)
+
+def compute_kcv_aes(key:bytes) -> bytes:
+    # GP Card Spec B.6: For a AES key, the key check value is computed by encrypting 16 bytes, each with
+    # value '01', with the key to be checked and retaining the 3 highest-order bytes of the encrypted
+    # result.
+    plaintext = b'\x01' * 16
+    cipher = AES.new(key, AES.MODE_ECB)
+    return cipher.encrypt(plaintext)
+
+# dict is keyed by the string name of the KeyType enum above in this file
+KCV_CALCULATOR = {
+        'aes': compute_kcv_aes,
+        'des': compute_kcv_des,
+    }
+
+def compute_kcv(key_type: str, key: bytes) -> Optional[bytes]:
+    """Compute the KCV (Key Check Value) for given key type and key."""
+    kcv_calculator = KCV_CALCULATOR.get(key_type)
+    if not kcv_calculator:
+        return None
+    else:
+        return kcv_calculator(key)[:3]
