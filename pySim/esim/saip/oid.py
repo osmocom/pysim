@@ -27,7 +27,7 @@ class OID:
         return '.'.join([str(x) for x in intlist])
 
     def __init__(self, initializer: Union[List[int], str]):
-        if type(initializer) == str:
+        if isinstance(initializer, str):
             self.intlist = self.intlist_from_str(initializer)
         else:
             self.intlist = initializer
@@ -43,7 +43,7 @@ class eOID(OID):
     """OID helper for TCA eUICC prefix"""
     __prefix = [2,23,143,1]
     def __init__(self, initializer):
-        if type(initializer) == str:
+        if isinstance(initializer, str):
             initializer = self.intlist_from_str(initializer)
         super().__init__(self.__prefix + initializer)
 
