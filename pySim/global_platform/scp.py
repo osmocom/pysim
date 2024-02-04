@@ -24,15 +24,14 @@ from construct import Struct, Bytes, Int8ub, Int16ub, Const
 from construct import Optional as COptional
 from pySim.utils import b2h, bertlv_parse_len, bertlv_encode_len
 from pySim.secure_channel import SecureChannel
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 def scp02_key_derivation(constant: bytes, counter: int, base_key: bytes) -> bytes:
-    assert(len(constant) == 2)
+    assert len(constant) == 2
     assert(counter >= 0 and counter <= 65535)
-    assert(len(base_key) == 16)
+    assert len(base_key) == 16
 
     derivation_data = constant + counter.to_bytes(2, 'big') + b'\x00' * 12
     cipher = DES3.new(base_key, DES.MODE_CBC, b'\x00' * 8)
@@ -156,8 +155,7 @@ class SCP(SecureChannel, abc.ABC):
         # only protect those APDUs that actually are global platform commands
         if apdu[0] & 0x80:
             return self._wrap_cmd_apdu(apdu, *args, **kwargs)
-        else:
-            return apdu
+        return apdu
 
     @abc.abstractmethod
     def _wrap_cmd_apdu(self, apdu: bytes, *args, **kwargs) -> bytes:
@@ -181,8 +179,7 @@ class SCP(SecureChannel, abc.ABC):
         num_pad = len(key) % self.sk.blocksize
         if num_pad:
             return bertlv_encode_len(len(key)) + self.dek_encrypt(key + b'\x00'*num_pad)
-        else:
-            return self.dek_encrypt(key)
+        return self.dek_encrypt(key)
 
     def decrypt_key(self, encrypted_key:bytes) -> bytes:
         """Decrypt a key with the DEK."""
@@ -263,7 +260,7 @@ class SCP02(SCP):
         mac = self.sk.calc_mac_1des(header + self.host_cryptogram, True)
         return bytes([self._cla(True), INS_EXT_AUTH, self.security_level, 0, 16]) + self.host_cryptogram + mac
 
-    def _wrap_cmd_apdu(self, apdu: bytes) -> bytes:
+    def _wrap_cmd_apdu(self, apdu: bytes, *args, **kwargs) -> bytes:
         """Wrap Command APDU for SCP02: calculate MAC and encrypt."""
         lc = len(apdu) - 5
         assert len(apdu) >= 5, "Wrong APDU length: %d" % len(apdu)
@@ -295,9 +292,9 @@ class SCP02(SCP):
             apdu = bytes([self._cla(True, b8)]) + apdu[1:4] + bytes([lc]) + data + mac
         return apdu
 
-    def unwrap_rsp_apdu(self, sw: bytes, apdu: bytes) -> bytes:
+    def unwrap_rsp_apdu(self, sw: bytes, rsp_apdu: bytes) -> bytes:
         # TODO: Implement R-MAC / R-ENC
-        return apdu
+        return rsp_apdu
 
 
 
@@ -311,7 +308,7 @@ def scp03_key_derivation(constant: bytes, context: bytes, base_key: bytes, l: Op
     def prf(key: bytes, data:bytes):
         return CMAC.new(key, data, AES).digest()
 
-    if l == None:
+    if l is None:
         l = len(base_key) * 8
 
     logger.debug("scp03_kdf(constant=%s, context=%s, base_key=%s, l=%u)", b2h(constant), b2h(context), b2h(base_key), l)
@@ -433,7 +430,7 @@ class SCP03(SCP):
 
     def gen_init_update_apdu(self, host_challenge: Optional[bytes] = None) -> bytes:
         """Generate INITIALIZE UPDATE APDU."""
-        if host_challenge == None:
+        if host_challenge is None:
             host_challenge = b'\x00' * self.s_mode
         if len(host_challenge) != self.s_mode:
             raise ValueError('Host Challenge must be %u bytes long' % self.s_mode)
@@ -503,20 +500,20 @@ class SCP03(SCP):
 
         return mapdu
 
-    def unwrap_rsp_apdu(self, sw: bytes, apdu: bytes) -> bytes:
+    def unwrap_rsp_apdu(self, sw: bytes, rsp_apdu: bytes) -> bytes:
         # No R-MAC shall be generated and no protection shall be applied to a response that includes an error
         # status word: in this case only the status word shall be returned in the response. All status words
         # except '9000' and warning status words (i.e. '62xx' and '63xx') shall be interpreted as error status
         # words.
-        logger.debug("unwrap_rsp_apdu(sw=%s, apdu=%s)", sw, apdu)
+        logger.debug("unwrap_rsp_apdu(sw=%s, rsp_apdu=%s)", sw, rsp_apdu)
         if not self.do_rmac:
             assert not self.do_renc
-            return apdu
+            return rsp_apdu
 
         if sw != b'\x90\x00' and sw[0] not in [0x62, 0x63]:
-            return apdu
-        response_data = apdu[:-self.s_mode]
-        rmac = apdu[-self.s_mode:]
+            return rsp_apdu
+        response_data = rsp_apdu[:-self.s_mode]
+        rmac = rsp_apdu[-self.s_mode:]
         rmac_exp = self.sk.calc_rmac(response_data + sw)[:self.s_mode]
         if rmac != rmac_exp:
             raise ValueError("R-MAC value not matching: received: %s, computed: %s" % (rmac, rmac_exp))
