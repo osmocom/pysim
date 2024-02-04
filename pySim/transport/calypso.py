@@ -24,7 +24,7 @@ import argparse
 from typing import Optional
 
 from pySim.transport import LinkBase
-from pySim.exceptions import *
+from pySim.exceptions import ReaderError, ProtocolError
 from pySim.utils import h2b, b2h, Hexstr, ResTuple
 
 
@@ -58,9 +58,9 @@ class L1CTLMessageReset(L1CTLMessage):
     L1CTL_RES_T_FULL = 0x01
     L1CTL_RES_T_SCHED = 0x02
 
-    def __init__(self, type=L1CTL_RES_T_FULL):
-        super(L1CTLMessageReset, self).__init__(self.L1CTL_RESET_REQ)
-        self.data += struct.pack("Bxxx", type)
+    def __init__(self, ttype=L1CTL_RES_T_FULL):
+        super().__init__(self.L1CTL_RESET_REQ)
+        self.data += struct.pack("Bxxx", ttype)
 
 
 class L1CTLMessageSIM(L1CTLMessage):
@@ -70,7 +70,7 @@ class L1CTLMessageSIM(L1CTLMessage):
     L1CTL_SIM_CONF = 0x17
 
     def __init__(self, pdu):
-        super(L1CTLMessageSIM, self).__init__(self.L1CTL_SIM_REQ)
+        super().__init__(self.L1CTL_SIM_REQ)
         self.data += pdu
 
 
