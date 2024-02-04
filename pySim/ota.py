@@ -15,14 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pySim.construct import *
-from pySim.utils import b2h
-from pySim.sms import UserDataHeader
-from construct import *
 import zlib
 import abc
 import struct
 from typing import Optional
+from construct import Enum, Int8ub, Int16ub, Struct, Bytes, GreedyBytes, BitsInteger, BitStruct
+from construct import Flag, Padding, Switch, this
+
+from pySim.construct import *
+from pySim.utils import b2h
+from pySim.sms import UserDataHeader
 
 # ETS TS 102 225 gives the general command structure and the dialects for CAT_TP, TCP/IP and HTTPS
 # 3GPP TS 31.115 gives the dialects for SMS-PP, SMS-CB, USSD and HTTP
@@ -112,12 +114,12 @@ class OtaKeyset:
     @property
     def auth(self):
         """Return an instance of the matching OtaAlgoAuth."""
-        return OtaAlgoAuth.fromKeyset(self)
+        return OtaAlgoAuth.from_keyset(self)
 
     @property
     def crypt(self):
         """Return an instance of the matching OtaAlgoCrypt."""
-        return OtaAlgoCrypt.fromKeyset(self)
+        return OtaAlgoCrypt.from_keyset(self)
 
 class OtaCheckError(Exception):
     pass
@@ -128,26 +130,24 @@ class OtaDialect(abc.ABC):
     def _compute_sig_len(self, spi:SPI):
         if spi['rc_cc_ds'] == 'no_rc_cc_ds':
             return 0
-        elif spi['rc_cc_ds'] == 'rc': # CRC-32
+        if spi['rc_cc_ds'] == 'rc': # CRC-32
             return 4
-        elif spi['rc_cc_ds'] == 'cc': # Cryptographic Checksum (CC)
+        if spi['rc_cc_ds'] == 'cc': # Cryptographic Checksum (CC)
             # TODO: this is not entirely correct, as in AES case it could be 4 or 8
             return 8
-        else:
-            raise ValueError("Invalid rc_cc_ds: %s" % spi['rc_cc_ds'])
+        raise ValueError("Invalid rc_cc_ds: %s" % spi['rc_cc_ds'])
 
     @abc.abstractmethod
-    def encode_cmd(self, otak: OtaKeyset, tar: bytes, apdu: bytes) -> bytes:
+    def encode_cmd(self, otak: OtaKeyset, tar: bytes, spi: dict, apdu: bytes) -> bytes:
         pass
 
     @abc.abstractmethod
-    def decode_resp(self, otak: OtaKeyset, apdu: bytes) -> (object, Optional["CompactRemoteResp"]):
+    def decode_resp(self, otak: OtaKeyset, spi: dict, apdu: bytes) -> (object, Optional["CompactRemoteResp"]):
         """Decode a response into a response packet and, if indicted (by a
         response status of `"por_ok"`) a decoded response.
 
         The response packet's common characteristics are not fully determined,
         and (so far) completely proprietary per dialect."""
-        pass
 
 
 from Cryptodome.Cipher import DES, DES3, AES
@@ -190,7 +190,7 @@ class OtaAlgoCrypt(OtaAlgo, abc.ABC):
     def encrypt(self, data:bytes) -> bytes:
         """Encrypt given input bytes using the key material given in constructor."""
         padded_data = self.pad_to_blocksize(data)
-        return self._encrypt(data)
+        return self._encrypt(padded_data)
 
     def decrypt(self, data:bytes) -> bytes:
         """Decrypt given input bytes using the key material given in constructor."""
@@ -199,15 +199,13 @@ class OtaAlgoCrypt(OtaAlgo, abc.ABC):
     @abc.abstractmethod
     def _encrypt(self, data:bytes) -> bytes:
         """Actual implementation, to be implemented by derived class."""
-        pass
 
     @abc.abstractmethod
     def _decrypt(self, data:bytes) -> bytes:
         """Actual implementation, to be implemented by derived class."""
-        pass
 
     @classmethod
-    def fromKeyset(cls, otak: OtaKeyset) -> 'OtaAlgoCrypt':
+    def from_keyset(cls, otak: OtaKeyset) -> 'OtaAlgoCrypt':
         """Resolve the class for the encryption algorithm of otak and instantiate it."""
         for subc in cls.__subclasses__():
             if subc.enum_name == otak.algo_crypt:
@@ -239,7 +237,7 @@ class OtaAlgoAuth(OtaAlgo, abc.ABC):
         pass
 
     @classmethod
-    def fromKeyset(cls, otak: OtaKeyset) -> 'OtaAlgoAuth':
+    def from_keyset(cls, otak: OtaKeyset) -> 'OtaAlgoAuth':
         """Resolve the class for the authentication algorithm of otak and instantiate it."""
         for subc in cls.__subclasses__():
             if subc.enum_name == otak.algo_auth:
