@@ -26,6 +26,7 @@ from pySim.construct import *
 from pySim.filesystem import *
 from pySim.runtime import RuntimeLchan
 from pySim.apdu import ApduCommand, ApduCommandSet
+from pySim.utils import i2h
 
 logger = logging.getLogger(__name__)
 

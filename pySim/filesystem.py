@@ -24,24 +24,20 @@ not the actual contents / runtime state of interacting with a given smart card.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import code
+from typing import cast, Optional, Iterable, List, Dict, Tuple, Union
+import argparse
 import tempfile
 import json
 import abc
 import inspect
 
 import cmd2
-from cmd2 import CommandSet, with_default_category, with_argparser
-import argparse
-
-from typing import cast, Optional, Iterable, List, Dict, Tuple, Union
-
+from cmd2 import CommandSet, with_default_category
 from smartcard.util import toBytes
 
-from pySim.utils import sw_match, h2b, b2h, i2h, is_hex, auto_int, auto_uint8, auto_uint16, Hexstr, is_hexstr
+from pySim.utils import sw_match, h2b, b2h, is_hex, auto_int, auto_uint8, auto_uint16, is_hexstr
 from pySim.construct import filter_dict, parse_construct, build_construct
-from pySim.exceptions import *
-from pySim.jsonpath import js_path_find, js_path_modify
+from pySim.jsonpath import js_path_modify
 from pySim.commands import SimCardCommands
 
 # int: a single service is associated with this file
@@ -71,7 +67,7 @@ class CardFile:
             profile : Card profile that this file should be part of
             service : Service (SST/UST/IST) associated with the file
         """
-        if not isinstance(self, CardADF) and fid == None:
+        if not isinstance(self, CardADF) and fid is None:
             raise ValueError("fid is mandatory")
         if fid:
             fid = fid.lower()
@@ -136,6 +132,7 @@ class CardFile:
         return ret
 
     def build_select_path_to(self, target: 'CardFile') -> Optional[List['CardFile']]:
+        """Build the relative sequence of files we need to traverse to get from us to 'target'."""
 
         # special-case handling for applications. Applications may be selected
         # any time from any location. If there is an ADF somewhere in the path,
@@ -146,7 +143,6 @@ class CardFile:
                     return inter_path[i:]
             return inter_path
 
-        """Build the relative sequence of files we need to traverse to get from us to 'target'."""
         # special-case handling for selecting MF while the MF is selected
         if target == target.get_mf():
             return [target]
@@ -167,7 +163,7 @@ class CardFile:
 
     def get_mf(self) -> Optional['CardMF']:
         """Return the MF (root) of the file system."""
-        if self.parent == None:
+        if self.parent is None:
             return None
         # iterate towards the top. MF has parent == self
         node = self
@@ -282,23 +278,22 @@ class CardFile:
         """Assuming the provided list of activated services, should this file exist and be activated?."""
         if self.service is None:
             return None
-        elif isinstance(self.service, int):
+        if isinstance(self.service, int):
             # a single service determines the result
             return self.service in services
-        elif isinstance(self.service, list):
+        if isinstance(self.service, list):
             # any of the services active -> true
             for s in self.service:
                 if s in services:
                     return True
             return False
-        elif isinstance(self.service, tuple):
+        if isinstance(self.service, tuple):
             # all of the services active -> true
             for s in self.service:
                 if not s in services:
                     return False
             return True
-        else:
-            raise ValueError("self.service must be either int or list or tuple")
+        raise ValueError("self.service must be either int or list or tuple")
 
 
 class CardDF(CardFile):
@@ -306,15 +301,14 @@ class CardDF(CardFile):
 
     @with_default_category('DF/ADF Commands')
     class ShellCommands(CommandSet):
-        def __init__(self):
-            super().__init__()
+        pass
 
     def __init__(self, **kwargs):
         if not isinstance(self, CardADF):
-            if not 'fid' in kwargs:
+            if 'fid' not in kwargs:
                 raise TypeError('fid is mandatory for all DF')
         super().__init__(**kwargs)
-        self.children = dict()
+        self.children = {}
         self.shell_commands = [self.ShellCommands()]
         # dict of CardFile affected by service(int), indexed by service
         self.files_by_service = {}
@@ -415,7 +409,7 @@ class CardDF(CardFile):
 
     def lookup_file_by_name(self, name: Optional[str]) -> Optional[CardFile]:
         """Find a file with given name within current DF."""
-        if name == None:
+        if name is None:
             return None
         for i in self.children.values():
             if i.name and i.name == name:
@@ -424,7 +418,7 @@ class CardDF(CardFile):
 
     def lookup_file_by_sfid(self, sfid: Optional[str]) -> Optional[CardFile]:
         """Find a file with given short file ID within current DF."""
-        if sfid == None:
+        if sfid is None:
             return None
         for i in self.children.values():
             if i.sfid == int(str(sfid)):
@@ -449,7 +443,7 @@ class CardMF(CardDF):
         # cannot be overridden; use assignment
         kwargs['parent'] = self
         super().__init__(**kwargs)
-        self.applications = dict()
+        self.applications = {}
 
     def __str__(self):
         return "MF(%s)" % (self.fid)
@@ -573,9 +567,6 @@ class TransparentEF(CardEF):
     class ShellCommands(CommandSet):
         """Shell commands specific for transparent EFs."""
 
-        def __init__(self):
-            super().__init__()
-
         dec_hex_parser = argparse.ArgumentParser()
         dec_hex_parser.add_argument('--oneline', action='store_true',
                                     help='No JSON pretty-printing, dump as a single line')
@@ -596,7 +587,7 @@ class TransparentEF(CardEF):
         @cmd2.with_argparser(read_bin_parser)
         def do_read_binary(self, opts):
             """Read binary data from a transparent EF"""
-            (data, sw) = self._cmd.lchan.read_binary(opts.length, opts.offset)
+            (data, _sw) = self._cmd.lchan.read_binary(opts.length, opts.offset)
             self._cmd.poutput(data)
 
         read_bin_dec_parser = argparse.ArgumentParser()
@@ -606,7 +597,7 @@ class TransparentEF(CardEF):
         @cmd2.with_argparser(read_bin_dec_parser)
         def do_read_binary_decoded(self, opts):
             """Read + decode data from a transparent EF"""
-            (data, sw) = self._cmd.lchan.read_binary_dec()
+            (data, _sw) = self._cmd.lchan.read_binary_dec()
             self._cmd.poutput_json(data, opts.oneline)
 
         upd_bin_parser = argparse.ArgumentParser()
@@ -617,7 +608,7 @@ class TransparentEF(CardEF):
         @cmd2.with_argparser(upd_bin_parser)
         def do_update_binary(self, opts):
             """Update (Write) data of a transparent EF"""
-            (data, sw) = self._cmd.lchan.update_binary(opts.data, opts.offset)
+            (data, _sw) = self._cmd.lchan.update_binary(opts.data, opts.offset)
             if data:
                 self._cmd.poutput(data)
 
@@ -630,18 +621,18 @@ class TransparentEF(CardEF):
         def do_update_binary_decoded(self, opts):
             """Encode + Update (Write) data of a transparent EF"""
             if opts.json_path:
-                (data_json, sw) = self._cmd.lchan.read_binary_dec()
+                (data_json, _sw) = self._cmd.lchan.read_binary_dec()
                 js_path_modify(data_json, opts.json_path,
                                json.loads(opts.data))
             else:
                 data_json = json.loads(opts.data)
-            (data, sw) = self._cmd.lchan.update_binary_dec(data_json)
+            (data, _sw) = self._cmd.lchan.update_binary_dec(data_json)
             if data:
                 self._cmd.poutput_json(data)
 
-        def do_edit_binary_decoded(self, opts):
+        def do_edit_binary_decoded(self, _opts):
             """Edit the JSON representation of the EF contents in an editor."""
-            (orig_json, sw) = self._cmd.lchan.read_binary_dec()
+            (orig_json, _sw) = self._cmd.lchan.read_binary_dec()
             with tempfile.TemporaryDirectory(prefix='pysim_') as dirname:
                 filename = '%s/file' % dirname
                 # write existing data as JSON to file
@@ -654,7 +645,7 @@ class TransparentEF(CardEF):
                 if edited_json == orig_json:
                     self._cmd.poutput("Data not modified, skipping write")
                 else:
-                    (data, sw) = self._cmd.lchan.update_binary_dec(edited_json)
+                    (data, _sw) = self._cmd.lchan.update_binary_dec(edited_json)
                     if data:
                         self._cmd.poutput_json(data)
 
@@ -695,7 +686,7 @@ class TransparentEF(CardEF):
             return method(b2h(raw_bin_data))
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
-        elif self._tlv:
+        if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_tlv(raw_bin_data)
             return t.to_dict()
@@ -722,7 +713,7 @@ class TransparentEF(CardEF):
             return method(raw_bin_data)
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
-        elif self._tlv:
+        if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_tlv(raw_bin_data)
             return t.to_dict()
@@ -748,7 +739,7 @@ class TransparentEF(CardEF):
             return h2b(method(abstract_data))
         if self._construct:
             return build_construct(self._construct, abstract_data)
-        elif self._tlv:
+        if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return t.to_tlv()
@@ -776,7 +767,7 @@ class TransparentEF(CardEF):
             return b2h(raw_bin_data)
         if self._construct:
             return b2h(build_construct(self._construct, abstract_data))
-        elif self._tlv:
+        if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return b2h(t.to_tlv())
@@ -793,10 +784,6 @@ class LinFixedEF(CardEF):
     @with_default_category('Linear Fixed EF Commands')
     class ShellCommands(CommandSet):
         """Shell commands specific for Linear Fixed EFs."""
-
-        def __init__(self, **kwargs):
-            super().__init__(**kwargs)
-
         dec_hex_parser = argparse.ArgumentParser()
         dec_hex_parser.add_argument('--oneline', action='store_true',
                                     help='No JSON pretty-printing, dump as a single line')
@@ -819,8 +806,8 @@ class LinFixedEF(CardEF):
             """Read one or multiple records from a record-oriented EF"""
             for r in range(opts.count):
                 recnr = opts.record_nr + r
-                (data, sw) = self._cmd.lchan.read_record(recnr)
-                if (len(data) > 0):
+                (data, _sw) = self._cmd.lchan.read_record(recnr)
+                if len(data) > 0:
                     recstr = str(data)
                 else:
                     recstr = "(empty)"
@@ -835,18 +822,18 @@ class LinFixedEF(CardEF):
         @cmd2.with_argparser(read_rec_dec_parser)
         def do_read_record_decoded(self, opts):
             """Read + decode a record from a record-oriented EF"""
-            (data, sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
+            (data, _sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
             self._cmd.poutput_json(data, opts.oneline)
 
         read_recs_parser = argparse.ArgumentParser()
 
         @cmd2.with_argparser(read_recs_parser)
-        def do_read_records(self, opts):
+        def do_read_records(self, _opts):
             """Read all records from a record-oriented EF"""
             num_of_rec = self._cmd.lchan.selected_file_num_of_rec()
             for recnr in range(1, 1 + num_of_rec):
-                (data, sw) = self._cmd.lchan.read_record(recnr)
-                if (len(data) > 0):
+                (data, _sw) = self._cmd.lchan.read_record(recnr)
+                if len(data) > 0:
                     recstr = str(data)
                 else:
                     recstr = "(empty)"
@@ -863,7 +850,7 @@ class LinFixedEF(CardEF):
             # collect all results in list so they are rendered as JSON list when printing
             data_list = []
             for recnr in range(1, 1 + num_of_rec):
-                (data, sw) = self._cmd.lchan.read_record_dec(recnr)
+                (data, _sw) = self._cmd.lchan.read_record_dec(recnr)
                 data_list.append(data)
             self._cmd.poutput_json(data_list, opts.oneline)
 
@@ -875,7 +862,7 @@ class LinFixedEF(CardEF):
         @cmd2.with_argparser(upd_rec_parser)
         def do_update_record(self, opts):
             """Update (write) data to a record-oriented EF"""
-            (data, sw) = self._cmd.lchan.update_record(opts.record_nr, opts.data)
+            (data, _sw) = self._cmd.lchan.update_record(opts.record_nr, opts.data)
             if data:
                 self._cmd.poutput(data)
 
@@ -890,12 +877,12 @@ class LinFixedEF(CardEF):
         def do_update_record_decoded(self, opts):
             """Encode + Update (write) data to a record-oriented EF"""
             if opts.json_path:
-                (data_json, sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
+                (data_json, _sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
                 js_path_modify(data_json, opts.json_path,
                                json.loads(opts.data))
             else:
                 data_json = json.loads(opts.data)
-            (data, sw) = self._cmd.lchan.update_record_dec(
+            (data, _sw) = self._cmd.lchan.update_record_dec(
                 opts.record_nr, data_json)
             if data:
                 self._cmd.poutput(data)
@@ -907,7 +894,7 @@ class LinFixedEF(CardEF):
         @cmd2.with_argparser(edit_rec_dec_parser)
         def do_edit_record_decoded(self, opts):
             """Edit the JSON representation of one record in an editor."""
-            (orig_json, sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
+            (orig_json, _sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
             with tempfile.TemporaryDirectory(prefix='pysim_') as dirname:
                 filename = '%s/file' % dirname
                 # write existing data as JSON to file
@@ -920,7 +907,7 @@ class LinFixedEF(CardEF):
                 if edited_json == orig_json:
                     self._cmd.poutput("Data not modified, skipping write")
                 else:
-                    (data, sw) = self._cmd.lchan.update_record_dec(
+                    (data, _sw) = self._cmd.lchan.update_record_dec(
                         opts.record_nr, edited_json)
                     if data:
                         self._cmd.poutput_json(data)
@@ -966,7 +953,7 @@ class LinFixedEF(CardEF):
             return method(raw_bin_data, record_nr=record_nr)
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
-        elif self._tlv:
+        if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_tlv(raw_bin_data)
             return t.to_dict()
@@ -994,7 +981,7 @@ class LinFixedEF(CardEF):
             return method(raw_hex_data, record_nr=record_nr)
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
-        elif self._tlv:
+        if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_tlv(raw_bin_data)
             return t.to_dict()
@@ -1022,7 +1009,7 @@ class LinFixedEF(CardEF):
             return b2h(raw_bin_data)
         if self._construct:
             return b2h(build_construct(self._construct, abstract_data))
-        elif self._tlv:
+        if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return b2h(t.to_tlv())
@@ -1050,7 +1037,7 @@ class LinFixedEF(CardEF):
             return h2b(method(abstract_data, record_nr=record_nr))
         if self._construct:
             return build_construct(self._construct, abstract_data)
-        elif self._tlv:
+        if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return t.to_tlv()
@@ -1113,7 +1100,7 @@ class TransRecEF(TransparentEF):
             return method(raw_bin_data)
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
-        elif self._tlv:
+        if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_tlv(raw_bin_data)
             return t.to_dict()
@@ -1140,7 +1127,7 @@ class TransRecEF(TransparentEF):
             return method(raw_hex_data)
         if self._construct:
             return parse_construct(self._construct, raw_bin_data)
-        elif self._tlv:
+        if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_tlv(raw_bin_data)
             return t.to_dict()
@@ -1166,7 +1153,7 @@ class TransRecEF(TransparentEF):
             return b2h(method(abstract_data))
         if self._construct:
             return b2h(filter_dict(build_construct(self._construct, abstract_data)))
-        elif self._tlv:
+        if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return b2h(t.to_tlv())
@@ -1193,7 +1180,7 @@ class TransRecEF(TransparentEF):
             return h2b(method(abstract_data))
         if self._construct:
             return filter_dict(build_construct(self._construct, abstract_data))
-        elif self._tlv:
+        if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
             return t.to_tlv()
@@ -1223,9 +1210,6 @@ class BerTlvEF(CardEF):
     class ShellCommands(CommandSet):
         """Shell commands specific for BER-TLV EFs."""
 
-        def __init__(self):
-            super().__init__()
-
         retrieve_data_parser = argparse.ArgumentParser()
         retrieve_data_parser.add_argument(
             'tag', type=auto_int, help='BER-TLV Tag of value to retrieve')
@@ -1233,10 +1217,10 @@ class BerTlvEF(CardEF):
         @cmd2.with_argparser(retrieve_data_parser)
         def do_retrieve_data(self, opts):
             """Retrieve (Read) data from a BER-TLV EF"""
-            (data, sw) = self._cmd.lchan.retrieve_data(opts.tag)
+            (data, _sw) = self._cmd.lchan.retrieve_data(opts.tag)
             self._cmd.poutput(data)
 
-        def do_retrieve_tags(self, opts):
+        def do_retrieve_tags(self, _opts):
             """List tags available in a given BER-TLV EF"""
             tags = self._cmd.lchan.retrieve_tags()
             self._cmd.poutput(tags)
@@ -1249,7 +1233,7 @@ class BerTlvEF(CardEF):
         @cmd2.with_argparser(set_data_parser)
         def do_set_data(self, opts):
             """Set (Write) data for a given tag in a BER-TLV EF"""
-            (data, sw) = self._cmd.lchan.set_data(opts.tag, opts.data)
+            (data, _sw) = self._cmd.lchan.set_data(opts.tag, opts.data)
             if data:
                 self._cmd.poutput(data)
 
@@ -1260,7 +1244,7 @@ class BerTlvEF(CardEF):
         @cmd2.with_argparser(del_data_parser)
         def do_delete_data(self, opts):
             """Delete  data for a given tag in a BER-TLV EF"""
-            (data, sw) = self._cmd.lchan.set_data(opts.tag, None)
+            (data, _sw) = self._cmd.lchan.set_data(opts.tag, None)
             if data:
                 self._cmd.poutput(data)
 
@@ -1312,7 +1296,7 @@ class CardApplication:
         """
         self.name = name
         self.adf = adf
-        self.sw = sw or dict()
+        self.sw = sw or {}
         # back-reference from ADF to Applicaiton
         if self.adf:
             self.aid = aid or self.adf.aid
