@@ -23,9 +23,9 @@ telecom-related protocol traces over UDP.
 #
 
 import socket
-from typing import List, Dict, Optional
 from construct import Optional as COptional
-from construct import *
+from construct import Int8ub, Int8sb, Int32ub, BitStruct, Enum, GreedyBytes, Struct, Switch
+from construct import this, PaddedString
 from pySim.construct import *
 
 # The root definition of GSMTAP can be found at
