@@ -22,7 +22,7 @@ from construct import Optional as COptional
 from construct import *
 from bidict import bidict
 from Cryptodome.Random import get_random_bytes
-from pySim.global_platform.scp02 import SCP02
+from pySim.global_platform.scp import SCP02
 from pySim.construct import *
 from pySim.utils import *
 from pySim.filesystem import *
