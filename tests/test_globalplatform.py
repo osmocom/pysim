@@ -19,7 +19,7 @@ import unittest
 import logging
 
 from pySim.global_platform import *
-from pySim.global_platform.scp02 import SCP02
+from pySim.global_platform.scp import SCP02
 from pySim.utils import b2h, h2b
 
 KIC = h2b('100102030405060708090a0b0c0d0e0f') # enc
