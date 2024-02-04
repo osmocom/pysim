@@ -19,11 +19,11 @@
 
 import argparse
 import re
-from typing import Optional, Union
+from typing import Optional
 
 from smartcard.CardConnection import CardConnection
 from smartcard.CardRequest import CardRequest
-from smartcard.Exceptions import NoCardException, CardRequestTimeoutException, CardConnectionException, CardConnectionException
+from smartcard.Exceptions import NoCardException, CardRequestTimeoutException, CardConnectionException
 from smartcard.System import readers
 
 from pySim.exceptions import NoCardError, ProtocolError, ReaderError
@@ -63,15 +63,14 @@ class PcscSimLink(LinkBase):
             self._con.disconnect()
         except:
             pass
-        return
 
     def wait_for_card(self, timeout: Optional[int] = None, newcardonly: bool = False):
         cr = CardRequest(readers=[self._reader],
                          timeout=timeout, newcardonly=newcardonly)
         try:
             cr.waitforcard()
-        except CardRequestTimeoutException:
-            raise NoCardError()
+        except CardRequestTimeoutException as exc:
+            raise NoCardError() from exc
         self.connect()
 
     def connect(self):
@@ -82,10 +81,10 @@ class PcscSimLink(LinkBase):
 
             # Explicitly select T=0 communication protocol
             self._con.connect(CardConnection.T0_protocol)
-        except CardConnectionException:
-            raise ProtocolError()
-        except NoCardException:
-            raise NoCardError()
+        except CardConnectionException as exc:
+            raise ProtocolError() from exc
+        except NoCardException as exc:
+            raise NoCardError() from exc
 
     def get_atr(self) -> Hexstr:
         return self._con.getATR()
