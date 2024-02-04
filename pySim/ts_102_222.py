@@ -18,22 +18,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import List
-
-import cmd2
-from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 
-from pySim.exceptions import *
-from pySim.utils import h2b, swap_nibbles, b2h, JsonEncoder, auto_uint8, auto_uint16
+import cmd2
+from cmd2 import CommandSet, with_default_category
+
+from pySim.utils import b2h, auto_uint8, auto_uint16, is_hexstr
 
 from pySim.ts_102_221 import *
 
 @with_default_category('TS 102 222 Administrative Commands')
 class Ts102222Commands(CommandSet):
     """Administrative commands for telecommunication applications."""
-
-    def __init__(self):
-        super().__init__()
 
     delfile_parser = argparse.ArgumentParser()
     delfile_parser.add_argument('--force-delete', action='store_true',
@@ -49,7 +45,7 @@ class Ts102222Commands(CommandSet):
             self._cmd.perror("Refusing to permanently delete the file, please read the help text.")
             return
         f = self._cmd.lchan.get_file_for_selectable(opts.NAME)
-        (data, sw) = self._cmd.lchan.scc.delete_file(f.fid)
+        (_data, _sw) = self._cmd.lchan.scc.delete_file(f.fid)
 
     def complete_delete_file(self, text, line, begidx, endidx) -> List[str]:
         """Command Line tab completion for DELETE FILE"""
@@ -70,7 +66,7 @@ class Ts102222Commands(CommandSet):
             self._cmd.perror("Refusing to terminate the file, please read the help text.")
             return
         f = self._cmd.lchan.get_file_for_selectable(opts.NAME)
-        (data, sw) = self._cmd.lchan.scc.terminate_df(f.fid)
+        (_data, _sw) = self._cmd.lchan.scc.terminate_df(f.fid)
 
     def complete_terminate_df(self, text, line, begidx, endidx) -> List[str]:
         """Command Line tab completion for TERMINATE DF"""
@@ -86,7 +82,7 @@ class Ts102222Commands(CommandSet):
             self._cmd.perror("Refusing to terminate the file, please read the help text.")
             return
         f = self._cmd.lchan.get_file_for_selectable(opts.NAME)
-        (data, sw) = self._cmd.lchan.scc.terminate_ef(f.fid)
+        (_data, _sw) = self._cmd.lchan.scc.terminate_ef(f.fid)
 
     def complete_terminate_ef(self, text, line, begidx, endidx) -> List[str]:
         """Command Line tab completion for TERMINATE EF"""
@@ -104,7 +100,7 @@ class Ts102222Commands(CommandSet):
         if not opts.force_terminate_card:
             self._cmd.perror("Refusing to permanently terminate the card, please read the help text.")
             return
-        (data, sw) = self._cmd.lchan.scc.terminate_card_usage()
+        (_data, _sw) = self._cmd.lchan.scc.terminate_card_usage()
 
     create_parser = argparse.ArgumentParser()
     create_parser.add_argument('FILE_ID', type=is_hexstr, help='File Identifier as 4-character hex string')
@@ -149,7 +145,7 @@ class Ts102222Commands(CommandSet):
                ShortFileIdentifier(decoded=opts.short_file_id),
             ]
         fcp = FcpTemplate(children=ies)
-        (data, sw) = self._cmd.lchan.scc.create_file(b2h(fcp.to_tlv()))
+        (_data, _sw) = self._cmd.lchan.scc.create_file(b2h(fcp.to_tlv()))
         # the newly-created file is automatically selected but our runtime state knows nothing of it
         self._cmd.lchan.select_file(self._cmd.lchan.selected_file)
 
@@ -192,15 +188,15 @@ class Ts102222Commands(CommandSet):
             ies.append(TotalFileSize(decoded=opts.total_file_size))
         # TODO: Spec states PIN Status Template DO is mandatory
         if opts.permit_rfm_create or opts.permit_rfm_delete_terminate or opts.permit_other_applet_create or opts.permit_other_applet_delete_terminate:
-               toolkit_ac = {
-                   'rfm_create': opts.permit_rfm_create,
-                   'rfm_delete_terminate': opts.permit_rfm_delete_terminate,
-                   'other_applet_create': opts.permit_other_applet_create,
-                   'other_applet_delete_terminate': opts.permit_other_applet_delete_terminate,
-                   }
-               ies.append(ProprietaryInformation(children=[ToolkitAccessConditions(decoded=toolkit_ac)]))
+            toolkit_ac = {
+               'rfm_create': opts.permit_rfm_create,
+               'rfm_delete_terminate': opts.permit_rfm_delete_terminate,
+               'other_applet_create': opts.permit_other_applet_create,
+               'other_applet_delete_terminate': opts.permit_other_applet_delete_terminate,
+               }
+            ies.append(ProprietaryInformation(children=[ToolkitAccessConditions(decoded=toolkit_ac)]))
         fcp = FcpTemplate(children=ies)
-        (data, sw) = self._cmd.lchan.scc.create_file(b2h(fcp.to_tlv()))
+        (_data, _sw) = self._cmd.lchan.scc.create_file(b2h(fcp.to_tlv()))
         # the newly-created file is automatically selected but our runtime state knows nothing of it
         self._cmd.lchan.select_file(self._cmd.lchan.selected_file)
 
@@ -217,7 +213,7 @@ class Ts102222Commands(CommandSet):
         ies = [FileIdentifier(decoded=f.fid),
                FileSize(decoded=opts.file_size)]
         fcp = FcpTemplate(children=ies)
-        (data, sw) = self._cmd.lchan.scc.resize_file(b2h(fcp.to_tlv()))
+        (_data, _sw) = self._cmd.lchan.scc.resize_file(b2h(fcp.to_tlv()))
         # the resized file is automatically selected but our runtime state knows nothing of it
         self._cmd.lchan.select_file(self._cmd.lchan.selected_file)
 
