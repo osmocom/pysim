@@ -1,4 +1,3 @@
-# coding=utf-8
 """APDU (and TPDU) parser for UICC/USIM/ISIM cards.
 
 The File (and its classes) represent the structure / hierarchy
@@ -27,12 +26,13 @@ we already know in pySim about the filesystem structure, file encoding, etc.
 
 
 import abc
-from termcolor import colored
 import typing
 from typing import List, Dict, Optional
+from termcolor import colored
 
-from construct import *
+from construct import Byte, GreedyBytes
 from construct import Optional as COptional
+
 from pySim.construct import *
 from pySim.utils import *
 from pySim.runtime import RuntimeLchan, RuntimeState, lchan_nr_from_cla
@@ -52,8 +52,8 @@ from pySim.filesystem import CardADF, CardFile, TransparentEF, LinFixedEF
 class ApduCommandMeta(abc.ABCMeta):
     """A meta-class that we can use to set some class variables when declaring
        a derived class of ApduCommand."""
-    def __new__(metacls, name, bases, namespace, **kwargs):
-        x = super().__new__(metacls, name, bases, namespace)
+    def __new__(mcs, name, bases, namespace, **kwargs):
+        x = super().__new__(mcs, name, bases, namespace)
         x._name = namespace.get('name', kwargs.get('n', None))
         x._ins = namespace.get('ins', kwargs.get('ins', None))
         x._cla = namespace.get('cla', kwargs.get('cla', None))
@@ -187,44 +187,39 @@ class ApduCommand(Apdu, metaclass=ApduCommandMeta):
         if apdu_case in [1, 2]:
             # data is part of response
             return cls(buffer[:5], buffer[5:])
-        elif apdu_case in [3, 4]:
+        if apdu_case in [3, 4]:
             # data is part of command
             lc = buffer[4]
             return cls(buffer[:5+lc], buffer[5+lc:])
-        else:
-            raise ValueError('%s: Invalid APDU Case %u' % (cls.__name__, apdu_case))
+        raise ValueError('%s: Invalid APDU Case %u' % (cls.__name__, apdu_case))
 
     @property
     def path(self) -> List[str]:
         """Return (if known) the path as list of files to the file on which this command operates."""
         if self.file:
             return self.file.fully_qualified_path()
-        else:
-            return []
+        return []
 
     @property
     def path_str(self) -> str:
         """Return (if known) the path as string to the file on which this command operates."""
         if self.file:
             return self.file.fully_qualified_path_str()
-        else:
-            return ''
+        return ''
 
     @property
     def col_sw(self) -> str:
         """Return the ansi-colorized status word. Green==OK, Red==Error"""
         if self.successful:
             return colored(b2h(self.sw), 'green')
-        else:
-            return colored(b2h(self.sw), 'red')
+        return colored(b2h(self.sw), 'red')
 
     @property
     def lchan_nr(self) -> int:
         """Logical channel number over which this ApduCommand was transmitted."""
         if self.lchan:
             return self.lchan.lchan_nr
-        else:
-            return lchan_nr_from_cla(self.cla)
+        return lchan_nr_from_cla(self.cla)
 
     def __str__(self) -> str:
         return '%02u %s(%s): %s' % (self.lchan_nr, type(self).__name__, self.path_str, self.to_dict())
@@ -236,7 +231,7 @@ class ApduCommand(Apdu, metaclass=ApduCommandMeta):
         """Fall-back function to be called if there is no derived-class-specific
         process_global or process_on_lchan method. Uses information from APDU decode."""
         self.processed = {}
-        if not 'p1' in self.cmd_dict:
+        if 'p1' not in self.cmd_dict:
             self.processed = self.to_dict()
         else:
             self.processed['p1'] = self.cmd_dict['p1']
@@ -428,8 +423,7 @@ class TpduFilter(ApduHandler):
             apdu = Apdu(icmd, tpdu.rsp)
             if self.apdu_handler:
                 return self.apdu_handler.input(apdu)
-            else:
-                return Apdu(icmd, tpdu.rsp)
+            return Apdu(icmd, tpdu.rsp)
 
     def input(self, cmd: bytes, rsp: bytes):
         if isinstance(cmd, str):
@@ -452,7 +446,6 @@ class CardReset:
         self.atr = atr
 
     def __str__(self):
-        if (self.atr):
+        if self.atr:
             return '%s(%s)' % (type(self).__name__, b2h(self.atr))
-        else:
-            return '%s' % (type(self).__name__)
+        return '%s' % (type(self).__name__)
