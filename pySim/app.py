@@ -20,7 +20,6 @@ from pySim.transport import LinkBase
 from pySim.commands import SimCardCommands
 from pySim.filesystem import CardModel, CardApplication
 from pySim.cards import card_detect, SimCardBase, UiccCardBase
-from pySim.exceptions import NoCardError
 from pySim.runtime import RuntimeState
 from pySim.profile import CardProfile
 from pySim.cdma_ruim import CardProfileRUIM
@@ -108,6 +107,3 @@ def init_card(sl: LinkBase) -> Tuple[RuntimeState, SimCardBase]:
     sl.set_sw_interpreter(rs)
 
     return rs, card
-
-
-
