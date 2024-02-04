@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import enum
 
+from construct import Bytewise, BitStruct, BitsInteger, Struct, FlagsEnum
+
 from pySim.utils import *
 from pySim.filesystem import *
 from pySim.profile import match_ruim
@@ -27,7 +29,6 @@ from pySim.ts_51_011 import CardProfileSIM
 from pySim.ts_51_011 import DF_TELECOM, DF_GSM
 from pySim.ts_51_011 import EF_ServiceTable
 from pySim.construct import *
-from construct import *
 
 
 # Mapping between CDMA Service Number and its description
@@ -185,9 +186,9 @@ class CardProfileRUIM(CardProfile):
                          sel_ctrl="0000", files_in_mf=[DF_TELECOM(), DF_GSM(), DF_CDMA()])
 
     @staticmethod
-    def decode_select_response(resp_hex: str) -> object:
+    def decode_select_response(data_hex: str) -> object:
         # TODO: Response parameters/data in case of DF_CDMA (section 2.6)
-        return CardProfileSIM.decode_select_response(resp_hex)
+        return CardProfileSIM.decode_select_response(data_hex)
 
     @staticmethod
     def match_with_card(scc: SimCardCommands) -> bool:
