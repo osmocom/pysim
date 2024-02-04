@@ -16,20 +16,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import sys
 import logging
-from pprint import pprint as pp
 from typing import Tuple
 import pyshark
 
-from pySim.utils import h2b, b2h
-from pySim.apdu import Tpdu
+from pySim.utils import h2b
 from pySim.gsmtap import GsmtapMessage
-from . import ApduSource, PacketType, CardReset
 
 from pySim.apdu.ts_102_221 import ApduCommands as UiccApduCommands
 from pySim.apdu.ts_31_102 import ApduCommands as UsimApduCommands
 from pySim.apdu.global_platform import ApduCommands as GpApduCommands
+
+from . import ApduSource, PacketType, CardReset
+
 ApduCommands = UiccApduCommands + UsimApduCommands + GpApduCommands
 
 logger = logging.getLogger(__name__)
@@ -67,10 +66,10 @@ class _PysharkGsmtap(ApduSource):
         sub_type = gsmtap_msg['sub_type']
         if sub_type == 'apdu':
             return ApduCommands.parse_cmd_bytes(gsmtap_msg['body'])
-        elif sub_type == 'atr':
+        if sub_type == 'atr':
             # card has been reset
             return CardReset(gsmtap_msg['body'])
-        elif sub_type in ['pps_req', 'pps_rsp']:
+        if sub_type in ['pps_req', 'pps_rsp']:
             # simply ignore for now
             pass
         else:
@@ -87,4 +86,3 @@ class PysharkGsmtapPcap(_PysharkGsmtap):
         """
         pyshark_inst = pyshark.FileCapture(pcap_filename, display_filter='gsm_sim', use_json=True, keep_packets=False)
         super().__init__(pyshark_inst)
-
