@@ -45,7 +45,7 @@ case "$JOB_TYPE" in
 		--disable E1102 \
 		--disable E0401 \
 		--enable W0301 \
-		pySim *.py
+		pySim tests/*.py *.py
 	;;
 "docs")
 	rm -rf docs/_build
