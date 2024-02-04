@@ -19,11 +19,11 @@
 import requests
 from typing import Optional, List
 
-from cryptography.hazmat.primitives.asymmetric import ec, padding
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import hashes
-from cryptography.exceptions import InvalidSignature
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import load_pem_private_key, Encoding
+from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 
 from pySim.utils import b2h
 
@@ -67,7 +67,6 @@ class oid:
 
 class VerifyError(Exception):
     """An error during certificate verification,"""
-    pass
 
 class CertificateSet:
     """A set of certificates consisting of a trusted [self-signed] CA root certificate,
@@ -88,7 +87,7 @@ class CertificateSet:
         self.crl = None
 
     def load_crl(self, urls: Optional[List[str]] = None):
-        if urls and type(urls) is str:
+        if urls and isinstance(urls, str):
             urls = [urls]
         if not urls:
             # generate list of CRL URLs from root CA certificate
@@ -102,7 +101,7 @@ class CertificateSet:
 
         for url in urls:
             try:
-                crl_bytes = requests.get(url)
+                crl_bytes = requests.get(url, timeout=10)
             except requests.exceptions.ConnectionError:
                 continue
             crl = x509.load_der_x509_crl(crl_bytes)
@@ -160,7 +159,6 @@ class CertificateSet:
             if depth > max_depth:
                 raise VerifyError('Maximum depth %u exceeded while verifying certificate chain' % max_depth)
 
-from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 
 def ecdsa_dss_to_tr03111(sig: bytes) -> bytes:
     """convert from DER format to BSI TR-03111; first get long integers; then convert those to bytes."""
