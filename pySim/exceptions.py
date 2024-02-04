@@ -24,17 +24,14 @@
 
 class NoCardError(Exception):
     """No card was found in the reader."""
-    pass
 
 
 class ProtocolError(Exception):
     """Some kind of protocol level error interfacing with the card."""
-    pass
 
 
 class ReaderError(Exception):
     """Some kind of general error with the card reader."""
-    pass
 
 
 class SwMatchError(Exception):
