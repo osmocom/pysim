@@ -19,7 +19,7 @@
 
 from typing import Optional, Tuple
 
-from pySim.utils import sw_match, h2b, i2h, is_hex, bertlv_parse_one, Hexstr
+from pySim.utils import h2b, i2h, is_hex, bertlv_parse_one, Hexstr
 from pySim.exceptions import *
 from pySim.filesystem import *
 
@@ -29,11 +29,10 @@ def lchan_nr_from_cla(cla: int) -> int:
     if cla >> 4 in [0x0, 0xA, 0x8]:
         # Table 10.3
         return cla & 0x03
-    elif cla & 0xD0 in [0x40, 0xC0]:
+    if cla & 0xD0 in [0x40, 0xC0]:
         # Table 10.4a
         return 4 + (cla & 0x0F)
-    else:
-        raise ValueError('Could not determine logical channel for CLA=%2X' % cla)
+    raise ValueError('Could not determine logical channel for CLA=%2X' % cla)
 
 class RuntimeState:
     """Represent the runtime state of a session with a card."""
@@ -116,7 +115,7 @@ class RuntimeState:
                 # no problem when we access the card object directly without caring
                 # about updating other states. For normal selects at runtime, the
                 # caller must use the lchan provided methods select or select_file!
-                data, sw = self.card.select_adf_by_aid(f.aid)
+                _data, sw = self.card.select_adf_by_aid(f.aid)
                 self.selected_adf = f
                 if sw == "9000":
                     print(" %s: %s" % (f.name, f.aid))
@@ -264,20 +263,20 @@ class RuntimeLchan:
             # run time. In case the file does not exist on the card, we just abort.
             # The state on the card (selected file/application) wont't be changed,
             # so we do not have to update any state in that case.
-            (data, sw) = self.scc.select_file(fid)
+            (data, _sw) = self.scc.select_file(fid)
         except SwMatchError as swm:
             self._select_post(cmd_app)
             k = self.interpret_sw(swm.sw_actual)
             if not k:
-                raise(swm)
-            raise RuntimeError("%s: %s - %s" % (swm.sw_actual, k[0], k[1]))
+                raise swm
+            raise RuntimeError("%s: %s - %s" % (swm.sw_actual, k[0], k[1])) from swm
 
         select_resp = self.selected_file.decode_select_response(data)
-        if (select_resp['file_descriptor']['file_descriptor_byte']['file_type'] == 'df'):
+        if select_resp['file_descriptor']['file_descriptor_byte']['file_type'] == 'df':
             f = CardDF(fid=fid, sfid=None, name="DF." + str(fid).upper(),
                        desc="dedicated file, manually added at runtime")
         else:
-            if (select_resp['file_descriptor']['file_descriptor_byte']['structure'] == 'transparent'):
+            if select_resp['file_descriptor']['file_descriptor_byte']['structure'] == 'transparent':
                 f = TransparentEF(fid=fid, sfid=None, name="EF." + str(fid).upper(),
                                   desc="elementary file, manually added at runtime")
             else:
@@ -340,13 +339,13 @@ class RuntimeLchan:
                 # card directly since this would lead into an incoherence of the
                 # card state and the state of the lchan.
                 if isinstance(f, CardADF):
-                    (data, sw) = self.rs.card.select_adf_by_aid(f.aid, scc=self.scc)
+                    (data, _sw) = self.rs.card.select_adf_by_aid(f.aid, scc=self.scc)
                 else:
-                    (data, sw) = self.scc.select_file(f.fid)
+                    (data, _sw) = self.scc.select_file(f.fid)
                 selected_file = f
             except SwMatchError as swm:
                 self._select_post(cmd_app, selected_file, data)
-                raise(swm)
+                raise swm
 
         self._select_post(cmd_app, f, data)
 
@@ -394,7 +393,7 @@ class RuntimeLchan:
 
     def status(self):
         """Request STATUS (current selected file FCP) from card."""
-        (data, sw) = self.scc.status()
+        (data, _sw) = self.scc.status()
         return self.selected_file.decode_select_response(data)
 
     def get_file_for_selectable(self, name: str):
@@ -524,8 +523,8 @@ class RuntimeLchan:
         """
         if not isinstance(self.selected_file, BerTlvEF):
             raise TypeError("Only works with BER-TLV EF")
-        data, sw = self.scc.retrieve_data(self.selected_file.fid, 0x5c)
-        tag, length, value, remainder = bertlv_parse_one(h2b(data))
+        data, _sw = self.scc.retrieve_data(self.selected_file.fid, 0x5c)
+        _tag, _length, value, _remainder = bertlv_parse_one(h2b(data))
         return list(value)
 
     def set_data(self, tag: int, data_hex: str):
@@ -544,6 +543,3 @@ class RuntimeLchan:
         if cmd_app and self.selected_file.shell_commands:
             for c in self.selected_file.shell_commands:
                 cmd_app.unregister_command_set(c)
-
-
-
