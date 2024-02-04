@@ -26,11 +26,12 @@ Support for the Secure Element Access Control, specifically the ARA-M inside an 
 #
 
 
-from construct import *
+from construct import GreedyBytes, GreedyString, Struct, Enum, Int8ub, Int16ub
 from construct import Optional as COptional
 from pySim.construct import *
 from pySim.filesystem import *
 from pySim.tlv import *
+from pySim.utils import Hexstr
 import pySim.global_platform
 
 # various BER-TLV encoded Data Objects (DOs)
@@ -68,11 +69,10 @@ class ApduArDO(BER_TLV_IE, tag=0xd0):
             if do[0] == 0x00:
                 self.decoded = {'generic_access_rule': 'never'}
                 return self.decoded
-            elif do[0] == 0x01:
+            if do[0] == 0x01:
                 self.decoded = {'generic_access_rule': 'always'}
                 return self.decoded
-            else:
-                return ValueError('Invalid 1-byte generic APDU access rule')
+            return ValueError('Invalid 1-byte generic APDU access rule')
         else:
             if len(do) % 8:
                 return ValueError('Invalid non-modulo-8 length of APDU filter: %d' % len(do))
@@ -88,10 +88,9 @@ class ApduArDO(BER_TLV_IE, tag=0xd0):
         if 'generic_access_rule' in self.decoded:
             if self.decoded['generic_access_rule'] == 'never':
                 return b'\x00'
-            elif self.decoded['generic_access_rule'] == 'always':
+            if self.decoded['generic_access_rule'] == 'always':
                 return b'\x01'
-            else:
-                return ValueError('Invalid 1-byte generic APDU access rule')
+            return ValueError('Invalid 1-byte generic APDU access rule')
         else:
             if not 'apdu_filter' in self.decoded:
                 return ValueError('Invalid APDU AR DO')
@@ -277,14 +276,13 @@ class ADF_ARAM(CardADF):
             cmd_do_enc = b''
             cmd_do_len = 0
         c_apdu = hdr + ('%02x' % cmd_do_len) + b2h(cmd_do_enc)
-        (data, sw) = tp.send_apdu_checksw(c_apdu, exp_sw)
+        (data, _sw) = tp.send_apdu_checksw(c_apdu, exp_sw)
         if data:
             if resp_cls:
                 resp_do = resp_cls()
                 resp_do.from_tlv(h2b(data))
                 return resp_do
-            else:
-                return data
+            return data
         else:
             return None
 
@@ -306,16 +304,13 @@ class ADF_ARAM(CardADF):
 
     @with_default_category('Application-Specific Commands')
     class AddlShellCommands(CommandSet):
-        def __init(self):
-            super().__init__()
-
-        def do_aram_get_all(self, opts):
+        def do_aram_get_all(self, _opts):
             """GET DATA [All] on the ARA-M Applet"""
             res_do = ADF_ARAM.get_all(self._cmd.lchan.scc._tp)
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
 
-        def do_aram_get_config(self, opts):
+        def do_aram_get_config(self, _opts):
             """Perform GET DATA [Config] on the ARA-M Applet: Tell it our version and retrieve its version."""
             res_do = ADF_ARAM.get_config(self._cmd.lchan.scc._tp)
             if res_do:
@@ -353,7 +348,7 @@ class ADF_ARAM(CardADF):
             """Perform STORE DATA [Command-Store-REF-AR-DO] to store a (new) access rule."""
             # REF
             ref_do_content = []
-            if opts.aid != None:
+            if opts.aid is not None:
                 ref_do_content += [{'aid_ref_do': opts.aid}]
             elif opts.aid_empty:
                 ref_do_content += [{'aid_ref_empty_do': None}]
@@ -382,7 +377,7 @@ class ADF_ARAM(CardADF):
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
 
-        def do_aram_delete_all(self, opts):
+        def do_aram_delete_all(self, _opts):
             """Perform STORE DATA [Command-Delete[all]] to delete all access rules."""
             deldo = CommandDelete()
             res_do = ADF_ARAM.store_data(self._cmd.lchan.scc._tp, deldo)
