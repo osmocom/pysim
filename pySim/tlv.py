@@ -16,21 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-from typing import Optional, List, Dict, Any, Tuple
-from bidict import bidict
+import inspect
+import abc
+import re
+from typing import List, Tuple
 
 from pySim.utils import bertlv_encode_len, bertlv_parse_len, bertlv_encode_tag, bertlv_parse_tag
 from pySim.utils import comprehensiontlv_encode_tag, comprehensiontlv_parse_tag
 from pySim.utils import bertlv_parse_tag_raw, comprehensiontlv_parse_tag_raw
 from pySim.utils import dgi_parse_tag_raw, dgi_parse_len, dgi_encode_tag, dgi_encode_len
 
-from pySim.construct import build_construct, parse_construct, LV, HexAdapter, BcdAdapter, BitsRFU, GsmStringAdapter
-from pySim.exceptions import *
+from pySim.construct import build_construct, parse_construct
 
-import inspect
-import abc
-import re
 
 def camel_to_snake(name):
     name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
@@ -40,9 +37,9 @@ class TlvMeta(abc.ABCMeta):
     """Metaclass which we use to set some class variables at the time of defining a subclass.
     This allows us to create subclasses for each TLV/IE type, where the class represents fixed
     parameters like the tag/type and instances of it represent the actual TLV data."""
-    def __new__(metacls, name, bases, namespace, **kwargs):
-        #print("TlvMeta_new_(metacls=%s, name=%s, bases=%s, namespace=%s, kwargs=%s)" % (metacls, name, bases, namespace, kwargs))
-        x = super().__new__(metacls, name, bases, namespace)
+    def __new__(mcs, name, bases, namespace, **kwargs):
+        #print("TlvMeta_new_(mcs=%s, name=%s, bases=%s, namespace=%s, kwargs=%s)" % (mcs, name, bases, namespace, kwargs))
+        x = super().__new__(mcs, name, bases, namespace)
         # this becomes a _class_ variable, not an instance variable
         x.tag = namespace.get('tag', kwargs.get('tag', None))
         x.desc = namespace.get('desc', kwargs.get('desc', None))
@@ -63,9 +60,9 @@ class TlvCollectionMeta(abc.ABCMeta):
     """Metaclass which we use to set some class variables at the time of defining a subclass.
     This allows us to create subclasses for each Collection type, where the class represents fixed
     parameters like the nested IE classes and instances of it represent the actual TLV data."""
-    def __new__(metacls, name, bases, namespace, **kwargs):
-        #print("TlvCollectionMeta_new_(metacls=%s, name=%s, bases=%s, namespace=%s, kwargs=%s)" % (metacls, name, bases, namespace, kwargs))
-        x = super().__new__(metacls, name, bases, namespace)
+    def __new__(mcs, name, bases, namespace, **kwargs):
+        #print("TlvCollectionMeta_new_(mcs=%s, name=%s, bases=%s, namespace=%s, kwargs=%s)" % (mcs, name, bases, namespace, kwargs))
+        x = super().__new__(mcs, name, bases, namespace)
         # this becomes a _class_ variable, not an instance variable
         x.possible_nested = namespace.get('nested', kwargs.get('nested', None))
         return x
@@ -86,7 +83,7 @@ class Transcodable(abc.ABC):
     def to_bytes(self, context: dict = {}) -> bytes:
         """Convert from internal representation to binary bytes.  Store the binary result
         in the internal state and return it."""
-        if self.decoded == None:
+        if self.decoded is None:
             do = b''
         elif self._construct:
             do = build_construct(self._construct, self.decoded, context)
@@ -167,10 +164,7 @@ class IE(Transcodable, metaclass=TlvMeta):
 
     def is_constructed(self):
         """Is this IE constructed by further nested IEs?"""
-        if len(self.children):
-            return True
-        else:
-            return False
+        return bool(len(self.children) > 0)
 
     @abc.abstractmethod
     def to_ie(self, context: dict = {}) -> bytes:
@@ -198,9 +192,6 @@ class IE(Transcodable, metaclass=TlvMeta):
 
 class TLV_IE(IE):
     """Abstract base class for various TLV type Information Elements."""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
     def _compute_tag(self) -> int:
         """Compute the tag (sometimes the tag encodes part of the value)."""
@@ -254,9 +245,6 @@ class TLV_IE(IE):
 class BER_TLV_IE(TLV_IE):
     """TLV_IE formatted as ASN.1 BER described in ITU-T X.690 8.1.2."""
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     @classmethod
     def _decode_tag(cls, do: bytes) -> Tuple[dict, bytes]:
         return bertlv_parse_tag(do)
@@ -304,9 +292,6 @@ class COMPR_TLV_IE(TLV_IE):
 
 class DGI_TLV_IE(TLV_IE):
     """TLV_IE formated as  GlobalPlatform Systems Scripting Language Specification v1.1.0 Annex B."""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
     @classmethod
     def _parse_tag_raw(cls, do: bytes) -> Tuple[int, bytes]:
@@ -379,14 +364,14 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
         while len(remainder):
             context['siblings'] = res
             # obtain the tag at the start of the remainder
-            tag, r = first._parse_tag_raw(remainder)
-            if tag == None:
+            tag, _r = first._parse_tag_raw(remainder)
+            if tag is None:
                 break
             if tag in self.members_by_tag:
                 cls = self.members_by_tag[tag]
                 # create an instance and parse accordingly
                 inst = cls()
-                dec, remainder = inst.from_tlv(remainder, context=context)
+                _dec, remainder = inst.from_tlv(remainder, context=context)
                 res.append(inst)
             else:
                 # unknown tag; create the related class on-the-fly using the same base class
@@ -397,7 +382,7 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
                 cls._to_bytes = lambda s: bytes.fromhex(s.decoded['raw'])
                 # create an instance and parse accordingly
                 inst = cls()
-                dec, remainder = inst.from_tlv(remainder, context=context)
+                _dec, remainder = inst.from_tlv(remainder, context=context)
                 res.append(inst)
         self.children = res
         return res
@@ -458,7 +443,7 @@ def flatten_dict_lists(inp):
         return True
 
     def are_elements_unique(lod):
-        set_of_keys = set([list(x.keys())[0] for x in lod])
+        set_of_keys = {list(x.keys())[0] for x in lod}
         return len(lod) == len(set_of_keys)
 
     if isinstance(inp, list):
@@ -470,10 +455,10 @@ def flatten_dict_lists(inp):
                 newdict[key] = e[key]
             inp = newdict
             # process result as any native dict
-            return {k:flatten_dict_lists(inp[k]) for k in inp.keys()}
+            return {k:flatten_dict_lists(v) for k,v in inp.items()}
         else:
             return [flatten_dict_lists(x) for x in inp]
     elif isinstance(inp, dict):
-        return {k:flatten_dict_lists(inp[k]) for k in inp.keys()}
+        return {k:flatten_dict_lists(v) for k,v in inp.items()}
     else:
         return inp
