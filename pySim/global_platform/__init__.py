@@ -17,12 +17,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from copy import deepcopy
+from typing import Optional, List, Dict, Tuple
 from construct import Optional as COptional
 from construct import Struct, GreedyRange, FlagsEnum, Int16ub, Int24ub, Padding, Bit, Const
-from typing import Optional, List, Dict, Tuple
-from copy import deepcopy
-from bidict import bidict
 from Cryptodome.Random import get_random_bytes
+from Cryptodome.Cipher import DES, DES3, AES
 from pySim.global_platform.scp import SCP02, SCP03
 from pySim.construct import *
 from pySim.utils import *
@@ -446,15 +446,11 @@ class ADF_SD(CardADF):
         super().__init__(aid=aid, fid=None, sfid=None, name=name, desc=desc)
         self.shell_commands += [self.AddlShellCommands()]
 
-    @staticmethod
-    def decode_select_response(res_hex: str) -> object:
-        return decode_select_response(res_hex)
+    def decode_select_response(self, data_hex: str) -> object:
+        return decode_select_response(data_hex)
 
     @with_default_category('Application-Specific Commands')
     class AddlShellCommands(CommandSet):
-        def __init__(self):
-            super().__init__()
-
         get_data_parser = argparse.ArgumentParser()
         get_data_parser.add_argument('data_object_name', type=str,
             help='Name of the data object to be retrieved from the card')
@@ -470,7 +466,7 @@ class ADF_SD(CardADF):
                 self._cmd.poutput('Unknown data object "%s", available options: %s' % (tlv_cls_name,
                                                                                        do_names))
                 return
-            (data, sw) = self._cmd.lchan.scc.get_data(cla=0x80, tag=tlv_cls.tag)
+            (data, _sw) = self._cmd.lchan.scc.get_data(cla=0x80, tag=tlv_cls.tag)
             ie = tlv_cls()
             ie.from_tlv(h2b(data))
             self._cmd.poutput_json(ie.to_dict())
@@ -507,7 +503,7 @@ class ADF_SD(CardADF):
                                       {'last_block': len(remainder) == 0, 'encryption': encryption,
                                        'structure': structure, 'response': response_permitted})
                 hdr = "80E2%02x%02x%02x" % (p1b[0], block_nr, len(chunk))
-                data, sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(chunk))
+                data, _sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(chunk))
                 block_nr += 1
                 response += data
             return data
@@ -566,7 +562,7 @@ class ADF_SD(CardADF):
             See GlobalPlatform CardSpecification v2.3 Section 11.8 for details."""
             key_data = kvn.to_bytes(1, 'big') + build_construct(ADF_SD.AddlShellCommands.KeyDataBasic, key_dict)
             hdr = "80D8%02x%02x%02x" % (old_kvn, kid, len(key_data))
-            data, sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(key_data))
+            data, _sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(key_data))
             return data
 
         get_status_parser = argparse.ArgumentParser()
@@ -596,7 +592,7 @@ class ADF_SD(CardADF):
                 while len(remainder):
                     # tlv sequence, each element is one GpRegistryRelatedData()
                     grd = GpRegistryRelatedData()
-                    dec, remainder = grd.from_tlv(remainder)
+                    _dec, remainder = grd.from_tlv(remainder)
                     grd_list.append(grd)
                 if sw != '6310':
                     return grd_list
@@ -624,7 +620,7 @@ class ADF_SD(CardADF):
                                'scope'/SetStatusScope, 'status'/CLifeCycleState,
                                'aid'/HexAdapter(Prefixed(Int8ub, COptional(GreedyBytes))))
             apdu = build_construct(SetStatus, {'scope':scope, 'status':status, 'aid':aid})
-            data, sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(apdu))
+            _data, _sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(apdu))
 
         inst_perso_parser = argparse.ArgumentParser()
         inst_perso_parser.add_argument('application-aid', type=is_hexstr, help='Application AID')
@@ -700,13 +696,13 @@ class ADF_SD(CardADF):
             """Perform GlobalPlaform DELETE (Key) command.
             If both KID and KVN are specified, exactly one key is deleted. If only either of the two is
             specified, multiple matching keys may be deleted."""
-            if opts.key_id == None and opts.key_ver == None:
+            if opts.key_id is None and opts.key_ver is None:
                 raise ValueError('At least one of KID or KVN must be specified')
             p2 = 0x80 if opts.delete_related_objects else 0x00
             cmd = ""
-            if opts.key_id != None:
+            if opts.key_id is not None:
                 cmd += "d001%02x" % opts.key_id
-            if opts.key_ver != None:
+            if opts.key_ver is not None:
                 cmd += "d201%02x" % opts.key_ver
             self.delete(0x00, p2, cmd)
 
@@ -759,17 +755,17 @@ class ADF_SD(CardADF):
         def _establish_scp(self, scp, host_challenge, security_level):
             # perform the common functionality shared by SCP02 and SCP03 establishment
             init_update_apdu = scp.gen_init_update_apdu(host_challenge=host_challenge)
-            init_update_resp, sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(init_update_apdu))
+            init_update_resp, _sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(init_update_apdu))
             scp.parse_init_update_resp(h2b(init_update_resp))
             ext_auth_apdu = scp.gen_ext_auth_apdu(security_level)
-            ext_auth_resp, sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(ext_auth_apdu))
+            _ext_auth_resp, _sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(ext_auth_apdu))
             self._cmd.poutput("Successfully established a %s secure channel" % str(scp))
             # store a reference to the SCP instance
             self._cmd.lchan.scc.scp = scp
             self._cmd.update_prompt()
 
 
-        def do_release_scp(self, opts):
+        def do_release_scp(self, _opts):
             """Release a previously establiehed secure channel."""
             if not self._cmd.lchan.scc.scp:
                 self._cmd.poutput("Cannot release SCP as none is established")
@@ -801,7 +797,7 @@ class CardApplicationISD(CardApplicationSD):
 class GpCardKeyset:
     """A single set of GlobalPlatform card keys and the associated KVN."""
     def __init__(self, kvn: int, enc: bytes, mac: bytes, dek: bytes):
-        assert kvn >= 0 and kvn < 256
+        assert 0 < kvn < 256
         assert len(enc) == len(mac) == len(dek)
         self.kvn = kvn
         self.enc = enc
@@ -810,13 +806,12 @@ class GpCardKeyset:
 
     @classmethod
     def from_single_key(cls, kvn: int, base_key: bytes) -> 'GpCardKeyset':
-        return cls(int, base_key, base_key, base_key)
+        return cls(kvn, base_key, base_key, base_key)
 
     def __str__(self):
         return "%s(KVN=%u, ENC=%s, MAC=%s, DEK=%s)" % (self.__class__.__name__,
                 self.kvn, b2h(self.enc), b2h(self.mac), b2h(self.dek))
 
-from Cryptodome.Cipher import DES, DES3, AES
 
 def compute_kcv_des(key:bytes) -> bytes:
     # GP Card Spec B.6: For a DES key, the key check value is computed by encrypting 8 bytes, each with
