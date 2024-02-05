@@ -250,7 +250,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         # noted that the apdu command plays an exceptional role since it is the only card accessing command that
         # can be executed without the presence of a runtime state (self.rs) object. However, this also means that
         # self.lchan is also not present (see method equip).
-        if opts.raw:
+        if opts.raw or self.lchan is None:
             data, sw = self.card._scc.send_apdu(opts.APDU)
         else:
             data, sw = self.lchan.scc.send_apdu(opts.APDU)
