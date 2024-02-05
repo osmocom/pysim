@@ -630,7 +630,7 @@ class ADF_SD(CardADF):
             """Perform GlobalPlatform INSTALL [for personalization] command in order to inform a Security
             Domain that the following STORE DATA commands are meant for a specific AID (specified here)."""
             # Section 11.5.2.3.6 / Table 11-47
-            self.install(0x20, 0x00, "0000%02u%s000000" % (len(opts.application_aid)//2, opts.application_aid))
+            self.install(0x20, 0x00, "0000%02x%s000000" % (len(opts.application_aid)//2, opts.application_aid))
 
         inst_inst_parser = argparse.ArgumentParser()
         inst_inst_parser.add_argument('--load-file-aid', type=is_hexstr, default='',
