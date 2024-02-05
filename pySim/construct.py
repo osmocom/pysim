@@ -1,17 +1,20 @@
-from construct.lib.containers import Container, ListContainer
-from construct.core import EnumIntegerString
+"""Utility code related to the integration of the 'construct' declarative parser."""
+
 import typing
-from construct import Adapter, Prefixed, Int8ub, GreedyBytes, Default, Flag, Byte, Construct, Enum
-from construct import BitsInteger, BitStruct, Bytes, StreamError, stream_read_entire, stream_write
-from construct import SizeofError, IntegerError, swapbytes
-from construct.core import evaluate, BitwisableString
-from construct.lib import integertypes
-from pySim.utils import b2h, h2b, swap_nibbles
-import gsm0338
 import codecs
 import ipaddress
 
-"""Utility code related to the integration of the 'construct' declarative parser."""
+import gsm0338
+
+from construct.lib.containers import Container, ListContainer
+from construct.core import EnumIntegerString
+from construct import Adapter, Prefixed, Int8ub, GreedyBytes, Default, Flag, Byte, Construct, Enum
+from construct import BitsInteger, BitStruct, Bytes, StreamError, stream_read_entire, stream_write
+from construct import SizeofError, IntegerError, swapbytes
+from construct.core import evaluate
+from construct.lib import integertypes
+
+from pySim.utils import b2h, h2b, swap_nibbles
 
 # (C) 2021-2022 by Harald Welte <laforge@osmocom.org>
 #
@@ -44,7 +47,7 @@ class Utf8Adapter(Adapter):
     def _decode(self, obj, context, path):
         # In case the string contains only 0xff bytes we interpret it as an empty string
         if obj == b'\xff' * len(obj):
-                return ""
+            return ""
         return codecs.decode(obj, "utf-8")
 
     def _encode(self, obj, context, path):
@@ -56,7 +59,7 @@ class GsmOrUcs2Adapter(Adapter):
     def _decode(self, obj, context, path):
         # In case the string contains only 0xff bytes we interpret it as an empty string
         if obj == b'\xff' * len(obj):
-                return ""
+            return ""
         # one of the magic bytes of TS 102 221 Annex A
         if obj[0] in [0x80, 0x81, 0x82]:
             ad = Ucs2Adapter(GreedyBytes)
@@ -79,7 +82,7 @@ class Ucs2Adapter(Adapter):
     def _decode(self, obj, context, path):
         # In case the string contains only 0xff bytes we interpret it as an empty string
         if obj == b'\xff' * len(obj):
-                return ""
+            return ""
         if obj[0] == 0x80:
             # TS 102 221 Annex A Variant 1
             return codecs.decode(obj[1:], 'utf_16_be')
@@ -177,7 +180,7 @@ class Ucs2Adapter(Adapter):
 
         def _encode_variant1(instr: str) -> bytes:
             """Encode according to TS 102 221 Annex A Variant 1"""
-            return b'\x80' + codecs.encode(obj, 'utf_16_be')
+            return b'\x80' + codecs.encode(instr, 'utf_16_be')
 
         def _encode_variant2(instr: str) -> bytes:
             """Encode according to TS 102 221 Annex A Variant 2"""
@@ -196,7 +199,7 @@ class Ucs2Adapter(Adapter):
                     assert codepoint_prefix == c_prefix
                     enc = (0x80 + (c_codepoint & 0x7f)).to_bytes(1, byteorder='big')
                 chars += enc
-            if codepoint_prefix == None:
+            if codepoint_prefix is None:
                 codepoint_prefix = 0
             return hdr + codepoint_prefix.to_bytes(1, byteorder='big') + chars
 
@@ -266,9 +269,9 @@ class InvertAdapter(Adapter):
             # skip all private entries
             if k.startswith('_'):
                 continue
-            if v == False:
+            if v is False:
                 obj[k] = True
-            elif v == True:
+            elif v is True:
                 obj[k] = False
         return obj
 
@@ -382,14 +385,14 @@ class StripTrailerAdapter(Adapter):
         self.min_len = min_len
 
     def _decode(self, obj, context, path):
-        assert type(obj) == bytes
+        assert isinstance(obj, bytes)
         # pad with suppressed/missing bytes
         if len(obj) < self.total_length:
             obj += self.default_value * (self.total_length - len(obj))
         return int.from_bytes(obj, 'big')
 
     def _encode(self, obj, context, path):
-        assert type(obj) == int
+        assert isinstance(obj, int)
         obj = obj.to_bytes(self.total_length, 'big')
         # remove trailing bytes if they are zero
         while len(obj) > self.min_len and obj[-1] == self.default_value[0]:
@@ -405,20 +408,20 @@ def filter_dict(d, exclude_prefix='_'):
     for (key, value) in d.items():
         if key.startswith(exclude_prefix):
             continue
-        if type(value) is dict:
+        if isinstance(value, dict):
             res[key] = filter_dict(value)
         else:
             res[key] = value
     return res
 
 
-def normalize_construct(c):
+def normalize_construct(c, exclude_prefix: str = '_'):
     """Convert a construct specific type to a related base type, mostly useful
     so we can serialize it."""
     # we need to include the filter_dict as we otherwise get elements like this
     # in the dict: '_io': <_io.BytesIO object at 0x7fdb64e05860> which we cannot json-serialize
-    c = filter_dict(c)
-    if isinstance(c, Container) or isinstance(c, dict):
+    c = filter_dict(c, exclude_prefix)
+    if isinstance(c, (Container, dict)):
         r = {k: normalize_construct(v) for (k, v) in c.items()}
     elif isinstance(c, ListContainer):
         r = [normalize_construct(x) for x in c]
@@ -441,11 +444,11 @@ def parse_construct(c, raw_bin_data: bytes, length: typing.Optional[int] = None,
         # if the input is all-ff, this means the content is undefined.  Let's avoid passing StreamError
         # exceptions in those situations (which might occur if a length field 0xff is 255 but then there's
         # actually less bytes in the remainder of the file.
-        if all([v == 0xff for v in raw_bin_data]):
+        if all(v == 0xff for v in raw_bin_data):
             return None
         else:
             raise e
-    return normalize_construct(parsed)
+    return normalize_construct(parsed, exclude_prefix)
 
 def build_construct(c, decoded_data, context: dict = {}):
     """Helper function to handle total_len."""
@@ -558,8 +561,7 @@ class GreedyInteger(Construct):
 
         # round up to the minimum number
         # of bytes we anticipate
-        if nbytes < minlen:
-            nbytes = minlen
+        nbytes = max(nbytes, minlen)
 
         return nbytes
 
@@ -570,7 +572,7 @@ class GreedyInteger(Construct):
         try:
             data = obj.to_bytes(length, byteorder='big', signed=self.signed)
         except ValueError as e:
-            raise IntegerError(str(e), path=path)
+            raise IntegerError(str(e), path=path) from e
         if evaluate(self.swapped, context):
             data = swapbytes(data)
         stream_write(stream, data, length, path)
