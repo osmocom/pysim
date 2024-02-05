@@ -150,12 +150,12 @@ def comprehensiontlv_parse_tag(binary: bytes) -> Tuple[dict, bytes]:
         # three-byte tag
         tag = (binary[1] & 0x7f) << 8
         tag |= binary[2]
-        compr = True if binary[1] & 0x80 else False
+        compr = bool(binary[1] & 0x80)
         return ({'comprehension': compr, 'tag': tag}, binary[3:])
     else:
         # single byte tag
         tag = binary[0] & 0x7f
-        compr = True if binary[0] & 0x80 else False
+        compr = bool(binary[0] & 0x80)
         return ({'comprehension': compr, 'tag': tag}, binary[1:])
 
 
@@ -163,7 +163,7 @@ def comprehensiontlv_encode_tag(tag) -> bytes:
     """Encode a single Tag according to ETSI TS 101 220 Section 7.1.1"""
     # permit caller to specify tag also as integer value
     if isinstance(tag, int):
-        compr = True if tag < 0xff and tag & 0x80 else False
+        compr = bool(tag < 0xff and tag & 0x80)
         tag = {'tag': tag, 'comprehension': compr}
     compr = tag.get('comprehension', False)
     if tag['tag'] in [0x00, 0x80, 0xff] or tag['tag'] > 0xff:
@@ -219,7 +219,7 @@ def bertlv_parse_tag_raw(binary: bytes) -> Tuple[int, bytes]:
         i = 1
         last = False
         while not last:
-            last = False if binary[i] & 0x80 else True
+            last = not bool(binary[i] & 0x80)
             tag <<= 8
             tag |= binary[i]
             i += 1
@@ -234,7 +234,7 @@ def bertlv_parse_tag(binary: bytes) -> Tuple[dict, bytes]:
             Tuple of ({class:int, constructed:bool, tag:int}, remainder:bytes)
     """
     cls = binary[0] >> 6
-    constructed = True if binary[0] & 0x20 else False
+    constructed = bool(binary[0] & 0x20)
     tag = binary[0] & 0x1f
     if tag <= 30:
         return ({'class': cls, 'constructed': constructed, 'tag': tag}, binary[1:])
@@ -243,7 +243,7 @@ def bertlv_parse_tag(binary: bytes) -> Tuple[dict, bytes]:
         i = 1
         last = False
         while not last:
-            last = False if binary[i] & 0x80 else True
+            last = not bool(binary[i] & 0x80)
             tag <<= 7
             tag |= binary[i] & 0x7f
             i += 1
@@ -276,7 +276,7 @@ def bertlv_encode_tag(t) -> bytes:
     if isinstance(t, int):
         # first convert to a dict representation
         tag_size = count_int_bytes(t)
-        t, remainder = bertlv_parse_tag(t.to_bytes(tag_size, 'big'))
+        t, _remainder = bertlv_parse_tag(t.to_bytes(tag_size, 'big'))
     tag = t['tag']
     constructed = t['constructed']
     cls = t['class']
@@ -538,7 +538,7 @@ def dec_act(twohexbytes: Hexstr) -> List[str]:
             sel.add(a['name'])
     # TS 31.102 Section 4.2.5 Table 4.2.5.1
     eutran_bits = u16t & 0x7000
-    if eutran_bits == 0x4000 or eutran_bits == 0x7000:
+    if eutran_bits in [0x4000, 0x7000]:
         sel.add("E-UTRAN WB-S1")
         sel.add("E-UTRAN NB-S1")
     elif eutran_bits == 0x5000:
@@ -547,7 +547,7 @@ def dec_act(twohexbytes: Hexstr) -> List[str]:
         sel.add("E-UTRAN WB-S1")
     # TS 31.102 Section 4.2.5 Table 4.2.5.2
     gsm_bits = u16t & 0x008C
-    if gsm_bits == 0x0080 or gsm_bits == 0x008C:
+    if gsm_bits in [0x0080, 0x008C]:
         sel.add("GSM")
         sel.add("EC-GSM-IoT")
     elif u16t & 0x008C == 0x0084:
@@ -611,7 +611,7 @@ def mcc_from_imsi(imsi: str) -> Optional[str]:
     """
     Derive the MCC (Mobile Country Code) from the first three digits of an IMSI
     """
-    if imsi == None:
+    if imsi is None:
         return None
 
     if len(imsi) > 3:
@@ -624,7 +624,7 @@ def mnc_from_imsi(imsi: str, long: bool = False) -> Optional[str]:
     """
     Derive the MNC (Mobile Country Code) from the 4th to 6th digit of an IMSI
     """
-    if imsi == None:
+    if imsi is None:
         return None
 
     if len(imsi) > 3:
@@ -730,7 +730,7 @@ def enc_msisdn(msisdn: str, npi: int = 0x01, ton: int = 0x03) -> Hexstr:
     """
 
     # If no MSISDN is supplied then encode the file contents as all "ff"
-    if msisdn == "" or msisdn == "+":
+    if msisdn in ["", "+"]:
         return "ff" * 14
 
     # Leading '+' indicates International Number
@@ -771,7 +771,7 @@ def is_hex(string: str, minlen: int = 2, maxlen: Optional[int] = None) -> bool:
 
     # Try actual encoding to be sure
     try:
-        try_encode = h2b(string)
+        _try_encode = h2b(string)
         return True
     except:
         return False
@@ -799,12 +799,10 @@ def sanitize_pin_adm(pin_adm, pin_adm_hex=None) -> Hexstr:
             # Ensure that it's hex-encoded
             try:
                 try_encode = h2b(pin_adm)
-            except ValueError:
-                raise ValueError(
-                    "PIN-ADM needs to be hex encoded using this option")
+            except ValueError as exc:
+                raise ValueError("PIN-ADM needs to be hex encoded using this option") from exc
         else:
-            raise ValueError(
-                "PIN-ADM needs to be exactly 16 digits (hex encoded)")
+            raise ValueError("PIN-ADM needs to be exactly 16 digits (hex encoded)")
 
     return pin_adm
 
@@ -818,7 +816,7 @@ def get_addr_type(addr):
     """
 
     # Empty address string
-    if not len(addr):
+    if len(addr) == 0:
         return None
 
     addr_list = addr.split('.')
@@ -833,7 +831,7 @@ def get_addr_type(addr):
             return 0x01
         elif ipa.version == 6:
             return 0x02
-    except Exception as e:
+    except Exception:
         invalid_ipv4 = True
         for i in addr_list:
             # Invalid IPv4 may qualify for a valid FQDN, so make check here
@@ -889,7 +887,7 @@ def tabulate_str_list(str_list, width: int = 79, hspace: int = 2, lspace: int = 
     Returns:
             multi-line string containing formatted table
     """
-    if str_list == None:
+    if str_list is None:
         return ""
     if len(str_list) <= 0:
         return ""
@@ -900,7 +898,7 @@ def tabulate_str_list(str_list, width: int = 79, hspace: int = 2, lspace: int = 
     table = []
     for i in iter(range(rows)):
         str_list_row = str_list[i::rows]
-        if (align_left):
+        if align_left:
             format_str_cell = '%%-%ds'
         else:
             format_str_cell = '%%%ds'
@@ -988,7 +986,7 @@ class JsonEncoder(json.JSONEncoder):
     """Extend the standard library JSONEncoder with support for more types."""
 
     def default(self, o):
-        if isinstance(o, BytesIO) or isinstance(o, bytes) or isinstance(o, bytearray):
+        if isinstance(o, (BytesIO, bytes, bytearray)):
             return b2h(o)
         elif isinstance(o, datetime.datetime):
             return o.isoformat()
