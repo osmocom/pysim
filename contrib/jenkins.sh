@@ -45,7 +45,8 @@ case "$JOB_TYPE" in
 		--disable E1102 \
 		--disable E0401 \
 		--enable W0301 \
-		pySim tests/*.py *.py
+		pySim tests/*.py *.py \
+		contrib/es2p_client.py
 	;;
 "docs")
 	rm -rf docs/_build

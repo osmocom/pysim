@@ -2,10 +2,10 @@ import sys
 from typing import Optional
 from importlib import resources
 
-import asn1tools
 
 def compile_asn1_subdir(subdir_name:str):
     """Helper function that compiles ASN.1 syntax from all files within given subdir"""
+    import asn1tools
     asn_txt = ''
     __ver = sys.version_info
     if (__ver.major, __ver.minor) >= (3, 9):
