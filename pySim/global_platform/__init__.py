@@ -515,11 +515,16 @@ class ADF_SD(CardADF):
         put_key_parser.add_argument('--key-type', choices=KeyType.ksymapping.values(), action='append', required=True, help='Key Type')
         put_key_parser.add_argument('--key-data', type=is_hexstr, action='append', required=True, help='Key Data Block')
         put_key_parser.add_argument('--key-check', type=is_hexstr, action='append', help='Key Check Value')
+        put_key_parser.add_argument('--suppress-key-check', action='store_true', help='Suppress generation of Key Check Values')
 
         @cmd2.with_argparser(put_key_parser)
         def do_put_key(self, opts):
             """Perform the GlobalPlatform PUT KEY command in order to store a new key on the card.
             See GlobalPlatform CardSpecification v2.3 Section 11.8 for details.
+
+            The KCV (Key Check Values) can either be explicitly specified using `--key-check`, or will
+            otherwise be automatically generated for DES and AES keys.  You can suppress the latter using
+            `--suppress-key-check`.
 
             Example (SCP80 KIC/KID/KIK):
                 put_key --key-version-nr 1 --key-id 0x01    --key-type aes --key-data 000102030405060708090a0b0c0d0e0f
@@ -537,6 +542,8 @@ class ADF_SD(CardADF):
             for i in range(0, len(opts.key_type)):
                 if opts.key_check and len(opts.key_check) > i:
                     kcv = opts.key_check[i]
+                elif opts.suppress_key_check:
+                    kcv = ''
                 else:
                     kcv_bin = compute_kcv(opts.key_type[i], h2b(opts.key_data[i])) or b''
                     kcv = b2h(kcv_bin)
