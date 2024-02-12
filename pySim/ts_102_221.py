@@ -1,7 +1,7 @@
 # coding=utf-8
 """Utilities / Functions related to ETSI TS 102 221, the core UICC spec.
 
-(C) 2021 by Harald Welte <laforge@osmocom.org>
+(C) 2021-2024 by Harald Welte <laforge@osmocom.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -80,6 +80,10 @@ ts_102_22x_cmdset = CardCommandSet('TS 102 22x', [
     CardCommand('RESIZE FILE',              0xD4, ['8X', 'CX']),
 ])
 
+
+# ETSI TS 102 221 6.2.1
+SupplyVoltageClasses = FlagsEnum(Int8ub, a=0x1, b=0x2, c=0x4, d=0x8, e=0x10)
+
 # ETSI TS 102 221 11.1.1.4.2
 class FileSize(BER_TLV_IE, tag=0x80):
     _construct = GreedyInteger(minlen=2)
@@ -131,7 +135,7 @@ class UiccCharacteristics(BER_TLV_IE, tag=0x80):
 
 # ETSI TS 102 221 11.1.1.4.6.2
 class ApplicationPowerConsumption(BER_TLV_IE, tag=0x81):
-    _construct = Struct('voltage_class'/Int8ub,
+    _construct = Struct('voltage_class'/SupplyVoltageClasses,
                         'power_consumption_ma'/Int8ub,
                         'reference_freq_100k'/Int8ub)
 
@@ -282,6 +286,33 @@ def tlv_val_interpret(inmap, indata):
         else:
             return val
     return {d[0]: newval(inmap, d[0], d[1]) for d in indata.items()}
+
+# TS 102 221 11.1.19.2.1
+class TerminalPowerSupply(BER_TLV_IE, tag=0x80):
+    _construct = Struct('used_supply_voltage_class'/SupplyVoltageClasses,
+                        'maximum_available_power_supply'/Int8ub,
+                        'actual_used_freq_100k'/Int8ub)
+
+# TS 102 221 11.1.19.2.2
+class ExtendedLchanTerminalSupport(BER_TLV_IE, tag=0x81):
+    _construct = GreedyBytes
+
+# TS 102 221 11.1.19.2.3
+class AdditionalInterfacesSupport(BER_TLV_IE, tag=0x82):
+    _construct = FlagsEnum(Int8ub, uicc_clf=0x01)
+
+# TS 102 221 11.1.19.2.4 + SGP.32 v3.0 3.4.2 RSP Device Capabilities
+class AdditionalTermCapEuicc(BER_TLV_IE, tag=0x83):
+    _construct = FlagsEnum(Int8ub, lui_d=0x01, lpd_d=0x02, lds_d=0x04, lui_e_scws=0x08,
+                           metadata_update_alerting=0x10,
+                           enterprise_capable_device=0x20,
+                           lui_e_e4e=0x40,
+                           lpr=0x80)
+
+# TS 102 221 11.1.19.2.0
+class TerminalCapability(BER_TLV_IE, tag=0xa9, nested=[TerminalPowerSupply, ExtendedLchanTerminalSupport,
+                                                       AdditionalInterfacesSupport, AdditionalTermCapEuicc]):
+    pass
 
 # ETSI TS 102 221 Section 9.2.7 + ISO7816-4 9.3.3/9.3.4
 class _AM_DO_DF(DataObject):
@@ -901,3 +932,81 @@ class CardProfileUICC(CardProfile):
             of the card is required between SUSPEND and RESUME, and only very few non-RESUME
             commands are permitted between SUSPEND and RESUME.  See TS 102 221 Section 11.1.22."""
             self._cmd.card._scc.resume_uicc(opts.token)
+
+        term_cap_parser = argparse.ArgumentParser()
+        # power group
+        tc_power_grp = term_cap_parser.add_argument_group('Terminal Power Supply')
+        tc_power_grp.add_argument('--used-supply-voltage-class', type=str, choices=['a','b','c','d','e'],
+                                  help='Actual used Supply voltage class')
+        tc_power_grp.add_argument('--maximum-available-power-supply', type=auto_uint8,
+                                  help='Maximum available power supply of the terminal')
+        tc_power_grp.add_argument('--actual-used-freq-100k', type=auto_uint8,
+                                  help='Actual used clock frequency (in units of 100kHz)')
+        # no separate groups for those two
+        tc_elc_grp = term_cap_parser.add_argument_group('Extended logical channels terminal support')
+        tc_elc_grp.add_argument('--extended-logical-channel', action='store_true',
+                                help='Extended Logical Channel supported')
+        tc_aif_grp = term_cap_parser.add_argument_group('Additional interfaces support')
+        tc_aif_grp.add_argument('--uicc-clf', action='store_true',
+                                help='Local User Interface in the Device (LUId) supported')
+        # eUICC group
+        tc_euicc_grp = term_cap_parser.add_argument_group('Additional Terminal capability indications related to eUICC')
+        tc_euicc_grp.add_argument('--lui-d', action='store_true',
+                                  help='Local User Interface in the Device (LUId) supported')
+        tc_euicc_grp.add_argument('--lpd-d', action='store_true',
+                                  help='Local Profile Download in the Device (LPDd) supported')
+        tc_euicc_grp.add_argument('--lds-d', action='store_true',
+                                  help='Local Discovery Service in the Device (LPDd) supported')
+        tc_euicc_grp.add_argument('--lui-e-scws', action='store_true',
+                                  help='LUIe based on SCWS supported')
+        tc_euicc_grp.add_argument('--metadata-update-alerting', action='store_true',
+                                  help='Metadata update alerting supported')
+        tc_euicc_grp.add_argument('--enterprise-capable-device', action='store_true',
+                                  help='Enterprise Capable Device')
+        tc_euicc_grp.add_argument('--lui-e-e4e', action='store_true',
+                                  help='LUIe using E4E (ENVELOPE tag E4) supported')
+        tc_euicc_grp.add_argument('--lpr', action='store_true',
+                                  help='LPR (LPA Proxy) supported')
+
+        @cmd2.with_argparser(term_cap_parser)
+        def do_terminal_capability(self, opts):
+            """Perform the TERMINAL CAPABILITY function. Used to inform the UICC about terminal capability."""
+            ps_flags = {}
+            addl_if_flags = {}
+            euicc_flags = {}
+
+            opts_dict = vars(opts)
+
+            power_items = ['used_supply_voltage_class', 'maximum_available_power_supply', 'actual_used_freq_100k']
+            if any(opts_dict[x] for x in power_items):
+                if not all(opts_dict[x] for x in power_items):
+                    raise argparse.ArgumentTypeError('If any of the Terminal Power Supply group options are used, all must be specified')
+
+            for k, v in opts_dict.items():
+                if k in AdditionalInterfacesSupport._construct.flags.keys():
+                    addl_if_flags[k] = v
+                elif k in AdditionalTermCapEuicc._construct.flags.keys():
+                    euicc_flags[k] = v
+                elif k in [f.name for f in TerminalPowerSupply._construct.subcons]:
+                    if k == 'used_supply_voltage_class' and v:
+                        v = {v: True}
+                    ps_flags[k] = v
+
+            child_list = []
+            if any(x for x in ps_flags.values()):
+                child_list.append(TerminalPowerSupply(decoded=ps_flags))
+
+            if opts.extended_logical_channel:
+                child_list.append(ExtendedLchanTerminalSupport())
+            if any(x for x in addl_if_flags.values()):
+                child_list.append(AdditionalInterfacesSupport(decoded=addl_if_flags))
+            if any(x for x in euicc_flags.values()):
+                child_list.append(AdditionalTermCapEuicc(decoded=euicc_flags))
+
+            print(child_list)
+            tc = TerminalCapability(children=child_list)
+            self.terminal_capability(b2h(tc.to_tlv()))
+
+        def terminal_capability(self, data:Hexstr):
+            cmd_hex = "80AA0000%02x%s" % (len(data)//2, data)
+            _rsp_hex, _sw = self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)

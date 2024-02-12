@@ -473,7 +473,18 @@ sequence including the electrical power down.
    :module: pySim.ts_102_221
    :func: CardProfileUICC.AddlShellCommands.resume_uicc_parser
 
+terminal_capability
+~~~~~~~~~~~~~~~~~~~
+This command allows you to perform the TERMINAL CAPABILITY command towards the card.
 
+TS 102 221 specifies the TERMINAL CAPABILITY command using which the
+terminal (Software + hardware talking to the card) can expose their
+capabilities.  This is also used in the eUICC universe to let the eUICC
+know which features are supported.
+
+.. argparse::
+   :module: pySim.ts_102_221
+   :func: CardProfileUICC.AddlShellCommands.term_cap_parser
 
 
 Linear Fixed EF commands
