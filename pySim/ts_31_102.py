@@ -10,7 +10,7 @@ Various constants from 3GPP TS 31.102 V17.9.0
 
 #
 # Copyright (C) 2020 Supreeth Herle <herlesupreeth@gmail.com>
-# Copyright (C) 2021-2023 Harald Welte <laforge@osmocom.org>
+# Copyright (C) 2021-2024 Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1443,14 +1443,13 @@ class DF_SAIP(CardDF):
 
 class ADF_USIM(CardADF):
     def __init__(self, aid='a0000000871002', has_fs=True,  name='ADF.USIM', fid=None, sfid=None,
-                 desc='USIM Application'):
+                 desc='USIM Application', has_imsi=True):
         super().__init__(aid=aid, has_fs=has_fs, fid=fid, sfid=sfid, name=name, desc=desc)
         # add those commands to the general commands of a TransparentEF
         self.shell_commands += [self.AddlShellCommands()]
 
         files = [
             EF_LI(sfid=0x02),
-            EF_IMSI(sfid=0x07),
             EF_Keys(),
             EF_Keys('6f09', 0x09, 'EF.KeysPS',
                     desc='Ciphering and Integrity Keys for PS domain'),
@@ -1571,6 +1570,10 @@ class ADF_USIM(CardADF):
             DF_5G_ProSe(service=139),
             DF_SAIP(),
         ]
+
+        if has_imsi:
+            files.append(EF_IMSI(sfid=0x07))
+
         self.add_files(files)
 
     def decode_select_response(self, data_hex):
@@ -1666,3 +1669,10 @@ sw_usim = {
 class CardApplicationUSIM(CardApplication):
     def __init__(self):
         super().__init__('USIM', adf=ADF_USIM(), sw=sw_usim)
+
+# TS 31.102 Annex N + TS 102 220 Annex E
+class CardApplicationUSIMnonIMSI(CardApplication):
+    def __init__(self):
+        adf = ADF_USIM(aid='a000000087100b', name='ADF.USIM-non-IMSI', has_imsi=False,
+                       desc='3GPP USIM (non-IMSI SUPI Type) - TS 31.102 Annex N')
+        super().__init__('USIM-non-IMSI', adf=adf, sw=sw_usim)
