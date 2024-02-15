@@ -492,13 +492,14 @@ class ADF_SD(CardADF):
         def store_data(self, data: bytes, structure:str = 'none', encryption:str = 'none', response_permitted: bool = False) -> bytes:
             """Perform the GlobalPlatform GET DATA command in order to store some card-specific data.
             See GlobalPlatform CardSpecification v2.3Section 11.11 for details."""
+            max_cmd_len = self._cmd.lchan.scc.max_cmd_len
             # Table 11-89 of GP Card Specification v2.3
             remainder = data
             block_nr = 0
             response = ''
             while len(remainder):
-                chunk = remainder[:255]
-                remainder = remainder[255:]
+                chunk = remainder[:max_cmd_len]
+                remainder = remainder[max_cmd_len:]
                 p1b = build_construct(ADF_SD.StoreData,
                                       {'last_block': len(remainder) == 0, 'encryption': encryption,
                                        'structure': structure, 'response': response_permitted})

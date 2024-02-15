@@ -84,6 +84,14 @@ class SimCardCommands:
         """Return the (cached) patched default CLA byte for this card."""
         return self._cla4lchan
 
+    @property
+    def max_cmd_len(self) -> int:
+        """Maximum length of the command apdu data section. Depends on secure channel protocol used."""
+        if self.scp:
+            return 255 - self.scp.overhead
+        else:
+            return 255
+
     @cla_byte.setter
     def cla_byte(self, new_val: Hexstr):
         """Set the (raw, without lchan) default CLA value for this card."""
@@ -318,7 +326,7 @@ class SimCardCommands:
         total_data = ''
         chunk_offset = 0
         while chunk_offset < length:
-            chunk_len = min(255, length-chunk_offset)
+            chunk_len = min(self.max_cmd_len, length-chunk_offset)
             pdu = self.cla_byte + \
                 'b0%04x%02x' % (offset + chunk_offset, chunk_len)
             try:
@@ -376,7 +384,7 @@ class SimCardCommands:
         total_data = ''
         chunk_offset = 0
         while chunk_offset < data_length:
-            chunk_len = min(255, data_length - chunk_offset)
+            chunk_len = min(self.max_cmd_len, data_length - chunk_offset)
             # chunk_offset is bytes, but data slicing is hex chars, so we need to multiply by 2
             pdu = self.cla_byte + \
                 'd6%04x%02x' % (offset + chunk_offset, chunk_len) + \
@@ -560,10 +568,10 @@ class SimCardCommands:
         total_len = len(tlv_bin)
         remaining = tlv_bin
         while len(remaining) > 0:
-            fragment = remaining[:255]
+            fragment = remaining[:self.max_cmd_len]
             rdata, sw = self._set_data(fragment, first=first)
             first = False
-            remaining = remaining[255:]
+            remaining = remaining[self.max_cmd_len:]
         return rdata, sw
 
     def run_gsm(self, rand: Hexstr) -> ResTuple:

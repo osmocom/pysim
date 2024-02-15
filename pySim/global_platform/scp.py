@@ -218,6 +218,10 @@ class SCP02(SCP):
                         'seq_counter'/Int16ub, 'card_challenge'/Bytes(6), 'card_cryptogram'/Bytes(8))
     kvn_range = [0x20, 0x2f]
 
+    def __init__(self, *args, **kwargs):
+        self.overhead = 8
+        super().__init__(*args, **kwargs)
+
     def dek_encrypt(self, plaintext:bytes) -> bytes:
         cipher = DES.new(self.card_keys.dek, DES.MODE_ECB)
         return cipher.encrypt(plaintext)
@@ -410,6 +414,7 @@ class SCP03(SCP):
 
     def __init__(self, *args, **kwargs):
         self.s_mode = kwargs.pop('s_mode', 8)
+        self.overhead = self.s_mode
         super().__init__(*args, **kwargs)
 
     def dek_encrypt(self, plaintext:bytes) -> bytes:
