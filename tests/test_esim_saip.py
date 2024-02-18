@@ -21,6 +21,7 @@ import copy
 
 from pySim.utils import h2b, b2h
 from pySim.esim.saip import *
+from pySim.esim.saip.data_source import *
 from pySim.esim.saip.personalization import *
 from pprint import pprint as pp
 
@@ -62,6 +63,48 @@ class SaipTest(unittest.TestCase):
             p.apply(pes)
         # TODO: we don't actually test the results here, but we just verify there is no exception
         pes.to_der()
+
+
+class DataSourceTest(unittest.TestCase):
+    def test_fixed(self):
+        FIXED = b'\x01\x02\x03'
+        ds = DataSourceFixed(FIXED)
+        self.assertEqual(ds.generate_one(), FIXED)
+        self.assertEqual(ds.generate_one(), FIXED)
+        self.assertEqual(ds.generate_one(), FIXED)
+
+    def test_incrementing(self):
+        BASE_VALUE = 100
+        ds = DataSourceIncrementing(BASE_VALUE)
+        self.assertEqual(ds.generate_one(), BASE_VALUE)
+        self.assertEqual(ds.generate_one(), BASE_VALUE+1)
+        self.assertEqual(ds.generate_one(), BASE_VALUE+2)
+        self.assertEqual(ds.generate_one(), BASE_VALUE+3)
+
+    def test_incrementing_step3(self):
+        BASE_VALUE = 300
+        ds = DataSourceIncrementing(BASE_VALUE, step_size=3)
+        self.assertEqual(ds.generate_one(), BASE_VALUE)
+        self.assertEqual(ds.generate_one(), BASE_VALUE+3)
+        self.assertEqual(ds.generate_one(), BASE_VALUE+6)
+
+    def test_random(self):
+        ds = DataSourceRandomBytes(8)
+        res = []
+        for i in range(0,100):
+            res.append(ds.generate_one())
+        for r in res:
+            self.assertEqual(len(r), 8)
+        # ensure no duplicates exist
+        self.assertEqual(len(set(res)), len(res))
+
+    def test_random_int(self):
+        ds = DataSourceRandomUInt(below=256)
+        res = []
+        for i in range(0,100):
+            res.append(ds.generate_one())
+        for r in res:
+            self.assertTrue(r < 256)
 
 
 if __name__ == "__main__":
