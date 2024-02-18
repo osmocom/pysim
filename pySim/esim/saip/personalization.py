@@ -101,6 +101,100 @@ class Imsi(ConfigurableParameter):
             file_replace_content(pe.decoded['ef-acc'], acc.to_bytes(2, 'big'))
         # TODO: DF.GSM_ACCESS if not linked?
 
+
+class SdKey(ConfigurableParameter, metaclass=ClassVarMeta):
+    """Configurable Security Domain (SD) Key.  Value is presented as bytes."""
+    # these will be set by derived classes
+    key_type = None
+    key_id = None
+    kvn = None
+    key_usage_qual = None
+    permitted_len = None
+
+    def validate(self):
+        if not isinstance(self.value, (io.BytesIO, bytes, bytearray)):
+            raise ValueError('Value must be of bytes-like type')
+        if self.permitted_len:
+            if len(self.value) not in self.permitted_len:
+                raise ValueError('Value length must be %s' % self.permitted_len)
+
+    def _apply_sd(self, pe: ProfileElement):
+        assert pe.type == 'securityDomain'
+        for key in pe.decoded['keyList']:
+            if key['keyIdentifier'][0] == self.key_id and key['keyVersionNumber'][0] == self.kvn:
+                assert len(key['keyComponents']) == 1
+                key['keyComponents'][0]['keyData'] = self.value
+                return
+        # Could not find matching key to patch, create a new one
+        key = {
+            'keyUsageQualifier': bytes([self.key_usage_qual]),
+            'keyIdentifier': bytes([self.key_id]),
+            'keyVersionNumber': bytes([self.kvn]),
+            'keyComponents': [
+                { 'keyType': bytes([self.key_type]), 'keyData': self.value },
+            ]
+        }
+        pe.decoded['keyList'].append(key)
+
+    def apply(self, pes: ProfileElementSequence):
+        for pe in pes.get_pes_for_type('securityDomain'):
+            self._apply_sd(pe)
+
+class SdKeyScp80_01(SdKey, kvn=0x01, key_type=0x88, permitted_len=[16,24,32]): # AES key type
+    pass
+class SdKeyScp80_01Kic(SdKeyScp80_01, key_id=0x01, key_usage_qual=0x18): # FIXME: ordering?
+    pass
+class SdKeyScp80_01Kid(SdKeyScp80_01, key_id=0x02, key_usage_qual=0x14):
+    pass
+class SdKeyScp80_01Kik(SdKeyScp80_01, key_id=0x03, key_usage_qual=0x48):
+    pass
+
+class SdKeyScp81_01(SdKey, kvn=0x81): # FIXME
+    pass
+class SdKeyScp81_01Psk(SdKeyScp81_01, key_id=0x01, key_type=0x85, key_usage_qual=0x3C):
+    pass
+class SdKeyScp81_01Dek(SdKeyScp81_01, key_id=0x02, key_type=0x88, key_usage_qual=0x48):
+    pass
+
+class SdKeyScp02_20(SdKey, kvn=0x20, key_type=0x88, permitted_len=[16,24,32]): # AES key type
+    pass
+class SdKeyScp02_20Enc(SdKeyScp02_20, key_id=0x01, key_usage_qual=0x18):
+    pass
+class SdKeyScp02_20Mac(SdKeyScp02_20, key_id=0x02, key_usage_qual=0x14):
+    pass
+class SdKeyScp02_20Dek(SdKeyScp02_20, key_id=0x03, key_usage_qual=0x48):
+    pass
+
+class SdKeyScp03_30(SdKey, kvn=0x30, key_type=0x88, permitted_len=[16,24,32]): # AES key type
+    pass
+class SdKeyScp03_30Enc(SdKeyScp03_30, key_id=0x01, key_usage_qual=0x18):
+    pass
+class SdKeyScp03_30Mac(SdKeyScp03_30, key_id=0x02, key_usage_qual=0x14):
+    pass
+class SdKeyScp03_30Dek(SdKeyScp03_30, key_id=0x03, key_usage_qual=0x48):
+    pass
+
+class SdKeyScp03_31(SdKey, kvn=0x31, key_type=0x88, permitted_len=[16,24,32]): # AES key type
+    pass
+class SdKeyScp03_31Enc(SdKeyScp03_31, key_id=0x01, key_usage_qual=0x18):
+    pass
+class SdKeyScp03_31Mac(SdKeyScp03_31, key_id=0x02, key_usage_qual=0x14):
+    pass
+class SdKeyScp03_31Dek(SdKeyScp03_31, key_id=0x03, key_usage_qual=0x48):
+    pass
+
+class SdKeyScp03_32(SdKey, kvn=0x32, key_type=0x88, permitted_len=[16,24,32]): # AES key type
+    pass
+class SdKeyScp03_32Enc(SdKeyScp03_32, key_id=0x01, key_usage_qual=0x18):
+    pass
+class SdKeyScp03_32Mac(SdKeyScp03_32, key_id=0x02, key_usage_qual=0x14):
+    pass
+class SdKeyScp03_32Dek(SdKeyScp03_32, key_id=0x03, key_usage_qual=0x48):
+    pass
+
+
+
+
 def obtain_singleton_pe_from_pelist(l: List[ProfileElement], wanted_type: str) -> ProfileElement:
     filtered = list(filter(lambda x: x.type == wanted_type, l))
     assert len(filtered) == 1
