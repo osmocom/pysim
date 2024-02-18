@@ -16,8 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
+import io
 from typing import List, Tuple
 
+from pySim.utils import enc_iccid, enc_imsi, h2b, rpad, sanitize_iccid
 from pySim.esim.saip import ProfileElement, ProfileElementSequence
 
 def remove_unwanted_tuples_from_list(l: List[Tuple], unwanted_keys: List[str]) -> List[Tuple]:
@@ -47,26 +49,56 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
     def __init__(self, value):
         self.value = value
 
+    def validate(self):
+        """Optional validation method. Can be used by derived classes to perform validation
+        of the input value (self.value).  Will raise an exception if validation fails."""
+        pass
+
     @abc.abstractmethod
     def apply(self, pes: ProfileElementSequence):
         pass
 
 class Iccid(ConfigurableParameter):
-    """Configurable ICCID.  Expects the value to be in EF.ICCID format."""
+    """Configurable ICCID.  Expects the value to be a string of decimal digits.
+    If the string of digits is only 18 digits long, a Luhn check digit will be added."""
     name = 'iccid'
+
+    def validate(self):
+        # convert to string as it migt be an integer
+        iccid_str = str(self.value)
+        if len(iccid_str) < 18 or len(iccid_str) > 20:
+            raise ValueError('ICCID must be 18, 19 or 20 digits long')
+        if not iccid_str.isdecimal():
+            raise ValueError('ICCID must only contain decimal digits')
+
     def apply(self, pes: ProfileElementSequence):
-        # patch the header; FIXME: swap nibbles!
-        pes.get_pe_for_type('header').decoded['iccid'] = self.value
+        iccid_str = sanitize_iccid(self.value)
+        # patch the header
+        pes.get_pe_for_type('header').decoded['iccid'] = iccid_str
         # patch MF/EF.ICCID
-        file_replace_content(pes.get_pe_for_type('mf').decoded['ef-iccid'], bytes(self.value))
+        file_replace_content(pes.get_pe_for_type('mf').decoded['ef-iccid'], h2b(enc_iccid(iccid_str)))
 
 class Imsi(ConfigurableParameter):
-    """Configurable IMSI. Expects value to be n EF.IMSI format."""
+    """Configurable IMSI. Expects value to be a string of digits. Automatically sets the ACC to
+    the last digit of the IMSI."""
     name = 'imsi'
+
+    def validate(self):
+        # convert to string as it migt be an integer
+        imsi_str = str(self.value)
+        if len(imsi_str) < 6 or len(imsi_str) > 15:
+            raise ValueError('IMSI must be 6..15 digits long')
+        if not imsi_str.isdecimal():
+            raise ValueError('IMSI must only contain decimal digits')
+
     def apply(self, pes: ProfileElementSequence):
+        imsi_str = str(self.value)
+        # we always use the least significant byte of the IMSI as ACC
+        acc = (1 << int(imsi_str[-1]))
         # patch ADF.USIM/EF.IMSI
-        for pe in pes.get_pes_by_type('usim'):
-            file_replace_content(pe.decoded['ef-imsi'], self.value)
+        for pe in pes.get_pes_for_type('usim'):
+            file_replace_content(pe.decoded['ef-imsi'], h2b(enc_imsi(imsi_str)))
+            file_replace_content(pe.decoded['ef-acc'], acc.to_bytes(2, 'big'))
         # TODO: DF.GSM_ACCESS if not linked?
 
 def obtain_singleton_pe_from_pelist(l: List[ProfileElement], wanted_type: str) -> ProfileElement:
@@ -81,12 +113,21 @@ def obtain_first_pe_from_pelist(l: List[ProfileElement], wanted_type: str) -> Pr
 class Puk(ConfigurableParameter, metaclass=ClassVarMeta):
     """Configurable PUK (Pin Unblock Code). String ASCII-encoded digits."""
     keyReference = None
+    def validate(self):
+        if isinstance(self.value, int):
+            self.value = '%08d' % self.value
+        # FIXME: valid length?
+        if not self.value.isdecimal():
+            raise ValueError('PUK must only contain decimal digits')
+
     def apply(self, pes: ProfileElementSequence):
+        puk = ''.join(['%02x' % (ord(x)) for x in self.value])
+        padded_puk = rpad(puk, 16)
         mf_pes = pes.pes_by_naa['mf'][0]
         pukCodes = obtain_singleton_pe_from_pelist(mf_pes, 'pukCodes')
         for pukCode in pukCodes.decoded['pukCodes']:
             if pukCode['keyReference'] == self.keyReference:
-                pukCode['pukValue'] = self.value
+                pukCode['pukValue'] = h2b(padded_puk)
                 return
         raise ValueError('cannot find pukCode')
 class Puk1(Puk, keyReference=0x01):
@@ -97,29 +138,46 @@ class Puk2(Puk, keyReference=0x81):
 class Pin(ConfigurableParameter, metaclass=ClassVarMeta):
     """Configurable PIN (Personal Identification Number).  String of digits."""
     keyReference = None
+    def validate(self):
+        if isinstance(self.value, int):
+            self.value = '%04d' % self.value
+        if len(self.value) < 4 or len(self.value) > 8:
+            raise ValueError('PIN mus be 4..8 digits long')
+        if not self.value.isdecimal():
+            raise ValueError('PIN must only contain decimal digits')
     def apply(self, pes: ProfileElementSequence):
+        pin = ''.join(['%02x' % (ord(x)) for x in self.value])
+        padded_pin = rpad(pin, 16)
         mf_pes = pes.pes_by_naa['mf'][0]
         pinCodes = obtain_first_pe_from_pelist(mf_pes, 'pinCodes')
         if pinCodes.decoded['pinCodes'][0] != 'pinconfig':
             return
         for pinCode in pinCodes.decoded['pinCodes'][1]:
             if pinCode['keyReference'] == self.keyReference:
-                 pinCode['pinValue'] = self.value
+                 pinCode['pinValue'] = h2b(padded_pin)
                  return
         raise ValueError('cannot find pinCode')
 class AppPin(ConfigurableParameter, metaclass=ClassVarMeta):
     """Configurable PIN (Personal Identification Number).  String of digits."""
     keyReference = None
+    def validate(self):
+        if isinstance(self.value, int):
+            self.value = '%04d' % self.value
+        if len(self.value) < 4 or len(self.value) > 8:
+            raise ValueError('PIN mus be 4..8 digits long')
+        if not self.value.isdecimal():
+            raise ValueError('PIN must only contain decimal digits')
     def _apply_one(self, pe: ProfileElement):
+        pin = ''.join(['%02x' % (ord(x)) for x in self.value])
+        padded_pin = rpad(pin, 16)
         pinCodes = obtain_first_pe_from_pelist(pe, 'pinCodes')
         if pinCodes.decoded['pinCodes'][0] != 'pinconfig':
             return
         for pinCode in pinCodes.decoded['pinCodes'][1]:
             if pinCode['keyReference'] == self.keyReference:
-                pinCode['pinValue'] = self.value
+                pinCode['pinValue'] = h2b(padded_pin)
                 return
         raise ValueError('cannot find pinCode')
-
     def apply(self, pes: ProfileElementSequence):
         for naa in pes.pes_by_naa:
             if naa not in ['usim','isim','csim','telecom']:
@@ -140,6 +198,9 @@ class Adm2(Pin, keyReference=0x0B):
 class AlgoConfig(ConfigurableParameter, metaclass=ClassVarMeta):
     """Configurable Algorithm parameter.  bytes."""
     key = None
+    def validate(self):
+        if not isinstance(self.value, (io.BytesIO, bytes, bytearray)):
+            raise ValueError('Value must be of bytes-like type')
     def apply(self, pes: ProfileElementSequence):
         for pe in pes.get_pes_for_type('akaParameter'):
             algoConfiguration = pe.decoded['algoConfiguration']
@@ -152,5 +213,6 @@ class K(AlgoConfig, key='key'):
 class Opc(AlgoConfig, key='opc'):
     pass
 class AlgorithmID(AlgoConfig, key='algorithmID'):
-    pass
-
+    def validate(self):
+        if self.value not in [1, 2, 3]:
+            raise ValueError('Invalid algorithmID %s' % (self.value))

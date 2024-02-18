@@ -55,9 +55,10 @@ class SaipTest(unittest.TestCase):
     def test_personalization(self):
         """Test some of the personalization operations."""
         pes = copy.deepcopy(self.pes)
-        params = [Puk1(value=b'01234567'), Puk2(value=b'98765432'), Pin1(b'1111'), Pin2(b'2222'), Adm1(b'11111111'),
+        params = [Puk1('01234567'), Puk2(98765432), Pin1('1111'), Pin2(2222), Adm1('11111111'),
                   K(h2b('000102030405060708090a0b0c0d0e0f')), Opc(h2b('101112131415161718191a1b1c1d1e1f'))]
         for p in params:
+            p.validate()
             p.apply(pes)
         # TODO: we don't actually test the results here, but we just verify there is no exception
         pes.to_der()
