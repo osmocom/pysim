@@ -983,7 +983,7 @@ keyAccess [22] OCTET STRING (SIZE (1)) DEFAULT '00'H,
 keyIdentifier [2] OCTET STRING (SIZE (1)),
 keyVersionNumber [3] OCTET STRING (SIZE (1)),
 keyCounterValue [5] OCTET STRING OPTIONAL,
-keyCompontents SEQUENCE (SIZE (1..MAX)) OF SEQUENCE {
+keyComponents SEQUENCE (SIZE (1..MAX)) OF SEQUENCE {
 		keyType [0] OCTET STRING,
 		keyData [6] OCTET STRING,
 		macLength[7] UInt8 DEFAULT 8
