@@ -46,13 +46,15 @@ class ClassVarMeta(abc.ABCMeta):
 class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
     """Base class representing a part of the eSIM profile that is configurable during the
     personalization process (with dynamic data from elsewhere)."""
-    def __init__(self, value):
-        self.value = value
+    def __init__(self, input_value):
+        self.input_value = input_value # the raw input value as given by caller
+        self.value = None # the processed input value (e.g. with check digit) as produced by validate()
 
     def validate(self):
         """Optional validation method. Can be used by derived classes to perform validation
         of the input value (self.value).  Will raise an exception if validation fails."""
-        pass
+        # default implementation: simply copy input_value over to value
+        self.value = self.input_value
 
     @abc.abstractmethod
     def apply(self, pes: ProfileElementSequence):
@@ -65,18 +67,18 @@ class Iccid(ConfigurableParameter):
 
     def validate(self):
         # convert to string as it migt be an integer
-        iccid_str = str(self.value)
+        iccid_str = str(self.input_value)
         if len(iccid_str) < 18 or len(iccid_str) > 20:
             raise ValueError('ICCID must be 18, 19 or 20 digits long')
         if not iccid_str.isdecimal():
             raise ValueError('ICCID must only contain decimal digits')
+        self.value = sanitize_iccid(iccid_str)
 
     def apply(self, pes: ProfileElementSequence):
-        iccid_str = sanitize_iccid(self.value)
         # patch the header
-        pes.get_pe_for_type('header').decoded['iccid'] = iccid_str
+        pes.get_pe_for_type('header').decoded['iccid'] = self.value
         # patch MF/EF.ICCID
-        file_replace_content(pes.get_pe_for_type('mf').decoded['ef-iccid'], h2b(enc_iccid(iccid_str)))
+        file_replace_content(pes.get_pe_for_type('mf').decoded['ef-iccid'], h2b(enc_iccid(self.value)))
 
 class Imsi(ConfigurableParameter):
     """Configurable IMSI. Expects value to be a string of digits. Automatically sets the ACC to
@@ -85,14 +87,15 @@ class Imsi(ConfigurableParameter):
 
     def validate(self):
         # convert to string as it migt be an integer
-        imsi_str = str(self.value)
+        imsi_str = str(self.input_value)
         if len(imsi_str) < 6 or len(imsi_str) > 15:
             raise ValueError('IMSI must be 6..15 digits long')
         if not imsi_str.isdecimal():
             raise ValueError('IMSI must only contain decimal digits')
+        self.value = imsi_str
 
     def apply(self, pes: ProfileElementSequence):
-        imsi_str = str(self.value)
+        imsi_str = self.value
         # we always use the least significant byte of the IMSI as ACC
         acc = (1 << int(imsi_str[-1]))
         # patch ADF.USIM/EF.IMSI
@@ -112,11 +115,12 @@ class SdKey(ConfigurableParameter, metaclass=ClassVarMeta):
     permitted_len = None
 
     def validate(self):
-        if not isinstance(self.value, (io.BytesIO, bytes, bytearray)):
+        if not isinstance(self.input_value, (io.BytesIO, bytes, bytearray)):
             raise ValueError('Value must be of bytes-like type')
         if self.permitted_len:
-            if len(self.value) not in self.permitted_len:
+            if len(self.input_value) not in self.permitted_len:
                 raise ValueError('Value length must be %s' % self.permitted_len)
+        self.value = self.input_value
 
     def _apply_sd(self, pe: ProfileElement):
         assert pe.type == 'securityDomain'
@@ -208,8 +212,10 @@ class Puk(ConfigurableParameter, metaclass=ClassVarMeta):
     """Configurable PUK (Pin Unblock Code). String ASCII-encoded digits."""
     keyReference = None
     def validate(self):
-        if isinstance(self.value, int):
-            self.value = '%08d' % self.value
+        if isinstance(self.input_value, int):
+            self.value = '%08d' % self.input_value
+        else:
+            self.value = self.input_value
         # FIXME: valid length?
         if not self.value.isdecimal():
             raise ValueError('PUK must only contain decimal digits')
@@ -233,8 +239,10 @@ class Pin(ConfigurableParameter, metaclass=ClassVarMeta):
     """Configurable PIN (Personal Identification Number).  String of digits."""
     keyReference = None
     def validate(self):
-        if isinstance(self.value, int):
-            self.value = '%04d' % self.value
+        if isinstance(self.input_value, int):
+            self.value = '%04d' % self.input_value
+        else:
+            self.value = self.input_value
         if len(self.value) < 4 or len(self.value) > 8:
             raise ValueError('PIN mus be 4..8 digits long')
         if not self.value.isdecimal():
@@ -255,8 +263,10 @@ class AppPin(ConfigurableParameter, metaclass=ClassVarMeta):
     """Configurable PIN (Personal Identification Number).  String of digits."""
     keyReference = None
     def validate(self):
-        if isinstance(self.value, int):
-            self.value = '%04d' % self.value
+        if isinstance(self.input_value, int):
+            self.value = '%04d' % self.input_value
+        else:
+            self.value = self.input_value
         if len(self.value) < 4 or len(self.value) > 8:
             raise ValueError('PIN mus be 4..8 digits long')
         if not self.value.isdecimal():
@@ -293,8 +303,9 @@ class AlgoConfig(ConfigurableParameter, metaclass=ClassVarMeta):
     """Configurable Algorithm parameter.  bytes."""
     key = None
     def validate(self):
-        if not isinstance(self.value, (io.BytesIO, bytes, bytearray)):
+        if not isinstance(self.input_value, (io.BytesIO, bytes, bytearray)):
             raise ValueError('Value must be of bytes-like type')
+        self.value = self.input_value
     def apply(self, pes: ProfileElementSequence):
         for pe in pes.get_pes_for_type('akaParameter'):
             algoConfiguration = pe.decoded['algoConfiguration']
@@ -308,5 +319,6 @@ class Opc(AlgoConfig, key='opc'):
     pass
 class AlgorithmID(AlgoConfig, key='algorithmID'):
     def validate(self):
-        if self.value not in [1, 2, 3]:
-            raise ValueError('Invalid algorithmID %s' % (self.value))
+        if self.input_value not in [1, 2, 3]:
+            raise ValueError('Invalid algorithmID %s' % (self.input_value))
+        self.value = self.input_value
