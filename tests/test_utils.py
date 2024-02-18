@@ -236,5 +236,22 @@ class TestDgiTlv(unittest.TestCase):
         self.assertEqual(utils.dgi_parse_len(b'\xfe\x0b'), (254, b'\x0b'))
         self.assertEqual(utils.dgi_parse_len(b'\xff\x00\xff\x0b'), (255, b'\x0b'))
 
+class TestLuhn(unittest.TestCase):
+    def test_verify(self):
+        utils.verify_luhn('8988211000000530082')
+
+    def test_encode(self):
+        self.assertEqual(utils.calculate_luhn('898821100000053008'), 2)
+
+    def test_sanitize_iccid(self):
+        # 19 digits with correct luhn; we expect no change
+        self.assertEqual(utils.sanitize_iccid('8988211000000530082'), '8988211000000530082')
+        # 20 digits with correct luhn; we expect no change
+        self.assertEqual(utils.sanitize_iccid('89882110000005300811'), '89882110000005300811')
+        # 19 digits without correct luhn; we expect check digit to be added
+        self.assertEqual(utils.sanitize_iccid('8988211000000530081'), '89882110000005300811')
+        # 18 digits; we expect luhn check digit to be added
+        self.assertEqual(utils.sanitize_iccid('898821100000053008'), '8988211000000530082')
+
 if __name__ == "__main__":
 	unittest.main()

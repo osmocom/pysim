@@ -9,7 +9,7 @@ import string
 import datetime
 import argparse
 from io import BytesIO
-from typing import Optional, List, Dict, Any, Tuple, NewType
+from typing import Optional, List, Dict, Any, Tuple, NewType, Union
 
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
 # Copyright (C) 2021 Harald Welte <laforge@osmocom.org>
@@ -446,6 +446,30 @@ def dec_iccid(ef: Hexstr) -> str:
 def enc_iccid(iccid: str) -> Hexstr:
     return swap_nibbles(rpad(iccid, 20))
 
+def sanitize_iccid(iccid: Union[int, str]) -> str:
+    iccid = str(iccid)
+    if len(iccid) < 18:
+        raise ValueError('ICCID input value must be at least 18 digits')
+    if len(iccid) > 20:
+        raise ValueError('ICCID input value must be at most 20 digits')
+    if len(iccid) == 18:
+        # 18 digits means we must add a luhn check digit to reach 19 digits
+        iccid += str(calculate_luhn(iccid))
+    if len(iccid) == 20:
+        # 20 digits means we're actually exceeding E.118 by one digit, and
+        # the luhn check digit must already be included
+        verify_luhn(iccid)
+    if len(iccid) == 19:
+        # 19 digits means that it's either an in-spec 19-digits ICCID with
+        # its luhn check digit already present, or it's an out-of-spec 20-digit
+        # ICCID without that check digit...
+        try:
+            verify_luhn(iccid)
+        except ValueError:
+            # 19th digit was not luhn check digit; we must add it
+            iccid += str(calculate_luhn(iccid))
+    return iccid
+
 
 def enc_plmn(mcc: Hexstr, mnc: Hexstr) -> Hexstr:
     """Converts integer MCC/MNC into 3 bytes for EF"""
@@ -606,6 +630,11 @@ def calculate_luhn(cc) -> int:
                            for d in num[::-2]]) % 10
     return 0 if check_digit == 10 else check_digit
 
+def verify_luhn(digits: str):
+    """Verify the Luhn check digit; raises ValueError if it is incorrect."""
+    cd = calculate_luhn(digits[:-1])
+    if str(cd) != digits[-1]:
+        raise ValueError('Luhn check digit mismatch: should be %s but is %s' % (str(cd), digits[-1]))
 
 def mcc_from_imsi(imsi: str) -> Optional[str]:
     """
