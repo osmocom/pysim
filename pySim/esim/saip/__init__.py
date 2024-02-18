@@ -30,7 +30,13 @@ from pySim.esim.saip import templates
 asn1 = compile_asn1_subdir('saip')
 
 class File:
-    """Internal representation of a file in a profile filesystem."""
+    """Internal representation of a file in a profile filesystem.
+
+    Parameters:
+        pename: Name string of the profile element
+        l: List of tuples [fileDescriptor, fillFileContent, fillFileOffset profile elements]
+        template: Applicable FileTemplate describing defaults as per SAIP spec
+    """
     def __init__(self, pename: str, l: Optional[List[Tuple]] = None, template: Optional[templates.FileTemplate] = None):
         self.pe_name = pename
         self.template = template
@@ -103,7 +109,7 @@ class File:
 
     @staticmethod
     def linearize_file_content(l: List[Tuple]) -> Optional[io.BytesIO]:
-        """linearize a list of fillFileContent + fillFileOffset tuples."""
+        """linearize a list of fillFileContent / fillFileOffset tuples into a stream of bytes."""
         stream = io.BytesIO()
         for k, v in l:
             if k == 'doNotCreate':
@@ -125,6 +131,7 @@ class File:
         return "File(%s): %s" % (self.pe_name, self.fileDescriptor)
 
 class ProfileElement:
+    """Class representing a Profile Element (PE) within a SAIP Profile."""
     FILE_BEARING = ['mf', 'cd', 'telecom', 'usim', 'opt-usim', 'isim', 'opt-isim', 'phonebook', 'gsm-access',
                     'csim', 'opt-csim', 'eap', 'df-5gs', 'df-saip', 'df-snpn', 'df-5gprose', 'iot', 'opt-iot']
     def _fixup_sqnInit_dec(self) -> None:
@@ -162,6 +169,7 @@ class ProfileElement:
 
     @property
     def header_name(self) -> str:
+        """Return the name of the header field within the profile element."""
         # unneccessarry compliaction by inconsistent naming :(
         if self.type.startswith('opt-'):
             return self.type.replace('-','') + '-header'
@@ -169,10 +177,12 @@ class ProfileElement:
 
     @property
     def header(self):
+        """Return the decoded ProfileHeader."""
         return self.decoded.get(self.header_name, None)
 
     @property
     def templateID(self):
+        """Return the decoded templateID used by this profile element (if any)."""
         return self.decoded.get('templateID', None)
 
     @property
@@ -216,9 +226,12 @@ class ProfileElementSequence:
         self.pes_by_naa: Dict = {}
 
     def get_pes_for_type(self, tname: str) -> List[ProfileElement]:
+        """Return list of profile elements present for given profile element type."""
         return self.pe_by_type.get(tname, [])
 
     def get_pe_for_type(self, tname: str) -> Optional[ProfileElement]:
+        """Return a single profile element for given profile element type. Works only for
+        types of which there is only a signle instance in the PE Sequence!"""
         l = self.get_pes_for_type(tname)
         if len(l) == 0:
             return None

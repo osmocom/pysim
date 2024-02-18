@@ -32,7 +32,8 @@ def file_replace_content(file: List[Tuple], new_content: bytes):
     return file
 
 class ClassVarMeta(abc.ABCMeta):
-    """Metaclass that puts all additional keyword-args into the class."""
+    """Metaclass that puts all additional keyword-args into the class. We use this to have one
+    class definition for something like a PIN, and then have derived classes for PIN1, PIN2, ..."""
     def __new__(metacls, name, bases, namespace, **kwargs):
         #print("Meta_new_(metacls=%s, name=%s, bases=%s, namespace=%s, kwargs=%s)" % (metacls, name, bases, namespace, kwargs))
         x = super().__new__(metacls, name, bases, namespace)
@@ -78,6 +79,7 @@ def obtain_first_pe_from_pelist(l: List[ProfileElement], wanted_type: str) -> Pr
     return filtered[0]
 
 class Puk(ConfigurableParameter, metaclass=ClassVarMeta):
+    """Configurable PUK (Pin Unblock Code). String ASCII-encoded digits."""
     keyReference = None
     def apply(self, pes: ProfileElementSequence):
         mf_pes = pes.pes_by_naa['mf'][0]
@@ -93,6 +95,7 @@ class Puk2(Puk, keyReference=0x81):
     pass
 
 class Pin(ConfigurableParameter, metaclass=ClassVarMeta):
+    """Configurable PIN (Personal Identification Number).  String of digits."""
     keyReference = None
     def apply(self, pes: ProfileElementSequence):
         mf_pes = pes.pes_by_naa['mf'][0]
@@ -105,6 +108,7 @@ class Pin(ConfigurableParameter, metaclass=ClassVarMeta):
                  return
         raise ValueError('cannot find pinCode')
 class AppPin(ConfigurableParameter, metaclass=ClassVarMeta):
+    """Configurable PIN (Personal Identification Number).  String of digits."""
     keyReference = None
     def _apply_one(self, pe: ProfileElement):
         pinCodes = obtain_first_pe_from_pelist(pe, 'pinCodes')
@@ -134,6 +138,7 @@ class Adm2(Pin, keyReference=0x0B):
 
 
 class AlgoConfig(ConfigurableParameter, metaclass=ClassVarMeta):
+    """Configurable Algorithm parameter.  bytes."""
     key = None
     def apply(self, pes: ProfileElementSequence):
         for pe in pes.get_pes_for_type('akaParameter'):
