@@ -77,7 +77,7 @@ class Iccid(ConfigurableParameter):
 
     def apply(self, pes: ProfileElementSequence):
         # patch the header
-        pes.get_pe_for_type('header').decoded['iccid'] = self.value
+        pes.get_pe_for_type('header').decoded['iccid'] = h2b(rpad(self.value, 20))
         # patch MF/EF.ICCID
         file_replace_content(pes.get_pe_for_type('mf').decoded['ef-iccid'], h2b(enc_iccid(self.value)))
 
