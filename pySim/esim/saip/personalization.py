@@ -19,6 +19,7 @@ import abc
 import io
 from typing import List, Tuple
 
+from pySim.tlv import camel_to_snake
 from pySim.utils import enc_iccid, enc_imsi, h2b, rpad, sanitize_iccid
 from pySim.esim.saip import ProfileElement, ProfileElementSequence
 
@@ -41,6 +42,7 @@ class ClassVarMeta(abc.ABCMeta):
         x = super().__new__(metacls, name, bases, namespace)
         for k, v in kwargs.items():
             setattr(x, k, v)
+        setattr(x, 'name', camel_to_snake(name))
         return x
 
 class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
@@ -63,7 +65,6 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
 class Iccid(ConfigurableParameter):
     """Configurable ICCID.  Expects the value to be a string of decimal digits.
     If the string of digits is only 18 digits long, a Luhn check digit will be added."""
-    name = 'iccid'
 
     def validate(self):
         # convert to string as it migt be an integer
@@ -83,7 +84,6 @@ class Iccid(ConfigurableParameter):
 class Imsi(ConfigurableParameter):
     """Configurable IMSI. Expects value to be a string of digits. Automatically sets the ACC to
     the last digit of the IMSI."""
-    name = 'imsi'
 
     def validate(self):
         # convert to string as it migt be an integer
