@@ -35,6 +35,7 @@ import asn1tools
 from pySim.utils import h2b, b2h, swap_nibbles
 
 import pySim.esim.rsp as rsp
+from pySim.esim import saip
 from pySim.esim.es8p import *
 from pySim.esim.x509_cert import oid, cert_policy_has_oid, cert_get_auth_key_id
 from pySim.esim.x509_cert import CertAndPrivkey, CertificateSet, cert_get_subject_key_id, VerifyError
@@ -363,11 +364,14 @@ class SmDppHttpServer:
                 if not os.path.isfile(path) or not os.access(path, os.R_OK):
                     raise ApiError('8.2.6', '3.8', 'Refused')
                 ss.matchingId = matchingId
+                with open(path, 'rb') as f:
+                    pes = saip.ProfileElementSequence.from_der(f.read())
+                    iccid_str = b2h(pes.get_pe_for_type('header').decoded['iccid'])
 
         # FIXME: we actually want to perform the profile binding herr, and read the profile metadat from the profile
 
         # Put together profileMetadata + _bin
-        ss.profileMetadata = ProfileMetadata(iccid_bin= h2b(swap_nibbles('89000123456789012358')), spn="OsmocomSPN", profile_name="OsmocomProfile")
+        ss.profileMetadata = ProfileMetadata(iccid_bin=h2b(swap_nibbles(iccid_str)), spn="OsmocomSPN", profile_name=matchingId)
         profileMetadata_bin = ss.profileMetadata.gen_store_metadata_request()
 
         # Put together smdpSigned2 + _bin
