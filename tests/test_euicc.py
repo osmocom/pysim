@@ -16,16 +16,16 @@ class TestEid(unittest.TestCase):
         self.assertFalse(verify_eid_checksum(89049032123451234512345678901234))
 
     def test_eid_encode_with_32_digits(self):
-        self.assertEquals(compute_eid_checksum('89049032123451234512345678901200'), '89049032123451234512345678901235')
-        self.assertEquals(compute_eid_checksum('89086030202200000022000023022900'), '89086030202200000022000023022943')
+        self.assertEqual(compute_eid_checksum('89049032123451234512345678901200'), '89049032123451234512345678901235')
+        self.assertEqual(compute_eid_checksum('89086030202200000022000023022900'), '89086030202200000022000023022943')
 
     def test_eid_encode_with_30digits(self):
-        self.assertEquals(compute_eid_checksum('890490321234512345123456789012'), '89049032123451234512345678901235')
+        self.assertEqual(compute_eid_checksum('890490321234512345123456789012'), '89049032123451234512345678901235')
 
     def test_eid_encode_with_wrong_csum(self):
         # input: EID with wrong checksum
-        self.assertEquals(compute_eid_checksum('89049032123451234512345678901299'), '89049032123451234512345678901235')
-        self.assertEquals(compute_eid_checksum(89049032123451234512345678901299), '89049032123451234512345678901235')
+        self.assertEqual(compute_eid_checksum('89049032123451234512345678901299'), '89049032123451234512345678901235')
+        self.assertEqual(compute_eid_checksum(89049032123451234512345678901299), '89049032123451234512345678901235')
 
 if __name__ == "__main__":
 	unittest.main()
