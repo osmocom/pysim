@@ -505,6 +505,9 @@ read_record_decoded
    :module: pySim.filesystem
    :func: LinFixedEF.ShellCommands.read_rec_dec_parser
 
+If this command fails, it means that the record is not decodable, and you should use the :ref:`read_record`
+command and proceed with manual decoding of the contents.
+
 
 read_records
 ~~~~~~~~~~~~
@@ -519,6 +522,9 @@ read_records_decoded
    :module: pySim.filesystem
    :func: LinFixedEF.ShellCommands.read_recs_dec_parser
 
+If this command fails, it means that the record[s] are not decodable, and you should use the :ref:`read_records`
+command and proceed with manual decoding of the contents.
+
 
 update_record
 ~~~~~~~~~~~~~
@@ -532,6 +538,9 @@ update_record_decoded
 .. argparse::
    :module: pySim.filesystem
    :func: LinFixedEF.ShellCommands.upd_rec_dec_parser
+
+If this command fails, it means that the record is not encodable; please check your input and/or use the raw
+:ref:`update_record` command.
 
 
 edit_record_decoded
@@ -550,6 +559,12 @@ Afterwards, the modified JSON will be re-encoded to the binary format, and the r
 back to the record on the SIM card.
 
 This allows for easy interactive modification of records.
+
+If this command fails before the editor is spawned, it means that the current record contents is not decodable,
+and you should use the :ref:`update_record_decoded` or :ref:`update_record` command.
+
+If this command fails after making your modificatiosn in the editor, it means that the new file contents is not
+encodable; please check your input and/or us the raw :ref:`update_record` comamdn.
 
 
 decode_hex
@@ -579,6 +594,8 @@ read_binary_decoded
    :module: pySim.filesystem
    :func: TransparentEF.ShellCommands.read_bin_dec_parser
 
+If this command fails, it means that the file is not decodable, and you should use the :ref:`read_binary`
+command and proceed with manual decoding of the contents.
 
 update_binary
 ~~~~~~~~~~~~~
@@ -632,6 +649,10 @@ The below example demonstrates this by modifying the ciphering indicator field w
       "extensions": "ff"
   }
 
+If this command fails, it means that the file is not encodable; please check your input and/or use the raw
+:ref:`update_binary` command.
+
+
 edit_binary_decoded
 ~~~~~~~~~~~~~~~~~~~
 This command will read the selected binary EF, decode it to its JSON representation, save
@@ -644,6 +665,12 @@ Afterwards, the modified JSON will be re-encoded to the binary format, and the r
 to the SIM card.
 
 This allows for easy interactive modification of file contents.
+
+If this command fails before the editor is spawned, it means that the current file contents is not decodable,
+and you should use the :ref:`update_binary_decoded` or :ref:`update_binary` command.
+
+If this command fails after making your modificatiosn in the editor, it means that the new file contents is not
+encodable; please check your input and/or us the raw :ref:`update_binary` comamdn.
 
 
 decode_hex
