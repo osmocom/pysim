@@ -1002,7 +1002,7 @@ aram_delete_all
 ~~~~~~~~~~~~~~~
 This command will request deletion of all access rules stored within the
 ARA-M applet.  Use it with caution, there is no undo.  Any rules later
-intended must be manually inserted again using `aram_store_ref_ar_do`
+intended must be manually inserted again using :ref:`aram_store_ref_ar_do`
 
 
 GlobalPlatform commands
