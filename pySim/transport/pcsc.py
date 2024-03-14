@@ -25,6 +25,7 @@ from smartcard.CardConnection import CardConnection
 from smartcard.CardRequest import CardRequest
 from smartcard.Exceptions import NoCardException, CardRequestTimeoutException, CardConnectionException
 from smartcard.System import readers
+from smartcard.ExclusiveConnectCardConnection import ExclusiveConnectCardConnection
 
 from pySim.exceptions import NoCardError, ProtocolError, ReaderError
 from pySim.transport import LinkBase
@@ -56,6 +57,8 @@ class PcscSimLink(LinkBase):
                 raise ReaderError('No matching reader found for regex %s' % opts.pcsc_regex)
 
         self._con = self._reader.createConnection()
+        if not opts.pcsc_shared:
+            self._con = ExclusiveConnectCardConnection(self._con)
 
     def __del__(self):
         try:
@@ -119,6 +122,8 @@ access smart card readers, and is available on a variety of operating systems, s
 Windows, MacOS X and Linux.  Most vendors of smart card readers provide drivers that offer a PC/SC
 interface, if not even a generic USB CCID driver is used.  You can use a tool like ``pcsc_scan -r``
 to obtain a list of readers available on your system. """)
+        pcsc_group.add_argument('--pcsc-shared', action='store_true',
+                                help='Open PC/SC reaer in SHARED access (default: EXCLUSIVE)')
         dev_group = pcsc_group.add_mutually_exclusive_group()
         dev_group.add_argument('-p', '--pcsc-device', type=int, dest='pcsc_dev', metavar='PCSC', default=None,
                                help='Number of PC/SC reader to use for SIM access')
