@@ -25,7 +25,7 @@
 #
 
 import hashlib
-from optparse import OptionParser
+import argparse
 import os
 import random
 import re
@@ -35,7 +35,7 @@ import json
 import csv
 
 from pySim.commands import SimCardCommands
-from pySim.transport import init_reader
+from pySim.transport import init_reader, argparse_add_reader_args
 from pySim.legacy.cards import _cards_classes, card_detect
 from pySim.utils import h2b, swap_nibbles, rpad, derive_milenage_opc, calculate_luhn, dec_iccid
 from pySim.ts_51_011 import EF_AD
@@ -46,169 +46,146 @@ from pySim.utils import *
 
 def parse_options():
 
-    parser = OptionParser(usage="usage: %prog [options]")
+    parser = argparse.ArgumentParser()
+    argparse_add_reader_args(parser)
 
-    parser.add_option("-d", "--device", dest="device", metavar="DEV",
-                      help="Serial Device for SIM access [default: %default]",
-                      default="/dev/ttyUSB0",
-                      )
-    parser.add_option("-b", "--baud", dest="baudrate", type="int", metavar="BAUD",
-                      help="Baudrate used for SIM access [default: %default]",
-                      default=9600,
-                      )
-    parser.add_option("-p", "--pcsc-device", dest="pcsc_dev", type='int', metavar="PCSC",
-                      help="Which PC/SC reader number for SIM access",
-                      default=None,
-                      )
-    parser.add_option("--modem-device", dest="modem_dev", metavar="DEV",
-                      help="Serial port of modem for Generic SIM Access (3GPP TS 27.007)",
-                      default=None,
-                      )
-    parser.add_option("--modem-baud", dest="modem_baud", type="int", metavar="BAUD",
-                      help="Baudrate used for modem's port [default: %default]",
-                      default=115200,
-                      )
-    parser.add_option("--osmocon", dest="osmocon_sock", metavar="PATH",
-                      help="Socket path for Calypso (e.g. Motorola C1XX) based reader (via OsmocomBB)",
-                      default=None,
-                      )
-    parser.add_option("-t", "--type", dest="type",
-                      help="Card type (user -t list to view) [default: %default]",
+    parser.add_argument("-t", "--type", dest="type",
+                      help="Card type (user -t list to view) [default: %(default)s]",
                       default="auto",
                       )
-    parser.add_option("-T", "--probe", dest="probe",
+    parser.add_argument("-T", "--probe", dest="probe",
                       help="Determine card type",
                       default=False, action="store_true"
                       )
-    parser.add_option("-a", "--pin-adm", dest="pin_adm",
+    parser.add_argument("-a", "--pin-adm", dest="pin_adm",
                       help="ADM PIN used for provisioning (overwrites default)",
                       )
-    parser.add_option("-A", "--pin-adm-hex", dest="pin_adm_hex",
+    parser.add_argument("-A", "--pin-adm-hex", dest="pin_adm_hex",
                       help="ADM PIN used for provisioning, as hex string (16 characters long",
                       )
-    parser.add_option("-e", "--erase", dest="erase", action='store_true',
-                      help="Erase beforehand [default: %default]",
+    parser.add_argument("-e", "--erase", dest="erase", action='store_true',
+                      help="Erase beforehand [default: %(default)s]",
                       default=False,
                       )
 
-    parser.add_option("-S", "--source", dest="source",
-                      help="Data Source[default: %default]",
+    parser.add_argument("-S", "--source", dest="source",
+                      help="Data Source[default: %(default)s]",
                       default="cmdline",
                       )
 
     # if mode is "cmdline"
-    parser.add_option("-n", "--name", dest="name",
-                      help="Operator name [default: %default]",
+    parser.add_argument("-n", "--name", dest="name",
+                      help="Operator name [default: %(default)s]",
                       default="Magic",
                       )
-    parser.add_option("-c", "--country", dest="country", type="int", metavar="CC",
-                      help="Country code [default: %default]",
+    parser.add_argument("-c", "--country", dest="country", type=int, metavar="CC",
+                      help="Country code [default: %(default)s]",
                       default=1,
                       )
-    parser.add_option("-x", "--mcc", dest="mcc", type="string",
-                      help="Mobile Country Code [default: %default]",
+    parser.add_argument("-x", "--mcc", dest="mcc",
+                      help="Mobile Country Code [default: %(default)s]",
                       default="901",
                       )
-    parser.add_option("-y", "--mnc", dest="mnc", type="string",
-                      help="Mobile Network Code [default: %default]",
+    parser.add_argument("-y", "--mnc", dest="mnc",
+                      help="Mobile Network Code [default: %(default)s]",
                       default="55",
                       )
-    parser.add_option("--mnclen", dest="mnclen", type="choice",
-                      help="Length of Mobile Network Code [default: %default]",
+    parser.add_argument("--mnclen", dest="mnclen",
+                      help="Length of Mobile Network Code [default: %(default)s]",
                       default="auto",
                       choices=["2", "3", "auto"],
                       )
-    parser.add_option("-m", "--smsc", dest="smsc",
+    parser.add_argument("-m", "--smsc", dest="smsc",
                       help="SMSC number (Start with + for international no.) [default: '00 + country code + 5555']",
                       )
-    parser.add_option("-M", "--smsp", dest="smsp",
+    parser.add_argument("-M", "--smsp", dest="smsp",
                       help="Raw SMSP content in hex [default: auto from SMSC]",
                       )
 
-    parser.add_option("-s", "--iccid", dest="iccid", metavar="ID",
+    parser.add_argument("-s", "--iccid", dest="iccid", metavar="ID",
                       help="Integrated Circuit Card ID",
                       )
-    parser.add_option("-i", "--imsi", dest="imsi",
+    parser.add_argument("-i", "--imsi", dest="imsi",
                       help="International Mobile Subscriber Identity",
                       )
-    parser.add_option("--msisdn", dest="msisdn",
+    parser.add_argument("--msisdn", dest="msisdn",
                       help="Mobile Subscriber Integrated Services Digital Number",
                       )
-    parser.add_option("-k", "--ki", dest="ki",
+    parser.add_argument("-k", "--ki", dest="ki",
                       help="Ki (default is to randomize)",
                       )
-    parser.add_option("-o", "--opc", dest="opc",
+    parser.add_argument("-o", "--opc", dest="opc",
                       help="OPC (default is to randomize)",
                       )
-    parser.add_option("--op", dest="op",
+    parser.add_argument("--op", dest="op",
                       help="Set OP to derive OPC from OP and KI",
                       )
-    parser.add_option("--acc", dest="acc",
+    parser.add_argument("--acc", dest="acc",
                       help="Set ACC bits (Access Control Code). not all card types are supported",
                       )
-    parser.add_option("--opmode", dest="opmode", type="choice",
+    parser.add_argument("--opmode", dest="opmode",
                       help="Set UE Operation Mode in EF.AD (Administrative Data)",
                       default=None,
                       choices=['{:02X}'.format(int(m)) for m in EF_AD.OP_MODE],
                       )
-    parser.add_option("-f", "--fplmn", dest="fplmn", action="append",
+    parser.add_argument("-f", "--fplmn", dest="fplmn", action="append",
                       help="Set Forbidden PLMN. Add multiple time for multiple FPLMNS",
                       )
-    parser.add_option("--epdgid", dest="epdgid",
+    parser.add_argument("--epdgid", dest="epdgid",
                       help="Set Home Evolved Packet Data Gateway (ePDG) Identifier. (Only FQDN format supported)",
                       )
-    parser.add_option("--epdgSelection", dest="epdgSelection",
+    parser.add_argument("--epdgSelection", dest="epdgSelection",
                       help="Set PLMN for ePDG Selection Information. (Only Operator Identifier FQDN format supported)",
                       )
-    parser.add_option("--pcscf", dest="pcscf",
+    parser.add_argument("--pcscf", dest="pcscf",
                       help="Set Proxy Call Session Control Function (P-CSCF) Address. (Only FQDN format supported)",
                       )
-    parser.add_option("--ims-hdomain", dest="ims_hdomain",
+    parser.add_argument("--ims-hdomain", dest="ims_hdomain",
                       help="Set IMS Home Network Domain Name in FQDN format",
                       )
-    parser.add_option("--impi", dest="impi",
+    parser.add_argument("--impi", dest="impi",
                       help="Set IMS private user identity",
                       )
-    parser.add_option("--impu", dest="impu",
+    parser.add_argument("--impu", dest="impu",
                       help="Set IMS public user identity",
                       )
-    parser.add_option("--read-imsi", dest="read_imsi", action="store_true",
+    parser.add_argument("--read-imsi", dest="read_imsi", action="store_true",
                       help="Read the IMSI from the CARD", default=False
                       )
-    parser.add_option("--read-iccid", dest="read_iccid", action="store_true",
+    parser.add_argument("--read-iccid", dest="read_iccid", action="store_true",
                       help="Read the ICCID from the CARD", default=False
                       )
-    parser.add_option("-z", "--secret", dest="secret", metavar="STR",
+    parser.add_argument("-z", "--secret", dest="secret", metavar="STR",
                       help="Secret used for ICCID/IMSI autogen",
                       )
-    parser.add_option("-j", "--num", dest="num", type=int,
+    parser.add_argument("-j", "--num", dest="num", type=int,
                       help="Card # used for ICCID/IMSI autogen",
                       )
-    parser.add_option("--batch", dest="batch_mode",
-                      help="Enable batch mode [default: %default]",
+    parser.add_argument("--batch", dest="batch_mode",
+                      help="Enable batch mode [default: %(default)s]",
                       default=False, action='store_true',
                       )
-    parser.add_option("--batch-state", dest="batch_state", metavar="FILE",
+    parser.add_argument("--batch-state", dest="batch_state", metavar="FILE",
                       help="Optional batch state file",
                       )
 
     # if mode is "csv"
-    parser.add_option("--read-csv", dest="read_csv", metavar="FILE",
+    parser.add_argument("--read-csv", dest="read_csv", metavar="FILE",
                       help="Read parameters from CSV file rather than command line")
 
-    parser.add_option("--write-csv", dest="write_csv", metavar="FILE",
+    parser.add_argument("--write-csv", dest="write_csv", metavar="FILE",
                       help="Append generated parameters in CSV file",
                       )
-    parser.add_option("--write-hlr", dest="write_hlr", metavar="FILE",
+    parser.add_argument("--write-hlr", dest="write_hlr", metavar="FILE",
                       help="Append generated parameters to OpenBSC HLR sqlite3",
                       )
-    parser.add_option("--dry-run", dest="dry_run",
+    parser.add_argument("--dry-run", dest="dry_run",
                       help="Perform a 'dry run', don't actually program the card",
                       default=False, action="store_true")
-    parser.add_option("--card_handler", dest="card_handler_config", metavar="FILE",
+    parser.add_argument("--card_handler", dest="card_handler_config", metavar="FILE",
                       help="Use automatic card handling machine")
 
-    (options, args) = parser.parse_args()
+    options = parser.parse_args()
 
     if options.type == 'list':
         for kls in _cards_classes:
@@ -241,9 +218,6 @@ def parse_options():
         if (options.imsi is not None) or (options.iccid is not None):
             parser.error(
                 "Can't give ICCID/IMSI for batch mode, need to use automatic parameters ! see --num and --secret for more information")
-
-    if args:
-        parser.error("Extraneous arguments")
 
     return options
 
