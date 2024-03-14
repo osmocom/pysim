@@ -206,6 +206,18 @@ class EF_USIM_SQN(TransparentEF):
 
 
 class EF_USIM_AUTH_KEY(TransparentEF):
+    _test_de_encode = [
+        ( '141898d827f70120d33b3e7462ee5fd6fe6ca53d7a0a804561646816d7b0c702fb',
+          { "cfg": { "only_4bytes_res_in_3g": False, "sres_deriv_func_in_2g": 1, "use_opc_instead_of_op": True, "algorithm": "milenage" },
+            "key": "1898d827f70120d33b3e7462ee5fd6fe", "op_opc": "6ca53d7a0a804561646816d7b0c702fb" } ),
+        ( '160a04101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f000102030405060708090a0b0c0d0e0f',
+         { "cfg" : { "algorithm" : "tuak", "key_length" : 128, "sres_deriv_func_in_2g" : 1, "use_opc_instead_of_op" : True },
+           "tuak_cfg" : { "ck_and_ik_size" : 128, "mac_size" : 128, "res_size" : 128 },
+           "num_of_keccak_iterations" : 4,
+           "k" : "000102030405060708090a0b0c0d0e0f",
+           "op_opc" : "101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f"
+         } ),
+      ]
     def __init__(self, fid='af20', name='EF.USIM_AUTH_KEY'):
         super().__init__(fid, name=name, desc='USIM authentication key')
         Algorithm = Enum(Nibble, milenage=4, sha1_aka=5, tuak=6, xor=15)
