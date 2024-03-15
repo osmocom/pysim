@@ -239,7 +239,7 @@ class SmDppHttpServer:
 
         # Generate a TransactionID which is used to identify the ongoing RSP session. The TransactionID
         # SHALL be unique within the scope and lifetime of each SM-DP+.
-        transactionId = uuid.uuid4().hex
+        transactionId = uuid.uuid4().hex.upper()
         assert not transactionId in self.rss
 
         # Generate a serverChallenge for eUICC authentication attached to the ongoing RSP session.
