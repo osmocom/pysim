@@ -4,7 +4,7 @@
 # environment variables:
 # * WITH_MANUALS: build manual PDFs if set to "1"
 # * PUBLISH: upload manuals after building if set to "1" (ignored without WITH_MANUALS = "1")
-# * JOB_TYPE: one of 'test', 'pylint', 'docs'
+# * JOB_TYPE: one of 'test', 'distcheck', 'pylint', 'docs'
 #
 
 export PYTHONUNBUFFERED=1
@@ -31,6 +31,17 @@ case "$JOB_TYPE" in
 	cd pysim-testdata
 	../tests/pySim-prog_test.sh
 	../tests/pySim-trace_test.sh
+	;;
+"distcheck")
+	virtualenv -p python3 venv --system-site-packages
+	. venv/bin/activate
+
+	pip install .
+	pip install pyshark
+
+	for prog in venv/bin/pySim-*.py; do
+		$prog --help > /dev/null
+	done
 	;;
 "pylint")
 	# Print pylint version
