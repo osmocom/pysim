@@ -127,9 +127,9 @@ Mailing List
 ------------
 
 There is no separate mailing list for this project. However,
-discussions related to pysim-prog are happening on the
-<openbsc@lists.osmocom.org> mailing list, please see
-<https://lists.osmocom.org/mailman/listinfo/openbsc> for subscription
+discussions related to pySim are happening on the simtrace
+<simtrace@lists.osmocom.org> mailing list, please see
+<https://lists.osmocom.org/mailman/listinfo/simtrace> for subscription
 options and the list archive.
 
 Please observe the [Osmocom Mailing List
