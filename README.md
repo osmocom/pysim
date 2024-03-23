@@ -144,6 +144,13 @@ Please observe the [Osmocom Mailing List
 Rules](https://osmocom.org/projects/cellular-infrastructure/wiki/Mailing_List_Rules)
 when posting.
 
+Issue Tracker
+-------------
+
+We use the [issue tracker of the pysim project on osmocom.org](https://osmocom.org/projects/pysim/issues) for
+tracking the state of bug reports and feature requests.  Feel free to submit any issues you may find, or help
+us out by resolving existing issues.
+
 
 Contributing
 ------------
