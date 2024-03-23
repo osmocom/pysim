@@ -123,6 +123,14 @@ sudo pacman -Rs python-pysim-git
 ```
 
 
+Forum
+-----
+
+We welcome any pySim related discussions in the
+[SIM Card Technology](https://discourse.osmocom.org/c/sim-card-technology/)
+section of the osmocom discourse (web based Forum).
+
+
 Mailing List
 ------------
 
