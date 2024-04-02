@@ -261,6 +261,8 @@ class Es2PlusApiFunction(abc.ABC):
     output_mandatory = []
     # expected HTTP status code of the response
     expected_http_status = 200
+    # the HTTP method used (GET, OPTIONS, HEAD, POST, PUT, PATCH or DELETE)
+    http_method = 'POST'
 
     def __init__(self, url_prefix: str, func_req_id: str, session):
         self.url_prefix = url_prefix
@@ -326,7 +328,7 @@ class Es2PlusApiFunction(abc.ABC):
         }
 
         logger.debug("HTTP REQ %s - '%s'" % (url, encoded))
-        response = self.session.post(url, data=encoded, headers=headers, timeout=timeout)
+        response = self.session.request(self.http_method, url, data=encoded, headers=headers, timeout=timeout)
         logger.debug("HTTP RSP-STS: [%u] hdr: %s" % (response.status_code, response.headers))
         logger.debug("HTTP RSP: %s" % (response.content))
 
