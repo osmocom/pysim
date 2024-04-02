@@ -86,6 +86,8 @@ class ApiParamInteger(ApiParam):
 
     @classmethod
     def verify_encoded(cls, data):
+        if isinstance(data, int):
+            return
         if not data.isdecimal():
             raise ValueError('integer (%s) contains non-decimal characters' % data)
         assert str(int(data)) == data
