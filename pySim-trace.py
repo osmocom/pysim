@@ -14,6 +14,7 @@ from pySim.profile import CardProfile
 from pySim.ts_102_221 import CardProfileUICC
 from pySim.ts_31_102 import CardApplicationUSIM
 from pySim.ts_31_103 import CardApplicationISIM
+from pySim.euicc import CardApplicationISDR, CardApplicationECASD
 from pySim.transport import LinkBase
 
 from pySim.apdu_source.gsmtap import GsmtapApduSource
@@ -78,6 +79,8 @@ class Tracer:
         profile = CardProfileUICC()
         profile.add_application(CardApplicationUSIM())
         profile.add_application(CardApplicationISIM())
+        profile.add_application(CardApplicationISDR())
+        profile.add_application(CardApplicationECASD())
         scc = SimCardCommands(transport=DummySimLink())
         card = UiccCardBase(scc)
         self.rs = RuntimeState(card, profile)
