@@ -512,7 +512,7 @@ class CardADF(CardDF):
         super().__init__(**kwargs)
         # reference to CardApplication may be set from CardApplication constructor
         self.application = None  # type: Optional[CardApplication]
-        self.aid = aid           # Application Identifier
+        self.aid = aid.lower()   # Application Identifier
         self.has_fs = has_fs     # Flag to tell whether the ADF supports a filesystem or not
         mf = self.get_mf()
         if mf:
@@ -1294,6 +1294,8 @@ class CardApplication:
             adf : ADF name
             sw : Dict of status word conversions
         """
+        if aid:
+            aid = aid.lower()
         self.name = name
         self.adf = adf
         self.sw = sw or {}
