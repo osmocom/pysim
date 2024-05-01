@@ -279,7 +279,7 @@ class EumCertificate(BER_TLV_IE, tag=0xa5):
     _construct = GreedyBytes
 class EuiccCertificate(BER_TLV_IE, tag=0xa6):
     _construct = GreedyBytes
-class GetCertsError(BER_TLV_IE, tag=0x80):
+class GetCertsError(BER_TLV_IE, tag=0x81):
     _construct = Enum(Int8ub, invalidCiPKId=1, undefinedError=127)
 class GetCertsResp(BER_TLV_IE, tag=0xbf56, nested=[EumCertificate, EuiccCertificate, GetCertsError]):
     pass
@@ -501,7 +501,7 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
             """Perform an ES10c GetCerts() function on an IoT eUICC."""
             gc = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, GetCertsReq(), GetCertsResp)
             d = gc.to_dict()
-            self._cmd.poutput_json(flatten_dict_lists(d['get_certficiates_resp']))
+            self._cmd.poutput_json(flatten_dict_lists(d['get_certs_resp']))
 
         def do_get_eim_configuration_data(self, _opts):
             """Perform an ES10b GetEimConfigurationData function on an Iot eUICC."""
