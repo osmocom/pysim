@@ -550,7 +550,7 @@ class ADF_SD(CardADF):
                     kcv = b2h(kcv_bin)
                 if self._cmd.lchan.scc.scp:
                     # encrypte key data with DEK of current SCP
-                    kcb = b2h(self._cmd.lchan.scc.scp.card_keys.encrypt_key(h2b(opts.key_data[i])))
+                    kcb = b2h(self._cmd.lchan.scc.scp.encrypt_key(h2b(opts.key_data[i])))
                 else:
                     # (for example) during personalization, DEK might not be required)
                     kcb = opts.key_data[i]
