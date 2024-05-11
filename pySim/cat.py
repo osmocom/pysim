@@ -32,7 +32,7 @@ from pySim.utils import b2h, dec_xplmn_w_act
 # TS 102 223 Section 8.1
 class Address(COMPR_TLV_IE, tag=0x06):
     _construct = Struct('ton_npi'/Int8ub,
-                        'call_number'/BcdAdapter(Bytes(this._.total_len-1)))
+                        'call_number'/BcdAdapter(GreedyBytes))
 
 # TS 102 223 Section 8.2
 class AlphaIdentifier(COMPR_TLV_IE, tag=0x05):
