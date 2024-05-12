@@ -55,7 +55,7 @@ class Foo:
             self.tar = h2b('000001') # ISD-R according to Annex H of SGP.02
             #self.tar = h2b('000002') # ECASD according to Annex H of SGP.02
 
-        if True:
+        if False:
             KIC1 = h2b('4BE2D58A1FA7233DD723B3C70996E6E6')
             KID1 = h2b('4a664208eba091d32c4ecbc299da1f34')
             self.ota_keyset = OtaKeyset(algo_crypt='triple_des_cbc2', kic_idx=1, kic=KIC1,
@@ -66,6 +66,14 @@ class Foo:
             #                            algo_auth='triple_des_cbc2', kid_idx=3, kid=KID3)
             #self.tar = h2b('B00011') # USIM RFM
             self.tar = h2b('000000') # RAM
+
+        if True: # sysmoEUICC1-C2G
+            KIC1 = h2b('B52F9C5938D1C19ED73E1AE772937FD7')
+            KID1 = h2b('3BC696ACD1EEC95A6624F7330D22FC81')
+            self.ota_keyset = OtaKeyset(algo_crypt='aes_cbc', kic_idx=1, kic=KIC1,
+                                        algo_auth='aes_cmac', kid_idx=1, kid=KID1)
+            self.tar = h2b('000001') # ISD-R according to Annex H of SGP.02
+            #self.tar = h2b('000002') # ECASD according to Annex H of SGP.02
 
         self.ota_dialect = OtaDialectSms()
         self.spi = {'counter':'no_counter', 'ciphering':True, 'rc_cc_ds': 'cc', 'por_in_submit':False,

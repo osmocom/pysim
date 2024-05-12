@@ -302,7 +302,7 @@ class OtaAlgoAuthDES3(OtaAlgoAuth):
 class OtaAlgoCryptAES(OtaAlgoCrypt):
     name = 'AES'
     enum_name = 'aes_cbc'
-    blocksize = 16 # TODO: is this needed?
+    blocksize = 16
     def _encrypt(self, data:bytes) -> bytes:
         cipher = AES.new(self.otak.kic, AES.MODE_CBC, self.iv)
         return cipher.encrypt(data)
@@ -356,20 +356,20 @@ class OtaDialectSms(OtaDialect):
 
         # CHL + SPI (+ KIC + KID)
         part_head = self.hdr_construct.build({'chl': chl, 'spi':spi, 'kic':kic, 'kid':kid, 'tar':tar})
-        #print("part_head: %s" % b2h(part_head))
+        print("part_head: %s" % b2h(part_head))
 
         # CNTR + PCNTR (CNTR not used)
         part_cnt = otak.cntr.to_bytes(5, 'big') + pad_cnt.to_bytes(1, 'big')
-        #print("part_cnt: %s" % b2h(part_cnt))
+        print("part_cnt: %s" % b2h(part_cnt))
 
         envelope_data = part_head + part_cnt + apdu
-        #print("envelope_data: %s" % b2h(envelope_data))
+        print("envelope_data: %s" % b2h(envelope_data))
 
         # 2-byte CPL. CPL is part of RC/CC/CPI to end of secured data, including any padding for ciphering
         # CPL from and including CPI to end of secured data, including any padding for ciphering
         cpl = len(envelope_data) + len_sig
         envelope_data = cpl.to_bytes(2, 'big') + envelope_data
-        #print("envelope_data with cpl: %s" % b2h(envelope_data))
+        print("envelope_data with cpl: %s" % b2h(envelope_data))
 
         if spi['rc_cc_ds'] == 'cc':
             cc = otak.auth.sign(envelope_data)
@@ -383,7 +383,7 @@ class OtaDialectSms(OtaDialect):
         else:
             raise ValueError("Invalid rc_cc_ds: %s" % spi['rc_cc_ds'])
 
-        #print("envelope_data with sig: %s" % b2h(envelope_data))
+        print("envelope_data with sig: %s" % b2h(envelope_data))
 
         # encrypt as needed
         if spi['ciphering']: # ciphering is requested
@@ -395,7 +395,7 @@ class OtaDialectSms(OtaDialect):
         else:
             envelope_data = part_head + envelope_data
 
-        #print("envelope_data: %s" % b2h(envelope_data))
+        print("envelope_data: %s" % b2h(envelope_data))
 
         if len(envelope_data) > 140:
             raise ValueError('Cannot encode command in a single SMS; Fragmentation not implemented')
