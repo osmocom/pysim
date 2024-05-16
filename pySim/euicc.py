@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 """
-Various definitions related to GSMA eSIM / eUICC
+Various definitions related to GSMA consumer + IoT eSIM / eUICC
 
-Related Specs: GSMA SGP.22, GSMA SGP.02, etc.
+Does *not* implement anything related to M2M eUICC
+
+Related Specs: GSMA SGP.21, SGP.22, SGP.31, SGP32
 """
 
 # Copyright (C) 2023 Harald Welte <laforge@osmocom.org>
