@@ -211,6 +211,7 @@ class SimCardCommands:
         # checking if the length of the remaining TLV string matches
         # what we get in the length field.
         # See also ETSI TS 102 221, chapter 11.1.1.3.0 Base coding.
+        # TODO: this likely just is normal BER-TLV ("All data objects are BER-TLV except if otherwise # defined.")
         exp_tlv_len = int(fcp[2:4], 16)
         if len(fcp[4:]) // 2 == exp_tlv_len:
             skip = 4
@@ -218,6 +219,7 @@ class SimCardCommands:
             exp_tlv_len = int(fcp[2:6], 16)
             if len(fcp[4:]) // 2 == exp_tlv_len:
                 skip = 6
+            raise ValueError('Cannot determine length of TLV-length')
 
         # Skip FCP tag and length
         tlv = fcp[skip:]
