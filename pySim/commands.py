@@ -606,6 +606,8 @@ class SimCardCommands:
             p2 = '81'
         elif context == 'gsm':
             p2 = '80'
+        else:
+            raise ValueError("Unsupported context '%s'" % context)
         (data, sw) = self.send_apdu_constr_checksw(
             self.cla_byte, '88', '00', p2, AuthCmd3G, cmd_data, AuthResp3G)
         if 'auts' in data:
