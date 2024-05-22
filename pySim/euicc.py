@@ -429,8 +429,11 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
             """Perform an ES10c EnableProfile function."""
             if opts.isdp_aid:
                 p_id = ProfileIdentifier(children=[IsdpAid(decoded=opts.isdp_aid)])
-            if opts.iccid:
+            elif opts.iccid:
                 p_id = ProfileIdentifier(children=[Iccid(decoded=opts.iccid)])
+            else:
+                # this is guaranteed by argparse; but we need this to make pylint happy
+                raise ValueError('Either ISD-P AID or ICCID must be given')
             ep_cmd_contents = [p_id, RefreshFlag(decoded=opts.refresh_required)]
             ep_cmd = EnableProfileReq(children=ep_cmd_contents)
             ep = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, ep_cmd, EnableProfileResp)
@@ -448,8 +451,11 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
             """Perform an ES10c DisableProfile function."""
             if opts.isdp_aid:
                 p_id = ProfileIdentifier(children=[IsdpAid(decoded=opts.isdp_aid)])
-            if opts.iccid:
+            elif opts.iccid:
                 p_id = ProfileIdentifier(children=[Iccid(decoded=opts.iccid)])
+            else:
+                # this is guaranteed by argparse; but we need this to make pylint happy
+                raise ValueError('Either ISD-P AID or ICCID must be given')
             dp_cmd_contents = [p_id, RefreshFlag(decoded=opts.refresh_required)]
             dp_cmd = DisableProfileReq(children=dp_cmd_contents)
             dp = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, dp_cmd, DisableProfileResp)
@@ -466,8 +472,11 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
             """Perform an ES10c DeleteProfile function."""
             if opts.isdp_aid:
                 p_id = IsdpAid(decoded=opts.isdp_aid)
-            if opts.iccid:
+            elif opts.iccid:
                 p_id = Iccid(decoded=opts.iccid)
+            else:
+                # this is guaranteed by argparse; but we need this to make pylint happy
+                raise ValueError('Either ISD-P AID or ICCID must be given')
             dp_cmd_contents = [p_id]
             dp_cmd = DeleteProfileReq(children=dp_cmd_contents)
             dp = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, dp_cmd, DeleteProfileResp)
