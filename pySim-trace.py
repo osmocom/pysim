@@ -194,6 +194,8 @@ if __name__ == '__main__':
         s = PysharkRsproLive(opts.interface)
     elif opts.source == 'gsmtap-pyshark-pcap':
         s = PysharkGsmtapPcap(opts.pcap_file)
+    else:
+        raise ValueError("unsupported source %s", opts.source)
 
     tracer = Tracer(source=s, suppress_status=opts.suppress_status, suppress_select=opts.suppress_select,
                     show_raw_apdu=opts.show_raw_apdu)
