@@ -368,6 +368,9 @@ class SmDppHttpServer:
                     pes = saip.ProfileElementSequence.from_der(f.read())
                     iccid_str = b2h(pes.get_pe_for_type('header').decoded['iccid'])
 
+        # make pylint happy:  E0601: Using variable 'iccid_str' before assignment (used-before-assignment)
+        assert iccid_str
+
         # FIXME: we actually want to perform the profile binding herr, and read the profile metadat from the profile
 
         # Put together profileMetadata + _bin
