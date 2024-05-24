@@ -57,7 +57,7 @@ class PcscSimLink(LinkBase):
                 raise ReaderError('No matching reader found for regex %s' % opts.pcsc_regex)
 
         self._con = self._reader.createConnection()
-        if not opts.pcsc_shared:
+        if not getattr(opts, "pcsc_shared", False):
             self._con = ExclusiveConnectCardConnection(self._con)
 
     def __del__(self):
