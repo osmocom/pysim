@@ -162,6 +162,7 @@ def main(argv):
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action='count', default=0)
     parser.add_argument("-n", "--slot-nr", help="SIM slot number", type=int, default=0)
     subp = parser.add_subparsers()
+    subp.required = True
 
     auth_p = subp.add_parser('auth', help='UMTS AKA Authentication')
     auth_p.add_argument("-c", "--count", help="Auth count", type=int, default=10)
