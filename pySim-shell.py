@@ -160,9 +160,9 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
 
             try:
                 self.lchan.select('MF/EF.ICCID', self)
-                self.iccid = dec_iccid(self.lchan.read_binary()[0])
+                rs.identity['ICCID'] = dec_iccid(self.lchan.read_binary()[0])
             except:
-                self.iccid = None
+                rs.identity['ICCID'] = None
 
             self.lchan.select('MF', self)
             rc = True
@@ -741,16 +741,14 @@ Currently only ADM1 is supported."""
             # use specified ADM-PIN
             pin_adm = sanitize_pin_adm(opts.ADM1)
         else:
+            iccid = self._cmd.rs.identity['ICCID']
             # try to find an ADM-PIN if none is specified
-            result = card_key_provider_get_field(
-                'ADM1', key='ICCID', value=self._cmd.iccid)
+            result = card_key_provider_get_field('ADM1', key='ICCID', value=iccid)
             pin_adm = sanitize_pin_adm(result)
             if pin_adm:
-                self._cmd.poutput(
-                    "found ADM-PIN '%s' for ICCID '%s'" % (result, self._cmd.iccid))
+                self._cmd.poutput("found ADM-PIN '%s' for ICCID '%s'" % (result, iccid))
             else:
-                raise ValueError(
-                    "cannot find ADM-PIN for ICCID '%s'" % (self._cmd.iccid))
+                raise ValueError("cannot find ADM-PIN for ICCID '%s'" % (iccid))
 
         if pin_adm:
             self._cmd.lchan.scc.verify_chv(self._cmd.card._adm_chv_num, h2b(pin_adm))
@@ -762,7 +760,7 @@ Currently only ADM1 is supported."""
         self._cmd.poutput("Card info:")
         self._cmd.poutput(" Name: %s" % self._cmd.card.name)
         self._cmd.poutput(" ATR: %s" % self._cmd.rs.identity['ATR'])
-        self._cmd.poutput(" ICCID: %s" % self._cmd.iccid)
+        self._cmd.poutput(" ICCID: %s" % self._cmd.rs.identity['ICCID'])
         self._cmd.poutput(" Class-Byte: %s" % self._cmd.lchan.scc.cla_byte)
         self._cmd.poutput(" Select-Ctrl: %s" % self._cmd.lchan.scc.sel_ctrl)
         self._cmd.poutput(" AIDs:")
@@ -799,15 +797,13 @@ class Iso7816Commands(CommandSet):
         if str(code).upper() not in auto:
             return sanitize_pin_adm(code)
 
-        result = card_key_provider_get_field(
-            str(code), key='ICCID', value=self._cmd.iccid)
+        iccid = self._cmd.rs.identity['ICCID']
+        result = card_key_provider_get_field(str(code), key='ICCID', value=iccid)
         result = sanitize_pin_adm(result)
         if result:
-            self._cmd.poutput("found %s '%s' for ICCID '%s'" %
-                              (code.upper(), result, self._cmd.iccid))
+            self._cmd.poutput("found %s '%s' for ICCID '%s'" % (code.upper(), result, iccid))
         else:
-            self._cmd.poutput("cannot find %s for ICCID '%s'" %
-                              (code.upper(), self._cmd.iccid))
+            self._cmd.poutput("cannot find %s for ICCID '%s'" % (code.upper(), iccid))
         return result
 
     verify_chv_parser = argparse.ArgumentParser()
