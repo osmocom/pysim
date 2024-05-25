@@ -10,10 +10,10 @@ the need of manually entering the related card-individual data on every
 operation with pySim-shell.
 """
 
-# (C) 2021 by Sysmocom s.f.m.c. GmbH
+# (C) 2021-2024 by Sysmocom s.f.m.c. GmbH
 # All Rights Reserved
 #
-# Author: Philipp Maier
+# Author: Philipp Maier, Harald Welte
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,18 +29,29 @@ operation with pySim-shell.
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import List, Dict, Optional
+from Cryptodome.Cipher import AES
+from pySim.utils import h2b, b2h
 
 import abc
 import csv
 
 card_key_providers = []  # type: List['CardKeyProvider']
 
+# well-known groups of columns relate to a given functionality.  This avoids having
+# to specify the same transport key N number of times, if the same key is used for multiple
+# fields of one group, like KIC+KID+KID of one SD.
+CRYPT_GROUPS = {
+    'UICC_SCP02': ['UICC_SCP02_KIC1', 'UICC_SCP02_KID1', 'UICC_SCP02_KIK1'],
+    'UICC_SCP03': ['UICC_SCP03_KIC1', 'UICC_SCP03_KID1', 'UICC_SCP03_KIK1'],
+    'SCP03_ISDR': ['SCP03_ENC_ISDR', 'SCP03_MAC_ISDR', 'SCP03_DEK_ISDR'],
+    'SCP03_ISDA': ['SCP03_ENC_ISDR', 'SCP03_MAC_ISDA', 'SCP03_DEK_ISDA'],
+    'SCP03_ECASD': ['SCP03_ENC_ECASD', 'SCP03_MAC_ECASD', 'SCP03_DEK_ECASD'],
+    }
 
 class CardKeyProvider(abc.ABC):
     """Base class, not containing any concrete implementation."""
 
-    VALID_FIELD_NAMES = ['ICCID', 'ADM1',
-                         'IMSI', 'PIN1', 'PIN2', 'PUK1', 'PUK2']
+    VALID_KEY_FIELD_NAMES = ['ICCID', 'EID', 'IMSI' ]
 
     # check input parameters, but do nothing concrete yet
     def _verify_get_data(self, fields: List[str] = [], key: str = 'ICCID', value: str = "") -> Dict[str, str]:
@@ -53,14 +64,10 @@ class CardKeyProvider(abc.ABC):
         Returns:
                 dictionary of {field, value} strings for each requested field from 'fields'
         """
-        for f in fields:
-            if f not in self.VALID_FIELD_NAMES:
-                raise ValueError("Requested field name '%s' is not a valid field name, valid field names are: %s" %
-                                 (f, str(self.VALID_FIELD_NAMES)))
 
-        if key not in self.VALID_FIELD_NAMES:
+        if key not in self.VALID_KEY_FIELD_NAMES:
             raise ValueError("Key field name '%s' is not a valid field name, valid field names are: %s" %
-                             (key, str(self.VALID_FIELD_NAMES)))
+                             (key, str(self.VALID_KEY_FIELD_NAMES)))
 
         return {}
 
@@ -84,19 +91,47 @@ class CardKeyProvider(abc.ABC):
 
 
 class CardKeyProviderCsv(CardKeyProvider):
-    """Card key provider implementation that allows to query against a specified CSV file"""
+    """Card key provider implementation that allows to query against a specified CSV file.
+    Supports column-based encryption as it is generally a bad idea to store cryptographic key material in
+    plaintext.  Instead, the key material should be encrypted by a "key-encryption key", occasionally also
+    known as "transport key" (see GSMA FS.28)."""
+    IV = b'\x23' * 16
     csv_file = None
     filename = None
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str, transport_keys: dict):
         """
         Args:
                 filename : file name (path) of CSV file containing card-individual key/data
+                transport_keys : a dict indexed by field name, whose values are hex-encoded AES keys for the
+                                 respective field (column) of the CSV.  This is done so that different fields
+                                 (columns) can use different transport keys, which is strongly recommended by
+                                 GSMA FS.28
         """
         self.csv_file = open(filename, 'r')
         if not self.csv_file:
             raise RuntimeError("Could not open CSV file '%s'" % filename)
         self.filename = filename
+        self.transport_keys = self.process_transport_keys(transport_keys)
+
+    @staticmethod
+    def process_transport_keys(transport_keys: dict):
+        """Apply a single transport key to multiple fields/columns, if the name is a group."""
+        new_dict = {}
+        for name, key in transport_keys.items():
+            if name in CRYPT_GROUPS:
+                for field in CRYPT_GROUPS[name]:
+                    new_dict[field] = key
+            else:
+                new_dict[name] = key
+        return new_dict
+
+    def _decrypt_field(self, field_name: str, encrypted_val: str) -> str:
+        """decrypt a single field, if we have a transport key for the field of that name."""
+        if not field_name in self.transport_keys:
+            return encrypted_val
+        cipher = AES.new(h2b(self.transport_keys[field_name]), AES.MODE_CBC, self.IV)
+        return b2h(cipher.decrypt(h2b(encrypted_val)))
 
     def get(self, fields: List[str], key: str, value: str) -> Dict[str, str]:
         super()._verify_get_data(fields, key, value)
@@ -113,7 +148,7 @@ class CardKeyProviderCsv(CardKeyProvider):
             if row[key] == value:
                 for f in fields:
                     if f in row:
-                        rc.update({f: row[f]})
+                        rc.update({f: self._decrypt_field(f, row[f])})
                     else:
                         raise RuntimeError("CSV-File '%s' lacks column '%s'" %
                                            (self.filename, f))

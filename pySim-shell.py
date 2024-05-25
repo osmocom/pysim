@@ -967,6 +967,8 @@ global_group.add_argument('--script', metavar='PATH', default=None,
                           help='script with pySim-shell commands to be executed automatically at start-up')
 global_group.add_argument('--csv', metavar='FILE',
                           default=None, help='Read card data from CSV file')
+global_group.add_argument('--csv-column-key', metavar='FIELD:AES_KEY_HEX', default=[], action='append',
+                          help='per-CSV-column AES transport key')
 global_group.add_argument("--card_handler", dest="card_handler_config", metavar="FILE",
                           help="Use automatic card handling machine")
 
@@ -993,13 +995,18 @@ if __name__ == '__main__':
             print("Invalid script file!")
             sys.exit(2)
 
+    csv_column_keys = {}
+    for par in opts.csv_column_key:
+        name, key = par.split(':')
+        csv_column_keys[name] = key
+
     # Register csv-file as card data provider, either from specified CSV
     # or from CSV file in home directory
     csv_default = str(Path.home()) + "/.osmocom/pysim/card_data.csv"
     if opts.csv:
-        card_key_provider_register(CardKeyProviderCsv(opts.csv))
+        card_key_provider_register(CardKeyProviderCsv(opts.csv, csv_column_keys))
     if os.path.isfile(csv_default):
-        card_key_provider_register(CardKeyProviderCsv(csv_default))
+        card_key_provider_register(CardKeyProviderCsv(csv_default, csv_column_keys))
 
     # Init card reader driver
     sl = init_reader(opts, proactive_handler = Proact())

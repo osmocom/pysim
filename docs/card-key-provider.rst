@@ -41,6 +41,38 @@ of pySim-shell.  If you do not specify a CSV file, pySim will attempt to
 open a CSV file from the default location at
 `~/.osmocom/pysim/card_data.csv`, and use that, if it exists.
 
+Column-Level CSV encryption
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+pySim supports column-level CSV encryption.  This feature will make sure
+that your key material is not stored in plaintext in the CSV file.
+
+The encryption mechanism uses AES in CBC mode.  You can use any key
+length permitted by AES (128/192/256 bit).
+
+Following GSMA FS.28, the encryption works on column level.  This means
+different columns can be decrypted using different key material.  This
+means that leakage of a column encryption key for one column or set of
+columns (like a specific security domain) does not compromise various
+other keys that might be stored in other columns.
+
+You can specify column-level decryption keys using the
+`--csv-column-key` command line argument.  The syntax is
+`FIELD:AES_KEY_HEX`, for example:
+
+`pySim-shell.py --csv-column-key SCP03_ENC_ISDR:000102030405060708090a0b0c0d0e0f`
+
+In order to avoid having to repeat the column key for each and every
+column of a group of keys within a keyset, there are pre-defined column
+group aliases, which will make sure that the specified key will be used
+by all columns of the set:
+
+* `UICC_SCP02` is a group alias for `UICC_SCP02_KIC1`, `UICC_SCP02_KID1`, `UICC_SCP02_KIK1`
+* `UICC_SCP03` is a group alias for `UICC_SCP03_KIC1`, `UICC_SCP03_KID1`, `UICC_SCP03_KIK1`
+* `SCP03_ECASD` is a group alias for `SCP03_ENC_ECASD`, `SCP03_MAC_ECASD`, `SCP03_DEK_ECASD`
+* `SCP03_ISDA` is a group alias for `SCP03_ENC_ISDA`, `SCP03_MAC_ISDA`, `SCP03_DEK_ISDA`
+* `SCP03_ISDR` is a group alias for `SCP03_ENC_ISDR`, `SCP03_MAC_ISDR`, `SCP03_DEK_ISDR`
+
 
 Field naming
 ------------
