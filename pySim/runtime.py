@@ -49,6 +49,9 @@ class RuntimeState:
         self.lchan = {}
         # the basic logical channel always exists
         self.lchan[0] = RuntimeLchan(0, self)
+        # this is a dict of card identities which different parts of the code might populate,
+        # typically with something like ICCID, EID, ATR, ...
+        self.identity = {}
 
         # make sure the class and selection control bytes, which are specified
         # by the card profile are used
@@ -138,6 +141,8 @@ class RuntimeState:
         # select MF to reset internal state and to verify card really works
         self.lchan[0].select('MF', cmd_app)
         self.lchan[0].selected_adf = None
+        # store ATR as part of our card identies dict
+        self.identity['ATR'] = atr
         return atr
 
     def add_lchan(self, lchan_nr: int) -> 'RuntimeLchan':

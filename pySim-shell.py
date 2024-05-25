@@ -761,7 +761,7 @@ Currently only ADM1 is supported."""
         """Display information about the currently inserted card"""
         self._cmd.poutput("Card info:")
         self._cmd.poutput(" Name: %s" % self._cmd.card.name)
-        self._cmd.poutput(" ATR: %s" % b2h(self._cmd.lchan.scc.get_atr()))
+        self._cmd.poutput(" ATR: %s" % self._cmd.rs.identity['ATR'])
         self._cmd.poutput(" ICCID: %s" % self._cmd.iccid)
         self._cmd.poutput(" Class-Byte: %s" % self._cmd.lchan.scc.cla_byte)
         self._cmd.poutput(" Select-Ctrl: %s" % self._cmd.lchan.scc.sel_ctrl)
