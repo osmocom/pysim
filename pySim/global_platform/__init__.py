@@ -23,6 +23,7 @@ from construct import Optional as COptional
 from construct import Struct, GreedyRange, FlagsEnum, Int16ub, Int24ub, Padding, Bit, Const
 from Cryptodome.Random import get_random_bytes
 from Cryptodome.Cipher import DES, DES3, AES
+from pySim.card_key_provider import card_key_provider_get_field
 from pySim.global_platform.scp import SCP02, SCP03
 from pySim.construct import *
 from pySim.utils import *
@@ -719,23 +720,33 @@ class ADF_SD(CardADF):
             return self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
 
         est_scp02_parser = argparse.ArgumentParser()
-        est_scp02_parser.add_argument('--key-ver', type=auto_uint8, required=True,
-                                      help='Key Version Number (KVN)')
-        est_scp02_parser.add_argument('--key-enc', type=is_hexstr, required=True,
-                                      help='Secure Channel Encryption Key')
-        est_scp02_parser.add_argument('--key-mac', type=is_hexstr, required=True,
-                                      help='Secure Channel MAC Key')
-        est_scp02_parser.add_argument('--key-dek', type=is_hexstr, required=True,
-                                      help='Data Encryption Key')
+        est_scp02_parser.add_argument('--key-ver', type=auto_uint8, required=True, help='Key Version Number (KVN)')
         est_scp02_parser.add_argument('--host-challenge', type=is_hexstr,
                                       help='Hard-code the host challenge; default: random')
         est_scp02_parser.add_argument('--security-level', type=auto_uint8, default=0x01,
                                       help='Security Level. Default: 0x01 (C-MAC only)')
+        est_scp02_p_k = est_scp02_parser.add_argument_group('Manual key specification')
+        est_scp02_p_k.add_argument('--key-enc', type=is_hexstr, help='Secure Channel Encryption Key')
+        est_scp02_p_k.add_argument('--key-mac', type=is_hexstr, help='Secure Channel MAC Key')
+        est_scp02_p_k.add_argument('--key-dek', type=is_hexstr, help='Data Encryption Key')
+        est_scp02_p_csv = est_scp02_parser.add_argument_group('Obtain keys from CardKeyProvider (e.g. CSV')
+        est_scp02_p_csv.add_argument('--key-provider-suffix', help='Suffix for key names in CardKeyProvider')
 
         @cmd2.with_argparser(est_scp02_parser)
         def do_establish_scp02(self, opts):
             """Establish a secure channel using the GlobalPlatform SCP02 protocol.  It can be released
             again by using `release_scp`."""
+            if opts.key_provider_suffix:
+                suffix = opts.key_provider_suffix
+                id_field_name = self._cmd.lchan.selected_adf.scp_key_identity
+                identity = self._cmd.rs.identity.get(id_field_name)
+                opts.key_enc = card_key_provider_get_field('SCP02_ENC_' + suffix, key=id_field_name, value=identity)
+                opts.key_mac = card_key_provider_get_field('SCP02_MAC_' + suffix, key=id_field_name, value=identity)
+                opts.key_dek = card_key_provider_get_field('SCP02_DEK_' + suffix, key=id_field_name, value=identity)
+            else:
+                if not opts.key_enc or not opts.key_mac:
+                    self._cmd.poutput("Cannot establish SCP02 without at least ENC and MAC keys given!")
+                    return
             if self._cmd.lchan.scc.scp:
                 self._cmd.poutput("Cannot establish SCP02 as this lchan already has a SCP instance!")
                 return
@@ -751,6 +762,17 @@ class ADF_SD(CardADF):
         def do_establish_scp03(self, opts):
             """Establish a secure channel using the GlobalPlatform SCP03 protocol.  It can be released
             again by using `release_scp`."""
+            if opts.key_provider_suffix:
+                suffix = opts.key_provider_suffix
+                id_field_name = self._cmd.lchan.selected_adf.scp_key_identity
+                identity = self._cmd.rs.identity.get(id_field_name)
+                opts.key_enc = card_key_provider_get_field('SCP03_ENC_' + suffix, key=id_field_name, value=identity)
+                opts.key_mac = card_key_provider_get_field('SCP03_MAC_' + suffix, key=id_field_name, value=identity)
+                opts.key_dek = card_key_provider_get_field('SCP03_DEK_' + suffix, key=id_field_name, value=identity)
+            else:
+                if not opts.key_enc or not opts.key_mac:
+                    self._cmd.poutput("Cannot establish SCP03 without at least ENC and MAC keys given!")
+                    return
             if self._cmd.lchan.scc.scp:
                 self._cmd.poutput("Cannot establish SCP03 as this lchan already has a SCP instance!")
                 return
@@ -787,6 +809,9 @@ class CardApplicationSD(CardApplication):
     __intermediate = True
     def __init__(self, aid: str, name: str, desc: str):
         super().__init__(name, adf=ADF_SD(aid, name, desc), sw=sw_table)
+        # the identity (e.g. 'ICCID', 'EID') that should be used as a look-up key to attempt to retrieve
+        # the key material for the security domain from the CardKeyProvider
+        self.adf.scp_key_identity = None
 
 # Card Application of Issuer Security Domain
 class CardApplicationISD(CardApplicationSD):

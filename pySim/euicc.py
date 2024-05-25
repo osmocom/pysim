@@ -315,6 +315,8 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
                          desc='ISD-R (Issuer Security Domain Root) Application')
         self.adf.decode_select_response = self.decode_select_response
         self.adf.shell_commands += [self.AddlShellCommands()]
+        # we attempt to retrieve ISD-R key material from CardKeyProvider identified by EID
+        self.adf.scp_key_identity = 'EID'
 
     @staticmethod
     def store_data(scc: SimCardCommands, tx_do: Hexstr, exp_sw: SwMatchstr ="9000") -> Tuple[Hexstr, SwHexstr]:
@@ -539,6 +541,8 @@ class CardApplicationECASD(pySim.global_platform.CardApplicationSD):
                          desc='ECASD (eUICC Controlling Authority Security Domain) Application')
         self.adf.decode_select_response = self.decode_select_response
         self.adf.shell_commands += [self.AddlShellCommands()]
+        # we attempt to retrieve ECASD key material from CardKeyProvider identified by EID
+        self.adf.scp_key_identity = 'EID'
 
     @with_default_category('Application-Specific Commands')
     class AddlShellCommands(CommandSet):
