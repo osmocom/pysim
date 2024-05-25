@@ -760,6 +760,9 @@ Currently only ADM1 is supported."""
         self._cmd.poutput("Card info:")
         self._cmd.poutput(" Name: %s" % self._cmd.card.name)
         self._cmd.poutput(" ATR: %s" % self._cmd.rs.identity['ATR'])
+        eid = self._cmd.rs.identity.get('EID', None)
+        if eid:
+            self._cmd.poutput(" EID: %s" % eid)
         self._cmd.poutput(" ICCID: %s" % self._cmd.rs.identity['ICCID'])
         self._cmd.poutput(" Class-Byte: %s" % self._cmd.lchan.scc.cla_byte)
         self._cmd.poutput(" Select-Ctrl: %s" % self._cmd.lchan.scc.sel_ctrl)

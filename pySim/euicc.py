@@ -345,6 +345,13 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
         else:
             return None
 
+    @staticmethod
+    def get_eid(scc: SimCardCommands) -> str:
+        ged_cmd = GetEuiccData(children=[TagList(decoded=[0x5A])])
+        ged = CardApplicationISDR.store_data_tlv(scc, ged_cmd, GetEuiccData)
+        d = ged.to_dict()
+        return flatten_dict_lists(d['get_euicc_data'])['eid_value']
+
     def decode_select_response(self, data_hex: Hexstr) -> object:
         t = FciTemplate()
         t.from_tlv(h2b(data_hex))

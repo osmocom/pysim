@@ -25,6 +25,7 @@ from pySim.profile import CardProfile
 from pySim.cdma_ruim import CardProfileRUIM
 from pySim.ts_102_221 import CardProfileUICC
 from pySim.utils import all_subclasses
+from pySim.exceptions import SwMatchError
 
 # we need to import this module so that the SysmocomSJA2 sub-class of
 # CardModel is created, which will add the ATR-based matching and
@@ -105,5 +106,16 @@ def init_card(sl: LinkBase) -> Tuple[RuntimeState, SimCardBase]:
 
     # inform the transport that we can do context-specific SW interpretation
     sl.set_sw_interpreter(rs)
+
+    # try to obtain the EID, if any
+    isd_r = rs.mf.applications.get(pySim.euicc.AID_ISD_R.lower(), None)
+    if isd_r:
+        rs.lchan[0].select_file(isd_r)
+        try:
+            rs.identity['EID'] = pySim.euicc.CardApplicationISDR.get_eid(scc)
+        except SwMatchError:
+            # has ISD-R but not a SGP.22/SGP.32 eUICC - maybe SGP.02?
+            pass
+        card.reset()
 
     return rs, card
