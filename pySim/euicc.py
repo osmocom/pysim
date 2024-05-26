@@ -488,7 +488,6 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
 
         def do_get_eid(self, _opts):
             """Perform an ES10c GetEID function."""
-            (_data, _sw) = CardApplicationISDR.store_data(self._cmd.lchan.scc, 'BF3E035C015A')
             ged_cmd = GetEuiccData(children=[TagList(decoded=[0x5A])])
             ged = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, ged_cmd, GetEuiccData)
             d = ged.to_dict()
