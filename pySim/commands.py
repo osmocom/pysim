@@ -618,7 +618,7 @@ class SimCardCommands:
 
     def status(self) -> ResTuple:
         """Execute a STATUS command as per TS 102 221 Section 11.1.2."""
-        return self.send_apdu_checksw(self.cla4lchan('80') + 'F20000ff')
+        return self.send_apdu_checksw(self.cla4lchan('80') + 'F2000000')
 
     def deactivate_file(self) -> ResTuple:
         """Execute DECATIVATE FILE command as per TS 102 221 Section 11.1.14."""
