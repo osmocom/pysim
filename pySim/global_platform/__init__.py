@@ -631,7 +631,7 @@ class ADF_SD(CardADF):
             _data, _sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(apdu))
 
         inst_perso_parser = argparse.ArgumentParser()
-        inst_perso_parser.add_argument('application-aid', type=is_hexstr, help='Application AID')
+        inst_perso_parser.add_argument('application_aid', type=is_hexstr, help='Application AID')
 
         @cmd2.with_argparser(inst_perso_parser)
         def do_install_for_personalization(self, opts):
