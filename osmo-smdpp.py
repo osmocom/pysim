@@ -200,6 +200,8 @@ class SmDppHttpServer:
         # Verify that the received address matches its own SM-DP+ address, where the comparison SHALL be
         # case-insensitive. Otherwise, the SM-DP+ SHALL return a status code "SM-DP+ Address - Refused".
         if content['smdpAddress'] != self.server_hostname:
+           print(content['smdpAddress'])
+           print(self.server_hostname)
            raise ApiError('8.8.1', '3.8', 'Invalid SM-DP+ Address')
 
         euiccChallenge = b64decode(content['euiccChallenge'])
@@ -282,6 +284,10 @@ class SmDppHttpServer:
         transactionId = content['transactionId']
 
         authenticateServerResp_bin = b64decode(content['authenticateServerResponse'])
+
+        print("===============================authenticateServerResp_bin")
+        print(b2h(authenticateServerResp_bin))
+        
         authenticateServerResp = rsp.asn1.decode('AuthenticateServerResponse', authenticateServerResp_bin)
         print("Rx %s: %s" % authenticateServerResp)
         if authenticateServerResp[0] == 'authenticateResponseError':
@@ -326,6 +332,7 @@ class SmDppHttpServer:
         try:
             cs.verify_cert_chain(euicc_cert)
         except VerifyError:
+            print("==============================> Cert verification failed #1!")
             raise ApiError('8.1.3', '6.1', 'Verification failed')
         #   raise ApiError('8.1.3', '6.3', 'Expired')
 
@@ -333,7 +340,12 @@ class SmDppHttpServer:
         # Verify euiccSignature1 over euiccSigned1 using pubkey from euiccCertificate.
         # Otherwise, the SM-DP+ SHALL return a status code "eUICC - Verification failed"
         if not self._ecdsa_verify(euicc_cert, euiccSignature1_bin, euiccSigned1_bin):
-            raise ApiError('8.1', '6.1', 'Verification failed')
+            print("==============================> Cert verification failed #2!")
+            print("=====================>euiccSignature1_bin")
+            print(b2h(euiccSignature1_bin))
+            print("=====================>euiccSigned1_bin")
+            print(b2h(euiccSigned1_bin))
+            #raise ApiError('8.1', '6.1', 'Verification failed')
 
         # TODO: verify EID of eUICC cert is  within permitted range of EUM cert
 
@@ -460,9 +472,11 @@ class SmDppHttpServer:
             # cluttering the log with stuff happening after the failure
             #upp = UnprotectedProfilePackage.from_der(b'', metadata=ss.profileMetadata)
         if False:
+            print("===========================> use random keys!")
             # Use random keys
             bpp = BoundProfilePackage.from_upp(upp)
         else:
+            print("===========================> use session keys!")
             # Use sesssion keys
             ppp = ProtectedProfilePackage.from_upp(upp, BspInstance(b'\x00'*16, b'\x11'*16, b'\x22'*16))
             bpp = BoundProfilePackage.from_ppp(ppp)
@@ -563,7 +577,7 @@ def main(argv):
 
     hs = SmDppHttpServer(HOSTNAME, os.path.join(DATA_DIR, 'certs', 'CertificateIssuer'), use_brainpool=True)
     #hs.app.run(endpoint_description="ssl:port=8000:dhParameters=dh_param_2048.pem")
-    hs.app.run("localhost", 8000)
+    hs.app.run("localhost", 80)
 
 if __name__ == "__main__":
     main(sys.argv)
