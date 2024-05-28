@@ -26,6 +26,8 @@ from pySim.ts_102_221 import FileDescriptor
 from pySim.construct import build_construct
 from pySim.esim import compile_asn1_subdir
 from pySim.esim.saip import templates
+from pySim.tlv import BER_TLV_IE
+from pySim.global_platform.uicc import UiccSdInstallParams
 
 asn1 = compile_asn1_subdir('saip')
 
@@ -134,6 +136,9 @@ class ProfileElement:
     """Class representing a Profile Element (PE) within a SAIP Profile."""
     FILE_BEARING = ['mf', 'cd', 'telecom', 'usim', 'opt-usim', 'isim', 'opt-isim', 'phonebook', 'gsm-access',
                     'csim', 'opt-csim', 'eap', 'df-5gs', 'df-saip', 'df-snpn', 'df-5gprose', 'iot', 'opt-iot']
+    def __init__(self, decoded = None):
+        self.decoded = decoded
+
     def _fixup_sqnInit_dec(self) -> None:
         """asn1tools has a bug when working with SEQUENCE OF that have DEFAULT values. Let's work around
         this."""
@@ -160,12 +165,6 @@ class ProfileElement:
                 return
         # none of the fields were initialized with a non-default (non-zero) value, so we can skip it
         del self.decoded['sqnInit']
-
-    def parse_der(self, der: bytes) -> None:
-        """Parse a sequence of PE and store the result in instance attributes."""
-        self.type, self.decoded = asn1.decode('ProfileElement', der)
-        # work around asn1tools bug regarding DEFAULT for a SEQUENCE OF
-        self._fixup_sqnInit_dec()
 
     @property
     def header_name(self) -> str:
@@ -195,18 +194,59 @@ class ProfileElement:
     @classmethod
     def from_der(cls, der: bytes) -> 'ProfileElement':
         """Construct an instance from given raw, DER encoded bytes."""
-        inst = cls()
-        inst.parse_der(der)
+        pe_type, decoded = asn1.decode('ProfileElement', der)
+        if pe_type == 'securityDomain':
+            inst = ProfileElementSD(decoded)
+        else:
+            inst = ProfileElement(decoded)
+            inst.type = pe_type
+        # work around asn1tools bug regarding DEFAULT for a SEQUENCE OF
+        inst._fixup_sqnInit_dec()
+        # run any post-decoder a derived class may have
+        if hasattr(inst, '_post_decode'):
+            inst._post_decode()
         return inst
 
     def to_der(self) -> bytes:
         """Build an encoded DER representation of the instance."""
+        # run any pre-encoder a derived class may have
+        if hasattr(self, '_pre_encode'):
+            self._pre_encode()
         # work around asn1tools bug regarding DEFAULT for a SEQUENCE OF
         self._fixup_sqnInit_enc()
         return asn1.encode('ProfileElement', (self.type, self.decoded))
 
     def __str__(self) -> str:
         return self.type
+
+class ProfileElementSD(ProfileElement):
+    """Class representing a securityDomain ProfileElement."""
+    type = 'securityDomain'
+
+    class C9(BER_TLV_IE, tag=0xC9, nested=UiccSdInstallParams):
+        pass
+
+    def _post_decode(self):
+        self.usip = self.C9()
+        self.usip.from_bytes(self.decoded['instance']['applicationSpecificParametersC9'])
+
+    def _pre_encode(self):
+        self.decoded['instance']['applicationSpecificParametersC9'] = self.usip.to_bytes()
+
+    def has_scp(self, scp: int) -> bool:
+        """Determine if SD Installation parameters already specify given SCP."""
+        return self.usip.nested_collection.has_scp(scp)
+
+    def add_scp(self, scp: int, i: int):
+        """Add given SCP (and i parameter) to list of SCP of the Security Domain Install Params.
+        Example: add_scp(0x03, 0x70) for SCP03, or add_scp(0x02, 0x55) for SCP02."""
+        self.usip.nested_collection.add_scp(scp, i)
+        self._pre_encode()
+
+    def remove_scp(self, scp: int):
+        """Remove given SCP from list of SCP of the Security Domain Install Params."""
+        self.usip.nested_collection.remove_scp(scp)
+        self._pre_encode()
 
 
 def bertlv_first_segment(binary: bytes) -> Tuple[bytes, bytes]:
