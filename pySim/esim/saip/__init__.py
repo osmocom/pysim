@@ -18,10 +18,11 @@
 import abc
 import io
 from typing import Tuple, List, Optional, Dict, Union
+from collections import OrderedDict
 
 import asn1tools
 
-from pySim.utils import bertlv_parse_tag, bertlv_parse_len, b2h
+from pySim.utils import bertlv_parse_tag, bertlv_parse_len, b2h, h2b
 from pySim.ts_102_221 import FileDescriptor
 from pySim.construct import build_construct
 from pySim.esim import compile_asn1_subdir
@@ -297,6 +298,35 @@ class ProfileElementSD(ProfileElement):
     class C9(BER_TLV_IE, tag=0xC9, nested=UiccSdInstallParams):
         pass
 
+    def __init__(self, decoded: Optional[dict] = None):
+        if decoded:
+            self.decoded = decoded
+            return
+        # provide some reasonable defaults for a MNO-SD
+        self.decoded = OrderedDict()
+        self.decoded['sd-Header'] = { 'mandated': None, 'identification': None }
+        self.decoded['instance'] = {
+                'applicationLoadPackageAID': h2b('A0000001515350'),
+                'classAID':                  h2b('A000000251535041'),
+                'instanceAID':               h2b('A000000151000000'),
+                # Optional: extraditeSecurityDomainAID
+                'applicationPrivileges': h2b('82FC80'),
+                # Optioal: lifeCycleState
+                'applicationSpecificParametersC9': h2b('8201f09301f08701f0'), # we assume user uses add_scp()
+                # Optional: systemSpecificParameters
+                'applicationParameters': {
+                        # TAR: B20100, MSL: 12
+                        'uiccToolkitApplicationSpecificParametersField': h2b('0100000100000002011203B2010000'),
+                    },
+                # Optional: processData
+                # Optional: controlReferenceTemplate
+            }
+        self.decoded['keyList'] = [] # we assume user uses add_key() method for all keys
+        # Optional: sdPersoData
+        # Optional: openPersoData
+        # Optional: catTpParameters
+        self._post_decode()
+
     def _post_decode(self):
         self.usip = self.C9()
         self.usip.from_bytes(self.decoded['instance']['applicationSpecificParametersC9'])
@@ -343,6 +373,17 @@ class ProfileElementSD(ProfileElement):
         self.keys.remove(key)
         self._pre_encode()
 
+class ProfileElementSSD(ProfileElementSD):
+    """Class representing a securityDomain ProfileElement for a SSD."""
+    def __init__(self):
+        super().__init__()
+        # defaults [overriding ProfileElementSD) taken from SAIP v2.3.1 Section 11.2.12
+        self.decoded['instance']['instanceAID'] = h2b('A00000055910100102736456616C7565')
+        self.decoded['instance']['applicationPrivileges'] = h2b('808000')
+        self.decoded['instance']['applicationParameters'] = {
+                # TAR: 6C7565, MSL: 12
+                'uiccToolkitApplicationSpecificParametersField': h2b('01000001000000020112036C756500'),
+            }
 
 def bertlv_first_segment(binary: bytes) -> Tuple[bytes, bytes]:
     """obtain the first segment of a binary concatenation of BER-TLV objects.
@@ -435,6 +476,35 @@ class ProfileElementSequence:
         for pe in self.pe_list:
             out += pe.to_der()
         return out
+
+    def renumber_identification(self):
+        """Re-generate the 'identification' numbering of all PE headers."""
+        i = 1
+        for pe in self.pe_list:
+            hdr = pe.header
+            if not hdr:
+                continue
+            pe.header['identification'] = i
+            i += 1
+
+    def get_index_by_type(self, petype: str) -> List[int]:
+        """Return a list with the indicies of all instances of PEs of petype."""
+        ret = []
+        i = 0
+        for pe in self.pe_list:
+            if pe.type == petype:
+                ret.append(i)
+            i += 1
+        return ret
+
+    def add_ssd(self, ssd: ProfileElementSSD):
+        """Add a SSD (Supplementary Security Domain) After MNO-SD/ISD-P."""
+        # find MNO-SD index
+        idx = self.get_index_by_type('securityDomain')[0]
+        # insert _after_ MNO-SD
+        self.pe_list.insert(idx+1, ssd)
+        self._process_pelist()
+        self.renumber_identification()
 
     def __repr__(self) -> str:
         return "PESequence(%s)" % ', '.join([str(x) for x in self.pe_list])
