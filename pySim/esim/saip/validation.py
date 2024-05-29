@@ -95,6 +95,12 @@ class CheckBasicStructure(ProfileConstraintChecker):
         if 'profile-a-p256' in m_svcs and not ('usim' in m_svcs or 'isim' in m_svcs):
             raise ProfileError('profile-a-p256 mandatory, but no usim or isim')
 
+    def check_identification_unique(self, pes: ProfileElementSequence):
+        """Ensure that each PE has a unique identification value."""
+        id_list = [pe.header['identification'] for pe in pes.pe_list if pe.header]
+        if len(id_list) != len(set(id_list)):
+            raise ProfileError('PE identification values are not unique')
+
 FileChoiceList = List[Tuple]
 
 class FileError(ProfileError):
