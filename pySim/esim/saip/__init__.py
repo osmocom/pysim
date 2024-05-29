@@ -137,6 +137,20 @@ class ProfileElement:
     """Class representing a Profile Element (PE) within a SAIP Profile."""
     FILE_BEARING = ['mf', 'cd', 'telecom', 'usim', 'opt-usim', 'isim', 'opt-isim', 'phonebook', 'gsm-access',
                     'csim', 'opt-csim', 'eap', 'df-5gs', 'df-saip', 'df-snpn', 'df-5gprose', 'iot', 'opt-iot']
+    # in their infinite wisdom the spec authors used inconsistent/irregular naming of PE type vs. hedaer field
+    # names, so we have to manually translate the exceptions here...
+    header_name_translation_dict = {
+        'header':                   None,
+        'genericFileManagement':    'gfm-header',
+        'akaParameter':             'aka-header',
+        'cdmaParameter':            'cdma-header',
+        # note how they couldn't even consistently captialize the 'header' suffix :(
+        'application':              'app-Header',
+        'pukCodes':                 'puk-Header',
+        'pinCodes':                 'pin-Header',
+        'securityDomain':           'sd-Header',
+        }
+
     def __init__(self, decoded = None):
         self.decoded = decoded
 
@@ -173,6 +187,8 @@ class ProfileElement:
         # unneccessarry compliaction by inconsistent naming :(
         if self.type.startswith('opt-'):
             return self.type.replace('-','') + '-header'
+        if self.type in self.header_name_translation_dict:
+            return self.header_name_translation_dict[self.type]
         return self.type + '-header'
 
     @property
