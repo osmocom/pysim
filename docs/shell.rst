@@ -20,6 +20,9 @@ The pySim-shell interactive shell provides commands for
 
 * if your card supports it, and you have the related privileges: resizing, creating, enabling and disabling of
   files
+* performing GlobalPlatform operations, including establishment of Secure Channel Protocol (SCP), Installing
+  applications, installing key material, etc.
+* listing/enabling/disabling/deleting eSIM profiles on Consumer eUICC
 
 By means of using the python ``cmd2`` module, various useful features improve usability:
 
