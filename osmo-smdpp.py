@@ -325,14 +325,14 @@ class SmDppHttpServer:
         try:
             cs.verify_cert_chain(euicc_cert)
         except VerifyError:
-            raise ApiError('8.1.3', '6.1', 'Verification failed')
+            raise ApiError('8.1.3', '6.1', 'Verification failed (certificate chain)')
         #   raise ApiError('8.1.3', '6.3', 'Expired')
 
 
         # Verify euiccSignature1 over euiccSigned1 using pubkey from euiccCertificate.
         # Otherwise, the SM-DP+ SHALL return a status code "eUICC - Verification failed"
         if not self._ecdsa_verify(euicc_cert, euiccSignature1_bin, euiccSigned1_bin):
-            raise ApiError('8.1', '6.1', 'Verification failed')
+            raise ApiError('8.1', '6.1', 'Verification failed (euiccSignature1 over euiccSigned1)')
 
         # TODO: verify EID of eUICC cert is  within permitted range of EUM cert
 
@@ -343,7 +343,7 @@ class SmDppHttpServer:
         # serverChallenge returned by the eUICC. Otherwise, the SM-DP+ SHALL return a status code "eUICC -
         # Verification failed".
         if euiccSigned1['serverChallenge'] != ss.serverChallenge:
-            raise ApiError('8.1', '6.1', 'Verification failed')
+            raise ApiError('8.1', '6.1', 'Verification failed (serverChallenge)')
 
         # If ctxParams1 contains a ctxParamsForCommonAuthentication data object, the SM-DP+ Shall [...]
         # TODO: We really do a very simplistic job here, this needs to be properly implemented later,
