@@ -292,8 +292,7 @@ class SmDppHttpServer:
 
         r_ok = authenticateServerResp[1]
         euiccSigned1 = r_ok['euiccSigned1']
-        # TODO: use original data, don't re-encode?
-        euiccSigned1_bin = rsp.asn1.encode('EuiccSigned1', euiccSigned1)
+        euiccSigned1_bin = rsp.extract_euiccSigned1(authenticateServerResp_bin)
         euiccSignature1_bin = r_ok['euiccSignature1']
         euiccCertificate_dec = r_ok['euiccCertificate']
         # TODO: use original data, don't re-encode?
@@ -422,8 +421,7 @@ class SmDppHttpServer:
 
         # Verify the euiccSignature2 computed over euiccSigned2 and smdpSignature2 using the PK.EUICC.SIG attached to the ongoing RSP session
         euiccSigned2 = r_ok['euiccSigned2']
-        # TODO: use original data, don't re-encode?
-        euiccSigned2_bin = rsp.asn1.encode('EUICCSigned2', euiccSigned2)
+        euiccSigned2_bin = rsp.extract_euiccSigned2(prepDownloadResp_bin)
         if not self._ecdsa_verify(ss.euicc_cert, r_ok['euiccSignature2'], euiccSigned2_bin + ss.smdpSignature2_do):
             raise ApiError('8.1', '6.1', 'eUICC signature is invalid')
 
