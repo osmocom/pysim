@@ -69,6 +69,15 @@ Usage Examples
    suci-tutorial
 
 
+Advanced Topics
+---------------
+.. toctree::
+   :maxdepth: 1
+   :caption: Advanced pySIM-shell topics
+
+   card-key-provider
+
+
 cmd2 basics
 -----------
 
