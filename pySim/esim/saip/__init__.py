@@ -198,6 +198,13 @@ class ProfileElement:
         return self.decoded.get(self.header_name, None)
 
     @property
+    def identification(self):
+        if self.header:
+            return self.header['identification']
+        else:
+            return None
+
+    @property
     def templateID(self):
         """Return the decoded templateID used by this profile element (if any)."""
         return self.decoded.get('templateID', None)
