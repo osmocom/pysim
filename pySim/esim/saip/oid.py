@@ -38,6 +38,10 @@ class OID:
     def __repr__(self) -> str:
         return 'OID(%s)' % (str(self))
 
+    def prefix_match(self, oid_str):
+        """determine if oid_str is equal or below our OID."""
+        return oid_str.startswith(str(self))
+
 
 class eOID(OID):
     """OID helper for TCA eUICC prefix"""

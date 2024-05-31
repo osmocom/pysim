@@ -27,11 +27,57 @@ from pySim.ts_102_221 import FileDescriptor
 from pySim.construct import build_construct
 from pySim.esim import compile_asn1_subdir
 from pySim.esim.saip import templates
+from pySim.esim.saip import oid
 from pySim.tlv import BER_TLV_IE
 from pySim.global_platform import KeyType, KeyUsageQualifier
 from pySim.global_platform.uicc import UiccSdInstallParams
 
 asn1 = compile_asn1_subdir('saip')
+
+class Naa:
+    """A class defining a Network Access Application (NAA)."""
+    name = None
+    # AID prefix, as used for ADF and EF.DIR
+    aid = None
+    # the ProfileElement types used specifically in this NAA
+    pe_types = []
+    # we only use the base DN of each OID; there may be subsequent versions underneath it
+    templates = []
+    mandatory_services = []
+
+    @classmethod
+    def adf_name(cls):
+        return 'adf-' + cls.mandatory_services[0]
+
+class NaaCsim(Naa):
+    name = "csim"
+    aid = h2b("")
+    mandatory_services = ["csim"]
+    pe_types = ["csim", "opt-csim", "cdmaParameter"]
+    templates = [oid.ADF_CSIM_by_default, oid.ADF_CSIM_not_by_default]
+
+class NaaUsim(Naa):
+    name = "usim"
+    aid = h2b("")
+    mandatory_services = ["usim"]
+    pe_types = ["usim", "opt-usim"]
+    templates = [oid.ADF_USIM_by_default, oid.ADF_USIM_not_by_default,
+                 oid.DF_PHONEBOOK_ADF_USIM, oid.DF_GSM_ACCESS_ADF_USIM,
+                 oid.DF_EAP, oid.DF_5GS, oid.DF_SAIP, oid.DF_SNPN,
+                 oid.DF_5GProSe]
+
+class NaaIsim(Naa):
+    name = "isim"
+    aid = h2b("")
+    mandatory_services = ["isim"]
+    pe_types = ["isim", "opt-isim"]
+    templates = [oid.ADF_ISIM_by_default, oid.ADF_ISIM_not_by_default]
+
+NAAs = {
+    NaaCsim.name: NaaCsim,
+    NaaUsim.name: NaaUsim,
+    NaaIsim.name: NaaIsim,
+}
 
 class File:
     """Internal representation of a file in a profile filesystem.
@@ -512,6 +558,43 @@ class ProfileElementSequence:
         self.pe_list.insert(idx+1, ssd)
         self._process_pelist()
         self.renumber_identification()
+
+    def remove_naas_of_type(self, naa: Naa) -> None:
+        """Remove all instances of NAAs of given type. This can be used, for example,
+        to remove all CSIM NAAs from a profile.  Will not just remove the PEs, but also
+        any records in 'eUICC-Mandatory-services' or 'eUICC-Mandatory-GFSTEList'."""
+        hdr = self.pe_by_type['header'][0]
+        # remove any associated mandatory services
+        for service in naa.mandatory_services:
+            if service in hdr.decoded['eUICC-Mandatory-services']:
+                del hdr.decoded['eUICC-Mandatory-services'][service]
+        # remove any associaed mandatory filesystem templates
+        for template in naa.templates:
+            if template in hdr.decoded['eUICC-Mandatory-GFSTEList']:
+                hdr.decoded['eUICC-Mandatory-GFSTEList'] = [x for x in hdr.decoded['eUICC-Mandatory-GFSTEList'] if not template.prefix_match(x)]
+        # determine the ADF names (AIDs) of all NAA ADFs
+        naa_adf_names = []
+        if naa.pe_types[0] in self.pe_by_type:
+            for pe in self.pe_by_type[naa.pe_types[0]]:
+                adf_name = naa.adf_name()
+                adf = File(adf_name, pe.decoded[adf_name])
+                naa_adf_names.append(adf.fileDescriptor['dfName'])
+        # remove PEs of each NAA instance
+        if naa.name in self.pes_by_naa:
+            for inst in self.pes_by_naa[naa.name]:
+                # delete all the PEs of the NAA
+                self.pe_list = [pe for pe in self.pe_list if pe not in inst]
+        self._process_pelist()
+        # remove any RFM PEs for the just-removed ADFs
+        if 'rfm' in self.pe_by_type:
+            to_delete_pes = []
+            for rfm_pe in self.pe_by_type['rfm']:
+                if 'adfRFMAccess' in rfm_pe.decoded:
+                    if rfm_pe.decoded['adfRFMAccess']['adfAID'] in naa_adf_names:
+                        to_delete_pes.append(rfm_pe)
+            self.pe_list = [pe for pe in self.pe_list if pe not in to_delete_pes]
+        self._process_pelist()
+        # TODO: remove any records related to the ADFs from EF.DIR
 
     def __repr__(self) -> str:
         return "PESequence(%s)" % ', '.join([str(x) for x in self.pe_list])
