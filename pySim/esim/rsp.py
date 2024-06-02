@@ -24,7 +24,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography import x509
 
-from pySim.utils import bertlv_parse_one, bertlv_encode_tag, bertlv_encode_len, b2h
+from pySim.utils import bertlv_parse_one_rawtag, bertlv_return_one_rawtlv, b2h
 from pySim.esim import compile_asn1_subdir
 
 asn1 = compile_asn1_subdir('rsp')
@@ -101,37 +101,31 @@ class RspSessionStore(shelve.DbfilenameShelf):
 def extract_euiccSigned1(authenticateServerResponse: bytes) -> bytes:
     """Extract the raw, DER-encoded binary euiccSigned1 field from the given AuthenticateServerResponse. This
     is needed due to the very peculiar SGP.22 notion of signing sections of DER-encoded ASN.1 objects."""
-    tdict, l, v, remainder = bertlv_parse_one(authenticateServerResponse)
-    rawtag = bertlv_encode_tag(tdict)
+    rawtag, l, v, remainder = bertlv_parse_one_rawtag(authenticateServerResponse)
     if len(remainder):
         raise ValueError('Excess data at end of TLV')
-    if b2h(rawtag) != 'bf38':
+    if rawtag != 0xbf38:
         raise ValueError('Unexpected outer tag: %s' % b2h(rawtag))
-    tdict, l, v1, remainder = bertlv_parse_one(v)
-    rawtag = bertlv_encode_tag(tdict)
-    if b2h(rawtag) != 'a0':
+    rawtag, l, v1, remainder = bertlv_parse_one_rawtag(v)
+    if rawtag != 0xa0:
         raise ValueError('Unexpected tag where CHOICE was expected')
-    tdict, l, v2, remainder = bertlv_parse_one(v1)
-    rawtag = bertlv_encode_tag(tdict)
-    if b2h(rawtag) != '30':
+    rawtag, l, tlv2, remainder = bertlv_return_one_rawtlv(v1)
+    if rawtag != 0x30:
         raise ValueError('Unexpected tag where SEQUENCE was expected')
-    return rawtag + bertlv_encode_len(l) + v2
+    return tlv2
 
 def extract_euiccSigned2(prepareDownloadResponse: bytes) -> bytes:
     """Extract the raw, DER-encoded binary euiccSigned2 field from the given prepareDownloadrResponse. This is
     needed due to the very peculiar SGP.22 notion of signing sections of DER-encoded ASN.1 objects."""
-    tdict, l, v, remainder = bertlv_parse_one(prepareDownloadResponse)
-    rawtag = bertlv_encode_tag(tdict)
+    rawtag, l, v, remainder = bertlv_parse_one_rawtag(prepareDownloadResponse)
     if len(remainder):
         raise ValueError('Excess data at end of TLV')
-    if b2h(rawtag) != 'bf21':
+    if rawtag != 0xbf21:
         raise ValueError('Unexpected outer tag: %s' % b2h(rawtag))
-    tdict, l, v1, remainder = bertlv_parse_one(v)
-    rawtag = bertlv_encode_tag(tdict)
-    if b2h(rawtag) != 'a0':
+    rawtag, l, v1, remainder = bertlv_parse_one_rawtag(v)
+    if rawtag != 0xa0:
         raise ValueError('Unexpected tag where CHOICE was expected')
-    tdict, l, v2, remainder = bertlv_parse_one(v1)
-    rawtag = bertlv_encode_tag(tdict)
-    if b2h(rawtag) != '30':
+    rawtag, l, tlv2, remainder = bertlv_return_one_rawtlv(v1)
+    if rawtag != 0x30:
         raise ValueError('Unexpected tag where SEQUENCE was expected')
-    return rawtag + bertlv_encode_len(l) + v2
+    return tlv2

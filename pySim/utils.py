@@ -359,6 +359,32 @@ def bertlv_parse_one(binary: bytes) -> Tuple[dict, int, bytes, bytes]:
     remainder = remainder[length:]
     return (tagdict, length, value, remainder)
 
+def bertlv_parse_one_rawtag(binary: bytes) -> Tuple[int, int, bytes, bytes]:
+    """Parse a single TLV IE at the start of the given binary data; return tag as raw integer.
+    Args:
+            binary : binary input data of BER-TLV length field
+    Returns:
+            Tuple of (tag:int, len:int, remainder:bytes)
+    """
+    (tag, remainder) = bertlv_parse_tag_raw(binary)
+    (length, remainder) = bertlv_parse_len(remainder)
+    value = remainder[:length]
+    remainder = remainder[length:]
+    return (tag, length, value, remainder)
+
+def bertlv_return_one_rawtlv(binary: bytes) -> Tuple[int, int, bytes, bytes]:
+    """Return one single [encoded] TLV IE at the start of the given binary data.
+    Args:
+            binary : binary input data of BER-TLV length field
+    Returns:
+            Tuple of (tag:int, len:int, tlv:bytes, remainder:bytes)
+    """
+    (tag, remainder) = bertlv_parse_tag_raw(binary)
+    (length, remainder) = bertlv_parse_len(remainder)
+    tl_length = len(binary) - len(remainder)
+    value = binary[:tl_length] + remainder[:length]
+    remainder = remainder[length:]
+    return (tag, length, value, remainder)
 
 def dgi_parse_tag_raw(binary: bytes) -> Tuple[int, bytes]:
     # In absence of any clear spec guidance we assume it's always 16 bit
