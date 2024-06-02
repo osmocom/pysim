@@ -17,7 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Dict, List, Optional
-from pySim.utils import b2h, h2b, bertlv_encode_tag, bertlv_encode_len
+
+from cryptography.hazmat.primitives.asymmetric import ec
+
+from pySim.utils import b2h, h2b, bertlv_encode_tag, bertlv_encode_len, bertlv_parse_one_rawtag
+from pySim.utils import bertlv_return_one_rawtlv
 
 import pySim.esim.rsp as rsp
 from pySim.esim.bsp import BspInstance
@@ -183,3 +187,79 @@ class BoundProfilePackage(ProfilePackage):
 
         # manual DER encode: wrap in outer SEQUENCE
         return bertlv_encode_tag(0xbf36) + bertlv_encode_len(len(bpp_seq)) + bpp_seq
+
+    def decode(self, euicc_ot, eid: str, bpp_bin: bytes):
+        """Decode a BPP into the PPP and subsequently UPP. This is what happens inside an eUICC."""
+
+        def split_bertlv_sequence(sequence: bytes) -> List[bytes]:
+            remainder = sequence
+            ret = []
+            while remainder:
+                _tag, _l, tlv, remainder = bertlv_return_one_rawtlv(remainder)
+                ret.append(tlv)
+            return ret
+
+        # we don't use rsp.asn1.decode('boundProfilePackage') here, as the BSP needs
+        # fully encoded + MACed TLVs including their tag + length values.
+        #bpp = rsp.asn1.decode('BoundProfilePackage', bpp_bin)
+
+        tag, _l, v, _remainder = bertlv_parse_one_rawtag(bpp_bin)
+        if len(_remainder):
+            raise ValueError('Excess data at end of TLV')
+        if tag != 0xbf36:
+            raise ValueError('Unexpected outer tag: %s' % tag)
+
+        # InitialiseSecureChannelRequest
+        tag, _l, iscr_bin, remainder = bertlv_return_one_rawtlv(v)
+        iscr = rsp.asn1.decode('InitialiseSecureChannelRequest', iscr_bin)
+
+        # configureIsdpRequest
+        tag, _l, firstSeqOf87, remainder = bertlv_parse_one_rawtag(remainder)
+        if tag != 0xa0:
+            raise ValueError("Unexpected 'firstSequenceOf87' tag: %s" % tag)
+        firstSeqOf87 = split_bertlv_sequence(firstSeqOf87)
+
+        # storeMetadataRequest
+        tag, _l, seqOf88, remainder = bertlv_parse_one_rawtag(remainder)
+        if tag != 0xa1:
+            raise ValueError("Unexpected 'sequenceOf88' tag: %s" % tag)
+        seqOf88 = split_bertlv_sequence(seqOf88)
+
+        tag, _l, tlv, remainder = bertlv_parse_one_rawtag(remainder)
+        if tag == 0xa2:
+            secondSeqOf87 = split_bertlv_sequence(tlv)
+            tag2, _l, seqOf86, remainder = bertlv_parse_one_rawtag(remainder)
+            if tag2 != 0xa3:
+                raise ValueError("Unexpected 'sequenceOf86' tag: %s" % tag)
+            seqOf86 = split_bertlv_sequence(seqOf86)
+        elif tag == 0xa3:
+            secondSeqOf87 = None
+            seqOf86 = split_bertlv_sequence(tlv)
+        else:
+            raise ValueError("Unexpected 'secondSequenceOf87' tag: %s" % tag)
+
+        # extract smdoOtpk from initialiseSecureChannel
+        smdp_otpk = iscr['smdpOtpk']
+
+        # Generate Session Keys using the CRT, opPK.DP.ECKA and otSK.EUICC.ECKA according to annex G
+        smdp_public_key = ec.EllipticCurvePublicKey.from_encoded_point(euicc_ot.curve, smdp_otpk)
+        self.shared_secret = euicc_ot.exchange(ec.ECDH(), smdp_public_key)
+
+        crt = iscr['controlRefTemplate']
+        bsp = BspInstance.from_kdf(self.shared_secret, int.from_bytes(crt['keyType'], 'big'), int.from_bytes(crt['keyLen'], 'big'), crt['hostId'], h2b(eid))
+
+        self.encoded_configureISDPRequest = bsp.demac_and_decrypt(firstSeqOf87)
+        self.configureISDPRequest = rsp.asn1.decode('ConfigureISDPRequest', self.encoded_configureISDPRequest)
+
+        self.encoded_storeMetadataRequest = bsp.demac_only(seqOf88)
+        self.storeMetadataRequest = rsp.asn1.decode('StoreMetadataRequest', self.encoded_storeMetadataRequest)
+
+        if secondSeqOf87 != None:
+            rsk_bin = bsp.demac_and_decrypt(secondSeqOf87)
+            rsk = rsp.asn1.decode('ReplaceSessionKeysRequest', rsk_bin)
+            # process replace_session_keys!
+            bsp = BspInstance(rsk['ppkEnc'], rsk['ppkCmac'], rsk['initialMacChainingValue'])
+            self.replaceSessionKeysRequest = rsk
+
+        self.upp = bsp.demac_and_decrypt(seqOf86)
+        return self.upp
