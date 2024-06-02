@@ -19,6 +19,7 @@ import abc
 import requests
 import logging
 import json
+from typing import Optional
 import base64
 
 logger = logging.getLogger(__name__)
@@ -176,19 +177,20 @@ class JsonHttpApiFunction(abc.ABC):
     http_method = 'POST'
     extra_http_req_headers = {}
 
-    def __init__(self, url_prefix: str, func_req_id: str, session: requests.Session):
+    def __init__(self, url_prefix: str, func_req_id: Optional[str], session: requests.Session):
         self.url_prefix = url_prefix
         self.func_req_id = func_req_id
         self.session = session
 
-    def encode(self, data: dict, func_call_id: str) -> dict:
+    def encode(self, data: dict, func_call_id: Optional[str] = None) -> dict:
         """Validate an encode input dict into JSON-serializable dict for request body."""
-        output = {
-            'header': {
-                'functionRequesterIdentifier': self.func_req_id,
-                'functionCallIdentifier': func_call_id
-            }
-        }
+        output = {}
+        if func_call_id:
+            output['header'] = {
+                    'functionRequesterIdentifier': self.func_req_id,
+                    'functionCallIdentifier': func_call_id
+                }
+
         for p in self.input_mandatory:
             if not p in data:
                 raise ValueError('Mandatory input parameter %s missing' % p)
@@ -227,7 +229,7 @@ class JsonHttpApiFunction(abc.ABC):
                 output[p] = p_class.decode(v)
         return output
 
-    def call(self, data: dict, func_call_id:str, timeout=10) -> dict:
+    def call(self, data: dict, func_call_id: Optional[str] = None, timeout=10) -> dict:
         """Make an API call to the HTTP API endpoint represented by this object.
         Input data is passed in `data` as json-serializable dict.  Output data
         is returned as json-deserialized dict."""

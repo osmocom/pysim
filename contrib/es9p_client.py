@@ -39,7 +39,6 @@ logging.basicConfig(level=logging.DEBUG)
 parser = argparse.ArgumentParser(description="""
 Utility to manually issue requests against the ES9+ API of an SM-DP+ according to GSMA SGP.22.""")
 parser.add_argument('--url', required=True, help='Base URL of ES9+ API endpoint')
-parser.add_argument('--id', default='osmocom pySim', help='Entity identifier passed to SM-DP+')
 parser.add_argument('--server-ca-cert', help="""X.509 CA certificates acceptable for the server side. In
                     production use cases, this would be the GSMA Root CA (CI) certificate.""")
 subparsers = parser.add_subparsers(dest='command',help="The command (API function) to call", required=True)
@@ -87,7 +86,7 @@ def do_download(opts):
     print("CI PKID: %s" % b2h(ci_pkid))
     print()
 
-    peer = es9p.Es9pApiClient(opts.url, opts.id, server_cert_verify=opts.server_ca_cert)
+    peer = es9p.Es9pApiClient(opts.url, server_cert_verify=opts.server_ca_cert)
 
     print("Step 1: InitiateAuthentication...")
 

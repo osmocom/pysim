@@ -148,35 +148,29 @@ class CancelSession(Es9PlusApiFunction):
     input_mandatory = ['transactionId', 'cancelSessionResponse']
 
 class Es9pApiClient:
-    def __init__(self, url_prefix:str, func_req_id:str, server_cert_verify: str = None):
-        self.func_id = 0
+    def __init__(self, url_prefix:str, server_cert_verify: str = None):
         self.session = requests.Session()
         self.session.verify = False # FIXME HACK
         if server_cert_verify:
             self.session.verify = server_cert_verify
 
-        self.initiateAuthentication = InitiateAuthentication(url_prefix, func_req_id, self.session)
-        self.authenticateClient = AuthenticateClient(url_prefix, func_req_id, self.session)
-        self.getBoundProfilePackage = GetBoundProfilePackage(url_prefix, func_req_id, self.session)
-        self.handleNotification = HandleNotification(url_prefix, func_req_id, self.session)
-        self.cancelSession = CancelSession(url_prefix, func_req_id, self.session)
-
-    def _gen_func_id(self) -> str:
-        """Generate the next function call id."""
-        self.func_id += 1
-        return 'FCI-%u-%u' % (time.time(), self.func_id)
+        self.initiateAuthentication = InitiateAuthentication(url_prefix, '', self.session)
+        self.authenticateClient = AuthenticateClient(url_prefix, '', self.session)
+        self.getBoundProfilePackage = GetBoundProfilePackage(url_prefix, '', self.session)
+        self.handleNotification = HandleNotification(url_prefix, '', self.session)
+        self.cancelSession = CancelSession(url_prefix, '', self.session)
 
     def call_initiateAuthentication(self, data: dict) -> dict:
-        return self.initiateAuthentication.call(data, self._gen_func_id())
+        return self.initiateAuthentication.call(data)
 
     def call_authenticateClient(self, data: dict) -> dict:
-        return self.authenticateClient.call(data, self._gen_func_id())
+        return self.authenticateClient.call(data)
 
     def call_getBoundProfilePackage(self, data: dict) -> dict:
-        return self.getBoundProfilePackage.call(data, self._gen_func_id())
+        return self.getBoundProfilePackage.call(data)
 
     def call_handleNotification(self, data: dict) -> dict:
-        return self.handleNotification.call(data, self._gen_func_id())
+        return self.handleNotification.call(data)
 
     def call_cancelSession(self, data: dict) -> dict:
-        return self.cancelSession.call(data, self._gen_func_id())
+        return self.cancelSession.call(data)
