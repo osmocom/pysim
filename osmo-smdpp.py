@@ -444,7 +444,7 @@ class SmDppHttpServer:
 
         ss.host_id = b'mahlzeit'
 
-        # Generate Session Keys using the CRT, opPK.eUICC.ECKA and otSK.DP.ECKA according to annex G
+        # Generate Session Keys using the CRT, otPK.eUICC.ECKA and otSK.DP.ECKA according to annex G
         euicc_public_key = ec.EllipticCurvePublicKey.from_encoded_point(ss.smdp_ot.curve, ss.euicc_otpk)
         ss.shared_secret = ss.smdp_ot.exchange(ec.ECDH(), euicc_public_key)
         print("shared_secret: %s" % b2h(ss.shared_secret))

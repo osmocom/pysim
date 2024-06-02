@@ -37,7 +37,7 @@ class RspSessionState:
     def __init__(self, transactionId: str, serverChallenge: bytes, ci_cert_id: bytes):
         self.transactionId = transactionId
         self.serverChallenge = serverChallenge
-        #  used at a later point between API calsl
+        #  used at a later point between API calls
         self.ci_cert_id = ci_cert_id
         self.euicc_cert: Optional[x509.Certificate] = None
         self.eum_cert: Optional[x509.Certificate] = None
