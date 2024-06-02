@@ -74,6 +74,7 @@ class Es9PlusApiFunction(JsonHttpApiFunction):
 # ES9+ InitiateAuthentication function (SGP.22 section 6.5.2.6)
 class InitiateAuthentication(Es9PlusApiFunction):
     path = '/gsma/rsp2/es9plus/initiateAuthentication'
+    extra_http_req_headers = { 'User-Agent': 'gsma-rsp-lpad' }
     input_params = {
         'euiccChallenge': ApiParamBase64,
         'euiccInfo1': param.EuiccInfo1,
@@ -94,6 +95,7 @@ class InitiateAuthentication(Es9PlusApiFunction):
 # ES9+ GetBoundProfilePackage function (SGP.22 section 6.5.2.7)
 class GetBoundProfilePackage(Es9PlusApiFunction):
     path = '/gsma/rsp2/es9plus/getBoundProfilePackage'
+    extra_http_req_headers = { 'User-Agent': 'gsma-rsp-lpad' }
     input_params = {
         'transactionId': param.TransactionId,
         'prepareDownloadResponse': param.PrepareDownloadResponse,
@@ -109,6 +111,7 @@ class GetBoundProfilePackage(Es9PlusApiFunction):
 # ES9+ AuthenticateClient function (SGP.22 section 6.5.2.8)
 class AuthenticateClient(Es9PlusApiFunction):
     path= '/gsma/rsp2/es9plus/authenticateClient'
+    extra_http_req_headers = { 'User-Agent': 'gsma-rsp-lpad' }
     input_params = {
         'transactionId': param.TransactionId,
         'authenticateServerResponse': param.AuthenticateServerResponse,
@@ -128,6 +131,7 @@ class AuthenticateClient(Es9PlusApiFunction):
 # ES9+ HandleNotification function (SGP.22 section 6.5.2.9)
 class HandleNotification(Es9PlusApiFunction):
     path = '/gsma/rsp2/es9plus/handleNotification'
+    extra_http_req_headers = { 'User-Agent': 'gsma-rsp-lpad' }
     input_params = {
         'pendingNotification': param.PendingNotification,
       }
@@ -136,6 +140,7 @@ class HandleNotification(Es9PlusApiFunction):
 # ES9+ CancelSession function (SGP.22 section 6.5.2.10)
 class CancelSession(Es9PlusApiFunction):
     path = '/gsma/rsp2/es9plus/cancelSession'
+    extra_http_req_headers = { 'User-Agent': 'gsma-rsp-lpad' }
     input_params = {
         'transactionId': param.TransactionId,
         'cancelSessionResponse': param.CancelSessionResponse,

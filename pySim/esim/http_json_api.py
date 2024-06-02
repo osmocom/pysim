@@ -174,6 +174,7 @@ class JsonHttpApiFunction(abc.ABC):
     expected_http_status = 200
     # the HTTP method used (GET, OPTIONS, HEAD, POST, PUT, PATCH or DELETE)
     http_method = 'POST'
+    extra_http_req_headers = {}
 
     def __init__(self, url_prefix: str, func_req_id: str, session: requests.Session):
         self.url_prefix = url_prefix
@@ -232,19 +233,20 @@ class JsonHttpApiFunction(abc.ABC):
         is returned as json-deserialized dict."""
         url = self.url_prefix + self.path
         encoded = json.dumps(self.encode(data, func_call_id))
-        headers = {
+        req_headers = {
             'Content-Type': 'application/json',
             'X-Admin-Protocol': 'gsma/rsp/v2.5.0',
         }
+        req_headers.update(self.extra_http_req_headers)
 
-        logger.debug("HTTP REQ %s - '%s'" % (url, encoded))
-        response = self.session.request(self.http_method, url, data=encoded, headers=headers, timeout=timeout)
+        logger.debug("HTTP REQ %s - hdr: %s '%s'" % (url, req_headers, encoded))
+        response = self.session.request(self.http_method, url, data=encoded, headers=req_headers, timeout=timeout)
         logger.debug("HTTP RSP-STS: [%u] hdr: %s" % (response.status_code, response.headers))
         logger.debug("HTTP RSP: %s" % (response.content))
 
         if response.status_code != self.expected_http_status:
             raise HttpStatusError(response)
-        if not response.headers.get('Content-Type').startswith(headers['Content-Type']):
+        if not response.headers.get('Content-Type').startswith(req_headers['Content-Type']):
             raise HttpHeaderError(response)
         if not response.headers.get('X-Admin-Protocol', 'gsma/rsp/v2.unknown').startswith('gsma/rsp/v2.'):
             raise HttpHeaderError(response)
