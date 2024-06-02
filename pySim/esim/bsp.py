@@ -287,6 +287,8 @@ class BspInstance:
     def demac_only_one(self, ciphertext: bytes) -> bytes:
         payload = self.m_algo.verify(ciphertext)
         _tdict, _l, val, _remain = bertlv_parse_one(payload)
+        # The data block counter for ICV caluclation is incremented also for each segment with C-MAC only.
+        self.c_algo.block_nr += 1
         return val
 
     def demac_only(self, ciphertext_list: List[bytes]) -> bytes:
