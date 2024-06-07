@@ -47,7 +47,7 @@ class Foo:
 
         self.client = client
 
-        if False:
+        if True:
             KIC1 = h2b('000102030405060708090a0b0c0d0e0f')
             KID1 = h2b('101112131415161718191a1b1c1d1e1f')
             self.ota_keyset = OtaKeyset(algo_crypt='aes_cbc', kic_idx=1, kic=KIC1,
@@ -67,7 +67,7 @@ class Foo:
             #self.tar = h2b('B00011') # USIM RFM
             self.tar = h2b('000000') # RAM
 
-        if True: # sysmoEUICC1-C2G
+        if False: # sysmoEUICC1-C2G
             KIC1 = h2b('B52F9C5938D1C19ED73E1AE772937FD7')
             KID1 = h2b('3BC696ACD1EEC95A6624F7330D22FC81')
             self.ota_keyset = OtaKeyset(algo_crypt='aes_cbc', kic_idx=1, kic=KIC1,

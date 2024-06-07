@@ -31,7 +31,7 @@ from pySim.exceptions import SwMatchError
 # CardModel is created, which will add the ATR-based matching and
 # calling of SysmocomSJA2.add_files.  See  CardModel.apply_matching_models
 import pySim.sysmocom_sja2
-import pySim.sysmocom_euicc1
+#import pySim.sysmocom_euicc1
 
 # we need to import these modules so that the various sub-classes of
 # CardProfile are created, which will be used in init_card() to iterate
