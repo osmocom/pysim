@@ -559,7 +559,7 @@ def main(argv):
 
     args = parser.parse_args()
 
-    hs = SmDppHttpServer(HOSTNAME, os.path.join(DATA_DIR, 'certs', 'CertificateIssuer'), use_brainpool=True)
+    hs = SmDppHttpServer(HOSTNAME, os.path.join(DATA_DIR, 'certs', 'CertificateIssuer'), use_brainpool=False)
     #hs.app.run(endpoint_description="ssl:port=8000:dhParameters=dh_param_2048.pem")
     hs.app.run("localhost", 8000)
 
