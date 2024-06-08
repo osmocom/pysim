@@ -1196,6 +1196,13 @@ class ProactiveCommand(TLV_IE_Collection,
     def to_bytes(self, context: dict = {}):
         return self.decoded.to_tlv()
 
+# TS 101 223 Section 6.8.0
+class TerminalResponse(TLV_IE_Collection,
+                       nested=[CommandDetails, DeviceIdentities, Result,
+                               Duration, TextString, ItemIdentifier,
+                               #TODO: LocalInformation and other optional/conditional IEs
+                               ]):
+    pass
 
 # reasonable default for playing with OTA
 # 010203040506070809101112131415161718192021222324252627282930313233

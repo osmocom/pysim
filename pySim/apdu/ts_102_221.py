@@ -464,10 +464,12 @@ class Envelope(ApduCommand, n='ENVELOPE', ins=0xC2, cla=['80']):
 # TS 102 221 Section 11.2.3 / TS 102 223
 class Fetch(ApduCommand, n='FETCH', ins=0x12, cla=['80']):
     _apdu_case = 2
+    _tlv_rsp = cat.ProactiveCommand
 
 # TS 102 221 Section 11.2.3 / TS 102 223
 class TerminalResponse(ApduCommand, n='TERMINAL RESPONSE', ins=0x14, cla=['80']):
     _apdu_case = 3
+    _tlv = cat.TerminalResponse
 
 # TS 102 221 Section 11.3.1
 class RetrieveData(ApduCommand, n='RETRIEVE DATA', ins=0xCB, cla=['8X', 'CX', 'EX']):
