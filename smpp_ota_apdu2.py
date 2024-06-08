@@ -75,6 +75,22 @@ class Foo:
             self.tar = h2b('000001') # ISD-R according to Annex H of SGP.02
             #self.tar = h2b('000002') # ECASD according to Annex H of SGP.02
 
+        if False: # TS.48 profile
+            KIC1 = h2b('66778899aabbccdd1122334455eeff10')
+            KID1 = h2b('112233445566778899aabbccddeeff10')
+            self.ota_keyset = OtaKeyset(algo_crypt='triple_des_cbc2', kic_idx=1, kic=KIC1,
+                                        algo_auth='triple_des_cbc2', kid_idx=1, kid=KID1)
+            self.tar = h2b('000000') # ISD-P according to FIXME
+
+        if False: # TS.48 profile AES
+            KIC1 = h2b('66778899aabbccdd1122334455eeff10')
+            KID1 = h2b('112233445566778899aabbccddeeff10')
+            self.ota_keyset = OtaKeyset(algo_crypt='aes_cbc', kic_idx=2, kic=KIC1,
+                                        algo_auth='aes_cmac', kid_idx=2, kid=KID1)
+            self.tar = h2b('000000') # ISD-P according to FIXME
+
+ 
+ 
         self.ota_dialect = OtaDialectSms()
         self.spi = {'counter':'no_counter', 'ciphering':True, 'rc_cc_ds': 'cc', 'por_in_submit':False,
                     'por_shall_be_ciphered':True, 'por_rc_cc_ds': 'cc', 'por': 'por_required'}
