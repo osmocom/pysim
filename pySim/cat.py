@@ -1191,7 +1191,7 @@ class ProactiveCommand(TLV_IE_Collection,
         pcmd.from_tlv(binary)
         cmd_details = pcmd.find_cmd_details()
         # then do a second decode stage for the specific
-        cmd_type = cmd_details.decoded['type_of_command']
+        cmd_type = TypeOfCommand.encmapping[cmd_details.decoded['type_of_command']]
         if cmd_type in self.members_by_tag:
             cls = self.members_by_tag[cmd_type]
             inst = cls()
