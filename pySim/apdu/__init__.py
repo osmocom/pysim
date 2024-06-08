@@ -9,7 +9,7 @@ is far too simplistic, while this decoder can utilize all of the information
 we already know in pySim about the filesystem structure, file encoding, etc.
 """
 
-# (C) 2022 by Harald Welte <laforge@osmocom.org>
+# (C) 2022-2024 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -152,6 +152,8 @@ class ApduCommand(Apdu, metaclass=ApduCommandMeta):
     _construct_p2 = Byte
     _construct = HexAdapter(GreedyBytes)
     _construct_rsp = HexAdapter(GreedyBytes)
+    _tlv = None
+    _tlv_rsp = None
 
     def __init__(self, cmd: BytesOrHex, rsp: Optional[BytesOrHex] = None):
         """Instantiate a new ApduCommand from give cmd + resp."""
@@ -299,7 +301,12 @@ class ApduCommand(Apdu, metaclass=ApduCommandMeta):
                 r['p2'] = parse_construct(self._construct_p2, self.p2.to_bytes(1, 'big'))
             r['p3'] = self.p3
             if self.cmd_data:
-                r['body'] = parse_construct(self._construct, self.cmd_data)
+                if self._tlv:
+                    ie = self._tlv()
+                    ie.from_tlv(self.cmd_data)
+                    r['body'] = ie.to_dict()
+                else:
+                    r['body'] = parse_construct(self._construct, self.cmd_data)
             return r
 
     def rsp_to_dict(self) -> Dict:
@@ -310,7 +317,12 @@ class ApduCommand(Apdu, metaclass=ApduCommandMeta):
         else:
             r = {}
             if self.rsp_data:
-                r['body'] = parse_construct(self._construct_rsp, self.rsp_data)
+                if self._tlv_rsp:
+                    ie = self._tlv_rsp()
+                    ie.from_tlv(self.rsp_data)
+                    r['body'] = ie.to_dict()
+                else:
+                    r['body'] = parse_construct(self._construct_rsp, self.rsp_data)
             r['sw'] = b2h(self.sw)
             return r
 
