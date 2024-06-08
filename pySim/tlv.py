@@ -224,12 +224,16 @@ class TLV_IE(IE):
         val = self.to_bytes(context=context)
         return self._encode_tag() + self._encode_len(val) + val
 
+    def is_tag_compatible(self, rawtag) -> bool:
+        """Is the given rawtag compatible with this class?"""
+        return rawtag == self._compute_tag()
+
     def from_tlv(self, do: bytes, context: dict = {}):
         if len(do) == 0:
             return {}, b''
         (rawtag, remainder) = self.__class__._parse_tag_raw(do)
         if rawtag:
-            if rawtag != self._compute_tag():
+            if not self.is_tag_compatible(rawtag):
                 raise ValueError("%s: Encountered tag %s doesn't match our supported tag %s" %
                                  (self, rawtag, self.tag))
             (length, remainder) = self.__class__._parse_len(remainder)
@@ -282,6 +286,15 @@ class COMPR_TLV_IE(TLV_IE):
     @classmethod
     def _parse_len(cls, do: bytes) -> Tuple[int, bytes]:
         return bertlv_parse_len(do)
+
+    def is_tag_compatible(self, rawtag: int) -> bool:
+        """Override is_tag_compatible as we need to mask out the
+        comprehension bit when doing compares."""
+        ctag = self._compute_tag()
+        if ctag > 0xff:
+            return ctag & 0x7fff == rawtag & 0x7fff
+        else:
+            return ctag & 0x7f == rawtag & 0x7f
 
     def _encode_tag(self) -> bytes:
         return comprehensiontlv_encode_tag(self._compute_tag())
@@ -367,6 +380,8 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
             tag, _r = first._parse_tag_raw(remainder)
             if tag is None:
                 break
+            if issubclass(first, COMPR_TLV_IE):
+                tag = tag | 0x80 # HACK: always assume comprehension
             if tag in self.members_by_tag:
                 cls = self.members_by_tag[tag]
                 # create an instance and parse accordingly
