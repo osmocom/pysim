@@ -717,17 +717,191 @@ class SMSCBDownload(BER_TLV_IE, tag=0xD2,
                     nested=[DeviceIdentities, CBSPage]):
     pass
 
+# TS 101 220 Table 7.17
+class MenuSelection(BER_TLV_IE, tag=0xD3,
+                    nested=[DeviceIdentities, ItemIdentifier, HelpRequest]):
+    pass
 
+class BcRepeatIndicator(BER_TLV_IE, tag=0x2A):
+    pass
+
+# TS 101 220 Table 7.17
+class CallControl(BER_TLV_IE, tag=0xD4,
+                  nested=[DeviceIdentities, Address, CapabilityConfigParams, Subaddress,
+                          LocationInformation, BcRepeatIndicator]):
+    pass
+
+# TS 101 220 Table 7.17
+class MoShortMessageControl(BER_TLV_IE, tag=0xD5):
+    pass
+
+
+# TS 101 220 Table 7.23
+class TransactionIdentifier(BER_TLV_IE, tag=0x1C):
+    pass
+
+# TS 101 220 Table 7.23
+class ImsURI(BER_TLV_IE, tag=0x31):
+    pass
+
+# TS 101 220 Table 7.23
+class UriTruncated(BER_TLV_IE, tag=0x73):
+    pass
+
+# TS 101 220 Table 7.23
+class TrackingAreaIdentification(BER_TLV_IE, tag=0x7D):
+    pass
+
+# TS 101 220 Table 7.23
+class ExtendedRejectionCauseCode(BER_TLV_IE, tag=0x57):
+    pass
+
+# TS 101 220 Table 7.23
+class CsgCellSelectionStatus(BER_TLV_IE, tag=0x55):
+    pass
+
+# TS 101 220 Table 7.23
+class CsgId(BER_TLV_IE, tag=0x56):
+    pass
+
+# TS 101 220 Table 7.23
+class HnbName(BER_TLV_IE, tag=0x57):
+    pass
+
+# TS 101 220 Table 7.23
+class PlmnId(BER_TLV_IE, tag=0x09):
+    pass
+
+# TS 101 220 Table 7.23
+class ImsCallDisconnectionStatus(BER_TLV_IE, tag=0x55):
+    pass
+
+# TS 101 220 Table 7.23
+class Iari(BER_TLV_IE, tag=0x76):
+    pass
+
+# TS 101 220 Table 7.23
+class ImpuList(BER_TLV_IE, tag=0x77):
+    pass
+
+# TS 101 220 Table 7.23
+class ImsStatusCode(BER_TLV_IE, tag=0x77):
+    pass
+
+# TS 101 220 Table 7.23
+class DateTimeAndTimezone(BER_TLV_IE, tag=0x26):
+    pass
+
+# TS 101 220 Table 7.23
+class PdpPdnPduType(BER_TLV_IE, tag=0x0B):
+    pass
+
+# TS 101 220 Table 7.23
+class GadShape(BER_TLV_IE, tag=0x77):
+    pass
+
+# TS 101 220 Table 7.23
+class NmeaSentence(BER_TLV_IE, tag=0x78):
+    pass
+
+# TS 101 220 Table 7.23
+class WlanAccessStatus(BER_TLV_IE, tag=0x4B):
+    pass
+
+# TS 101 220 Table 7.17
+class EventDownload(BER_TLV_IE, tag=0xD6,
+                    nested=[EventList, DeviceIdentities,
+                            # 7.5.1.2 (I-)WLAN Access Status
+                            WlanAccessStatus,
+                            # 7.5.1A.2 MT Call
+                            TransactionIdentifier, Address,
+                            Subaddress, ImsURI, MediaType, UriTruncated,
+                            # 7.5.2.2 Network Rejection
+                            LocationInformation, RoutingAreaIdentification, TrackingAreaIdentification,
+                            AccessTechnology, UpdateAttachRegistrationType, RejectionCauseCode,
+                            ExtendedRejectionCauseCode,
+                            # 7.5.2A.2 Call Connected
+                            # TransactionIdentifier, MediaType
+                            # 7.5.3.2 CSG Cell Selection
+                            # AccessTechnology
+                            CsgCellSelectionStatus, CsgId, HnbName, PlmnId,
+                            # 7.5.3A.2 CAll Disconnected
+                            # TransactionIdentifier, MediaType,
+                            ImsCallDisconnectionStatus,
+                            # TS 102 223 7.5.4 LocationStatusEvent
+                            # TS 102 223 7.5.5 UserActivityEvent
+                            # TS 102 223 7.5.6 IdleScreenAvailableEvent
+                            # TS 102 223 7.5.7 CardReaderStatusEvent
+                            # TS 102 223 7.5.8 LanguageSelectionEvent
+                            # TS 102 223 7.5.9 BrowserTerminationEvent
+                            # TS 102 223 7.5.10 DataAvailableEvent
+                            # TS 102 223 7.5.11 ChannelStatusEvent
+                            # TS 102 223 7.5.12 AccessTechnologyChangeEvent
+                            # TS 102 223 7.5.13 DisplayParametersChangedEvent
+                            # TS 102 223 7.5.14 LocalConnectionEvent
+                            # TS 102 223 7.5.15 NetworkSearchModeChangeEvent
+                            # TS 102 223 7.5.16 BrowsingStatusEvent
+                            # TS 102 223 7.5.17 FramesInformationChangedEvent
+                            # 7.5.20 Incoming IMS Data
+                            Iari,
+                            # 7.5.21 MS Registration Event
+                            ImpuList, ImsStatusCode,
+                            # 7.5.24 / TS 102 223 7.5.22 PollIntervalNegotiation
+                            # 7.5.25 DataConnectionStatusChangeEvent
+                            DataConnectionStatus, DataConnectionType, SmCause,
+                            # TransactionIdentifier, LocationInformation, AccessTechnology
+                            DateTimeAndTimezone, LocationStatus, NetworkAccessName, PdpPdnPduType,
+                            # 7.7 / TS 102 223 7.6 MMS Transfer Status
+                            # 7.8 / TS 102 223 MMS Notification Download
+                            # 7.9 / TS 102 223 8.8 Terminal Applications
+                    ]):
+    pass
+
+# TS 101 220 Table 7.17
+class TimerExpiration(BER_TLV_IE, tag=0xD7):
+    pass
+
+# TS 101 220 Table 7.17 + TS 31.111 7.6.2
 class USSDDownload(BER_TLV_IE, tag=0xD9,
                    nested=[DeviceIdentities, USSDString]):
     pass
 
+# TS 101 220 Table 7.17 + TS 102 223 7.6
+class MmsTransferStatus(BER_TLV_IE, tag=0xDA):
+    pass
 
+# TS 101 220 Table 7.17 + 102 223
+class MmsNotificationDownload(BER_TLV_IE, tag=0xDB):
+    pass
 
+# TS 101 220 Table 7.17 + 102 223 7.8
+class TerminalApplication(BER_TLV_IE, tag=0xDC):
+    pass
 
+# TS 101 220 Table 7.17 + TS 31.111 7.10.2
+class GeographicalLocation(BER_TLV_IE, tag=0xDD,
+                           nested=[DeviceIdentities, GadShape, NmeaSentence]):
+    pass
+
+# TS 101 220 Table 7.17
+class EnvelopeContainer(BER_TLV_IE, tag=0xDE):
+    pass
+
+# TS 101 220 Table 7.17
+class ProSeReport(BER_TLV_IE, tag=0xDF):
+    pass
+
+# TS 101 220 Table 7.17
 class ProactiveCmd(BER_TLV_IE):
     def _compute_tag(self) -> int:
         return 0xD0
+
+
+class EventCollection(TLV_IE_Collection,
+                      nested=[SMSPPDownload, SMSCBDownload,
+                              EventDownload, CallControl, MoShortMessageControl,
+                              USSDDownload, GeographicalLocation, ProSeReport]):
+    pass
 
 
 # TS 101 220 Table 7.17 + 102 223 6.6.13/9.4 + TS 31.111 6.6.13
