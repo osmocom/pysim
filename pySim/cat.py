@@ -51,10 +51,24 @@ class CapabilityConfigParams(COMPR_TLV_IE, tag=0x07):
 class CBSPage(COMPR_TLV_IE, tag=0x0C):
     pass
 
+# TS 102 223 V15.3.0 Section 9.4
+TypeOfCommand = Enum(Int8ub, refresh=0x01, more_time=0x02, poll_interval=0x03, polling_off=0x04,
+                     set_up_event_list=0x05, set_up_call=0x10, send_ss=0x11, send_ussd=0x12,
+                     send_short_message=0x13, send_dtmf=0x14, launch_browser=0x15, geo_location_req=0x16,
+                     play_tone=0x20, display_text=0x21, get_inkey=0x22, get_input=0x23, select_item=0x24,
+                     set_up_menu=0x25, provide_local_info=0x26, timer_management=0x27,
+                     set_up_idle_mode_text=0x28, perform_card_apdu=0x30, power_on_card=0x31,
+                     power_off_card=0x32, get_reader_status=0x33, run_at_command=0x34,
+                     language_notification=0x35, open_channel=0x40, close_channel=0x41, receive_data=0x42,
+                     send_data=0x43, get_channel_status=0x44, service_search=0x45, get_service_info=0x46,
+                     declare_service=0x47, set_frames=0x50, get_frames_status=0x51, retrieve_mms=0x60,
+                     submit_mms=0x61, display_mms=0x62, activate=0x70, contactless_state_changed=0x71,
+                     command_container=0x72, encapsulated_session_control=0x73)
+
 # TS 102 223 Section 8.6 + TS 31.111 Section 8.6
 class CommandDetails(COMPR_TLV_IE, tag=0x81):
     _construct = Struct('command_number'/Int8ub,
-                        'type_of_command'/Int8ub,
+                        'type_of_command'/TypeOfCommand,
                         'command_qualifier'/Int8ub)
 
 # TS 102 223 Section 8.7
