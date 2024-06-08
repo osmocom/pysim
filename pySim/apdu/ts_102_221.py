@@ -1,7 +1,7 @@
 # coding=utf-8
 """APDU definitions/decoders of ETSI TS 102 221, the core UICC spec.
 
-(C) 2022 by Harald Welte <laforge@osmocom.org>
+(C) 2022-2024 by Harald Welte <laforge@osmocom.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ from pySim.filesystem import *
 from pySim.runtime import RuntimeLchan
 from pySim.apdu import ApduCommand, ApduCommandSet
 from pySim.utils import i2h
+from pySim import cat
 
 logger = logging.getLogger(__name__)
 
@@ -458,6 +459,7 @@ class TerminalProfile(ApduCommand, n='TERMINAL PROFILE', ins=0x10, cla=['80']):
 # TS 102 221 Section 11.2.2 / TS 102 223
 class Envelope(ApduCommand, n='ENVELOPE', ins=0xC2, cla=['80']):
     _apdu_case = 4
+    _tlv = cat.EventCollection
 
 # TS 102 221 Section 11.2.3 / TS 102 223
 class Fetch(ApduCommand, n='FETCH', ins=0x12, cla=['80']):
