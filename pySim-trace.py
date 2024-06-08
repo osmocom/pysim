@@ -20,6 +20,7 @@ from pySim.transport import LinkBase
 from pySim.apdu_source.gsmtap import GsmtapApduSource
 from pySim.apdu_source.pyshark_rspro import PysharkRsproPcap, PysharkRsproLive
 from pySim.apdu_source.pyshark_gsmtap import PysharkGsmtapPcap
+from pySim.apdu_source.tca_loader_log import TcaLoaderLogApduSource
 
 from pySim.apdu.ts_102_221 import UiccSelect, UiccStatus
 
@@ -181,6 +182,11 @@ parser_rspro_pyshark_live = subparsers.add_parser('rspro-pyshark-live', help="""
 parser_rspro_pyshark_live.add_argument('-i', '--interface', required=True,
                                        help='Name of the network interface to capture on')
 
+parser_tcaloader_log = subparsers.add_parser('tca-loader-log', help="""
+    Read APDUs from a TCA Loader log file.""")
+parser_tcaloader_log.add_argument('-f', '--log-file', required=True,
+                                  help='Name of te log file to be read')
+
 if __name__ == '__main__':
 
     opts = option_parser.parse_args()
@@ -194,6 +200,8 @@ if __name__ == '__main__':
         s = PysharkRsproLive(opts.interface)
     elif opts.source == 'gsmtap-pyshark-pcap':
         s = PysharkGsmtapPcap(opts.pcap_file)
+    elif opts.source == 'tca-loader-log':
+        s = TcaLoaderLogApduSource(opts.log_file)
     else:
         raise ValueError("unsupported source %s", opts.source)
 
