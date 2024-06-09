@@ -30,25 +30,25 @@ from pySim.utils import b2h, dec_xplmn_w_act
 # Tag values as per TS 101 220 Table 7.23
 
 # TS 102 223 Section 8.1
-class Address(COMPR_TLV_IE, tag=0x06):
+class Address(COMPR_TLV_IE, tag=0x86):
     _construct = Struct('ton_npi'/Int8ub,
                         'call_number'/BcdAdapter(GreedyBytes))
 
 # TS 102 223 Section 8.2
-class AlphaIdentifier(COMPR_TLV_IE, tag=0x05):
+class AlphaIdentifier(COMPR_TLV_IE, tag=0x85):
     # FIXME: like EF.ADN
     pass
 
 # TS 102 223 Section 8.3
-class Subaddress(COMPR_TLV_IE, tag=0x08):
+class Subaddress(COMPR_TLV_IE, tag=0x88):
     pass
 
 # TS 102 223 Section 8.4 + TS 31.111 Section 8.4
-class CapabilityConfigParams(COMPR_TLV_IE, tag=0x07):
+class CapabilityConfigParams(COMPR_TLV_IE, tag=0x87):
     pass
 
 # TS 31.111 Section 8.5
-class CBSPage(COMPR_TLV_IE, tag=0x0C):
+class CBSPage(COMPR_TLV_IE, tag=0x8C):
     pass
 
 # TS 102 223 V15.3.0 Section 9.4
@@ -121,7 +121,7 @@ class DeviceIdentities(COMPR_TLV_IE, tag=0x82):
         return bytes([src, dst])
 
 # TS 102 223 Section 8.8
-class Duration(COMPR_TLV_IE, tag=0x04):
+class Duration(COMPR_TLV_IE, tag=0x84):
     _construct = Struct('time_unit'/Enum(Int8ub, minutes=0, seconds=1, tenths_of_seconds=2),
                         'time_interval'/Int8ub)
 
@@ -131,16 +131,16 @@ class Item(COMPR_TLV_IE, tag=0x0f):
                         'text_string'/GsmStringAdapter(GreedyBytes))
 
 # TS 102 223 Section 8.10
-class ItemIdentifier(COMPR_TLV_IE, tag=0x10):
+class ItemIdentifier(COMPR_TLV_IE, tag=0x90):
     _construct = Struct('identifier'/Int8ub)
 
 # TS 102 223 Section 8.11
-class ResponseLength(COMPR_TLV_IE, tag=0x11):
+class ResponseLength(COMPR_TLV_IE, tag=0x91):
     _construct = Struct('minimum_length'/Int8ub,
                         'maximum_length'/Int8ub)
 
 # TS 102 223 Section 8.12
-class Result(COMPR_TLV_IE, tag=0x03):
+class Result(COMPR_TLV_IE, tag=0x83):
     GeneralResult = Enum(Int8ub,
                          # '0X' and '1X' indicate that the command has been performed
                          performed_successfully=0,
@@ -266,12 +266,12 @@ class SsString(COMPR_TLV_IE, tag=0x89):
 
 
 # TS 102 223 Section 8.15
-class TextString(COMPR_TLV_IE, tag=0x0d):
+class TextString(COMPR_TLV_IE, tag=0x8D):
     _construct = Struct('dcs'/Int8ub, # TS 03.38
                         'text_string'/HexAdapter(GreedyBytes))
 
 # TS 102 223 Section 8.16
-class Tone(COMPR_TLV_IE, tag=0x0e):
+class Tone(COMPR_TLV_IE, tag=0x8E):
     _construct = Struct('tone'/Enum(Int8ub, dial_tone=0x01,
                                             called_subscriber_busy=0x02,
                                             congestion=0x03,
@@ -302,12 +302,12 @@ class Tone(COMPR_TLV_IE, tag=0x0e):
                                             melody_8=0x47))
 
 # TS 31 111 Section 8.17
-class USSDString(COMPR_TLV_IE, tag=0x0a):
+class USSDString(COMPR_TLV_IE, tag=0x8A):
     _construct = Struct('dcs'/Int8ub,
                         'ussd_string'/HexAdapter(GreedyBytes))
 
 # TS 102 223 Section 8.18
-class FileList(COMPR_TLV_IE, tag=0x12):
+class FileList(COMPR_TLV_IE, tag=0x92):
     FileId=HexAdapter(Bytes(2))
     _construct = Struct('number_of_files'/Int8ub,
                         'files'/GreedyRange(FileId))
@@ -334,7 +334,7 @@ class DefaultText(COMPR_TLV_IE, tag=0x97):
                         'text_string'/HexAdapter(GreedyBytes))
 
 # TS 102 223 Section 8.24
-class ItemsNextActionIndicator(COMPR_TLV_IE, tag=0x18):
+class ItemsNextActionIndicator(COMPR_TLV_IE, tag=0x98):
     _construct = GreedyRange(Int8ub)
 
 class EventList(COMPR_TLV_IE, tag=0x99):
@@ -379,7 +379,7 @@ class LocationStatus(COMPR_TLV_IE, tag=0x9b):
     _construct = Enum(Int8ub, normal_service=0, limited_service=1, no_service=2)
 
 # TS 102 223 Section 8.31
-class IconIdentifier(COMPR_TLV_IE, tag=0x1e):
+class IconIdentifier(COMPR_TLV_IE, tag=0x9e):
     _construct = Struct('icon_qualifier'/FlagsEnum(Int8ub, not_self_explanatory=1),
                         'icon_identifier'/Int8ub)
 
@@ -405,7 +405,7 @@ class AtCommand(COMPR_TLV_IE, tag=0xA8):
     _construct = HexAdapter(GreedyBytes)
 
 # TS 102 223 Section 8.43
-class ImmediateResponse(COMPR_TLV_IE, tag=0x2b):
+class ImmediateResponse(COMPR_TLV_IE, tag=0xAB):
     pass
 
 # TS 102 223 Section 8.45
@@ -413,7 +413,7 @@ class Language(COMPR_TLV_IE, tag=0xAD):
     _construct = HexAdapter(GreedyBytes)
 
 # TS 31.111 Section 8.46
-class TimingAdvance(COMPR_TLV_IE, tag=0x46):
+class TimingAdvance(COMPR_TLV_IE, tag=0xC6):
     _construct = Struct('me_status'/Enum(Int8ub, in_idle_state=0, not_in_idle_state=1),
                         'timing_advance'/Int8ub)
 
@@ -497,7 +497,7 @@ class UiccTransportLevel(COMPR_TLV_IE, tag = 0xBC):
                         'port_number'/Int16ub)
 
 # TS 102 223 Section 8.60
-class Aid(COMPR_TLV_IE, tag=0x2f):
+class Aid(COMPR_TLV_IE, tag=0xAF):
     _construct = Struct('aid'/HexAdapter(GreedyBytes))
 
 # TS 102 223 Section 8.61
@@ -540,7 +540,7 @@ class NetworkAccessName(COMPR_TLV_IE, tag=0xC7):
     _construct = HexAdapter(GreedyBytes)
 
 # TS 102 223 Section 8.72
-class TextAttribute(COMPR_TLV_IE, tag=0x50):
+class TextAttribute(COMPR_TLV_IE, tag=0xD0):
     pass
 
 # TS 31.111 Section 8.72
@@ -576,7 +576,7 @@ class ItemTextAttributeList(COMPR_TLV_IE, tag=0xD1):
     _construct = GreedyRange(Int8ub)
 
 # TS 102 223 Section 8.80
-class FrameIdentifier(COMPR_TLV_IE, tag=0x68):
+class FrameIdentifier(COMPR_TLV_IE, tag=0xE8):
     _construct = Struct('identifier'/Int8ub)
 
 # TS 102 223 Section 8.82
@@ -697,7 +697,7 @@ class SupportedRadioAccessTechnologies(COMPR_TLV_IE, tag=0xB4):
     _construct = GreedyRange(AccessTechTuple)
 
 # TS 102 223 Section 8.107
-class ApplicationSpecificRefreshData(COMPR_TLV_IE, tag=0x3B):
+class ApplicationSpecificRefreshData(COMPR_TLV_IE, tag=0xBB):
     pass
 
 # TS 31.111 Section 8.108
