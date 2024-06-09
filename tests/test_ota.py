@@ -299,3 +299,6 @@ class SmsOtaTestCase(OtaTestCase):
                 self.assertEqual(d.number_of_commands, t['response']['number_of_commands'])
                 self.assertEqual(d.last_status_word, t['response']['last_status_word'])
                 self.assertEqual(d.last_response_data, t['response']['last_response_data'])
+
+if __name__ == "__main__":
+	unittest.main()
