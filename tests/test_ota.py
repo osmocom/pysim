@@ -65,14 +65,19 @@ class Test_SMS_AES128(unittest.TestCase):
 
     def test_cmd_aes128_ciphered(self):
         spi = self.spi_base
-        r = self.dialect.encode_cmd(self.od, self.tar, spi, h2b('00a40004023f00'))
+        apdu = h2b('00a40004023f00')
+        r = self.dialect.encode_cmd(self.od, self.tar, spi, apdu)
         self.assertEqual(b2h(r), '00281506192222b00011e87cceebb2d93083011ce294f93fc4d8de80da1abae8c37ca3e72ec4432e5058')
-
-
+        # also test decoder
+        dec_tar, dec_spi, dec_apdu = self.dialect.decode_cmd(self.od, r)
+        self.assertEqual(b2h(apdu), b2h(dec_apdu))
+        self.assertEqual(b2h(dec_tar), b2h(self.tar))
+        self.assertEqual(dec_spi, spi)
 
 
 class Test_SMS_3DES(unittest.TestCase):
     tar = h2b('b00000')
+    apdu = h2b('00a40000023f00')
     """Test the OtaDialectSms for 3DES algorithms."""
     def __init__(self, foo, **kwargs):
         super().__init__(foo, **kwargs)
@@ -134,21 +139,26 @@ class Test_SMS_3DES(unittest.TestCase):
         spi = self.spi_base
         spi['ciphering'] = True
         spi['rc_cc_ds'] = 'no_rc_cc_ds'
-        r = self.dialect.encode_cmd(self.od, self.tar, spi, h2b('00a40000023f00'))
+        r = self.dialect.encode_cmd(self.od, self.tar, spi, self.apdu)
         self.assertEqual(b2h(r), '00180d04193535b00000e3ec80a849b554421276af3883927c20')
+        # also test decoder
+        dec_tar, dec_spi, dec_apdu = self.dialect.decode_cmd(self.od, r)
+        self.assertEqual(b2h(self.apdu), b2h(dec_apdu))
+        self.assertEqual(b2h(dec_tar), b2h(self.tar))
+        self.assertEqual(dec_spi, spi)
 
     def test_cmd_3des_signed(self):
         spi = self.spi_base
         spi['ciphering'] = False
         spi['rc_cc_ds'] = 'cc'
-        r = self.dialect.encode_cmd(self.od, self.tar, spi, h2b('00a40000023f00'))
+        r = self.dialect.encode_cmd(self.od, self.tar, spi, self.apdu)
         self.assertEqual(b2h(r), '1502193535b00000000000000000072ea17bdb72060e00a40000023f00')
 
     def test_cmd_3des_none(self):
         spi = self.spi_base
         spi['ciphering'] = False
         spi['rc_cc_ds'] = 'no_rc_cc_ds'
-        r = self.dialect.encode_cmd(self.od, self.tar, spi, h2b('00a40000023f00'))
+        r = self.dialect.encode_cmd(self.od, self.tar, spi, self.apdu)
         self.assertEqual(b2h(r), '0d00193535b0000000000000000000a40000023f00')
 
 
@@ -272,6 +282,12 @@ class SmsOtaTestCase(OtaTestCase):
                 #print("TPDU: %s" % tpdu)
                 #print("tpdu: %s" % b2h(tpdu.to_bytes()))
                 self.assertEqual(b2h(tpdu.to_bytes()), t['request']['encoded_tpdu'])
+
+                # also test decoder
+                dec_tar, dec_spi, dec_apdu = self.dialect.decode_cmd(kset, outp)
+                self.assertEqual(b2h(t['request']['apdu']), b2h(dec_apdu))
+                self.assertEqual(b2h(dec_tar), b2h(self.tar))
+                self.assertEqual(dec_spi, t['spi'])
 
     def test_decode_resp(self):
         for t in SmsOtaTestCase.testdatasets:

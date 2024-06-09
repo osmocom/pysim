@@ -18,7 +18,7 @@
 import zlib
 import abc
 import struct
-from typing import Optional
+from typing import Optional, Tuple
 from construct import Enum, Int8ub, Int16ub, Struct, Bytes, GreedyBytes, BitsInteger, BitStruct
 from construct import Flag, Padding, Switch, this
 
@@ -387,6 +387,49 @@ class OtaDialectSms(OtaDialect):
         #print("envelope_data: %s" % b2h(envelope_data))
 
         return envelope_data
+
+    def decode_cmd(self, otak: OtaKeyset, encoded: bytes) -> Tuple[bytes, dict, bytes]:
+        """Decode an encoded (encrypted, signed) OTA SMS Command-APDU."""
+        if True: # TODO: how to decide?
+            cpl = int.from_bytes(encoded[:2], 'big')
+            part_head = encoded[2:2+8]
+            ciph = encoded[2+8:]
+            envelope_data = otak.crypt.decrypt(ciph)
+        else:
+            part_head = encoded[:8]
+            envelope_data = encoded[8:]
+
+        hdr_dec = self.hdr_construct.parse(part_head)
+
+        # strip counter part from front of envelope_data
+        part_cnt = envelope_data[:6]
+        cntr = int.from_bytes(part_cnt[:5], 'big')
+        pad_cnt = int.from_bytes(part_cnt[5:], 'big')
+        envelope_data = envelope_data[6:]
+
+        spi = hdr_dec['spi']
+        if spi['rc_cc_ds'] == 'cc':
+            # split cc from front of APDU
+            cc = envelope_data[:8]
+            apdu = envelope_data[8:]
+            # verify CC
+            temp_data = cpl.to_bytes(2, 'big') + part_head + part_cnt + apdu
+            otak.auth.check_sig(temp_data, cc)
+        elif spi['rc_cc_ds'] == 'rc':
+            # CRC32
+            crc32_rx = int.from_bytes(envelope_data[:4], 'big')
+            # FIXME: crc32_computed = zlip.crc32(
+            # FIXME: verify RC
+            raise NotImplementedError
+            apdu = envelope_data[4:]
+        elif spi['rc_cc_ds'] == 'no_rc_cc_ds':
+            apdu = envelope_data
+        else:
+            raise ValueError("Invalid rc_cc_ds: %s" % spi['rc_cc_ds'])
+
+        apdu = apdu[:len(apdu)-pad_cnt]
+        return hdr_dec['tar'], spi, apdu
+
 
     def decode_resp(self, otak: OtaKeyset, spi: dict, data: bytes) -> ("OtaDialectSms.SmsResponsePacket", Optional["CompactRemoteResp"]):
         if isinstance(data, str):
