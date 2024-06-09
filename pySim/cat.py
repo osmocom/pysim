@@ -24,7 +24,7 @@ from construct import Int8ub, Int16ub, Byte, Bytes, BitsInteger
 from construct import Struct, Enum, BitStruct, this
 from construct import GreedyBytes, Switch, GreedyRange, FlagsEnum
 from pySim.tlv import TLV_IE, COMPR_TLV_IE, BER_TLV_IE, TLV_IE_Collection
-from pySim.construct import PlmnAdapter, BcdAdapter, HexAdapter, GsmStringAdapter, TonNpi
+from pySim.construct import PlmnAdapter, BcdAdapter, HexAdapter, GsmStringAdapter, TonNpi, GsmString
 from pySim.utils import b2h, dec_xplmn_w_act
 
 # Tag values as per TS 101 220 Table 7.23
@@ -408,6 +408,10 @@ class AtCommand(COMPR_TLV_IE, tag=0xA8):
 class ImmediateResponse(COMPR_TLV_IE, tag=0xAB):
     pass
 
+# TS 102 223 Section 8.44
+class DtmfString(COMPR_TLV_IE, tag=0xAC):
+    _construct = BcdAdapter(GreedyBytes)
+
 # TS 102 223 Section 8.45
 class Language(COMPR_TLV_IE, tag=0xAD):
     _construct = HexAdapter(GreedyBytes)
@@ -417,10 +421,26 @@ class TimingAdvance(COMPR_TLV_IE, tag=0xC6):
     _construct = Struct('me_status'/Enum(Int8ub, in_idle_state=0, not_in_idle_state=1),
                         'timing_advance'/Int8ub)
 
+# TS 31.111 Section 8.47
+class BrowserIdentity(COMPR_TLV_IE, tag=0xB0):
+    _construct = Enum(Int8ub, default=0, wml=1, html=2, xhtml=3, chtml=4)
+
+# TS 31.111 Section 8.48
+class Url(COMPR_TLV_IE, tag=0xB1):
+    _construct = GsmString(GreedyBytes)
+
 # TS 31.111 Section 8.49
 class Bearer(COMPR_TLV_IE, tag=0xB2):
     SingleBearer = Enum(Int8ub, sms=0, csd=1, ussd=2, packet_Service=3)
     _construct = GreedyRange(SingleBearer)
+
+# TS 102 223 Section 8.50
+class ProvisioningFileReference(COMPR_TLV_IE, tag=0xB3):
+    _construct = HexAdapter(GreedyBytes)
+
+# TS 102 223 Section 8.51
+class BrowserTerminationCause(COMPR_TLV_IE, tag=0xB4):
+    _construct = Enum(Int8ub, user_termination=0, error_termination=1)
 
 # TS 102 223 Section 8.52
 class BearerDescription(COMPR_TLV_IE, tag=0xB5):
@@ -482,7 +502,7 @@ class BufferSize(COMPR_TLV_IE, tag = 0xB9):
 # TS 31.111 Section 8.56
 class ChannelStatus(COMPR_TLV_IE, tag = 0xB8):
     # complex decoding, depends on out-of-band context/knowledge :(
-    pass
+    _construct = HexAdapter(GreedyBytes)
 
 # TS 102 223 Section 8.58
 class OtherAddress(COMPR_TLV_IE, tag = 0xBE):
@@ -849,6 +869,7 @@ class EventDownload(BER_TLV_IE, tag=0xD6,
                             # TS 102 223 7.5.8 LanguageSelectionEvent
                             # TS 102 223 7.5.9 BrowserTerminationEvent
                             # TS 102 223 7.5.10 DataAvailableEvent
+                            ChannelStatus, ChannelDataLength,
                             # TS 102 223 7.5.11 ChannelStatusEvent
                             # TS 102 223 7.5.12 AccessTechnologyChangeEvent
                             # TS 102 223 7.5.13 DisplayParametersChangedEvent
@@ -925,20 +946,24 @@ class Refresh(ProactiveCmd, tag=0x01,
                       ApplicationSpecificRefreshData, PlmnWactList, PlmnList]):
     pass
 
+# TS 102 223 Section 6.6.4
 class MoreTime(ProactiveCmd, tag=0x02,
-        nested=[CommandDetails]):
+        nested=[CommandDetails, DeviceIdentities]):
     pass
 
+# TS 102 223 Section 6.6.5
 class PollInterval(ProactiveCmd, tag=0x03,
-        nested=[CommandDetails]):
+        nested=[CommandDetails, DeviceIdentities, Duration]):
     pass
 
+# TS 102 223 Section 6.6.14
 class PollingOff(ProactiveCmd, tag=0x04,
-        nested=[CommandDetails]):
+        nested=[CommandDetails, DeviceIdentities]):
     pass
 
+# TS 102 223 Section 6.6.16
 class SetUpEventList(ProactiveCmd, tag=0x05,
-        nested=[CommandDetails]):
+        nested=[CommandDetails, DeviceIdentities, EventList]):
     pass
 
 # TS 31.111 Section 6.6.12
@@ -966,20 +991,27 @@ class SendShortMessage(ProactiveCmd, tag=0x13,
                                SMS_TPDU, IconIdentifier, TextAttribute, FrameIdentifier]):
     pass
 
+# TS 102 223 6.6.24
 class SendDTMF(ProactiveCmd, tag=0x14,
-        nested=[CommandDetails]):
+        nested=[CommandDetails, DeviceIdentities, AlphaIdentifier,
+                DtmfString, IconIdentifier, TextAttribute, FrameIdentifier]):
     pass
 
+# TS 102 223 6.6.26
 class LaunchBrowser(ProactiveCmd, tag=0x15,
-        nested=[CommandDetails]):
+        nested=[CommandDetails, DeviceIdentities, BrowserIdentity, Url, Bearer, ProvisioningFileReference,
+                TextString, AlphaIdentifier, IconIdentifier, TextAttribute, FrameIdentifier,
+                NetworkAccessName]):
     pass
 
 class GeographicalLocationRequest(ProactiveCmd, tag=0x16,
         nested=[CommandDetails]):
     pass
 
+# TS 102 223 6.6.5
 class PlayTone(ProactiveCmd, tag=0x20,
-        nested=[CommandDetails]):
+        nested=[CommandDetails, DeviceIdentities, AlphaIdentifier,
+                Tone, Duration, IconIdentifier, TextAttribute, FrameIdentifier]):
     pass
 
 # TS 101 220 Table 7.17 + 102 223 6.6.1/9.4 CMD=0x21
@@ -1215,6 +1247,8 @@ class TerminalResponse(TLV_IE_Collection,
                        nested=[CommandDetails, DeviceIdentities, Result,
                                Duration, TextString, ItemIdentifier,
                                #TODO: LocalInformation and other optional/conditional IEs
+                               ChannelData, ChannelDataLength,
+                               ChannelStatus, BufferSize, BearerDescription,
                                ]):
     pass
 
