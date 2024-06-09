@@ -322,6 +322,7 @@ class OtaDialectSms(OtaDialect):
                                'response_status'/ResponseStatus,
                                'cc_rc'/Bytes(this.rhl-10),
                                'secured_data'/GreedyBytes)
+    hdr_construct = Struct('chl'/Int8ub, 'spi'/SPI, 'kic'/KIC, 'kid'/KID_CC, 'tar'/Bytes(3))
 
     def encode_cmd(self, otak: OtaKeyset, tar: bytes, spi: dict, apdu: bytes) -> bytes:
         # length of signature in octets
@@ -343,8 +344,7 @@ class OtaDialectSms(OtaDialect):
         chl = 13 + len_sig
 
         # CHL + SPI (+ KIC + KID)
-        c = Struct('chl'/Int8ub, 'spi'/SPI, 'kic'/KIC, 'kid'/KID_CC, 'tar'/Bytes(3))
-        part_head = c.build({'chl': chl, 'spi':spi, 'kic':kic, 'kid':kid, 'tar':tar})
+        part_head = self.hdr_construct.build({'chl': chl, 'spi':spi, 'kic':kic, 'kid':kid, 'tar':tar})
         #print("part_head: %s" % b2h(part_head))
 
         # CNTR + PCNTR (CNTR not used)
