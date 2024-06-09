@@ -268,7 +268,21 @@ class BER_TLV_IE(TLV_IE):
         return bertlv_encode_len(len(val))
 
 
-class COMPR_TLV_IE(TLV_IE):
+class ComprTlvMeta(TlvMeta):
+    def __new__(mcs, name, bases, namespace, **kwargs):
+        x = super().__new__(mcs, name, bases, namespace)
+        if x.tag:
+            # we currently assume that the tag values always have the comprehension bit set;
+            # let's fix it up if a derived class has forgotten about that
+            if x.tag > 0xff and x.tag & 0x8000 == 0:
+                print("Fixing up COMPR_TLV_IE class %s: tag=0x%x has no comprehension bit" % (name, x.tag))
+                x.tag = x.tag | 0x8000
+            elif x.tag & 0x80 == 0:
+                print("Fixing up COMPR_TLV_IE class %s: tag=0x%x has no comprehension bit" % (name, x.tag))
+                x.tag = x.tag | 0x80
+        return x
+
+class COMPR_TLV_IE(TLV_IE, metaclass=ComprTlvMeta):
     """TLV_IE formated as COMPREHENSION-TLV as described in ETSI TS 101 220."""
 
     def __init__(self, **kwargs):
