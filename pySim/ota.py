@@ -332,6 +332,7 @@ class OtaDialectSms(OtaDialect):
             len_cipher = 6 + len_sig + len(apdu)
             padding = otak.crypt._get_padding(len_cipher, otak.crypt.blocksize)
             pad_cnt = len(padding)
+            apdu = bytes(apdu) # make a copy so we don't modify the input data
             apdu += padding
 
         kic = {'key': otak.kic_idx, 'algo': otak.algo_crypt}
