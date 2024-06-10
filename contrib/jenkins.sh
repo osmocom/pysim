@@ -57,9 +57,7 @@ case "$JOB_TYPE" in
 		--disable E0401 \
 		--enable W0301 \
 		pySim tests/*.py *.py \
-		contrib/es2p_client.py \
-		contrib/es9p_client.py \
-		contrib/saip-tool.py
+		contrib/*.py
 	;;
 "docs")
 	rm -rf docs/_build
