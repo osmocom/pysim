@@ -22,7 +22,7 @@ from collections import OrderedDict
 
 import asn1tools
 
-from pySim.utils import bertlv_parse_tag, bertlv_parse_len, b2h, h2b
+from pySim.utils import bertlv_parse_tag, bertlv_parse_len, b2h, h2b, dec_imsi
 from pySim.ts_102_221 import FileDescriptor
 from pySim.construct import build_construct
 from pySim.esim import compile_asn1_subdir
@@ -263,10 +263,15 @@ class ProfileElement:
 
     @classmethod
     def from_der(cls, der: bytes) -> 'ProfileElement':
+        class4petype = {
+            'securityDomain': ProfileElementSD,
+            'usim': ProfileElementUSIM,
+            'isim': ProfileElementISIM,
+            }
         """Construct an instance from given raw, DER encoded bytes."""
         pe_type, decoded = asn1.decode('ProfileElement', der)
-        if pe_type == 'securityDomain':
-            inst = ProfileElementSD(decoded)
+        if pe_type in class4petype:
+            inst = class4petype[pe_type](decoded)
         else:
             inst = ProfileElement(decoded)
             inst.type = pe_type
@@ -436,6 +441,22 @@ class ProfileElementSSD(ProfileElementSD):
                 # TAR: 6C7565, MSL: 12
                 'uiccToolkitApplicationSpecificParametersField': h2b('01000001000000020112036C756500'),
             }
+
+class ProfileElementUSIM(ProfileElement):
+    type = 'usim'
+    @property
+    def adf_name(self) -> str:
+        return b2h(self.decoded['adf-usim'][0][1]['dfName'])
+    @property
+    def imsi(self) -> Optional[str]:
+        f = File('ef-imsi', self.decoded['ef-imsi'])
+        return dec_imsi(b2h(f.stream.getvalue()))
+
+class ProfileElementISIM(ProfileElement):
+    type = 'isim'
+    @property
+    def adf_name(self) -> str:
+        return b2h(self.decoded['adf-isim'][0][1]['dfName'])
 
 def bertlv_first_segment(binary: bytes) -> Tuple[bytes, bytes]:
     """obtain the first segment of a binary concatenation of BER-TLV objects.

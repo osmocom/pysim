@@ -54,6 +54,7 @@ parser_rn.add_argument('--output-file', required=True, help='Output file name')
 parser_rn.add_argument('--naa-type', required=True, choices=NAAs.keys(), help='Network Access Application type to remove')
 # TODO: add an --naa-index or the like, so only one given instance can be removed
 
+parser_info = subparsers.add_parser('info', help='Display information about the profile')
 
 def do_split(pes: ProfileElementSequence, opts):
     i = 0
@@ -136,6 +137,45 @@ def do_remove_naa(pes: ProfileElementSequence, opts):
     with open(opts.output_file, 'wb') as f:
         f.write(pes.to_der())
 
+def do_info(pes: ProfileElementSequence, opts):
+    def get_naa_count(pes: ProfileElementSequence) -> dict:
+        """return a dict with naa-type (usim, isim) as key and the count of NAA instances as value."""
+        ret = {}
+        for naa_type in pes.pes_by_naa:
+            ret[naa_type] = len(pes.pes_by_naa[naa_type])
+        return ret
+
+    pe_hdr_dec = pes.pe_by_type['header'][0].decoded
+    print()
+    print("SAIP Profile Version: %u.%u" % (pe_hdr_dec['major-version'], pe_hdr_dec['minor-version']))
+    print("Profile Type: '%s'" % pe_hdr_dec['profileType'])
+    print("ICCID: %s" % b2h(pe_hdr_dec['iccid']))
+    print("Mandatory Services: %s" % ', '.join(pe_hdr_dec['eUICC-Mandatory-services'].keys()))
+    print()
+    naa_strs = ["%s[%u]" % (k, v) for k, v in get_naa_count(pes).items()]
+    print("NAAs: %s" % ', '.join(naa_strs))
+    for naa_type in pes.pes_by_naa:
+        for naa_inst in pes.pes_by_naa[naa_type]:
+            first_pe = naa_inst[0]
+            adf_name = ''
+            if hasattr(first_pe, 'adf_name'):
+                adf_name = '(' + first_pe.adf_name + ')'
+            print("NAA %s %s" % (first_pe.type, adf_name))
+            if hasattr(first_pe, 'imsi'):
+                print("\tIMSI: %s" % first_pe.imsi)
+
+    # applications
+    print()
+    apps = pes.pe_by_type.get('application', [])
+    print("Number of applications: %u" % len(apps))
+    for app_pe in apps:
+        print("App Load Package AID: %s" % b2h(app_pe.decoded['loadBlock']['loadPackageAID']))
+        print("\tMandated: %s" % ('mandated' in app_pe.decoded['app-Header']))
+        print("\tLoad Block Size: %s" % len(app_pe.decoded['loadBlock']['loadBlockObject']))
+        for inst in app_pe.decoded.get('instanceList', []):
+            print("\tInstance AID: %s" % b2h(inst['instanceAID']))
+    pass
+
 
 if __name__ == '__main__':
     opts = parser.parse_args()
@@ -155,3 +195,5 @@ if __name__ == '__main__':
         do_remove_pe(pes, opts)
     elif opts.command == 'remove-naa':
         do_remove_naa(pes, opts)
+    elif opts.command == 'info':
+        do_info(pes, opts)
