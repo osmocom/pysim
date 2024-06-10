@@ -95,7 +95,6 @@ class File:
         # apply some defaults from profile
         if self.template:
             self.from_template(self.template)
-        print("after template: %s" % repr(self))
         if l:
             self.from_tuples(l)
 
