@@ -147,7 +147,7 @@ def do_download(opts):
             ('ctxParamsForCommonAuthentication', {
                 'matchingId': opts.matchingId,
                 'deviceInfo': {
-                    'tac': b'\x00'*8,
+                    'tac': b'\x35\x23\x01\x45', # same as lpac
                     'deviceCapabilities': {},
                     #imei:
                 }
