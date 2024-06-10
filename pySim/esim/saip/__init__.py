@@ -617,7 +617,19 @@ class ProfileElementSequence:
         # TODO: remove any records related to the ADFs from EF.DIR
 
     def __repr__(self) -> str:
-        return "PESequence(%s)" % ', '.join([str(x) for x in self.pe_list])
+        return "PESequence(%s: %s)" % (self.iccid, ', '.join([str(x) for x in self.pe_list]))
 
     def __iter__(self) -> str:
         yield from self.pe_list
+
+    @property
+    def iccid(self) -> Optional[str]:
+        """The ICCID of the profile."""
+        if not 'header' in self.pe_by_type:
+            return None
+        if len(self.pe_by_type['header']) < 1:
+            return None
+        pe_hdr_dec = self.pe_by_type['header'][0].decoded
+        if not 'iccid' in pe_hdr_dec:
+            return None
+        return b2h(pe_hdr_dec['iccid'])

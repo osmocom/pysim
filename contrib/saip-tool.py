@@ -19,11 +19,13 @@ import os
 import sys
 import argparse
 import logging
+import zipfile
 from pathlib import Path
 from typing import List
 
 from pySim.esim.saip import *
 from pySim.esim.saip.validation import CheckBasicStructure
+from pySim import javacard
 from pySim.utils import h2b, b2h, swap_nibbles
 from pySim.pprint import HexBytesPrettyPrinter
 
@@ -55,6 +57,10 @@ parser_rn.add_argument('--naa-type', required=True, choices=NAAs.keys(), help='N
 # TODO: add an --naa-index or the like, so only one given instance can be removed
 
 parser_info = subparsers.add_parser('info', help='Display information about the profile')
+
+parser_eapp = subparsers.add_parser('extract-apps', help='Extract applications as loadblock file')
+parser_eapp.add_argument('--output-dir', default='.', help='Output directory (where to store files)')
+parser_eapp.add_argument('--format', default='cap', choices=['ijc', 'cap'], help='Data format of output files')
 
 def do_split(pes: ProfileElementSequence, opts):
     i = 0
@@ -176,6 +182,21 @@ def do_info(pes: ProfileElementSequence, opts):
             print("\tInstance AID: %s" % b2h(inst['instanceAID']))
     pass
 
+def do_extract_apps(pes:ProfileElementSequence, opts):
+    apps = pes.pe_by_type.get('application', [])
+    for app_pe in apps:
+        package_aid = b2h(app_pe.decoded['loadBlock']['loadPackageAID'])
+
+        fname = os.path.join(opts.output_dir, '%s-%s.%s' % (pes.iccid, package_aid, opts.format))
+        load_block_obj = app_pe.decoded['loadBlock']['loadBlockObject']
+        print("Writing Load Package AID: %s to file %s" % (package_aid, fname))
+        if opts.format == 'ijc':
+            with open(fname, 'wb') as f:
+                f.write(load_block_obj)
+        else:
+            with io.BytesIO(load_block_obj) as f, zipfile.ZipFile(fname, 'w') as z:
+                javacard.ijc_to_cap(f, z, package_aid)
+
 
 if __name__ == '__main__':
     opts = parser.parse_args()
@@ -197,3 +218,5 @@ if __name__ == '__main__':
         do_remove_naa(pes, opts)
     elif opts.command == 'info':
         do_info(pes, opts)
+    elif opts.command == 'extract-apps':
+        do_extract_apps(pes, opts)
