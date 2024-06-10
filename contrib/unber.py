@@ -35,5 +35,8 @@ if __name__ == '__main__':
             content = f.read()
     elif opts.hex:
         content = h2b(opts.hex)
+    else:
+        # avoid pylint "(possibly-used-before-assignment)" below
+        sys.exit(2)
 
     process_one_level(content, 0)
