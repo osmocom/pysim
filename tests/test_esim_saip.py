@@ -67,7 +67,7 @@ class SaipTest(unittest.TestCase):
         """Test that DER-encoding of PE created by "empty" constructor works without raising exception."""
         for cls in [ProfileElementMF, ProfileElementPuk, ProfileElementPin, ProfileElementTelecom,
                     ProfileElementUSIM, ProfileElementISIM, ProfileElementAKA, ProfileElementSD,
-                    ProfileElementSSD]:
+                    ProfileElementSSD, ProfileElementOptUSIM, ProfileElementOptISIM]:
             with self.subTest(cls.__name__):
                 pes = ProfileElementSequence()
                 inst = cls()

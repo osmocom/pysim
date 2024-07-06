@@ -270,7 +270,9 @@ class ProfileElement:
             'pinCodes': ProfileElementPin,
             'telecom': ProfileElementTelecom,
             'usim': ProfileElementUSIM,
+            'opt-usim': ProfileElementOptUSIM,
             'isim': ProfileElementISIM,
+            'opt-isim': ProfileElementOptISIM,
             'akaParameter': ProfileElementAKA,
             }
         """Construct an instance from given raw, DER encoded bytes."""
@@ -575,6 +577,19 @@ class ProfileElementUSIM(ProfileElement):
         f = File('ef-imsi', self.decoded['ef-imsi'])
         return dec_imsi(b2h(f.stream.getvalue()))
 
+class ProfileElementOptUSIM(ProfileElement):
+    type = 'opt-usim'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__()
+        if decoded:
+            self.decoded = decoded
+            return
+        # provide some reasonable defaults for a MNO-SD
+        self.decoded = OrderedDict()
+        self.decoded['optusim-header'] = { 'mandated': None, 'identification': None}
+        self.decoded['templateID'] = str(oid.ADF_USIMopt_not_by_default_v2)
+
 class ProfileElementISIM(ProfileElement):
     type = 'isim'
 
@@ -593,6 +608,20 @@ class ProfileElementISIM(ProfileElement):
     @property
     def adf_name(self) -> str:
         return b2h(self.decoded['adf-isim'][0][1]['dfName'])
+
+class ProfileElementOptISIM(ProfileElement):
+    type = 'opt-isim'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__()
+        if decoded:
+            self.decoded = decoded
+            return
+        # provide some reasonable defaults for a MNO-SD
+        self.decoded = OrderedDict()
+        self.decoded['optisim-header'] = { 'mandated': None, 'identification': None}
+        self.decoded['templateID'] = str(oid.ADF_ISIMopt_not_by_default_v2)
+
 
 class ProfileElementAKA(ProfileElement):
     type = 'akaParameter'
