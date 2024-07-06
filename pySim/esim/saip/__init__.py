@@ -54,14 +54,14 @@ class NaaCsim(Naa):
     aid = h2b("")
     mandatory_services = ["csim"]
     pe_types = ["csim", "opt-csim", "cdmaParameter"]
-    templates = [oid.ADF_CSIM_by_default, oid.ADF_CSIM_not_by_default]
+    templates = [oid.ADF_CSIM_by_default, oid.ADF_CSIMopt_not_by_default]
 
 class NaaUsim(Naa):
     name = "usim"
     aid = h2b("")
     mandatory_services = ["usim"]
     pe_types = ["usim", "opt-usim"]
-    templates = [oid.ADF_USIM_by_default, oid.ADF_USIM_not_by_default,
+    templates = [oid.ADF_USIM_by_default, oid.ADF_USIMopt_not_by_default,
                  oid.DF_PHONEBOOK_ADF_USIM, oid.DF_GSM_ACCESS_ADF_USIM,
                  oid.DF_EAP, oid.DF_5GS, oid.DF_SAIP, oid.DF_SNPN,
                  oid.DF_5GProSe]
@@ -71,7 +71,7 @@ class NaaIsim(Naa):
     aid = h2b("")
     mandatory_services = ["isim"]
     pe_types = ["isim", "opt-isim"]
-    templates = [oid.ADF_ISIM_by_default, oid.ADF_ISIM_not_by_default]
+    templates = [oid.ADF_ISIM_by_default, oid.ADF_ISIMopt_not_by_default]
 
 NAAs = {
     NaaCsim.name: NaaCsim,

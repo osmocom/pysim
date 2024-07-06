@@ -318,7 +318,7 @@ class FilesUsimMandatoryV2(ProfileTemplate):
 # Section 9.5.2 v2.3.1
 class FilesUsimOptional(ProfileTemplate):
     created_by_default = False
-    oid = OID.ADF_USIM_not_by_default
+    oid = OID.ADF_USIMopt_not_by_default
     files = [
         FileTemplate(0x6f05, 'EF.LI',        'TR', None,    6,   1, 0x02, 'FF...FF', False),
         FileTemplate(0x6f37, 'EF.ACMmax',    'TR', None,    3,   5, None, '000000', False, ass_serv=[13], pe_name='ef-acmax'),
@@ -400,7 +400,7 @@ class FilesUsimOptional(ProfileTemplate):
 # Section 9.5.2
 class FilesUsimOptionalV2(ProfileTemplate):
     created_by_default = False
-    oid = OID.ADF_USIM_not_by_default_v2
+    oid = OID.ADF_USIMopt_not_by_default_v2
     files = [
         FileTemplate(0x6f05, 'EF.LI',        'TR', None,    6,   1, 0x02, 'FF...FF', False),
         FileTemplate(0x6f37, 'EF.ACMmax',    'TR', None,    3,   5, None, '000000', False, ass_serv=[13]),
@@ -601,7 +601,7 @@ class FilesIsimMandatory(ProfileTemplate):
 # Section 9.6.2 v2.3.1
 class FilesIsimOptional(ProfileTemplate):
     created_by_default = False
-    oid = OID.ADF_ISIM_not_by_default
+    oid = OID.ADF_ISIMopt_not_by_default
     files = [
         FileTemplate(0x6f09, 'EF.P-CSCF',      'LF',    1, None,   2, None, None, True, ['size'], ass_serv=[1,5]),
         FileTemplate(0x6f3c, 'EF.SMS',         'LF',   10,  176,   5, None, '00FF...FF', False, ass_serv=[6,8]),
@@ -618,7 +618,7 @@ class FilesIsimOptional(ProfileTemplate):
 # Section 9.6.2
 class FilesIsimOptionalv2(ProfileTemplate):
     created_by_default = False
-    oid = OID.ADF_ISIM_not_by_default_v2
+    oid = OID.ADF_ISIMopt_not_by_default_v2
     files = [
         FileTemplate(0x6f09, 'EF.PCSCF',       'LF',    1, None,   2, None, None, True, ['size'], ass_serv=[1,5]),
         FileTemplate(0x6f3c, 'EF.SMS',         'LF',   10,  176,   5, None, '00FF...FF', False, ass_serv=[6,8]),
