@@ -553,6 +553,34 @@ class ProfileElementSSD(ProfileElementSD):
                 'uiccToolkitApplicationSpecificParametersField': h2b('01000001000000020112036C756500'),
             }
 
+class ProfileElementRFM(ProfileElement):
+    type = 'rfm'
+
+    def __init__(self, decoded: Optional[dict] = None,
+                 inst_aid: Optional[bytes] = None, sd_aid: Optional[bytes] = None,
+                 adf_aid: Optional[bytes] = None,
+                 tar_list: Optional[List[bytes]] = [], msl: Optional[int] = 0x06):
+        super().__init__()
+        ADM1_ACCESS = h2b('02000100')
+        if decoded:
+            self.decoded = decoded
+            return
+        # provide some reasonable defaults for a MNO-SD
+        self.decoded = OrderedDict()
+        self.decoded['rfm-header'] = { 'mandated': None, 'identification': None}
+        self.decoded['instanceAID'] = inst_aid
+        self.decoded['securityDomainAID'] = sd_aid
+        self.decoded['tarList'] = tar_list
+        self.decoded['minimumSecurityLevel'] = bytes([msl])
+        self.decoded['uiccAccessDomain'] = ADM1_ACCESS
+        self.decoded['uiccAdminAccessDomain'] = ADM1_ACCESS
+        if adf_aid:
+            self.decoded['adfRFMAccess'] = {
+                    'adfAID': adf_aid,
+                    'adfAccessDomain': ADM1_ACCESS,
+                    'adfAdminAccessDomain': ADM1_ACCESS,
+                }
+
 class ProfileElementUSIM(ProfileElement):
     type = 'usim'
 

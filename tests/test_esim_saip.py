@@ -74,6 +74,13 @@ class SaipTest(unittest.TestCase):
                 pes.append(inst)
                 pes.to_der()
 
+        # RFM requires some constructor arguments
+        cls = ProfileElementRFM
+        with self.subTest(cls.__name__):
+                pes = ProfileElementSequence()
+                inst = cls(inst_aid=b'\x01\x02', sd_aid=b'\x03\x04', tar_list=[b'\x01\x02\x03'])
+                pes.append(inst)
+                pes.to_der()
 
 
 if __name__ == "__main__":
