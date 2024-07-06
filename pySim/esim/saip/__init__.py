@@ -271,6 +271,7 @@ class ProfileElement:
             'telecom': ProfileElementTelecom,
             'usim': ProfileElementUSIM,
             'isim': ProfileElementISIM,
+            'akaParameter': ProfileElementAKA,
             }
         """Construct an instance from given raw, DER encoded bytes."""
         pe_type, decoded = asn1.decode('ProfileElement', der)
@@ -592,6 +593,54 @@ class ProfileElementISIM(ProfileElement):
     @property
     def adf_name(self) -> str:
         return b2h(self.decoded['adf-isim'][0][1]['dfName'])
+
+class ProfileElementAKA(ProfileElement):
+    type = 'akaParameter'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__()
+        if decoded:
+            self.decoded = decoded
+            return
+        # provide some reasonable defaults for a MNO-SD
+        self.decoded = OrderedDict()
+        self.decoded['aka-header'] = { 'mandated': None, 'identification': None}
+        self.set_milenage(b'\x00'*16, b'\x00'*16)
+
+    def set_milenage(self, k: bytes, opc: bytes):
+        """Configure akaParametes for MILENAGE."""
+        self.decoded['algoConfiguration'] = ('algoParameter', {
+            'algorithmID': 1,
+            'algorithmOptions': b'\x00', # not relevant for milenage
+            'key': k,
+            'opc': opc,
+        })
+
+    def set_xor3g(self, k: bytes):
+        """Configure akaParametes for XOR-3G."""
+        self.decoded['algoConfiguration'] = ('algoParameter', {
+            'algorithmID': 3,
+            'algorithmOptions': b'\x00', # not relevant for milenage
+            'key': k,
+            'opc': b'', # not used for MILENAGE
+        })
+
+    def set_tuak(self, k: bytes, topc: bytes, num_of_keccak: int = 1):
+        """Configure akaParametes for TUAK."""
+        self.decoded['algoConfiguration'] = ('algoParameter', {
+            'algorithmID': 2,
+            'algorithmOptions': b'\x00', # not relevant for milenage
+            'key': k,
+            'opc': topc,
+            'numberOfKeccak': bytes([num_of_keccak]),
+        })
+
+    def set_mapping(self, aid: bytes, options: int = 6):
+        """Configure akaParametes for a mapping from another AID."""
+        self.decoded['algoConfiguration'] = ('mappingParamete', {
+            'mappingOptions': bytes([options]),
+            'mappingSource': aid,
+        })
 
 def bertlv_first_segment(binary: bytes) -> Tuple[bytes, bytes]:
     """obtain the first segment of a binary concatenation of BER-TLV objects.
