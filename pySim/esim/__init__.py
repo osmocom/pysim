@@ -3,7 +3,7 @@ from typing import Optional
 from importlib import resources
 
 
-def compile_asn1_subdir(subdir_name:str):
+def compile_asn1_subdir(subdir_name:str, codec='der'):
     """Helper function that compiles ASN.1 syntax from all files within given subdir"""
     import asn1tools
     asn_txt = ''
@@ -14,7 +14,7 @@ def compile_asn1_subdir(subdir_name:str):
             asn_txt += "\n"
     #else:
         #print(resources.read_text(__name__, 'asn1/rsp.asn'))
-    return asn1tools.compile_string(asn_txt, codec='der')
+    return asn1tools.compile_string(asn_txt, codec=codec)
 
 
 # SGP.22 section 4.1 Activation Code
