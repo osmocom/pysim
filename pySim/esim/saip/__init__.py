@@ -787,6 +787,76 @@ class ProfileElementSequence:
                 self.pes_by_naa[cur_naa] = []
             self.pes_by_naa[cur_naa].append(cur_naa_list)
 
+    def rebuild_mandatory_services(self):
+        """(Re-)build the eUICC Mandatory services list of the ProfileHeader based on what's in the
+        PE-Sequence."""
+        # services that we cannot auto-determine and which must hence be manually specified
+        manual_services = ['contactless', 'mbms', 'cat-tp', 'suciCalculatorApi', 'dns-resolution',
+                           'scp11ac', 'scp11c-authorization-mechanism', 's16mode', 'eaka']
+        svc_set = set()
+        # rebuild mandatory NAAs
+        for naa in self.pes_by_naa.keys():
+            if naa not in ['usim', 'isim', 'csim']:
+                continue
+            # see if any of the instances is mandatory
+            for inst in self.pes_by_naa[naa]:
+                if 'mandated' in inst[0].header:
+                    svc_set.add(naa)
+        # rebuild algorithms of all mandatory akaParameters
+        for aka in self.get_pes_for_type('akaParameter'):
+            if 'mandated' in aka.header:
+                if aka.decoded['algoConfiguration'][0] == 'algoParameter':
+                    algo_par = aka.decoded['algoConfiguration'][1]
+                    algo_id = algo_par['algorithmID']
+                    if algo_id == 1:
+                        svc_set.add('milenage')
+                    elif algo_id == 2:
+                        if len(algo_par['key']) == 32:
+                            svc_set.add('tuak256')
+                        else:
+                            svc_set.add('tuak128')
+                    elif algo_id == 3:
+                        svc_set.add('usim-test-algorithm')
+        # rebuild algorithms of all mandatory cdmaParameter
+        for cdma in self.get_pes_for_type('cdmaParameter'):
+            if 'mandated' in cdma.header:
+                svc_set.add('cave')
+        # TODO: gba-{usim,isim} (determine from EF.GBA* ?)
+        # determine if EAP is mandatory
+        for eap in self.get_pes_for_type('eap'):
+            if 'mandated' in eap.header:
+                svc_set.add('eap')
+        # determine if javacard is mandatory
+        for app in self.get_pes_for_type('application'):
+            if 'mandated' in app.header:
+                # javacard / multos distinction is not automatically possible, but multos is hypothetical
+                svc_set.add('javacard')
+        # recompute multiple-{usim,isim,csim}
+        for naa_name in ['usim','isim','csim']:
+            if naa_name in self.pes_by_naa[naa]:
+                if len(self.pes_by_naa[naa]) > 1:
+                    svc_set.add('multiple-' + naa_name)
+        # TODO: BER-TLV (scan all files for related type?)
+        # TODO: dfLinked files (scan all files, check for non-empty Fcp.linkPath presence of DFs)
+        # TODO: 5G related bits (derive from EF.UST or file presence?)
+        hdr_pe = self.get_pe_for_type('header')
+        # patch in the 'manual' services from the existing list:
+        for old_svc in hdr_pe.decoded['eUICC-Mandatory-services'].keys():
+            if old_svc in manual_services:
+                svc_set.add(old_svc)
+        hdr_pe.decoded['eUICC-Mandatory-services'] = {x: None for x in svc_set}
+
+    def rebuild_mandatory_gfstelist(self):
+        """(Re-)build the eUICC Mandatory GFSTEList of the ProfileHeader based on what's in the
+        PE-Sequence."""
+        template_set = set()
+        for pe in self.pe_list:
+            if pe.header and 'mandated' in pe.header:
+                if 'templateID' in pe.decoded:
+                    template_set.add(pe.decoded['templateID'])
+        hdr_pe = self.get_pe_for_type('header')
+        hdr_pe.decoded['eUICC-Mandatory-GFSTEList'] = list(template_set)
+
     @classmethod
     def from_der(cls, der: bytes) -> 'ProfileElementSequence':
         """Construct an instance from given raw, DER encoded bytes."""
