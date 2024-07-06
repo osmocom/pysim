@@ -197,8 +197,15 @@ class ProfileElement:
         'securityDomain':           'sd-Header',
         }
 
-    def __init__(self, decoded = None):
-        self.decoded = decoded
+    def __init__(self, decoded = None, mandated: bool = True):
+        if decoded:
+            self.decoded = decoded
+        else:
+            self.decoded = OrderedDict()
+            if self.header_name:
+                self.decoded[self.header_name] = { 'identification': None}
+                if mandated:
+                    self.decoded[self.header_name] = { 'mandated': None}
 
     def _fixup_sqnInit_dec(self) -> None:
         """asn1tools has a bug when working with SEQUENCE OF that have DEFAULT values. Let's work around
@@ -305,13 +312,10 @@ class ProfileElementMF(ProfileElement):
     type = 'mf'
 
     def __init__(self, decoded: Optional[dict] = None):
-        super().__init__()
+        super().__init__(decoded)
         if decoded:
-            self.decoded = decoded
             return
         # provide some reasonable defaults
-        self.decoded = OrderedDict()
-        self.decoded['mf-header'] = { 'mandated': None, 'identification': None}
         self.decoded['templateID'] = str(oid.MF)
         for fname in ['mf', 'ef-iccid', 'ef-dir', 'ef-arr']:
             self.decoded[fname] = []
@@ -321,13 +325,10 @@ class ProfileElementPuk(ProfileElement):
     type = 'pukCodes'
 
     def __init__(self, decoded: Optional[dict] = None):
-        super().__init__()
+        super().__init__(decoded)
         if decoded:
-            self.decoded = decoded
             return
         # provide some reasonable defaults
-        self.decoded = OrderedDict()
-        self.decoded['puk-Header'] = { 'mandated': None, 'identification': None}
         self.decoded['pukCodes'] = []
         self.add_puk(0x01, b'11111111')
         self.add_puk(0x81, b'22222222')
@@ -354,13 +355,10 @@ class ProfileElementPin(ProfileElement):
     type = 'pinCodes'
 
     def __init__(self, decoded: Optional[dict] = None):
-        super().__init__()
+        super().__init__(decoded)
         if decoded:
-            self.decoded = decoded
             return
         # provide some reasonable defaults
-        self.decoded = OrderedDict()
-        self.decoded['pin-Header'] = { 'mandated': None, 'identification': None}
         self.decoded['pinCodes'] = ('pinconfig', [])
         self.add_pin(0x01, b'0000\xff\xff\xff\xff', unblock_ref=1, pin_attrib=6)
         self.add_pin(0x10, b'11111111', pin_attrib=3)
@@ -393,13 +391,10 @@ class ProfileElementTelecom(ProfileElement):
     type = 'telecom'
 
     def __init__(self, decoded: Optional[dict] = None):
-        super().__init__()
+        super().__init__(decoded)
         if decoded:
-            self.decoded = decoded
             return
         # provide some reasonable defaults for a MNO-SD
-        self.decoded = OrderedDict()
-        self.decoded['telecom-header'] = { 'mandated': None, 'identification': None}
         self.decoded['templateID'] = str(oid.DF_TELECOM_v2)
         for fname in ['df-telecom', 'ef-arr']:
             self.decoded[fname] = []
@@ -467,12 +462,10 @@ class ProfileElementSD(ProfileElement):
         pass
 
     def __init__(self, decoded: Optional[dict] = None):
+        super().__init__(decoded)
         if decoded:
-            self.decoded = decoded
             return
         # provide some reasonable defaults for a MNO-SD
-        self.decoded = OrderedDict()
-        self.decoded['sd-Header'] = { 'mandated': None, 'identification': None }
         self.decoded['instance'] = {
                 'applicationLoadPackageAID': h2b('A0000001515350'),
                 'classAID':                  h2b('A000000251535041'),
@@ -543,8 +536,10 @@ class ProfileElementSD(ProfileElement):
 
 class ProfileElementSSD(ProfileElementSD):
     """Class representing a securityDomain ProfileElement for a SSD."""
-    def __init__(self):
-        super().__init__()
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__(decoded)
+        if decoded:
+            return
         # defaults [overriding ProfileElementSD) taken from SAIP v2.3.1 Section 11.2.12
         self.decoded['instance']['instanceAID'] = h2b('A00000055910100102736456616C7565')
         self.decoded['instance']['applicationPrivileges'] = h2b('808000')
@@ -560,14 +555,11 @@ class ProfileElementRFM(ProfileElement):
                  inst_aid: Optional[bytes] = None, sd_aid: Optional[bytes] = None,
                  adf_aid: Optional[bytes] = None,
                  tar_list: Optional[List[bytes]] = [], msl: Optional[int] = 0x06):
-        super().__init__()
+        super().__init__(decoded)
         ADM1_ACCESS = h2b('02000100')
         if decoded:
-            self.decoded = decoded
             return
         # provide some reasonable defaults for a MNO-SD
-        self.decoded = OrderedDict()
-        self.decoded['rfm-header'] = { 'mandated': None, 'identification': None}
         self.decoded['instanceAID'] = inst_aid
         self.decoded['securityDomainAID'] = sd_aid
         self.decoded['tarList'] = tar_list
@@ -585,13 +577,10 @@ class ProfileElementUSIM(ProfileElement):
     type = 'usim'
 
     def __init__(self, decoded: Optional[dict] = None):
-        super().__init__()
+        super().__init__(decoded)
         if decoded:
-            self.decoded = decoded
             return
         # provide some reasonable defaults for a MNO-SD
-        self.decoded = OrderedDict()
-        self.decoded['usim-header'] = { 'mandated': None, 'identification': None}
         self.decoded['templateID'] = str(oid.ADF_USIM_by_default_v2)
         for fname in ['adf-usim', 'ef-imsi', 'ef-arr', 'ef-ust', 'ef-spn', 'ef-est', 'ef-acc', 'ef-ecc']:
             self.decoded[fname] = []
@@ -609,26 +598,20 @@ class ProfileElementOptUSIM(ProfileElement):
     type = 'opt-usim'
 
     def __init__(self, decoded: Optional[dict] = None):
-        super().__init__()
+        super().__init__(decoded)
         if decoded:
-            self.decoded = decoded
             return
         # provide some reasonable defaults for a MNO-SD
-        self.decoded = OrderedDict()
-        self.decoded['optusim-header'] = { 'mandated': None, 'identification': None}
         self.decoded['templateID'] = str(oid.ADF_USIMopt_not_by_default_v2)
 
 class ProfileElementISIM(ProfileElement):
     type = 'isim'
 
     def __init__(self, decoded: Optional[dict] = None):
-        super().__init__()
+        super().__init__(decoded)
         if decoded:
-            self.decoded = decoded
             return
         # provide some reasonable defaults for a MNO-SD
-        self.decoded = OrderedDict()
-        self.decoded['isim-header'] = { 'mandated': None, 'identification': None}
         self.decoded['templateID'] = str(oid.ADF_ISIM_by_default)
         for fname in ['adf-isim', 'ef-impi', 'ef-impu', 'ef-domain', 'ef-ist', 'ef-arr']:
             self.decoded[fname] = []
@@ -641,13 +624,10 @@ class ProfileElementOptISIM(ProfileElement):
     type = 'opt-isim'
 
     def __init__(self, decoded: Optional[dict] = None):
-        super().__init__()
+        super().__init__(decoded)
         if decoded:
-            self.decoded = decoded
             return
         # provide some reasonable defaults for a MNO-SD
-        self.decoded = OrderedDict()
-        self.decoded['optisim-header'] = { 'mandated': None, 'identification': None}
         self.decoded['templateID'] = str(oid.ADF_ISIMopt_not_by_default_v2)
 
 
@@ -655,13 +635,10 @@ class ProfileElementAKA(ProfileElement):
     type = 'akaParameter'
 
     def __init__(self, decoded: Optional[dict] = None):
-        super().__init__()
+        super().__init__(decoded)
         if decoded:
-            self.decoded = decoded
             return
         # provide some reasonable defaults for a MNO-SD
-        self.decoded = OrderedDict()
-        self.decoded['aka-header'] = { 'mandated': None, 'identification': None}
         self.set_milenage(b'\x00'*16, b'\x00'*16)
 
     def set_milenage(self, k: bytes, opc: bytes):
