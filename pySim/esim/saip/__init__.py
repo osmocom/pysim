@@ -22,7 +22,7 @@ from collections import OrderedDict
 
 import asn1tools
 
-from pySim.utils import bertlv_parse_tag, bertlv_parse_len, b2h, h2b, dec_imsi
+from pySim.utils import bertlv_parse_tag, bertlv_parse_len, b2h, h2b, dec_imsi, Hexstr
 from pySim.ts_102_221 import FileDescriptor
 from pySim.construct import build_construct
 from pySim.esim import compile_asn1_subdir
@@ -187,6 +187,7 @@ class ProfileElement:
     # names, so we have to manually translate the exceptions here...
     header_name_translation_dict = {
         'header':                   None,
+        'end':                      'end-header',
         'genericFileManagement':    'gfm-header',
         'akaParameter':             'aka-header',
         'cdmaParameter':            'cdma-header',
@@ -281,6 +282,8 @@ class ProfileElement:
             'isim': ProfileElementISIM,
             'opt-isim': ProfileElementOptISIM,
             'akaParameter': ProfileElementAKA,
+            'header': ProfileElementHeader,
+            'end': ProfileElementEnd,
             }
         """Construct an instance from given raw, DER encoded bytes."""
         pe_type, decoded = asn1.decode('ProfileElement', der)
@@ -675,6 +678,30 @@ class ProfileElementAKA(ProfileElement):
             'mappingOptions': bytes([options]),
             'mappingSource': aid,
         })
+
+class ProfileElementHeader(ProfileElement):
+    type = 'header'
+    def __init__(self, decoded: Optional[dict] = None,
+                 ver_major: Optional[int] = 2, ver_minor: Optional[int] = 3,
+                 iccid: Optional[Hexstr] = '0'*20, profile_type: Optional[str] = None):
+        super().__init__(decoded)
+        if decoded:
+            return
+        # provide some reasonable defaults
+        self.decoded = {
+            'major-version': ver_major,
+            'minor-version': ver_minor,
+            'iccid': h2b(iccid),
+            'eUICC-Mandatory-services': {}, # needs to be recomputed at the end
+            'eUICC-Mandatory-GFSTEList': [], # needs to be recomputed at the end
+        }
+        if profile_type:
+            self.decoded['profileType'] = profile_type
+
+class ProfileElementEnd(ProfileElement):
+    type = 'end'
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__(decoded)
 
 def bertlv_first_segment(binary: bytes) -> Tuple[bytes, bytes]:
     """obtain the first segment of a binary concatenation of BER-TLV objects.
