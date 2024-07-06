@@ -265,6 +265,10 @@ class ProfileElement:
     def from_der(cls, der: bytes) -> 'ProfileElement':
         class4petype = {
             'securityDomain': ProfileElementSD,
+            'mf': ProfileElementMF,
+            'pukCodes': ProfileElementPuk,
+            'pinCodes': ProfileElementPin,
+            'telecom': ProfileElementTelecom,
             'usim': ProfileElementUSIM,
             'isim': ProfileElementISIM,
             }
@@ -293,6 +297,110 @@ class ProfileElement:
 
     def __str__(self) -> str:
         return self.type
+
+class ProfileElementMF(ProfileElement):
+    type = 'mf'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__()
+        if decoded:
+            self.decoded = decoded
+            return
+        # provide some reasonable defaults
+        self.decoded = OrderedDict()
+        self.decoded['mf-header'] = { 'mandated': None, 'identification': None}
+        self.decoded['templateID'] = str(oid.MF)
+        for fname in ['mf', 'ef-iccid', 'ef-dir', 'ef-arr']:
+            self.decoded[fname] = []
+        # TODO: resize EF.DIR?
+
+class ProfileElementPuk(ProfileElement):
+    type = 'pukCodes'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__()
+        if decoded:
+            self.decoded = decoded
+            return
+        # provide some reasonable defaults
+        self.decoded = OrderedDict()
+        self.decoded['puk-Header'] = { 'mandated': None, 'identification': None}
+        self.decoded['pukCodes'] = []
+        self.add_puk(0x01, b'11111111')
+        self.add_puk(0x81, b'22222222')
+
+    def add_puk(self, key_ref: int, puk_value: bytes, max_attempts:int = 10, retries_left:int = 10):
+        """Add a PUK to the pukCodes ProfileElement"""
+        if key_ref < 0 or key_ref > 0xff:
+            raise ValueError('key_ref must be uint8')
+        if len(puk_value) != 8:
+            raise ValueError('puk_value must be 8 bytes long')
+        if max_attempts < 0 or max_attempts > 0xf:
+            raise ValueError('max_attempts must be 4 bit')
+        if retries_left < 0 or max_attempts > 0xf:
+            raise ValueError('retries_left must be 4 bit')
+        puk = {
+            'keyReference': key_ref,
+            'pukValue': puk_value,
+            'maxNumOfAttemps-retryNumLeft': (max_attempts << 4) | retries_left,
+        }
+        self.decoded['pukCodes'].append(puk)
+
+
+class ProfileElementPin(ProfileElement):
+    type = 'pinCodes'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__()
+        if decoded:
+            self.decoded = decoded
+            return
+        # provide some reasonable defaults
+        self.decoded = OrderedDict()
+        self.decoded['pin-Header'] = { 'mandated': None, 'identification': None}
+        self.decoded['pinCodes'] = ('pinconfig', [])
+        self.add_pin(0x01, b'0000\xff\xff\xff\xff', unblock_ref=1, pin_attrib=6)
+        self.add_pin(0x10, b'11111111', pin_attrib=3)
+
+    def add_pin(self, key_ref: int, pin_value: bytes, max_attempts : int = 3, retries_left : int = 3,
+                unblock_ref: Optional[int] = None, pin_attrib: int = 7):
+        """Add a PIN to the pinCodes ProfileElement"""
+        if key_ref < 0 or key_ref > 0xff:
+            raise ValueError('key_ref must be uint8')
+        if pin_attrib < 0 or pin_attrib > 0xff:
+            raise ValueError('pin_attrib must be uint8')
+        if len(pin_value) != 8:
+            raise ValueError('pin_value must be 8 bytes long')
+        if max_attempts < 0 or max_attempts > 0xf:
+            raise ValueError('max_attempts must be 4 bit')
+        if retries_left < 0 or max_attempts > 0xf:
+            raise ValueError('retries_left must be 4 bit')
+        pin = {
+            'keyReference': key_ref,
+            'pinValue': pin_value,
+            'maxNumOfAttemps-retryNumLeft': (max_attempts << 4) | retries_left,
+            'pinAttributes': pin_attrib,
+        }
+        if unblock_ref:
+            pin['unblockingPINReference'] = unblock_ref
+        self.decoded['pinCodes'][1].append(pin)
+
+
+class ProfileElementTelecom(ProfileElement):
+    type = 'telecom'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__()
+        if decoded:
+            self.decoded = decoded
+            return
+        # provide some reasonable defaults for a MNO-SD
+        self.decoded = OrderedDict()
+        self.decoded['telecom-header'] = { 'mandated': None, 'identification': None}
+        self.decoded['templateID'] = str(oid.DF_TELECOM_v2)
+        for fname in ['df-telecom', 'ef-arr']:
+            self.decoded[fname] = []
+
 
 class SecurityDomainKeyComponent:
     """Representation of a key-component of a key for a security domain."""
@@ -444,9 +552,23 @@ class ProfileElementSSD(ProfileElementSD):
 
 class ProfileElementUSIM(ProfileElement):
     type = 'usim'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__()
+        if decoded:
+            self.decoded = decoded
+            return
+        # provide some reasonable defaults for a MNO-SD
+        self.decoded = OrderedDict()
+        self.decoded['usim-header'] = { 'mandated': None, 'identification': None}
+        self.decoded['templateID'] = str(oid.ADF_USIM_by_default_v2)
+        for fname in ['adf-usim', 'ef-imsi', 'ef-arr', 'ef-ust', 'ef-spn', 'ef-est', 'ef-acc', 'ef-ecc']:
+            self.decoded[fname] = []
+
     @property
     def adf_name(self) -> str:
         return b2h(self.decoded['adf-usim'][0][1]['dfName'])
+
     @property
     def imsi(self) -> Optional[str]:
         f = File('ef-imsi', self.decoded['ef-imsi'])
@@ -454,6 +576,19 @@ class ProfileElementUSIM(ProfileElement):
 
 class ProfileElementISIM(ProfileElement):
     type = 'isim'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__()
+        if decoded:
+            self.decoded = decoded
+            return
+        # provide some reasonable defaults for a MNO-SD
+        self.decoded = OrderedDict()
+        self.decoded['isim-header'] = { 'mandated': None, 'identification': None}
+        self.decoded['templateID'] = str(oid.ADF_ISIM_by_default)
+        for fname in ['adf-isim', 'ef-impi', 'ef-impu', 'ef-domain', 'ef-ist', 'ef-arr']:
+            self.decoded[fname] = []
+
     @property
     def adf_name(self) -> str:
         return b2h(self.decoded['adf-isim'][0][1]['dfName'])
@@ -470,9 +605,15 @@ def bertlv_first_segment(binary: bytes) -> Tuple[bytes, bytes]:
 class ProfileElementSequence:
     """A sequence of ProfileElement objects, which is the overall representation of an eSIM profile."""
     def __init__(self):
-        self.pe_list: List[ProfileElement] = None
+        self.pe_list: List[ProfileElement] = []
         self.pe_by_type: Dict = {}
         self.pes_by_naa: Dict = {}
+
+    def append(self, pe: ProfileElement):
+        """Append a PE to the PE Sequence"""
+        self.pe_list.append(pe)
+        self._process_pelist()
+        self.renumber_identification()
 
     def get_pes_for_type(self, tname: str) -> List[ProfileElement]:
         """Return list of profile elements present for given profile element type."""
