@@ -191,6 +191,18 @@ def do_info(pes: ProfileElementSequence, opts):
         for key in sd.keys:
             print("\tKVN=0x%02x, KID=0x%02x, %s" % (key.key_version_number, key.key_identifier, key.key_components))
 
+    # RFM
+    print()
+    rfms = pes.pe_by_type.get('rfm', [])
+    print("Number of RFM instances: %u" % len(rfms))
+    for rfm in rfms:
+        inst_aid = rfm.decoded['instanceAID']
+        print("RFM instanceAID: %s (-> TAR: %s)" % (b2h(inst_aid), b2h(inst_aid[-3:])))
+        print("\tMSL: 0x%02x" % rfm.decoded['minimumSecurityLevel'][0])
+        adf = rfm.decoded.get('adfRFMAccess', None)
+        if adf:
+            print("\tADF AID: %s" % b2h(adf['adfAID']))
+
 def do_extract_apps(pes:ProfileElementSequence, opts):
     apps = pes.pe_by_type.get('application', [])
     for app_pe in apps:
