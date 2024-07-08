@@ -180,7 +180,16 @@ def do_info(pes: ProfileElementSequence, opts):
         print("\tLoad Block Size: %s" % len(app_pe.decoded['loadBlock']['loadBlockObject']))
         for inst in app_pe.decoded.get('instanceList', []):
             print("\tInstance AID: %s" % b2h(inst['instanceAID']))
-    pass
+
+    # security domains
+    print()
+    sds = pes.pe_by_type.get('securityDomain', [])
+    print("Number of security domains: %u" % len(sds))
+    for sd in sds:
+        print("Security domain Instance AID: %s" % b2h(sd.decoded['instance']['instanceAID']))
+        # FIXME: 'applicationSpecificParametersC9' parsing to figure out enabled SCP
+        for key in sd.keys:
+            print("\tKVN=0x%02x, KID=0x%02x, %s" % (key.key_version_number, key.key_identifier, key.key_components))
 
 def do_extract_apps(pes:ProfileElementSequence, opts):
     apps = pes.pe_by_type.get('application', [])
