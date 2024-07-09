@@ -17,8 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from construct import Int8ub
+from construct import Int8ub, GreedyBytes
 from pySim.tlv import *
+from pySim.utils import h2b
 
 class TestUtils(unittest.TestCase):
     def test_camel_to_snake(self):
@@ -116,6 +117,29 @@ class TestIE(unittest.TestCase):
         self.assertEqual(ie.is_constructed(), False)
         self.assertEqual(ie.to_bytes(), b'\x42')
         self.assertEqual(ie.to_ie(), b'\x42')
+
+class TestCompact(unittest.TestCase):
+    class IE_3(COMPACT_TLV_IE, tag=0x3):
+        _construct = GreedyBytes
+    class IE_7(COMPACT_TLV_IE, tag=0x7):
+        _construct = GreedyBytes
+    class IE_5(COMPACT_TLV_IE, tag=0x5):
+        _construct = GreedyBytes
+    # pylint: disable=undefined-variable
+    class IE_Coll(TLV_IE_Collection, nested=[IE_3, IE_7, IE_5]):
+        _construct = GreedyBytes
+    def test_ATR(self):
+        atr = h2b("31E073FE211F5745437531301365")
+        c = self.IE_Coll()
+        c.from_tlv(atr)
+        self.assertEqual(c.children[0].tag, 3)
+        self.assertEqual(c.children[0].to_bytes(), b'\xe0')
+        self.assertEqual(c.children[1].tag, 7)
+        self.assertEqual(c.children[1].to_bytes(), b'\xfe\x21\x1f')
+        self.assertEqual(c.children[2].tag, 5)
+        self.assertEqual(c.children[2].to_bytes(), b'\x45\x43\x75\x31\x30\x13\x65')
+        self.assertEqual(c.to_tlv(), atr)
+
 
 if __name__ == "__main__":
 	unittest.main()

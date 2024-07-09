@@ -246,6 +246,35 @@ class TLV_IE(IE):
         return dec, remainder
 
 
+class COMPACT_TLV_IE(TLV_IE):
+    """TLV_IE formatted as COMPACT-TLV described in ISO 7816"""
+
+    @classmethod
+    def _parse_tag_raw(cls, do: bytes) -> Tuple[int, bytes]:
+        return do[0] >> 4, do
+
+    @classmethod
+    def _decode_tag(cls, do: bytes) -> Tuple[dict, bytes]:
+        rawtag, remainder = cls._parse_tag_raw(do)
+        return {'tag': rawtag}, remainder
+
+    @classmethod
+    def _parse_len(cls, do: bytes) -> Tuple[int, bytes]:
+        return do[0] & 0xf, do[1:]
+
+    def _encode_tag(self) -> bytes:
+        """Not needed as we override the to_tlv() method to encode tag+length into one byte."""
+        raise NotImplementedError
+
+    def _encode_len(self):
+        """Not needed as we override the to_tlv() method to encode tag+length into one byte."""
+        raise NotImplementedError
+
+    def to_tlv(self, context: dict = {}):
+        val = self.to_bytes(context=context)
+        return bytes([(self.tag << 4) | (len(val) & 0xF)]) + val
+
+
 class BER_TLV_IE(TLV_IE):
     """TLV_IE formatted as ASN.1 BER described in ITU-T X.690 8.1.2."""
 
