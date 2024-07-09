@@ -47,7 +47,7 @@ class Foo:
 
         self.client = client
 
-        if True:
+        if False:
             KIC1 = h2b('000102030405060708090a0b0c0d0e0f')
             KID1 = h2b('101112131415161718191a1b1c1d1e1f')
             self.ota_keyset = OtaKeyset(algo_crypt='aes_cbc', kic_idx=1, kic=KIC1,
@@ -89,6 +89,14 @@ class Foo:
                                         algo_auth='aes_cmac', kid_idx=2, kid=KID1)
             self.tar = h2b('000000') # ISD-P according to FIXME
 
+        if True: # eSIM profile
+            KIC1 = h2b('207c5d2c1aa80d58cd8f542fb9ef2f80')
+            KID1 = h2b('312367f1681902fd67d9a71c62a840e3')
+            self.ota_keyset = OtaKeyset(algo_crypt='aes_cbc', kic_idx=2, kic=KIC1,
+                                        algo_auth='aes_cmac', kid_idx=2, kid=KID1)
+            self.tar = h2b('b00001') # ADF.USIM
+
+ 
  
  
         self.ota_dialect = OtaDialectSms()
