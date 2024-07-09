@@ -270,7 +270,7 @@ class BER_TLV_IE(TLV_IE):
 
 class ComprTlvMeta(TlvMeta):
     def __new__(mcs, name, bases, namespace, **kwargs):
-        x = super().__new__(mcs, name, bases, namespace)
+        x = super().__new__(mcs, name, bases, namespace, **kwargs)
         if x.tag:
             # we currently assume that the tag values always have the comprehension bit set;
             # let's fix it up if a derived class has forgotten about that

@@ -126,7 +126,7 @@ class Duration(COMPR_TLV_IE, tag=0x84):
                         'time_interval'/Int8ub)
 
 # TS 102 223 Section 8.9
-class Item(COMPR_TLV_IE, tag=0x0f):
+class Item(COMPR_TLV_IE, tag=0x8f):
     _construct = Struct('identifier'/Int8ub,
                         'text_string'/GsmStringAdapter(GreedyBytes))
 
@@ -703,7 +703,7 @@ class SaTemplate(COMPR_TLV_IE, tag=0xA3):
     _construct = HexAdapter(GreedyBytes)
 
 # TS 102 223 Section 8.103
-class RefreshEnforcementPolicy(COMPR_TLV_IE, tag=0x3A):
+class RefreshEnforcementPolicy(COMPR_TLV_IE, tag=0xBA):
     _construct = FlagsEnum(Byte, even_if_navigating_menus=0, even_if_data_call=1, even_if_voice_call=2)
 
 # TS 102 223 Section 8.104
