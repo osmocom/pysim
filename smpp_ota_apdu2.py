@@ -19,7 +19,13 @@ class Foo:
     def smpp_rx_handler(self, pdu):
         sys.stdout.write('delivered {}\n'.format(pdu.receipted_message_id))
         if pdu.short_message:
-            dec = self.ota_dialect.decode_resp(self.ota_keyset, self.spi, pdu.short_message)
+            try:
+                dec = self.ota_dialect.decode_resp(self.ota_keyset, self.spi, pdu.short_message)
+            except ValueError:
+                spi = self.spi.copy()
+                spi['por_shall_be_ciphered'] = False
+                spi['por_rc_cc_ds'] = 'no_rc_cc_ds'
+                dec = self.ota_dialect.decode_resp(self.ota_keyset, spi, pdu.short_message)
             pp(dec)
         return None
 
