@@ -272,7 +272,7 @@ class SmsOtaTestCase(OtaTestCase):
                 kset = t['ota_keyset']
                 outp = self.dialect.encode_cmd(kset, self.tar, t['spi'], apdu=t['request']['apdu'])
                 #print("result: %s" % b2h(outp))
-                self.assertEqual(b2h(outp), t['request']['encoded_cmd'])
+                self.assertEqual(b2h(outp), t['request']['encoded_cmd'].lower())
 
                 with_udh = b'\x02\x70\x00' + outp
                 #print("with_udh: %s" % b2h(with_udh))
@@ -281,7 +281,7 @@ class SmsOtaTestCase(OtaTestCase):
                                    tp_scts=h2b('22705200000000'), tp_udl=3, tp_ud=with_udh)
                 #print("TPDU: %s" % tpdu)
                 #print("tpdu: %s" % b2h(tpdu.to_bytes()))
-                self.assertEqual(b2h(tpdu.to_bytes()), t['request']['encoded_tpdu'])
+                self.assertEqual(b2h(tpdu.to_bytes()), t['request']['encoded_tpdu'].lower())
 
                 # also test decoder
                 dec_tar, dec_spi, dec_apdu = self.dialect.decode_cmd(kset, outp)
@@ -296,9 +296,12 @@ class SmsOtaTestCase(OtaTestCase):
                 r, d = self.dialect.decode_resp(kset, t['spi'], t['response']['encoded_resp'])
                 #print("RESP: %s / %s" % (r, d))
                 self.assertEqual(r.response_status, t['response']['response_status'])
-                self.assertEqual(d.number_of_commands, t['response']['number_of_commands'])
-                self.assertEqual(d.last_status_word, t['response']['last_status_word'])
-                self.assertEqual(d.last_response_data, t['response']['last_response_data'])
+                if 'number_of_commands' in t['response']:
+                    self.assertEqual(d.number_of_commands, t['response']['number_of_commands'])
+                if 'last_status_word' in t['response']:
+                    self.assertEqual(d.last_status_word, t['response']['last_status_word'])
+                if 'last_response_data' in t['response']:
+                    self.assertEqual(d.last_response_data, t['response']['last_response_data'])
 
 if __name__ == "__main__":
 	unittest.main()
