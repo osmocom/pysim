@@ -130,6 +130,7 @@ class LinkBase(abc.ABC):
                         data : string (in hex) of returned data (ex. "074F4EFFFF")
                         sw   : string (in hex) of status word (ex. "9000")
         """
+        prev_pdu = pdu
         data, sw = self.send_apdu_raw(pdu)
 
         # When we have sent the first APDU, the SW may indicate that there are response bytes
@@ -137,15 +138,17 @@ class LinkBase(abc.ABC):
         # xx is the number of response bytes available.
         # See also:
         if sw is not None:
-            while ((sw[0:2] == '9f') or (sw[0:2] == '61')):
+            while (sw[0:2] in ['9f', '61', '62', '63']):
                 # SW1=9F: 3GPP TS 51.011 9.4.1, Responses to commands which are correctly executed
                 # SW1=61: ISO/IEC 7816-4, Table 5 — General meaning of the interindustry values of SW1-SW2
+                # SW1=62: ETSI TS 102 221 7.3.1.1.4 Clause 4b): 62xx, 63xx, 9xxx != 9000
                 pdu_gr = pdu[0:2] + 'c00000' + sw[2:4]
+                prev_pdu = pdu_gr
                 d, sw = self.send_apdu_raw(pdu_gr)
                 data += d
             if sw[0:2] == '6c':
                 # SW1=6C: ETSI TS 102 221 Table 7.1: Procedure byte coding
-                pdu_gr = pdu[0:8] + sw[2:4]
+                pdu_gr = prev_pdu[0:8] + sw[2:4]
                 data, sw = self.send_apdu_raw(pdu_gr)
 
         return data, sw
