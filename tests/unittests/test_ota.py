@@ -74,6 +74,27 @@ class Test_SMS_AES128(unittest.TestCase):
         self.assertEqual(b2h(dec_tar), b2h(self.tar))
         self.assertEqual(dec_spi, spi)
 
+    def test_open_channel(self):
+        spi = self.spi_base
+        tpdu = h2b('40048111227ff6407070611535007e070003000201700000781516011212000001ccda206e8b0d46304247bf00bfdc9853eed2a826f9af8dc7c2974ce2cb9bb55cc1a8577e047cc8f5d450380ba86b25354fe69f58884f671d7ace0c911f7c74830dc1d58b62cce4934568697ba1f577eecbca26c5dbfa32b0e2f0877948a9fb46a122e4214947386f467de11c')
+        #'40048111227ff6407070611535000a0500030002027b6abed3'
+        submit = SMS_DELIVER.from_bytes(tpdu)
+        submit.tp_udhi = True
+        print(submit)
+        #print("UD: %s" % b2h(submit.tp_ud))
+        #print("len(UD)=%u, UDL=%u" % (len(submit.tp_ud), submit.tp_udl))
+        udhd, data = UserDataHeader.from_bytes(submit.tp_ud)
+        print("UDHD: %s" % udhd)
+        print("DATA: %s" % b2h(data))
+        tpdu2 = h2b('40048111227ff6407070611535000a0500030002027b6abed3')
+        submit2 = SMS_DELIVER.from_bytes(tpdu2)
+        print(submit2)
+        udhd2, data2 = UserDataHeader.from_bytes(submit2.tp_ud)
+        print("UDHD: %s" % udhd2)
+        print("DATA: %s" % b2h(data2))
+        dec_tar, dec_spi, dec_apdu = self.dialect.decode_cmd(self.od, data + data2)
+        print(dec_apdu)
+
 
 class Test_SMS_3DES(unittest.TestCase):
     tar = h2b('b00000')

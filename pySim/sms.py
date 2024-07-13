@@ -30,6 +30,13 @@ from smpp.pdu import pdu_types, operations
 
 BytesOrHex = typing.Union[Hexstr, bytes]
 
+# 07
+#  00 03 000201 # part 01 of 02 in reference 00
+#  70 00
+
+# 05
+#   00 03 000202
+
 class UserDataHeader:
     # a single IE in the user data header
     ie_c = Struct('iei'/Int8ub, 'length'/Int8ub, 'value'/Bytes(this.length))
