@@ -492,6 +492,7 @@ class OtaDialectSms(OtaDialect):
         else:
             raise OtaCheckError('Unknown por_rc_cc_ds: %s' % spi['por_rc_cc_ds'])
 
+        print(res)
         # TODO: ExpandedRemoteResponse according to TS 102 226 5.2.2
         if res.response_status == 'por_ok' and len(res['secured_data']):
             dec = CompactRemoteResp.parse(res['secured_data'])
