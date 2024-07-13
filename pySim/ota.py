@@ -386,6 +386,9 @@ class OtaDialectSms(OtaDialect):
 
         #print("envelope_data: %s" % b2h(envelope_data))
 
+        if len(envelope_data) > 140:
+            raise ValueError('Cannot encode command in a single SMS; Fragmentation not implemented')
+
         return envelope_data
 
     def decode_cmd(self, otak: OtaKeyset, encoded: bytes) -> Tuple[bytes, dict, bytes]:
