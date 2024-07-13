@@ -187,9 +187,11 @@ class LinkBase(abc.ABC):
                 # they could be appended after the Result; if the first is a
                 # Result, that cuold replace the one built here.
                 self.proactive_handler.receive_fetch_raw(pcmd, parsed)
-                result.from_dict({'general_result': 'performed_successfully', 'additional_information': ''})
+                result.from_dict({'result': {'general_result': 'performed_successfully',
+                                             'additional_information': ''}})
             else:
-                result.from_dict({'general_result': 'command_beyond_terminal_capability', 'additional_information': ''})
+                result.from_dict({'result': {'general_result': 'command_beyond_terminal_capability',
+                                             'additional_information': ''}})
 
             # Send response immediately, thus also flushing out any further
             # proactive commands that the card already wants to send
@@ -200,7 +202,8 @@ class LinkBase(abc.ABC):
             (command_details,) = [c for c in pcmd.decoded.children if isinstance(c, CommandDetails)]
             # The Device Identities are fixed. (TS 102 223 V4.0.0 Section 6.8.2)
             device_identities = DeviceIdentities()
-            device_identities.from_dict({'source_dev_id': 'terminal', 'dest_dev_id': 'uicc'})
+            device_identities.from_dict({'device_identities': {'source_dev_id': 'terminal', 'dest_dev_id':
+                                                               'uicc'}})
 
             # Testing hint: The value of tail does not influence the behavior
             # of an SJA2 that sent ans SMS, so this is implemented only
