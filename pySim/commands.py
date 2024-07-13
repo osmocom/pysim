@@ -759,7 +759,7 @@ class SimCardCommands:
                 payload : payload as hex string
         """
         data_length = len(payload) // 2
-        data, sw = self.send_apdu(('80100000%02x' % data_length) + payload)
+        data, sw = self.send_apdu_checksw(('80100000%02x' % data_length) + payload)
         return (data, sw)
 
     # ETSI TS 102 221 11.1.22
