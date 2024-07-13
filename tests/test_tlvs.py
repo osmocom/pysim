@@ -31,6 +31,7 @@ import pySim.sysmocom_sja2
 import pySim.gsm_r
 import pySim.cdma_ruim
 import pySim.global_platform
+import pySim.global_platform.http
 
 if 'unittest.util' in __import__('sys').modules:
     # Show full diff in self.assertEqual.

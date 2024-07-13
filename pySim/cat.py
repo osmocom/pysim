@@ -267,6 +267,9 @@ class SsString(COMPR_TLV_IE, tag=0x89):
 
 # TS 102 223 Section 8.15
 class TextString(COMPR_TLV_IE, tag=0x8D):
+    _test_de_encode = [
+        ( '8d090470617373776f7264', {'dcs': 4, 'text_string': '70617373776f7264'} ),
+    ]
     _construct = Struct('dcs'/Int8ub, # TS 03.38
                         'text_string'/HexAdapter(GreedyBytes))
 
@@ -444,6 +447,9 @@ class BrowserTerminationCause(COMPR_TLV_IE, tag=0xB4):
 
 # TS 102 223 Section 8.52
 class BearerDescription(COMPR_TLV_IE, tag=0xB5):
+    _test_de_encode = [
+        ( 'b50103', {'bearer_parameters': '', 'bearer_type': 'default'} ),
+    ]
     # TS 31.111 Section 8.52.1
     BearerParsCs = Struct('data_rate'/Int8ub,
                           'bearer_service'/Int8ub,
@@ -507,11 +513,17 @@ class ChannelStatus(COMPR_TLV_IE, tag = 0xB8):
 
 # TS 102 223 Section 8.58
 class OtherAddress(COMPR_TLV_IE, tag = 0xBE):
+    _test_de_encode = [
+        ( 'be052101020304', {'address': '01020304', 'type_of_address': 'ipv4'} ),
+    ]
     _construct = Struct('type_of_address'/Enum(Int8ub, ipv4=0x21, ipv6=0x57),
                         'address'/HexAdapter(GreedyBytes))
 
 # TS 102 223 Section 8.59
 class UiccTransportLevel(COMPR_TLV_IE, tag = 0xBC):
+    _test_de_encode = [
+        ( 'bc03028000', {'port_number': 32768, 'protocol_type': 'tcp_uicc_client_remote'} ),
+    ]
     _construct = Struct('protocol_type'/Enum(Int8ub, udp_uicc_client_remote=1, tcp_uicc_client_remote=2,
                                              tcp_uicc_server=3, udp_uicc_client_local=4,
                                              tcp_uicc_client_local=5, direct_channel=6),
@@ -558,6 +570,9 @@ class RemoteEntityAddress(COMPR_TLV_IE, tag=0xC9):
 
 # TS 102 223 Section 8.70
 class NetworkAccessName(COMPR_TLV_IE, tag=0xC7):
+    _test_de_encode = [
+        ( 'c704036e6161', '036e6161' ),
+    ]
     _construct = HexAdapter(GreedyBytes)
 
 # TS 102 223 Section 8.72
