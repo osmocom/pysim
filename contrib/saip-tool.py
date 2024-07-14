@@ -197,11 +197,13 @@ def do_info(pes: ProfileElementSequence, opts):
     print("Number of RFM instances: %u" % len(rfms))
     for rfm in rfms:
         inst_aid = rfm.decoded['instanceAID']
-        print("RFM instanceAID: %s (-> TAR: %s)" % (b2h(inst_aid), b2h(inst_aid[-3:])))
+        print("RFM instanceAID: %s" % b2h(inst_aid))
         print("\tMSL: 0x%02x" % rfm.decoded['minimumSecurityLevel'][0])
         adf = rfm.decoded.get('adfRFMAccess', None)
         if adf:
             print("\tADF AID: %s" % b2h(adf['adfAID']))
+        for tar in rfm.decoded['tarList']:
+            print("\tTAR: %s" % b2h(tar))
 
 def do_extract_apps(pes:ProfileElementSequence, opts):
     apps = pes.pe_by_type.get('application', [])
