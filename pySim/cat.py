@@ -499,9 +499,10 @@ class ChannelDataLength(COMPR_TLV_IE, tag = 0xB7):
 class BufferSize(COMPR_TLV_IE, tag = 0xB9):
     _construct = Int16ub
 
-# TS 31.111 Section 8.56
+# TS 102 223 Section 8.56 + TS 31.111 Section 8.56
 class ChannelStatus(COMPR_TLV_IE, tag = 0xB8):
     # complex decoding, depends on out-of-band context/knowledge :(
+    # for default / TCP Client mode: bit 8 of first byte indicates connected, 3 LSB indicate channel nr
     _construct = HexAdapter(GreedyBytes)
 
 # TS 102 223 Section 8.58
