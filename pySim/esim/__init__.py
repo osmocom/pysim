@@ -1,7 +1,51 @@
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 from importlib import resources
 
+class PMO:
+    """Convenience conversion class for ProfileManagementOperation as used in ES9+ notifications."""
+    pmo4operation = {
+        'install': 0x80,
+        'enable': 0x40,
+        'disable': 0x20,
+        'delete': 0x10,
+    }
+
+    def __init__(self, op: str):
+        if not op in self.pmo4operation:
+            raise ValueError('Unknown operation "%s"' % op)
+        self.op = op
+
+    def to_int(self):
+        return self.pmo4operation[self.op]
+
+    @staticmethod
+    def _num_bits(data: int)-> int:
+        for i in range(0, 8):
+            if data & (1 << i):
+                return 8-i
+        return 0
+
+    def to_bitstring(self) -> Tuple[bytes, int]:
+        """return value in a format as used by asn1tools for BITSTRING."""
+        val = self.to_int()
+        return (bytes([val]), self._num_bits(val))
+
+    @classmethod
+    def from_int(cls, i: int) -> 'PMO':
+        """Parse an integer representation."""
+        for k, v in cls.pmo4operation.items():
+            if v == i:
+                return cls(k)
+        raise ValueError('Unknown PMO 0x%02x' % i)
+
+    @classmethod
+    def from_bitstring(cls, bstr: Tuple[bytes, int]) -> 'PMO':
+        """Parse a asn1tools BITSTRING representation."""
+        return cls.from_int(bstr[0][0])
+
+    def __str__(self):
+        return self.op
 
 def compile_asn1_subdir(subdir_name:str, codec='der'):
     """Helper function that compiles ASN.1 syntax from all files within given subdir"""

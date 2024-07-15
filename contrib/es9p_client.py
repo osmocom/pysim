@@ -29,8 +29,9 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.hazmat.primitives.asymmetric import ec
 
 import pySim.esim.rsp as rsp
-from pySim.esim import es9p
-from pySim.utils import h2b, b2h, swap_nibbles, bertlv_parse_one_rawtag, bertlv_return_one_rawtlv
+from pySim.esim import es9p, PMO
+from pySim.utils import h2b, b2h, swap_nibbles, is_hexstr
+from pySim.utils import bertlv_parse_one_rawtag, bertlv_return_one_rawtlv
 from pySim.esim.x509_cert import CertAndPrivkey
 from pySim.esim.es8p import BoundProfilePackage
 
@@ -63,6 +64,29 @@ parser_dl.add_argument('--output-path', default='.',
 parser_dl.add_argument('--confirmation-code',
                        help="Confirmation Code for the eSIM download")
 
+# notification
+parser_ntf = subparsers.add_parser('notification', help='ES9+ (other) notification')
+parser_ntf.add_argument('operation', choices=['enable','disable','delete'],
+                        help='Profile Management Opreation whoise occurrence shall be notififed')
+parser_ntf.add_argument('--sequence-nr', type=int, required=True,
+                        help='eUICC global notification sequence number')
+parser_ntf.add_argument('--notification-address', help='notificationAddress, if different from URL')
+parser_ntf.add_argument('--iccid', type=is_hexstr, help='ICCID to which the notification relates')
+
+# notification-install
+parser_ntfi = subparsers.add_parser('notification-install', help='ES9+ installation notification')
+parser_ntfi.add_argument('--sequence-nr', type=int, required=True,
+                         help='eUICC global notification sequence number')
+parser_ntfi.add_argument('--transaction-id', required=True,
+                         help='transactionId of previous ES9+ download')
+parser_ntfi.add_argument('--notification-address', help='notificationAddress, if different from URL')
+parser_ntfi.add_argument('--iccid', type=is_hexstr, help='ICCID to which the notification relates')
+parser_ntfi.add_argument('--smdpp-oid', required=True, help='SM-DP+ OID (as in CERT.DPpb.ECDSA)')
+parser_ntfi.add_argument('--isdp-aid', type=is_hexstr, required=True,
+                         help='AID of the ISD-P of the installed profile')
+parser_ntfi.add_argument('--sima-response', type=is_hexstr, required=True,
+                         help='hex digits of BER-encoded SAIP EUICCResponse')
+
 class Es9pClient:
     def __init__(self, opts):
         self.opts = opts
@@ -89,6 +113,49 @@ class Es9pClient:
         print()
 
         self.peer = es9p.Es9pApiClient(opts.url, server_cert_verify=opts.server_ca_cert)
+
+
+    def do_notification(self):
+
+        ntf_metadata = {
+            'seqNumber': self.opts.sequence_nr,
+            'profileManagementOperation': PMO(self.opts.operation).to_bitstring(),
+            'notificationAddress': self.opts.notification_address or urlparse(self.opts.url).netloc,
+        }
+        if opts.iccid:
+            ntf_metadata['iccid'] = h2b(swap_nibbles(opts.iccid))
+
+        if self.opts.operation == 'download':
+            pird = {
+                'transactionId': self.opts.transaction_id,
+                'notificationMetadata': ntf_metadata,
+                'smdpOid': self.opts.smdpp_oid,
+                'finalResult': ('successResult', {
+                    'aid': self.opts.isdp_aid,
+                    'simaResponse': self.opts.sima_response,
+                    }),
+            }
+            pird_bin = rsp.asn1.encode('ProfileInstallationResultData', pird)
+            signature = self.cert_and_key.ecdsa_sign(pird_bin)
+            pn_dict = ('profileInstallationResult', {
+                'profileInstallationResultData': pird,
+                'euiccSignPIR': signature,
+            })
+        else:
+            ntf_bin = rsp.asn1.encode('NotificationMetadata', ntf_metadata)
+            signature = self.cert_and_key.ecdsa_sign(ntf_bin)
+            pn_dict = ('otherSignedNotification', {
+                'tbsOtherNotification': ntf_metadata,
+                'euiccNotificationSignature': signature,
+                'euiccCertificate': rsp.asn1.decode('Certificate', self.cert_and_key.get_cert_as_der()),
+                'eumCertificate': rsp.asn1.decode('Certificate', self.eum_cert.public_bytes(Encoding.DER)),
+            })
+
+        data = {
+            'pendingNotification': pn_dict,
+            }
+        #print(data)
+        res = self.peer.call_handleNotification(data)
 
 
     def do_download(self):
@@ -243,3 +310,8 @@ if __name__ == '__main__':
 
     if opts.command == 'download':
         c.do_download()
+    elif opts.command == 'notification':
+        c.do_notification()
+    elif opts.command == 'notification-install':
+        opts.operation = 'install'
+        c.do_notification()
