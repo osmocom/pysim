@@ -186,7 +186,9 @@ class SmDppHttpServer:
             print("Rx JSON: %s" % json.dumps(content))
             set_headers(request)
 
-            output = func(self, request, content) or {}
+            output = func(self, request, content)
+            if output == None:
+                return ''
 
             build_resp_header(output)
             print("Tx JSON: %s" % json.dumps(output))
