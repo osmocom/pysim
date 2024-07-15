@@ -35,7 +35,7 @@ import asn1tools
 from pySim.utils import h2b, b2h, swap_nibbles
 
 import pySim.esim.rsp as rsp
-from pySim.esim import saip
+from pySim.esim import saip, PMO
 from pySim.esim.es8p import *
 from pySim.esim.x509_cert import oid, cert_policy_has_oid, cert_get_auth_key_id
 from pySim.esim.x509_cert import CertAndPrivkey, CertificateSet, cert_get_subject_key_id, VerifyError
@@ -494,13 +494,33 @@ class SmDppHttpServer:
             pird_bin = rsp.asn1.encode('ProfileInstallationResultData', pird)
             # verify eUICC signature
             if not self._ecdsa_verify(ss.euicc_cert, profileInstallRes['euiccSignPIR'], pird_bin):
-                print("Unable to verify eUICC signature")
+                raise Exception('ECDSA signature verification failed on notification')
             print("Profile Installation Final Result: ", pird['finalResult'])
             # remove session state
             del self.rss[transactionId]
         elif pendingNotification[0] == 'otherSignedNotification':
-            # TODO
-            pass
+            otherSignedNotif = pendingNotification[1]
+            # TODO: use some kind of partially-parsed original data, don't re-encode?
+            euiccCertificate_bin = rsp.asn1.encode('Certificate', otherSignedNotif['euiccCertificate'])
+            eumCertificate_bin = rsp.asn1.encode('Certificate', otherSignedNotif['eumCertificate'])
+            euicc_cert = x509.load_der_x509_certificate(euiccCertificate_bin)
+            eum_cert = x509.load_der_x509_certificate(eumCertificate_bin)
+            ci_cert_id = cert_get_auth_key_id(eum_cert)
+            # Verify the validity of the eUICC certificate chain
+            cs = CertificateSet(self.ci_get_cert_for_pkid(ci_cert_id))
+            cs.add_intermediate_cert(eum_cert)
+            # TODO v3: otherCertsInChain
+            cs.verify_cert_chain(euicc_cert)
+            tbs_bin = rsp.asn1.encode('NotificationMetadata', otherSignedNotif['tbsOtherNotification'])
+            if not self._ecdsa_verify(euicc_cert, otherSignedNotif['euiccNotificationSignature'], tbs_bin):
+                raise Exception('ECDSA signature verification failed on notification')
+            other_notif = otherSignedNotif['tbsOtherNotification']
+            pmo = PMO.from_bitstring(other_notif['profileManagementOperation'])
+            eid = euicc_cert.subject.get_attributes_for_oid(x509.oid.NameOID.SERIAL_NUMBER)[0].value
+            iccid = other_notif.get('iccid', None)
+            if iccid:
+                iccid = swap_nibbles(b2h(iccid))
+            print("handleNotification: EID %s: %s of %s" % (eid, pmo, iccid))
         else:
             raise ValueError(pendingNotification)
 
