@@ -57,7 +57,18 @@ class ProactiveHandler(abc.ABC):
         """Default handler for not otherwise handled proactive commands."""
         raise NotImplementedError('No handler method for %s' % pcmd.decoded)
 
-
+    def prepare_response(self, pcmd: ProactiveCommand, general_result: str = 'performed_successfully'):
+        # The Command Details are echoed from the command that has been processed.
+        (command_details,) = [c for c in pcmd.children if isinstance(c, CommandDetails)]
+        # invert the device identities
+        (command_dev_ids,) = [c for c in pcmd.children if isinstance(c, DeviceIdentities)]
+        rsp_dev_ids = DeviceIdentities()
+        rsp_dev_ids.from_dict({'device_identities': {
+                                    'dest_dev_id': command_dev_ids.decoded['source_dev_id'],
+                                    'source_dev_id': command_dev_ids.decoded['dest_dev_id']}})
+        result = Result()
+        result.from_dict({'result': {'general_result': general_result, 'additional_information': ''}})
+        return [command_details, rsp_dev_ids, result]
 
 class LinkBase(abc.ABC):
     """Base class for link/transport to card."""
@@ -185,34 +196,26 @@ class LinkBase(abc.ABC):
             pcmd = ProactiveCommand()
             parsed = pcmd.from_tlv(h2b(fetch_rv[0]))
             print("FETCH: %s (%s)" % (fetch_rv[0], type(parsed).__name__))
-            result = Result()
             if self.proactive_handler:
                 # Extension point: If this does return a list of TLV objects,
                 # they could be appended after the Result; if the first is a
                 # Result, that cuold replace the one built here.
-                self.proactive_handler.receive_fetch_raw(pcmd, parsed)
-                result.from_dict({'result': {'general_result': 'performed_successfully',
-                                             'additional_information': ''}})
+                ti_list = self.proactive_handler.receive_fetch_raw(pcmd, parsed)
+                if not ti_list:
+                    ti_list = self.proactive_handler.prepare_response(pcmd, 'FIXME')
             else:
-                result.from_dict({'result': {'general_result': 'command_beyond_terminal_capability',
-                                             'additional_information': ''}})
+                ti_list = self.proactive_handler.prepare_response(pcmd, 'command_beyond_terminal_capability')
 
             # Send response immediately, thus also flushing out any further
             # proactive commands that the card already wants to send
             #
             # Structure as per TS 102 223 V4.4.0 Section 6.8
 
-            # The Command Details are echoed from the command that has been processed.
-            (command_details,) = [c for c in pcmd.decoded.children if isinstance(c, CommandDetails)]
-            # The Device Identities are fixed. (TS 102 223 V4.0.0 Section 6.8.2)
-            device_identities = DeviceIdentities()
-            device_identities.from_dict({'device_identities': {'source_dev_id': 'terminal', 'dest_dev_id':
-                                                               'uicc'}})
-
             # Testing hint: The value of tail does not influence the behavior
             # of an SJA2 that sent ans SMS, so this is implemented only
             # following TS 102 223, and not fully tested.
-            tail = command_details.to_tlv() + device_identities.to_tlv() + result.to_tlv()
+            ti_list_bin = [x.to_tlv() for x in ti_list]
+            tail = b''.join(ti_list_bin)
             # Testing hint: In contrast to the above, this part is positively
             # essential to get the SJA2 to provide the later parts of a
             # multipart SMS in response to an OTA RFM command.
