@@ -92,15 +92,15 @@ class Foo:
         if True: # eSIM profile
             KIC1 = h2b('207c5d2c1aa80d58cd8f542fb9ef2f80')
             KID1 = h2b('312367f1681902fd67d9a71c62a840e3')
-            self.ota_keyset = OtaKeyset(algo_crypt='aes_cbc', kic_idx=2, kic=KIC1,
-                                        algo_auth='aes_cmac', kid_idx=2, kid=KID1)
+            #KIC1 = h2b('B6B0E130EEE1C9A4A29DAEC034D35C9E')
+            #KID1 = h2b('889C51CD2A381A9D4EDDA9224C24A9AF')
+            self.ota_keyset = OtaKeyset(algo_crypt='aes_cbc', kic_idx=1, kic=KIC1,
+                                        algo_auth='aes_cmac', kid_idx=1, kid=KID1)
+            self.ota_keyset.cntr = 7
             self.tar = h2b('b00001') # ADF.USIM
 
- 
- 
- 
         self.ota_dialect = OtaDialectSms()
-        self.spi = {'counter':'no_counter', 'ciphering':True, 'rc_cc_ds': 'cc', 'por_in_submit':False,
+        self.spi = {'counter':'counter_must_be_higher', 'ciphering':True, 'rc_cc_ds': 'cc', 'por_in_submit':False,
                     'por_shall_be_ciphered':True, 'por_rc_cc_ds': 'cc', 'por': 'por_required'}
 
 
@@ -137,5 +137,6 @@ f = Foo()
 print("initialized")
 #f.tx_c_apdu(h2b('80a40400023f00'))
 #f.tx_c_apdu(h2b('80EC010100'))
-f.tx_c_apdu(h2b('80EC0101' + '0E' + '350103' + '390203e8' + '3e052101020304'))
+#f.tx_c_apdu(h2b('80EC0101' + '0E' + '350103' + '390203e8' + '3e052101020304'))
+f.tx_c_apdu(h2b('00a40000026f0700c0000000'))
 f.client.listen()

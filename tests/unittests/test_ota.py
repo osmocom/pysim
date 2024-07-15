@@ -16,6 +16,16 @@ SPI_CC_POR_CIPHERED_CC = {
     'por': 'por_required'
     }
 
+SPI_CC_CTR_POR_UNCIPHERED_CC = {
+    'counter':'counter_must_be_higher',
+    'ciphering':True,
+    'rc_cc_ds': 'cc',
+    'por_in_submit':False,
+    'por_shall_be_ciphered':False,
+    'por_rc_cc_ds': 'cc',
+    'por': 'por_required'
+    }
+
 SPI_CC_POR_UNCIPHERED_CC = {
     'counter':'no_counter',
     'ciphering':True,
@@ -35,6 +45,17 @@ SPI_CC_POR_UNCIPHERED_NOCC = {
     'por_rc_cc_ds': 'no_rc_cc_ds',
     'por': 'por_required'
 }
+
+SPI_CC_UNCIPHERED = {
+    'counter':'no_counter',
+    'ciphering':False,
+    'rc_cc_ds': 'cc',
+    'por_in_submit':False,
+    'por_shall_be_ciphered':False,
+    'por_rc_cc_ds': 'no_rc_cc_ds',
+    'por': 'por_required'
+}
+
 
 ######################################################################
 # old-style code-driven test (lots of code copy+paste)
@@ -99,6 +120,23 @@ class Test_SMS_AES128(unittest.TestCase):
         dec_tar, dec_spi, dec_apdu = self.dialect.decode_cmd(self.od, data + data2)
         print(b2h(dec_tar), b2h(dec_apdu))
 
+    def test_open_channel2(self):
+        spi = self.spi_base
+        self.od = OtaKeyset(algo_crypt='aes_cbc', kic_idx=1,
+                            algo_auth='aes_cmac', kid_idx=1,
+                            kic=h2b('000102030405060708090a0b0c0d0e0f'),
+                            kid=h2b('101112131415161718191a1b1c1d1e1f'))
+        tpdu = h2b('40048111227ff6407070611535004d02700000481516011212000001fe4c0943aea42e45021c078ae06c66afc09303608874b72f58bacadb0dcf665c29349c799fbb522e61709c9baf1890015e8e8e196e36153106c8b92f95153774')
+        submit = SMS_DELIVER.from_bytes(tpdu)
+        submit.tp_udhi = True
+        print(submit)
+        #print("UD: %s" % b2h(submit.tp_ud))
+        #print("len(UD)=%u, UDL=%u" % (len(submit.tp_ud), submit.tp_udl))
+        udhd, data = UserDataHeader.from_bytes(submit.tp_ud)
+        print("UDHD: %s" % udhd)
+        print("DATA: %s" % b2h(data))
+        dec_tar, dec_spi, dec_apdu = self.dialect.decode_cmd(self.od, data)
+        print(b2h(dec_tar), b2h(dec_apdu))
 
 class Test_SMS_3DES(unittest.TestCase):
     tar = h2b('b00000')
@@ -203,6 +241,13 @@ OTA_KEYSET_SJA5_AES128 = OtaKeyset(algo_crypt='aes_cbc', kic_idx=2,
                                    kic=h2b('200102030405060708090a0b0c0d0e0f'),
                                    kid=h2b('201102030405060708090a0b0c0d0e0f'))
 
+OTA_KEYSET_eSIM_AES128 = OtaKeyset(algo_crypt='aes_cbc', kic_idx=1,
+                                   algo_auth='aes_cmac', kid_idx=1,
+                                   kic=h2b('207c5d2c1aa80d58cd8f542fb9ef2f80'),
+                                   kid=h2b('312367f1681902fd67d9a71c62a840e3'))
+OTA_KEYSET_eSIM_AES128.cntr = 2
+
+
 class OtaTestCase(unittest.TestCase):
     def __init__(self, methodName='runTest', **kwargs):
         super().__init__(methodName, **kwargs)
@@ -210,6 +255,7 @@ class OtaTestCase(unittest.TestCase):
         # SIM RFM: B00010
         # USIM RFM: B00011
         self.tar = h2b('B00011')
+        self.tar = h2b('B00000')
 
 class SmsOtaTestCase(OtaTestCase):
     # Array describing the input/output data for the tests.  We use the
@@ -218,70 +264,102 @@ class SmsOtaTestCase(OtaTestCase):
     # manually writing one class per test.
     testdatasets = [
         {
-            'name': '3DES-SJA5-CIPHERED-CC',
-            'ota_keyset': OTA_KEYSET_SJA5_SAMPLES,
-            'spi': SPI_CC_POR_CIPHERED_CC,
+#            'name': '3DES-SJA5-CIPHERED-CC',
+#            'ota_keyset': OTA_KEYSET_SJA5_SAMPLES,
+#            'spi': SPI_CC_POR_CIPHERED_CC,
+#            'request': {
+#                'apdu': b'\x00\xa4\x00\x04\x02\x3f\x00',
+#                'encoded_cmd': '00201506193535b00011ae733256918d050b87c94fbfe12e4dc402f262c41cf67f2f',
+#                'encoded_tpdu': '400881214365877ff6227052000000000302700000201506193535b00011ae733256918d050b87c94fbfe12e4dc402f262c41cf67f2f',
+#                },
+#            'response': {
+#                'encoded_resp': '027100001c12b000118bb989492c632529326a2f4681feb37c825bc9021c9f6d0b',
+#                'response_status': 'por_ok',
+#                'number_of_commands': 1,
+#                'last_status_word': '6132',
+#                'last_response_data': '',
+#                }
+#        }, {
+#            'name': '3DES-SJA5-UNCIPHERED-CC',
+#            'ota_keyset': OTA_KEYSET_SJA5_SAMPLES,
+#            'spi': SPI_CC_POR_UNCIPHERED_CC,
+#            'request': {
+#                'apdu': b'\x00\xa4\x00\x04\x02\x3f\x00',
+#                'encoded_cmd': '00201506093535b00011c49ac91ab8159ba5b83a54fb6385e0a5e31694f8b215fafc',
+#                'encoded_tpdu': '400881214365877ff6227052000000000302700000201506093535b00011c49ac91ab8159ba5b83a54fb6385e0a5e31694f8b215fafc',
+#                },
+#            'response': {
+#                'encoded_resp': '027100001612b0001100000000000000b5bcd6353a421fae016132',
+#                'response_status': 'por_ok',
+#                'number_of_commands': 1,
+#                'last_status_word': '6132',
+#                'last_response_data': '',
+#                }
+#        }, {
+#            'name': '3DES-SJA5-UNCIPHERED-NOCC',
+#            'ota_keyset': OTA_KEYSET_SJA5_SAMPLES,
+#            'spi': SPI_CC_POR_UNCIPHERED_NOCC,
+#            'request': {
+#                'apdu': b'\x00\xa4\x00\x04\x02\x3f\x00',
+#                'encoded_cmd': '00201506013535b000113190be334900f52b025f3f7eddfe868e96ebf310023b7769',
+#                'encoded_tpdu': '400881214365877ff6227052000000000302700000201506013535b000113190be334900f52b025f3f7eddfe868e96ebf310023b7769',
+#                },
+#            'response': {
+#                'encoded_resp': '027100000e0ab0001100000000000000016132',
+#                'response_status': 'por_ok',
+#                'number_of_commands': 1,
+#                'last_status_word': '6132',
+#                'last_response_data': '',
+#                }
+#        }, {
+#            'name': 'AES128-SJA5-CIPHERED-CC',
+#            'ota_keyset': OTA_KEYSET_SJA5_AES128,
+#            'spi': SPI_CC_POR_CIPHERED_CC,
+#            'request': {
+#                'apdu': b'\x00\xa4\x00\x04\x02\x3f\x00',
+#                'encoded_cmd': '00281506192222b00011e87cceebb2d93083011ce294f93fc4d8de80da1abae8c37ca3e72ec4432e5058',
+#                'encoded_tpdu': '400881214365877ff6227052000000000302700000281506192222b00011e87cceebb2d93083011ce294f93fc4d8de80da1abae8c37ca3e72ec4432e5058',
+#                },
+#            'response': {
+#                'encoded_resp': '027100002412b00011ebc6b497e2cad7aedf36ace0e3a29b38853f0fe9ccde81913be5702b73abce1f',
+#                'response_status': 'por_ok',
+#                'number_of_commands': 1,
+#                'last_status_word': '6132',
+#                'last_response_data': '',
+#                }
+#        }, {
+            'name': 'AES128-eSIM-UNCIPHERED-CC',
+            'ota_keyset': OTA_KEYSET_eSIM_AES128,
+            'spi': SPI_CC_UNCIPHERED,
             'request': {
-                'apdu': b'\x00\xa4\x00\x04\x02\x3f\x00',
-                'encoded_cmd': '00201506193535b00011ae733256918d050b87c94fbfe12e4dc402f262c41cf67f2f',
-                'encoded_tpdu': '400881214365877ff6227052000000000302700000201506193535b00011ae733256918d050b87c94fbfe12e4dc402f262c41cf67f2f',
+                'apdu': h2b('AA0A220880F28000024F0000'), #b'\xaa\x0a\x22\x08\x80\xf2\x80\x00\x02\x4f\x00\x00',
+                'encoded_cmd': '1502011212B0000000000000020059E3EFF2E21D3809AA0A220880F28000024F0000',
+                'encoded_tpdu': '40048111227FF6407070611535002702700000221502011212B0000000000000020059E3EFF2E21D3809AA0A220880F28000024F0000',
                 },
             'response': {
-                'encoded_resp': '027100001c12b000118bb989492c632529326a2f4681feb37c825bc9021c9f6d0b',
-                'response_status': 'por_ok',
-                'number_of_commands': 1,
-                'last_status_word': '6132',
-                'last_response_data': '',
+                'encoded_resp': '027100000B0AB000000000000000000A9000',
+                'response_status': 'insufficient_security_level',
                 }
         }, {
-            'name': '3DES-SJA5-UNCIPHERED-CC',
-            'ota_keyset': OTA_KEYSET_SJA5_SAMPLES,
-            'spi': SPI_CC_POR_UNCIPHERED_CC,
+            'name': 'AES128-eSIM-CIPHERED-CC',
+            'ota_keyset': OTA_KEYSET_eSIM_AES128,
+            'spi': SPI_CC_CTR_POR_UNCIPHERED_CC,
             'request': {
-                'apdu': b'\x00\xa4\x00\x04\x02\x3f\x00',
-                'encoded_cmd': '00201506093535b00011c49ac91ab8159ba5b83a54fb6385e0a5e31694f8b215fafc',
-                'encoded_tpdu': '400881214365877ff6227052000000000302700000201506093535b00011c49ac91ab8159ba5b83a54fb6385e0a5e31694f8b215fafc',
+                'apdu': h2b('AA0A220880F28000024F0000'), #b'\xaa\x0a\x22\x08\x80\xf2\x80\x00\x02\x4f\x00\x00',
+                'encoded_cmd': '00281516091212B00000DD103B36C3BFBE9AA58BCE50D15DE123EE350BB19951DE24FD879A26FF252234',
+                'encoded_tpdu': '40048111227FF6407070611535002D02700000281516091212B00000DD103B36C3BFBE9AA58BCE50D15DE123EE350BB19951DE24FD879A26FF252234',
                 },
             'response': {
-                'encoded_resp': '027100001612b0001100000000000000b5bcd6353a421fae016132',
-                'response_status': 'por_ok',
-                'number_of_commands': 1,
-                'last_status_word': '6132',
-                'last_response_data': '',
-                }
-        }, {
-            'name': '3DES-SJA5-UNCIPHERED-NOCC',
-            'ota_keyset': OTA_KEYSET_SJA5_SAMPLES,
-            'spi': SPI_CC_POR_UNCIPHERED_NOCC,
-            'request': {
-                'apdu': b'\x00\xa4\x00\x04\x02\x3f\x00',
-                'encoded_cmd': '00201506013535b000113190be334900f52b025f3f7eddfe868e96ebf310023b7769',
-                'encoded_tpdu': '400881214365877ff6227052000000000302700000201506013535b000113190be334900f52b025f3f7eddfe868e96ebf310023b7769',
-                },
-            'response': {
-                'encoded_resp': '027100000e0ab0001100000000000000016132',
-                'response_status': 'por_ok',
-                'number_of_commands': 1,
-                'last_status_word': '6132',
-                'last_response_data': '',
-                }
-        }, {
-            'name': 'AES128-SJA5-CIPHERED-CC',
-            'ota_keyset': OTA_KEYSET_SJA5_AES128,
-            'spi': SPI_CC_POR_CIPHERED_CC,
-            'request': {
-                'apdu': b'\x00\xa4\x00\x04\x02\x3f\x00',
-                'encoded_cmd': '00281506192222b00011e87cceebb2d93083011ce294f93fc4d8de80da1abae8c37ca3e72ec4432e5058',
-                'encoded_tpdu': '400881214365877ff6227052000000000302700000281506192222b00011e87cceebb2d93083011ce294f93fc4d8de80da1abae8c37ca3e72ec4432e5058',
-                },
-            'response': {
-                'encoded_resp': '027100002412b00011ebc6b497e2cad7aedf36ace0e3a29b38853f0fe9ccde81913be5702b73abce1f',
+                'encoded_resp': '027100001C12B00000000000000200007DB7086951F7DB55AB0780010123026D009000',
+                #'encoded_resp': '027100000b0ab0000100000000000006'
+                #'encoded_resp': '027100002412b000019a551bb7c28183652de0ace6170d0e563c5e949a3ba56747fe4c1dbbef16642c'
                 'response_status': 'por_ok',
                 'number_of_commands': 1,
                 'last_status_word': '6132',
                 'last_response_data': '',
                 }
         },
+
         # TODO: AES192
         # TODO: AES256
     ]

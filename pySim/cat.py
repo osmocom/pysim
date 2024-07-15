@@ -2,7 +2,7 @@
 mainly) ETSI TS 102 223, ETSI TS 101 220 and USIM Application Toolkit (SAT)
 as described in 3GPP TS 31.111."""
 
-# (C) 2021-2022 by Harald Welte <laforge@osmocom.org>
+# (C) 2021-2024 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
