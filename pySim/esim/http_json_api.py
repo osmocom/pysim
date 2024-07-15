@@ -204,16 +204,17 @@ class JsonHttpApiFunction(abc.ABC):
         return output
 
     def decode(self, data: dict) -> dict:
-        """[further] Decode and validate the JSON-Dict of the respnse body."""
+        """[further] Decode and validate the JSON-Dict of the response body."""
         output = {}
-        # let's first do the header, it's special
-        if not 'header' in data:
-            raise ValueError('Mandatory output parameter "header" missing')
-        hdr_class = self.output_params.get('header')
-        output['header'] = hdr_class.decode(data['header'])
+        if 'header' in self.output_params:
+            # let's first do the header, it's special
+            if not 'header' in data:
+                raise ValueError('Mandatory output parameter "header" missing')
+            hdr_class = self.output_params.get('header')
+            output['header'] = hdr_class.decode(data['header'])
 
-        if output['header']['functionExecutionStatus']['status'] not in ['Executed-Success','Executed-WithWarning']:
-            raise ApiError(output['header']['functionExecutionStatus'])
+            if output['header']['functionExecutionStatus']['status'] not in ['Executed-Success','Executed-WithWarning']:
+                raise ApiError(output['header']['functionExecutionStatus'])
         # we can only expect mandatory parameters to be present in case of successful execution
         for p in self.output_mandatory:
             if p == 'header':
@@ -229,7 +230,7 @@ class JsonHttpApiFunction(abc.ABC):
                 output[p] = p_class.decode(v)
         return output
 
-    def call(self, data: dict, func_call_id: Optional[str] = None, timeout=10) -> dict:
+    def call(self, data: dict, func_call_id: Optional[str] = None, timeout=10) -> Optional[dict]:
         """Make an API call to the HTTP API endpoint represented by this object.
         Input data is passed in `data` as json-serializable dict.  Output data
         is returned as json-deserialized dict."""
@@ -253,4 +254,6 @@ class JsonHttpApiFunction(abc.ABC):
         if not response.headers.get('X-Admin-Protocol', 'gsma/rsp/v2.unknown').startswith('gsma/rsp/v2.'):
             raise HttpHeaderError(response)
 
-        return self.decode(response.json())
+        if response.content:
+            return self.decode(response.json())
+        return None
