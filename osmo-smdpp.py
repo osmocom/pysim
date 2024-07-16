@@ -376,6 +376,9 @@ class SmDppHttpServer:
 
         # Put together profileMetadata + _bin
         ss.profileMetadata = ProfileMetadata(iccid_bin=h2b(swap_nibbles(iccid_str)), spn="OsmocomSPN", profile_name=matchingId)
+        # enable notifications for all operations
+        for event in ['enable', 'disable', 'delete']:
+            ss.profileMetadata.add_notification(event, self.server_hostname)
         profileMetadata_bin = ss.profileMetadata.gen_store_metadata_request()
 
         # Put together smdpSigned2 + _bin

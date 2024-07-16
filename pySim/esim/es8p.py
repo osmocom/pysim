@@ -25,6 +25,7 @@ from pySim.utils import bertlv_return_one_rawtlv
 
 import pySim.esim.rsp as rsp
 from pySim.esim.bsp import BspInstance
+from pySim.esim import PMO
 
 # Given that GSMA RSP uses ASN.1 in a very weird way, we actually cannot encode the full data type before
 # signing, but we have to build parts of it separately first, then sign that, so we can put the signature
@@ -78,6 +79,11 @@ class ProfileMetadata:
         self.iccid_bin = iccid_bin
         self.spn = spn
         self.profile_name = profile_name
+        self.notifications = []
+
+    def add_notification(self, event: str, address: str):
+        """Add an 'other' notification to the notification configuration of the metadata"""
+        self.notifications.append((event, address))
 
     def gen_store_metadata_request(self) -> bytes:
         """Generate encoded (but unsigned) StoreMetadataReqest DO (SGP.22 5.5.3)"""
@@ -86,6 +92,12 @@ class ProfileMetadata:
             'serviceProviderName': self.spn,
             'profileName': self.profile_name,
         }
+        nci = []
+        for n in self.notifications:
+            pmo = PMO(n[0])
+            nci.append({'profileManagementOperation': pmo.to_bitstring(), 'notificationAddress': n[1]})
+        if len(nci):
+            smr['notificationConfigurationInfo'] = nci
         return rsp.asn1.encode('StoreMetadataRequest', smr)
 
 
