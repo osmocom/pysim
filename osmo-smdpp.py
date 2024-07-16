@@ -481,6 +481,9 @@ class SmDppHttpServer:
     @rsp_api_wrapper
     def handleNotification(self, request: IRequest, content: dict) -> dict:
         """See ES9+ HandleNotification in SGP.22 Section 5.6.4"""
+        # SGP.22 Section 6.3: "A normal notification function execution status (MEP Notification)
+        # SHALL be indicated by the HTTP status code '204' (No Content) with an empty HTTP response body"
+        request.setResponseCode(204)
         pendingNotification_bin = b64decode(content['pendingNotification'])
         pendingNotification = rsp.asn1.decode('PendingNotification', pendingNotification_bin)
         print("Rx %s: %s" % pendingNotification)

@@ -136,6 +136,7 @@ class HandleNotification(Es9PlusApiFunction):
         'pendingNotification': param.PendingNotification,
       }
     input_mandatory = ['pendingNotification']
+    expected_http_status = 204
 
 # ES9+ CancelSession function (SGP.22 section 6.5.2.10)
 class CancelSession(Es9PlusApiFunction):
