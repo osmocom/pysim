@@ -79,7 +79,19 @@ class ProfileMetadata:
         self.iccid_bin = iccid_bin
         self.spn = spn
         self.profile_name = profile_name
+        self.icon = None
+        self.icon_type = None
         self.notifications = []
+
+    def set_icon(self, is_png: bool, icon_data: bytes):
+        """Set the icon that is part of the metadata."""
+        if len(icon_data) > 1024:
+            raise ValueError('Icon data must not exceed 1024 bytes')
+        self.icon = icon_data
+        if is_png:
+            self.icon_type = 1
+        else:
+            self.icon_type = 0
 
     def add_notification(self, event: str, address: str):
         """Add an 'other' notification to the notification configuration of the metadata"""
@@ -92,6 +104,9 @@ class ProfileMetadata:
             'serviceProviderName': self.spn,
             'profileName': self.profile_name,
         }
+        if self.icon:
+            smr['icon'] = self.icon
+            smr['iconType'] = self.icon_type
         nci = []
         for n in self.notifications:
             pmo = PMO(n[0])
