@@ -451,7 +451,8 @@ class RuntimeLchan:
             binary data read from the file
         """
         if not isinstance(self.selected_file, TransparentEF):
-            raise TypeError("Only works with TransparentEF")
+            raise TypeError("Only works with TransparentEF, but %s is %s" % (self.selected_file,
+                                                                             self.selected_file.__class__.__mro__))
         return self.scc.read_binary(self.selected_file.fid, length, offset)
 
     def read_binary_dec(self) -> Tuple[dict, str]:
@@ -475,7 +476,8 @@ class RuntimeLchan:
             offset : Offset into the file from which to write 'data_hex'
         """
         if not isinstance(self.selected_file, TransparentEF):
-            raise TypeError("Only works with TransparentEF")
+            raise TypeError("Only works with TransparentEF, but %s is %s" % (self.selected_file,
+                                                                             self.selected_file.__class__.__mro__))
         return self.scc.update_binary(self.selected_file.fid, data_hex, offset, conserve=self.rs.conserve_write)
 
     def update_binary_dec(self, data: dict):
@@ -497,7 +499,8 @@ class RuntimeLchan:
             hex string of binary data contained in record
         """
         if not isinstance(self.selected_file, LinFixedEF):
-            raise TypeError("Only works with Linear Fixed EF")
+            raise TypeError("Only works with Linear Fixed EF, but %s is %s" % (self.selected_file,
+                                                                               self.selected_file.__class__.__mro__))
         # returns a string of hex nibbles
         return self.scc.read_record(self.selected_file.fid, rec_nr)
 
@@ -520,7 +523,8 @@ class RuntimeLchan:
             data_hex : Hex string binary data to be written
         """
         if not isinstance(self.selected_file, LinFixedEF):
-            raise TypeError("Only works with Linear Fixed EF")
+            raise TypeError("Only works with Linear Fixed EF, but %s is %s" % (self.selected_file,
+                                                                               self.selected_file.__class__.__mro__))
         return self.scc.update_record(self.selected_file.fid, rec_nr, data_hex,
 					       conserve=self.rs.conserve_write,
 					       leftpad=self.selected_file.leftpad)
@@ -556,7 +560,8 @@ class RuntimeLchan:
             list of integer tags contained in EF
         """
         if not isinstance(self.selected_file, BerTlvEF):
-            raise TypeError("Only works with BER-TLV EF")
+            raise TypeError("Only works with BER-TLV EF, but %s is %s" % (self.selected_file,
+                                                                          self.selected_file.__class__.__mro__))
         data, _sw = self.scc.retrieve_data(self.selected_file.fid, 0x5c)
         _tag, _length, value, _remainder = bertlv_parse_one(h2b(data))
         return list(value)
@@ -569,7 +574,8 @@ class RuntimeLchan:
             data_hex : Hex string binary data to be written (value portion)
         """
         if not isinstance(self.selected_file, BerTlvEF):
-            raise TypeError("Only works with BER-TLV EF")
+            raise TypeError("Only works with BER-TLV EF, but %s is %s" % (self.selected_file,
+                                                                          self.selected_file.__class__.__mro__))
         return self.scc.set_data(self.selected_file.fid, tag, data_hex, conserve=self.rs.conserve_write)
 
     def register_cmds(self, cmd_app=None):
