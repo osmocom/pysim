@@ -850,7 +850,7 @@ class EF_IPS(CyclicEF):
         self._construct = Struct('status'/PaddedString(2, 'ascii'),
                                  'link_to_ef_ipd'/Int8ub, 'rfu'/Byte)
 
-# TS 31.102 Section 4.2.103
+# TS 31.102 Section 4.2.103 (Rel 13)
 class EF_ePDGId(TransparentEF):
     _test_de_encode = [
         ( '801100657064672e6f736d6f636f6d2e6f7267', {'e_pdg_id': {"type_of_ePDG_address": "FQDN", "ePDG_address" : "epdg.osmocom.org" } } ),
@@ -868,7 +868,7 @@ class EF_ePDGId(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_ePDGId.ePDGId
 
-# TS 31.102 Section 4.2.104
+# TS 31.102 Section 4.2.104 (Rel 13)
 class EF_ePDGSelection(TransparentEF):
     _test_de_encode = [
         ( '800600f110000100', {'e_pdg_selection': [{'plmn': '001-01', 'epdg_priority': 1, 'epdg_fqdn_format': 'operator_identified' }] }),
@@ -883,14 +883,14 @@ class EF_ePDGSelection(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_ePDGSelection.ePDGSelection
 
-# TS 31.102 Section 4.2.106
+# TS 31.102 Section 4.2.106 (Rel 14)
 class EF_FromPreferred(TransparentEF):
     def __init__(self, fid='6ff7', sfid=None, name='EF.FromPreferred', size=(1, 1),
                  desc='From Preferred', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = BitStruct('rfu'/BitsRFU(7), 'from_preferred'/Flag)
 
-# TS 31.102 Section 4.2.114
+# TS 31.102 Section 4.2.114 (Rel 18)
 class EF_eAKA(TransparentEF):
     def __init__(self, fid='6f01', sfid=None, name='EF.eAKA', size=(1, 1),
                  desc='enhanced AKA support', **kwargs):
@@ -992,10 +992,10 @@ class EF_OCSGL(LinFixedEF):
 
 
 ######################################################################
-# DF.5GS
+# DF.5GS (Rel 15)
 ######################################################################
 
-# TS 31.102 Section 4.4.11.2
+# TS 31.102 Section 4.4.11.2 (Rel 15)
 class EF_5GS3GPPLOCI(TransparentEF):
     def __init__(self, fid='4f01', sfid=0x01, name='EF.5GS3GPPLOCI', size=(20, 20),
                  desc='5S 3GP location information', **kwargs):
@@ -1006,7 +1006,7 @@ class EF_5GS3GPPLOCI(TransparentEF):
                                  'last_visited_registered_tai_in_5gs'/HexAdapter(Bytes(6)),
                                  '5gs_update_status'/upd_status_constr)
 
-# TS 31.102 Section 4.4.11.7
+# TS 31.102 Section 4.4.11.7 (Rel 15)
 class EF_UAC_AIC(TransparentEF):
     _test_de_encode = [
         ( '03', { "uac_access_id_config": { "multimedia_priority_service": True,
@@ -1019,7 +1019,7 @@ class EF_UAC_AIC(TransparentEF):
                                mission_critical_service=2)
         self._construct = Struct('uac_access_id_config'/cfg_constr)
 
-# TS 31.102 Section 4.4.11.9
+# TS 31.102 Section 4.4.11.9 (Rel 15)
 class EF_OPL5G(LinFixedEF):
     def __init__(self, fid='4f08', sfid=0x08, name='EF.OPL5G', desc='5GS Operator PLMN List', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(10, None), **kwargs)
@@ -1027,7 +1027,7 @@ class EF_OPL5G(LinFixedEF):
                      'tac_max'/HexAdapter(Bytes(3)))
         self._construct = Struct('tai'/Tai, 'pnn_record_id'/Int8ub)
 
-# TS 31.102 Section 4.4.11.10
+# TS 31.102 Section 4.4.11.10 (Rel 15)
 class EF_SUPI_NAI(TransparentEF):
     class NetworkSpecificIdentifier(TLV_IE, tag=0x80):
         # RFC 7542 encoded as UTF-8 string
@@ -1049,7 +1049,7 @@ class EF_SUPI_NAI(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_SUPI_NAI.NAI_TLV_Collection
 
-# TS 31.102 Section 4.4.11.11
+# TS 31.102 Section 4.4.11.11 (Rel 15)
 class EF_Routing_Indicator(TransparentEF):
     def __init__(self, fid='4f0a', sfid=0x0a, name='EF.Routing_Indicator', desc='Routing Indicator', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
@@ -1061,7 +1061,7 @@ class EF_Routing_Indicator(TransparentEF):
         self._construct = Struct('routing_indicator'/Rpad(BcdAdapter(Bytes(2)), 'f', 2),
                                  'rfu'/HexAdapter(Bytes(2)))
 
-# TS 31.102 Section 4.4.11.13
+# TS 31.102 Section 4.4.11.13 (Rel 16)
 class EF_TN3GPPSNN(TransparentEF):
     class ServingNetworkName(BER_TLV_IE, tag=0x80):
         _construct = Utf8Adapter(GreedyBytes)
