@@ -1639,7 +1639,7 @@ class ADF_USIM(CardADF):
             EF_VGCS('6fb3', None, 'EF.VBS', desc='Voice Broadcast Service', service=58),
             EF_VGCSS('6fb4', None, 'EF.VBSS', desc='Voice Broadcast Service Status', service=58),
             EF_VGCSCA(service=64),
-            EF_VGCSCA('6fd5', None, 'EF.VBCSCA', desc='Voice Broadcast Service Ciphering Algorithm', service=65),
+            EF_VGCSCA('6fd5', None, 'EF.VBSCA', desc='Voice Broadcast Service Ciphering Algorithm', service=65),
             EF_GBABP(service=68),
             EF_MSK(service=69),
             EF_MUK(service=69),
