@@ -145,6 +145,32 @@ optional files in some later 3GPP release) were not found on the card, or were i
 trying to SELECT them.
 
 
+fsdump
+~~~~~~
+.. argparse::
+   :module: pySim-shell
+   :func: PySimCommands.fsdump_parser
+
+Please note that `fsdump` works relative to the current working
+directory, so if you are in `MF`, then the dump will contain all known
+files on the card.  However, if you are in `ADF.ISIM`, only files below
+that ADF will be part of the dump.
+
+Furthermore, it is strongly advised to first enter the ADM1 pin
+(`verify_adm`) to maximize the chance of having permission to read
+all/most files.
+
+One use case for this is to systematically analyze the differences between the contents of two
+cards.  To do this, you can create fsdumps of the two cards, and then use some general-purpose JSON
+diffing tool like `jycm --show` (see https://github.com/eggachecat/jycm).
+
+Example:
+::
+
+  pySIM-shell (00:MF)> fsdump > /tmp/fsdump.json
+  pySIM-shell (00:MF)>
+
+
 tree
 ~~~~
 Display a tree of the card filesystem.  It is important to note that this displays a tree

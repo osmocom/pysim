@@ -49,9 +49,18 @@ class SwMatchError(Exception):
         self.sw_expected = sw_expected
         self.rs = rs
 
-    def __str__(self):
+    @property
+    def description(self):
         if self.rs and self.rs.lchan[0]:
             r = self.rs.lchan[0].interpret_sw(self.sw_actual)
             if r:
-                return "SW match failed! Expected %s and got %s: %s - %s" % (self.sw_expected, self.sw_actual, r[0], r[1])
-        return "SW match failed! Expected %s and got %s." % (self.sw_expected, self.sw_actual)
+                return "%s - %s" % (r[0], r[1])
+        return ''
+
+    def __str__(self):
+        description = self.description
+        if description:
+            description = ": " + description
+        else:
+            description = "."
+        return "SW match failed! Expected %s and got %s%s" % (self.sw_expected, self.sw_actual, description)
