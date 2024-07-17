@@ -334,8 +334,8 @@ class SimCardCommands:
             try:
                 data, sw = self.send_apdu_checksw(pdu)
             except Exception as e:
-                raise ValueError('%s, failed to read (offset %d)' %
-                                 (str_sanitize(str(e)), offset)) from e
+                e.add_note('failed to read (offset %d)' % offset)
+                raise e
             total_data += data
             chunk_offset += chunk_len
         return total_data, sw
@@ -394,8 +394,8 @@ class SimCardCommands:
             try:
                 chunk_data, chunk_sw = self.send_apdu_checksw(pdu)
             except Exception as e:
-                raise ValueError('%s, failed to write chunk (chunk_offset %d, chunk_len %d)' %
-                                 (str_sanitize(str(e)), chunk_offset, chunk_len)) from e
+                e.add_note('failed to write chunk (chunk_offset %d, chunk_len %d)' % (chunk_offset, chunk_len))
+                raise e
             total_data += data
             chunk_offset += chunk_len
         if verify:
