@@ -30,7 +30,7 @@ import enum
 
 from construct import Optional as COptional
 from construct import Int32ub, Nibble, GreedyRange, Struct, FlagsEnum, Switch, this, Int16ub, Padding
-from construct import Bytewise, Int24ub, PaddedString
+from construct import Bytewise, Int24ub, PaddedString, PrefixedArray, If
 
 import pySim.ts_102_221
 from pySim.ts_51_011 import EF_ACMmax, EF_AAeM, EF_eMLPP, EF_CMI, EF_PNN
@@ -43,6 +43,8 @@ from pySim.ts_102_221 import EF_ARR
 from pySim.tlv import *
 from pySim.filesystem import *
 from pySim.ts_31_102_telecom import DF_PHONEBOOK, EF_UServiceTable
+from pySim.ts_31_103_shared import EF_IMSConfigData, EF_XCAPConfigData, EF_MuDMiDConfigData
+from pySim.ts_31_103_shared import EF_AC_GBAUAPI, EF_IMSDCI
 from pySim.construct import *
 from pySim.utils import is_hexstr
 from pySim.cat import SMS_TPDU, DeviceIdentities, SMSPPDownload
@@ -897,6 +899,14 @@ class EF_eAKA(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = BitStruct('rfu'/BitsRFU(7), 'enhanced_sqn_calculation_supported'/Flag)
 
+# TS 31.102 Section 4.2.115 (Rel 18)
+class EF_OCST(TransparentEF):
+    def __init__(self, fid='6f02', sfid=None, name='EF.OCST', size=(2, 100),
+                 desc='Operator controlled signal threshold per access technology', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
+        self._construct = Struct('sense'/FlagsEnum(Byte, sense_enabled=1),
+                                 'ocst_tlv'/GreedyBytes)
+
 
 ######################################################################
 # DF.GSM-ACCESS
@@ -1278,6 +1288,56 @@ class EF_5G_PROSE_UIR(TransparentEF):
         # contains TLV structure despite being TransparentEF, not BER-TLV ?!?
         self._tlv = EF_5G_PROSE_UIR.ProSeConfigDataForUeToNetworkRelayUE
 
+# TS 31.102 Section 4.4.13.8 (Rel 18)
+class EF_5G_PROSE_U2URU(TransparentEF):
+    class ValidityTimer(BER_TLV_IE, tag=0x85):
+        _construct = Bytes(5)
+    class ServedByNGRAN(BER_TLV_IE, tag=0x80):
+        _construct = GreedyBytes
+    class NotServedByNGRAN(BER_TLV_IE, tag=0x81):
+        _construct = GreedyBytes
+    class DefaultDstL2IdsForRxDisc(BER_TLV_IE, tag=0x99):
+        _construct = GreedyBytes
+    class UserInforIdForDiscovery(BER_TLV_IE, tag=0x8e):
+        _construct = GreedyBytes
+    class RSCInfoList(BER_TLV_IE, tag=0x8b):
+        _construct = GreedyBytes
+    class DefaultDstL2IdsForTxRxDirect(BER_TLV_IE, tag=0x9a):
+        _construct = GreedyBytes
+    class ProSeConfigDataForU2URelayUE(BER_TLV_IE, tag=0xa0,
+                                       nested=[ValidityTimer, ServedByNGRAN, NotServedByNGRAN,
+                                               DefaultDstL2IdsForRxDisc, UserInforIdForDiscovery,
+                                               RSCInfoList, DefaultDstL2IdsForTxRxDirect]):
+        pass
+    def __init__(self, fid='4f07', sfid=0x07, name='EF.5G_PROSE_U2URU',
+                 desc='5G ProSe configuration data for UE-to-UE relay UE', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._tlv = EF_5G_PROSE_U2URU.ProSeConfigDataForU2URelayUE
+
+# TS 31.102 Section 4.4.13.9 (Rel 18)
+class EF_5G_PROSE_EU(TransparentEF):
+    class PKMFAddressInformation(BER_TLV_IE, tag=0x93):
+        Ipv4AddrList = PrefixedArray(Int8ub, Int32ub)
+        Ipv6AddrList = PrefixedArray(Int8ub, Bytes(16))
+        _construct = Struct('flags'/FlagsEnum(Byte, ipv4=1, ipv6=2, fqdn=4),
+                            'ipv4_addr_list'/If(this.flags.ipv4, Ipv4AddrList),
+                            'ipv6_addr_list'/If(this.flags.ipv6, Ipv6AddrList),
+                            'fqdn'/Prefixed(Int8ub, Utf8Adapter(GreedyBytes)))
+    class ProSeConfigDataForEndUE(BER_TLV_IE, tag=0xa0,
+                                  nested=[EF_5G_PROSE_U2URU.ValidityTimer,
+                                          EF_5G_PROSE_U2URU.ServedByNGRAN,
+                                          EF_5G_PROSE_U2URU.NotServedByNGRAN,
+                                          EF_5G_PROSE_U2URU.DefaultDstL2IdsForRxDisc,
+                                          EF_5G_PROSE_U2URU.UserInforIdForDiscovery,
+                                          EF_5G_PROSE_U2URU.RSCInfoList,
+                                          EF_5G_PROSE_U2URU.DefaultDstL2IdsForTxRxDirect,
+                                          PKMFAddressInformation]):
+        pass
+    def __init__(self, fid='4f08', sfid=0x08, name='EF.5G_PROSE_EU',
+                 desc='5G ProSe configuration data for end UE', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._tlv = EF_5G_PROSE_EU.ProSeConfigDataForEndUE
+
 # TS 31.102 Section 4.4.13 (Rel 17)
 class DF_5G_ProSe(CardDF):
     def __init__(self, fid='5ff0', name='DF.5G_ProSe', desc='Files for 5G ProSe purpose', **kwargs):
@@ -1289,8 +1349,61 @@ class DF_5G_ProSe(CardDF):
             EF_5G_PROSE_U2NRU(service=3),
             EF_5G_PROSE_RU(service=4),
             EF_5G_PROSE_UIR(service=5),
+            # Rel 18 additions
+            EF_5G_PROSE_U2URU(service=6),
+            EF_5G_PROSE_EU(service=7),
         ]
         self.add_files(files)
+
+# TS 31.102 Section 4.4.14.2 (Rel 18)
+class EF_5MBSUECONFIG(TransparentEF):
+
+    class Plmn(BER_TLV_IE, tag=0x80):
+        _construct = Struct('plmn'/PlmnAdapter(Bytes(3)),
+                            'nid'/COptional(Bytes(6)))
+    class Tmgi(BER_TLV_IE, tag=0x81):
+        TmgiEntry = Struct('tmgi'/Bytes(6),
+                           'usd_fid'/HexAdapter(Bytes(2)),
+                           'service_type'/FlagsEnum(Byte, mbs_service_announcement=1, mbs_user_service=2))
+        _construct = GreedyRange(TmgiEntry)
+    class NrArfcnList(BER_TLV_IE, tag=0x82):
+        _construct = GreedyRange(Bytes(4))
+    class DNN(BER_TLV_IE, tag=0x83):
+        _construct = GreedyBytes
+    class SNSSAI(BER_TLV_IE, tag=0x84):
+        _construct = GreedyBytes
+    class PduInfoList(BER_TLV_IE, tag=0xa1, nested=[DNN, SNSSAI]):
+        pass
+    class Plmn5mbsPreconfiguration(BER_TLV_IE, tag=0xa0,
+                                   nested=[Plmn, Tmgi, NrArfcnList, PduInfoList]):
+        pass
+    def __init__(self, fid='4f01', sfid=None, name='EF.5MBSUECONFIG',
+                 desc='5MBS UE pre-configuration', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._tlv = EF_5MBSUECONFIG.Plmn5mbsPreconfiguration
+
+# TS 31.102 Section 4.4.14.3 (Rel 18)
+class EF_5MBSUSD(TransparentEF):
+    """There can be any number of these files with undefined FID; the FIDs are contained
+    in EF.5BMSUECONFIG. FID range is 4f08...4fff"""
+    class USD(BER_TLV_IE, tag=0x80):
+        _construct = GreedyBytes
+    def __init__(self, fid, sfid=None, name='EF.5MBSUSD',
+                 desc='5MBS User Service Description', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._tlv = USD
+
+
+# TS 31.102 Section 4.4.14 (Rel 18)
+class DF_5MBSUECONFIG(CardDF):
+    def __init__(self, fid='5ff1', name='DF.5MBSUECONFIG', desc='', **kwargs):
+        super().__init__(fid=fid, name=name, desc=desc, **kwargs)
+        files = [
+            EF_5MBSUECONFIG(),
+            # EF_5MBSUSD() wouild have to be dynamically registered based on EF_5MBSUECONFIG content
+        ]
+        self.add_files(files)
+
 
 # TS 31.102 Section 4.4.11.18 (Rel 17)
 class EF_5GSEDRX(TransparentEF):
@@ -1556,7 +1669,17 @@ class ADF_USIM(CardADF):
             EF_ePDGSelection('6ff6', None, 'EF.ePDGSelectionEm',
                              desc='ePDG Selection Information for Emergency Services', service=(110, 111)),
             EF_FromPreferred(service=114),
+            EF_IMSConfigData(service=115),
+            # TODO: EF.TVCONFIG
+            # TODO: EF.3GPPPSDATAOFF
+            # TODO: EF.3GPPPSDATAOFFservicelist
+            EF_XCAPConfigData(service=120),
+            # TODO: EF.EARFCNList
+            EF_MuDMiDConfigData(service=134),
             EF_eAKA(),
+            EF_OCST(service=148),
+            EF_AC_GBAUAPI(service=68),
+            EF_IMSDCI(service=150),
             # FIXME: DF_SoLSA service=23
             DF_PHONEBOOK(),
             DF_GSM_ACCESS(),
@@ -1569,6 +1692,7 @@ class ADF_USIM(CardADF):
             DF_SNPN(service=[143,146]),
             DF_5G_ProSe(service=139),
             DF_SAIP(),
+            DF_5MBSUECONFIG(service=147),
         ]
 
         if has_imsi:
