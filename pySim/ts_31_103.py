@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 """
-Various constants from 3GPP TS 31.103 V16.1.0
+Various constants from 3GPP TS 31.103 V18.1.0
 """
 
 #
 # Copyright (C) 2020 Supreeth Herle <herlesupreeth@gmail.com>
-# Copyright (C) 2021 Harald Welte <laforge@osmocom.org>
+# Copyright (C) 2021-2024 Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,6 +56,7 @@ EF_IST_map = {
     19: 'XCAP Configuration Data',
     20: 'WebRTC URI',
     21: 'MuD and MiD configuration data',
+    22: 'IMS Data Channel indication',
 }
 
 # TS 31.103 Section 4.2.2
@@ -279,6 +280,29 @@ class EF_MuDMiDConfigData(BerTlvEF):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
         self._tlv = EF_MuDMiDConfigData.MudMidConfigDataCollection
 
+# TS 31.103 Section 4.2.22
+class EF_AC_GBAUAPI(LinFixedEF):
+    """The use of this EF is eescribed in 3GPP TS 31.130"""
+    class AppletNafAccessControl(BER_TLV_IE, tag=0x80):
+        # the use of Int8ub as length field in Prefixed is strictly speaking incorrect, as it is a BER-TLV
+        # length field whihc will consume two bytes from length > 127 bytes.  However, AIDs and NAF IDs can
+        # safely be assumed shorter than that
+        _construct = Struct('aid'/Prefixed(Int8ub, GreedyBytes),
+                            'naf_id'/Prefixed(Int8ub, GreedyBytes))
+    def __init__(self, fid='6f0a', sfid=None, name='EF.GBAUAPI',
+                 desc='Access Control to GBA_U_API', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._tlv = EF_AC_GBAUAPI.AppletNafAccessControl
+
+# TS 31.103 Section 4.2.23
+class EF_IMSDCI(TransparentEF):
+    """See Management object as defined in 3GPP TS 24.275."""
+    def __init__(self, fid='6f0b', sfid=None, name='EF.IMSDCI', desc='IMS Data Channel Indication', **kwargs):
+        super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, **kwargs)
+        self._construct = Enum(Byte, ims_dc_not_allowed=0x00,
+                                     ims_dc_allowed_after_ims_session=0x01,
+                                     ims_dc_allowed_simultaneous_ims_session=0x02)
+
 
 class ADF_ISIM(CardADF):
     def __init__(self, aid='a0000000871004', has_fs=True, name='ADF.ISIM', fid=None, sfid=None,
@@ -306,6 +330,8 @@ class ADF_ISIM(CardADF):
             EF_XCAPConfigData(service=19),
             EF_WebRTCURI(service=20),
             EF_MuDMiDConfigData(service=21),
+            EF_AC_GBAUAPI(service=2),
+            EF_IMSDCI(service=22),
         ]
         self.add_files(files)
         # add those commands to the general commands of a TransparentEF
