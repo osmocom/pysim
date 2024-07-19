@@ -292,22 +292,26 @@ class ApduCommand(Apdu, metaclass=ApduCommandMeta):
         if callable(method):
             return method()
         else:
-            r = {}
-            method = getattr(self, '_decode_p1p2', None)
-            if callable(method):
-                r = self._decode_p1p2()
+            return self._cmd_to_dict()
+
+    def _cmd_to_dict(self) -> Dict:
+        """back-end function performing automatic decoding using _construct / _tlv."""
+        r = {}
+        method = getattr(self, '_decode_p1p2', None)
+        if callable(method):
+            r = self._decode_p1p2()
+        else:
+            r['p1'] = parse_construct(self._construct_p1, self.p1.to_bytes(1, 'big'))
+            r['p2'] = parse_construct(self._construct_p2, self.p2.to_bytes(1, 'big'))
+        r['p3'] = self.p3
+        if self.cmd_data:
+            if self._tlv:
+                ie = self._tlv()
+                ie.from_tlv(self.cmd_data)
+                r['body'] = ie.to_dict()
             else:
-                r['p1'] = parse_construct(self._construct_p1, self.p1.to_bytes(1, 'big'))
-                r['p2'] = parse_construct(self._construct_p2, self.p2.to_bytes(1, 'big'))
-            r['p3'] = self.p3
-            if self.cmd_data:
-                if self._tlv:
-                    ie = self._tlv()
-                    ie.from_tlv(self.cmd_data)
-                    r['body'] = ie.to_dict()
-                else:
-                    r['body'] = parse_construct(self._construct, self.cmd_data)
-            return r
+                r['body'] = parse_construct(self._construct, self.cmd_data)
+        return r
 
     def rsp_to_dict(self) -> Dict:
         """Convert the Response part of the APDU to a dict."""
