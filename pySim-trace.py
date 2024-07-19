@@ -23,6 +23,7 @@ from pySim.apdu_source.gsmtap import GsmtapApduSource
 from pySim.apdu_source.pyshark_rspro import PysharkRsproPcap, PysharkRsproLive
 from pySim.apdu_source.pyshark_gsmtap import PysharkGsmtapPcap
 from pySim.apdu_source.tca_loader_log import TcaLoaderLogApduSource
+from pySim.apdu_source.stdin_hex import StdinHexApduSource
 
 from pySim.apdu.ts_102_221 import UiccSelect, UiccStatus
 
@@ -190,6 +191,10 @@ parser_tcaloader_log = subparsers.add_parser('tca-loader-log', help="""
 parser_tcaloader_log.add_argument('-f', '--log-file', required=True,
                                   help='Name of the log file to be read')
 
+parser_stdin_hex = subparsers.add_parser('stdin-hex', help="""
+    Read APDUs as hex-string from stdin.""")
+
+
 if __name__ == '__main__':
 
     opts = option_parser.parse_args()
@@ -205,6 +210,8 @@ if __name__ == '__main__':
         s = PysharkGsmtapPcap(opts.pcap_file)
     elif opts.source == 'tca-loader-log':
         s = TcaLoaderLogApduSource(opts.log_file)
+    elif opts.source == 'stdin-hex':
+        s = StdinHexApduSource()
     else:
         raise ValueError("unsupported source %s", opts.source)
 
