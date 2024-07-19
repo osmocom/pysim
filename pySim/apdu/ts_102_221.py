@@ -99,7 +99,7 @@ class UiccSelect(ApduCommand, n='SELECT', ins=0xA4, cla=['0X', '4X', '6X']):
                 logger.warning('SELECT UNKNOWN FID %s', file_hex)
         elif mode == 'df_name':
             # Select by AID (can be sub-string!)
-            aid = self.cmd_dict['body']
+            aid = b2h(self.cmd_dict['body'])
             sels = lchan.rs.mf.get_app_selectables(['AIDS'])
             adf = self._find_aid_substr(sels, aid)
             if adf:
@@ -115,7 +115,7 @@ class UiccSelect(ApduCommand, n='SELECT', ins=0xA4, cla=['0X', '4X', '6X']):
             self.file = lchan.selected_file
             if 'body' in self.rsp_dict:
                 # not every SELECT is asking for the FCP in response...
-                return lchan.selected_file.decode_select_response(self.rsp_dict['body'])
+                return lchan.selected_file.decode_select_response(b2h(self.rsp_dict['body']))
         return None
 
 
@@ -128,7 +128,7 @@ class UiccStatus(ApduCommand, n='STATUS', ins=0xF2, cla=['8X', 'CX', 'EX']):
 
     def process_on_lchan(self, lchan):
         if self.cmd_dict['p2'] == 'response_like_select':
-            return lchan.selected_file.decode_select_response(self.rsp_dict['body'])
+            return lchan.selected_file.decode_select_response(b2h(self.rsp_dict['body']))
 
 def _decode_binary_p1p2(p1, p2) -> Dict:
     ret = {}

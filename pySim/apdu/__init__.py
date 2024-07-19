@@ -150,8 +150,8 @@ class ApduCommand(Apdu, metaclass=ApduCommandMeta):
     # fall-back constructs if the derived class provides no override
     _construct_p1 = Byte
     _construct_p2 = Byte
-    _construct = HexAdapter(GreedyBytes)
-    _construct_rsp = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
+    _construct_rsp = GreedyBytes
     _tlv = None
     _tlv_rsp = None
 

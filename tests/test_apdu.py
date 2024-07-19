@@ -30,8 +30,8 @@ class TestUsimAuth(unittest.TestCase):
                 '04a0a1a2a308b0b1b2b3b4b5b6b79000')
         res = {
             'cmd': {'p1': 0, 'p2': {'scope': 'df_adf_specific', 'authentication_context': 'gsm'},
-                    'body': {'rand': '0001020304050607', 'autn': None}},
-            'rsp': {'body': {'sres': 'a0a1a2a3', 'kc': 'b0b1b2b3b4b5b6b7'}}
+                    'body': {'rand': h2b('0001020304050607'), 'autn': None}},
+            'rsp': {'body': {'sres': h2b('a0a1a2a3'), 'kc': h2b('b0b1b2b3b4b5b6b7')}}
             }
         u = UsimAuthenticateEven(apdu[0], apdu[1])
         d = filter_dict(u.to_dict())
@@ -44,12 +44,12 @@ class TestUsimAuth(unittest.TestCase):
                        '10' + 'c0c1c2c3c4c5c6c7c8c9cacbcccdcecf' + '9000')
         res = {
             'cmd': {'p1': 0, 'p2': {'scope': 'df_adf_specific', 'authentication_context': 'umts'},
-                    'body': {'rand': '0001020304050607', 'autn': '1011121314151617'}},
+                    'body': {'rand': h2b('0001020304050607'), 'autn': h2b('1011121314151617')}},
             'rsp': {'body': {'tag': 219,
                              'body': {
-                                 'res': 'a0a1a2a3a4a5a6a7',
-                                 'ck': 'b0b1b2b3b4b5b6b7b8b9babbbcbdbebf',
-                                 'ik': 'c0c1c2c3c4c5c6c7c8c9cacbcccdcecf',
+                                 'res': h2b('a0a1a2a3a4a5a6a7'),
+                                 'ck': h2b('b0b1b2b3b4b5b6b7b8b9babbbcbdbebf'),
+                                 'ik': h2b('c0c1c2c3c4c5c6c7c8c9cacbcccdcecf'),
                                  'kc': None
                                  }
                              }
@@ -64,8 +64,8 @@ class TestUsimAuth(unittest.TestCase):
                 'DC' + '08' + 'a0a1a2a3a4a5a6a7' + '9000')
         res = {
             'cmd': {'p1': 0, 'p2': {'scope': 'df_adf_specific', 'authentication_context': 'umts'},
-                    'body': {'rand': '0001020304050607', 'autn': '1011121314151617'}},
-            'rsp': {'body': {'tag': 220, 'body': {'auts': 'a0a1a2a3a4a5a6a7' }}}
+                    'body': {'rand': h2b('0001020304050607'), 'autn': h2b('1011121314151617')}},
+            'rsp': {'body': {'tag': 220, 'body': {'auts': h2b('a0a1a2a3a4a5a6a7') }}}
             }
         u = UsimAuthenticateEven(apdu[0], apdu[1])
         d = filter_dict(u.to_dict())
@@ -78,8 +78,8 @@ class TestUsimAuth(unittest.TestCase):
                 'DB' + '10' + 'b0b1b2b3b4b5b6b7b8b9babbbcbdbebf' + '9000')
         res = {
             'cmd': {'p1': 0, 'p2': {'scope': 'df_adf_specific', 'authentication_context': 'vgcs_vbs'},
-                    'body': { 'vk_id': '10', 'vservice_id': '00010203', 'vstk_rand': '2021222324252627'}},
-            'rsp': {'body': {'vstk': 'b0b1b2b3b4b5b6b7b8b9babbbcbdbebf'}}
+                    'body': { 'vk_id': h2b('10'), 'vservice_id': h2b('00010203'), 'vstk_rand': h2b('2021222324252627')}},
+            'rsp': {'body': {'vstk': h2b('b0b1b2b3b4b5b6b7b8b9babbbcbdbebf')}}
             }
         u = UsimAuthenticateEven(apdu[0], apdu[1])
         d = filter_dict(u.to_dict())

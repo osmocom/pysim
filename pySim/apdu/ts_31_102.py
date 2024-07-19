@@ -42,28 +42,28 @@ class UsimAuthenticateEven(ApduCommand, n='AUTHENTICATE', ins=0x88, cla=['0X', '
                               BitsInteger(4),
                               'authentication_context'/Enum(BitsInteger(3), gsm=0, umts=1,
                                                             vgcs_vbs=2, gba=4))
-    _cs_cmd_gsm_3g =  Struct('_rand_len'/Int8ub, 'rand'/HexAdapter(Bytes(this._rand_len)),
-                         '_autn_len'/COptional(Int8ub), 'autn'/If(this._autn_len, HexAdapter(Bytes(this._autn_len))))
-    _cs_cmd_vgcs = Struct('_vsid_len'/Int8ub, 'vservice_id'/HexAdapter(Bytes(this._vsid_len)),
-                          '_vkid_len'/Int8ub, 'vk_id'/HexAdapter(Bytes(this._vkid_len)),
-                          '_vstk_rand_len'/Int8ub, 'vstk_rand'/HexAdapter(Bytes(this._vstk_rand_len)))
-    _cmd_gba_bs = Struct('_rand_len'/Int8ub, 'rand'/HexAdapter(Bytes(this._rand_len)),
-                         '_autn_len'/Int8ub, 'autn'/HexAdapter(Bytes(this._autn_len)))
-    _cmd_gba_naf = Struct('_naf_id_len'/Int8ub, 'naf_id'/HexAdapter(Bytes(this._naf_id_len)),
-                          '_impi_len'/Int8ub, 'impi'/HexAdapter(Bytes(this._impi_len)))
+    _cs_cmd_gsm_3g =  Struct('_rand_len'/Int8ub, 'rand'/Bytes(this._rand_len),
+                         '_autn_len'/COptional(Int8ub), 'autn'/If(this._autn_len, Bytes(this._autn_len)))
+    _cs_cmd_vgcs = Struct('_vsid_len'/Int8ub, 'vservice_id'/Bytes(this._vsid_len),
+                          '_vkid_len'/Int8ub, 'vk_id'/Bytes(this._vkid_len),
+                          '_vstk_rand_len'/Int8ub, 'vstk_rand'/Bytes(this._vstk_rand_len))
+    _cmd_gba_bs = Struct('_rand_len'/Int8ub, 'rand'/Bytes(this._rand_len),
+                         '_autn_len'/Int8ub, 'autn'/Bytes(this._autn_len))
+    _cmd_gba_naf = Struct('_naf_id_len'/Int8ub, 'naf_id'/Bytes(this._naf_id_len),
+                          '_impi_len'/Int8ub, 'impi'/Bytes(this._impi_len))
     _cs_cmd_gba = Struct('tag'/Int8ub, 'body'/Switch(this.tag, { 0xDD: 'bootstrap'/_cmd_gba_bs,
                                                                  0xDE: 'naf_derivation'/_cmd_gba_naf }))
-    _cs_rsp_gsm = Struct('_len_sres'/Int8ub, 'sres'/HexAdapter(Bytes(this._len_sres)),
-                         '_len_kc'/Int8ub, 'kc'/HexAdapter(Bytes(this._len_kc)))
-    _rsp_3g_ok = Struct('_len_res'/Int8ub, 'res'/HexAdapter(Bytes(this._len_res)),
-                        '_len_ck'/Int8ub, 'ck'/HexAdapter(Bytes(this._len_ck)),
-                        '_len_ik'/Int8ub, 'ik'/HexAdapter(Bytes(this._len_ik)),
-                        '_len_kc'/COptional(Int8ub), 'kc'/If(this._len_kc, HexAdapter(Bytes(this._len_kc))))
-    _rsp_3g_sync = Struct('_len_auts'/Int8ub, 'auts'/HexAdapter(Bytes(this._len_auts)))
+    _cs_rsp_gsm = Struct('_len_sres'/Int8ub, 'sres'/Bytes(this._len_sres),
+                         '_len_kc'/Int8ub, 'kc'/Bytes(this._len_kc))
+    _rsp_3g_ok = Struct('_len_res'/Int8ub, 'res'/Bytes(this._len_res),
+                        '_len_ck'/Int8ub, 'ck'/Bytes(this._len_ck),
+                        '_len_ik'/Int8ub, 'ik'/Bytes(this._len_ik),
+                        '_len_kc'/COptional(Int8ub), 'kc'/If(this._len_kc, Bytes(this._len_kc)))
+    _rsp_3g_sync = Struct('_len_auts'/Int8ub, 'auts'/Bytes(this._len_auts))
     _cs_rsp_3g = Struct('tag'/Int8ub, 'body'/Switch(this.tag, { 0xDB: 'success'/_rsp_3g_ok,
                                                                 0xDC: 'sync_fail'/_rsp_3g_sync}))
-    _cs_rsp_vgcs = Struct(Const(b'\xDB'), '_vstk_len'/Int8ub, 'vstk'/HexAdapter(Bytes(this._vstk_len)))
-    _cs_rsp_gba_naf = Struct(Const(b'\xDB'), '_ks_ext_naf_len'/Int8ub, 'ks_ext_naf'/HexAdapter(Bytes(this._ks_ext_naf_len)))
+    _cs_rsp_vgcs = Struct(Const(b'\xDB'), '_vstk_len'/Int8ub, 'vstk'/Bytes(this._vstk_len))
+    _cs_rsp_gba_naf = Struct(Const(b'\xDB'), '_ks_ext_naf_len'/Int8ub, 'ks_ext_naf'/Bytes(this._ks_ext_naf_len))
     def _decode_cmd(self) -> Dict:
         r = {}
         r['p1'] = parse_construct(self._construct_p1, self.p1.to_bytes(1, 'big'))
