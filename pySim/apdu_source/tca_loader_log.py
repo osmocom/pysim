@@ -20,12 +20,13 @@ from pySim.utils import h2b
 from pySim.gsmtap import GsmtapSource
 
 from pySim.apdu.ts_102_221 import ApduCommands as UiccApduCommands
+from pySim.apdu.ts_102_222 import ApduCommands as UiccAdmApduCommands
 from pySim.apdu.ts_31_102 import ApduCommands as UsimApduCommands
 from pySim.apdu.global_platform import ApduCommands as GpApduCommands
 
 from . import ApduSource, PacketType, CardReset
 
-ApduCommands = UiccApduCommands + UsimApduCommands + GpApduCommands
+ApduCommands = UiccApduCommands + UiccAdmApduCommands + UsimApduCommands + GpApduCommands
 
 class TcaLoaderLogApduSource(ApduSource):
     """ApduSource for reading log files created by TCALoader."""
