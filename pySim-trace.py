@@ -8,6 +8,7 @@ from pprint import pprint as pp
 from pySim.apdu import *
 from pySim.runtime import RuntimeState
 
+from pySim.utils import JsonEncoder
 from pySim.cards import UiccCardBase
 from pySim.commands import SimCardCommands
 from pySim.profile import CardProfile
@@ -97,7 +98,8 @@ class Tracer:
         """Output a single decoded + processed ApduCommand."""
         if self.show_raw_apdu:
             print(apdu)
-        print("%02u %-16s %-35s %-8s %s %s" % (inst.lchan_nr, inst._name, inst.path_str, inst.col_id, inst.col_sw, inst.processed))
+        print("%02u %-16s %-35s %-8s %s %s" % (inst.lchan_nr, inst._name, inst.path_str, inst.col_id,
+                                               inst.col_sw, json.dumps(inst.processed, cls=JsonEncoder)))
         print("===============================")
 
     def format_reset(self, apdu: CardReset):
