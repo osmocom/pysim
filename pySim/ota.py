@@ -1,6 +1,6 @@
 """Code related to SIM/UICC OTA according to TS 102 225 + TS 31.115."""
 
-# (C) 2021-2023 by Harald Welte <laforge@osmocom.org>
+# (C) 2021-2024 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import abc
 import struct
 from typing import Optional, Tuple
 from construct import Enum, Int8ub, Int16ub, Struct, Bytes, GreedyBytes, BitsInteger, BitStruct
-from construct import Flag, Padding, Switch, this
+from construct import Flag, Padding, Switch, this, PrefixedArray, GreedyRange
 
 from pySim.construct import *
 from pySim.utils import b2h
@@ -98,6 +98,17 @@ SmsCommandPacket = Struct('cmd_pkt_len'/Int16ub,
                           'kid'/Switch(this.spi.rc_cc_ds, {'cc': KID_CC, 'rc': KID_RC }),
                           'tar'/Bytes(3),
                           'secured_data'/GreedyBytes)
+
+# TS 102 226 Section 8.2.1.3.2.1
+SimFileAccessAndToolkitAppSpecParams = Struct('access_domain'/Prefixed(Int8ub, GreedyBytes),
+                                              'prio_level_of_tk_app_inst'/Int8ub,
+                                              'max_num_of_timers'/Int8ub,
+                                              'max_text_length_for_menu_entry'/Int8ub,
+                                              'menu_entries'/PrefixedArray(Int8ub, Struct('id'/Int8ub,
+                                                                                          'pos'/Int8ub)),
+                                              'max_num_of_channels'/Int8ub,
+                                              'msl'/Prefixed(Int8ub, GreedyBytes),
+                                              'tar_values'/Prefixed(Int8ub, GreedyRange(Bytes(3))))
 
 class OtaKeyset:
     """The OTA related data (key material, counter) to be used in encrypt/decrypt."""
