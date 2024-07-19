@@ -272,7 +272,7 @@ class ApduCommand(Apdu, metaclass=ApduCommandMeta):
         """Does the given CLA match the CLA list of the command?."""
         if not isinstance(cla, str):
             cla = '%02X' % cla
-        cla = cla.lower()
+        cla = cla.upper()
         # see https://github.com/PyCQA/pylint/issues/7219
         # pylint: disable=no-member
         for cla_match in cls._cla:
@@ -282,7 +282,7 @@ class ApduCommand(Apdu, metaclass=ApduCommandMeta):
                     cla_masked += 'X'
                 else:
                     cla_masked += cla[i]
-            if cla_masked == cla_match:
+            if cla_masked == cla_match.upper():
                 return True
         return False
 
