@@ -30,6 +30,80 @@ from pySim.utils import *
 from pySim.filesystem import *
 from pySim.tlv import *
 from pySim.profile import CardProfile
+from pySim.ota import SimFileAccessAndToolkitAppSpecParams
+
+# GPCS Table 11-48 Load Parameter Tags
+class NonVolatileCodeMinMemoryReq(BER_TLV_IE, tag=0xC6):
+    _construct = GreedyInteger()
+
+# GPCS Table 11-48 Load Parameter Tags
+class VolatileMinMemoryReq(BER_TLV_IE, tag=0xC7):
+    _construct = GreedyInteger()
+
+# GPCS Table 11-48 Load Parameter Tags
+class NonVolatileDataMinMemoryReq(BER_TLV_IE, tag=0xC8):
+    _construct = GreedyInteger()
+
+# GPCS Table 11-49: Install Parameter Tags
+class GlobalServiceParams(BER_TLV_IE, tag=0xCB):
+    pass
+
+# GPCS Table 11-49: Install Parameter Tags
+class VolatileReservedMemory(BER_TLV_IE, tag=0xD7):
+    _construct = GreedyInteger()
+
+# GPCS Table 11-49: Install Parameter Tags
+class NonVolatileReservedMemory(BER_TLV_IE, tag=0xD8):
+    _construct = GreedyInteger()
+
+# GPCS Table 11-49: Install Parameter Tags
+class Ts102226SpecificParameter(BER_TLV_IE, tag=0xCA):
+    _construct = SimFileAccessAndToolkitAppSpecParams
+
+# GPCS Table 11-48 Load Parameter Tags
+class LoadFileDataBlockFormatId(BER_TLV_IE, tag=0xCD):
+    pass
+
+# GPCS Table 11-50: Make Selectable Parameter Tags
+class ImplicitSelectionParam(BER_TLV_IE, tag=0xCF):
+    pass
+
+# GPCS Table 11-48 Load Parameter Tags
+class LoadFileDtaBlockParameters(BER_TLV_IE, tag=0xDD):
+    pass
+
+# GPCS Table 11-48 Load Parameter Tags / 11-49: Install Parameter Tags
+class SystemSpecificParams(BER_TLV_IE, tag=0xEF,
+                           nested=[NonVolatileCodeMinMemoryReq,
+                                   VolatileMinMemoryReq,
+                                   NonVolatileDataMinMemoryReq,
+                                   GlobalServiceParams,
+                                   VolatileReservedMemory,
+                                   NonVolatileReservedMemory,
+                                   Ts102226SpecificParameter,
+                                   LoadFileDataBlockFormatId,
+                                   ImplicitSelectionParam,
+                                   LoadFileDtaBlockParameters]):
+    pass
+
+# GPCS Table 11-49: Install Parameter Tags
+class ApplicationSpecificParams(BER_TLV_IE, tag=0xC9):
+    _construct = GreedyBytes
+
+class Ts102226SpecificTemplate(BER_TLV_IE, tag=0xEA):
+    pass
+
+class CrtForDigitalSignature(BER_TLV_IE, tag=0xB6):
+    # FIXME: nested
+    pass
+
+
+class InstallParameters(TLV_IE_Collection, nested=[ApplicationSpecificParams,
+                                                   SystemSpecificParams,
+                                                   Ts102226SpecificTemplate,
+                                                   CrtForDigitalSignature]):
+    pass
+
 
 sw_table = {
     'Warnings': {
