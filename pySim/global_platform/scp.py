@@ -115,6 +115,12 @@ class SCP(SecureChannel, abc.ABC):
             if not card_keys.kvn in range(self.kvn_range[0], self.kvn_range[1]+1):
                 raise ValueError('%s cannot be used with KVN outside range 0x%02x..0x%02x' %
                                  (self.__class__.__name__, self.kvn_range[0], self.kvn_range[1]))
+        elif hasattr(self, 'kvn_ranges'):
+            # pylint: disable=no-member
+            if all([not card_keys.kvn in range(x[0], x[1]+1) for x in self.kvn_ranges]):
+                raise ValueError('%s cannot be used with KVN outside permitted ranges %s' %
+                                 (self.__class__.__name__, self.kvn_ranges))
+
         self.lchan_nr = lchan_nr
         self.card_keys = card_keys
         self.sk = None
@@ -216,7 +222,8 @@ class SCP02(SCP):
 
     constr_iur = Struct('key_div_data'/Bytes(10), 'key_ver'/Int8ub, Const(b'\x02'),
                         'seq_counter'/Int16ub, 'card_challenge'/Bytes(6), 'card_cryptogram'/Bytes(8))
-    kvn_range = [0x20, 0x2f]
+    # The 0x70 is a non-spec special-case of sysmoISIM-SJA2/SJA5 and possibly more sysmocom products
+    kvn_ranges = [[0x20, 0x2f], [0x70, 0x70]]
 
     def __init__(self, *args, **kwargs):
         self.overhead = 8
