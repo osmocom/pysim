@@ -202,7 +202,8 @@ def do_info(pes: ProfileElementSequence, opts):
         adf = rfm.decoded.get('adfRFMAccess', None)
         if adf:
             print("\tADF AID: %s" % b2h(adf['adfAID']))
-        for tar in rfm.decoded['tarList']:
+        tar_list = rfm.decoded.get('tarList', [inst_aid[-3:]])
+        for tar in tar_list:
             print("\tTAR: %s" % b2h(tar))
 
 def do_extract_apps(pes:ProfileElementSequence, opts):
