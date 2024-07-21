@@ -15,8 +15,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from functools import total_ordering
 from typing import List, Union
 
+@total_ordering
 class OID:
     @staticmethod
     def intlist_from_str(instr: str) -> List[int]:
@@ -25,6 +27,10 @@ class OID:
     @staticmethod
     def str_from_intlist(intlist: List[int]) -> str:
         return '.'.join([str(x) for x in intlist])
+
+    @staticmethod
+    def highest_oid(oids: List['OID']) -> 'OID':
+        return sorted(oids)[-1]
 
     def __init__(self, initializer: Union[List[int], str]):
         if isinstance(initializer, str):
@@ -37,6 +43,39 @@ class OID:
 
     def __repr__(self) -> str:
         return 'OID(%s)' % (str(self))
+
+    def __eq__(self, other: 'OID'):
+        return (self.intlist == other.intlist)
+
+    def __ne__(self, other: 'OID'):
+        # implement based on __eq__
+        return not (self == other)
+
+    def cmp(self, other: 'OID'):
+        self_len = len(self.intlist)
+        other_len = len(other.intlist)
+        common_len = min(self_len, other_len)
+        max_len = max(self_len, other_len)
+
+        for i in range(0, max_len+1):
+            if i >= self_len:
+                # other list is longer
+                return -1
+            if i >= other_len:
+                # our list is longer
+                return 1
+            if self.intlist[i] > other.intlist[i]:
+                # our version is higher
+                return 1
+            if self.intlist[i] < other.intlist[i]:
+                # other version is higher
+                return -1
+            # continue to next digit
+        return 0
+
+    def __gt__(self, other: 'OID'):
+        if self.cmp(other) > 0:
+            return True
 
     def prefix_match(self, oid_str):
         """determine if oid_str is equal or below our OID."""

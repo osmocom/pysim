@@ -83,6 +83,12 @@ class SaipTest(unittest.TestCase):
                 pes.append(inst)
                 pes.to_der()
 
+class OidTest(unittest.TestCase):
+    def test_cmp(self):
+        self.assertTrue(oid.OID('1.0') > oid.OID('0.9'))
+        self.assertTrue(oid.OID('1.0') == oid.OID('1.0'))
+        self.assertTrue(oid.OID('1.0.1') > oid.OID('1.0'))
+        self.assertTrue(oid.OID('1.0.2') > oid.OID('1.0.1'))
 
 if __name__ == "__main__":
 	unittest.main()
