@@ -147,9 +147,10 @@ class File:
                 if k == 'fileDescriptor':
                     return v
         fd = get_fileDescriptor(l)
-        if not fd:
-            raise ValueError("No fileDescriptor found")
-        self.fileDescriptor.update(dict(fd))
+        if not fd and not self.fileDescriptor:
+            raise ValueError("No fileDescriptor found in tuple, and none set by template before")
+        if fd:
+            self.fileDescriptor.update(dict(fd))
         self.stream = self.linearize_file_content(l)
 
     def to_tuples(self) -> List[Tuple]:
@@ -262,13 +263,6 @@ class ProfileElement:
         """Return the decoded templateID used by this profile element (if any)."""
         return self.decoded.get('templateID', None)
 
-    @property
-    def files(self):
-        """Return dict of decoded 'File' ASN.1 items."""
-        if not self.type in self.FILE_BEARING:
-            return {}
-        return {k:v for (k,v) in self.decoded.items() if k not in ['templateID', self.header_name]}
-
     @classmethod
     def from_der(cls, der: bytes) -> 'ProfileElement':
         class4petype = {
@@ -311,7 +305,44 @@ class ProfileElement:
     def __str__(self) -> str:
         return self.type
 
-class ProfileElementMF(ProfileElement):
+class FsProfileElement(ProfileElement):
+    """A file-system bearing profile element, like MF, USIM, ...."""
+
+    def __init__(self, decoded = None, mandated: bool = True):
+        super().__init__(decoded, mandated)
+        # indexed by PE-Name
+        self.files = {}
+        self.tdef = asn1.types['ProfileElement'].type.name_to_member[self.type]
+
+    def add_file(self, file: File):
+        """Add a File to the ProfileElement."""
+        if file.pe_name in self.files:
+            raise KeyError('Cannot add file: %s already exists' % file.pename)
+        self.files[file.pe_name] = file
+
+    def files2pe(self):
+        """Update the "decoded" member with the contents of the files member."""
+        for f in self.files:
+            self.decoded[f.pename] = f.to_tuples()
+
+    def pe2files(self):
+        """Update the "files" member with the contents of the "decoded" member."""
+        tdict = {x.name: x for x in self.tdef.root_members}
+        template = templates.ProfileTemplateRegistry.get_by_oid(self.templateID)
+        for k, v in self.decoded.items():
+            if tdict[k].type_name == 'File':
+                self.add_file(File(k, v, template.files_by_pename.get(k, None)))
+
+    def _post_decode(self):
+        # not entirely sure about this automatism
+        self.pe2files()
+
+    def _pre_encode(self):
+        # should we do self.pe2files()?  I don't think so
+        #self.files2pe()
+        pass
+
+class ProfileElementMF(FsProfileElement):
     type = 'mf'
 
     def __init__(self, decoded: Optional[dict] = None):
@@ -390,7 +421,7 @@ class ProfileElementPin(ProfileElement):
         self.decoded['pinCodes'][1].append(pin)
 
 
-class ProfileElementTelecom(ProfileElement):
+class ProfileElementTelecom(FsProfileElement):
     type = 'telecom'
 
     def __init__(self, decoded: Optional[dict] = None):
@@ -576,7 +607,7 @@ class ProfileElementRFM(ProfileElement):
                     'adfAdminAccessDomain': ADM1_ACCESS,
                 }
 
-class ProfileElementUSIM(ProfileElement):
+class ProfileElementUSIM(FsProfileElement):
     type = 'usim'
 
     def __init__(self, decoded: Optional[dict] = None):
@@ -597,7 +628,7 @@ class ProfileElementUSIM(ProfileElement):
         f = File('ef-imsi', self.decoded['ef-imsi'])
         return dec_imsi(b2h(f.stream.getvalue()))
 
-class ProfileElementOptUSIM(ProfileElement):
+class ProfileElementOptUSIM(FsProfileElement):
     type = 'opt-usim'
 
     def __init__(self, decoded: Optional[dict] = None):
@@ -607,7 +638,7 @@ class ProfileElementOptUSIM(ProfileElement):
         # provide some reasonable defaults for a MNO-SD
         self.decoded['templateID'] = str(oid.ADF_USIMopt_not_by_default_v2)
 
-class ProfileElementISIM(ProfileElement):
+class ProfileElementISIM(FsProfileElement):
     type = 'isim'
 
     def __init__(self, decoded: Optional[dict] = None):
@@ -623,7 +654,7 @@ class ProfileElementISIM(ProfileElement):
     def adf_name(self) -> str:
         return b2h(self.decoded['adf-isim'][0][1]['dfName'])
 
-class ProfileElementOptISIM(ProfileElement):
+class ProfileElementOptISIM(FsProfileElement):
     type = 'opt-isim'
 
     def __init__(self, decoded: Optional[dict] = None):
