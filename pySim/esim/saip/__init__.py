@@ -153,6 +153,10 @@ class File:
             self.fileDescriptor.update(dict(fd))
         self.stream = self.linearize_file_content(l)
 
+    def from_gfm(self, d: Dict):
+        print(d)
+        # FIXME
+
     def to_tuples(self) -> List[Tuple]:
         """Generate a list of fileDescriptor, fillFileContent, fillFileOffset tuples into this instance."""
         raise NotImplementedError
@@ -277,6 +281,7 @@ class ProfileElement:
             'opt-isim': ProfileElementOptISIM,
             'akaParameter': ProfileElementAKA,
             'header': ProfileElementHeader,
+            'genericFileManagement': ProfileElementGFM,
             'end': ProfileElementEnd,
             }
         """Construct an instance from given raw, DER encoded bytes."""
@@ -341,6 +346,57 @@ class FsProfileElement(ProfileElement):
         # should we do self.pe2files()?  I don't think so
         #self.files2pe()
         pass
+
+class ProfileElementGFM(ProfileElement):
+    type = 'genericFileManagement'
+
+    def __init__(self, decoded = None, mandated: bool = True):
+        super().__init__(decoded, mandated)
+        # indexed by PE-Name
+        self.files = {}
+        self.tdef = asn1.types['ProfileElement'].type.name_to_member[self.type]
+
+    def add_file(self, path, file: File):
+        # FIXME: proper FS hiearchy
+        #if path in self.files:
+        #    raise KeyError('Cannot add file: path %s already exists' % path)
+        self.files[path] = file
+
+    def pe2files(self):
+        """Update the "files" member with the contents of the "decoded" member."""
+        def perform(self, path, file_elements):
+            if len(file_elements):
+                file = File('', file_elements)
+                self.add_file(path, file)
+
+        path = "3f00" # current DF: MF
+        file_elements = []
+        # looks like TCA added one level too much in the ASN.1 hierarchy here
+        for fmc in self.decoded['fileManagementCMD']:
+            for fmc2 in fmc:
+                if fmc2[0] == 'filePath':
+                    # selecting a new path means we're done with the previous file
+                    perform(self, path, file_elements)
+                    if fmc2[1] == "":
+                        path = "3f00"
+                    else:
+                        # FIXME
+                        pass
+                elif fmc2[0] == 'createFCP':
+                    # new FCP means new file; perform the old one
+                    perform(self, path, file_elements)
+                    file_elements = [('fileDescriptor', fmc2[1])]
+                elif fmc2[0] == 'fillFileOffset' or fmc2[0] == 'fillFileContent':
+                    file_elements.append(fmc2)
+                else:
+                    raise ValueError("Unknown GFM choice '%s'" % fmc2[0])
+        # add the last file, if we still have any pending data in file_elements
+        perform(self, path, file_elements)
+
+    def _post_decode(self):
+        # not entirely sure about this automatism
+        self.pe2files()
+
 
 class ProfileElementMF(FsProfileElement):
     type = 'mf'
