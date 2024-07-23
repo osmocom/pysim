@@ -19,7 +19,7 @@
 import inspect
 import abc
 import re
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from pySim.utils import bertlv_encode_len, bertlv_parse_len, bertlv_encode_tag, bertlv_parse_tag
 from pySim.utils import comprehensiontlv_encode_tag, comprehensiontlv_parse_tag
@@ -188,6 +188,24 @@ class IE(Transcodable, metaclass=TlvMeta):
         else:
             self.children = []
             return super().from_bytes(do, context=context)
+
+    def child_by_name(self, name: str) -> Optional['IE']:
+        """Return a child IE instance of given snake-case/json type name. This only works in case
+        there is no more than one child IE of the given type."""
+        children = list(filter(lambda c: camel_to_snake(type(c).__name__) == name, self.children))
+        if len(children) > 1:
+            raise KeyError('There are multiple children of class %s' % name)
+        elif len(children) == 1:
+            return children[0]
+
+    def child_by_type(self, cls) -> Optional['IE']:
+        """Return a child IE instance of given type (class). This only works in case
+        there is no more than one child IE of the given type."""
+        children = list(filter(lambda c: isinstance(c, cls), self.children))
+        if len(children) > 1:
+            raise KeyError('There are multiple children of class %s' % cls)
+        elif len(children) == 1:
+            return children[0]
 
 
 class TLV_IE(IE):
