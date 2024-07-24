@@ -401,7 +401,7 @@ class RuntimeLchan:
         (data, _sw) = self.scc.status()
         return self.selected_file.decode_select_response(data)
 
-    def get_file_for_selectable(self, name: str):
+    def get_file_for_filename(self, name: str):
         """Get the related CardFile object for a specified filename."""
         sels = self.selected_file.get_selectables()
         return sels[name]

@@ -44,7 +44,7 @@ class Ts102222Commands(CommandSet):
         if not opts.force_delete:
             self._cmd.perror("Refusing to permanently delete the file, please read the help text.")
             return
-        f = self._cmd.lchan.get_file_for_selectable(opts.NAME)
+        f = self._cmd.lchan.get_file_for_filename(opts.NAME)
         (_data, _sw) = self._cmd.lchan.scc.delete_file(f.fid)
 
     def complete_delete_file(self, text, line, begidx, endidx) -> List[str]:
@@ -65,7 +65,7 @@ class Ts102222Commands(CommandSet):
         if not opts.force:
             self._cmd.perror("Refusing to terminate the file, please read the help text.")
             return
-        f = self._cmd.lchan.get_file_for_selectable(opts.NAME)
+        f = self._cmd.lchan.get_file_for_filename(opts.NAME)
         (_data, _sw) = self._cmd.lchan.scc.terminate_df(f.fid)
 
     def complete_terminate_df(self, text, line, begidx, endidx) -> List[str]:
@@ -81,7 +81,7 @@ class Ts102222Commands(CommandSet):
         if not opts.force:
             self._cmd.perror("Refusing to terminate the file, please read the help text.")
             return
-        f = self._cmd.lchan.get_file_for_selectable(opts.NAME)
+        f = self._cmd.lchan.get_file_for_filename(opts.NAME)
         (_data, _sw) = self._cmd.lchan.scc.terminate_ef(f.fid)
 
     def complete_terminate_ef(self, text, line, begidx, endidx) -> List[str]:
@@ -209,7 +209,7 @@ class Ts102222Commands(CommandSet):
     @cmd2.with_argparser(resize_ef_parser)
     def do_resize_ef(self, opts):
         """Resize an existing EF below the currently selected DF.  Requires related privileges."""
-        f = self._cmd.lchan.get_file_for_selectable(opts.NAME)
+        f = self._cmd.lchan.get_file_for_filename(opts.NAME)
         ies = [FileIdentifier(decoded=f.fid),
                FileSize(decoded=opts.file_size)]
         fcp = FcpTemplate(children=ies)
