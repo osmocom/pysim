@@ -599,66 +599,14 @@ class PySimCommands(CommandSet):
         self._cmd.poutput("# directory: %s (%s)" % (df_path, df_path_fid))
         try:
             fcp_dec = self._cmd.lchan.select(filename, self._cmd)
-            self._cmd.poutput("# file: %s (%s)" % (
-                self._cmd.lchan.selected_file.name, self._cmd.lchan.selected_file.fid))
-
-            structure = self._cmd.lchan.selected_file_structure()
-            self._cmd.poutput("# structure: %s" % str(structure))
+            self._cmd.poutput("# file: %s (%s)" %
+                              (self._cmd.lchan.selected_file.name, self._cmd.lchan.selected_file.fid))
+            self._cmd.poutput("# structure: %s" % self._cmd.lchan.selected_file_structure())
             self._cmd.poutput("# RAW FCP Template: %s" % str(self._cmd.lchan.selected_file_fcp_hex))
             self._cmd.poutput("# Decoded FCP Template: %s" % str(self._cmd.lchan.selected_file_fcp))
+            self._cmd.poutput("select " + self._cmd.lchan.selected_file.fully_qualified_path_str())
+            self._cmd.poutput(self._cmd.lchan.selected_file.export(as_json, self._cmd.lchan))
 
-            for f in df_path_list:
-                self._cmd.poutput("select " + str(f))
-            self._cmd.poutput("select " + self._cmd.lchan.selected_file.name)
-
-            if structure == 'transparent':
-                if as_json:
-                    result = self._cmd.lchan.read_binary_dec()
-                    self._cmd.poutput("update_binary_decoded '%s'" % json.dumps(result[0], cls=JsonEncoder))
-                else:
-                    result = self._cmd.lchan.read_binary()
-                    self._cmd.poutput("update_binary " + str(result[0]))
-            elif structure == 'cyclic' or structure == 'linear_fixed':
-                # Use number of records specified in select response
-                num_of_rec = self._cmd.lchan.selected_file_num_of_rec()
-                if num_of_rec:
-                    for r in range(1, num_of_rec + 1):
-                        if as_json:
-                            result = self._cmd.lchan.read_record_dec(r)
-                            self._cmd.poutput("update_record_decoded %d '%s'" % (r, json.dumps(result[0], cls=JsonEncoder)))
-                        else:
-                            result = self._cmd.lchan.read_record(r)
-                            self._cmd.poutput("update_record %d %s" % (r, str(result[0])))
-
-                # When the select response does not return the number of records, read until we hit the
-                # first record that cannot be read.
-                else:
-                    r = 1
-                    while True:
-                        try:
-                            if as_json:
-                                result = self._cmd.lchan.read_record_dec(r)
-                                self._cmd.poutput("update_record_decoded %d '%s'" % (r, json.dumps(result[0], cls=JsonEncoder)))
-                            else:
-                                result = self._cmd.lchan.read_record(r)
-                                self._cmd.poutput("update_record %d %s" % (r, str(result[0])))
-                        except SwMatchError as e:
-                            # We are past the last valid record - stop
-                            if e.sw_actual == "9402":
-                                break
-                            # Some other problem occurred
-                            else:
-                                raise e
-                        r = r + 1
-            elif structure == 'ber_tlv':
-                tags = self._cmd.lchan.retrieve_tags()
-                for t in tags:
-                    result = self._cmd.lchan.retrieve_data(t)
-                    (tag, l, val, remainer) = bertlv_parse_one(h2b(result[0]))
-                    self._cmd.poutput("set_data 0x%02x %s" % (t, b2h(val)))
-            else:
-                raise RuntimeError(
-                    'Unsupported structure "%s" of file "%s"' % (structure, filename))
         except Exception as e:
             bad_file_str = df_path + "/" + str(filename) + ", " + str(e)
             self._cmd.poutput("# bad file: %s" % bad_file_str)

@@ -35,10 +35,13 @@ import cmd2
 from cmd2 import CommandSet, with_default_category
 from smartcard.util import toBytes
 
-from pySim.utils import sw_match, h2b, b2h, is_hex, auto_int, auto_uint8, auto_uint16, is_hexstr
+from pySim.utils import sw_match, h2b, b2h, is_hex, auto_int, auto_uint8, auto_uint16, is_hexstr, JsonEncoder
+from pySim.utils import bertlv_parse_one
+
 from pySim.construct import filter_dict, parse_construct, build_construct
 from pySim.jsonpath import js_path_modify
 from pySim.commands import SimCardCommands
+from pySim.exceptions import SwMatchError
 
 # int: a single service is associated with this file
 # list: any of the listed services requires this file
@@ -774,6 +777,25 @@ class TransparentEF(CardEF):
         raise NotImplementedError(
             "%s encoder not yet implemented. Patches welcome." % self)
 
+    @staticmethod
+    def export(as_json: bool, lchan):
+        """
+        Export the file contents of a TransparentEF. This method returns a shell command string (See also ShellCommand
+        definition in this class) that can be used to write the file contents back.
+        """
+
+        if lchan.selected_file_structure() != 'transparent':
+            raise ValueError("selected file has structure type '%s', expecting a file with structure 'transparent'" %
+                             lchan.selected_file_structure())
+        export_str = ""
+        if as_json:
+            result = lchan.read_binary_dec()
+            export_str += ("update_binary_decoded '%s'\n" % json.dumps(result[0], cls=JsonEncoder))
+        else:
+            result = lchan.read_binary()
+            export_str += ("update_binary %s\n" % str(result[0]))
+        return export_str.strip()
+
 
 class LinFixedEF(CardEF):
     """Linear Fixed EF (Entry File) in the smart card filesystem.
@@ -1044,6 +1066,54 @@ class LinFixedEF(CardEF):
         raise NotImplementedError(
             "%s encoder not yet implemented. Patches welcome." % self)
 
+    @staticmethod
+    def export(as_json: bool, lchan):
+        """
+        Export the file contents of a LinFixedEF (or a CyclicEF). This method returns a shell command string (See also
+        ShellCommand definition in this class) that can be used to write the file contents back.
+        """
+
+        # A CyclicEF is a subclass of LinFixedEF.
+        if lchan.selected_file_structure() != 'linear_fixed' and lchan.selected_file_structure() != 'cyclic':
+            raise ValueError("selected file has structure type '%s', expecting a file with structure 'linear_fixed' or 'cyclic'" %
+                             lchan.selected_file_structure())
+
+        export_str = ""
+
+        # Use number of records specified in select response
+        num_of_rec = lchan.selected_file_num_of_rec()
+        if num_of_rec:
+            for r in range(1, num_of_rec + 1):
+                if as_json:
+                    result = lchan.read_record_dec(r)
+                    export_str += ("update_record_decoded %d '%s'\n" % (r, json.dumps(result[0], cls=JsonEncoder)))
+                else:
+                    result = lchan.read_record(r)
+                    export_str += ("update_record %d %s\n" % (r, str(result[0])))
+
+        # In case the select response does not return the number of records, read until we hit the first record that
+        # cannot be read.
+        else:
+            r = 1
+            while True:
+                try:
+                    if as_json:
+                        result = lchan.read_record_dec(r)
+                        export_str += ("update_record_decoded %d '%s'\n" % (r, json.dumps(result[0], cls=JsonEncoder)))
+                    else:
+                        result = lchan.read_record(r)
+                        export_str += ("update_record %d %s\n" % (r, str(result[0])))
+                except SwMatchError as e:
+                    # We are past the last valid record - stop
+                    if e.sw_actual == "9402":
+                        break
+                # Some other problem occurred
+                else:
+                    raise e
+                r = r + 1
+
+        return export_str.strip()
+
 
 class CyclicEF(LinFixedEF):
     """Cyclic EF (Entry File) in the smart card filesystem"""
@@ -1263,6 +1333,33 @@ class BerTlvEF(CardEF):
         self._construct = None
         self.size = size
         self.shell_commands = [self.ShellCommands()]
+
+    @staticmethod
+    def export(as_json: bool, lchan):
+        """
+        Export the file contents of a BerTlvEF. This method returns a shell command string (See also ShellCommand
+        definition in this class) that can be used to write the file contents back.
+        """
+
+        if lchan.selected_file_structure() != 'ber_tlv':
+            raise ValueError("selected file has structure type '%s', expecting a file with structure 'ber_tlv'" %
+                             lchan.selected_file_structure())
+
+        # TODO: Add JSON output as soon as we have a set_data_decoded command and a retrieve_data_dec method.
+        if as_json:
+            raise NotImplementedError("BerTlvEF encoder not yet implemented. Patches welcome.")
+
+        export_str = ""
+        tags = lchan.retrieve_tags()
+        if tags == []:
+            export_str += "# empty file, no tags"
+        else:
+            for t in tags:
+                result = lchan.retrieve_data(t)
+                (tag, l, val, remainer) = bertlv_parse_one(h2b(result[0]))
+                export_str += ("set_data 0x%02x %s\n" % (t, b2h(val)))
+        return export_str.strip()
+
 
 def interpret_sw(sw_data: dict, sw: str):
     """Interpret a given status word.
