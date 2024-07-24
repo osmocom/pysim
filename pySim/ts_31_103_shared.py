@@ -92,7 +92,7 @@ class EF_XCAPConfigData(BerTlvEF):
         self._tlv = EF_XCAPConfigData.XcapConnParamsPolicy
 
 # TS 31.103 Section 4.2.20
-class EF_WebRTCURI(TransparentEF):
+class EF_WebRTCURI(LinFixedEF):
     class uri(BER_TLV_IE, tag=0x80):
         _construct = Utf8Adapter(GreedyBytes)
 
