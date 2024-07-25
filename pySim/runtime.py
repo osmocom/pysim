@@ -396,6 +396,36 @@ class RuntimeLchan:
 
         return self.selected_file_fcp
 
+    def select_parent(self, cmd_app=None):
+        """Select the parent file of the currently selected file. This method also works in case the currently selected
+        file is an ADF without UICC file system support and can be used to exit those ADFs.
+        """
+        parent = self.selected_file.parent
+        df = self.selected_file
+        adf = self.selected_adf
+        if adf and adf.has_fs == False:
+            # Not every application that may be present on a GlobalPlatform card will support the SELECT
+            # command as we know it from ETSI TS 102 221, section 11.1.1. In fact the only subset of
+            # SELECT we may rely on is the OPEN SELECT command as specified in GlobalPlatform Card
+            # Specification, section 11.9. Unfortunately the OPEN SELECT command only supports the
+            # "select by name" method, which means we can only select an application and not a file.
+            # The consequence of this is that we may get trapped in an application that does not have
+            # ISIM/USIM like file system support and the only way to leave that application is to select
+            # an ISIM/USIM application in order to get the file system access back.
+            #
+            # To automate this escape-route while traversing the file system we will check whether
+            # the parent file is the MF. When this is the case and the selected ADF has no file system
+            # support, we will select an arbitrary ADF that has file system support first and from there
+            # we will then select the MF.
+            for selectable in parent.get_selectables().items():
+                if isinstance(selectable[1], CardADF) and selectable[1].has_fs == True:
+                    self.select(selectable[1].name, cmd_app)
+                    break
+            self.select_file(parent, cmd_app)
+
+        # Select the parent file normally
+        self.select_file(parent, cmd_app)
+
     def status(self):
         """Request STATUS (current selected file FCP) from card."""
         (data, _sw) = self.scc.status()

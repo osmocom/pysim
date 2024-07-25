@@ -535,32 +535,7 @@ class PySimCommands(CommandSet):
                 # below, so we must not move up.
                 if skip_df == False:
                     self.walk(indent + 1, action_ef, action_df, context, **kwargs)
-
-                    parent = self._cmd.lchan.selected_file.parent
-                    df = self._cmd.lchan.selected_file
-                    adf = self._cmd.lchan.selected_adf
-                    if isinstance(parent, CardMF) and (adf and adf.has_fs == False):
-                        # Not every application that may be present on a GlobalPlatform card will support the SELECT
-                        # command as we know it from ETSI TS 102 221, section 11.1.1. In fact the only subset of
-                        # SELECT we may rely on is the OPEN SELECT command as specified in GlobalPlatform Card
-                        # Specification, section 11.9. Unfortunately the OPEN SELECT command only supports the
-                        # "select by name" method, which means we can only select an application and not a file.
-                        # The consequence of this is that we may get trapped in an application that does not have
-                        # ISIM/USIM like file system support and the only way to leave that application is to select
-                        # an ISIM/USIM application in order to get the file system access back.
-                        #
-                        # To automate this escape-route while traversing the file system we will check whether
-                        # the parent file is the MF. When this is the case and the selected ADF has no file system
-                        # support, we will select an arbitrary ADF that has file system support first and from there
-                        # we will then select the MF.
-                        for selectable in parent.get_selectables().items():
-                            if isinstance(selectable[1], CardADF) and selectable[1].has_fs == True:
-                                self._cmd.lchan.select(selectable[1].name, self._cmd)
-                                break
-                        self._cmd.lchan.select(df.get_mf().name, self._cmd)
-                    else:
-                        # Normal DF/ADF selection
-                        fcp_dec = self._cmd.lchan.select("..", self._cmd)
+                    self._cmd.lchan.select_parent(self._cmd)
 
             elif action_ef:
                 df_before_action = self._cmd.lchan.selected_file
