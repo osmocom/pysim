@@ -859,9 +859,9 @@ above the to-be-activated EF must be selected!"""
     @cmd2.with_argparser(switch_chan_parser)
     def do_switch_channel(self, opts):
         """Switch currently active logical channel."""
-        self._cmd.lchan._select_pre(self._cmd)
+        self._cmd.lchan.unregister_cmds(self._cmd)
         self._cmd.lchan = self._cmd.rs.lchan[opts.chan_nr]
-        self._cmd.lchan._select_post(self._cmd)
+        self._cmd.lchan.register_cmds(self._cmd)
         self._cmd.update_prompt()
 
     def do_status(self, opts):

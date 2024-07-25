@@ -262,7 +262,8 @@ class RuntimeLchan:
             raise ValueError(
                 "Cannot select unknown file by name %s, only hexadecimal 4 digit FID is allowed" % fid)
 
-        self._select_pre(cmd_app)
+        # unregister commands of old file
+        self.unregister_cmds(cmd_app)
 
         try:
             # We access the card through the select_file method of the scc object.
@@ -295,12 +296,6 @@ class RuntimeLchan:
 
         self._select_post(cmd_app, f, data)
 
-    def _select_pre(self, cmd_app):
-        # unregister commands of old file
-        if cmd_app and self.selected_file.shell_commands:
-            for c in self.selected_file.shell_commands:
-                cmd_app.unregister_command_set(c)
-
     def _select_post(self, cmd_app, file:Optional[CardFile] = None, select_resp_data = None):
         # we store some reference data (see above) about the currently selected file.
         # This data must be updated after every select.
@@ -316,9 +311,7 @@ class RuntimeLchan:
                 self.selected_file_fcp = None
 
         # register commands of new file
-        if cmd_app and self.selected_file.shell_commands:
-            for c in self.selected_file.shell_commands:
-                cmd_app.register_command_set(c)
+        self.register_cmds(cmd_app)
 
     def select_file(self, file: CardFile, cmd_app=None):
         """Select a file (EF, DF, ADF, MF, ...).
@@ -331,7 +324,9 @@ class RuntimeLchan:
         inter_path = self.selected_file.build_select_path_to(file)
         if not inter_path:
             raise RuntimeError('Cannot determine path from %s to %s' % (self.selected_file, file))
-        self._select_pre(cmd_app)
+
+        # unregister commands of old file
+        self.unregister_cmds(cmd_app)
 
         # be sure the variables that we pass to _select_post contain valid values.
         selected_file = self.selected_file
@@ -577,8 +572,14 @@ class RuntimeLchan:
             raise TypeError("Only works with BER-TLV EF")
         return self.scc.set_data(self.selected_file.fid, tag, data_hex, conserve=self.rs.conserve_write)
 
+    def register_cmds(self, cmd_app=None):
+        """Register command set that is associated with the currently selected file"""
+        if cmd_app and self.selected_file.shell_commands:
+            for c in self.selected_file.shell_commands:
+                cmd_app.register_command_set(c)
+
     def unregister_cmds(self, cmd_app=None):
-        """Unregister all file specific commands."""
+        """Unregister command set that is associated with the currently selected file"""
         if cmd_app and self.selected_file.shell_commands:
             for c in self.selected_file.shell_commands:
                 cmd_app.unregister_command_set(c)
