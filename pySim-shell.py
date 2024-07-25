@@ -265,10 +265,8 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_reset(self, opts):
         """Reset the Card."""
-        atr = self.card.reset()
-        if self.lchan and self.lchan.scc.scp:
-            self.lchan.scc.scp = None
-        self.poutput('Card ATR: %s' % i2h(atr))
+        atr = self.rs.reset(self)
+        self.poutput('Card ATR: %s' % atr)
         self.update_prompt()
 
     class InterceptStderr(list):
