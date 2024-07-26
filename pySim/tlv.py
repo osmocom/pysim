@@ -142,25 +142,43 @@ class IE(Transcodable, metaclass=TlvMeta):
         else:
             return '%s(%s)' % (type(self).__name__, self.decoded)
 
-    def to_dict(self):
-        """Return a JSON-serializable dict representing the [nested] IE data."""
+    def to_val_dict(self):
+        """Return a JSON-serializable dict representing just the [nested] value portion of the IE
+        data.  This does not include any indication of the type of 'self', so the resulting dict alone
+        will be insufficient ot recreate an object from it without additional type information."""
         if len(self.children):
-            v = [x.to_dict() for x in self.children]
+            return [x.to_dict() for x in self.children]
         else:
-            v = self.decoded
-        return {camel_to_snake(type(self).__name__): v}
+            return self.decoded
+
+    def from_val_dict(self, decoded):
+        """Set the IE internal decoded representation to data from the argument.
+        If this is a nested IE, the child IE instance list is re-created.
+
+        This method is symmetrical to to_val_dict() aboe, i.e. there is no outer dict
+        containig the snake-reformatted type name of 'self'."""
+        if self.nested_collection:
+            self.children = self.nested_collection.from_dict(decoded)
+        else:
+            self.children = []
+            self.decoded = decoded
+
+    def to_dict(self):
+        """Return a JSON-serializable dict representing the [nested] IE data.  The returned
+        data contains an outer dict with the snake-reformatted type of 'self' and is hence
+        sufficient to re-create an object from it."""
+        return {camel_to_snake(type(self).__name__): self.to_val_dict()}
 
     def from_dict(self, decoded: dict):
         """Set the IE internal decoded representation to data from the argument.
-        If this is a nested IE, the child IE instance list is re-created."""
+        If this is a nested IE, the child IE instance list is re-created.
+
+        This method is symmetrical to to_dict() above, i.e. the outer dict must contain just a single
+        key-value pair, where the key is the snake-reformatted type name of 'self'"""
         expected_key_name = camel_to_snake(type(self).__name__)
         if not expected_key_name in decoded:
             raise ValueError("Dict %s doesn't contain expected key %s" % (decoded, expected_key_name))
-        if self.nested_collection:
-            self.children = self.nested_collection.from_dict(decoded[expected_key_name])
-        else:
-            self.children = []
-            self.decoded = decoded[expected_key_name]
+        self.from_val_dict(decoded[expected_key_name])
 
     def is_constructed(self):
         """Is this IE constructed by further nested IEs?"""
