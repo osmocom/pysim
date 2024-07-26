@@ -76,13 +76,13 @@ class ApduArDO(BER_TLV_IE, tag=0xd0):
         else:
             if len(do) % 8:
                 return ValueError('Invalid non-modulo-8 length of APDU filter: %d' % len(do))
-            self.decoded['apdu_filter'] = []
+            self.decoded = {'apdu_filter': []}
             offset = 0
             while offset < len(do):
-                self.decoded['apdu_filter'] += {'header': b2h(do[offset:offset+4]),
-                                                'mask': b2h(do[offset+4:offset+8])}
-            self.decoded = res
-            return res
+                self.decoded['apdu_filter'] += [{'header': b2h(do[offset:offset+4]),
+                                                'mask': b2h(do[offset+4:offset+8])}]
+                offset += 8 # Move offset to the beginning of the next apdu_filter object
+            return self.decoded
 
     def _to_bytes(self):
         if 'generic_access_rule' in self.decoded:
@@ -332,7 +332,7 @@ class ADF_ARAM(CardADF):
         apdu_grp.add_argument(
             '--apdu-always', action='store_true', help='APDU access is allowed')
         apdu_grp.add_argument(
-            '--apdu-filter', help='APDU filter: 4 byte CLA/INS/P1/P2 followed by 4 byte mask (8 hex bytes)')
+            '--apdu-filter', help='APDU filter: multiple groups of 8 hex bytes (4 byte CLA/INS/P1/P2 followed by 4 byte mask)')
         nfc_grp = store_ref_ar_do_parse.add_mutually_exclusive_group()
         nfc_grp.add_argument('--nfc-always', action='store_true',
                              help='NFC event access is allowed')
@@ -360,8 +360,15 @@ class ADF_ARAM(CardADF):
             elif opts.apdu_always:
                 ar_do_content += [{'apdu_ar_do': {'generic_access_rule': 'always'}}]
             elif opts.apdu_filter:
-                # TODO: multiple filters
-                ar_do_content += [{'apdu_ar_do': {'apdu_filter': [opts.apdu_filter]}}]
+                if len(opts.apdu_filter) % 16:
+                    return ValueError('Invalid non-modulo-16 length of APDU filter: %d' % len(do))
+                offset = 0
+                apdu_filter = []
+                while offset < len(opts.apdu_filter):
+                    apdu_filter += [{'header': opts.apdu_filter[offset:offset+8],
+                                     'mask': opts.apdu_filter[offset+8:offset+16]}]
+                    offset += 16 # Move offset to the beginning of the next apdu_filter object
+                ar_do_content += [{'apdu_ar_do': {'apdu_filter': apdu_filter}}]
             if opts.nfc_always:
                 ar_do_content += [{'nfc_ar_do': {'nfc_event_access_rule': 'always'}}]
             elif opts.nfc_never:
