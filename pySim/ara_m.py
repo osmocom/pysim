@@ -228,16 +228,14 @@ class BlockDO(BER_TLV_IE, tag=0xe7):
 class GetCommandDoCollection(TLV_IE_Collection, nested=[RefDO, DeviceConfigDO]):
     pass
 
+
 # SEID v1.1 Table 4-2
-
-
 class GetResponseDoCollection(TLV_IE_Collection, nested=[ResponseAllRefArDO, ResponseArDO,
                                                          ResponseRefreshTagDO, ResponseAramConfigDO]):
     pass
 
+
 # SEID v1.1 Table 5-1
-
-
 class StoreCommandDoCollection(TLV_IE_Collection,
                                nested=[BlockDO, CommandStoreRefArDO, CommandDelete,
                                        CommandUpdateRefreshTagDO, CommandRegisterClientAidsDO,
