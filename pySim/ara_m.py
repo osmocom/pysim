@@ -296,8 +296,8 @@ class ADF_ARAM(CardADF):
     @staticmethod
     def get_config(tp, v_major=0, v_minor=0, v_patch=1):
         cmd_do = DeviceConfigDO()
-        cmd_do.from_dict([{'device_interface_version_do': {
-                         'major': v_major, 'minor': v_minor, 'patch': v_patch}}])
+        cmd_do.from_val_dict([{'device_interface_version_do': {
+                               'major': v_major, 'minor': v_minor, 'patch': v_patch}}])
         return ADF_ARAM.xceive_apdu_tlv(tp, '80cadf21', cmd_do, ResponseAramConfigDO)
 
     @with_default_category('Application-Specific Commands')
@@ -370,7 +370,7 @@ class ADF_ARAM(CardADF):
                 ar_do_content += [{'perm_ar_do': {'permissions': opts.android_permissions}}]
             d = [{'ref_ar_do': [{'ref_do': ref_do_content}, {'ar_do': ar_do_content}]}]
             csrado = CommandStoreRefArDO()
-            csrado.from_dict(d)
+            csrado.from_val_dict(d)
             res_do = ADF_ARAM.store_data(self._cmd.lchan.scc._tp, csrado)
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
