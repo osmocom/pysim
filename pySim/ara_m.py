@@ -415,3 +415,78 @@ sw_aram = {
 class CardApplicationARAM(CardApplication):
     def __init__(self):
         super().__init__('ARA-M', adf=ADF_ARAM(), sw=sw_aram)
+
+    @staticmethod
+    def __export_get_from_dictlist(key, dictlist):
+        # Data objects are organized in lists that contain dictionaries, usually there is only one dictionary per
+        # list item. This function goes through that list and gets the value of the first dictionary that has the
+        # matching key.
+        if dictlist is None:
+            return None
+        obj = None
+        for d in dictlist:
+            obj = d.get(key, obj)
+        return obj
+
+    @staticmethod
+    def __export_ref_ar_do_list(ref_ar_do_list):
+        export_str = ""
+        ref_do_list = CardApplicationARAM.__export_get_from_dictlist('ref_do', ref_ar_do_list.get('ref_ar_do'))
+        ar_do_list = CardApplicationARAM.__export_get_from_dictlist('ar_do', ref_ar_do_list.get('ref_ar_do'))
+
+        if ref_do_list and ar_do_list:
+            # Get ref_do parameters
+            aid_ref_do = CardApplicationARAM.__export_get_from_dictlist('aid_ref_do', ref_do_list)
+            dev_app_id_ref_do = CardApplicationARAM.__export_get_from_dictlist('dev_app_id_ref_do', ref_do_list)
+            pkg_ref_do = CardApplicationARAM.__export_get_from_dictlist('pkg_ref_do', ref_do_list)
+
+            # Get ar_do parameters
+            apdu_ar_do = CardApplicationARAM.__export_get_from_dictlist('apdu_ar_do', ar_do_list)
+            nfc_ar_do = CardApplicationARAM.__export_get_from_dictlist('nfc_ar_do', ar_do_list)
+            perm_ar_do = CardApplicationARAM.__export_get_from_dictlist('perm_ar_do', ar_do_list)
+
+            # Write command-line
+            export_str += "aram_store_ref_ar_do"
+            if aid_ref_do:
+                export_str += (" --aid %s" % aid_ref_do)
+            else:
+                export_str += " --aid-empty"
+            if dev_app_id_ref_do:
+                export_str += (" --device-app-id %s" % dev_app_id_ref_do)
+            if apdu_ar_do and 'generic_access_rule' in apdu_ar_do:
+                export_str += (" --apdu-%s" % apdu_ar_do['generic_access_rule'])
+            elif apdu_ar_do and 'apdu_filter' in apdu_ar_do:
+                export_str += (" --apdu-filter ")
+                for apdu_filter in apdu_ar_do['apdu_filter']:
+                    export_str += apdu_filter['header']
+                    export_str += apdu_filter['mask']
+            if nfc_ar_do and 'nfc_event_access_rule' in nfc_ar_do:
+                export_str += (" --nfc-%s" % nfc_ar_do['nfc_event_access_rule'])
+            if perm_ar_do:
+                export_str += (" --android-permissions %s" % perm_ar_do['permissions'])
+            if pkg_ref_do:
+                export_str += (" --pkg-ref %s" % pkg_ref_do['package_name_string'])
+            export_str += "\n"
+        return export_str
+
+    @staticmethod
+    def export(as_json: bool, lchan):
+
+        # TODO: Add JSON output as soon as aram_store_ref_ar_do is able to process input in JSON format.
+        if as_json:
+            raise NotImplementedError("res_do encoder not yet implemented. Patches welcome.")
+
+        export_str = ""
+        export_str += "aram_delete_all\n"
+
+        res_do = ADF_ARAM.get_all(lchan.scc._tp)
+        if not res_do:
+            return export_str.strip()
+
+        for res_do_dict in res_do.to_dict():
+            if not res_do_dict.get('response_all_ref_ar_do', False):
+                continue
+            for ref_ar_do_list in res_do_dict['response_all_ref_ar_do']:
+                export_str += CardApplicationARAM.__export_ref_ar_do_list(ref_ar_do_list)
+
+        return export_str.strip()
