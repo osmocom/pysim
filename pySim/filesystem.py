@@ -541,6 +541,15 @@ class CardADF(CardDF):
         else:
             return self.aid
 
+    @staticmethod
+    def export(as_json: bool, lchan):
+        """
+        Export application specific parameters that are not part of the UICC filesystem.
+        """
+        if not isinstance(lchan.selected_file, CardADF):
+            raise TypeError('currently selected file is not of type CardADF')
+        return lchan.selected_file.application.export(as_json, lchan)
+
 
 class CardEF(CardFile):
     """EF (Entry File) in the smart card filesystem"""
@@ -1427,6 +1436,15 @@ class CardApplication:
             Tuple of two strings
         """
         return interpret_sw(self.sw, sw)
+
+    @staticmethod
+    def export(as_json: bool, lchan):
+        """
+        Export application specific parameters, in the form of commandline script. (see also comment in the export
+        method of class "CardFile")
+        """
+        return "# %s has no exportable features" % str(lchan.selected_file)
+
 
 
 class CardModel(abc.ABC):
