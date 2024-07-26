@@ -54,7 +54,7 @@ from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, 
 from pySim.utils import is_hexstr_or_decimal, is_hexstr, is_decimal
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
-from pySim.filesystem import CardMF, CardDF, CardADF
+from pySim.filesystem import CardMF, CardEF, CardDF, CardADF
 from pySim.ts_102_221 import pin_names
 from pySim.ts_102_222 import Ts102222Commands
 from pySim.gsm_r import DF_EIRENE
@@ -495,12 +495,25 @@ class PySimCommands(CommandSet):
         self._cmd.poutput(directory_str)
         self._cmd.poutput("%d files" % len(selectables))
 
-    def walk(self, indent=0, action_ef=None, action_df=None, context=None, **kwargs):
+    def __walk_action(self, action, filename, context, **kwargs):
+        # Changing the currently selected file while walking over the filesystem tree would disturb the
+        # walk, so we memorize the currently selected file here so that we can select it again after
+        # we have executed the action callback.
+        selected_file_before_action = self._cmd.lchan.selected_file
+
+        # Perform action
+        action(filename, context, **kwargs)
+
+        # When the action callback is done, make sure the file that was selected before is selected again.
+        if selected_file_before_action != self._cmd.lchan.selected_file:
+            self._cmd.lchan.select_file(selected_file_before_action, self._cmd)
+
+    def __walk(self, indent=0, action_ef=None, action_df=None, context=None, **kwargs):
         """Recursively walk through the file system, starting at the currently selected DF"""
 
         if isinstance(self._cmd.lchan.selected_file, CardDF):
             if action_df:
-                action_df(context, **kwargs)
+                self.__walk_action(action_df, self._cmd.lchan.selected_file.name, context, **kwargs)
 
         files = self._cmd.lchan.selected_file.get_selectables(
             flags=['FNAMES', 'ANAMES'])
@@ -533,65 +546,44 @@ class PySimCommands(CommandSet):
                 # If the DF was skipped, we never have entered the directory
                 # below, so we must not move up.
                 if skip_df == False:
-                    self.walk(indent + 1, action_ef, action_df, context, **kwargs)
+                    self.__walk(indent + 1, action_ef, action_df, context, **kwargs)
                     self._cmd.lchan.select_file(self._cmd.lchan.selected_file.parent, self._cmd)
 
             elif action_ef:
-                df_before_action = self._cmd.lchan.selected_file
-                action_ef(f, context, **kwargs)
-                # When walking through the file system tree the action must not
-                # always restore the currently selected file to the file that
-                # was selected before executing the action() callback.
-                if df_before_action != self._cmd.lchan.selected_file:
-                    raise RuntimeError("inconsistent walk, %s is currently selected but expecting %s to be selected"
-                                       % (str(self._cmd.lchan.selected_file), str(df_before_action)))
+                self.__walk_action(action_ef, f, context, **kwargs)
 
     def do_tree(self, opts):
         """Display a filesystem-tree with all selectable files"""
-        self.walk()
+        self.__walk()
 
-    def export_ef(self, filename, context, as_json):
-        """ Select and export a single elementary file (EF) """
+    def __export_file(self, filename, context, as_json):
+        """ Select and export a single file (EF, DF or ADF) """
         context['COUNT'] += 1
-        df = self._cmd.lchan.selected_file
 
-        # The currently selected file (not the file we are going to export)
-        # must always be an ADF or DF. From this starting point we select
-        # the EF we want to export. To maintain consistency we will then
-        # select the current DF again (see comment below).
-        if not isinstance(df, CardDF):
-            raise RuntimeError(
-                "currently selected file %s is not a DF or ADF" % str(df))
+        file = self._cmd.lchan.get_file_by_name(filename)
+        if file:
+            self._cmd.poutput(boxed_heading_str(file.fully_qualified_path_str(True)))
+            self._cmd.poutput("# directory: %s (%s)" % (file.fully_qualified_path_str(True),
+                                                        file.fully_qualified_path_str(False)))
+        else:
+            # If this is called from self.__walk(), then it is ensured that the file exists.
+            raise RuntimeError("cannot export, file %s does not exist in the file system tree" % filename)
 
-        df_path_list = df.fully_qualified_path(True)
-        df_path = df.fully_qualified_path_str(True)
-        df_path_fid = df.fully_qualified_path_str(False)
-
-        file_str = df_path + "/" + str(filename)
-        self._cmd.poutput(boxed_heading_str(file_str))
-
-        self._cmd.poutput("# directory: %s (%s)" % (df_path, df_path_fid))
         try:
-            fcp_dec = self._cmd.lchan.select(filename, self._cmd)
+            fcp_dec = self._cmd.lchan.select_file(file, self._cmd)
             self._cmd.poutput("# file: %s (%s)" %
                               (self._cmd.lchan.selected_file.name, self._cmd.lchan.selected_file.fid))
-            self._cmd.poutput("# structure: %s" % self._cmd.lchan.selected_file_structure())
+            if isinstance(self._cmd.lchan.selected_file, CardEF):
+                self._cmd.poutput("# structure: %s" % str(self._cmd.lchan.selected_file_structure()))
             self._cmd.poutput("# RAW FCP Template: %s" % str(self._cmd.lchan.selected_file_fcp_hex))
             self._cmd.poutput("# Decoded FCP Template: %s" % str(self._cmd.lchan.selected_file_fcp))
             self._cmd.poutput("select " + self._cmd.lchan.selected_file.fully_qualified_path_str())
             self._cmd.poutput(self._cmd.lchan.selected_file.export(as_json, self._cmd.lchan))
-
         except Exception as e:
-            bad_file_str = df_path + "/" + str(filename) + ", " + str(e)
+            bad_file_str = file.fully_qualified_path_str(True) + "/" + str(file.name) + ", " + str(e)
             self._cmd.poutput("# bad file: %s" % bad_file_str)
             context['ERR'] += 1
             context['BAD'].append(bad_file_str)
-
-        # When reading the file is done, make sure the parent file is
-        # selected again. This will be the usual case, however we need
-        # to check before since we must not select the same DF twice
-        if df != self._cmd.lchan.selected_file:
-            self._cmd.lchan.select(df.fid or df.aid, self._cmd)
 
         self._cmd.poutput("#")
 
@@ -610,10 +602,10 @@ class PySimCommands(CommandSet):
         exception_str_add = ""
 
         if opts.filename:
-            self.export_ef(opts.filename, context, **kwargs_export)
+            self.__walk_action(self.__export_file, opts.filename, context, **kwargs_export)
         else:
             try:
-                self.walk(0, self.export_ef, None, context, **kwargs_export)
+                self.__walk(0, self.__export_file, self.__export_file, context, **kwargs_export)
             except Exception as e:
                 print("# Stopping early here due to exception: " + str(e))
                 print("#")
@@ -641,7 +633,7 @@ class PySimCommands(CommandSet):
             raise RuntimeError(
                     "unable to export %i dedicated files(s)%s" % (context['ERR'], exception_str_add))
 
-    def fsdump_df(self, context, as_json):
+    def fsdump_df(self, filename, context, as_json):
         """Dump information about currently selected [A]DF"""
         df = self._cmd.lchan.selected_file
         df_path_list = df.fully_qualified_path(True)
@@ -683,8 +675,7 @@ class PySimCommands(CommandSet):
 
         # The currently selected file (not the file we are going to export)
         # must always be an ADF or DF. From this starting point we select
-        # the EF we want to export. To maintain consistency we will then
-        # select the current DF again (see comment below).
+        # the EF we want to export.
         if not isinstance(df, CardDF):
             raise RuntimeError("currently selected file %s is not a DF or ADF" % str(df))
 
@@ -769,13 +760,6 @@ class PySimCommands(CommandSet):
 
         context['result']['files'][file_str] = res
 
-        # When reading the file is done, make sure the parent file is
-        # selected again. This will be the usual case, however we need
-        # to check before since we must not select the same DF twice
-        if df != self._cmd.lchan.selected_file:
-            self._cmd.lchan.select(df.fid or df.aid, self._cmd)
-
-
     fsdump_parser = argparse.ArgumentParser()
     fsdump_parser.add_argument(
         '--filename', type=str, default=None, help='only export specific (named) file')
@@ -801,12 +785,11 @@ class PySimCommands(CommandSet):
         exception_str_add = ""
 
         if opts.filename:
-            # export only that one specified file
-            self.fsdump_ef(opts.filename, context, **kwargs_export)
+            self.__walk_action(self.fsdump_ef, opts.filename, context, **kwargs_export)
         else:
             # export an entire subtree
             try:
-                self.walk(0, self.fsdump_ef, self.fsdump_df, context, **kwargs_export)
+                self.__walk(0, self.fsdump_ef, self.fsdump_df, context, **kwargs_export)
             except Exception as e:
                 print("# Stopping early here due to exception: " + str(e))
                 print("#")
