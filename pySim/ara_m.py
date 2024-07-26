@@ -356,7 +356,7 @@ class ADF_ARAM(CardADF):
             # AR
             ar_do_content = []
             if opts.apdu_never:
-                ar_do_content += [{'apdu_ar_od': {'generic_access_rule': 'never'}}]
+                ar_do_content += [{'apdu_ar_do': {'generic_access_rule': 'never'}}]
             elif opts.apdu_always:
                 ar_do_content += [{'apdu_ar_do': {'generic_access_rule': 'always'}}]
             elif opts.apdu_filter:
