@@ -94,24 +94,20 @@ class TotalFileSize(BER_TLV_IE, tag=0x81):
 
 # ETSI TS 102 221 11.1.1.4.3
 class FileDescriptor(BER_TLV_IE, tag=0x82):
-    _test_decode = [
-        # FIXME: this doesn't work as _encode test for some strange reason.
-        ( '82027921', { "file_descriptor_byte": { "shareable": True, "structure": "ber_tlv" }, "record_len": None, "num_of_rec": None } ),
-    ]
     _test_de_encode = [
+        ( '82027921', { "file_descriptor_byte": { "shareable": True, "structure": "ber_tlv" }, "record_len": None, "num_of_rec": None } ),
         ( '82027821', { "file_descriptor_byte": { "shareable": True, "file_type": "df", "structure": "no_info_given" }, "record_len": None, "num_of_rec": None }),
         ( '82024121', { "file_descriptor_byte": { "shareable": True, "file_type": "working_ef", "structure": "transparent" }, "record_len": None, "num_of_rec": None } ),
         ( '82054221006e05', { "file_descriptor_byte": { "shareable": True, "file_type": "working_ef", "structure": "linear_fixed" }, "record_len": 110, "num_of_rec": 5 } ),
     ]
     class BerTlvAdapter(Adapter):
-        def _parse(self, obj, context, path):
-            data = obj.read()
-            if data == b'\x01\x01\x01\x00\x00\x01':
+        def _decode(self, obj, context, path):
+            if obj == 0x39:
                 return 'ber_tlv'
             raise ValidationError
-        def _build(self, obj, context, path):
+        def _encode(self, obj, context, path):
             if obj == 'ber_tlv':
-                return b'\x01\x01\x01\x00\x00\x01'
+                return 0x39
             raise ValidationError
 
     FDB = Select(BitStruct(Const(0, Bit), 'shareable'/Flag, 'structure'/BerTlvAdapter(Const(0x39, BitsInteger(6)))),
