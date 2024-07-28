@@ -296,13 +296,13 @@ class ProfileElement:
             'opt-usim': ProfileElementOptUSIM,
             'isim': ProfileElementISIM,
             'opt-isim': ProfileElementOptISIM,
-            # TODO: phonebook
-            # TODO: gsm-access
+            'phonebook': ProfileElementPhonebook,
+            'gsm-access': ProfileElementGsmAccess,
             # TODO: csim
             # TODO: opt-csim
             # TODO: eap
-            # TODO: df-5gs
-            # TODO: df-saip
+            'df-5gs': ProfileElementDf5GS,
+            'df-saip': ProfileElementDfSAIP,
             }
         if pe_type in class4petype:
             return class4petype[pe_type]
@@ -515,6 +515,54 @@ class ProfileElementTelecom(FsProfileElement):
         # provide some reasonable defaults for a MNO-SD
         self.decoded['templateID'] = str(oid.DF_TELECOM_v2)
         for fname in ['df-telecom', 'ef-arr']:
+            self.decoded[fname] = []
+
+class ProfileElementPhonebook(FsProfileElement):
+    type = 'phonebook'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__(decoded)
+        if decoded:
+            return
+        # provide some reasonable defaults
+        self.decoded['templateID'] = str(oid.DF_PHONEBOOK_ADF_USIM)
+        for fname in ['df-phonebook']:
+            self.decoded[fname] = []
+
+class ProfileElementGsmAccess(FsProfileElement):
+    type = 'gsm-access'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__(decoded)
+        if decoded:
+            return
+        # provide some reasonable defaults
+        self.decoded['templateID'] = str(oid.DF_GSM_ACCESS_ADF_USIM)
+        for fname in ['df-gsm-access']:
+            self.decoded[fname] = []
+
+class ProfileElementDf5GS(FsProfileElement):
+    type = 'df-5gs'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__(decoded)
+        if decoded:
+            return
+        # provide some reasonable defaults
+        self.decoded['templateID'] = str(oid.DF_5GS_v3)
+        for fname in ['df-5gs']:
+            self.decoded[fname] = []
+
+class ProfileElementDfSAIP(FsProfileElement):
+    type = 'df-saip'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__(decoded)
+        if decoded:
+            return
+        # provide some reasonable defaults
+        self.decoded['templateID'] = str(oid.DF_SAIP)
+        for fname in ['df-saip']:
             self.decoded[fname] = []
 
 
