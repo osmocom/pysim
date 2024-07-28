@@ -62,7 +62,7 @@ class NaaCsim(Naa):
 
 class NaaUsim(Naa):
     name = "usim"
-    aid = h2b("")
+    aid = h2b("a0000000871002")
     mandatory_services = ["usim"]
     pe_types = ["usim", "opt-usim"]
     templates = [oid.ADF_USIM_by_default, oid.ADF_USIMopt_not_by_default,
@@ -73,7 +73,7 @@ class NaaUsim(Naa):
 
 class NaaIsim(Naa):
     name = "isim"
-    aid = h2b("")
+    aid = h2b("a0000000871004")
     mandatory_services = ["isim"]
     pe_types = ["isim", "opt-isim"]
     templates = [oid.ADF_ISIM_by_default, oid.ADF_ISIMopt_not_by_default]
