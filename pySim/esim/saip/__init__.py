@@ -274,26 +274,48 @@ class ProfileElement:
         return self.decoded.get('templateID', None)
 
     @classmethod
-    def from_der(cls, der: bytes) -> 'ProfileElement':
+    def class_for_petype(cls, pe_type: str) -> Optional['ProfileElement']:
+        """Return the subclass implementing the given pe-type string."""
         class4petype = {
-            'securityDomain': ProfileElementSD,
-            'mf': ProfileElementMF,
-            'pukCodes': ProfileElementPuk,
+            # use same order as ASN.1 source definition of "ProfileElement ::= CHOICE {"
+            'header': ProfileElementHeader,
+            'genericFileManagement': ProfileElementGFM,
             'pinCodes': ProfileElementPin,
+            'pukCodes': ProfileElementPuk,
+            'akaParameter': ProfileElementAKA,
+            # TODO: cdmaParameter
+            'securityDomain': ProfileElementSD,
+            # TODO: rfm
+            # TODO: application
+            # TODO: nonStandard
+            'end': ProfileElementEnd,
+            'mf': ProfileElementMF,
+            # TODO: cd
             'telecom': ProfileElementTelecom,
             'usim': ProfileElementUSIM,
             'opt-usim': ProfileElementOptUSIM,
             'isim': ProfileElementISIM,
             'opt-isim': ProfileElementOptISIM,
-            'akaParameter': ProfileElementAKA,
-            'header': ProfileElementHeader,
-            'genericFileManagement': ProfileElementGFM,
-            'end': ProfileElementEnd,
+            # TODO: phonebook
+            # TODO: gsm-access
+            # TODO: csim
+            # TODO: opt-csim
+            # TODO: eap
+            # TODO: df-5gs
+            # TODO: df-saip
             }
+        if pe_type in class4petype:
+            return class4petype[pe_type]
+        else:
+            return None
+
+    @classmethod
+    def from_der(cls, der: bytes) -> 'ProfileElement':
         """Construct an instance from given raw, DER encoded bytes."""
         pe_type, decoded = asn1.decode('ProfileElement', der)
-        if pe_type in class4petype:
-            inst = class4petype[pe_type](decoded)
+        pe_cls = cls.class_for_petype(pe_type)
+        if pe_cls:
+            inst = pe_cls(decoded)
         else:
             inst = ProfileElement(decoded)
             inst.type = pe_type
