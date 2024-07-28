@@ -169,17 +169,40 @@ class SpecificUiccEnvironmentConditions(BER_TLV_IE, tag=0x88):
 class Platform2PlatformCatSecuredApdu(BER_TLV_IE, tag=0x89):
     _construct = GreedyBytes
 
+# TS 102 222 Table 4a + 5
+class SpecialFileInfo(BER_TLV_IE, tag=0xC0):
+    _construct = FlagsEnum(Byte, high_update_activity=0x80, readable_and_updatable_when_deactivated=0x40)
+
+# TS 102 222 Table 4a
+class FillingPattern(BER_TLV_IE, tag=0xC1):
+    # The first W-1 bytes of the transparent EF or the first W-1 bytes of each record of a record
+    # oriented EF shall be initialized with the first W-1 bytes of the Filling Pattern. All remaining
+    # bytes (if any) shall be initialized with the value of the last byte of the Filling Pattern. If
+    # the file or record length is shorter than the Filling Pattern, the Filling Pattern shall be
+    # truncated accordingly.
+    _construct = GreedyBytes
+
+# TS 102 222 Table 4a
+class RepeatPattern(BER_TLV_IE, tag=0xC2):
+    # The first X bytes of the transparent EF or the first X bytes of each record of a record oriented
+    # EF shall be initialized with the X bytes of the Repeat Pattern. This shall be repeated
+    # consecutively for all remaining blocks of X bytes of data in the file or in a record. If
+    # necessary, the Repeat Pattern shall be truncated at the end of the file or at the end of each
+    # record to initialize the remaining bytes.
+    _construct = GreedyBytes
+
 # sysmoISIM-SJA2 specific
 class ToolkitAccessConditions(BER_TLV_IE, tag=0xD2):
     _construct = FlagsEnum(Byte, rfm_create=1, rfm_delete_terminate=2, other_applet_create=4,
                            other_applet_delete_terminate=8)
 
-# ETSI TS 102 221 11.1.1.4.6.0
+# ETSI TS 102 221 11.1.1.4.6.0 + TS 102 222 Table 4A
 class ProprietaryInformation(BER_TLV_IE, tag=0xA5,
                              nested=[UiccCharacteristics, ApplicationPowerConsumption,
                                      MinApplicationClockFrequency, AvailableMemory,
                                      FileDetails, ReservedFileSize, MaximumFileSize,
                                      SupportedFilesystemCommands, SpecificUiccEnvironmentConditions,
+                                     SpecialFileInfo, FillingPattern, RepeatPattern,
                                      ToolkitAccessConditions]):
     pass
 
