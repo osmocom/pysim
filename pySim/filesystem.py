@@ -9,7 +9,7 @@ The classes are intended to represent the *specification* of the filesystem,
 not the actual contents / runtime state of interacting with a given smart card.
 """
 
-# (C) 2021 by Harald Welte <laforge@osmocom.org>
+# (C) 2021-2024 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1448,3 +1448,48 @@ class CardModel(abc.ABC):
         for m in CardModel.__subclasses__():
             if m.match(scc):
                 m.add_files(rs)
+
+
+class Path:
+    """Representation of a file-system path."""
+    def __init__(self, p: Union[str, List[str]]):
+        # split if given as single string with slahes
+        if isinstance(p, str):
+            p = p.split('/')
+        # make sure internal representation alwas is uppercase only
+        self.list = [x.upper() for x in p]
+
+    def __str__(self) -> str:
+        return '/'.join(self.list)
+
+    def __repr__(self) -> str:
+        return 'Path(%s)' % (str(self))
+
+    def __eq__(self, other: 'Path') -> bool:
+        return self.list == other.list
+
+    def __getitem__(self, i):
+        return self.list[i]
+
+    def __add__(self, a):
+        if isinstance(a, list):
+            l = self.list + a
+        elif isinstance(a, Path):
+            l = self.list + a.list
+        else:
+            l = self.list + [a]
+        return Path(l)
+
+    def relative_to_mf(self) -> 'Path':
+        """Return a path relative to MF, i.e. without initial explicit MF."""
+        if self.list[0] == 'MF':
+            return Path(self.list[1:])
+        return self
+
+    def is_parent(self, other: 'Path') -> bool:
+        """Is this instance a parent of the given other instance?"""
+        if len(self.list) >= len(other.list):
+            return False
+        if other.list[:len(self.list)] == self.list:
+            return True
+        return False
