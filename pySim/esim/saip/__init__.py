@@ -24,6 +24,9 @@ import asn1tools
 
 from pySim.utils import bertlv_parse_tag, bertlv_parse_len, b2h, h2b, dec_imsi, Hexstr
 from pySim.ts_102_221 import FileDescriptor
+from pySim.filesystem import CardADF
+from pySim.ts_31_102 import ADF_USIM
+from pySim.ts_31_103 import ADF_ISIM
 from pySim.construct import build_construct
 from pySim.esim import compile_asn1_subdir
 from pySim.esim.saip import templates
@@ -44,6 +47,7 @@ class Naa:
     # we only use the base DN of each OID; there may be subsequent versions underneath it
     templates = []
     mandatory_services = []
+    adf: CardADF = None
 
     @classmethod
     def adf_name(cls):
@@ -65,6 +69,7 @@ class NaaUsim(Naa):
                  oid.DF_PHONEBOOK_ADF_USIM, oid.DF_GSM_ACCESS_ADF_USIM,
                  oid.DF_EAP, oid.DF_5GS, oid.DF_SAIP, oid.DF_SNPN,
                  oid.DF_5GProSe]
+    adf = ADF_USIM()
 
 class NaaIsim(Naa):
     name = "isim"
@@ -72,6 +77,7 @@ class NaaIsim(Naa):
     mandatory_services = ["isim"]
     pe_types = ["isim", "opt-isim"]
     templates = [oid.ADF_ISIM_by_default, oid.ADF_ISIMopt_not_by_default]
+    adf = ADF_ISIM()
 
 NAAs = {
     NaaCsim.name: NaaCsim,
