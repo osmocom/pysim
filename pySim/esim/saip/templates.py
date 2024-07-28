@@ -59,22 +59,68 @@ class FileTemplate:
         return "FileTemplate(%s/%s, %s, %s, arr=%s, sfi=%s)" % (self.name, self.pe_name, s_fid,
                                                                 self.file_type, s_arr, s_sfi)
 
+    def print_tree(self, indent:str = ""):
+        """recursive printing of FileTemplate tree structure."""
+        print("%s%s" % (indent, repr(self)))
+        indent += " "
+        for c in self.children:
+            c.print_tree(indent)
+
+    def get_file_by_path(self, path: List[str]) -> Optional['FileTemplate']:
+        """Return a FileTemplate matching the given path within this ProfileTemplate."""
+        if path[0].lower() != self.name.lower():
+            return None
+        for c in self.children:
+            if path[1].lower() == c.name.lower():
+                return c.get_file_by_path(path[1:])
+
 class ProfileTemplate:
     """Representation of a SimAlliance/TCA Profile Template.  Each Template is identified by its OID and
     consists of a number of file definitions.  We implement each profile template as a class derived from this
     base class.  Each such derived class is a singleton and has no instances."""
     created_by_default: bool = False
+    optional: bool = False
     oid: Optional[OID.eOID] = None
     files: List[FileTemplate] = []
-    files_by_pename: dict[str,FileTemplate] = {}
 
     def __init_subclass__(cls, **kwargs):
         """This classmethod is called automatically after executing the subclass body. We use it to
         initialize the cls.files_by_pename from the cls.files"""
         super().__init_subclass__(**kwargs)
+        cur_df = None
+
+        cls.files_by_pename: dict[str,FileTemplate] = {}
+        cls.tree: List[FileTemplate] = []
+
+        if not cls.optional and not cls.files[0].file_type in ['MF', 'DF', 'ADF']:
+            raise ValueError('First file in non-optional template must be MF, DF or ADF (is: %s)' % cls.files[0])
         for f in cls.files:
+            if f.file_type in ['MF', 'DF', 'ADF']:
+                if cur_df == None:
+                    cls.tree.append(f)
+                    cur_df = f
+                    f.parent = None
+                else:
+                    # "cd .."
+                    if cur_df.parent:
+                        cur_df = cur_df.parent
+                    cur_df.children.append(f)
+                    f.parent = cur_df
+                    cur_df = f
+            else:
+                if cur_df == None:
+                    cls.tree.append(f)
+                    f.parent = None
+                else:
+                    cur_df.children.append(f)
+                    f.parent = cur_df
             cls.files_by_pename[f.pe_name] = f
         ProfileTemplateRegistry.add(cls)
+
+    @classmethod
+    def print_tree(cls):
+        for c in cls.tree:
+            c.print_tree()
 
 class ProfileTemplateRegistry:
     """A registry of profile templates.  Exists as a singleton class with no instances and only
@@ -318,6 +364,7 @@ class FilesUsimMandatoryV2(ProfileTemplate):
 # Section 9.5.2 v2.3.1
 class FilesUsimOptional(ProfileTemplate):
     created_by_default = False
+    optional = True
     oid = OID.ADF_USIMopt_not_by_default
     files = [
         FileTemplate(0x6f05, 'EF.LI',        'TR', None,    6,   1, 0x02, 'FF...FF', False),
@@ -400,6 +447,7 @@ class FilesUsimOptional(ProfileTemplate):
 # Section 9.5.2
 class FilesUsimOptionalV2(ProfileTemplate):
     created_by_default = False
+    optional = True
     oid = OID.ADF_USIMopt_not_by_default_v2
     files = [
         FileTemplate(0x6f05, 'EF.LI',        'TR', None,    6,   1, 0x02, 'FF...FF', False),
@@ -601,6 +649,7 @@ class FilesIsimMandatory(ProfileTemplate):
 # Section 9.6.2 v2.3.1
 class FilesIsimOptional(ProfileTemplate):
     created_by_default = False
+    optional = True
     oid = OID.ADF_ISIMopt_not_by_default
     files = [
         FileTemplate(0x6f09, 'EF.P-CSCF',      'LF',    1, None,   2, None, None, True, ['size'], ass_serv=[1,5]),
@@ -618,6 +667,7 @@ class FilesIsimOptional(ProfileTemplate):
 # Section 9.6.2
 class FilesIsimOptionalv2(ProfileTemplate):
     created_by_default = False
+    optional = True
     oid = OID.ADF_ISIMopt_not_by_default_v2
     files = [
         FileTemplate(0x6f09, 'EF.PCSCF',       'LF',    1, None,   2, None, None, True, ['size'], ass_serv=[1,5]),
