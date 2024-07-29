@@ -679,7 +679,7 @@ class SimCardCommands:
             raise RuntimeError('Failed to %s chv_no 0x%02X with code 0x%s, %i tries left.' %
                                (op_name, chv_no, b2h(pin_code).upper(), int(sw[3])))
         if sw != '9000':
-            raise SwMatchError(sw, '9000')
+            raise SwMatchError(sw, '9000', self._tp.sw_interpreter)
 
     def verify_chv(self, chv_no: int, code: Hexstr) -> ResTuple:
         """Verify a given CHV (Card Holder Verification == PIN)
