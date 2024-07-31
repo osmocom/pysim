@@ -495,12 +495,7 @@ class TLV_IE_Collection(metaclass=TlvCollectionMeta):
                     # resolve the class for that name; create an instance of it
                     cls = self.members_by_name[k]
                     inst = cls()
-                    if cls.nested_collection_cls:
-                        # in case of collections, we want to pass the raw "value" portion to from_dict,
-                        # as to_dict() below intentionally omits the collection-class-name as key
-                        inst.from_dict(i[k])
-                    else:
-                        inst.from_dict({k: i[k]})
+                    inst.from_dict({k: i[k]})
                     res.append(inst)
                 else:
                     raise ValueError('%s: Unknown TLV Class %s in %s; expected %s' %
