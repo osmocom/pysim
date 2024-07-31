@@ -955,6 +955,44 @@ class EF_MMSUCP(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
 
 
+# TS 102 221 Section 13.2 / TS 31.101 Section 13 / TS 51.011 Section 10.1.1
+class EF_ICCID(TransparentEF):
+    _test_de_encode = [
+        ( '988812010000400310f0', { "iccid": "8988211000000430010" } ),
+    ]
+    def __init__(self, fid='2fe2', sfid=0x02, name='EF.ICCID', desc='ICC Identification'):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=(10, 10))
+
+    def _decode_hex(self, raw_hex):
+        return {'iccid': dec_iccid(raw_hex)}
+
+    def _encode_hex(self, abstract):
+        return enc_iccid(abstract['iccid'])
+
+# TS 102 221 Section 13.3 / TS 31.101 Secction 13 / TS 51.011 Section 10.1.2
+class EF_PL(TransRecEF):
+    _test_de_encode = [
+        ( '6465', "de" ),
+        ( '656e', "en" ),
+        ( 'ffff', None ),
+    ]
+
+    def __init__(self, fid='2f05', sfid=0x05, name='EF.PL', desc='Preferred Languages'):
+        super().__init__(fid, sfid=sfid, name=name,
+                         desc=desc, rec_len=2, size=(2, None))
+
+    def _decode_record_bin(self, bin_data, **kwargs):
+        if bin_data == b'\xff\xff':
+            return None
+        else:
+            return bin_data.decode('ascii')
+
+    def _encode_record_bin(self, in_json, **kwargs):
+        if in_json is None:
+            return b'\xff\xff'
+        else:
+            return in_json.encode('ascii')
+
 class DF_GSM(CardDF):
     def __init__(self, fid='7f20', name='DF.GSM', desc='GSM Network related files'):
         super().__init__(fid=fid, name=name, desc=desc)
@@ -1085,12 +1123,19 @@ class CardProfileSIM(CardProfile):
             },
         }
 
+        files = [
+            EF_ICCID(),
+            EF_PL(),
+            DF_TELECOM(),
+            DF_GSM(),
+        ]
+
         addons = [
             AddonGSMR,
         ]
 
         super().__init__('SIM', desc='GSM SIM Card', cla="a0",
-                         sel_ctrl="0000", files_in_mf=[DF_TELECOM(), DF_GSM()], sw=sw, addons = addons)
+                         sel_ctrl="0000", files_in_mf=files, sw=sw, addons = addons)
 
     @staticmethod
     def decode_select_response(resp_hex: str) -> object:

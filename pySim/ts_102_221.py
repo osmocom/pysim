@@ -31,7 +31,7 @@ from pySim import iso7816_4
 
 # A UICC will usually also support 2G functionality. If this is the case, we
 # need to add DF_GSM and DF_TELECOM along with the UICC related files
-from pySim.ts_51_011 import AddonSIM
+from pySim.ts_51_011 import AddonSIM, EF_ICCID, EF_PL
 from pySim.gsm_r import AddonGSMR
 from pySim.cdma_ruim import AddonRUIM
 
@@ -665,44 +665,6 @@ class EF_DIR(LinFixedEF):
     def __init__(self, fid='2f00', sfid=0x1e, name='EF.DIR', desc='Application Directory'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(5, 54))
         self._tlv = EF_DIR.ApplicationTemplate
-
-# TS 102 221 Section 13.2
-class EF_ICCID(TransparentEF):
-    _test_de_encode = [
-        ( '988812010000400310f0', { "iccid": "8988211000000430010" } ),
-    ]
-    def __init__(self, fid='2fe2', sfid=0x02, name='EF.ICCID', desc='ICC Identification'):
-        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=(10, 10))
-
-    def _decode_hex(self, raw_hex):
-        return {'iccid': dec_iccid(raw_hex)}
-
-    def _encode_hex(self, abstract):
-        return enc_iccid(abstract['iccid'])
-
-# TS 102 221 Section 13.3
-class EF_PL(TransRecEF):
-    _test_de_encode = [
-        ( '6465', "de" ),
-        ( '656e', "en" ),
-        ( 'ffff', None ),
-    ]
-
-    def __init__(self, fid='2f05', sfid=0x05, name='EF.PL', desc='Preferred Languages'):
-        super().__init__(fid, sfid=sfid, name=name,
-                         desc=desc, rec_len=2, size=(2, None))
-
-    def _decode_record_bin(self, bin_data, **kwargs):
-        if bin_data == b'\xff\xff':
-            return None
-        else:
-            return bin_data.decode('ascii')
-
-    def _encode_record_bin(self, in_json, **kwargs):
-        if in_json is None:
-            return b'\xff\xff'
-        else:
-            return in_json.encode('ascii')
 
 
 # TS 102 221 Section 13.4
