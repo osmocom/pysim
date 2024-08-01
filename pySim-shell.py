@@ -55,6 +55,7 @@ from pySim.utils import is_hexstr_or_decimal, is_hexstr, is_decimal
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
 from pySim.filesystem import CardMF, CardDF, CardADF
+from pySim.ts_102_221 import pin_names
 from pySim.ts_102_222 import Ts102222Commands
 from pySim.gsm_r import DF_EIRENE
 from pySim.cat import ProactiveCommand
@@ -824,37 +825,46 @@ class PySimCommands(CommandSet):
             self._cmd.poutput("no description available")
 
     verify_adm_parser = argparse.ArgumentParser()
-    verify_adm_parser.add_argument('ADM1', nargs='?', type=is_hexstr_or_decimal,
-                                   help='ADM1 pin value. If none given, CSV file will be queried')
+    verify_adm_parser.add_argument('ADM', nargs='?', type=is_hexstr_or_decimal,
+                                   help='ADM pin value. If none given, CSV file will be queried')
     verify_adm_parser.add_argument('--pin-is-hex', action='store_true',
-                                   help='ADM1 pin value is specified as hex-string (not decimal)')
+                                   help='ADM pin value is specified as hex-string (not decimal)')
+    verify_adm_parser.add_argument('--adm-type',
+                                   choices=[x for x in pin_names.values() if x.startswith('ADM')],
+                                   help='Override ADM number. Default is card-model-specific, usually 1')
 
     @cmd2.with_argparser(verify_adm_parser)
     def do_verify_adm(self, opts):
         """Verify the ADM (Administrator) PIN specified as argument.  This is typically needed in order
-        to get write/update permissions to most of the files on SIM cards. Currently only ADM1 is supported.
+        to get write/update permissions to most of the files on SIM cards.
         """
-        if opts.ADM1:
+        if opts.adm_type:
+            # pylint: disable=unsubscriptable-object
+            adm_chv_num = pin_names.inverse[opts.adm_type]
+        else:
+            adm_chv_num = self._cmd.card._adm_chv_num
+        if opts.ADM:
             # use specified ADM-PIN
             if opts.pin_is_hex:
-                pin_adm = sanitize_pin_adm(None, opts.ADM1)
+                pin_adm = sanitize_pin_adm(None, opts.ADM)
             else:
-                pin_adm = sanitize_pin_adm(opts.ADM1)
+                pin_adm = sanitize_pin_adm(opts.ADM)
         else:
             iccid = self._cmd.rs.identity['ICCID']
+            adm_type = opts.adm_type or 'ADM1'
             # try to find an ADM-PIN if none is specified
-            result = card_key_provider_get_field('ADM1', key='ICCID', value=iccid)
+            result = card_key_provider_get_field(adm_type, key='ICCID', value=iccid)
             if opts.pin_is_hex:
                 pin_adm = sanitize_pin_adm(None, result)
             else:
                 pin_adm = sanitize_pin_adm(result)
             if pin_adm:
-                self._cmd.poutput("found ADM-PIN '%s' for ICCID '%s'" % (result, iccid))
+                self._cmd.poutput("found %s '%s' for ICCID '%s'" % (adm_type, result, iccid))
             else:
-                raise ValueError("cannot find ADM-PIN for ICCID '%s'" % (iccid))
+                raise ValueError("cannot find %s for ICCID '%s'" % (adm_type, iccid))
 
         if pin_adm:
-            self._cmd.lchan.scc.verify_chv(self._cmd.card._adm_chv_num, h2b(pin_adm))
+            self._cmd.lchan.scc.verify_chv(adm_chv_num, h2b(pin_adm))
         else:
             raise ValueError("error: cannot authenticate, no adm-pin!")
 
