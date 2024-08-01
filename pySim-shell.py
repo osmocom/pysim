@@ -826,6 +826,8 @@ class PySimCommands(CommandSet):
     verify_adm_parser = argparse.ArgumentParser()
     verify_adm_parser.add_argument('ADM1', nargs='?', type=is_hexstr_or_decimal,
                                    help='ADM1 pin value. If none given, CSV file will be queried')
+    verify_adm_parser.add_argument('--pin-is-hex', action='store_true',
+                                   help='ADM1 pin value is specified as hex-string (not decimal)')
 
     @cmd2.with_argparser(verify_adm_parser)
     def do_verify_adm(self, opts):
@@ -834,12 +836,18 @@ class PySimCommands(CommandSet):
         """
         if opts.ADM1:
             # use specified ADM-PIN
-            pin_adm = sanitize_pin_adm(opts.ADM1)
+            if opts.pin_is_hex:
+                pin_adm = sanitize_pin_adm(None, opts.ADM1)
+            else:
+                pin_adm = sanitize_pin_adm(opts.ADM1)
         else:
             iccid = self._cmd.rs.identity['ICCID']
             # try to find an ADM-PIN if none is specified
             result = card_key_provider_get_field('ADM1', key='ICCID', value=iccid)
-            pin_adm = sanitize_pin_adm(result)
+            if opts.pin_is_hex:
+                pin_adm = sanitize_pin_adm(None, result)
+            else:
+                pin_adm = sanitize_pin_adm(result)
             if pin_adm:
                 self._cmd.poutput("found ADM-PIN '%s' for ICCID '%s'" % (result, iccid))
             else:
