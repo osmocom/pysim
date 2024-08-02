@@ -153,7 +153,7 @@ class ProfileTemplateRegistry:
         return cls.by_oid.get(oid, None)
 
 # below are transcribed template definitions from "ANNEX A (Normative): File Structure Templates Definition"
-# of "Profile interoperability specification V3.1 Final" (unless other version explicitly specified).
+# of "Profile interoperability specification V3.3.1 Final" (unless other version explicitly specified).
 
 # Section 9.2
 class FilesAtMF(ProfileTemplate):
@@ -550,6 +550,15 @@ class FilesUsimOptionalV2(ProfileTemplate):
         FileTemplate(0x6ffd, 'EF.MudMidCfgdata','BT', None, None,2, None, None, True, ['size'], ass_serv=[134]),
     ]
 
+# Section 9.5.2.3 v3.3.1
+class FilesUsimOptionalV3(ProfileTemplate):
+    created_by_default = False
+    optional = True
+    oid = OID.ADF_USIMopt_not_by_default_v3
+    base_path = Path('ADF.USIM')
+    files = FilesUsimOptionalV2.files + [
+        FileTemplate(0x6f01, 'EF.eAKA', 'TR', None, 1, 3, None, None, True, ['size'], ass_serv=[134]),
+    ]
 
 # Section 9.5.3
 class FilesUsimDfPhonebook(ProfileTemplate):
@@ -638,6 +647,36 @@ class FilesUsimDf5GSv3(ProfileTemplate):
         FileTemplate(0x4f0c, 'EF.TN3GPPSNN',         'TR', None,    1,   2, 0x0c, '00', False, ass_serv=[135]),
     ]
 
+# Section 9.5.11.4
+class FilesUsimDf5GSv4(ProfileTemplate):
+    created_by_default = False
+    oid = OID.DF_5GS_v4
+    base_path = Path('ADF.USIM')
+    files = [
+        FileTemplate(0x6fc0, 'DF.5GS',               'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[122,126,127,128,129,130], pe_name='df-df-5gs'),
+        FileTemplate(0x4f01, 'EF.5GS3GPPLOCI',       'TR', None,   20,   5, 0x01, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000001', False, ass_serv=[122], high_update=True),
+        FileTemplate(0x4f02, 'EF.5GSN3GPPLOCI',      'TR', None,   20,   5, 0x02, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000001', False, ass_serv=[122], high_update=True),
+        FileTemplate(0x4f03, 'EF.5GS3GPPNSC',        'LF',    2,   62,   5, 0x03, 'FF...FF', False, ass_serv=[122,136], high_update=True),
+        # ^ If Service n°136 is not "available" in EF UST, the Profile Creator shall ensure that these files shall contain one record; otherwise, they shall contain 2 records.
+        FileTemplate(0x4f04, 'EF.5GSN3GPPNSC',       'LF',    2,   62,   5, 0x04, 'FF...FF', False, ass_serv=[122,136], high_update=True),
+        # ^ If Service n°136 is not "available" in EF UST, the Profile Creator shall ensure that these files shall contain one record; otherwise, they shall contain 2 records.
+        FileTemplate(0x4f05, 'EF.5GAUTHKEYS',        'TR', None,  110,   5, 0x05, None, True, ass_serv=[123], high_update=True),
+        FileTemplate(0x4f06, 'EF.UAC_AIC',           'TR', None,    4,   2, 0x06, None, True, ass_serv=[126]),
+        FileTemplate(0x4f07, 'EF.SUCI_Calc_Info',    'TR', None, None,   2, 0x07, 'FF...FF', False, ass_serv=[124]),
+        FileTemplate(0x4f08, 'EF.OPL5G',             'LF', None,   10,  10, 0x08, 'FF...FF', False, ['nb_rec'], ass_serv=[129]),
+        FileTemplate(0x4f09, 'EF.SUPI_NAI',          'TR', None, None,   2, 0x09, None, True, ['size'], ass_serv=[130], pe_name='ef-supinai'),
+        FileTemplate(0x4f0a, 'EF.Routing_Indicator', 'TR', None,    4,   2, 0x0a, 'F0FF0000', False, ass_serv=[124]),
+        FileTemplate(0x4f0b, 'EF.URSP',              'BT', None, None,   2, None, None, False, ass_serv=[132]),
+        FileTemplate(0x4f0c, 'EF.TN3GPPSNN',         'TR', None,    1,   2, 0x0c, '00', False, ass_serv=[135]),
+        FileTemplate(0x4f0d, 'EF.CAG',               'TR', None,    2,   2, 0x0d, None, True, ass_serv=[137]),
+        FileTemplate(0x4f0e, 'EF.SOR_CMCI',          'TR', None, None,   2, 0x0e, None, True, ass_serv=[138]),
+        FileTemplate(0x4f0f, 'EF.DRI',               'TR', None,    7,   2, 0x0f, None, True, ass_serv=[150]),
+        FileTemplate(0x4f10, 'EF.5GSEDRX',           'TR', None,    2,   2, 0x10, None, True, ass_serv=[141]),
+        FileTemplate(0x4f11, 'EF.5GNSWO_CONF',       'TR', None,    1,   2, 0x11, None, True, ass_serv=[142]),
+        FileTemplate(0x4f15, 'EF.MCHPPLMN',          'TR', None,    1,   2, 0x15, None, True, ass_serv=[144]),
+        FileTemplate(0x4f16, 'EF.KAUSF_DERIVATION',  'TR', None,    1,   2, 0x16, None, True, ass_serv=[145]),
+    ]
+
 
 # Section 9.5.12
 class FilesUsimDfSaip(ProfileTemplate):
@@ -649,6 +688,30 @@ class FilesUsimDfSaip(ProfileTemplate):
         FileTemplate(0x4f01, 'EF.SUCICalcInfo','TR', None, None, 3, None, 'FF..FF', False, ['size'], ass_serv=[125], pe_name='ef-suci-calc-info-usim'),
     ]
 
+# Section 9.5.13
+class FilesDfSnpn(ProfileTemplate):
+    created_by_default = False
+    oid = OID.DF_SNPN
+    base_path = Path('ADF.USIM')
+    files = [
+        FileTemplate(0x5fe0, 'DF.SNPN',         'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[143], pe_name='df-df-snpn'),
+        FileTemplate(0x4f01, 'EF.PWS_SNPN',     'TR', None,    1,  10, None, None, True, ass_serv=[143]),
+    ]
+
+# Section 9.5.14
+class FilesDf5GProSe(ProfileTemplate):
+    created_by_default = False
+    oid = OID.DF_5GProSe
+    base_path = Path('ADF.USIM')
+    files = [
+        FileTemplate(0x5ff0, 'DF.5G_ProSe',       'DF', None, None,  14, None, None, False, ['pinStatusTeimplateDO'], ass_serv=[139], pe_name='df-df-5g-prose'),
+        FileTemplate(0x4f01, 'EF.5G_PROSE_ST',    'TR', None,    1,   2, 0x01, None,  True, ass_serv=[139]),
+        FileTemplate(0x4f02, 'EF.5G_PROSE_DD',    'TR', None,   26,   2, 0x02, None,  True, ass_serv=[139,1001]),
+        FileTemplate(0x4f03, 'EF.5G_PROSE_DC',    'TR', None,   12,   2, 0x03, None,  True, ass_serv=[139,1002]),
+        FileTemplate(0x4f04, 'EF.5G_PROSE_U2NRU', 'TR', None,   32,   2, 0x04, None,  True, ass_serv=[139,1003]),
+        FileTemplate(0x4f05, 'EF.5G_PROSE_RU',    'TR', None,   29,   2, 0x05, None,  True, ass_serv=[139,1004]),
+        FileTemplate(0x4f06, 'EF.5G_PROSE_UIR',   'TR', None,   32,   2, 0x06, None,  True, ass_serv=[139,1005]),
+    ]
 
 # Section 9.6.1
 class FilesIsimMandatory(ProfileTemplate):
