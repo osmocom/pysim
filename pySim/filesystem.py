@@ -1471,6 +1471,9 @@ class Path:
     def __getitem__(self, i):
         return self.list[i]
 
+    def __len__(self):
+        return len(self.list)
+
     def __add__(self, a):
         if isinstance(a, list):
             l = self.list + a
