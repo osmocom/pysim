@@ -300,9 +300,11 @@ class ProfileElement:
             'gsm-access': ProfileElementGsmAccess,
             # TODO: csim
             # TODO: opt-csim
-            # TODO: eap
+            'eap': ProfileElementEAP,
             'df-5gs': ProfileElementDf5GS,
             'df-saip': ProfileElementDfSAIP,
+            'df-snpn': ProfileElementDfSNPN,
+            'df-5gprose': ProfileElementDf5GProSe,
             }
         if pe_type in class4petype:
             return class4petype[pe_type]
@@ -553,6 +555,18 @@ class ProfileElementDf5GS(FsProfileElement):
         for fname in ['df-5gs']:
             self.decoded[fname] = []
 
+class ProfileElementEAP(FsProfileElement):
+    type = 'eap'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__(decoded)
+        if decoded:
+            return
+        # provide some reasonable defaults
+        self.decoded['templateID'] = str(oid.DF_EAP)
+        for fname in ['df-eap', 'ef-eapstatus']:
+            self.decoded[fname] = []
+
 class ProfileElementDfSAIP(FsProfileElement):
     type = 'df-saip'
 
@@ -563,6 +577,30 @@ class ProfileElementDfSAIP(FsProfileElement):
         # provide some reasonable defaults
         self.decoded['templateID'] = str(oid.DF_SAIP)
         for fname in ['df-saip']:
+            self.decoded[fname] = []
+
+class ProfileElementDfSNPN(FsProfileElement):
+    type = 'df-snpn'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__(decoded)
+        if decoded:
+            return
+        # provide some reasonable defaults
+        self.decoded['templateID'] = str(oid.DF_SNPN)
+        for fname in ['df-snpn']:
+            self.decoded[fname] = []
+
+class ProfileElementDf5GProSe(FsProfileElement):
+    type = 'df-5gprose'
+
+    def __init__(self, decoded: Optional[dict] = None):
+        super().__init__(decoded)
+        if decoded:
+            return
+        # provide some reasonable defaults
+        self.decoded['templateID'] = str(oid.DF_5GProSe)
+        for fname in ['df-df-5g-prose']:
             self.decoded[fname] = []
 
 
