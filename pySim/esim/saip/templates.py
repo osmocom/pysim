@@ -17,6 +17,7 @@
 
 from typing import *
 from copy import deepcopy
+from pySim.filesystem import Path
 import pySim.esim.saip.oid as OID
 
 class FileTemplate:
@@ -61,10 +62,18 @@ class FileTemplate:
 
     def print_tree(self, indent:str = ""):
         """recursive printing of FileTemplate tree structure."""
-        print("%s%s" % (indent, repr(self)))
+        print("%s%s (%s)" % (indent, repr(self), self.path))
         indent += " "
         for c in self.children:
             c.print_tree(indent)
+
+    @property
+    def path(self):
+        """Return the path of the given File within the hierarchy."""
+        if self.parent:
+            return self.parent.path + self.name
+        else:
+            return Path(self.name)
 
     def get_file_by_path(self, path: List[str]) -> Optional['FileTemplate']:
         """Return a FileTemplate matching the given path within this ProfileTemplate."""
@@ -98,14 +107,14 @@ class ProfileTemplate:
             if f.file_type in ['MF', 'DF', 'ADF']:
                 if cur_df == None:
                     cls.tree.append(f)
-                    cur_df = f
                     f.parent = None
+                    cur_df = f
                 else:
                     # "cd .."
                     if cur_df.parent:
                         cur_df = cur_df.parent
-                    cur_df.children.append(f)
                     f.parent = cur_df
+                    cur_df.children.append(f)
                     cur_df = f
             else:
                 if cur_df == None:
@@ -213,6 +222,7 @@ for i in range(0x98, 0xa0):
 class FilesTelecom(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_TELECOM
+    base_path = Path('MF')
     files = [
         FileTemplate(0x7f11, 'DF.TELECOM',   'DF', None, None,  14, None, None, False, params=['pinStatusTemplateDO']),
         FileTemplate(0x6f06, 'EF.ARR',       'LF', None, None,  10, None, None, True, ['nb_rec', 'size']),
@@ -252,6 +262,7 @@ class FilesTelecom(ProfileTemplate):
 class FilesTelecomV2(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_TELECOM_v2
+    base_path = Path('MF')
     files = [
         FileTemplate(0x7f11, 'DF.TELECOM',   'DF', None, None,  14, None, None, False, params=['pinStatusTemplateDO']),
         FileTemplate(0x6f06, 'EF.ARR',       'LF', None, None,  10, None, None, True, ['nb_rec', 'size']),
@@ -366,6 +377,7 @@ class FilesUsimOptional(ProfileTemplate):
     created_by_default = False
     optional = True
     oid = OID.ADF_USIMopt_not_by_default
+    base_path = Path('ADF.USIM')
     files = [
         FileTemplate(0x6f05, 'EF.LI',        'TR', None,    6,   1, 0x02, 'FF...FF', False),
         FileTemplate(0x6f37, 'EF.ACMmax',    'TR', None,    3,   5, None, '000000', False, ass_serv=[13], pe_name='ef-acmax'),
@@ -449,6 +461,7 @@ class FilesUsimOptionalV2(ProfileTemplate):
     created_by_default = False
     optional = True
     oid = OID.ADF_USIMopt_not_by_default_v2
+    base_path = Path('ADF.USIM')
     files = [
         FileTemplate(0x6f05, 'EF.LI',        'TR', None,    6,   1, 0x02, 'FF...FF', False),
         FileTemplate(0x6f37, 'EF.ACMmax',    'TR', None,    3,   5, None, '000000', False, ass_serv=[13]),
@@ -542,6 +555,7 @@ class FilesUsimOptionalV2(ProfileTemplate):
 class FilesUsimDfPhonebook(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_PHONEBOOK_ADF_USIM
+    base_path = Path('ADF.USIM')
     files = df_pb_files
 
 
@@ -549,6 +563,7 @@ class FilesUsimDfPhonebook(ProfileTemplate):
 class FilesUsimDfGsmAccess(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_GSM_ACCESS_ADF_USIM
+    base_path = Path('ADF.USIM')
     files = [
         FileTemplate(0x5f3b, 'DF.GSM-ACCESS','DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[27]),
         FileTemplate(0x4f20, 'EF.Kc',        'TR', None,    9,   5, 0x01, 'FF...FF07', False, ass_serv=[27], high_update=True),
@@ -562,6 +577,7 @@ class FilesUsimDfGsmAccess(ProfileTemplate):
 class FilesUsimDf5GS(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_5GS
+    base_path = Path('ADF.USIM')
     files = [
         FileTemplate(0x6fc0, 'DF.5GS',               'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[122,126,127,128,129,130], pe_name='df-df-5gs'),
         FileTemplate(0x4f01, 'EF.5GS3GPPLOCI',       'TR', None,   20,   5, 0x01, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000001', False, ass_serv=[122], high_update=True),
@@ -581,6 +597,7 @@ class FilesUsimDf5GS(ProfileTemplate):
 class FilesUsimDf5GSv2(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_5GS_v2
+    base_path = Path('ADF.USIM')
     files = [
         FileTemplate(0x6fc0, 'DF.5GS',               'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[122,126,127,128,129,130], pe_name='df-df-5gs'),
         FileTemplate(0x4f01, 'EF.5GS3GPPLOCI',       'TR', None,   20,   5, 0x01, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000001', False, ass_serv=[122], high_update=True),
@@ -602,6 +619,7 @@ class FilesUsimDf5GSv2(ProfileTemplate):
 class FilesUsimDf5GSv3(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_5GS_v3
+    base_path = Path('ADF.USIM')
     files = [
         FileTemplate(0x6fc0, 'DF.5GS',               'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[122,126,127,128,129,130], pe_name='df-df-5gs'),
         FileTemplate(0x4f01, 'EF.5GS3GPPLOCI',       'TR', None,   20,   5, 0x01, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000001', False, ass_serv=[122], high_update=True),
@@ -625,6 +643,7 @@ class FilesUsimDf5GSv3(ProfileTemplate):
 class FilesUsimDfSaip(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_SAIP
+    base_path = Path('ADF.USIM')
     files = [
         FileTemplate(0x6fd0, 'DF.SAIP',        'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[(124, 125)], pe_name='df-df-saip'),
         FileTemplate(0x4f01, 'EF.SUCICalcInfo','TR', None, None, 3, None, 'FF..FF', False, ['size'], ass_serv=[125], pe_name='ef-suci-calc-info-usim'),
@@ -651,6 +670,7 @@ class FilesIsimOptional(ProfileTemplate):
     created_by_default = False
     optional = True
     oid = OID.ADF_ISIMopt_not_by_default
+    base_path = Path('ADF.ISIM')
     files = [
         FileTemplate(0x6f09, 'EF.P-CSCF',      'LF',    1, None,   2, None, None, True, ['size'], ass_serv=[1,5]),
         FileTemplate(0x6f3c, 'EF.SMS',         'LF',   10,  176,   5, None, '00FF...FF', False, ass_serv=[6,8]),
@@ -669,6 +689,7 @@ class FilesIsimOptionalv2(ProfileTemplate):
     created_by_default = False
     optional = True
     oid = OID.ADF_ISIMopt_not_by_default_v2
+    base_path = Path('ADF.ISIM')
     files = [
         FileTemplate(0x6f09, 'EF.PCSCF',       'LF',    1, None,   2, None, None, True, ['size'], ass_serv=[1,5]),
         FileTemplate(0x6f3c, 'EF.SMS',         'LF',   10,  176,   5, None, '00FF...FF', False, ass_serv=[6,8]),
