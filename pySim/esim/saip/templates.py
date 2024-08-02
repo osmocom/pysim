@@ -36,7 +36,7 @@ class FileTemplate:
         if ftype in ['LF', 'CY']:
             self.nb_rec = nb_rec
             self.rec_len = size
-        elif ftype in ['TR']:
+        elif ftype in ['TR', 'BT']:
             self.file_size = size
         self.arr = arr
         self.sfi = sfi
