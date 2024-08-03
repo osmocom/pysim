@@ -26,7 +26,7 @@ class FileTemplate:
     def __init__(self, fid:int, name:str, ftype, nb_rec: Optional[int], size:Optional[int], arr:int,
                  sfi:Optional[int] = None, default_val:Optional[str] = None, content_rqd:bool = True,
                  params:Optional[List] = None, ass_serv:Optional[List[int]]=None, high_update:bool = False,
-                 pe_name:Optional[str] = None):
+                 pe_name:Optional[str] = None, repeat:bool = False):
         # initialize from arguments
         self.fid = fid
         self.name = name
@@ -43,6 +43,7 @@ class FileTemplate:
         self.arr = arr
         self.sfi = sfi
         self.default_val = default_val
+        self.default_val_repeat = repeat
         self.content_rqd = content_rqd
         self.params = params
         self.ass_serv = ass_serv
@@ -393,9 +394,9 @@ class FilesUsimOptional(ProfileTemplate):
         FileTemplate(0x6f4b, 'EF.EXT2',      'LF',   10,   13,   8, None, '00FF...FF', False, ass_serv=[3]),
         FileTemplate(0x6f4c, 'EF.EXT3',      'LF',   10,   13,   2, None, '00FF...FF', False, ass_serv=[5]),
         FileTemplate(0x6f50, 'EF.CBMIR',     'TR', None,   20,   5, None, 'FF...FF', False, ass_serv=[16]),
-        FileTemplate(0x6f60, 'EF.PLMNwAcT',  'TR', None,   40,   5, 0x0a, 'FFFFFF0000'*8, False, ass_serv=[20]),
-        FileTemplate(0x6f61, 'EF.OPLMNwAcT', 'TR', None,   40,   2, 0x11, 'FFFFFF0000'*8, False, ass_serv=[42]),
-        FileTemplate(0x6f62, 'EF.HPLMNwAcT', 'TR', None,    5,   2, 0x13, 'FFFFFF0000', False, ass_serv=[43]),
+        FileTemplate(0x6f60, 'EF.PLMNwAcT',  'TR', None,   40,   5, 0x0a, 'FFFFFF0000', False, ass_serv=[20], repeat=True),
+        FileTemplate(0x6f61, 'EF.OPLMNwAcT', 'TR', None,   40,   2, 0x11, 'FFFFFF0000', False, ass_serv=[42], repeat=True),
+        FileTemplate(0x6f62, 'EF.HPLMNwAcT', 'TR', None,    5,   2, 0x13, 'FFFFFF0000', False, ass_serv=[43], repeat=True),
         FileTemplate(0x6f2c, 'EF.DCK',       'TR', None,   16,   5, None, 'FF...FF', False, ass_serv=[36]),
         FileTemplate(0x6f32, 'EF.CNL',       'TR', None,   30,   2, None, 'FF...FF', False, ass_serv=[37]),
         FileTemplate(0x6f47, 'EF.SMSR',      'LF',   10,   30,   5, None, '00FF...FF', False, ass_serv=[11]),
