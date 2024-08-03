@@ -17,7 +17,7 @@
 
 from typing import *
 from copy import deepcopy
-from pySim.utils import all_subclasses
+from pySim.utils import all_subclasses, h2b
 from pySim.filesystem import Path
 import pySim.esim.saip.oid as OID
 
@@ -51,6 +51,10 @@ class FileTemplate:
         # initialize empty
         self.parent = None
         self.children = []
+        if self.default_val:
+            length = self._default_value_len() or 100
+            # run the method once to verify the pattern can be processed
+            self.expand_default_value_pattern(length)
 
     def __str__(self) -> str:
         return "FileTemplate(%s)" % (self.name)
@@ -84,6 +88,34 @@ class FileTemplate:
         for c in self.children:
             if path[1].lower() == c.name.lower():
                 return c.get_file_by_path(path[1:])
+
+    def _default_value_len(self):
+        if self.file_type in ['TR']:
+            return self.file_size
+        elif self.file_type in ['LF', 'CY']:
+            return self.rec_len
+
+    def expand_default_value_pattern(self, length: Optional[int] = None) -> Optional[bytes]:
+        """Expand the default value pattern to the specified length."""
+        if not length:
+            length = self._default_value_len()
+        if not length:
+            raise ValueError("%s does not have a default length" % self)
+        if not self.default_val:
+            return None
+        if not '...' in self.default_val:
+            return h2b(self.default_val)
+        l = self.default_val.split('...')
+        if len(l) != 2:
+            raise ValueError("Pattern '%s' contains more than one ..." % self.default_val)
+        prefix = h2b(l[0])
+        suffix = h2b(l[1])
+        pad_len = length - len(prefix) - len(suffix)
+        if pad_len <= 0:
+            ret = prefix + suffix
+            return ret[:length]
+        return prefix + prefix[-1:] * pad_len + suffix
+
 
 class ProfileTemplate:
     """Representation of a SimAlliance/TCA Profile Template.  Each Template is identified by its OID and
