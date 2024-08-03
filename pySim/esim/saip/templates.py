@@ -17,6 +17,7 @@
 
 from typing import *
 from copy import deepcopy
+from pySim.utils import all_subclasses
 from pySim.filesystem import Path
 import pySim.esim.saip.oid as OID
 
@@ -807,3 +808,85 @@ ARR_DEFINITION = {
     13: ['800113A406830101950108', '800148A40683010A950108'],
     14: ['80015EA40683010A950108'],
 }
+
+class SaipSpecVersionMeta(type):
+    def __getitem__(self, ver: str):
+        """Syntactic sugar so that SaipSpecVersion['2.3.0'] will work."""
+        return SaipSpecVersion.for_version(ver)
+
+class SaipSpecVersion(object, metaclass=SaipSpecVersionMeta):
+    """Represents a specific version of the SIMalliance / TCA eUICC Profile Package:
+       Interoperable Format Technical Specification."""
+    version = None
+    oids = []
+
+    @classmethod
+    def suports_template_OID(cls, OID: OID.OID) -> bool:
+        """Return if a given spec version supports a template of given OID."""
+        return OID in cls.oids
+
+    @classmethod
+    def version_match(cls, ver: str) -> bool:
+        """Check if the given version-string matches the classes version.  trailing zeroes are ignored,
+        so that for example 2.2.0 will be considered equal to 2.2"""
+        def strip_trailing_zeroes(l: List):
+            while l[-1] == '0':
+                l.pop()
+        cls_ver_l = cls.version.split('.')
+        strip_trailing_zeroes(cls_ver_l)
+        ver_l = ver.split('.')
+        strip_trailing_zeroes(ver_l)
+        return cls_ver_l == ver_l
+
+    @staticmethod
+    def for_version(req_version: str) -> Optional['SaipSpecVersion']:
+        """Return the subclass for the requested version number string."""
+        for cls in all_subclasses(SaipSpecVersion):
+            if cls.version_match(req_version):
+                return cls
+
+
+class SaipSpecVersion101(SaipSpecVersion):
+    version = '1.0.1'
+    oids = [OID.MF, OID.DF_CD, OID.DF_TELECOM, OID.ADF_USIM_by_default, OID.ADF_USIMopt_not_by_default,
+            OID.DF_PHONEBOOK_ADF_USIM, OID.DF_GSM_ACCESS_ADF_USIM, OID.ADF_ISIM_by_default,
+            OID.ADF_ISIMopt_not_by_default, OID.ADF_CSIM_by_default, OID.ADF_CSIMopt_not_by_default]
+
+class SaipSpecVersion20(SaipSpecVersion):
+    version = '2.0'
+    # no changes in filesystem teplates to previous 1.0.1
+    oids = SaipSpecVersion101.oids
+
+class SaipSpecVersion21(SaipSpecVersion):
+    version = '2.1'
+    # no changes in filesystem teplates to previous 2.0
+    oids = SaipSpecVersion20.oids
+
+class SaipSpecVersion22(SaipSpecVersion):
+    version = '2.2'
+    oids = SaipSpecVersion21.oids + [OID.DF_EAP]
+
+class SaipSpecVersion23(SaipSpecVersion):
+    version = '2.3'
+    oids = SaipSpecVersion22.oids + [OID.DF_5GS, OID.DF_SAIP]
+
+class SaipSpecVersion231(SaipSpecVersion):
+    version = '2.3.1'
+    # no changes in filesystem teplates to previous 2.3
+    oids = SaipSpecVersion23.oids
+
+class SaipSpecVersion31(SaipSpecVersion):
+    version = '3.1'
+    oids = [OID.MF, OID.DF_CD, OID.DF_TELECOM_v2, OID.ADF_USIM_by_default_v2, OID.ADF_USIMopt_not_by_default_v2,
+            OID.DF_PHONEBOOK_ADF_USIM, OID.DF_GSM_ACCESS_ADF_USIM, OID.DF_5GS_v2, OID.DF_5GS_v3, OID.DF_SAIP,
+            OID.ADF_ISIM_by_default, OID.ADF_ISIMopt_not_by_default_v2, OID.ADF_CSIM_by_default_v2,
+            OID.ADF_CSIMopt_not_by_default_v2, OID.DF_EAP]
+
+class SaipSpecVersion32(SaipSpecVersion):
+    version = '3.2'
+    # no changes in filesystem teplates to previous 3.1
+    oids = SaipSpecVersion31.oids
+
+class SaipSpecVersion331(SaipSpecVersion):
+    version = '3.3.1'
+    oids = SaipSpecVersion32.oids + [OID.ADF_USIMopt_not_by_default_v3, OID.DF_5GS_v4, OID.DF_SAIP, OID.DF_SNPN, OID.DF_5GProSe, OID.IoT_by_default, OID.IoTopt_not_by_default]
