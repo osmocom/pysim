@@ -687,7 +687,7 @@ class FilesUsimDfSaip(ProfileTemplate):
     base_path = Path('ADF.USIM')
     files = [
         FileTemplate(0x6fd0, 'DF.SAIP',        'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[(124, 125)], pe_name='df-df-saip'),
-        FileTemplate(0x4f01, 'EF.SUCICalcInfo','TR', None, None, 3, None, 'FF..FF', False, ['size'], ass_serv=[125], pe_name='ef-suci-calc-info-usim'),
+        FileTemplate(0x4f01, 'EF.SUCICalcInfo','TR', None, None, 3, None, 'FF...FF', False, ['size'], ass_serv=[125], pe_name='ef-suci-calc-info-usim'),
     ]
 
 # Section 9.5.13
@@ -785,8 +785,8 @@ class FilesEap(ProfileTemplate):
         FileTemplate(0x4f01, 'EF.EAPKEYS',     'TR', None, None,   2, None, None, True, ['size'], high_update=True),
         FileTemplate(0x4f02, 'EF.EAPSTATUS',   'TR', None,    1,   2, None, '00', False, high_update=True),
         FileTemplate(0x4f03, 'EF.PUId',        'TR', None, None,   2, None, None, True, ['size']),
-        FileTemplate(0x4f04, 'EF.Ps',          'TR', None, None,   5, None, 'FF..FF', False, ['size'], high_update=True),
-        FileTemplate(0x4f20, 'EF.CurID',       'TR', None, None,   5, None, 'FF..FF', False, ['size'], high_update=True),
+        FileTemplate(0x4f04, 'EF.Ps',          'TR', None, None,   5, None, 'FF...FF', False, ['size'], high_update=True),
+        FileTemplate(0x4f20, 'EF.CurID',       'TR', None, None,   5, None, 'FF...FF', False, ['size'], high_update=True),
         FileTemplate(0x4f21, 'EF.RelID',       'TR', None, None,   5, None, None, True, ['size']),
         FileTemplate(0x4f22, 'EF.Realm',       'TR', None, None,   5, None, None, True, ['size']),
     ]
