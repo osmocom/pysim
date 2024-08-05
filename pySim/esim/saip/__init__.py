@@ -107,6 +107,7 @@ class File:
     def from_template(self, template: templates.FileTemplate):
         """Determine defaults for file based on given FileTemplate."""
         fdb_dec = {}
+        pefi = {}
         self.rec_len = None
         if template.fid:
             self.fileDescriptor['fileID'] = template.fid.to_bytes(2, 'big')
@@ -126,14 +127,16 @@ class File:
                 fdb_dec['structure'] = 'linear_fixed'
             elif template.file_type == 'CY':
                 fdb_dec['structure'] = 'cyclic'
-        elif template.file_type in ['TR', 'BT']:
+        elif template.file_type == 'BT':
             fdb_dec['file_type'] = 'working_ef'
+            fdb_dec['structure'] = 'ber_tlv'
+            if template.file_size:
+                pefi['maximumFileSize'] = template.file_size.to_bytes(2, 'big') # FIXME
+        elif template.file_type == 'TR':
+            fdb_dec['file_type'] = 'working_ef'
+            fdb_dec['structure'] = 'transparent'
             if template.file_size:
                 self.fileDescriptor['efFileSize'] = template.file_size.to_bytes(2, 'big') # FIXME
-            if template.file_type == 'BT':
-                fdb_dec['structure'] = 'ber_tlv'
-            elif template.file_type == 'TR':
-                fdb_dec['structure'] = 'transparent'
         elif template.file_type in ['MF', 'DF', 'ADF']:
             fdb_dec['file_type'] = 'df'
             fdb_dec['structure'] = 'no_info_given'
@@ -142,9 +145,18 @@ class File:
         if self.rec_len:
             fd_dict['record_len'] = self.rec_len
         self.fileDescriptor['fileDescriptor'] = build_construct(FileDescriptor._construct, fd_dict)
-        # FIXME: default_val
-        # FIXME: high_update
-        # FIXME: params?
+        if template.high_update:
+            pefi['specialFileInformation'] = b'\x80' # TS 102 222 Table 5
+        try:
+            if template.default_val_repeat:
+                pefi['repeatPattern'] = template.expand_default_value_pattern()
+            elif template.default_val:
+                pefi['fillPattern'] = template.expand_default_value_pattern()
+        except ValueError:
+            # ignore this here as without a file or record length we cannot do this
+            pass
+        if len(pefi.keys()):
+            self.fileDescriptor['proprietaryEFInfo'] = pefi
 
     def from_tuples(self, l:List[Tuple]):
         """Parse a list of fileDescriptor, fillFileContent, fillFileOffset tuples into this instance."""
