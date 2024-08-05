@@ -534,7 +534,7 @@ class PySimCommands(CommandSet):
                 # below, so we must not move up.
                 if skip_df == False:
                     self.walk(indent + 1, action_ef, action_df, context, **kwargs)
-                    self._cmd.lchan.select_parent(self._cmd)
+                    self._cmd.lchan.select_file(self._cmd.lchan.selected_file.parent, self._cmd)
 
             elif action_ef:
                 df_before_action = self._cmd.lchan.selected_file
