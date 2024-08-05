@@ -373,7 +373,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         first = True
         while 1:
             # TODO: Count consecutive failures, if more than N consecutive failures occur, then stop.
-            # The ratinale is: There may be a problem with the device, we do want to prevent that
+            # The rationale is: There may be a problem with the device, we do want to prevent that
             # all remaining cards are fired to the error bin. This is only relevant for situations
             # with large stacks, probably we do not need this feature right now.
 
