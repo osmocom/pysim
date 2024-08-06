@@ -235,33 +235,6 @@ class ProfileElement:
                 if mandated:
                     self.decoded[self.header_name] = { 'mandated': None}
 
-    def _fixup_sqnInit_dec(self) -> None:
-        """asn1tools has a bug when working with SEQUENCE OF that have DEFAULT values. Let's work around
-        this."""
-        if self.type != 'akaParameter':
-            return
-        sqn_init = self.decoded.get('sqnInit', None)
-        if not sqn_init:
-            return
-        # this weird '0x' value in a string is what we get from our (slightly hacked) ASN.1 syntax
-        if sqn_init == '0x000000000000':
-            # SEQUENCE (SIZE (32)) OF OCTET STRING (SIZE (6))
-            self.decoded['sqnInit'] = [b'\x00'*6] * 32
-
-    def _fixup_sqnInit_enc(self) -> None:
-        """asn1tools has a bug when working with SEQUENCE OF that have DEFAULT values. Let's work around
-        this."""
-        if self.type != 'akaParameter':
-            return
-        sqn_init = self.decoded.get('sqnInit', None)
-        if not sqn_init:
-            return
-        for s in sqn_init:
-            if any(s):
-                return
-        # none of the fields were initialized with a non-default (non-zero) value, so we can skip it
-        del self.decoded['sqnInit']
-
     @property
     def header_name(self) -> str:
         """Return the name of the header field within the profile element."""
@@ -337,8 +310,6 @@ class ProfileElement:
         else:
             inst = ProfileElement(decoded)
             inst.type = pe_type
-        # work around asn1tools bug regarding DEFAULT for a SEQUENCE OF
-        inst._fixup_sqnInit_dec()
         # run any post-decoder a derived class may have
         if hasattr(inst, '_post_decode'):
             inst._post_decode()
@@ -349,8 +320,6 @@ class ProfileElement:
         # run any pre-encoder a derived class may have
         if hasattr(self, '_pre_encode'):
             self._pre_encode()
-        # work around asn1tools bug regarding DEFAULT for a SEQUENCE OF
-        self._fixup_sqnInit_enc()
         return asn1.encode('ProfileElement', (self.type, self.decoded))
 
     def __str__(self) -> str:
@@ -860,6 +829,37 @@ class ProfileElementAKA(ProfileElement):
             return
         # provide some reasonable defaults for a MNO-SD
         self.set_milenage(b'\x00'*16, b'\x00'*16)
+
+    def _fixup_sqnInit_dec(self) -> None:
+        """asn1tools has a bug when working with SEQUENCE OF that have DEFAULT values. Let's work around
+        this."""
+        sqn_init = self.decoded.get('sqnInit', None)
+        if not sqn_init:
+            return
+        # this weird '0x' value in a string is what we get from our (slightly hacked) ASN.1 syntax
+        if sqn_init == '0x000000000000':
+            # SEQUENCE (SIZE (32)) OF OCTET STRING (SIZE (6))
+            self.decoded['sqnInit'] = [b'\x00'*6] * 32
+
+    def _fixup_sqnInit_enc(self) -> None:
+        """asn1tools has a bug when working with SEQUENCE OF that have DEFAULT values. Let's work around
+        this."""
+        sqn_init = self.decoded.get('sqnInit', None)
+        if not sqn_init:
+            return
+        for s in sqn_init:
+            if any(s):
+                return
+        # none of the fields were initialized with a non-default (non-zero) value, so we can skip it
+        del self.decoded['sqnInit']
+
+    def _post_decode(self):
+        # work around asn1tools bug regarding DEFAULT for a SEQUENCE OF
+        self._fixup_sqnInit_dec()
+
+    def _pre_encode(self):
+        # work around asn1tools bug regarding DEFAULT for a SEQUENCE OF
+        self._fixup_sqnInit_enc()
 
     def set_milenage(self, k: bytes, opc: bytes):
         """Configure akaParametes for MILENAGE."""
