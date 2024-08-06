@@ -104,6 +104,10 @@ class File:
         if l:
             self.from_tuples(l)
 
+    def _encode_file_size(self, size: int) -> bytes:
+        # FIXME: handle > v2.0 case where it must be encoded on the minimum number of octets possible
+        return size.to_bytes(2, 'big')
+
     def from_template(self, template: templates.FileTemplate):
         """Determine defaults for file based on given FileTemplate."""
         fdb_dec = {}
@@ -122,7 +126,7 @@ class File:
             if template.rec_len:
                 self.record_len = template.rec_len
             if template.nb_rec and template.rec_len:
-                self.fileDescriptor['efFileSize'] = (template.nb_rec * template.rec_len).to_bytes(2, 'big') # FIXME
+                self.fileDescriptor['efFileSize'] = self._encode_file_size(template.nb_rec * template.rec_len)
             if template.file_type == 'LF':
                 fdb_dec['structure'] = 'linear_fixed'
             elif template.file_type == 'CY':
@@ -131,12 +135,12 @@ class File:
             fdb_dec['file_type'] = 'working_ef'
             fdb_dec['structure'] = 'ber_tlv'
             if template.file_size:
-                pefi['maximumFileSize'] = template.file_size.to_bytes(2, 'big') # FIXME
+                pefi['maximumFileSize'] = self._encode_file_size(template.file_size)
         elif template.file_type == 'TR':
             fdb_dec['file_type'] = 'working_ef'
             fdb_dec['structure'] = 'transparent'
             if template.file_size:
-                self.fileDescriptor['efFileSize'] = template.file_size.to_bytes(2, 'big') # FIXME
+                self.fileDescriptor['efFileSize'] = self._encode_file_size(template.file_size)
         elif template.file_type in ['MF', 'DF', 'ADF']:
             fdb_dec['file_type'] = 'df'
             fdb_dec['structure'] = 'no_info_given'
