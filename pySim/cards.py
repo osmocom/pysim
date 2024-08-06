@@ -23,7 +23,7 @@
 #
 
 from typing import Optional, Tuple
-from pySim.ts_102_221 import EF_DIR
+from pySim.ts_102_221 import EF_DIR, CardProfileUICC
 from pySim.ts_51_011 import DF_GSM
 
 from pySim.utils import *
@@ -54,10 +54,17 @@ class CardBase:
         print("warning: erasing is not supported for specified card type!")
 
     def file_exists(self, fid: Path) -> bool:
+        """Determine if the file exists (and is not deactivated)."""
         res_arr = self._scc.try_select_path(fid)
         for res in res_arr:
             if res[1] != '9000':
                 return False
+        try:
+            d = CardProfileUICC.decode_select_response(res_arr[-1][0])
+            if d.get('life_cycle_status_integer', 'operational_activated') != 'operational_activated':
+                return False
+        except:
+            pass
         return True
 
     def read_aids(self) -> List[Hexstr]:
