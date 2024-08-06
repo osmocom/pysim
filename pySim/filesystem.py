@@ -298,6 +298,17 @@ class CardFile:
             return True
         raise ValueError("self.service must be either int or list or tuple")
 
+    @staticmethod
+    def export(as_json: bool, lchan):
+        """
+        Export file contents in the form of commandline script. This method is meant to be overloaded by a subclass in
+        case any exportable contents are present. The generated script may contain multiple command lines separated by
+        line breaks ("\n"), where the last commandline shall have no line break at the end
+        (e.g. "update_record 1 112233\nupdate_record 1 445566"). Naturally this export method will always refer to the
+        currently selected file of the presented lchan.
+        """
+        return "# %s has no exportable contents" % str(lchan.selected_file)
+
 
 class CardDF(CardFile):
     """DF (Dedicated File) in the smart card filesystem.  Those are basically sub-directories."""
