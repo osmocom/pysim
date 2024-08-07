@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from bidict import bidict
 
 from construct import Select, Const, Bit, Struct, Int16ub, FlagsEnum, GreedyString, ValidationError
-from construct import Optional as COptional
+from construct import Optional as COptional, Computed
 
 from pySim.construct import *
 from pySim.utils import *
@@ -95,7 +95,7 @@ class TotalFileSize(BER_TLV_IE, tag=0x81):
 # ETSI TS 102 221 11.1.1.4.3
 class FileDescriptor(BER_TLV_IE, tag=0x82):
     _test_de_encode = [
-        ( '82027921', { "file_descriptor_byte": { "shareable": True, "structure": "ber_tlv" }, "record_len": None, "num_of_rec": None } ),
+        ( '82027921', { "file_descriptor_byte": { "shareable": True, "file_type": "working_ef", "structure": "ber_tlv" }, "record_len": None, "num_of_rec": None } ),
         ( '82027821', { "file_descriptor_byte": { "shareable": True, "file_type": "df", "structure": "no_info_given" }, "record_len": None, "num_of_rec": None }),
         ( '82024121', { "file_descriptor_byte": { "shareable": True, "file_type": "working_ef", "structure": "transparent" }, "record_len": None, "num_of_rec": None } ),
         ( '82054221006e05', { "file_descriptor_byte": { "shareable": True, "file_type": "working_ef", "structure": "linear_fixed" }, "record_len": 110, "num_of_rec": 5 } ),
@@ -110,7 +110,7 @@ class FileDescriptor(BER_TLV_IE, tag=0x82):
                 return 0x39
             raise ValidationError
 
-    FDB = Select(BitStruct(Const(0, Bit), 'shareable'/Flag, 'structure'/BerTlvAdapter(Const(0x39, BitsInteger(6)))),
+    FDB = Select(BitStruct(Const(0, Bit), 'shareable'/Flag, 'structure'/BerTlvAdapter(Const(0x39, BitsInteger(6))), 'file_type'/Computed('working_ef')),
                  BitStruct(Const(0, Bit), 'shareable'/Flag, 'file_type'/Enum(BitsInteger(3), working_ef=0, internal_ef=1, df=7),
                            'structure'/Enum(BitsInteger(3), no_info_given=0, transparent=1, linear_fixed=2, cyclic=6))
                 )
