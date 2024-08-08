@@ -234,6 +234,42 @@ class RuntimeLchan:
             node = node.parent
         return None
 
+    def get_file_by_name(self, name: str) -> CardFile:
+        """Obtain the file object from the file system tree by its name without actually selecting the file.
+
+        Returns:
+            CardFile() instance or None"""
+
+        # handling of entire paths with multiple directories/elements
+        if '/' in name:
+            pathlist = name.split('/')
+            # treat /DF.GSM/foo like MF/DF.GSM/foo
+            if pathlist[0] == '':
+                pathlist[0] = 'MF'
+        else:
+            pathlist = [name]
+
+        # start in the current working directory (we can still
+        # select any ADF and the MF from here, so those will be
+        # among the selectables).
+        file = self.get_cwd()
+
+        for p in pathlist:
+            # Look for the next file in the path list
+            selectables = file.get_selectables().items()
+            file = None
+            for selectable in selectables:
+                if selectable[1].name == name:
+                    file = selectable[1]
+                    break
+
+            # When we hit none, then the given path must be invalid
+            if file is None:
+                return None
+
+        # Return the file object found at the tip of the path
+        return file
+
     def interpret_sw(self, sw: str):
         """Interpret a given status word relative to the currently selected application
         or the underlying card profile.
