@@ -633,118 +633,80 @@ class PySimCommands(CommandSet):
             raise RuntimeError(
                     "unable to export %i dedicated files(s)%s" % (context['ERR'], exception_str_add))
 
-    def fsdump_df(self, filename, context, as_json):
-        """Dump information about currently selected [A]DF"""
-        df = self._cmd.lchan.selected_file
-        df_path_list = df.fully_qualified_path(True)
-        df_path = df.fully_qualified_path_str(True)
-
-        res = {
-            'path': df_path_list,
-        }
-
-        try:
-            if not self._cmd.lchan.selected_file_fcp_hex:
-                # An application without a real ADF (like ADF.ARA-M) / filesystem
-                return
-
-            fcp_dec = self._cmd.lchan.selected_file_fcp
-            res['fcp_raw'] = str(self._cmd.lchan.selected_file_fcp_hex)
-            res['fcp'] = fcp_dec
-
-        except SwMatchError as e:
-            res['error'] = {
-                'sw_actual': e.sw_actual,
-                'sw_expected': e.sw_expected,
-                'message': e.description,
+    def __dump_file(self, filename, context, as_json):
+        """ Select and dump a single file (EF, DF or ADF) """
+        file = self._cmd.lchan.get_file_by_name(filename)
+        if file:
+            res = {
+                'path': file.fully_qualified_path(True)
             }
-        except Exception as e:
-            raise(e)
-            res['error'] = {
-                'message': str(e)
-            }
-
-        context['result']['files'][df_path] = res
-
-    def fsdump_ef(self, filename, context, as_json):
-        """Select and dump a single elementary file (EF) """
-        # TODO: this is very similar to export_ef(), but I couldn't really come up with a way to share
-        # code between the two.  They only hypothetical option could be turn "export" into a mere
-        # post-processing / printing function that works on the fsdump-generated dict/json?
-        df = self._cmd.lchan.selected_file
-
-        # The currently selected file (not the file we are going to export)
-        # must always be an ADF or DF. From this starting point we select
-        # the EF we want to export.
-        if not isinstance(df, CardDF):
-            raise RuntimeError("currently selected file %s is not a DF or ADF" % str(df))
-
-        df_path_list = df.fully_qualified_path(True)
-        df_path = df.fully_qualified_path_str(True)
-        df_path_fid = df.fully_qualified_path_str(False)
-
-        file_str = df_path + "/" + str(filename)
-
-        res = {
-            'path': df_path_list + [str(filename)],
-        }
+        else:
+            # If this is called from self.__walk(), then it is ensured that the file exists.
+            raise RuntimeError("cannot dump, file %s does not exist in the file system tree" % filename)
 
         try:
             fcp_dec = self._cmd.lchan.select(filename, self._cmd)
 
+            # File control parameters (common for EF, DF and ADF files)
+            if not self._cmd.lchan.selected_file_fcp_hex:
+                # An application without a real ADF (like ADF.ARA-M) / filesystem
+                return
+
             res['fcp_raw'] = str(self._cmd.lchan.selected_file_fcp_hex)
             res['fcp'] = fcp_dec
 
-            structure = self._cmd.lchan.selected_file_structure()
-            if structure == 'transparent':
-                if as_json:
-                    result = self._cmd.lchan.read_binary_dec()
-                    body = result[0]
-                else:
-                    result = self._cmd.lchan.read_binary()
-                    body = str(result[0])
-            elif structure == 'cyclic' or structure == 'linear_fixed':
-                body = []
-                # Use number of records specified in select response
-                num_of_rec = self._cmd.lchan.selected_file_num_of_rec()
-                if num_of_rec:
-                    for r in range(1, num_of_rec + 1):
-                        if as_json:
-                            result = self._cmd.lchan.read_record_dec(r)
-                            body.append(result[0])
-                        else:
-                            result = self._cmd.lchan.read_record(r)
-                            body.append(str(result[0]))
-
-                # When the select response does not return the number of records, read until we hit the
-                # first record that cannot be read.
-                else:
-                    r = 1
-                    while True:
-                        try:
+            # File structure and contents (EF only)
+            if isinstance(self._cmd.lchan.selected_file, CardEF):
+                structure = self._cmd.lchan.selected_file_structure()
+                if structure == 'transparent':
+                    if as_json:
+                        result = self._cmd.lchan.read_binary_dec()
+                        body = result[0]
+                    else:
+                        result = self._cmd.lchan.read_binary()
+                        body = str(result[0])
+                elif structure == 'cyclic' or structure == 'linear_fixed':
+                    body = []
+                    # Use number of records specified in select response
+                    num_of_rec = self._cmd.lchan.selected_file_num_of_rec()
+                    if num_of_rec:
+                        for r in range(1, num_of_rec + 1):
                             if as_json:
                                 result = self._cmd.lchan.read_record_dec(r)
                                 body.append(result[0])
                             else:
                                 result = self._cmd.lchan.read_record(r)
                                 body.append(str(result[0]))
-                        except SwMatchError as e:
-                            # We are past the last valid record - stop
-                            if e.sw_actual == "9402":
-                                break
-                            # Some other problem occurred
-                            raise e
-                        r = r + 1
-            elif structure == 'ber_tlv':
-                tags = self._cmd.lchan.retrieve_tags()
-                body = {}
-                for t in tags:
-                    result = self._cmd.lchan.retrieve_data(t)
-                    (tag, l, val, remainer) = bertlv_parse_one(h2b(result[0]))
-                    body[t] = b2h(val)
-            else:
-                raise RuntimeError('Unsupported structure "%s" of file "%s"' % (structure, filename))
-            res['body'] = body
+
+                    # When the select response does not return the number of records, read until we hit the
+                    # first record that cannot be read.
+                    else:
+                        r = 1
+                        while True:
+                            try:
+                                if as_json:
+                                    result = self._cmd.lchan.read_record_dec(r)
+                                    body.append(result[0])
+                                else:
+                                    result = self._cmd.lchan.read_record(r)
+                                    body.append(str(result[0]))
+                            except SwMatchError as e:
+                                # We are past the last valid record - stop
+                                if e.sw_actual == "9402":
+                                    break
+                                # Some other problem occurred
+                                raise e
+                            r = r + 1
+                elif structure == 'ber_tlv':
+                    tags = self._cmd.lchan.retrieve_tags()
+                    body = {}
+                    for t in tags:
+                        result = self._cmd.lchan.retrieve_data(t)
+                        (tag, l, val, remainer) = bertlv_parse_one(h2b(result[0]))
+                        body[t] = b2h(val)
+                else:
+                    raise RuntimeError('Unsupported structure "%s" of file "%s"' % (structure, filename))
+                res['body'] = body
 
         except SwMatchError as e:
             res['error'] = {
@@ -758,7 +720,7 @@ class PySimCommands(CommandSet):
                 'message': str(e)
             }
 
-        context['result']['files'][file_str] = res
+        context['result']['files'][file.fully_qualified_path_str(True)] = res
 
     fsdump_parser = argparse.ArgumentParser()
     fsdump_parser.add_argument(
@@ -785,11 +747,11 @@ class PySimCommands(CommandSet):
         exception_str_add = ""
 
         if opts.filename:
-            self.__walk_action(self.fsdump_ef, opts.filename, context, **kwargs_export)
+            self.__walk_action(self.__dump_file, opts.filename, context, **kwargs_export)
         else:
             # export an entire subtree
             try:
-                self.__walk(0, self.fsdump_ef, self.fsdump_df, context, **kwargs_export)
+                self.__walk(0, self.__dump_file, self.__dump_file, context, **kwargs_export)
             except Exception as e:
                 print("# Stopping early here due to exception: " + str(e))
                 print("#")
