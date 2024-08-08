@@ -64,7 +64,7 @@ class CardFile:
         Args:
             fid : File Identifier (4 hex digits)
             sfid : Short File Identifier (2 hex digits, optional)
-            name : Brief name of the file, lik EF_ICCID
+            name : Brief name of the file, like EF_ICCID
             desc : Description of the file
             parent : Parent CardFile object within filesystem hierarchy
             profile : Card profile that this file should be part of
