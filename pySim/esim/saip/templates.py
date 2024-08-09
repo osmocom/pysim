@@ -22,11 +22,31 @@ from pySim.filesystem import Path
 import pySim.esim.saip.oid as OID
 
 class FileTemplate:
-    """Representation of a single file in a SimAlliance/TCA Profile Template."""
+    """Representation of a single file in a SimAlliance/TCA Profile Template. The argument order
+    is done to match that of the tables in Section 9 of the SAIP specification."""
     def __init__(self, fid:int, name:str, ftype, nb_rec: Optional[int], size:Optional[int], arr:int,
                  sfi:Optional[int] = None, default_val:Optional[str] = None, content_rqd:bool = True,
                  params:Optional[List] = None, ass_serv:Optional[List[int]]=None, high_update:bool = False,
-                 pe_name:Optional[str] = None, repeat:bool = False):
+                 pe_name:Optional[str] = None, repeat:bool = False, ppath: List[int] = []):
+        """
+        Args:
+            fid: The 16bit file-identifier of the file
+            name: The name of the file in human-readable "EF.FOO", "DF.BAR" notation
+            ftype: The type of the file; can be 'MF', 'ADF', 'DF', 'TR', 'LF', 'CY', 'BT'
+            nb_rec: Then number of records (only valid for 'LF' and 'CY')
+            size: The size of the file ('TR', 'BT'); size of each record ('LF, 'CY')
+            arr: The record number of EF.ARR for referenced access rules
+            sfi: The short file identifier, if any
+            default_val: The default value [pattern] of the file
+            content_rqd: Whether an instance of template *must* specify file contents
+            params: A list of parameters that an instance of the template *must* specify
+            ass_serv: The associated service[s] of the service table
+            high_update: Is this file of "high update frequency" type?
+            pe_name: The name of this file in the ASN.1 type of the PE. Auto-generated for most.
+            repeat: Whether the default_val pattern is a repeating pattern.
+            ppath: The intermediate path between the base_df of the ProfileTemplate and this file.  If not
+                   specified, the file will be created immediately underneath the base_df.
+        """
         # initialize from arguments
         self.fid = fid
         self.name = name
@@ -48,6 +68,7 @@ class FileTemplate:
         self.params = params
         self.ass_serv = ass_serv
         self.high_update = high_update
+        self.ppath = ppath # parent path, if this FileTemplate is not immediately below the base_df
         # initialize empty
         self.parent = None
         self.children = []
@@ -63,8 +84,7 @@ class FileTemplate:
         s_fid = "%04x" % self.fid if self.fid is not None else 'None'
         s_arr = self.arr if self.arr is not None else 'None'
         s_sfi = "%02x" % self.sfi if self.sfi is not None else 'None'
-        return "FileTemplate(%s/%s, %s, %s, arr=%s, sfi=%s)" % (self.name, self.pe_name, s_fid,
-                                                                self.file_type, s_arr, s_sfi)
+        return "FileTemplate(%s/%s, %s, %s, arr=%s, sfi=%s, ppath=%s)" % (self.name, self.pe_name, s_fid, self.file_type, s_arr, s_sfi, self.ppath)
 
     def print_tree(self, indent:str = ""):
         """recursive printing of FileTemplate tree structure."""
@@ -126,6 +146,13 @@ class ProfileTemplate:
     oid: Optional[OID.eOID] = None
     files: List[FileTemplate] = []
 
+    # indicates that a given template does not have its own 'base DF', but that its contents merely
+    # extends that of the 'base DF' of another template
+    extends: Optional['ProfileTemplate'] = None
+
+    # indicates a parent ProfileTemplate below whose 'base DF' our files should be placed.
+    parent: Optional['ProfileTemplate'] = None
+
     def __init_subclass__(cls, **kwargs):
         """This classmethod is called automatically after executing the subclass body. We use it to
         initialize the cls.files_by_pename from the cls.files"""
@@ -164,6 +191,14 @@ class ProfileTemplate:
     def print_tree(cls):
         for c in cls.tree:
             c.print_tree()
+
+    @classmethod
+    def base_df(cls) -> FileTemplate:
+        """Return the FileTemplate for the base DF of the given template.  This may be a DF or ADF
+        within this template, or refer to another template (e.g. mandatory USIM if we are optional USIM."""
+        if cls.extends:
+            return cls.extends.base_df
+        return cls.files[0]
 
 class ProfileTemplateRegistry:
     """A registry of profile templates.  Exists as a singleton class with no instances and only
@@ -218,39 +253,39 @@ class FilesCD(ProfileTemplate):
 # Section 9.4: Do this separately, so we can use them also from 9.5.3
 df_pb_files = [
     FileTemplate(0x5f3a, 'DF.PHONEBOOK', 'DF', None, None,  14, None, None, True, ['pinStatusTemplateDO']),
-    FileTemplate(0x4f30, 'EF.PBR',       'LF', None, None,   2, None, None, True, ['nb_rec', 'size']),
+    FileTemplate(0x4f30, 'EF.PBR',       'LF', None, None,   2, None, None, True, ['nb_rec', 'size'], ppath=[0x5f3a]),
 ]
 for i in range(0x38, 0x40):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.EXT1', 'LF', None,   13,  5, None, '00FF...FF', False, ['size','sfi']))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.EXT1', 'LF', None,   13,  5, None, '00FF...FF', False, ['size','sfi'], ppath=[0x5f3a]))
 for i in range(0x40, 0x48):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.AAS', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size']))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.AAS', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size'], ppath=[0x5f3a]))
 for i in range(0x48, 0x50):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.GAS', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size']))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.GAS', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size'], ppath=[0x5f3a]))
 df_pb_files += [
-    FileTemplate(0x4f22, 'EF.PSC',       'TR', None,    4,   5, None, '00000000', False, ['sfi']),
-    FileTemplate(0x4f23, 'EF.CC',        'TR', None,    2,   5, None, '0000', False, ['sfi'], high_update=True),
-    FileTemplate(0x4f24, 'EF.PUID',      'TR', None,    2,   5, None, '0000', False, ['sfi'], high_update=True),
+    FileTemplate(0x4f22, 'EF.PSC',       'TR', None,    4,   5, None, '00000000', False, ['sfi'], ppath=[0x5f3a]),
+    FileTemplate(0x4f23, 'EF.CC',        'TR', None,    2,   5, None, '0000', False, ['sfi'], high_update=True, ppath=[0x5f3a]),
+    FileTemplate(0x4f24, 'EF.PUID',      'TR', None,    2,   5, None, '0000', False, ['sfi'], high_update=True, ppath=[0x5f3a]),
 ]
 for i in range(0x50, 0x58):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.IAP', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi']))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.IAP', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi'], ppath=[0x5f3a]))
 for i in range(0x58, 0x60):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.ADN', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi']))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.ADN', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi'], ppath=[0x5f3a]))
 for i in range(0x60, 0x68):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.ADN', 'LF', None,    2,  5, None, '00...00', False, ['nb_rec','sfi']))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.ADN', 'LF', None,    2,  5, None, '00...00', False, ['nb_rec','sfi'], ppath=[0x5f3a]))
 for i in range(0x68, 0x70):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.ANR', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi']))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.ANR', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi'], ppath=[0x5f3a]))
 for i in range(0x70, 0x78):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.PURI', 'LF', None, None,  5, None, None, True, ['nb_rec','size','sfi']))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.PURI', 'LF', None, None,  5, None, None, True, ['nb_rec','size','sfi'], ppath=[0x5f3a]))
 for i in range(0x78, 0x80):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.EMAIL', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi']))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.EMAIL', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi'], ppath=[0x5f3a]))
 for i in range(0x80, 0x88):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.SNE', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi']))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.SNE', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi'], ppath=[0x5f3a]))
 for i in range(0x88, 0x90):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.UID', 'LF', None,    2,  5, None, '0000', False, ['nb_rec','sfi']))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.UID', 'LF', None,    2,  5, None, '0000', False, ['nb_rec','sfi'], ppath=[0x5f3a]))
 for i in range(0x90, 0x98):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.GRP', 'LF', None, None,  5, None, '00...00', False, ['nb_rec','size','sfi']))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.GRP', 'LF', None, None,  5, None, '00...00', False, ['nb_rec','size','sfi'], ppath=[0x5f3a]))
 for i in range(0x98, 0xa0):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.CCP1', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi']))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.CCP1', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi'], ppath=[0x5f3a]))
 
 # Section 9.4 v2.3.1
 class FilesTelecom(ProfileTemplate):
@@ -266,29 +301,30 @@ class FilesTelecom(ProfileTemplate):
         FileTemplate(0x6fe1, 'EF.ICE_FF',    'LF', None, None,   9, None, 'FF...FF', False, ['nb_rec', 'size']),
         FileTemplate(0x6fe5, 'EF.PSISMSC',   'LF', None, None,   5, None, None, True, ['nb_rec', 'size'], ass_serv=[12,91]),
         FileTemplate(0x5f50, 'DF.GRAPHICS',  'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO']),
-        FileTemplate(0x4f20, 'EF.IMG',       'LF', None, None,   2, None, '00FF...FF', False, ['nb_rec', 'size']),
+        FileTemplate(0x4f20, 'EF.IMG',       'LF', None, None,   2, None, '00FF...FF', False, ['nb_rec', 'size'], ppath=[0x5f50]),
         # EF.IIDF below
-        FileTemplate(0x4f21, 'EF.ICE_GRAPHICS','BT',None,None,   9, None, None, False, ['size']),
-        FileTemplate(0x4f01, 'EF.LAUNCH_SCWS','TR',None, None,  10, None, None, True, ['size']),
+        FileTemplate(0x4f21, 'EF.ICE_GRAPHICS','BT',None,None,   9, None, None, False, ['size'], ppath=[0x5f50]),
+        FileTemplate(0x4f01, 'EF.LAUNCH_SCWS','TR',None, None,  10, None, None, True, ['size'], ppath=[0x5f50]),
         # EF.ICON below
     ]
     for i in range(0x40, 0x80):
-        files.append(FileTemplate(0x4f00+i, 'EF.IIDF', 'TR', None, None, 2, None, 'FF...FF', False, ['size']))
+        files.append(FileTemplate(0x4f00+i, 'EF.IIDF', 'TR', None, None, 2, None, 'FF...FF', False, ['size'], ppath=[0x5f50]))
     for i in range(0x80, 0xC0):
-        files.append(FileTemplate(0x4f00+i, 'EF.ICON', 'TR', None, None, 10, None, None, True, ['size']))
+        files.append(FileTemplate(0x4f00+i, 'EF.ICON', 'TR', None, None, 10, None, None, True, ['size'], ppath=[0x5f50]))
 
     # we copy the objects (instances) here as we also use them below from FilesUsimDfPhonebook
-    files += [deepcopy(x) for x in df_pb_files]
+    df_pb = deepcopy(df_pb_files)
+    files += df_pb
 
     files += [
         FileTemplate(0x5f3b, 'DF.MULTIMEDIA','DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[67]),
-        FileTemplate(0x4f47, 'EF.MML',       'BT', None, None,   5, None, None, False, ['size'], ass_serv=[67]),
-        FileTemplate(0x4f48, 'EF.MMDF',      'BT', None, None,   5, None, None, False, ['size'], ass_serv=[67]),
+        FileTemplate(0x4f47, 'EF.MML',       'BT', None, None,   5, None, None, False, ['size'], ass_serv=[67], ppath=[0x5f3b]),
+        FileTemplate(0x4f48, 'EF.MMDF',      'BT', None, None,   5, None, None, False, ['size'], ass_serv=[67], ppath=[0x5f3b]),
 
         FileTemplate(0x5f3c, 'DF.MMSS',      'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO']),
-        FileTemplate(0x4f20, 'EF.MLPL',      'TR', None, None,   2, 0x01, None, True, ['size']),
-        FileTemplate(0x4f21, 'EF.MSPL',      'TR', None, None,   2, 0x02, None, True, ['size']),
-        FileTemplate(0x4f21, 'EF.MMSSMODE',  'TR', None,    1,   2, 0x03, None, True),
+        FileTemplate(0x4f20, 'EF.MLPL',      'TR', None, None,   2, 0x01, None, True, ['size'], ppath=[0x5f3c]),
+        FileTemplate(0x4f21, 'EF.MSPL',      'TR', None, None,   2, 0x02, None, True, ['size'], ppath=[0x5f3c]),
+        FileTemplate(0x4f21, 'EF.MMSSMODE',  'TR', None,    1,   2, 0x03, None, True, ppath=[0x5f3c]),
     ]
 
 
@@ -306,40 +342,40 @@ class FilesTelecomV2(ProfileTemplate):
         FileTemplate(0x6fe1, 'EF.ICE_FF',    'LF', None, None,   9, None, 'FF...FF', False, ['nb_rec', 'size']),
         FileTemplate(0x6fe5, 'EF.PSISMSC',   'LF', None, None,   5, None, None, True, ['nb_rec', 'size'], ass_serv=[12,91]),
         FileTemplate(0x5f50, 'DF.GRAPHICS',  'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO']),
-        FileTemplate(0x4f20, 'EF.IMG',       'LF', None, None,   2, None, '00FF...FF', False, ['nb_rec', 'size']),
+        FileTemplate(0x4f20, 'EF.IMG',       'LF', None, None,   2, None, '00FF...FF', False, ['nb_rec', 'size'], ppath=[0x5f50]),
         # EF.IIDF below
-        FileTemplate(0x4f21, 'EF.ICE_GRRAPHICS','BT',None,None,   9, None, None, False, ['size']),
-        FileTemplate(0x4f01, 'EF.LAUNCH_SCWS','TR',None, None,  10, None, None, True, ['size']),
+        FileTemplate(0x4f21, 'EF.ICE_GRRAPHICS','BT',None,None,   9, None, None, False, ['size'], ppath=[0x5f50]),
+        FileTemplate(0x4f01, 'EF.LAUNCH_SCWS','TR',None, None,  10, None, None, True, ['size'], ppath=[0x5f50]),
         # EF.ICON below
     ]
     for i in range(0x40, 0x80):
-        files.append(FileTemplate(0x4f00+i, 'EF.IIDF', 'TR', None, None, 2, None, 'FF...FF', False, ['size']))
+        files.append(FileTemplate(0x4f00+i, 'EF.IIDF', 'TR', None, None, 2, None, 'FF...FF', False, ['size'], ppath=[0x5f50]))
     for i in range(0x80, 0xC0):
-        files.append(FileTemplate(0x4f00+i, 'EF.ICON', 'TR', None, None, 10, None, None, True, ['size']))
+        files.append(FileTemplate(0x4f00+i, 'EF.ICON', 'TR', None, None, 10, None, None, True, ['size'],ppath=[0x5f50]))
 
     # we copy the objects (instances) here as we also use them below from FilesUsimDfPhonebook
-    files += [deepcopy(x) for x in df_pb_files]
+    df_pb = deepcopy(df_pb_files)
+    files += df_pb
 
     files += [
         FileTemplate(0x5f3b, 'DF.MULTIMEDIA','DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[67]),
-        FileTemplate(0x4f47, 'EF.MML',       'BT', None, None,   5, None, None, False, ['size'], ass_serv=[67]),
-        FileTemplate(0x4f48, 'EF.MMDF',      'BT', None, None,   5, None, None, False, ['size'], ass_serv=[67]),
+        FileTemplate(0x4f47, 'EF.MML',       'BT', None, None,   5, None, None, False, ['size'], ass_serv=[67], ppath=[0x5f3b]),
+        FileTemplate(0x4f48, 'EF.MMDF',      'BT', None, None,   5, None, None, False, ['size'], ass_serv=[67], ppath=[0x5f3b]),
 
         FileTemplate(0x5f3c, 'DF.MMSS',      'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO']),
-        FileTemplate(0x4f20, 'EF.MLPL',      'TR', None, None,   2, 0x01, None, True, ['size']),
-        FileTemplate(0x4f21, 'EF.MSPL',      'TR', None, None,   2, 0x02, None, True, ['size']),
-        FileTemplate(0x4f21, 'EF.MMSSMODE',  'TR', None,    1,   2, 0x03, None, True),
-
+        FileTemplate(0x4f20, 'EF.MLPL',      'TR', None, None,   2, 0x01, None, True, ['size'], ppath=[0x5f3c]),
+        FileTemplate(0x4f21, 'EF.MSPL',      'TR', None, None,   2, 0x02, None, True, ['size'], ppath=[0x5f3c]),
+        FileTemplate(0x4f21, 'EF.MMSSMODE',  'TR', None,    1,   2, 0x03, None, True, ppath=[0x5f3c]),
 
         FileTemplate(0x5f3d, 'DF.MCS',       'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv={'usim':109, 'isim': 15}),
-        FileTemplate(0x4f01, 'EF.MST',       'TR', None, None,   2, 0x01, None, True, ['size'], ass_serv={'usim':109, 'isim': 15}),
-        FileTemplate(0x4f02, 'EF.MCSCONFIG', 'BT', None, None,   2, 0x02, None, True, ['size'], ass_serv={'usim':109, 'isim': 15}),
+        FileTemplate(0x4f01, 'EF.MST',       'TR', None, None,   2, 0x01, None, True, ['size'], ass_serv={'usim':109, 'isim': 15}, ppath=[0x5f3d]),
+        FileTemplate(0x4f02, 'EF.MCSCONFIG', 'BT', None, None,   2, 0x02, None, True, ['size'], ass_serv={'usim':109, 'isim': 15}, ppath=[0x5f3d]),
 
         FileTemplate(0x5f3e, 'DF.V2X',       'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[119]),
-        FileTemplate(0x4f01, 'EF.VST',       'TR', None, None,   2, 0x01, None, True, ['size'], ass_serv=[119]),
-        FileTemplate(0x4f02, 'EF.V2X_CONFIG','BT', None, None,   2, 0x02, None, True, ['size'], ass_serv=[119]),
-        FileTemplate(0x4f03, 'EF.V2XP_PC5',  'TR', None, None,   2, None, None, True, ['size'], ass_serv=[119]), # VST: 2
-        FileTemplate(0x4f04, 'EF.V2XP_Uu',   'TR', None, None,   2, None, None, True, ['size'], ass_serv=[119]), # VST: 3
+        FileTemplate(0x4f01, 'EF.VST',       'TR', None, None,   2, 0x01, None, True, ['size'], ass_serv=[119], ppath=[0x5f3e]),
+        FileTemplate(0x4f02, 'EF.V2X_CONFIG','BT', None, None,   2, 0x02, None, True, ['size'], ass_serv=[119], ppath=[0x5f3e]),
+        FileTemplate(0x4f03, 'EF.V2XP_PC5',  'TR', None, None,   2, None, None, True, ['size'], ass_serv=[119], ppath=[0x5f3e]), # VST: 2
+        FileTemplate(0x4f04, 'EF.V2XP_Uu',   'TR', None, None,   2, None, None, True, ['size'], ass_serv=[119], ppath=[0x5f3e]), # VST: 3
     ]
 
 
@@ -412,6 +448,7 @@ class FilesUsimOptional(ProfileTemplate):
     optional = True
     oid = OID.ADF_USIMopt_not_by_default
     base_path = Path('ADF.USIM')
+    extends = FilesUsimMandatory
     files = [
         FileTemplate(0x6f05, 'EF.LI',        'TR', None,    6,   1, 0x02, 'FF...FF', False),
         FileTemplate(0x6f37, 'EF.ACMmax',    'TR', None,    3,   5, None, '000000', False, ass_serv=[13], pe_name='ef-acmax'),
@@ -496,6 +533,7 @@ class FilesUsimOptionalV2(ProfileTemplate):
     optional = True
     oid = OID.ADF_USIMopt_not_by_default_v2
     base_path = Path('ADF.USIM')
+    extends = FilesUsimMandatoryV2
     files = [
         FileTemplate(0x6f05, 'EF.LI',        'TR', None,    6,   1, 0x02, 'FF...FF', False),
         FileTemplate(0x6f37, 'EF.ACMmax',    'TR', None,    3,   5, None, '000000', False, ass_serv=[13]),
@@ -590,6 +628,7 @@ class FilesUsimOptionalV3(ProfileTemplate):
     optional = True
     oid = OID.ADF_USIMopt_not_by_default_v3
     base_path = Path('ADF.USIM')
+    extends = FilesUsimMandatoryV2
     files = FilesUsimOptionalV2.files + [
         FileTemplate(0x6f01, 'EF.eAKA', 'TR', None, 1, 3, None, None, True, ['size'], ass_serv=[134]),
     ]
@@ -607,6 +646,7 @@ class FilesUsimDfGsmAccess(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_GSM_ACCESS_ADF_USIM
     base_path = Path('ADF.USIM')
+    parent = FilesUsimMandatory
     files = [
         FileTemplate(0x5f3b, 'DF.GSM-ACCESS','DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[27]),
         FileTemplate(0x4f20, 'EF.Kc',        'TR', None,    9,   5, 0x01, 'FF...FF07', False, ass_serv=[27], high_update=True),
@@ -621,6 +661,7 @@ class FilesUsimDf5GS(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_5GS
     base_path = Path('ADF.USIM')
+    parent = FilesUsimMandatory
     files = [
         FileTemplate(0x6fc0, 'DF.5GS',               'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[122,126,127,128,129,130], pe_name='df-df-5gs'),
         FileTemplate(0x4f01, 'EF.5GS3GPPLOCI',       'TR', None,   20,   5, 0x01, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000001', False, ass_serv=[122], high_update=True),
@@ -641,6 +682,7 @@ class FilesUsimDf5GSv2(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_5GS_v2
     base_path = Path('ADF.USIM')
+    parent = FilesUsimMandatory
     files = [
         FileTemplate(0x6fc0, 'DF.5GS',               'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[122,126,127,128,129,130], pe_name='df-df-5gs'),
         FileTemplate(0x4f01, 'EF.5GS3GPPLOCI',       'TR', None,   20,   5, 0x01, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000001', False, ass_serv=[122], high_update=True),
@@ -663,6 +705,7 @@ class FilesUsimDf5GSv3(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_5GS_v3
     base_path = Path('ADF.USIM')
+    parent = FilesUsimMandatory
     files = [
         FileTemplate(0x6fc0, 'DF.5GS',               'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[122,126,127,128,129,130], pe_name='df-df-5gs'),
         FileTemplate(0x4f01, 'EF.5GS3GPPLOCI',       'TR', None,   20,   5, 0x01, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000001', False, ass_serv=[122], high_update=True),
@@ -686,6 +729,7 @@ class FilesUsimDf5GSv4(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_5GS_v4
     base_path = Path('ADF.USIM')
+    parent = FilesUsimMandatory
     files = [
         FileTemplate(0x6fc0, 'DF.5GS',               'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[122,126,127,128,129,130], pe_name='df-df-5gs'),
         FileTemplate(0x4f01, 'EF.5GS3GPPLOCI',       'TR', None,   20,   5, 0x01, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000001', False, ass_serv=[122], high_update=True),
@@ -717,6 +761,7 @@ class FilesUsimDfSaip(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_SAIP
     base_path = Path('ADF.USIM')
+    parent = FilesUsimMandatory
     files = [
         FileTemplate(0x6fd0, 'DF.SAIP',        'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[(124, 125)], pe_name='df-df-saip'),
         FileTemplate(0x4f01, 'EF.SUCICalcInfo','TR', None, None, 3, None, 'FF...FF', False, ['size'], ass_serv=[125], pe_name='ef-suci-calc-info-usim'),
@@ -727,6 +772,7 @@ class FilesDfSnpn(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_SNPN
     base_path = Path('ADF.USIM')
+    parent = FilesUsimMandatory
     files = [
         FileTemplate(0x5fe0, 'DF.SNPN',         'DF', None, None,  14, None, None, False, ['pinStatusTemplateDO'], ass_serv=[143], pe_name='df-df-snpn'),
         FileTemplate(0x4f01, 'EF.PWS_SNPN',     'TR', None,    1,  10, None, None, True, ass_serv=[143]),
@@ -737,6 +783,7 @@ class FilesDf5GProSe(ProfileTemplate):
     created_by_default = False
     oid = OID.DF_5GProSe
     base_path = Path('ADF.USIM')
+    parent = FilesUsimMandatory
     files = [
         FileTemplate(0x5ff0, 'DF.5G_ProSe',       'DF', None, None,  14, None, None, False, ['pinStatusTeimplateDO'], ass_serv=[139], pe_name='df-df-5g-prose'),
         FileTemplate(0x4f01, 'EF.5G_PROSE_ST',    'TR', None,    1,   2, 0x01, None,  True, ass_serv=[139]),
@@ -768,6 +815,7 @@ class FilesIsimOptional(ProfileTemplate):
     optional = True
     oid = OID.ADF_ISIMopt_not_by_default
     base_path = Path('ADF.ISIM')
+    extends = FilesIsimMandatory
     files = [
         FileTemplate(0x6f09, 'EF.P-CSCF',      'LF',    1, None,   2, None, None, True, ['size'], ass_serv=[1,5]),
         FileTemplate(0x6f3c, 'EF.SMS',         'LF',   10,  176,   5, None, '00FF...FF', False, ass_serv=[6,8]),
@@ -787,6 +835,7 @@ class FilesIsimOptionalv2(ProfileTemplate):
     optional = True
     oid = OID.ADF_ISIMopt_not_by_default_v2
     base_path = Path('ADF.ISIM')
+    extends = FilesIsimMandatory
     files = [
         FileTemplate(0x6f09, 'EF.PCSCF',       'LF',    1, None,   2, None, None, True, ['size'], ass_serv=[1,5]),
         FileTemplate(0x6f3c, 'EF.SMS',         'LF',   10,  176,   5, None, '00FF...FF', False, ass_serv=[6,8]),
