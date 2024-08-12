@@ -1,0 +1,25 @@
+set debug true
+set echo true
+
+# Create a backup the files we will modify
+export --filename MF/DF.TELECOM/EF.CCP > restore_ef_ccp.script.tmp
+
+# Select an arbitrary file to work with
+select MF/DF.TELECOM/EF.CCP
+
+# Clear file contents
+update_record 1 ffffffffffffffffffffffffffff
+read_record 1 > test_record_sim.tmp
+
+# Write some short pattern to the file, expect tail to be padded with 0xff
+update_record 1 abcdef
+read_record 1 >> test_record_sim.tmp
+
+# Write some pattern to three different records
+update_record 1 12345678900AABBCCDD098765434
+update_record 3 12345678900AABBCCDD098765434
+update_record 5 12345678900AABBCCDD098765434
+read_records >> test_record_sim.tmp
+
+# Restore modified files to their original state
+run_script restore_ef_ccp.script.tmp

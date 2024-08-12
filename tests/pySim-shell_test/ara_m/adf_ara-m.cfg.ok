@@ -1,0 +1,152 @@
+[
+    {
+        "response_all_ref_ar_do": [
+            {
+                "ref_ar_do": [
+                    {
+                        "ref_do": [
+                            {
+                                "aid_ref_do": "ffffffffffaa"
+                            },
+                            {
+                                "dev_app_id_ref_do": "aa6872787654334567840de535c2bbd5a04f0baa"
+                            }
+                        ]
+                    },
+                    {
+                        "ar_do": [
+                            {
+                                "apdu_ar_do": {
+                                    "generic_access_rule": "never"
+                                }
+                            },
+                            {
+                                "nfc_ar_do": {
+                                    "nfc_event_access_rule": "never"
+                                }
+                            },
+                            {
+                                "perm_ar_do": {
+                                    "permissions": "0000000000000004"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "ref_ar_do": [
+                    {
+                        "ref_do": [
+                            {
+                                "aid_ref_do": "ffffffffffbb"
+                            },
+                            {
+                                "dev_app_id_ref_do": "aa6872f28b340b2345678905d5c2bbd5a04f0bdd"
+                            }
+                        ]
+                    },
+                    {
+                        "ar_do": [
+                            {
+                                "apdu_ar_do": {
+                                    "generic_access_rule": "always"
+                                }
+                            },
+                            {
+                                "nfc_ar_do": {
+                                    "nfc_event_access_rule": "always"
+                                }
+                            },
+                            {
+                                "perm_ar_do": {
+                                    "permissions": "0000000000000004"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "ref_ar_do": [
+                    {
+                        "ref_do": [
+                            {
+                                "aid_ref_do": "ffffffffffcc"
+                            },
+                            {
+                                "dev_app_id_ref_do": "a1234567890aaabb1f140de987657891a04f0bdd"
+                            }
+                        ]
+                    },
+                    {
+                        "ar_do": [
+                            {
+                                "apdu_ar_do": {
+                                    "apdu_filter": [
+                                        {
+                                            "header": "aabbccdd",
+                                            "mask": "01020304"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "nfc_ar_do": {
+                                    "nfc_event_access_rule": "always"
+                                }
+                            },
+                            {
+                                "perm_ar_do": {
+                                    "permissions": "0000000000000004"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "ref_ar_do": [
+                    {
+                        "ref_do": [
+                            {
+                                "aid_ref_do": "ffffffffffdd"
+                            },
+                            {
+                                "dev_app_id_ref_do": "a1234567890123bb1f140de987aaa891bbbf0bdd"
+                            }
+                        ]
+                    },
+                    {
+                        "ar_do": [
+                            {
+                                "apdu_ar_do": {
+                                    "apdu_filter": [
+                                        {
+                                            "header": "aabbccdd",
+                                            "mask": "01020304"
+                                        },
+                                        {
+                                            "header": "11223344",
+                                            "mask": "05060708"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "nfc_ar_do": {
+                                    "nfc_event_access_rule": "never"
+                                }
+                            },
+                            {
+                                "perm_ar_do": {
+                                    "permissions": "0000000000000004"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -1,0 +1,36 @@
+set debug true
+set echo true
+
+# Create a backup the files we will modify
+export --filename MF/ADF.ISIM/EF.IMSConfigData > restore_ef_IMSConfigData.script.tmp
+
+select MF/ADF.ISIM/EF.IMSConfigData
+
+# Empty the file
+delete_all
+retrieve_tags > test_ber_tlv_uicc.tmp
+
+# Set some tags
+set_data 129 aabbccddeeff
+set_data 130 11223344556677889900
+set_data 131 187216fff38bbcc22110ffffff
+set_data 132 23
+
+# Readback tags
+retrieve_tags > test_ber_tlv_uicc.tmp
+retrieve_data 129 >> test_ber_tlv_uicc.tmp
+retrieve_data 130 >> test_ber_tlv_uicc.tmp
+retrieve_data 131 >> test_ber_tlv_uicc.tmp
+retrieve_data 132 >> test_ber_tlv_uicc.tmp
+
+# Delete some tags
+delete_data 131
+delete_data 129
+retrieve_tags >> test_ber_tlv_uicc.tmp
+
+# Empty file again
+delete_all
+retrieve_tags >> test_ber_tlv_uicc.tmp
+
+# Restore modified files to their original state
+run_script restore_ef_IMSConfigData.script.tmp

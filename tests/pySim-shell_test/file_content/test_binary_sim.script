@@ -1,0 +1,27 @@
+set debug true
+set echo true
+
+# Create a backup the files we will modify
+export --filename MF/DF.GSM/EF.LOCI > restore_ef_loci.script.tmp
+
+# Select an arbitrary file to work with
+select MF/DF.GSM/EF.LOCI
+
+# Clear file contents
+update_binary ffffffffffffffffffffff
+read_binary > test_binary_sim.tmp
+
+# Write some short pattern to the file
+update_binary 01234567890abcdeff
+read_binary >> test_binary_sim.tmp
+
+# Write some pattern to the file
+update_binary 01234567890abcdeffaaaa
+read_binary >> test_binary_sim.tmp
+
+# Write some short pattern to the file, we expect the tail to remain unchanged
+update_binary 001abcd344
+read_binary >> test_binary_sim.tmp
+
+# Restore modified files to their original state
+run_script restore_ef_loci.script.tmp

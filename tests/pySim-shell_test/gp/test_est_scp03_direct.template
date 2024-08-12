@@ -1,0 +1,7 @@
+set debug true
+set echo true
+
+select ADF.ISD-R
+establish_scp03 --key-dek $KEY_DEK --key-enc $KEY_ENC --key-mac $KEY_MAC --key-ver 50 --security-level 3
+get_data issuer_identification_number
+release_scp

@@ -1,0 +1,21 @@
+set debug true
+set echo true
+
+# Enable PIN1
+enable_chv $PIN1 > test_unblock_direct.tmp
+reset
+
+# Enter the wrong PIN1 more than 3 times to block it (we will see some exceptions, which is normal)
+verify_chv 2468
+verify_chv 2468
+verify_chv 2468
+verify_chv 2468
+reset
+
+# Unblock the PIN again
+unblock_chv $PUK1 $PIN1 >> test_unblock_direct.tmp
+reset
+
+# Disable PIN1
+disable_chv $PIN1 >> test_unblock_direct.tmp
+reset

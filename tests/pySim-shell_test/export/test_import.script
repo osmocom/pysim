@@ -1,0 +1,5 @@
+set debug true
+set echo true
+
+# Export the entire file system
+run_script export.script.tmp

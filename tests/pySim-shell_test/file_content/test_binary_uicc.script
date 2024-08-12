@@ -1,0 +1,33 @@
+set debug true
+set echo true
+
+# Create a backup the files we will modify
+export --filename MF/ADF.USIM/EF.LOCI > restore_ef_loci.script.tmp
+
+# Select an arbitrary file to work with
+select MF/ADF.USIM/EF.LOCI
+
+# Clear file contents
+update_binary ffffffffffffffffffffff
+read_binary > test_binary_uicc.tmp
+
+# Write some short pattern to the file
+update_binary 01234567890abcdeff
+read_binary >> test_binary_uicc.tmp
+
+# Write some pattern to the file
+update_binary 01234567890abcdeffaaaa
+read_binary >> test_binary_uicc.tmp
+
+# Write some short pattern to the file, we expect the tail to remain unchanged
+update_binary 001abcd344
+read_binary >> test_binary_uicc.tmp
+
+# Write some json encoded content to the file
+update_binary_decoded '{"tmsi": "12345678", "lai": { "mcc_mnc": "262-42", "lac": "9876" }, "rfu": 0, "lu_status": 1 }'
+
+# Read the file, we expect the same json encoded content to show up again.
+read_binary_decoded >> test_binary_uicc.tmp
+
+# Restore modified files to their original state
+run_script restore_ef_loci.script.tmp

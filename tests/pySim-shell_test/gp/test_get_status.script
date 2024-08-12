@@ -1,0 +1,9 @@
+set debug true
+set echo true
+
+select ADF.ISD-R
+establish_scp03 --key-provider-suffix 1 --key-ver 50 --security-level 3
+
+get_status isd > get_status_isd.tmp
+
+release_scp

@@ -1,0 +1,16 @@
+set debug true
+set echo true
+
+select DF.GSM
+select EF.IMSI
+select > checkpoints_sim.tmp
+
+select MF
+select DF.TELECOM
+select EF.MSISDN
+select >> checkpoints_sim.tmp
+
+select MF
+select EF.ICCID
+select DF.GSM
+select >> checkpoints_sim.tmp

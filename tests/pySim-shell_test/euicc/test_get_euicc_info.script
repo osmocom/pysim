@@ -1,0 +1,6 @@
+set debug true
+set echo true
+
+select ADF.ISD-R
+get_euicc_info1 > euicc_info1.tmp
+get_euicc_info2 > euicc_info2.tmp

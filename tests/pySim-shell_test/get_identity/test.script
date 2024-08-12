@@ -1,0 +1,34 @@
+set debug true
+set echo true
+
+# This test requires a sysmoISIM-SJA5 with S17 chip variant. The file DF.SAIP/EF.SUCI_Calc_Info has the same format
+# as DF.5GS/EF.SUCI_Calc_Info, but its location is propritary. The contents of this file are accessed only by the card
+# OS to calculate the SUCI, not by the UE (see also sysmoISIM-SJA5 User Manual, section 3.5.1)
+
+# Create a backup the files we will modify
+export --filename MF/ADF.USIM/DF.SAIP/EF.SUCI_Calc_Info > restore_ef_suci_calc_info.script.tmp
+export --filename MF/ADF.USIM/DF.5GS/EF.Routing_Indicator > restore_ef_routing_indicator.script.tmp
+export --filename MF/ADF.USIM/EF.UST > restore_ef_ust.script.tmp
+
+# Program SUCI calc info (see also 3GPP TS 31.121, section 4.9.4)
+select MF/ADF.USIM/DF.SAIP/EF.SUCI_Calc_Info
+update_binary_decoded '{ "prot_scheme_id_list": [ {"priority": 0, "identifier": 2, "key_index": 1}, {"priority": 1, "identifier": 1, "key_index": 2}, {"priority": 2, "identifier": 0, "key_index": 0}], "hnet_pubkey_list": [ {"hnet_pubkey_identifier": 27, "hnet_pubkey": "0472DA71976234CE833A6907425867B82E074D44EF907DFB4B3E21C1C2256EBCD15A7DED52FCBB097A4ED250E036C7B9C8C7004C4EEDC4F068CD7BF8D3F900E3B4"}, {"hnet_pubkey_identifier": 30, "hnet_pubkey": "5A8D38864820197C3394B92613B20B91633CBD897119273BF8E4A6F4EEC0A650"}]}'
+
+# Set routing indicator (see also 3GPP TS 31.102, section 4.4.11.11)
+select MF/ADF.USIM/DF.5GS/EF.Routing_Indicator
+update_binary 17ffffff
+
+# Enable services (see also 3GPP TS 31.102, section 5.3.48)
+select MF/ADF.USIM/EF.UST
+ust_service_activate 124
+ust_service_activate 125
+
+# Calculate SUCI (see also 3GPP TS 31.102, section 7.5)
+select ADF.USIM
+get_identity > suci.tmp
+
+# Restore modified files to their original state
+run_script restore_ef_suci_calc_info.script.tmp
+run_script restore_ef_routing_indicator.script.tmp
+run_script restore_ef_ust.script.tmp
+

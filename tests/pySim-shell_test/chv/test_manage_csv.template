@@ -1,0 +1,26 @@
+set debug true
+set echo true
+
+# Enable PIN1
+enable_chv > test_manage_csv.tmp
+reset
+
+# Verify PIN1
+verify_chv >> test_manage_csv.tmp
+reset
+
+# Change PIN1 to some arbitrary value
+change_chv 1234 >> test_manage_csv.tmp
+reset
+
+# Verify PIN1
+verify_chv 1234 >> test_manage_csv.tmp
+reset
+
+# Change PIN1 back to its original value
+change_chv $PIN1 1234 >> test_manage_csv.tmp
+reset
+
+# Disable PIN1 again
+disable_chv >> test_manage_csv.tmp
+reset

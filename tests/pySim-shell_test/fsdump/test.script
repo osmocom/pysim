@@ -1,0 +1,5 @@
+set debug true
+set echo true
+
+# Dump the entire file system
+fsdump > fsdump.json.tmp

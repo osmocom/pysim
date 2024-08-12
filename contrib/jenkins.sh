@@ -36,6 +36,9 @@ case "$JOB_TYPE" in
 
 	# Run pySim-trace test
 	tests/pySim-trace_test/pySim-trace_test.sh
+
+	# Run pySim-shell integration tests (requires physical cards)
+	python3 -m unittest discover -v -s ./tests/pySim-shell_test/
 	;;
 "distcheck")
 	virtualenv -p python3 venv --system-site-packages

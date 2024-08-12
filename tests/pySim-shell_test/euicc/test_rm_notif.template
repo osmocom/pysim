@@ -1,0 +1,6 @@
+set debug true
+set echo true
+
+select ADF.ISD-R
+
+remove_notification_from_list $SEQ_NUMBER

@@ -1,0 +1,12 @@
+set debug true
+set echo true
+
+select ADF.ISD-R
+
+# by ICCID (pre-installed test profile on sysmoEUICC1-C2T)
+disable_profile --iccid 89000123456789012341 > enable_disable_profile.tmp
+enable_profile --iccid 89000123456789012341 >> enable_disable_profile.tmp
+
+# by ISDP AID (pre-installed test profile on sysmoEUICC1-C2T)
+disable_profile --isdp-aid a0000005591010ffffffff8900001000 >> enable_disable_profile.tmp
+enable_profile --isdp-aid a0000005591010ffffffff8900001000 >> enable_disable_profile.tmp

@@ -1,0 +1,7 @@
+set debug true
+set echo true
+
+select ADF.ISD-R
+
+# (pre-installed test profile on sysmoEUICC1-C2T)
+set_nickname --profile-nickname "this-is-a-testprofile" 89000123456789012341 > set_nickname.tmp

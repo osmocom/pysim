@@ -1,0 +1,8 @@
+set debug true
+set echo true
+
+select ADF.ISD
+establish_scp02 --key-dek $KEY_DEK --key-enc $KEY_ENC --key-mac $KEY_MAC --key-ver 112 --security-level 3
+get_data issuer_identification_number
+release_scp
+

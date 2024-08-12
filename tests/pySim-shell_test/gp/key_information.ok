@@ -1,0 +1,136 @@
+{
+    "key_information": [
+        {
+            "key_information_data": {
+                "key_identifier": 3,
+                "key_version_number": 50,
+                "key_types": [
+                    {
+                        "type": "aes",
+                        "length": 32
+                    }
+                ]
+            }
+        },
+        {
+            "key_information_data": {
+                "key_identifier": 2,
+                "key_version_number": 50,
+                "key_types": [
+                    {
+                        "type": "aes",
+                        "length": 32
+                    }
+                ]
+            }
+        },
+        {
+            "key_information_data": {
+                "key_identifier": 1,
+                "key_version_number": 50,
+                "key_types": [
+                    {
+                        "type": "aes",
+                        "length": 32
+                    }
+                ]
+            }
+        },
+        {
+            "key_information_data": {
+                "key_identifier": 3,
+                "key_version_number": 42,
+                "key_types": [
+                    {
+                        "type": "aes",
+                        "length": 16
+                    }
+                ]
+            }
+        },
+        {
+            "key_information_data": {
+                "key_identifier": 2,
+                "key_version_number": 42,
+                "key_types": [
+                    {
+                        "type": "aes",
+                        "length": 16
+                    }
+                ]
+            }
+        },
+        {
+            "key_information_data": {
+                "key_identifier": 1,
+                "key_version_number": 42,
+                "key_types": [
+                    {
+                        "type": "aes",
+                        "length": 16
+                    }
+                ]
+            }
+        },
+        {
+            "key_information_data": {
+                "key_identifier": 2,
+                "key_version_number": 64,
+                "key_types": [
+                    {
+                        "type": "des",
+                        "length": 16
+                    }
+                ]
+            }
+        },
+        {
+            "key_information_data": {
+                "key_identifier": 1,
+                "key_version_number": 64,
+                "key_types": [
+                    {
+                        "type": "tls_psk",
+                        "length": 16
+                    }
+                ]
+            }
+        },
+        {
+            "key_information_data": {
+                "key_identifier": 3,
+                "key_version_number": 1,
+                "key_types": [
+                    {
+                        "type": "aes",
+                        "length": 16
+                    }
+                ]
+            }
+        },
+        {
+            "key_information_data": {
+                "key_identifier": 2,
+                "key_version_number": 1,
+                "key_types": [
+                    {
+                        "type": "aes",
+                        "length": 16
+                    }
+                ]
+            }
+        },
+        {
+            "key_information_data": {
+                "key_identifier": 1,
+                "key_version_number": 1,
+                "key_types": [
+                    {
+                        "type": "aes",
+                        "length": 16
+                    }
+                ]
+            }
+        }
+    ]
+}

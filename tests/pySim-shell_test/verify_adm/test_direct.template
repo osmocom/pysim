@@ -1,0 +1,9 @@
+set debug true
+
+# Verify ADM PIN
+verify_adm $ADM
+
+# Perform an operation that requires ADM access
+select DF.SYSTEM
+select EF.SIM_AUTH_KEY
+read_binary

@@ -1,0 +1,40 @@
+set debug true
+set echo true
+
+# Open all three additional logical channels
+set apdu_trace true
+open_channel 1 > test.tmp
+open_channel 2 >> test.tmp
+open_channel 3 >> test.tmp
+set apdu_trace false
+
+# Switch through the channels and produce a different state on each channel
+select DF.TELECOM
+switch_channel 1
+select ADF.USIM
+switch_channel 2
+select ADF.ISIM
+switch_channel 3
+select ADF.ARA-M
+
+# Switch through the channels and do something to prove that we are still in the expected state
+switch_channel 0
+select EF.MSISDN
+select >> test.tmp
+switch_channel 1
+select EF.IMSI
+select >> test.tmp
+switch_channel 2
+select EF.AD
+select >> test.tmp
+switch_channel 3
+aram_delete_all
+aram_get_all >> test.tmp
+
+# Close all logical channels again
+switch_channel 0
+set apdu_trace true
+close_channel 1 >> test.tmp
+close_channel 2 >> test.tmp
+close_channel 3 >> test.tmp
+set apdu_trace false

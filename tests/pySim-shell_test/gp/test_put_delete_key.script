@@ -1,0 +1,20 @@
+set debug true
+set echo true
+
+# Establish secure channel
+select ADF.ISD-R
+establish_scp03 --key-provider-suffix 1 --key-ver 50 --security-level 3
+
+# Put a keyset
+put_key --key-version-nr 42 --key-id 1 --key-type aes --key-data 11111111111111111111111111111111 --key-type aes --key-data 22222222222222222222222222222222 --key-type aes --key-data 33333333333333333333333333333333
+
+# Read key information to see if the keyset was actually stored
+get_data key_information > key_information.tmp
+
+# Delete the keyset again
+delete_key --key-id 1 --key-ver 42
+delete_key --key-id 2 --key-ver 42
+delete_key --key-id 3 --key-ver 42
+
+# Release secure channel
+release_scp

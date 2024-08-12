@@ -1,0 +1,31 @@
+set debug true
+set echo true
+
+# Export existing ARA-M configuration
+export --filename ADF.ARA-M > restore_adf_ara_m.script.tmp
+
+# Create a known config in ADF.ARA-M
+select ADF.ARA-M
+aram_delete_all
+aram_store_ref_ar_do --aid ffffffffffaa --device-app-id aa6872787654334567840de535c2bbd5a04f0baa --apdu-never --nfc-never --android-permissions 0000000000000004
+aram_store_ref_ar_do --aid ffffffffffbb --device-app-id aa6872f28b340b2345678905d5c2bbd5a04f0bdd --apdu-always --nfc-always --android-permissions 0000000000000004
+aram_store_ref_ar_do --aid ffffffffffcc --device-app-id a1234567890aaabb1f140de987657891a04f0bdd --apdu-filter aabbccdd01020304 --nfc-always --android-permissions 0000000000000004
+aram_store_ref_ar_do --aid ffffffffffdd --device-app-id a1234567890123bb1f140de987aaa891bbbf0bdd --apdu-filter aabbccdd010203041122334405060708 --nfc-never --android-permissions 0000000000000004
+
+# Export ADF.ARA-M to a temporary script file
+export --filename ADF.ARA-M > adf_ara-m.script.tmp
+
+# Ensure ADF.ARA-M is empty
+aram_delete_all
+
+# Check that ADF.ARA-M is empty
+aram_get_all > adf_ara-m_empty.cfg.tmp
+
+# Run the temporary script file to restore ADF.ARA-M again
+run_script adf_ara-m.script.tmp
+
+# Read out ADF.ARA-M using aram_get_all
+aram_get_all > adf_ara-m.cfg.tmp
+
+# Restore ARA-M configuration to its original state
+run_script restore_adf_ara_m.script.tmp

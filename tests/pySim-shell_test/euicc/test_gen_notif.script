@@ -1,0 +1,8 @@
+set debug true
+set echo true
+
+select ADF.ISD-R
+
+# Generate two (additional) notifications by quickly enabeling the test profile
+enable_profile --iccid 8949449999999990031f
+enable_profile --iccid 89000123456789012341

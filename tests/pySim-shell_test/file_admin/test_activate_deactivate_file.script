@@ -1,0 +1,8 @@
+set debug true
+set echo true
+
+select /ADF.USIM/EF.LOCI > activate_deactivate_file.tmp
+deactivate_file
+select /ADF.USIM/EF.LOCI >> activate_deactivate_file.tmp
+activate_file EF.LOCI
+select /ADF.USIM/EF.LOCI >> activate_deactivate_file.tmp

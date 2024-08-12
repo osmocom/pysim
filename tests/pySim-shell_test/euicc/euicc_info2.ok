@@ -1,0 +1,21 @@
+{
+    "profile_version": "2.3.1",
+    "svn": "2.3.0",
+    "euicc_firmware_ver": "35.6.35",
+    "ext_card_resource": "810108820400045bf883022419",
+    "uicc_capability": "067f36f3c0",
+    "ts102241_version": "15.1.0",
+    "global_platform_version": "2.3.0",
+    "rsp_capability": "0398",
+    "euicc_ci_pki_list_for_verification": {
+        "subject_key_identifier": "f54172bdf98a95d65cbeb88a38a1c11d800a85c3"
+    },
+    "euicc_ci_pki_list_for_signing": {
+        "subject_key_identifier": "f54172bdf98a95d65cbeb88a38a1c11d800a85c3"
+    },
+    "unknown_ber_tlv_ie_99": {
+        "raw": "0640"
+    },
+    "pp_version": "1.0.0",
+    "ss_acreditation_number": "SYSMOCOM-TEST-1"
+}

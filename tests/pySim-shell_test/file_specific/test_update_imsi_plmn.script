@@ -1,0 +1,13 @@
+set debug true
+set echo true
+
+# Create a backup the files we will modify
+export --filename MF/ADF.USIM/EF.IMSI > restore_ef_imsi.script.tmp
+
+select MF/ADF.USIM/EF.IMSI
+update_binary 084941414141414141
+update_imsi_plmn 26242
+read_binary_decoded > ef_imsi.tmp
+
+# Restore modified files to their original state
+run_script restore_ef_imsi.script.tmp

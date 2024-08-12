@@ -1,0 +1,34 @@
+{
+    "gp_registry_related_data": [
+        {
+            "application_aid": "a000000151000000"
+        },
+        {
+            "life_cycle_state": "personalized"
+        },
+        {
+            "privileges": {
+                "security_domain": true,
+                "dap_verification": false,
+                "delegated_management": false,
+                "card_lock": false,
+                "card_terminate": false,
+                "card_reset": false,
+                "cvm_management": true,
+                "mandated_dap_verification": false,
+                "trusted_path": true,
+                "authorized_management": true,
+                "token_management": false,
+                "global_delete": true,
+                "global_lock": true,
+                "global_registry": true,
+                "final_application": false,
+                "global_service": false,
+                "receipt_generation": false,
+                "ciphered_load_file_data_block": false,
+                "contactless_activation": false,
+                "contactless_self_activation": false
+            }
+        }
+    ]
+}

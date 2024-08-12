@@ -1,0 +1,22 @@
+set debug true
+set echo true
+
+# Create a backup the files we will modify
+export --filename MF/ADF.ISIM/EF.IST > restore_ef_ist.script.tmp
+
+# Write some known default
+select MF/ADF.ISIM/EF.IST
+update_binary 190208
+
+# Run check
+ist_service_check > test_ef_ist.tmp
+
+# Make changes and see if they were applied
+read_binary >> test_ef_ist.tmp
+ust_service_activate 7
+read_binary >> test_ef_ist.tmp
+ust_service_deactivate 7
+read_binary >> test_ef_ist.tmp
+
+# Restore modified files to their original state
+run_script restore_ef_ist.script.tmp

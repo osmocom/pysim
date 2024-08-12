@@ -1,0 +1,25 @@
+set debug true
+set echo true
+
+# Before we start, we will grant ourselves the right to delete ef-arr-record-nr 1 files at any time. For this we
+# temporarily modify EF.ARR
+select /EF.ARR
+export --filename /EF.ARR > restore_ef_arr.script.tmp
+update_record 1 800101a40683010a950108800106900080016090008401d4a40683010a950108ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+# Create a new DF and select it
+select MF
+create_ef --ef-arr-file-id 2f06 --ef-arr-record-nr 1 --file-size 23 --structure transparent 5678
+select 5678
+
+# Resize the new DF and select it again
+select MF
+resize_ef --file-size 42 5678
+select 5678
+
+# Delete the DF that we have created
+select MF
+delete_file --force-delete 5678
+
+# Restore EF.ARR to its original state
+run_script restore_ef_arr.script.tmp

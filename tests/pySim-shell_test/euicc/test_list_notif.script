@@ -1,0 +1,7 @@
+set debug true
+set echo true
+
+select ADF.ISD-R
+
+# List notifications
+list_notification > notifications.tmp

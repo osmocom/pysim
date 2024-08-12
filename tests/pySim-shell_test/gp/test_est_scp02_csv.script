@@ -1,0 +1,7 @@
+set debug true
+set echo true
+
+select ADF.ISD
+establish_scp02 --key-provider-suffix 1 --key-ver 112 --security-level 3
+get_data issuer_identification_number
+release_scp

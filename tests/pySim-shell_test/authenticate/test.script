@@ -1,0 +1,23 @@
+set debug true
+set echo true
+
+# Create a backup the files we will modify
+export --filename MF/ADF.USIM/EF.USIM_SQN > restore_ef_usim_sqn.script.tmp
+export --filename MF/ADF.USIM/EF.USIM_AUTH_KEY > restore_ef_usim_auth_key.script.tmp
+
+# Write known configuration with KI and OPc value
+select MF/ADF.USIM/EF.USIM_AUTH_KEY
+update_binary 0456c3a6da347ae7e43c69d37576725d81e0012b514f84eca9bfd6182bee345e2cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+# Reset SQN counter
+select MF/ADF.USIM/EF.USIM_SQN
+update_binary d503000200000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+# Perform authentication
+select ADF.USIM
+authenticate e85b2b7fe58f0e6239b32543d3e3259a 7928ea47ae090000ca8ab1f93c7cb03a > auth_result.tmp
+
+# Restore modified files to their original state
+run_script restore_ef_usim_sqn.script.tmp
+run_script restore_ef_usim_auth_key.script.tmp
+

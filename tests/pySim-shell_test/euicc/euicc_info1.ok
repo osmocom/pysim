@@ -1,0 +1,9 @@
+{
+    "svn": "2.3.0",
+    "euicc_ci_pki_list_for_verification": {
+        "subject_key_identifier": "f54172bdf98a95d65cbeb88a38a1c11d800a85c3"
+    },
+    "euicc_ci_pki_list_for_signing": {
+        "subject_key_identifier": "f54172bdf98a95d65cbeb88a38a1c11d800a85c3"
+    }
+}

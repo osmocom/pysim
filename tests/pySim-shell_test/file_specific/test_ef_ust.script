@@ -1,0 +1,22 @@
+set debug true
+set echo true
+
+# Create a backup the files we will modify
+export --filename MF/ADF.USIM/EF.UST > restore_ef_ust.script.tmp
+
+# Write some known default
+select MF/ADF.USIM/EF.UST
+update_binary beff9f9de73e04080000ff730000000600000000
+
+# Run check
+ust_service_check > test_ef_ust.tmp
+
+# Make changes and see if they were applied
+read_binary >> test_ef_ust.tmp
+ust_service_activate 150
+read_binary >> test_ef_ust.tmp
+ust_service_deactivate 150
+read_binary >> test_ef_ust.tmp
+
+# Restore modified files to their original state
+run_script restore_ef_ust.script.tmp

@@ -1,0 +1,68 @@
+set debug true
+set echo true
+
+# Navigate using filenames
+
+select ADF.USIM
+select EF.IMSI
+select > checkpoints_uicc.tmp
+
+select ADF.ISIM
+select EF.AD
+select >> checkpoints_uicc.tmp
+
+select ADF.ARA-M
+select >> checkpoints_uicc.tmp
+select MF
+select >> checkpoints_uicc.tmp
+
+select ADF.USIM/EF.IMSI
+select >> checkpoints_uicc.tmp
+
+select ADF.USIM
+select DF.5GS
+select ../../DF.TELECOM/DF.MCS/EF.MST
+select >> checkpoints_uicc.tmp
+
+select ADF.USIM
+select DF.5GS
+select /DF.TELECOM/DF.MCS/EF.MST
+select >> checkpoints_uicc.tmp
+
+select ADF.USIM
+select DF.5GS
+select /DF.TELECOM/../DF.TELECOM/DF.MCS/EF.MST
+select >> checkpoints_uicc.tmp
+
+# Navigate using FIDs
+
+select a0000000871002
+select 6f07
+select >> checkpoints_uicc.tmp
+
+select a0000000871002
+select 6fad
+select >> checkpoints_uicc.tmp
+
+select a00000015141434c00
+select >> checkpoints_uicc.tmp
+select 3f00
+select >> checkpoints_uicc.tmp
+
+select ADF.USIM/EF.IMSI
+select >> checkpoints_uicc.tmp
+
+select a0000000871002
+select 5fc0
+select ../../7f10/5f3d/4f01
+select >> checkpoints_uicc.tmp
+
+select a0000000871002
+select 5fc0
+select 3f00/7f10/5f3d/4f01
+select >> checkpoints_uicc.tmp
+
+select a0000000871002
+select 5fc0
+select 3f00/7f10/../7f10/5f3d/4f01
+select >> checkpoints_uicc.tmp

@@ -1,0 +1,146 @@
+001 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+001 abcdefffffffffffffffffffffffffffffffffffffffffffffffffffff
+001 0123456789abcdef0123456789abcdef0123456789abcdef0123456789
+002 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+003 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+004 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+005 0123456789abcdef0123456789abcdef0123456789abcdef0123456789
+006 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+007 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+008 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+009 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+010 0123456789abcdef0123456789abcdef0123456789abcdef0123456789
+[
+    {
+        "alpha_id": null,
+        "len_of_bcd": 7,
+        "ton_npi": {
+            "ext": true,
+            "type_of_number": "reserved_for_extension",
+            "numbering_plan_id": "reserved_for_extension"
+        },
+        "dialing_nr": "123456",
+        "cap_conf_id": 42,
+        "ext4_record_id": 23
+    },
+    {
+        "alpha_id": "",
+        "len_of_bcd": 255,
+        "ton_npi": {
+            "ext": true,
+            "type_of_number": "reserved_for_extension",
+            "numbering_plan_id": "reserved_for_extension"
+        },
+        "dialing_nr": "",
+        "cap_conf_id": 255,
+        "ext4_record_id": 255
+    },
+    {
+        "alpha_id": "",
+        "len_of_bcd": 255,
+        "ton_npi": {
+            "ext": true,
+            "type_of_number": "reserved_for_extension",
+            "numbering_plan_id": "reserved_for_extension"
+        },
+        "dialing_nr": "",
+        "cap_conf_id": 255,
+        "ext4_record_id": 255
+    },
+    {
+        "alpha_id": "",
+        "len_of_bcd": 255,
+        "ton_npi": {
+            "ext": true,
+            "type_of_number": "reserved_for_extension",
+            "numbering_plan_id": "reserved_for_extension"
+        },
+        "dialing_nr": "",
+        "cap_conf_id": 255,
+        "ext4_record_id": 255
+    },
+    {
+        "alpha_id": null,
+        "len_of_bcd": 7,
+        "ton_npi": {
+            "ext": true,
+            "type_of_number": "reserved_for_extension",
+            "numbering_plan_id": "reserved_for_extension"
+        },
+        "dialing_nr": "123456",
+        "cap_conf_id": 42,
+        "ext4_record_id": 23
+    },
+    {
+        "alpha_id": "",
+        "len_of_bcd": 255,
+        "ton_npi": {
+            "ext": true,
+            "type_of_number": "reserved_for_extension",
+            "numbering_plan_id": "reserved_for_extension"
+        },
+        "dialing_nr": "",
+        "cap_conf_id": 255,
+        "ext4_record_id": 255
+    },
+    {
+        "alpha_id": "",
+        "len_of_bcd": 255,
+        "ton_npi": {
+            "ext": true,
+            "type_of_number": "reserved_for_extension",
+            "numbering_plan_id": "reserved_for_extension"
+        },
+        "dialing_nr": "",
+        "cap_conf_id": 255,
+        "ext4_record_id": 255
+    },
+    {
+        "alpha_id": "",
+        "len_of_bcd": 255,
+        "ton_npi": {
+            "ext": true,
+            "type_of_number": "reserved_for_extension",
+            "numbering_plan_id": "reserved_for_extension"
+        },
+        "dialing_nr": "",
+        "cap_conf_id": 255,
+        "ext4_record_id": 255
+    },
+    {
+        "alpha_id": "",
+        "len_of_bcd": 255,
+        "ton_npi": {
+            "ext": true,
+            "type_of_number": "reserved_for_extension",
+            "numbering_plan_id": "reserved_for_extension"
+        },
+        "dialing_nr": "",
+        "cap_conf_id": 255,
+        "ext4_record_id": 255
+    },
+    {
+        "alpha_id": null,
+        "len_of_bcd": 7,
+        "ton_npi": {
+            "ext": true,
+            "type_of_number": "reserved_for_extension",
+            "numbering_plan_id": "reserved_for_extension"
+        },
+        "dialing_nr": "123456",
+        "cap_conf_id": 42,
+        "ext4_record_id": 23
+    }
+]
+{
+    "alpha_id": null,
+    "len_of_bcd": 7,
+    "ton_npi": {
+        "ext": true,
+        "type_of_number": "reserved_for_extension",
+        "numbering_plan_id": "reserved_for_extension"
+    },
+    "dialing_nr": "123456",
+    "cap_conf_id": 42,
+    "ext4_record_id": 23
+}

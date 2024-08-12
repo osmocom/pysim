@@ -1,0 +1,20 @@
+-> 0070000100 
+<- 9000: 
+-> 0070000200 
+<- 9000: 
+-> 0070000300 
+<- 9000: 
+currently selected file: MF/DF.TELECOM/EF.MSISDN (3f00/7f10/6f40)
+currently selected file: MF/ADF.USIM/EF.IMSI (3f00/a0000000871002/6f07)
+currently selected file: MF/ADF.ISIM/EF.AD (3f00/a0000000871004/6fad)
+[
+    {
+        "response_all_ref_ar_do": null
+    }
+]
+-> 0070800100 
+<- 9000: 
+-> 0070800200 
+<- 9000: 
+-> 0070800300 
+<- 9000: 

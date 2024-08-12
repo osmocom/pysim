@@ -1,0 +1,13 @@
+ffffffffffffffffffffff
+01234567890abcdeffffff
+01234567890abcdeffaaaa
+001abcd3440abcdeffaaaa
+{
+    "tmsi": "12345678",
+    "lai": {
+        "mcc_mnc": "262-42",
+        "lac": "9876"
+    },
+    "rfu": 0,
+    "lu_status": 1
+}

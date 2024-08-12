@@ -1,0 +1,90 @@
+{
+    "file_descriptor": {
+        "file_descriptor_byte": {
+            "shareable": true,
+            "file_type": "working_ef",
+            "structure": "transparent"
+        },
+        "record_len": null,
+        "num_of_rec": null
+    },
+    "file_identifier": "6f7e",
+    "proprietary_information": {
+        "unknown_ber_tlv_ie_d0": {
+            "raw": "20"
+        },
+        "toolkit_access_conditions": {
+            "rfm_create": true,
+            "rfm_delete_terminate": true,
+            "other_applet_create": true,
+            "other_applet_delete_terminate": true
+        }
+    },
+    "life_cycle_status_integer": "operational_activated",
+    "security_attrib_referenced": {
+        "ef_arr_file_id": "6f06",
+        "ef_arr_record_nr": 4
+    },
+    "file_size": 11,
+    "short_file_identifier": 11
+}
+{
+    "file_descriptor": {
+        "file_descriptor_byte": {
+            "shareable": true,
+            "file_type": "working_ef",
+            "structure": "transparent"
+        },
+        "record_len": null,
+        "num_of_rec": null
+    },
+    "file_identifier": "6f7e",
+    "proprietary_information": {
+        "unknown_ber_tlv_ie_d0": {
+            "raw": "20"
+        },
+        "toolkit_access_conditions": {
+            "rfm_create": true,
+            "rfm_delete_terminate": true,
+            "other_applet_create": true,
+            "other_applet_delete_terminate": true
+        }
+    },
+    "life_cycle_status_integer": "operational_deactivated",
+    "security_attrib_referenced": {
+        "ef_arr_file_id": "6f06",
+        "ef_arr_record_nr": 4
+    },
+    "file_size": 11,
+    "short_file_identifier": 11
+}
+{
+    "file_descriptor": {
+        "file_descriptor_byte": {
+            "shareable": true,
+            "file_type": "working_ef",
+            "structure": "transparent"
+        },
+        "record_len": null,
+        "num_of_rec": null
+    },
+    "file_identifier": "6f7e",
+    "proprietary_information": {
+        "unknown_ber_tlv_ie_d0": {
+            "raw": "20"
+        },
+        "toolkit_access_conditions": {
+            "rfm_create": true,
+            "rfm_delete_terminate": true,
+            "other_applet_create": true,
+            "other_applet_delete_terminate": true
+        }
+    },
+    "life_cycle_status_integer": "operational_activated",
+    "security_attrib_referenced": {
+        "ef_arr_file_id": "6f06",
+        "ef_arr_record_nr": 4
+    },
+    "file_size": 11,
+    "short_file_identifier": 11
+}
