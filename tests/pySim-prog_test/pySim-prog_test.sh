@@ -20,8 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-PYSIM_PROG=../pySim-prog.py
-PYSIM_READ=../pySim-read.py
+PYSIM_PROG=../../pySim-prog.py
+PYSIM_READ=../../pySim-read.py
 TEMPFILE=temp.tmp
 PYTHON=python3
 
