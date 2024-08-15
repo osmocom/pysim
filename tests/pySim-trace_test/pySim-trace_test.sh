@@ -20,8 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-PYSIM_TRACE=../pySim-trace.py
-GSMTAP_TRACE=pySim-trace_test_gsmtap.pcapng
+PYSIM_TRACE=./pySim-trace.py
+GSMTAP_TRACE=./tests/pySim-trace_test/pySim-trace_test_gsmtap.pcapng
 TEMPFILE=temp.tmp
 
 export PYSIM_INTEGRATION_TEST=1

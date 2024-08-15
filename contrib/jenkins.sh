@@ -32,7 +32,10 @@ case "$JOB_TYPE" in
 	# Run the test with physical cards
 	cd pysim-testdata
 	../tests/pySim-prog_test.sh
-	../tests/pySim-trace_test.sh
+	cd ..
+
+	# Run pySim-trace test
+	tests/pySim-trace_test/pySim-trace_test.sh
 	;;
 "distcheck")
 	virtualenv -p python3 venv --system-site-packages
