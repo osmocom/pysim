@@ -27,7 +27,7 @@ case "$JOB_TYPE" in
 	pip install pyshark
 
 	# Execute automatically discovered unit tests first
-	python -m unittest discover -v -s tests/
+	python -m unittest discover -v -s tests/unittests
 
 	# Run the test with physical cards
 	cd pysim-testdata
@@ -58,7 +58,7 @@ case "$JOB_TYPE" in
 		--disable E1102 \
 		--disable E0401 \
 		--enable W0301 \
-		pySim tests/*.py *.py \
+		pySim tests/unittests/*.py *.py \
 		contrib/*.py
 	;;
 "docs")
