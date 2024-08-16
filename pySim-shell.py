@@ -851,67 +851,64 @@ class Iso7816Commands(CommandSet):
         index_dict = {1: self._cmd.lchan.selected_file.get_selectable_names()}
         return self._cmd.index_based_complete(text, line, begidx, endidx, index_dict=index_dict)
 
-    def get_code(self, code):
-        """Use code either directly or try to get it from external data source"""
-        auto = ('PIN1', 'PIN2', 'PUK1', 'PUK2')
-
-        if str(code).upper() not in auto:
+    def get_code(self, code, field):
+        """Use code either directly or try to get it from external data source using the provided field name"""
+        if code is not None:
             return sanitize_pin_adm(code)
-
         iccid = self._cmd.rs.identity['ICCID']
-        result = card_key_provider_get_field(str(code), key='ICCID', value=iccid)
+        result = card_key_provider_get_field(field, key='ICCID', value=iccid)
         result = sanitize_pin_adm(result)
         if result:
-            self._cmd.poutput("found %s '%s' for ICCID '%s'" % (code.upper(), result, iccid))
+            self._cmd.poutput("found %s '%s' for ICCID '%s'" % (field, result, iccid))
         else:
-            self._cmd.poutput("cannot find %s for ICCID '%s'" % (code.upper(), iccid))
+            raise RuntimeError("cannot find %s for ICCID '%s'" % (field, iccid))
         return result
 
     verify_chv_parser = argparse.ArgumentParser()
     verify_chv_parser.add_argument(
         '--pin-nr', type=int, default=1, help='PIN Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
-    verify_chv_parser.add_argument(
-        'pin_code', type=is_decimal, help='PIN code digits, \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+    verify_chv_parser.add_argument('PIN', nargs='?', type=is_decimal,
+                                   help='PIN code value. If none given, CSV file will be queried')
 
     @cmd2.with_argparser(verify_chv_parser)
     def do_verify_chv(self, opts):
         """Verify (authenticate) using specified CHV (PIN) code, which is how the specifications
         call it if you authenticate yourself using the specified PIN.  There usually is at least PIN1 and
         PIN2."""
-        pin = self.get_code(opts.pin_code)
+        pin = self.get_code(opts.PIN, "PIN" + str(opts.pin_nr))
         (data, sw) = self._cmd.lchan.scc.verify_chv(opts.pin_nr, h2b(pin))
         self._cmd.poutput("CHV verification successful")
 
     unblock_chv_parser = argparse.ArgumentParser()
     unblock_chv_parser.add_argument(
         '--pin-nr', type=int, default=1, help='PUK Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
-    unblock_chv_parser.add_argument(
-        'puk_code', type=is_decimal, help='PUK code digits \"PUK1\" or \"PUK2\" to get PUK code from external data source')
-    unblock_chv_parser.add_argument(
-        'new_pin_code', type=is_decimal, help='PIN code digits \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+    unblock_chv_parser.add_argument('PUK', nargs='?', type=is_decimal,
+                                   help='PUK code value. If none given, CSV file will be queried')
+    unblock_chv_parser.add_argument('NEWPIN', nargs='?', type=is_decimal,
+                                   help='PIN code value. If none given, CSV file will be queried')
 
     @cmd2.with_argparser(unblock_chv_parser)
     def do_unblock_chv(self, opts):
         """Unblock PIN code using specified PUK code"""
-        new_pin = self.get_code(opts.new_pin_code)
-        puk = self.get_code(opts.puk_code)
+        new_pin = self.get_code(opts.NEWPIN, "PIN" + str(opts.pin_nr))
+        puk = self.get_code(opts.PUK, "PUK" + str(opts.pin_nr))
         (data, sw) = self._cmd.lchan.scc.unblock_chv(
             opts.pin_nr, h2b(puk), h2b(new_pin))
         self._cmd.poutput("CHV unblock successful")
 
     change_chv_parser = argparse.ArgumentParser()
+    change_chv_parser.add_argument('NEWPIN', nargs='?', type=is_decimal,
+                                   help='PIN code value. If none given, CSV file will be queried')
+    change_chv_parser.add_argument('PIN', nargs='?', type=is_decimal,
+                                   help='PIN code value. If none given, CSV file will be queried')
     change_chv_parser.add_argument(
         '--pin-nr', type=int, default=1, help='PUK Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
-    change_chv_parser.add_argument(
-        'pin_code', type=is_decimal, help='PIN code digits \"PIN1\" or \"PIN2\" to get PIN code from external data source')
-    change_chv_parser.add_argument(
-        'new_pin_code', type=is_decimal, help='PIN code digits \"PIN1\" or \"PIN2\" to get PIN code from external data source')
 
     @cmd2.with_argparser(change_chv_parser)
     def do_change_chv(self, opts):
         """Change PIN code to a new PIN code"""
-        new_pin = self.get_code(opts.new_pin_code)
-        pin = self.get_code(opts.pin_code)
+        new_pin = self.get_code(opts.NEWPIN, "PIN" + str(opts.pin_nr))
+        pin = self.get_code(opts.PIN, "PIN" + str(opts.pin_nr))
         (data, sw) = self._cmd.lchan.scc.change_chv(
             opts.pin_nr, h2b(pin), h2b(new_pin))
         self._cmd.poutput("CHV change successful")
@@ -919,26 +916,26 @@ class Iso7816Commands(CommandSet):
     disable_chv_parser = argparse.ArgumentParser()
     disable_chv_parser.add_argument(
         '--pin-nr', type=int, default=1, help='PIN Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
-    disable_chv_parser.add_argument(
-        'pin_code', type=is_decimal, help='PIN code digits, \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+    disable_chv_parser.add_argument('PIN', nargs='?', type=is_decimal,
+                                   help='PIN code value. If none given, CSV file will be queried')
 
     @cmd2.with_argparser(disable_chv_parser)
     def do_disable_chv(self, opts):
         """Disable PIN code using specified PIN code"""
-        pin = self.get_code(opts.pin_code)
+        pin = self.get_code(opts.PIN, "PIN" + str(opts.pin_nr))
         (data, sw) = self._cmd.lchan.scc.disable_chv(opts.pin_nr, h2b(pin))
         self._cmd.poutput("CHV disable successful")
 
     enable_chv_parser = argparse.ArgumentParser()
     enable_chv_parser.add_argument(
         '--pin-nr', type=int, default=1, help='PIN Number, 1=PIN1, 2=PIN2 or custom value (decimal)')
-    enable_chv_parser.add_argument(
-        'pin_code', type=is_decimal, help='PIN code digits, \"PIN1\" or \"PIN2\" to get PIN code from external data source')
+    enable_chv_parser.add_argument('PIN', nargs='?', type=is_decimal,
+                                   help='PIN code value. If none given, CSV file will be queried')
 
     @cmd2.with_argparser(enable_chv_parser)
     def do_enable_chv(self, opts):
         """Enable PIN code using specified PIN code"""
-        pin = self.get_code(opts.pin_code)
+        pin = self.get_code(opts.PIN, "PIN" + str(opts.pin_nr))
         (data, sw) = self._cmd.lchan.scc.enable_chv(opts.pin_nr, h2b(pin))
         self._cmd.poutput("CHV enable successful")
 
