@@ -63,6 +63,8 @@ parser_eapp = subparsers.add_parser('extract-apps', help='Extract applications a
 parser_eapp.add_argument('--output-dir', default='.', help='Output directory (where to store files)')
 parser_eapp.add_argument('--format', default='cap', choices=['ijc', 'cap'], help='Data format of output files')
 
+parser_info = subparsers.add_parser('tree', help='Display the filesystem tree')
+
 def do_split(pes: ProfileElementSequence, opts):
     i = 0
     for pe in pes.pe_list:
@@ -222,6 +224,8 @@ def do_extract_apps(pes:ProfileElementSequence, opts):
             with io.BytesIO(load_block_obj) as f, zipfile.ZipFile(fname, 'w') as z:
                 javacard.ijc_to_cap(f, z, package_aid)
 
+def do_tree(pes:ProfileElementSequence, opts):
+    pes.mf.print_tree()
 
 if __name__ == '__main__':
     opts = parser.parse_args()
@@ -250,3 +254,5 @@ if __name__ == '__main__':
         do_info(pes, opts)
     elif opts.command == 'extract-apps':
         do_extract_apps(pes, opts)
+    elif opts.command == 'tree':
+        do_tree(pes, opts)
