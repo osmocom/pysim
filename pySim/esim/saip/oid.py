@@ -77,9 +77,9 @@ class OID:
         if self.cmp(other) > 0:
             return True
 
-    def prefix_match(self, oid_str):
+    def prefix_match(self, oid_str: Union[str, 'OID']):
         """determine if oid_str is equal or below our OID."""
-        return oid_str.startswith(str(self))
+        return str(oid_str).startswith(str(self))
 
 
 class eOID(OID):
