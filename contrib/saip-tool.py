@@ -31,7 +31,7 @@ from pySim.pprint import HexBytesPrettyPrinter
 
 pp = HexBytesPrettyPrinter(indent=4,width=500)
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 parser = argparse.ArgumentParser(description="""
 Utility program to work with eSIM SAIP (SimAlliance Interoperable Profile) files.""")
