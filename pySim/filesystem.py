@@ -1481,10 +1481,12 @@ class CardModel(abc.ABC):
 
 class Path:
     """Representation of a file-system path."""
-    def __init__(self, p: Union[str, List[str]]):
+    def __init__(self, p: Union[str, List[str], List[int]]):
         # split if given as single string with slahes
         if isinstance(p, str):
             p = p.split('/')
+        elif len(p) and isinstance(p[0], int):
+            p = ['%04x' % x for x in p]
         # make sure internal representation alwas is uppercase only
         self.list = [x.upper() for x in p]
 
@@ -1514,7 +1516,7 @@ class Path:
 
     def relative_to_mf(self) -> 'Path':
         """Return a path relative to MF, i.e. without initial explicit MF."""
-        if self.list[0] == 'MF':
+        if len(self.list) and self.list[0] in ['MF', '3F00']:
             return Path(self.list[1:])
         return self
 
