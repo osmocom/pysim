@@ -110,26 +110,30 @@ class SimCardCommands:
         else:
             return cla_with_lchan(cla, self.lchan_nr)
 
-    def send_apdu(self, pdu: Hexstr) -> ResTuple:
+    def send_apdu(self, pdu: Hexstr, apply_lchan:bool = True) -> ResTuple:
         """Sends an APDU and auto fetch response data
 
         Args:
            pdu : string of hexadecimal characters (ex. "A0A40000023F00")
+           apply_lchan : apply the currently selected lchan to the CLA byte before sending
         Returns:
            tuple(data, sw), where
                         data : string (in hex) of returned data (ex. "074F4EFFFF")
                         sw   : string (in hex) of status word (ex. "9000")
         """
+        if apply_lchan:
+            pdu = self.cla4lchan(pdu[0:2]) + pdu[2:]
         if self.scp:
             return self.scp.send_apdu_wrapper(self._tp.send_apdu, pdu)
         else:
             return self._tp.send_apdu(pdu)
 
-    def send_apdu_checksw(self, pdu: Hexstr, sw: SwMatchstr = "9000") -> ResTuple:
+    def send_apdu_checksw(self, pdu: Hexstr, sw: SwMatchstr = "9000", apply_lchan:bool = True) -> ResTuple:
         """Sends an APDU and check returned SW
 
         Args:
            pdu : string of hexadecimal characters (ex. "A0A40000023F00")
+           apply_lchan : apply the currently selected lchan to the CLA byte before sending
            sw : string of 4 hexadecimal characters (ex. "9000"). The user may mask out certain
                         digits using a '?' to add some ambiguity if needed.
         Returns:
@@ -137,13 +141,15 @@ class SimCardCommands:
                         data : string (in hex) of returned data (ex. "074F4EFFFF")
                         sw   : string (in hex) of status word (ex. "9000")
         """
+        if apply_lchan:
+            pdu = self.cla4lchan(pdu[0:2]) + pdu[2:]
         if self.scp:
             return self.scp.send_apdu_wrapper(self._tp.send_apdu_checksw, pdu, sw)
         else:
             return self._tp.send_apdu_checksw(pdu, sw)
 
     def send_apdu_constr(self, cla: Hexstr, ins: Hexstr, p1: Hexstr, p2: Hexstr, cmd_constr: Construct,
-                         cmd_data: Hexstr, resp_constr: Construct) -> Tuple[dict, SwHexstr]:
+                         cmd_data: Hexstr, resp_constr: Construct, apply_lchan:bool = True) -> Tuple[dict, SwHexstr]:
         """Build and sends an APDU using a 'construct' definition; parses response.
 
         Args:
@@ -154,13 +160,14 @@ class SimCardCommands:
                 cmd_cosntr : defining how to generate binary APDU command data
                 cmd_data : command data passed to cmd_constr
                 resp_cosntr : defining how to decode  binary APDU response data
+                apply_lchan : apply the currently selected lchan to the CLA byte before sending
         Returns:
                 Tuple of (decoded_data, sw)
         """
         cmd = cmd_constr.build(cmd_data) if cmd_data else ''
         p3 = i2h([len(cmd)])
         pdu = ''.join([cla, ins, p1, p2, p3, b2h(cmd)])
-        (data, sw) = self.send_apdu(pdu)
+        (data, sw) = self.send_apdu(pdu, apply_lchan = apply_lchan)
         if data:
             # filter the resulting dict to avoid '_io' members inside
             rsp = filter_dict(resp_constr.parse(h2b(data)))
@@ -170,7 +177,7 @@ class SimCardCommands:
 
     def send_apdu_constr_checksw(self, cla: Hexstr, ins: Hexstr, p1: Hexstr, p2: Hexstr,
                                  cmd_constr: Construct, cmd_data: Hexstr, resp_constr: Construct,
-                                 sw_exp: SwMatchstr="9000") -> Tuple[dict, SwHexstr]:
+                                 sw_exp: SwMatchstr="9000", apply_lchan:bool = True) -> Tuple[dict, SwHexstr]:
         """Build and sends an APDU using a 'construct' definition; parses response.
 
         Args:
@@ -185,8 +192,8 @@ class SimCardCommands:
         Returns:
                 Tuple of (decoded_data, sw)
         """
-        (rsp, sw) = self.send_apdu_constr(cla, ins,
-                                          p1, p2, cmd_constr, cmd_data, resp_constr)
+        (rsp, sw) = self.send_apdu_constr(cla, ins, p1, p2, cmd_constr, cmd_data, resp_constr,
+                                          apply_lchan = apply_lchan)
         if not sw_match(sw, sw_exp):
             raise SwMatchError(sw, sw_exp.lower(), self._tp.sw_interpreter)
         return (rsp, sw)
@@ -750,7 +757,7 @@ class SimCardCommands:
         Args:
                 payload : payload as hex string
         """
-        return self.send_apdu_checksw('80c20000%02x%s' % (len(payload)//2, payload))
+        return self.send_apdu_checksw('80c20000%02x%s' % (len(payload)//2, payload), apply_lchan = False)
 
     def terminal_profile(self, payload: Hexstr) -> ResTuple:
         """Send TERMINAL PROFILE to card
@@ -759,7 +766,7 @@ class SimCardCommands:
                 payload : payload as hex string
         """
         data_length = len(payload) // 2
-        data, sw = self.send_apdu_checksw(('80100000%02x' % data_length) + payload)
+        data, sw = self.send_apdu_checksw(('80100000%02x' % data_length) + payload, apply_lchan = False)
         return (data, sw)
 
     # ETSI TS 102 221 11.1.22
@@ -797,7 +804,7 @@ class SimCardCommands:
             raise ValueError('Time unit must be 0x00..0x04')
         min_dur_enc = encode_duration(min_len_secs)
         max_dur_enc = encode_duration(max_len_secs)
-        data, sw = self.send_apdu_checksw('8076000004' + min_dur_enc + max_dur_enc)
+        data, sw = self.send_apdu_checksw('8076000004' + min_dur_enc + max_dur_enc, apply_lchan = False)
         negotiated_duration_secs = decode_duration(data[:4])
         resume_token = data[4:]
         return (negotiated_duration_secs, resume_token, sw)
@@ -807,7 +814,7 @@ class SimCardCommands:
         """Send SUSPEND UICC (resume) to the card."""
         if len(h2b(token)) != 8:
             raise ValueError("Token must be 8 bytes long")
-        data, sw = self.send_apdu_checksw('8076010008' + token)
+        data, sw = self.send_apdu_checksw('8076010008' + token, apply_lchan = False)
         return (data, sw)
 
     def get_data(self, tag: int, cla: int = 0x00):

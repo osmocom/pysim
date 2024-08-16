@@ -252,9 +252,9 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         # can be executed without the presence of a runtime state (self.rs) object. However, this also means that
         # self.lchan is also not present (see method equip).
         if opts.raw or self.lchan is None:
-            data, sw = self.card._scc.send_apdu(opts.APDU)
+            data, sw = self.card._scc.send_apdu(opts.APDU, apply_lchan = False)
         else:
-            data, sw = self.lchan.scc.send_apdu(opts.APDU)
+            data, sw = self.lchan.scc.send_apdu(opts.APDU, apply_lchan = False)
         if data:
             self.poutput("SW: %s, RESP: %s" % (sw, data))
         else:

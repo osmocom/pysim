@@ -262,7 +262,7 @@ class ADF_ARAM(CardADF):
         return pySim.global_platform.decode_select_response(data_hex)
 
     @staticmethod
-    def xceive_apdu_tlv(tp, hdr: Hexstr, cmd_do, resp_cls, exp_sw='9000'):
+    def xceive_apdu_tlv(scc, hdr: Hexstr, cmd_do, resp_cls, exp_sw='9000'):
         """Transceive an APDU with the card, transparently encoding the command data from TLV
         and decoding the response data tlv."""
         if cmd_do:
@@ -274,7 +274,7 @@ class ADF_ARAM(CardADF):
             cmd_do_enc = b''
             cmd_do_len = 0
         c_apdu = hdr + ('%02x' % cmd_do_len) + b2h(cmd_do_enc)
-        (data, _sw) = tp.send_apdu_checksw(c_apdu, exp_sw)
+        (data, _sw) = scc.send_apdu_checksw(c_apdu, exp_sw)
         if data:
             if resp_cls:
                 resp_do = resp_cls()
@@ -285,32 +285,32 @@ class ADF_ARAM(CardADF):
             return None
 
     @staticmethod
-    def store_data(tp, do) -> bytes:
+    def store_data(scc, do) -> bytes:
         """Build the Command APDU for STORE DATA."""
-        return ADF_ARAM.xceive_apdu_tlv(tp, '80e29000', do, StoreResponseDoCollection)
+        return ADF_ARAM.xceive_apdu_tlv(scc, '80e29000', do, StoreResponseDoCollection)
 
     @staticmethod
-    def get_all(tp):
-        return ADF_ARAM.xceive_apdu_tlv(tp, '80caff40', None, GetResponseDoCollection)
+    def get_all(scc):
+        return ADF_ARAM.xceive_apdu_tlv(scc, '80caff40', None, GetResponseDoCollection)
 
     @staticmethod
-    def get_config(tp, v_major=0, v_minor=0, v_patch=1):
+    def get_config(scc, v_major=0, v_minor=0, v_patch=1):
         cmd_do = DeviceConfigDO()
         cmd_do.from_val_dict([{'device_interface_version_do': {
                                'major': v_major, 'minor': v_minor, 'patch': v_patch}}])
-        return ADF_ARAM.xceive_apdu_tlv(tp, '80cadf21', cmd_do, ResponseAramConfigDO)
+        return ADF_ARAM.xceive_apdu_tlv(scc, '80cadf21', cmd_do, ResponseAramConfigDO)
 
     @with_default_category('Application-Specific Commands')
     class AddlShellCommands(CommandSet):
         def do_aram_get_all(self, _opts):
             """GET DATA [All] on the ARA-M Applet"""
-            res_do = ADF_ARAM.get_all(self._cmd.lchan.scc._tp)
+            res_do = ADF_ARAM.get_all(self._cmd.lchan.scc)
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
 
         def do_aram_get_config(self, _opts):
             """Perform GET DATA [Config] on the ARA-M Applet: Tell it our version and retrieve its version."""
-            res_do = ADF_ARAM.get_config(self._cmd.lchan.scc._tp)
+            res_do = ADF_ARAM.get_config(self._cmd.lchan.scc)
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
 
@@ -378,14 +378,14 @@ class ADF_ARAM(CardADF):
             d = [{'ref_ar_do': [{'ref_do': ref_do_content}, {'ar_do': ar_do_content}]}]
             csrado = CommandStoreRefArDO()
             csrado.from_val_dict(d)
-            res_do = ADF_ARAM.store_data(self._cmd.lchan.scc._tp, csrado)
+            res_do = ADF_ARAM.store_data(self._cmd.lchan.scc, csrado)
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
 
         def do_aram_delete_all(self, _opts):
             """Perform STORE DATA [Command-Delete[all]] to delete all access rules."""
             deldo = CommandDelete()
-            res_do = ADF_ARAM.store_data(self._cmd.lchan.scc._tp, deldo)
+            res_do = ADF_ARAM.store_data(self._cmd.lchan.scc, deldo)
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
 
@@ -479,7 +479,7 @@ class CardApplicationARAM(CardApplication):
         export_str = ""
         export_str += "aram_delete_all\n"
 
-        res_do = ADF_ARAM.get_all(lchan.scc._tp)
+        res_do = ADF_ARAM.get_all(lchan.scc)
         if not res_do:
             return export_str.strip()
 
