@@ -965,7 +965,7 @@ class Iso7816Commands(CommandSet):
 
     open_chan_parser = argparse.ArgumentParser()
     open_chan_parser.add_argument(
-        'chan_nr', type=int, default=0, help='Channel Number')
+        'chan_nr', type=int, default=1, choices=range(1,16), help='Channel Number')
 
     @cmd2.with_argparser(open_chan_parser)
     def do_open_channel(self, opts):
@@ -977,7 +977,7 @@ class Iso7816Commands(CommandSet):
 
     close_chan_parser = argparse.ArgumentParser()
     close_chan_parser.add_argument(
-        'chan_nr', type=int, default=0, help='Channel Number')
+        'chan_nr', type=int, default=1, choices=range(1,16), help='Channel Number')
 
     @cmd2.with_argparser(close_chan_parser)
     def do_close_channel(self, opts):
@@ -989,7 +989,7 @@ class Iso7816Commands(CommandSet):
 
     switch_chan_parser = argparse.ArgumentParser()
     switch_chan_parser.add_argument(
-        'chan_nr', type=int, default=0, help='Channel Number')
+        'chan_nr', type=int, default=0, choices=range(0,16), help='Channel Number')
 
     @cmd2.with_argparser(switch_chan_parser)
     def do_switch_channel(self, opts):
