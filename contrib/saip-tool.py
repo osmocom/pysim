@@ -31,11 +31,12 @@ from pySim.pprint import HexBytesPrettyPrinter
 
 pp = HexBytesPrettyPrinter(indent=4,width=500)
 
-logging.basicConfig(level=logging.INFO)
-
 parser = argparse.ArgumentParser(description="""
 Utility program to work with eSIM SAIP (SimAlliance Interoperable Profile) files.""")
 parser.add_argument('INPUT_UPP', help='Unprotected Profile Package Input file')
+parser.add_argument("--loglevel", dest="loglevel", choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                    default='INFO', help="Set the logging level")
+parser.add_argument('--debug', action='store_true', help='Enable DEBUG logging')
 subparsers = parser.add_subparsers(dest='command', help="The command to perform", required=True)
 
 parser_split = subparsers.add_parser('split', help='Split PE-Sequence into individual PEs')
@@ -224,6 +225,11 @@ def do_extract_apps(pes:ProfileElementSequence, opts):
 
 if __name__ == '__main__':
     opts = parser.parse_args()
+
+    if opts.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.getLevelName(opts.loglevel))
 
     with open(opts.INPUT_UPP, 'rb') as f:
         pes = ProfileElementSequence.from_der(f.read())
