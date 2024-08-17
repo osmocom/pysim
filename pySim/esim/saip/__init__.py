@@ -225,7 +225,19 @@ class ProfileElement:
         'securityDomain':           'sd-Header',
         }
 
-    def __init__(self, decoded = None, mandated: bool = True):
+    def __init__(self, decoded = None, mandated: bool = True,
+                 pe_sequence: Optional['ProfileElementSequence'] = None):
+        """
+        Instantiate a new ProfileElement.  This is usually either called with the 'decoded' argument after
+        reading a SAIP-DER-encoded PE.  Alternatively, when constructing a PE from scratch, decoded is None,
+        and a minimal PE-Header is generated.
+
+        Args:
+            decoded: asn1tools-generated decoded structure for this PE
+            mandated: Whether or not the PE-Header should contain the mandated attribute
+            pe_sequence: back-reference to the PE-Sequence of which we're part of
+        """
+        self.pe_sequence = pe_sequence
         if decoded:
             self.decoded = decoded
         else:
@@ -301,14 +313,20 @@ class ProfileElement:
             return None
 
     @classmethod
-    def from_der(cls, der: bytes) -> 'ProfileElement':
-        """Construct an instance from given raw, DER encoded bytes."""
+    def from_der(cls, der: bytes,
+                 pe_sequence: Optional['ProfileElementSequence'] = None) -> 'ProfileElement':
+        """Construct an instance from given raw, DER encoded bytes.
+
+        Args:
+            der: raw, DER-encoded bytes of a single PE
+            pe_sequence: back-reference to the PE-Sequence of which this PE is part of
+        """
         pe_type, decoded = asn1.decode('ProfileElement', der)
         pe_cls = cls.class_for_petype(pe_type)
         if pe_cls:
-            inst = pe_cls(decoded)
+            inst = pe_cls(decoded, pe_sequence=pe_sequence)
         else:
-            inst = ProfileElement(decoded)
+            inst = ProfileElement(decoded, pe_sequence=pe_sequence)
             inst.type = pe_type
         # run any post-decoder a derived class may have
         if hasattr(inst, '_post_decode'):
@@ -984,7 +1002,7 @@ class ProfileElementSequence:
         remainder = der
         while len(remainder):
             first_tlv, remainder = bertlv_first_segment(remainder)
-            self.pe_list.append(ProfileElement.from_der(first_tlv))
+            self.pe_list.append(ProfileElement.from_der(first_tlv, pe_sequence=self))
         self._process_pelist()
 
     def _process_pelist(self) -> None:
