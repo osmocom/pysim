@@ -371,9 +371,9 @@ class FsProfileElement(ProfileElement):
         self.files[file.pe_name] = file
 
     def files2pe(self):
-        """Update the "decoded" member with the contents of the files member."""
-        for f in self.files:
-            self.decoded[f.pename] = f.to_tuples()
+        """Update the "decoded" member with the contents of the "files" member."""
+        for k, f in self.files.items():
+            self.decoded[k] = f.to_tuples()
 
     def pe2files(self):
         """Update the "files" member with the contents of the "decoded" member."""
