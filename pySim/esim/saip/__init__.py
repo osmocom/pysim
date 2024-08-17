@@ -97,7 +97,7 @@ class File:
         self.pe_name = pename
         self.template = template
         self.fileDescriptor = {}
-        self.stream = None
+        self.body = None
         # apply some defaults from profile
         if self.template:
             self.from_template(self.template)
@@ -173,7 +173,7 @@ class File:
             raise ValueError("No fileDescriptor found in tuple, and none set by template before")
         if fd:
             self.fileDescriptor.update(dict(fd))
-        self.stream = self.linearize_file_content(l)
+        self.body = self.linearize_file_content(l)
 
     def from_gfm(self, d: Dict):
         print(d)
@@ -184,7 +184,7 @@ class File:
         raise NotImplementedError
 
     @staticmethod
-    def linearize_file_content(l: List[Tuple]) -> Optional[io.BytesIO]:
+    def linearize_file_content(l: List[Tuple]) -> Optional[bytes]:
         """linearize a list of fillFileContent / fillFileOffset tuples into a stream of bytes."""
         stream = io.BytesIO()
         for k, v in l:
@@ -199,7 +199,14 @@ class File:
                 stream.write(v)
             else:
                 return ValueError("Unknown key '%s' in tuple list" % k)
-        return stream
+        return stream.getvalue()
+
+    def file_content_to_tuples(self) -> List[Tuple]:
+        # FIXME: simplistic approach. needs optimization. We should first check if the content
+        # matches the expanded default value from the template. If it does, return empty list.
+        # Next, we should compute the diff between the default value and self.body, and encode
+        # that as a sequence of fillFileOffset and fillFileContent tuples.
+        return [('fillFileContent', self.body)]
 
     def __str__(self) -> str:
         return "File(%s)" % self.pe_name
@@ -819,7 +826,7 @@ class ProfileElementUSIM(FsProfileElement):
     @property
     def imsi(self) -> Optional[str]:
         f = File('ef-imsi', self.decoded['ef-imsi'])
-        return dec_imsi(b2h(f.stream.getvalue()))
+        return dec_imsi(b2h(f.body))
 
 class ProfileElementOptUSIM(FsProfileElement):
     type = 'opt-usim'
