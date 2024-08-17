@@ -326,12 +326,19 @@ class ProfileElement:
         return self.type
 
 class FsProfileElement(ProfileElement):
-    """A file-system bearing profile element, like MF, USIM, ...."""
+    """A file-system bearing profile element, like MF, USIM, ....
 
-    def __init__(self, decoded = None, mandated: bool = True):
-        super().__init__(decoded, mandated)
+    We keep two major representations of the data:
+    * The "decoded" member, as introduced by our parent class, containing asn1tools syntax
+    * the "files" dict, consisting of File values indexed by PE-name strings
+
+    The methods pe2files and files2pe convert between those two representations.
+    """
+    def __init__(self, decoded = None, mandated: bool = True, **kwargs):
+        super().__init__(decoded, mandated, **kwargs)
         # indexed by PE-Name
         self.files = {}
+        # resolve ASN.1 type definition; needed to e.g. iterate field names (for file pe-names)
         self.tdef = asn1.types['ProfileElement'].type.name_to_member[self.type]
 
     def add_file(self, file: File):
@@ -365,8 +372,12 @@ class FsProfileElement(ProfileElement):
 class ProfileElementGFM(ProfileElement):
     type = 'genericFileManagement'
 
-    def __init__(self, decoded = None, mandated: bool = True):
-        super().__init__(decoded, mandated)
+    @staticmethod
+    def path_str(path: List[int]) -> str:
+        return '/'.join(['%04X' % x for x in path])
+
+    def __init__(self, decoded = None, mandated: bool = True, **kwargs):
+        super().__init__(decoded, mandated, **kwargs)
         # indexed by PE-Name
         self.files = {}
         self.tdef = asn1.types['ProfileElement'].type.name_to_member[self.type]
@@ -416,8 +427,8 @@ class ProfileElementGFM(ProfileElement):
 class ProfileElementMF(FsProfileElement):
     type = 'mf'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults
@@ -429,8 +440,8 @@ class ProfileElementMF(FsProfileElement):
 class ProfileElementPuk(ProfileElement):
     type = 'pukCodes'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults
@@ -459,8 +470,8 @@ class ProfileElementPuk(ProfileElement):
 class ProfileElementPin(ProfileElement):
     type = 'pinCodes'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults
@@ -495,8 +506,8 @@ class ProfileElementPin(ProfileElement):
 class ProfileElementTelecom(FsProfileElement):
     type = 'telecom'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults for a MNO-SD
@@ -507,8 +518,8 @@ class ProfileElementTelecom(FsProfileElement):
 class ProfileElementPhonebook(FsProfileElement):
     type = 'phonebook'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults
@@ -519,8 +530,8 @@ class ProfileElementPhonebook(FsProfileElement):
 class ProfileElementGsmAccess(FsProfileElement):
     type = 'gsm-access'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults
@@ -531,8 +542,8 @@ class ProfileElementGsmAccess(FsProfileElement):
 class ProfileElementDf5GS(FsProfileElement):
     type = 'df-5gs'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults
@@ -543,8 +554,8 @@ class ProfileElementDf5GS(FsProfileElement):
 class ProfileElementEAP(FsProfileElement):
     type = 'eap'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults
@@ -555,8 +566,8 @@ class ProfileElementEAP(FsProfileElement):
 class ProfileElementDfSAIP(FsProfileElement):
     type = 'df-saip'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults
@@ -567,8 +578,8 @@ class ProfileElementDfSAIP(FsProfileElement):
 class ProfileElementDfSNPN(FsProfileElement):
     type = 'df-snpn'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults
@@ -579,8 +590,8 @@ class ProfileElementDfSNPN(FsProfileElement):
 class ProfileElementDf5GProSe(FsProfileElement):
     type = 'df-5gprose'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults
@@ -650,8 +661,8 @@ class ProfileElementSD(ProfileElement):
     class C9(BER_TLV_IE, tag=0xC9, nested=UiccSdInstallParams):
         pass
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults for a MNO-SD
@@ -725,8 +736,8 @@ class ProfileElementSD(ProfileElement):
 
 class ProfileElementSSD(ProfileElementSD):
     """Class representing a securityDomain ProfileElement for a SSD."""
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # defaults [overriding ProfileElementSD) taken from SAIP v2.3.1 Section 11.2.12
@@ -743,8 +754,8 @@ class ProfileElementRFM(ProfileElement):
     def __init__(self, decoded: Optional[dict] = None,
                  inst_aid: Optional[bytes] = None, sd_aid: Optional[bytes] = None,
                  adf_aid: Optional[bytes] = None,
-                 tar_list: Optional[List[bytes]] = [], msl: Optional[int] = 0x06):
-        super().__init__(decoded)
+                 tar_list: Optional[List[bytes]] = [], msl: Optional[int] = 0x06, **kwargs):
+        super().__init__(decoded, **kwargs)
         ADM1_ACCESS = h2b('02000100')
         if decoded:
             return
@@ -765,8 +776,8 @@ class ProfileElementRFM(ProfileElement):
 class ProfileElementUSIM(FsProfileElement):
     type = 'usim'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults for a MNO-SD
@@ -786,8 +797,8 @@ class ProfileElementUSIM(FsProfileElement):
 class ProfileElementOptUSIM(FsProfileElement):
     type = 'opt-usim'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults for a MNO-SD
@@ -796,8 +807,8 @@ class ProfileElementOptUSIM(FsProfileElement):
 class ProfileElementISIM(FsProfileElement):
     type = 'isim'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults for a MNO-SD
@@ -812,8 +823,8 @@ class ProfileElementISIM(FsProfileElement):
 class ProfileElementOptISIM(FsProfileElement):
     type = 'opt-isim'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults for a MNO-SD
@@ -823,8 +834,8 @@ class ProfileElementOptISIM(FsProfileElement):
 class ProfileElementAKA(ProfileElement):
     type = 'akaParameter'
 
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults for a MNO-SD
@@ -900,8 +911,20 @@ class ProfileElementHeader(ProfileElement):
     type = 'header'
     def __init__(self, decoded: Optional[dict] = None,
                  ver_major: Optional[int] = 2, ver_minor: Optional[int] = 3,
-                 iccid: Optional[Hexstr] = '0'*20, profile_type: Optional[str] = None):
-        super().__init__(decoded)
+                 iccid: Optional[Hexstr] = '0'*20, profile_type: Optional[str] = None,
+                 **kwargs):
+        """You would usually initialize an instance either with a "decoded" argument (as read from
+        a DER-encoded SAIP file via asn1tools), or [some of] the othe arguments in case you're
+        constructing a Profile Header from scratch.
+
+        Args:
+            decoded: asn1tools-generated decoded structure for this PE
+            ver_major: Major SAIP version
+            ver_minor: Minor SAIP version
+            iccid: ICCID of the profile
+            profile_type: operational, testing or bootstrap
+        """
+        super().__init__(decoded, **kwargs)
         if decoded:
             return
         # provide some reasonable defaults
@@ -917,8 +940,8 @@ class ProfileElementHeader(ProfileElement):
 
 class ProfileElementEnd(ProfileElement):
     type = 'end'
-    def __init__(self, decoded: Optional[dict] = None):
-        super().__init__(decoded)
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
 
 def bertlv_first_segment(binary: bytes) -> Tuple[bytes, bytes]:
     """obtain the first segment of a binary concatenation of BER-TLV objects.
