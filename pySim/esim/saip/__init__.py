@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import abc
 import io
 from typing import Tuple, List, Optional, Dict, Union
@@ -24,10 +25,10 @@ import asn1tools
 
 from pySim.utils import bertlv_parse_tag, bertlv_parse_len, b2h, h2b, dec_imsi, Hexstr
 from pySim.ts_102_221 import FileDescriptor
-from pySim.filesystem import CardADF
+from pySim.filesystem import CardADF, Path
 from pySim.ts_31_102 import ADF_USIM
 from pySim.ts_31_103 import ADF_ISIM
-from pySim.construct import build_construct
+from pySim.construct import build_construct, parse_construct, GreedyInteger
 from pySim.esim import compile_asn1_subdir
 from pySim.esim.saip import templates
 from pySim.esim.saip import oid
@@ -36,6 +37,8 @@ from pySim.global_platform import KeyType, KeyUsageQualifier
 from pySim.global_platform.uicc import UiccSdInstallParams
 
 asn1 = compile_asn1_subdir('saip')
+
+logger = logging.getLogger(__name__)
 
 class Naa:
     """A class defining a Network Access Application (NAA)."""
@@ -64,7 +67,8 @@ class NaaUsim(Naa):
     name = "usim"
     aid = h2b("a0000000871002")
     mandatory_services = ["usim"]
-    pe_types = ["usim", "opt-usim"]
+    pe_types = ["usim", "opt-usim", "phonebook", "gsm-access", "eap", "df-5gs", "df-saip",
+                "df-snpn", "df-5gprose"]
     templates = [oid.ADF_USIM_by_default, oid.ADF_USIMopt_not_by_default,
                  oid.DF_PHONEBOOK_ADF_USIM, oid.DF_GSM_ACCESS_ADF_USIM,
                  oid.DF_EAP, oid.DF_5GS, oid.DF_SAIP, oid.DF_SNPN,
@@ -88,103 +92,245 @@ NAAs = {
 class File:
     """Internal representation of a file in a profile filesystem.
 
-    Parameters:
+    Args:
         pename: Name string of the profile element
         l: List of tuples [fileDescriptor, fillFileContent, fillFileOffset profile elements]
         template: Applicable FileTemplate describing defaults as per SAIP spec
+        name: Human-readable name like EF.IMSI, DF.TELECOM, ADF.USIM, ...
     """
-    def __init__(self, pename: str, l: Optional[List[Tuple]] = None, template: Optional[templates.FileTemplate] = None):
+    def __init__(self, pename: str, l: Optional[List[Tuple]] = None, template:
+                 Optional[templates.FileTemplate] = None, name: Optional[str] = None):
+        self._template_derived = False
         self.pe_name = pename
+        self._name = name
         self.template = template
-        self.fileDescriptor = {}
-        self.body = None
+        self.body: Optional[bytes] = None
+        self.node: Optional['FsNode'] = None
+        self.file_type = None
+        self.fid: Optional[int] = None
+        self.sfi: Optional[int] = None
+        self.arr = None
+        self.rec_len: Optional[int] = None
+        self.nb_rec: Optional[int] = None
+        self.high_update: bool = False
+        self.shareable: bool = True
         # apply some defaults from profile
         if self.template:
             self.from_template(self.template)
         if l:
             self.from_tuples(l)
 
-    def _encode_file_size(self, size: int) -> bytes:
-        # FIXME: handle > v2.0 case where it must be encoded on the minimum number of octets possible
-        return size.to_bytes(2, 'big')
+    @property
+    def name(self) -> Optional[str]:
+        if self._name:
+            return self._name
+        if self.template:
+            return self.template.name
+        return None
+
+    @staticmethod
+    def get_tuplelist_item(l: List[Tuple], key: str):
+        """get the [first] value matching given key from a list of (key, value) tuples."""
+        for k, v in l:
+            if k == key:
+                return v
+
+    @staticmethod
+    def _encode_file_size(size: int) -> bytes:
+        """Encode the integer file size into bytes, as needed by the asn1tools encoder."""
+        if False: # TODO: some way to know for which version of SAIP we should encode
+            # A V2.0 eUICC may expect file size to be encoded on at least 2 bytes, as specified in
+            # ETSI TS 102 222 [102 222], and may reject the encoding without the leading byte.
+            return size.to_bytes(2, 'big')
+        else:
+            # > v2.0 case where it must be encoded on the minimum number of octets possible
+            c = GreedyInteger()
+            return c.build(size)
+
+    @staticmethod
+    def _decode_file_size(size: bytes) -> int:
+        """Decode the file size from asn1tools-bytes to integer."""
+        c = GreedyInteger()
+        return c.parse(size)
 
     def from_template(self, template: templates.FileTemplate):
         """Determine defaults for file based on given FileTemplate."""
+        if self._template_derived:
+            raise ValueError('This file already has been initialized by a template before')
+        # copy various bits from template
+        self.file_type = template.file_type
+        self.fid = template.fid
+        self.sfi = template.sfi
+        self.arr = template.arr
+        #self.default_val = template.default_val
+        #self.default_val_repeat = template.default_val_repeat
+        if hasattr(template, 'rec_len'):
+            self.rec_len = template.rec_len
+        else:
+            self.rec_len = None
+        if hasattr(template, 'nb_rec'):
+            self.nb_rec = template.nb_rec
+        else:
+            self.nb_rec = None
+        self.high_update = template.high_update
+        # All the files defined in the templates shall have, by default, shareable/not-shareable bit in the file descriptor set to "shareable".
+        self.shareable = True
+        self._template_derived = True
+
+    def to_fileDescriptor(self) -> dict:
+        """Convert from internal representation to 'fileDescriptor' as used by asn1tools for SAIP"""
+        fileDescriptor = {}
         fdb_dec = {}
         pefi = {}
-        self.rec_len = None
-        if template.fid:
-            self.fileDescriptor['fileID'] = template.fid.to_bytes(2, 'big')
-        if template.sfi:
-            self.fileDescriptor['shortEFID'] = bytes([template.sfi])
-        if template.arr:
-            self.fileDescriptor['securityAttributesReferenced'] = bytes([template.arr])
-        # All the files defined in the templates shall have, by default, shareable/not-shareable bit in the file descriptor set to "shareable".
-        fdb_dec['shareable'] = True
-        if template.file_type in ['LF', 'CY']:
+        if self.fid:
+            fileDescriptor['fileID'] = self.fid.to_bytes(2, 'big')
+        if self.sfi:
+            fileDescriptor['shortEFID'] = bytes([self.sfi])
+        if self.df_name:
+            fileDescriptor['dfName'] = self.df_name
+        if self.arr:
+            fileDescriptor['securityAttributesReferenced'] = self.arr
+        if self.file_type in ['LF', 'CY']:
             fdb_dec['file_type'] = 'working_ef'
-            if template.rec_len:
-                self.record_len = template.rec_len
-            if template.nb_rec and template.rec_len:
-                self.fileDescriptor['efFileSize'] = self._encode_file_size(template.nb_rec * template.rec_len)
-            if template.file_type == 'LF':
+            if self.nb_rec and self.rec_len:
+                fileDescriptor['efFileSize'] = self._encode_file_size(self.nb_rec * self.rec_len)
+            if self.file_type == 'LF':
                 fdb_dec['structure'] = 'linear_fixed'
-            elif template.file_type == 'CY':
+            elif self.file_type == 'CY':
                 fdb_dec['structure'] = 'cyclic'
-        elif template.file_type == 'BT':
+        elif self.file_type == 'BT':
             fdb_dec['file_type'] = 'working_ef'
             fdb_dec['structure'] = 'ber_tlv'
-            if template.file_size:
-                pefi['maximumFileSize'] = self._encode_file_size(template.file_size)
-        elif template.file_type == 'TR':
+            if self.file_size:
+                pefi['maximumFileSize'] = self._encode_file_size(self.file_size)
+        elif self.file_type == 'TR':
             fdb_dec['file_type'] = 'working_ef'
             fdb_dec['structure'] = 'transparent'
-            if template.file_size:
-                self.fileDescriptor['efFileSize'] = self._encode_file_size(template.file_size)
-        elif template.file_type in ['MF', 'DF', 'ADF']:
+            if self.file_size:
+                fileDescriptor['efFileSize'] = self._encode_file_size(self.file_size)
+        elif self.file_type in ['MF', 'DF', 'ADF']:
             fdb_dec['file_type'] = 'df'
             fdb_dec['structure'] = 'no_info_given'
         # build file descriptor based on above input data
-        fd_dict = {'file_descriptor_byte': fdb_dec}
+        fd_dict = {}
+        if len(fdb_dec):
+            fdb_dec['shareable'] = self.shareable
+            fd_dict['file_descriptor_byte'] = fdb_dec
         if self.rec_len:
             fd_dict['record_len'] = self.rec_len
-        self.fileDescriptor['fileDescriptor'] = build_construct(FileDescriptor._construct, fd_dict)
-        if template.high_update:
+        if len(fd_dict):
+            fileDescriptor['fileDescriptor'] = build_construct(FileDescriptor._construct, fd_dict)
+        if self.high_update:
             pefi['specialFileInformation'] = b'\x80' # TS 102 222 Table 5
         try:
-            if template.default_val_repeat:
-                pefi['repeatPattern'] = template.expand_default_value_pattern()
-            elif template.default_val:
-                pefi['fillPattern'] = template.expand_default_value_pattern()
+            if self.template and self.template.default_val_repeat:
+                pefi['repeatPattern'] = self.template.expand_default_value_pattern()
+            elif self.template and self.template.default_val:
+                pefi['fillPattern'] = self.template.expand_default_value_pattern()
         except ValueError:
             # ignore this here as without a file or record length we cannot do this
             pass
         if len(pefi.keys()):
-            self.fileDescriptor['proprietaryEFInfo'] = pefi
+            # TODO: When overwriting the default "proprietaryEFInfo" for a template EF for which a
+            # default fill or repeat pattern is defined; it is hence recommended to provide the
+            # desired fill or repeat pattern in the "proprietaryEFInfo" element for the EF in Profiles
+            # downloaded to a V2.2 or earlier eUICC.
+            fileDescriptor['proprietaryEFInfo'] = pefi
+        logger.debug("%s: to_fileDescriptor(%s)" % (self, fileDescriptor))
+        return fileDescriptor
+
+    def from_fileDescriptor(self, fileDescriptor: dict):
+        """Convert from 'fileDescriptor' as used by asn1tools for SAIP to internal representation"""
+        logger.debug("%s: from_fileDescriptor(%s)" % (self, fileDescriptor))
+        fileID = fileDescriptor.get('fileID', None)
+        if fileID:
+            self.fid = int.from_bytes(fileID, 'big')
+        shortEFID = fileDescriptor.get('shortEFID', None)
+        if shortEFID:
+            self.sfi = shortEFID[0]
+        dfName = fileDescriptor.get('dfName', None)
+        if dfName:
+            self.df_name = dfName
+        pefi = fileDescriptor.get('proprietaryEFInfo', {})
+        securityAttributesReferenced = fileDescriptor.get('securityAttributesReferenced', None)
+        if securityAttributesReferenced:
+            self.arr = securityAttributesReferenced
+        if 'fileDescriptor' in fileDescriptor:
+            fd_dec = parse_construct(FileDescriptor._construct, fileDescriptor['fileDescriptor'])
+            fdb_dec = fd_dec['file_descriptor_byte']
+            self.shareable = fdb_dec['shareable']
+            if fdb_dec['file_type'] == 'working_ef':
+                efFileSize = fileDescriptor.get('efFileSize', None)
+                if efFileSize:
+                    self.file_size = self._decode_file_size(efFileSize)
+                if fd_dec['num_of_rec']:
+                    self.nb_rec = fd_dec['num_of_rec']
+                if fd_dec['record_len']:
+                    self.rec_len = fd_dec['record_len']
+                if fdb_dec['structure'] == 'linear_fixed':
+                    self.file_type = 'LF'
+                elif fdb_dec['structure'] == 'cyclic':
+                    self.file_type = 'CY'
+                elif fdb_dec['structure'] == 'transparent':
+                    self.file_type = 'TR'
+                elif fdb_dec['structure'] == 'ber_tlv':
+                    self.file_type = 'BT'
+                    if 'maximumFileSize' in pefi:
+                        self.file_size = self._decode_file_size(pefi['maximumFileSize'])
+                specialFileInformation = pefi.get('specialFileInformation', None)
+                if specialFileInformation:
+                    if specialFileInformation[0] & 0x80:
+                        self.hihgi_update = True
+                if 'repeatPattern' in pefi:
+                    self.repeat_pattern = pefi['repeatPattern']
+                if 'defaultPattern' in pefi:
+                    self.repeat_pattern = pefi['defaultPattern']
+            elif fdb_dec['file_type'] == 'df':
+                # only set it, if an earlier call to from_template() didn't alrady set it, as
+                # the template can differentiate between MF, DF and ADF (unlike FDB)
+                if not self.file_type:
+                    self.file_type = 'DF'
+        else:
+            if not self._template_derived:
+                # FIXME: this shouldn't happen? How can this be? But I see it in real profiles
+                #raise ValueError("%s: from_fileDescriptor without nested 'fileDescriptor'" % self)
+                pass
+
+        logger.debug("\t%s" % repr(self))
 
     def from_tuples(self, l:List[Tuple]):
         """Parse a list of fileDescriptor, fillFileContent, fillFileOffset tuples into this instance."""
-        def get_fileDescriptor(l:List[Tuple]):
-            for k, v in l:
-                if k == 'fileDescriptor':
-                    return v
-        fd = get_fileDescriptor(l)
-        if not fd and not self.fileDescriptor:
-            raise ValueError("No fileDescriptor found in tuple, and none set by template before")
+        # fileDescriptor
+        fd = self.get_tuplelist_item(l, 'fileDescriptor')
+        if not fd and not self._template_derived:
+            raise ValueError("%s: No fileDescriptor found in tuple, and none set by template before" % self)
         if fd:
-            self.fileDescriptor.update(dict(fd))
-        self.body = self.linearize_file_content(l)
+            self.from_fileDescriptor(dict(fd))
+        # BODY
+        self.body = self.file_content_from_tuples(l)
 
-    def from_gfm(self, d: Dict):
-        print(d)
-        # FIXME
+    @staticmethod
+    def path_from_gfm(bin_path: bytes):
+        """convert from byte-array of 16bit FIDs to list of integers"""
+        return [int.from_bytes(bin_path[i:i+2], 'big') for i in range(0, len(bin_path), 2)]
+
+    @staticmethod
+    def path_to_gfm(path: List[int]) -> bytes:
+        """convert from list of 16bit integers to byte-array"""
+        return b''.join([x.to_bytes(2, 'big') for x in path])
 
     def to_tuples(self) -> List[Tuple]:
         """Generate a list of fileDescriptor, fillFileContent, fillFileOffset tuples into this instance."""
-        raise NotImplementedError
+        return [('fileDescriptor', self.to_fileDescriptor())] + self.file_content_to_tuples()
+
+    def to_gfm(self) -> List[Tuple]:
+        """Generate a list of filePath, createFCP, fillFileContent, fillFileOffset tuples into this instance."""
+        ret = [('filePath', self.path_to_gfm(self.path)), ('createFCP', self.to_fileDescriptor())]
+        ret += self.file_content_to_tuples()
+        return ret
 
     @staticmethod
-    def linearize_file_content(l: List[Tuple]) -> Optional[bytes]:
+    def file_content_from_tuples(l: List[Tuple]) -> Optional[bytes]:
         """linearize a list of fillFileContent / fillFileOffset tuples into a stream of bytes."""
         stream = io.BytesIO()
         for k, v in l:
@@ -212,7 +358,13 @@ class File:
         return "File(%s)" % self.pe_name
 
     def __repr__(self) -> str:
-        return "File(%s): %s" % (self.pe_name, self.fileDescriptor)
+        return "File(%s, %s, %04X, SFI=%s)" % (self.pe_name, self.file_type, self.fid or 0, self.sfi)
+
+    def check_template_modification_rules(self):
+        """Check template modification rules as per SAIP section 8.3.3."""
+        if not self.template:
+            return None
+
 
 class ProfileElement:
     """Generic Class representing a Profile Element (PE) within a SAIP Profile. This may be used directly,
@@ -303,7 +455,7 @@ class ProfileElement:
             # TODO: nonStandard
             'end': ProfileElementEnd,
             'mf': ProfileElementMF,
-            # TODO: cd
+            'cd': ProfileElementCD,
             'telecom': ProfileElementTelecom,
             'usim': ProfileElementUSIM,
             'opt-usim': ProfileElementOptUSIM,
@@ -371,11 +523,55 @@ class FsProfileElement(ProfileElement):
         # resolve ASN.1 type definition; needed to e.g. iterate field names (for file pe-names)
         self.tdef = asn1.types['ProfileElement'].type.name_to_member[self.type]
 
+    def file_template_for_path(self, path: Path, adf: Optional[str] = None) -> Optional[templates.FileTemplate]:
+        """Resolve the FileTemplate for given path, if we have any matching.
+
+        Args:
+            path: the path for which we would like to resolve the FileTemplate
+            adf: string name of the ADF which might be used with this PE
+        """
+        template = templates.ProfileTemplateRegistry.get_by_oid(self.templateID)
+        for f in template.files:
+            if f.path == path:
+                return f
+            # optionally prefix with ADF name of NAA
+            if adf and Path(adf) + f.path == path:
+                return f
+
+    def supports_file_for_path(self, path: Path, adf: Optional[str] = None) -> bool:
+        """Does this ProfileElement support a file of given path?"""
+        return self.file_template_for_path(path) != None
+
     def add_file(self, file: File):
         """Add a File to the ProfileElement."""
+        logger.debug("%s.add_file: %s" % (self.__class__.__name__, repr(file)))
+        template = templates.ProfileTemplateRegistry.get_by_oid(self.templateID)
         if file.pe_name in self.files:
             raise KeyError('Cannot add file: %s already exists' % file.pename)
         self.files[file.pe_name] = file
+        if self.pe_sequence:
+            if file.pe_name == 'mf': #file.fid == 0x3f00:
+                if self.pe_sequence.mf:
+                    raise ValueError("PE Sequence already has MF, cannot add another one")
+                file.node = FsNodeMF(file)
+                self.pe_sequence.mf = file.node
+                self.pe_sequence.cur_df = file.node
+            else:
+                if not template.extends and file.pe_name != template.base_df().pe_name:
+                    # FsNodeDF of the first [A]DF of the PE
+                    pe_df = self.files[template.base_df().pe_name].node
+                    if file.template:
+                        for d in file.template.ppath: # TODO: revert list?
+                            pe_df = pe_df[d]
+                    self.pe_sequence.cur_df = pe_df
+                elif template.parent:
+                    # this is a template that belongs into the [A]DF of another template
+                    # 1) find the PE for the referenced template
+                    parent_pe = self.pe_sequence.get_closest_prev_pe_for_templateID(self, template.parent.oid)
+                    # 2) resolve te [A]DF that forms the base of that parent PE
+                    pe_df = parent_pe.files[template.parent.base_df().pe_name].node
+                    self.pe_sequence.cur_df = pe_df
+                self.pe_sequence.cur_df = self.pe_sequence.cur_df.add_file(file)
 
     def files2pe(self):
         """Update the "decoded" member with the contents of the "files" member."""
@@ -384,11 +580,13 @@ class FsProfileElement(ProfileElement):
 
     def pe2files(self):
         """Update the "files" member with the contents of the "decoded" member."""
+        logger.debug("%s.pe2files(%s)" % (self.__class__.__name__, self.type))
         tdict = {x.name: x for x in self.tdef.root_members}
         template = templates.ProfileTemplateRegistry.get_by_oid(self.templateID)
         for k, v in self.decoded.items():
             if tdict[k].type_name == 'File':
-                self.add_file(File(k, v, template.files_by_pename.get(k, None)))
+                file = File(k, v, template.files_by_pename.get(k, None))
+                self.add_file(file)
 
     def _post_decode(self):
         # not entirely sure about doing this this automatism
@@ -412,20 +610,42 @@ class ProfileElementGFM(ProfileElement):
         self.files = {}
         self.tdef = asn1.types['ProfileElement'].type.name_to_member[self.type]
 
-    def add_file(self, path, file: File):
-        # FIXME: proper FS hiearchy
-        #if path in self.files:
-        #    raise KeyError('Cannot add file: path %s already exists' % path)
-        self.files[path] = file
+    def supports_file_for_path(self, path: Path, adf: Optional[str] = None) -> bool:
+        """Does this ProfileElement support a file of given path?"""
+        # GFM supports all files in all paths...
+        return True
+
+    def add_file(self, file: File, path: Path):
+        logger.debug("%s.add_file(path=%s, %s)" % (self.__class__.__name__, path, repr(file)))
+        if hasattr(self.pe_sequence, 'mf'):
+            if isinstance(path, Path):
+                parent = self.pe_sequence.mf.lookup_by_path(Path(path[:-1]))
+            else:
+                parent = self.pe_sequence.mf.lookup_by_fidpath(path[:-1])
+
+            path_str = self.path_str(parent.fid_path + [file.fid])
+        else:
+            path_str = str(path)
+        if path_str in self.files:
+            raise KeyError('Cannot add file: %s already exists' % path_str)
+        self.files[path_str] = file
+        if hasattr(self.pe_sequence, 'mf'):
+            self.pe_sequence.cur_df = parent.add_file(file)
 
     def pe2files(self):
         """Update the "files" member with the contents of the "decoded" member."""
-        def perform(self, path, file_elements):
+        def perform(self, path: List[int], file_elements):
             if len(file_elements):
-                file = File('', file_elements)
-                self.add_file(path, file)
+                if self.pe_sequence:
+                    self.pe_sequence.cd(path)
+                file = File(None, file_elements)
+                file.path = path
+                file.pe_name = self.path_str(path + [file.fid])
+                self.add_file(file, path + [file.fid])
 
-        path = "3f00" # current DF: MF
+        logger.debug("="*70 + " " + self.type)
+        #logger.debug(self.decoded)
+        path = [0x3f00] # current DF at start of PE: MF
         file_elements = []
         # looks like TCA added one level too much in the ASN.1 hierarchy here
         for fmc in self.decoded['fileManagementCMD']:
@@ -433,11 +653,12 @@ class ProfileElementGFM(ProfileElement):
                 if fmc2[0] == 'filePath':
                     # selecting a new path means we're done with the previous file
                     perform(self, path, file_elements)
-                    if fmc2[1] == "":
-                        path = "3f00"
+                    file_elements = []
+                    if fmc2[1] == b'':
+                        path = [0x3f00]
                     else:
-                        # FIXME
-                        pass
+                        path = [0x3f00] + File.path_from_gfm(fmc2[1])
+                    #logger.debug("filePath %s -> path=%s" % (fmc2[1], path))
                 elif fmc2[0] == 'createFCP':
                     # new FCP means new file; perform the old one
                     perform(self, path, file_elements)
@@ -448,6 +669,12 @@ class ProfileElementGFM(ProfileElement):
                     raise ValueError("Unknown GFM choice '%s'" % fmc2[0])
         # add the last file, if we still have any pending data in file_elements
         perform(self, path, file_elements)
+
+    def files2pe(self):
+        """Update the "decoded" member from the "files" member."""
+        # FIXME: implement this
+        # sort / iterate by path; issue filePath, createFCP and fillFile{Offset,Content} elements
+
 
     def _post_decode(self):
         # not entirely sure about this automatism
@@ -543,6 +770,18 @@ class ProfileElementTelecom(FsProfileElement):
         # provide some reasonable defaults for a MNO-SD
         self.decoded['templateID'] = str(oid.DF_TELECOM_v2)
         for fname in ['df-telecom', 'ef-arr']:
+            self.decoded[fname] = []
+
+class ProfileElementCD(FsProfileElement):
+    type = 'cd'
+
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
+        if decoded:
+            return
+        # provide some reasonable defaults for a MNO-SD
+        self.decoded['templateID'] = str(oid.DF_CD)
+        for fname in ['df-cd']:
             self.decoded[fname] = []
 
 class ProfileElementPhonebook(FsProfileElement):
@@ -1002,6 +1241,27 @@ class ProfileElementSequence:
         self.pe_list: List[ProfileElement] = []
         self.pe_by_type: Dict = {}
         self.pes_by_naa: Dict = {}
+        self.mf: Optional[FsNodeMF] = None
+        self._cur_df: Optional[FsNodeDF] = None # current DF while adding files from FS-templates
+
+    @property
+    def cur_df(self) -> Optional['FsNodeDF']:
+        """Current DF; this is where the next files are created."""
+        return self._cur_df
+
+    @cur_df.setter
+    def cur_df(self, new_df: 'FsNodeDF'):
+        if self._cur_df == new_df:
+            return
+        self._cur_df = new_df
+
+    def add_hdr_and_end(self):
+        """Initialize the PE Sequence with a header and end PE."""
+        if len(self.pe_list):
+            raise ValueError("Cannot add header + end PE to a non-enmpty PE-Sequence")
+        # start with a minimal/empty sequence of header + end
+        self.append(ProfileElementHeader())
+        self.append(ProfileElementEnd())
 
     def append(self, pe: ProfileElement):
         """Append a given PE to the end of the PE Sequence"""
@@ -1021,6 +1281,31 @@ class ProfileElementSequence:
             return None
         assert len(l) == 1
         return l[0]
+
+    def get_pes_for_templateID(self, tid: oid.OID) -> List[ProfileElement]:
+        """Return list of profile elements present for given profile eleemnt type."""
+        res = []
+        for pe in self.pe_list:
+            if not pe.templateID:
+                continue
+            if tid.prefix_match(pe.templateID):
+                res.append(pe)
+        return res
+
+    def get_closest_prev_pe_for_templateID(self, cur: ProfileElement, tid: oid.OID) -> Optional[ProfileElement]:
+        """Return the PE of given templateID that is the closest PE prior to the given PE in the
+        PE-Sequence."""
+        try:
+            cur_idx = self.pe_list.index(cur)
+        except ValueError:
+            # we must be building the pe_list and cur is not yet part: scan from end of list
+            cur_idx = len(self.pe_list)
+        for i in reversed(range(cur_idx)):
+            pe = self.pe_list[i]
+            if not pe.templateID:
+                continue
+            if tid.prefix_match(pe.templateID):
+                return pe
 
     def parse_der(self, der: bytes) -> None:
         """Parse a sequence of PE from SAIP DER format and store the result in self.pe_list."""
@@ -1077,6 +1362,9 @@ class ProfileElementSequence:
         """(Re-)build the eUICC Mandatory services list of the ProfileHeader based on what's in the
         PE-Sequence.  You would normally call this at the very end, before encoding a PE-Sequence
         to its DER format."""
+        @staticmethod
+        def file_type_walker(node: 'FsNode', **kwargs):
+            return node.file.file_type
         # services that we cannot auto-determine and which must hence be manually specified
         manual_services = ['contactless', 'mbms', 'cat-tp', 'suciCalculatorApi', 'dns-resolution',
                            'scp11ac', 'scp11c-authorization-mechanism', 's16mode', 'eaka']
@@ -1123,8 +1411,11 @@ class ProfileElementSequence:
             if naa_name in self.pes_by_naa[naa]:
                 if len(self.pes_by_naa[naa]) > 1:
                     svc_set.add('multiple-' + naa_name)
-        # TODO: BER-TLV (scan all files for related type?)
-        # TODO: dfLinked files (scan all files, check for non-empty Fcp.linkPath presence of DFs)
+        # BER-TLV (recursively scan all files for related type)
+        ftype_list = self.mf.walk(file_type_walker)
+        if 'BT' in ftype_list:
+            svc_set.add('ber-tlv')
+        # FIXME:dfLinked files (scan all files, check for non-empty Fcp.linkPath presence of DFs)
         # TODO: 5G related bits (derive from EF.UST or file presence?)
         hdr_pe = self.get_pe_for_type('header')
         # patch in the 'manual' services from the existing list:
@@ -1207,7 +1498,7 @@ class ProfileElementSequence:
             for pe in self.pe_by_type[naa.pe_types[0]]:
                 adf_name = naa.adf_name()
                 adf = File(adf_name, pe.decoded[adf_name])
-                naa_adf_names.append(adf.fileDescriptor['dfName'])
+                naa_adf_names.append(adf.df_name)
         # remove PEs of each NAA instance
         if naa.name in self.pes_by_naa:
             for inst in self.pes_by_naa[naa.name]:
@@ -1224,6 +1515,88 @@ class ProfileElementSequence:
             self.pe_list = [pe for pe in self.pe_list if pe not in to_delete_pes]
         self._process_pelist()
         # TODO: remove any records related to the ADFs from EF.DIR
+
+    @staticmethod
+    def naa_for_path(path: Path) -> Optional[Naa]:
+        """determine the NAA for the given path"""
+        rel_path = path.relative_to_mf()
+        if len(rel_path) == 0:
+            # this is the MF itself
+            return None
+        df = rel_path[0]
+        if df == 'ADF.USIM':
+            return NaaUsim
+        elif df == 'ADF.ISIM':
+            return NaaIsim
+        elif df == 'ADF.CSIM':
+            return NaaCsim
+        else:
+            return None
+
+    @staticmethod
+    def peclass_for_path(path: Path) -> Optional[ProfileElement]:
+        """Return the ProfileElement class that can contain a file with given path."""
+        naa = ProfileElementSequence.naa_for_path(path)
+        if naa:
+            # TODO: find specific PE within Naa
+            for pet_name in naa.pe_types:
+                pe_cls = ProfileElement.class_for_petype(pet_name)
+                ft = pe_cls().file_template_for_path(path.relative_to_mf(), adf='ADF.'+naa.name.upper())
+                if ft:
+                    return pe_cls, ft
+        else:
+            rel_path  = path.relative_to_mf()
+            if len(rel_path) == 0:
+                ft = ProfileElementMF().file_template_for_path(Path(['MF']))
+                return ProfileElementMF, ft
+            f = rel_path[0]
+            if f.startswith('EF') or len(path) == 1 and path[0] == 'MF':
+                ft = ProfileElementMF().file_template_for_path(path)
+                if not ft:
+                    return ProfileElementGFM, None
+                return ProfileElementMF, ft
+            if f == 'DF.CD':
+                ft = ProfileElementCD().file_template_for_path(rel_path)
+                if not ft:
+                    return ProfileElementGFM, None
+                return ProfileElementCD, ft
+            if f == 'DF.TELECOM':
+                ft = ProfileElementTelecom().file_template_for_path(rel_path)
+                if not ft:
+                    return ProfileElementGFM, None
+                return ProfileElementTelecom, ft
+        return ProfileElementGFM, None
+
+    def pe_for_path(self, path: Path) -> Optional[ProfileElement]:
+        """Return the ProfileElement instance that can contain a file with matching path. This will
+        either be an existing PE within the sequence, or it will be a newly-allocated PE that is
+        inserted into the sequence."""
+        pe_class, ft = ProfileElementSequence.peclass_for_path(path)
+        logger.debug("peclass_for_path(%s): %s, %s" % (path, pe_class, repr(ft)))
+        if not pe_class:
+            raise NotImplementedError('No support for GenericFileManagement yet')
+        # check if we already have an instance
+        # TODO: this assumes we only have one instance of each PE; exception will be raised if not
+        pe = self.get_pe_for_type(pe_class.type)
+        if not pe:
+            # create a new instance
+            pe = pe_class(pe_sequence=self)
+            # FIXME: add it at the right location in the pe_sequence
+            self.append(pe)
+        return pe, ft
+
+    def add_file_at_path(self, path: Path, l: List):
+        """Add a file at given path.  This assumes that there's only one instance of USIM/ISIM/CSIM
+        inside the profile, as otherwise the path name would not be globally unique."""
+        pe, ft = self.pe_for_path(path)
+        logger.debug("pe_for_path(%s): %s, %s" % (path, pe, ft))
+        pe_name = ft.pe_name if ft else None
+        file = File(pe_name, l, template=ft, name=path[-1])
+        if isinstance(pe, ProfileElementGFM):
+            pe.add_file(file, path)
+        else:
+            pe.add_file(file)
+        return file
 
     def __repr__(self) -> str:
         return "PESequence(%s: %s)" % (self.iccid, ', '.join([str(x) for x in self.pe_list]))
@@ -1242,3 +1615,187 @@ class ProfileElementSequence:
         if not 'iccid' in pe_hdr_dec:
             return None
         return b2h(pe_hdr_dec['iccid'])
+
+    def cd(self, path: List[int]):
+        """Change the current directory to the [absolute] "path"."""
+        path = list(path) # make a copy before pop below
+        # remove the leading MF, in case it's specified explicitly
+        while len(path) and path[0] == 0x3f00:
+            path.pop(0)
+        df = self.mf
+        for p in path:
+            if not p in df.children:
+                raise ValueError("%s doesn't contain child %04X" % (df, p))
+            df = df.children[p]
+            if not isinstance(df, FsNodeDF):
+                raise ValueError("%s is not a DF, cannot change into it" % (df))
+        self.cur_df = df
+
+
+class FsNode:
+    """A node in the filesystem hierarchy."""
+    def __init__(self, fid: int, parent: Optional['FsNode'], file: Optional[File] = None,
+                 name: Optional[str] = None):
+        self.fid = fid
+        self.file = file
+        self.parent = None
+        self._name = name
+        if not self._name and self.file and self.file.name:
+            self._name = self.file.name
+        if parent:
+            parent.add_child(self)
+
+    def __str__(self):
+        return '%s(%s)' % (self.__class__.__name__, self.fid_path_str)
+
+    def __repr__(self):
+        return '%s(%s, %s)' % (self.__class__.__name__, self.fid_path_str, self.name_path_str)
+
+    @property
+    def name(self) -> str:
+        return self._name or '%04X' % self.fid
+
+    @property
+    def fid_path(self) -> List[int]:
+        """Return the path of the node as list of integers."""
+        if self.parent and self.parent != self:
+            return self.parent.fid_path + [self.fid]
+        else:
+            return [self.fid]
+
+    @property
+    def name_path(self) -> List[str]:
+        """Return the path of the node as list of integers."""
+        if self.parent and self.parent != self:
+            return self.parent.name_path + [self.name]
+        else:
+            return [self.name]
+
+    @property
+    def fid_path_str(self) -> str:
+        return "/".join(['%04X' % x for x in self.fid_path])
+
+    @property
+    def name_path_str(self) -> str:
+        return "/".join([x for x in self.name_path])
+
+    @property
+    def mf(self) -> 'FsNodeMF':
+        """Return the MF (root) of the hierarchy."""
+        x = self
+        while x.parent != x:
+            x = x.parent
+        return x
+
+    def walk(self, fn, **kwargs):
+        """call 'fn(self, **kwargs) for the File."""
+        return [fn(self, **kwargs)]
+
+class FsNodeEF(FsNode):
+    """An EF (Entry File) in the filesystem hierarchy."""
+
+    def print_tree(self, indent: int = 0):
+        print("%s%s: %s" % (' '*indent, self, repr(self.file)))
+
+class FsNodeDF(FsNode):
+    """A DF (Dedicated File) in the filesystem hierarchy."""
+    def __init__(self, fid: int, parent: 'FsNodeDf', file: Optional[File] = None,
+                 name: Optional[str] = None):
+        super().__init__(fid, parent, file, name)
+        self.children = {}
+        self.children_by_name = {}
+
+    def __iter__(self) -> FsNode:
+        """Iterator over the children of this DF."""
+        yield from self.children.values()
+
+    def __getitem__(self, fid: Union[int, str]) -> FsNode:
+        """Access child-nodes via dict-like lookup syntax."""
+        if fid in self.children_by_name:
+            return self.children_by_name[fid]
+        else:
+            return self.children[fid]
+
+    def add_child(self, child: FsNode):
+        """Add a child to the list of children of this DF."""
+        if child.parent:
+            raise ValueError('%s already has parent: %s' % (child, child.parent))
+        if child.fid in self.children:
+            #raise ValueError('%s already contains %s' % (self, self.children[child.fid]))
+            pass
+        if child.name in self.children_by_name:
+            #raise ValueError('%s already contains %s' % (self, self.children_by_name[child.name]))
+            pass
+        self.children[child.fid] = child
+        self.children_by_name[child.name] = child
+        child.parent = self
+
+    def add_file(self, file: File) -> 'FsNodeDF':
+        """Create and link an appropriate FsNode for the given 'file' and insert it.
+        Returns the new current DF (it might have changed)."""
+        cur_df = self
+        if file.node:
+            raise ValueError('File %s already has a node!' % file)
+        elif file.file_type in ['TR', 'LF', 'CY', 'BT']:
+            file.node = FsNodeEF(file.fid, cur_df, file)
+        elif file.file_type == 'DF':
+            file.node = FsNodeDF(file.fid, cur_df, file)
+            cur_df = file.node
+        elif file.file_type == 'ADF':
+            # implicit "cd /"
+            file.node = FsNodeADF(file.df_name, file.fid, cur_df.mf, file)
+            cur_df = file.node
+        else:
+            raise ValueError("Cannot add %s of unknown file_type %s to tree" % (file, file.file_type))
+        logger.debug("%s.add_file(%s) -> return cur_df=%s" % (self, file, cur_df))
+        return cur_df
+
+    def print_tree(self, indent: int = 0):
+        print("%s%s: %s" % (' '*indent, self, repr(self.file)))
+        for c in self: # using the __iter__ method above
+            c.print_tree(indent+1)
+
+    def lookup_by_path(self, path: Path) -> FsNode:
+        """Look-up a FsNode based on the [name based] given (absolute) path."""
+        rel_path = path.relative_to_mf()
+        cur = self.mf
+        for d in rel_path:
+            if not d in cur.children_by_name:
+                raise KeyError('Could not find %s in %s while looking up %s from %s' % (d, cur, path, self))
+            cur = cur.children_by_name[d]
+        return cur
+
+    def lookup_by_fidpath(self, path: List[int]) -> FsNode:
+        """Look-up a FsNode based on the [fid baesd] given (absolute) path."""
+        path = list(path) # make a copy before modification
+        while len(path) and path[0] == 0x3f00:
+            path.pop(0)
+        cur = self.mf
+        for d in path:
+            if not d in cur.children:
+                raise KeyError('Could not find %s in %s while looking up %s from %s' % (d, cur, path, self))
+            cur = cur.children[d]
+        return cur
+
+    def walk(self, fn, **kwargs):
+        """call 'fn(self, **kwargs) for the DF and recursively for all children."""
+        ret = super().walk(fn, **kwargs)
+        for c in self.children.values():
+            ret += c.walk(fn, **kwargs)
+        return ret
+
+class FsNodeADF(FsNodeDF):
+    """An ADF (Application Dedicated File) in the filesystem hierarchy."""
+    def __init__(self, df_name: Hexstr, fid: Optional[int] = None, parent: Optional[FsNodeDF] = None,
+                 file: Optional[File] = None, name: Optional[str] = None):
+        self.df_name = df_name
+        super().__init__(fid, parent, file, name)
+
+    def __str__(self):
+        return '%s(%s)' % (self.__class__.__name__, b2h(self.df_name))
+
+class FsNodeMF(FsNodeDF):
+    """The MF (Master File) in the filesystem hierarchy."""
+    def __init__(self, file: Optional[File] = None):
+        super().__init__(0x3f00, parent=None, file=file, name='MF')
+        self.parent = self

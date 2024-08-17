@@ -20,7 +20,7 @@ import sys
 import argparse
 import logging
 import zipfile
-from pathlib import Path
+from pathlib import Path as PlPath
 from typing import List
 
 from pySim.esim.saip import *
@@ -66,7 +66,7 @@ parser_eapp.add_argument('--format', default='cap', choices=['ijc', 'cap'], help
 def do_split(pes: ProfileElementSequence, opts):
     i = 0
     for pe in pes.pe_list:
-        basename = Path(opts.INPUT_UPP).stem
+        basename = PlPath(opts.INPUT_UPP).stem
         if not pe.identification:
             fname = '%s-%02u-%s.der' % (basename, i, pe.type)
         else:
