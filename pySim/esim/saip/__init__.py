@@ -932,7 +932,7 @@ class ProfileElementAKA(ProfileElement):
 
     def set_mapping(self, aid: bytes, options: int = 6):
         """Configure akaParametes for a mapping from another AID."""
-        self.decoded['algoConfiguration'] = ('mappingParamete', {
+        self.decoded['algoConfiguration'] = ('mappingParameter', {
             'mappingOptions': bytes([options]),
             'mappingSource': aid,
         })
