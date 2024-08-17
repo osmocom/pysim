@@ -193,6 +193,7 @@ class File:
             if k == 'fileDescriptor':
                 pass
             elif k == 'fillFileOffset':
+                # FIXME: respect the fillPattern!
                 stream.write(b'\xff' * v)
             elif k == 'fillFileContent':
                 stream.write(v)
@@ -207,7 +208,10 @@ class File:
         return "File(%s): %s" % (self.pe_name, self.fileDescriptor)
 
 class ProfileElement:
-    """Class representing a Profile Element (PE) within a SAIP Profile."""
+    """Generic Class representing a Profile Element (PE) within a SAIP Profile. This may be used directly,
+    but ist more likely sub-classed with a specific class for the specific profile element type, like e.g
+    ProfileElementHeader, ProfileElementMF, ...
+    """
     FILE_BEARING = ['mf', 'cd', 'telecom', 'usim', 'opt-usim', 'isim', 'opt-isim', 'phonebook', 'gsm-access',
                     'csim', 'opt-csim', 'eap', 'df-5gs', 'df-saip', 'df-snpn', 'df-5gprose', 'iot', 'opt-iot']
     # in their infinite wisdom the spec authors used inconsistent/irregular naming of PE type vs. hedaer field
@@ -259,11 +263,12 @@ class ProfileElement:
 
     @property
     def header(self):
-        """Return the decoded ProfileHeader."""
+        """The decoded ProfileHeader."""
         return self.decoded.get(self.header_name, None)
 
     @property
     def identification(self):
+        """The identification value: An unique number for the PE within the PE-Sequence."""
         if self.header:
             return self.header['identification']
         else:
@@ -379,7 +384,7 @@ class FsProfileElement(ProfileElement):
                 self.add_file(File(k, v, template.files_by_pename.get(k, None)))
 
     def _post_decode(self):
-        # not entirely sure about this automatism
+        # not entirely sure about doing this this automatism
         self.pe2files()
 
     def _pre_encode(self):
@@ -676,6 +681,10 @@ class ProfileElementSD(ProfileElement):
     """Class representing a securityDomain ProfileElement."""
     type = 'securityDomain'
 
+    # TODO: New parameters "openPersoData" and "catTpParameters" have been defined for Security
+    # Domains in v2.2. A V2.0 or V2.1 eUICC may reject these new options; it is hence recommended to
+    # avoid using such parameters in Profiles downloaded to a V2.0 or V2.1 eUICC.
+
     class C9(BER_TLV_IE, tag=0xC9, nested=UiccSdInstallParams):
         pass
 
@@ -851,6 +860,9 @@ class ProfileElementOptISIM(FsProfileElement):
 
 class ProfileElementAKA(ProfileElement):
     type = 'akaParameter'
+    # TODO: RES size for USIM test algorithm can be set to 32, 64 or 128 bits. This value was
+    # previously limited to 128 bits.  Recommendation: Avoid using RES size 32 or 64 in Profiles
+    # downloaded to V2.1 eUICCs.
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
         super().__init__(decoded, **kwargs)
@@ -971,14 +983,21 @@ def bertlv_first_segment(binary: bytes) -> Tuple[bytes, bytes]:
     return binary[:tlv_length], binary[tlv_length:]
 
 class ProfileElementSequence:
-    """A sequence of ProfileElement objects, which is the overall representation of an eSIM profile."""
+    """A sequence of ProfileElement objects, which is the overall representation of an eSIM profile.
+
+    This primarily contains a list of PEs (pe_list member) as well as a number of convenience indexes
+    like the pe_by_type and pes_by_naa dicts that allow easier access to individual PEs within the
+    sequence."""
     def __init__(self):
+        """After calling the constructor, you have to further initialize the instance by either
+        calling the parse_der() method, or by manually adding individual PEs, including the hedaer and
+        end PEs."""
         self.pe_list: List[ProfileElement] = []
         self.pe_by_type: Dict = {}
         self.pes_by_naa: Dict = {}
 
     def append(self, pe: ProfileElement):
-        """Append a PE to the PE Sequence"""
+        """Append a given PE to the end of the PE Sequence"""
         self.pe_list.append(pe)
         self._process_pelist()
         self.renumber_identification()
@@ -997,7 +1016,7 @@ class ProfileElementSequence:
         return l[0]
 
     def parse_der(self, der: bytes) -> None:
-        """Parse a sequence of PE and store the result in self.pe_list."""
+        """Parse a sequence of PE from SAIP DER format and store the result in self.pe_list."""
         self.pe_list = []
         remainder = der
         while len(remainder):
@@ -1006,10 +1025,12 @@ class ProfileElementSequence:
         self._process_pelist()
 
     def _process_pelist(self) -> None:
+        """Post-process the PE-list; update convenience accessor dicts."""
         self._rebuild_pe_by_type()
         self._rebuild_pes_by_naa()
 
     def _rebuild_pe_by_type(self) -> None:
+        """Re-build the self.pe_by_type convenience accessor dict."""
         self.pe_by_type = {}
         # build a dict {pe_type: [pe, pe, pe]}
         for pe in self.pe_list:
@@ -1047,7 +1068,8 @@ class ProfileElementSequence:
 
     def rebuild_mandatory_services(self):
         """(Re-)build the eUICC Mandatory services list of the ProfileHeader based on what's in the
-        PE-Sequence."""
+        PE-Sequence.  You would normally call this at the very end, before encoding a PE-Sequence
+        to its DER format."""
         # services that we cannot auto-determine and which must hence be manually specified
         manual_services = ['contactless', 'mbms', 'cat-tp', 'suciCalculatorApi', 'dns-resolution',
                            'scp11ac', 'scp11c-authorization-mechanism', 's16mode', 'eaka']
@@ -1106,7 +1128,8 @@ class ProfileElementSequence:
 
     def rebuild_mandatory_gfstelist(self):
         """(Re-)build the eUICC Mandatory GFSTEList of the ProfileHeader based on what's in the
-        PE-Sequence."""
+        PE-Sequence.  You would normally call this at the very end, before encoding a PE-Sequence
+        to its DER format."""
         template_set = set()
         for pe in self.pe_list:
             if pe.header and 'mandated' in pe.header:
