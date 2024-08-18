@@ -368,9 +368,9 @@ class SmDppHttpServer:
                 with open(path, 'rb') as f:
                     pes = saip.ProfileElementSequence.from_der(f.read())
                     iccid_str = b2h(pes.get_pe_for_type('header').decoded['iccid'])
-
-        # make pylint happy:  E0601: Using variable 'iccid_str' before assignment (used-before-assignment)
-        assert iccid_str
+        else:
+            # there's currently no other option in the ctxParams1 choice, so this cannot happen
+            raise ApiError('1.3.1', '2.2', 'ctxParams1 missing mandatory ctxParamsForCommonAuthentication')
 
         # FIXME: we actually want to perform the profile binding herr, and read the profile metadat from the profile
 
