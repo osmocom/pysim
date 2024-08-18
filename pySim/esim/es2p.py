@@ -104,7 +104,7 @@ class param:
 
         @classmethod
         def _encode(cls, data):
-            return datetime.toisoformat(data)
+            return datetime.isoformat(data)
 
     class NotificationPointId(ApiParamInteger):
         pass
