@@ -450,7 +450,7 @@ class ProfileElement:
             'akaParameter': ProfileElementAKA,
             # TODO: cdmaParameter
             'securityDomain': ProfileElementSD,
-            # TODO: rfm
+            'rfm': ProfileElementRFM,
             # TODO: application
             # TODO: nonStandard
             'end': ProfileElementEnd,
