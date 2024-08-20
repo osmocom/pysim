@@ -16,6 +16,8 @@ if [ ! -d "./pysim-testdata/" ] ; then
 	exit 1
 fi
 
+osmo-clean-workspace.sh
+
 case "$JOB_TYPE" in
 "test")
 	virtualenv -p python3 venv --system-site-packages
@@ -72,3 +74,5 @@ case "$JOB_TYPE" in
 	echo "ERROR: JOB_TYPE has unexpected value '$JOB_TYPE'."
 	exit 1
 esac
+
+osmo-clean-workspace.sh
