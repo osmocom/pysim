@@ -256,11 +256,11 @@ class RuntimeLchan:
 
         for p in pathlist:
             # Look for the next file in the path list
-            selectables = file.get_selectables().items()
+            selectables = file.get_selectables()
             file = None
             for selectable in selectables:
-                if selectable[1].name == name:
-                    file = selectable[1]
+                if selectable == p:
+                    file = selectables[selectable]
                     break
 
             # When we hit none, then the given path must be invalid
