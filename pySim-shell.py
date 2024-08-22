@@ -236,9 +236,9 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         self.equip(card, rs)
 
     apdu_cmd_parser = argparse.ArgumentParser()
-    apdu_cmd_parser.add_argument('APDU', type=is_hexstr, help='APDU as hex string')
     apdu_cmd_parser.add_argument('--expect-sw', help='expect a specified status word', type=str, default=None)
     apdu_cmd_parser.add_argument('--raw', help='Bypass the logical channel (and secure channel)', action='store_true')
+    apdu_cmd_parser.add_argument('APDU', type=is_hexstr, help='APDU as hex string')
 
     @cmd2.with_argparser(apdu_cmd_parser)
     def do_apdu(self, opts):
@@ -770,13 +770,13 @@ class PySimCommands(CommandSet):
             self._cmd.poutput("no description available")
 
     verify_adm_parser = argparse.ArgumentParser()
-    verify_adm_parser.add_argument('ADM', nargs='?', type=is_hexstr_or_decimal,
-                                   help='ADM pin value. If none given, CSV file will be queried')
     verify_adm_parser.add_argument('--pin-is-hex', action='store_true',
                                    help='ADM pin value is specified as hex-string (not decimal)')
     verify_adm_parser.add_argument('--adm-type',
                                    choices=[x for x in pin_names.values() if x.startswith('ADM')],
                                    help='Override ADM number. Default is card-model-specific, usually 1')
+    verify_adm_parser.add_argument('ADM', nargs='?', type=is_hexstr_or_decimal,
+                                   help='ADM pin value. If none given, CSV file will be queried')
 
     @cmd2.with_argparser(verify_adm_parser)
     def do_verify_adm(self, opts):

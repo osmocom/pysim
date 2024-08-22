@@ -103,7 +103,6 @@ class Ts102222Commands(CommandSet):
         (_data, _sw) = self._cmd.lchan.scc.terminate_card_usage()
 
     create_parser = argparse.ArgumentParser()
-    create_parser.add_argument('FILE_ID', type=is_hexstr, help='File Identifier as 4-character hex string')
     create_parser._action_groups.pop()
     create_required = create_parser.add_argument_group('required arguments')
     create_optional = create_parser.add_argument_group('optional arguments')
@@ -115,6 +114,7 @@ class Ts102222Commands(CommandSet):
     create_optional.add_argument('--short-file-id', type=str, help='Short File Identifier as 2-digit hex string')
     create_optional.add_argument('--shareable', action='store_true', help='Should the file be shareable?')
     create_optional.add_argument('--record-length', type=auto_uint16, help='Length of each record in octets')
+    create_parser.add_argument('FILE_ID', type=is_hexstr, help='File Identifier as 4-character hex string')
 
     @cmd2.with_argparser(create_parser)
     def do_create_ef(self, opts):
@@ -150,7 +150,6 @@ class Ts102222Commands(CommandSet):
         self._cmd.lchan.select_file(self._cmd.lchan.selected_file)
 
     createdf_parser = argparse.ArgumentParser()
-    createdf_parser.add_argument('FILE_ID', type=is_hexstr, help='File Identifier as 4-character hex string')
     createdf_parser._action_groups.pop()
     createdf_required = createdf_parser.add_argument_group('required arguments')
     createdf_optional = createdf_parser.add_argument_group('optional arguments')
@@ -165,6 +164,7 @@ class Ts102222Commands(CommandSet):
     createdf_sja_optional.add_argument('--permit-rfm-delete-terminate', action='store_true')
     createdf_sja_optional.add_argument('--permit-other-applet-create', action='store_true')
     createdf_sja_optional.add_argument('--permit-other-applet-delete-terminate', action='store_true')
+    createdf_parser.add_argument('FILE_ID', type=is_hexstr, help='File Identifier as 4-character hex string')
 
     @cmd2.with_argparser(createdf_parser)
     def do_create_df(self, opts):
@@ -201,10 +201,10 @@ class Ts102222Commands(CommandSet):
         self._cmd.lchan.select_file(self._cmd.lchan.selected_file)
 
     resize_ef_parser = argparse.ArgumentParser()
-    resize_ef_parser.add_argument('NAME', type=str, help='Name or FID of file to be resized')
     resize_ef_parser._action_groups.pop()
     resize_ef_required = resize_ef_parser.add_argument_group('required arguments')
     resize_ef_required.add_argument('--file-size', required=True, type=auto_uint16, help='Size of file in octets')
+    resize_ef_parser.add_argument('NAME', type=str, help='Name or FID of file to be resized')
 
     @cmd2.with_argparser(resize_ef_parser)
     def do_resize_ef(self, opts):

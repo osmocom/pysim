@@ -503,8 +503,8 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
             self._cmd.poutput_json(flatten_dict_lists(d['get_euicc_data']))
 
         set_nickname_parser = argparse.ArgumentParser()
-        set_nickname_parser.add_argument('ICCID', help='ICCID of the profile whose nickname to set')
         set_nickname_parser.add_argument('--profile-nickname', help='Nickname of the profile')
+        set_nickname_parser.add_argument('ICCID', help='ICCID of the profile whose nickname to set')
 
         @cmd2.with_argparser(set_nickname_parser)
         def do_set_nickname(self, opts):

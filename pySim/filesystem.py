@@ -636,9 +636,9 @@ class TransparentEF(CardEF):
                 self._cmd.poutput(data)
 
         upd_bin_dec_parser = argparse.ArgumentParser()
-        upd_bin_dec_parser.add_argument('data', help='Abstract data (JSON format) to write')
         upd_bin_dec_parser.add_argument('--json-path', type=str,
                                         help='JSON path to modify specific element of file only')
+        upd_bin_dec_parser.add_argument('data', help='Abstract data (JSON format) to write')
 
         @cmd2.with_argparser(upd_bin_dec_parser)
         def do_update_binary_decoded(self, opts):
@@ -839,9 +839,9 @@ class LinFixedEF(CardEF):
 
         read_rec_parser = argparse.ArgumentParser()
         read_rec_parser.add_argument(
-            'record_nr', type=auto_uint8, help='Number of record to be read')
-        read_rec_parser.add_argument(
             '--count', type=auto_uint8, default=1, help='Number of records to be read, beginning at record_nr')
+        read_rec_parser.add_argument(
+            'record_nr', type=auto_uint8, help='Number of record to be read')
 
         @cmd2.with_argparser(read_rec_parser)
         def do_read_record(self, opts):
@@ -856,10 +856,10 @@ class LinFixedEF(CardEF):
                 self._cmd.poutput("%03d %s" % (recnr, recstr))
 
         read_rec_dec_parser = argparse.ArgumentParser()
-        read_rec_dec_parser.add_argument(
-            'record_nr', type=auto_uint8, help='Number of record to be read')
         read_rec_dec_parser.add_argument('--oneline', action='store_true',
                                          help='No JSON pretty-printing, dump as a single line')
+        read_rec_dec_parser.add_argument(
+            'record_nr', type=auto_uint8, help='Number of record to be read')
 
         @cmd2.with_argparser(read_rec_dec_parser)
         def do_read_record_decoded(self, opts):
@@ -909,11 +909,11 @@ class LinFixedEF(CardEF):
                 self._cmd.poutput(data)
 
         upd_rec_dec_parser = argparse.ArgumentParser()
+        upd_rec_dec_parser.add_argument('--json-path', type=str,
+                                        help='JSON path to modify specific element of record only')
         upd_rec_dec_parser.add_argument(
             'record_nr', type=auto_uint8, help='Number of record to be read')
         upd_rec_dec_parser.add_argument('data', help='Abstract data (JSON format) to write')
-        upd_rec_dec_parser.add_argument('--json-path', type=str,
-                                        help='JSON path to modify specific element of record only')
 
         @cmd2.with_argparser(upd_rec_dec_parser)
         def do_update_record_decoded(self, opts):
