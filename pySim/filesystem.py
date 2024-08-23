@@ -1338,6 +1338,12 @@ class BerTlvEF(CardEF):
             if data:
                 self._cmd.poutput(data)
 
+        def do_delete_all(self, opts):
+            """Delete all data from a BER-TLV EF"""
+            tags = self._cmd.lchan.retrieve_tags()
+            for tag in tags:
+                self._cmd.lchan.set_data(tag, None)
+
     def __init__(self, fid: str, sfid: str = None, name: str = None, desc: str = None, parent: CardDF = None,
                  size: Size = (1, None), **kwargs):
         """
@@ -1374,6 +1380,7 @@ class BerTlvEF(CardEF):
         if tags == []:
             export_str += "# empty file, no tags"
         else:
+            export_str += "delete_all\n"
             for t in tags:
                 result = lchan.retrieve_data(t)
                 (tag, l, val, remainer) = bertlv_parse_one(h2b(result[0]))
