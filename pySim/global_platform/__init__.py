@@ -894,6 +894,7 @@ class CardApplicationISD(CardApplicationSD):
     # application using '00a4040000' and then parse the response FCI to get the ISD AID
     def __init__(self, aid='a000000003000000'):
         super().__init__(aid=aid, name='ADF.ISD', desc='Issuer Security Domain')
+        self.adf.scp_key_identity = 'ICCID'
 
 #class CardProfileGlobalPlatform(CardProfile):
 #    ORDER = 23
