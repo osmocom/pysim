@@ -1333,7 +1333,7 @@ class BerTlvEF(CardEF):
 
         @cmd2.with_argparser(del_data_parser)
         def do_delete_data(self, opts):
-            """Delete  data for a given tag in a BER-TLV EF"""
+            """Delete data for a given tag in a BER-TLV EF"""
             (data, _sw) = self._cmd.lchan.set_data(opts.tag, None)
             if data:
                 self._cmd.poutput(data)
