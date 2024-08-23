@@ -830,6 +830,7 @@ class ADF_SD(CardADF):
             self._establish_scp(scp02, host_challenge, opts.security_level)
 
         est_scp03_parser = deepcopy(est_scp02_parser)
+        est_scp03_parser.description = None
         est_scp03_parser.add_argument('--s16-mode', action='store_true', help='S16 mode (S8 is default)')
 
         @cmd2.with_argparser(est_scp03_parser)
