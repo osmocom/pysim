@@ -1028,6 +1028,8 @@ global_group.add_argument('--csv-column-key', metavar='FIELD:AES_KEY_HEX', defau
                           help='per-CSV-column AES transport key')
 global_group.add_argument("--card_handler", dest="card_handler_config", metavar="FILE",
                           help="Use automatic card handling machine")
+global_group.add_argument("--noprompt", help="Run in non interactive mode",
+                          action='store_true', default=False)
 
 adm_group = global_group.add_mutually_exclusive_group()
 adm_group.add_argument('-a', '--pin-adm', metavar='PIN_ADM1', dest='pin_adm', default=None,
@@ -1043,22 +1045,15 @@ option_parser.add_argument('command_args', nargs=argparse.REMAINDER,
 
 if __name__ == '__main__':
 
-    # Parse options
+    startup_errors = False
     opts = option_parser.parse_args()
 
-    # If a script file is specified, be sure that it actually exists
-    if opts.script:
-        if not os.access(opts.script, os.R_OK):
-            print("Invalid script file!")
-            sys.exit(2)
-
+    # Register csv-file as card data provider, either from specified CSV
+    # or from CSV file in home directory
     csv_column_keys = {}
     for par in opts.csv_column_key:
         name, key = par.split(':')
         csv_column_keys[name] = key
-
-    # Register csv-file as card data provider, either from specified CSV
-    # or from CSV file in home directory
     csv_default = str(Path.home()) + "/.osmocom/pysim/card_data.csv"
     if opts.csv:
         card_key_provider_register(CardKeyProviderCsv(opts.csv, csv_column_keys))
@@ -1079,18 +1074,18 @@ if __name__ == '__main__':
     # able to tolerate and recover from that.
     try:
         rs, card = init_card(sl)
-        app = PysimApp(card, rs, sl, ch, opts.script)
+        app = PysimApp(card, rs, sl, ch)
     except:
+        startup_errors = True
         print("Card initialization (%s) failed with an exception:" % str(sl))
         print("---------------------8<---------------------")
         traceback.print_exc()
         print("---------------------8<---------------------")
-        print("(you may still try to recover from this manually by using the 'equip' command.)")
-        print(" it should also be noted that some readers may behave strangely when no card")
-        print(" is inserted.)")
-        print("")
-        if opts.script:
-            print("will not execute startup script due to card initialization errors!")
+        if not opts.noprompt:
+            print("(you may still try to recover from this manually by using the 'equip' command.)")
+            print(" it should also be noted that some readers may behave strangely when no card")
+            print(" is inserted.)")
+            print("")
         app = PysimApp(None, None, sl, ch)
 
     # If the user supplies an ADM PIN at via commandline args authenticate
@@ -1102,9 +1097,31 @@ if __name__ == '__main__':
         try:
             card._scc.verify_chv(card._adm_chv_num, h2b(pin_adm))
         except Exception as e:
+            startup_errors = True
+            print("ADM verification (%s) failed with an exception:" % str(pin_adm))
+            print("---------------------8<---------------------")
             print(e)
+            print("---------------------8<---------------------")
 
+    # Run optional command
     if opts.command:
-        app.onecmd_plus_hooks('{} {}'.format(opts.command, ' '.join(opts.command_args)))
-    else:
+        if not startup_errors:
+            app.onecmd_plus_hooks('{} {}'.format(opts.command, ' '.join(opts.command_args)))
+        else:
+            print("Errors during startup, refusing to execute command (%s)" % opts.command)
+
+    # Run optional script file
+    if opts.script:
+        if not startup_errors:
+            if not os.access(opts.script, os.R_OK):
+                print("Error: script file (%s) not readable!" % opts.script)
+                startup_errors = True
+            else:
+                app.onecmd_plus_hooks('{} {}'.format('run_script', opts.script), add_to_history = False)
+        else:
+            print("Errors during startup, refusing to execute script (%s)" % opts.script)
+
+    if not opts.noprompt:
         app.cmdloop()
+    elif startup_errors:
+        sys.exit(2)
