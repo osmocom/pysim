@@ -1084,8 +1084,7 @@ if __name__ == '__main__':
         traceback.print_exc()
         print("---------------------8<---------------------")
         print("(you may still try to recover from this manually by using the 'equip' command.)")
-        print(
-            " it should also be noted that some readers may behave strangely when no card")
+        print(" it should also be noted that some readers may behave strangely when no card")
         print(" is inserted.)")
         print("")
         if opts.script:
