@@ -230,11 +230,11 @@ class SCP02(SCP):
         super().__init__(*args, **kwargs)
 
     def dek_encrypt(self, plaintext:bytes) -> bytes:
-        cipher = DES.new(self.card_keys.dek, DES.MODE_ECB)
+        cipher = DES.new(self.card_keys.dek[:8], DES.MODE_ECB)
         return cipher.encrypt(plaintext)
 
     def dek_decrypt(self, ciphertext:bytes) -> bytes:
-        cipher = DES.new(self.card_keys.dek, DES.MODE_ECB)
+        cipher = DES.new(self.card_keys.dek[:8], DES.MODE_ECB)
         return cipher.decrypt(ciphertext)
 
     def _compute_cryptograms(self, card_challenge: bytes, host_challenge: bytes):
