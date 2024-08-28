@@ -66,7 +66,6 @@ class SimCardCommands:
     byte by the respective instance. """
     def __init__(self, transport: LinkBase, lchan_nr: int = 0):
         self._tp = transport
-        self._cla_byte = None
         self.sel_ctrl = "0000"
         self.lchan_nr = lchan_nr
         # invokes the setter below
@@ -76,14 +75,9 @@ class SimCardCommands:
     def fork_lchan(self, lchan_nr: int) -> 'SimCardCommands':
         """Fork a per-lchan specific SimCardCommands instance off the current instance."""
         ret = SimCardCommands(transport = self._tp, lchan_nr = lchan_nr)
-        ret.cla_byte = self._cla_byte
+        ret.cla_byte = self.cla_byte
         ret.sel_ctrl = self.sel_ctrl
         return ret
-
-    @property
-    def cla_byte(self) -> Hexstr:
-        """Return the lchan patched default CLA value for this card."""
-        return cla_with_lchan(self._cla_byte, self.lchan_nr)
 
     @property
     def max_cmd_len(self) -> int:
@@ -92,11 +86,6 @@ class SimCardCommands:
             return 255 - self.scp.overhead
         else:
             return 255
-
-    @cla_byte.setter
-    def cla_byte(self, new_val: Hexstr):
-        """Set the (raw, without lchan) default CLA value for this card."""
-        self._cla_byte = new_val
 
     def send_apdu(self, pdu: Hexstr, apply_lchan:bool = True) -> ResTuple:
         """Sends an APDU and auto fetch response data
