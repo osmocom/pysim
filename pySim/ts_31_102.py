@@ -1761,7 +1761,8 @@ class ADF_USIM(CardADF):
             self._cmd.poutput('SW: %s, data: %s' % (sw, data))
 
         get_id_parser = argparse.ArgumentParser()
-        get_id_parser.add_argument("--nswo-context", action='store_true')
+        get_id_parser.add_argument("--nswo-context", action='store_true',
+                                   help='use SUCI 5G Non-Seamless WLAN Offload context')
 
         @cmd2.with_argparser(get_id_parser)
         def do_get_identity(self, opts):
