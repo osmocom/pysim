@@ -81,8 +81,8 @@ class SimCardCommands:
 
     @property
     def cla_byte(self) -> Hexstr:
-        """Return the (cached) patched default CLA byte for this card."""
-        return self._cla4lchan
+        """Return the lchan patched default CLA value for this card."""
+        return cla_with_lchan(self._cla_byte, self.lchan_nr)
 
     @property
     def max_cmd_len(self) -> int:
@@ -96,19 +96,6 @@ class SimCardCommands:
     def cla_byte(self, new_val: Hexstr):
         """Set the (raw, without lchan) default CLA value for this card."""
         self._cla_byte = new_val
-        # compute cached result
-        self._cla4lchan = cla_with_lchan(self._cla_byte, self.lchan_nr)
-
-    def cla4lchan(self, cla: Hexstr) -> Hexstr:
-        """Compute the lchan-patched value of the given CLA value. If no CLA
-        value is provided as argument, the lchan-patched version of the SimCardCommands._cla_byte
-        value is used. Most commands will use the latter, while some wish to override it and
-        can pass it as argument here."""
-        if not cla:
-            # return cached result to avoid re-computing this over and over again
-            return self._cla4lchan
-        else:
-            return cla_with_lchan(cla, self.lchan_nr)
 
     def send_apdu(self, pdu: Hexstr, apply_lchan:bool = True) -> ResTuple:
         """Sends an APDU and auto fetch response data
@@ -122,7 +109,7 @@ class SimCardCommands:
                         sw   : string (in hex) of status word (ex. "9000")
         """
         if apply_lchan:
-            pdu = self.cla4lchan(pdu[0:2]) + pdu[2:]
+            pdu = cla_with_lchan(pdu[0:2], self.lchan_nr) + pdu[2:]
         if self.scp:
             return self.scp.send_apdu_wrapper(self._tp.send_apdu, pdu)
         else:
@@ -142,7 +129,7 @@ class SimCardCommands:
                         sw   : string (in hex) of status word (ex. "9000")
         """
         if apply_lchan:
-            pdu = self.cla4lchan(pdu[0:2]) + pdu[2:]
+            pdu = cla_with_lchan(pdu[0:2], self.lchan_nr) + pdu[2:]
         if self.scp:
             return self.scp.send_apdu_wrapper(self._tp.send_apdu_checksw, pdu, sw)
         else:
@@ -517,9 +504,9 @@ class SimCardCommands:
     # TS 102 221 Section 11.3.1 low-level helper
     def _retrieve_data(self, tag: int, first: bool = True) -> ResTuple:
         if first:
-            pdu = self.cla4lchan('80') + 'cb008001%02x' % (tag)
+            pdu = '80cb008001%02x' % (tag)
         else:
-            pdu = self.cla4lchan('80') + 'cb000000'
+            pdu = '80cb000000'
         return self.send_apdu_checksw(pdu)
 
     def retrieve_data(self, ef: Path, tag: int) -> ResTuple:
@@ -549,7 +536,7 @@ class SimCardCommands:
             p1 = 0x00
         if isinstance(data, (bytes, bytearray)):
             data = b2h(data)
-        pdu = self.cla4lchan('80') + 'db00%02x%02x%s' % (p1, len(data)//2, data)
+        pdu = '80db00%02x%02x%s' % (p1, len(data)//2, data)
         return self.send_apdu_checksw(pdu)
 
     def set_data(self, ef, tag: int, value: str, verify: bool = False, conserve: bool = False) -> ResTuple:
@@ -592,7 +579,7 @@ class SimCardCommands:
         if len(rand) != 32:
             raise ValueError('Invalid rand')
         self.select_path(['3f00', '7f20'])
-        return self.send_apdu_checksw(self.cla4lchan('a0') + '88000010' + rand, sw='9000')
+        return self.send_apdu_checksw('a088000010' + rand, sw='9000')
 
     def authenticate(self, rand: Hexstr, autn: Hexstr, context: str = '3g') -> ResTuple:
         """Execute AUTHENTICATE (USIM/ISIM).
@@ -625,7 +612,7 @@ class SimCardCommands:
 
     def status(self) -> ResTuple:
         """Execute a STATUS command as per TS 102 221 Section 11.1.2."""
-        return self.send_apdu_checksw(self.cla4lchan('80') + 'F2000000')
+        return self.send_apdu_checksw('80F2000000')
 
     def deactivate_file(self) -> ResTuple:
         """Execute DECATIVATE FILE command as per TS 102 221 Section 11.1.14."""
@@ -645,7 +632,7 @@ class SimCardCommands:
 
     def resize_file(self, payload: Hexstr) -> ResTuple:
         """Execute RESIZE FILE command as per TS 102 222 Section 6.10"""
-        return self.send_apdu_checksw(self.cla4lchan('80') + 'd40000%02x%s' % (len(payload)//2, payload))
+        return self.send_apdu_checksw('80d40000%02x%s' % (len(payload)//2, payload))
 
     def delete_file(self, fid: Hexstr) -> ResTuple:
         """Execute DELETE FILE command as per TS 102 222 Section 6.4"""

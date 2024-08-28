@@ -322,7 +322,7 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
     def store_data(scc: SimCardCommands, tx_do: Hexstr, exp_sw: SwMatchstr ="9000") -> Tuple[Hexstr, SwHexstr]:
         """Perform STORE DATA according to Table 47+48 in Section 5.7.2 of SGP.22.
         Only single-block store supported for now."""
-        capdu = '%sE29100%02x%s' % (scc.cla4lchan('80'), len(tx_do)//2, tx_do)
+        capdu = '80E29100%02x%s' % (len(tx_do)//2, tx_do)
         return scc.send_apdu_checksw(capdu, exp_sw)
 
     @staticmethod
