@@ -27,8 +27,9 @@ Technical References
 
 This guide covers the basic workflow of provisioning SIM cards with the 5G SUCI feature. For detailed information on the SUCI feature and file contents, the following documents are helpful:
 
-* USIM files and structure: `TS 31.102 <https://www.etsi.org/deliver/etsi_ts/131100_131199/131102/16.06.00_60/ts_131102v160600p.pdf>`__
-* USIM tests (incl. file content examples) `TS 31.121 <https://www.etsi.org/deliver/etsi_ts/131100_131199/131121/16.01.00_60/ts_131121v160100p.pdf>`__
+* USIM files and structure: `3GPP TS 31.102 <https://www.etsi.org/deliver/etsi_ts/131100_131199/131102/16.06.00_60/ts_131102v160600p.pdf>`__
+* USIM tests (incl. file content examples): `3GPP TS 31.121 <https://www.etsi.org/deliver/etsi_ts/131100_131199/131121/16.01.00_60/ts_131121v160100p.pdf>`__
+* Test keys for SUCI calculation: `3GPP TS 33.501 <https://www.etsi.org/deliver/etsi_ts/133500_133599/133501/16.05.00_60/ts_133501v160500p.pdf>`__
 
 For specific information on sysmocom SIM cards, refer to Section 9.1 of the `sysmoUSIM User
 Manual <https://www.sysmocom.de/manuals/sysmousim-manual.pdf>`__.
@@ -83,8 +84,8 @@ By default, the file is present but empty:
    missing Protection Scheme Identifier List data object tag
    9000: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff -> {}
 
-The following JSON config defines the testfile from `TS 31.121 <https://www.etsi.org/deliver/etsi_ts/131100_131199/131121/16.01.00_60/ts_131121v160100p.pdf>`__ Section 4.9.4 with
-test keys from `TS 33.501 <hhttps://www.etsi.org/deliver/etsi_ts/133500_133599/133501/16.05.00_60/ts_133501v160500p.pdf>`__ Annex C.4. Highest priority (``0``) has a
+The following JSON config defines the testfile from 3GPP TS 31.121, Section 4.9.4 with
+test keys from 3GPP TS 33.501, Annex C.4. Highest priority (``0``) has a
 Profile-B (``identifier: 2``) key in key slot ``1``, which means the key
 with ``hnet_pubkey_identifier: 27``.
 
