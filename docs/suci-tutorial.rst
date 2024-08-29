@@ -151,7 +151,7 @@ First, check out the USIM Service Table (UST):
    pySIM-shell (00:MF/ADF.USIM/EF.UST)> read_binary_decoded
    9000: beff9f9de73e0408400170730000002e00000000 -> [2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 25, 27, 28, 29, 33, 34, 35, 38, 39, 42, 43, 44, 45, 46, 51, 60, 71, 73, 85, 86, 87, 89, 90, 93, 94, 95, 122, 123, 124, 126]
 
-.. list-table:: From TS31.102
+.. list-table:: From 3GPP TS 31.102
    :widths: 15 40
    :header-rows: 1
 
