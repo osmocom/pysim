@@ -1,26 +1,23 @@
 
 Guide: Enabling 5G SUCI
-========================
+=======================
 
 SUPI/SUCI Concealment is a feature of 5G-Standalone (SA) to encrypt the
 IMSI/SUPI with a network operator public key.  3GPP Specifies two different
 variants for this:
 
-* SUCI calculation *in the UE*, using data from the SIM
+* SUCI calculation *in the UE*, using key data from the SIM
 * SUCI calculation *on the card itself*
 
-pySIM supports writing the 5G-specific files for *SUCI calculation in the UE* on USIM cards, assuming that
-your cards contain the required files, and you have the privileges/credentials to write to them.  This is
-the case using sysmocom sysmoISIM-SJA2 cards (or successor products).
+pySim supports writing the 5G-specific files for *SUCI calculation in the UE* on USIM cards, assuming
+that your cards contain the required files, and you have the privileges/credentials to write to them.
+This is the case using sysmocom sysmoISIM-SJA2 or any flavor of sysmoISIM-SJA5.
 
-In short, you can enable SUCI with these steps:
+There is no 3GPP/ETSI standard method for configuring *SUCI calculation on the card*; pySim currently
+supports the vendor-specific method for the sysmoISIM-SJA5-S17).
 
-* activate USIM **Service 124**
-* make sure USIM **Service 125** is disabled
-* store the public keys in **SUCI_Calc_Info**
-* set the **Routing Indicator** (required)
+This document describes both methods.
 
-If you want to disable the feature, you can just disable USIM Service 124 (and 125).
 
 Technical References
 ~~~~~~~~~~~~~~~~~~~~
@@ -31,10 +28,28 @@ This guide covers the basic workflow of provisioning SIM cards with the 5G SUCI 
 * USIM tests (incl. file content examples): `3GPP TS 31.121 <https://www.etsi.org/deliver/etsi_ts/131100_131199/131121/16.01.00_60/ts_131121v160100p.pdf>`__
 * Test keys for SUCI calculation: `3GPP TS 33.501 <https://www.etsi.org/deliver/etsi_ts/133500_133599/133501/16.05.00_60/ts_133501v160500p.pdf>`__
 
-For specific information on sysmocom SIM cards, refer to Section 9.1 of the `sysmoUSIM User
-Manual <https://www.sysmocom.de/manuals/sysmousim-manual.pdf>`__.
+For specific information on sysmocom SIM cards, refer to
+
+* the `symoISIM-SJA5 User Manual <https://sysmocom.de/manuals/sysmoisim-sja5-manual.pdf>`__ for the curent
+  sysmoISIM-SJA5 product
+* the `sysmoISIM-SJA2 User Manual <https://sysmocom.de/manuals/sysmousim-manual.pdf>`__ for the older
+  sysmoISIM-SJA2 product
 
 --------------
+
+
+Enabling 5G SUCI *calculated in the UE*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In short, you can enable *SUCI calculation in the UE* with these steps:
+
+* activate USIM **Service 124**
+* make sure USIM **Service 125** is disabled
+* store the public keys in **EF.SUCI_Calc_Info**
+* set the **Routing Indicator** (required)
+
+If you want to disable the feature, you can just disable USIM Service 124 (and 125) in `EF.UST`.
+
 
 Admin PIN
 ---------
@@ -185,7 +200,7 @@ be disabled.
 USIM Error with 5G and sysmoISIM
 --------------------------------
 
-sysmoISIMs come 5GS-enabled. By default however, the configuration stored
+sysmoISIM-SJA2 come 5GS-enabled. By default however, the configuration stored
 in the card file-system is **not valid** for 5G networks: Service 124 is enabled,
 but EF.SUCI_Calc_Info and EF.Routing_Indicator are empty files (hence
 do not contain valid data).
@@ -194,3 +209,62 @@ At least for Qualcomm’s X55 modem, this results in an USIM error and the
 whole modem shutting 5G down. If you don’t need SUCI concealment but the
 smartphone refuses to connect to any 5G network, try to disable the UST
 service 124.
+
+sysmoISIM-SJA5 are shipped with a more forgiving default, with valid EF.Routing_Indicator
+contents and disabled Service 124
+
+
+SUCI calculation by the USIM
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The SUCI calculation can also be performed by the USIM application on the UICC
+directly. The UE then uses the GET IDENTITY command (see also 3GPP TS 31.102,
+section 7.5) to retrieve a SUCI value.
+
+The sysmoISIM-SJA5-S17 supports *SUCI calculation by the USIM*. The configuration
+is not much different to the above described configuration of *SUCI calculation
+in the UE*.
+
+The main difference is how the key provisioning is done. When the SUCI
+calculation is done by the USIM, then the key material is not accessed by the
+UE. The specification (see also 3GPP TS 31.102, section 7.5.1.1), also does not
+specify any file or file format to store the key material. This means the exact
+way to perform the key provisioning is an implementation detail of the USIM
+card application.
+
+In the case of sysmoISIM-SJA5-S17, the key material for *SUCI calculation by the USIM* is stored in
+`ADF.USIM/DF.SAIP/EF.SUCI_Calc_Info` (**not** in `ADF.USIM/DF.5GS/EF.SUCI_Calc_Info`!).
+
+::
+
+   pySIM-shell (00:MF)> select MF
+   pySIM-shell (00:MF)> select ADF.USIM
+   pySIM-shell (00:MF/ADF.USIM)> select DF.SAIP
+   pySIM-shell (00:MF/ADF.USIM/DF.SAIP)> select EF.SUCI_Calc_Info
+
+The file format is exactly the same as specified in 3GPP TS 31.102, section
+4.4.11.8. This means the above described key provisioning procedure can be
+applied without any changes, except that the file location is different.
+
+To signal to the UE that the USIM is setup up for SUCI calculation, service
+125 must be enabled in addition to service 124 (see also 3GPP TS 31.102,
+section 5.3.48)
+
+::
+
+   pySIM-shell (00:MF/ADF.USIM/EF.UST)> ust_service_activate 124
+   pySIM-shell (00:MF/ADF.USIM/EF.UST)> ust_service_activate 125
+
+To verify that the SUCI calculation works as expected, it is possible to issue
+a GET IDENTITY command using pySim-shell:
+
+::
+
+   select ADF.USIM
+   get_identity
+
+The USIM should then return a SUCI TLV Data object that looks like this:
+
+::
+
+   SUCI TLV Data Object: 0199f90717ff021b027a2c58ce1c6b89df088a9eb4d242596dd75746bb5f3503d2cf58a7461e4fd106e205c86f76544e9d732226a4e1
