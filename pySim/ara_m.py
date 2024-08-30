@@ -28,10 +28,10 @@ Support for the Secure Element Access Control, specifically the ARA-M inside an 
 
 from construct import GreedyBytes, GreedyString, Struct, Enum, Int8ub, Int16ub
 from construct import Optional as COptional
-from pySim.construct import *
+from osmocom.construct import *
+from osmocom.tlv import *
+from osmocom.utils import Hexstr
 from pySim.filesystem import *
-from pySim.tlv import *
-from pySim.utils import Hexstr
 import pySim.global_platform
 
 # various BER-TLV encoded Data Objects (DOs)

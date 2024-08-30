@@ -18,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from construct import FlagsEnum, Struct
-from pySim.tlv import flatten_dict_lists
+from osmocom.tlv import flatten_dict_lists
+from osmocom.construct import *
 from pySim.apdu import ApduCommand, ApduCommandSet
-from pySim.construct import *
 from pySim.global_platform import InstallParameters
 
 class GpDelete(ApduCommand, n='DELETE', ins=0xE4, cla=['8X', 'CX', 'EX']):

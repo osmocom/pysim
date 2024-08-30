@@ -29,19 +29,23 @@ order to describe the files specified in the relevant ETSI + 3GPP specifications
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import enum
+from struct import pack, unpack
+from typing import Tuple
+
+from construct import Optional as COptional
+from construct import *
+from osmocom.tlv import *
+from osmocom.utils import *
+from osmocom.construct import *
+
+from pySim.utils import dec_iccid, enc_iccid, dec_imsi, enc_imsi, dec_plmn, enc_plmn, dec_xplmn_w_act
+from pySim.utils import dec_msisdn, enc_msisdn
 from pySim.profile import match_sim
 from pySim.profile import CardProfile, CardProfileAddon
 from pySim.filesystem import *
 from pySim.ts_31_102_telecom import DF_PHONEBOOK, DF_MULTIMEDIA, DF_MCS, DF_V2X
 from pySim.gsm_r import AddonGSMR
-import enum
-from pySim.construct import *
-from construct import Optional as COptional
-from construct import *
-from struct import pack, unpack
-from typing import Tuple
-from pySim.tlv import *
-from pySim.utils import *
 
 # Mapping between SIM Service Number and its description
 EF_SST_map = {

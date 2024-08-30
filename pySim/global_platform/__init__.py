@@ -23,12 +23,13 @@ from construct import Optional as COptional
 from construct import Struct, GreedyRange, FlagsEnum, Int16ub, Int24ub, Padding, Bit, Const
 from Cryptodome.Random import get_random_bytes
 from Cryptodome.Cipher import DES, DES3, AES
+from osmocom.utils import *
+from osmocom.tlv import *
+from osmocom.construct import *
+from pySim.utils import ResTuple
 from pySim.card_key_provider import card_key_provider_get_field
 from pySim.global_platform.scp import SCP02, SCP03
-from pySim.construct import *
-from pySim.utils import *
 from pySim.filesystem import *
-from pySim.tlv import *
 from pySim.profile import CardProfile
 from pySim.ota import SimFileAccessAndToolkitAppSpecParams
 

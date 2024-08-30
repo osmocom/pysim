@@ -32,6 +32,10 @@ from construct import Optional as COptional
 from construct import Int32ub, Nibble, GreedyRange, Struct, FlagsEnum, Switch, this, Int16ub, Padding
 from construct import Bytewise, Int24ub, PaddedString, PrefixedArray, If
 
+from osmocom.utils import is_hexstr
+from osmocom.tlv import *
+from osmocom.construct import *
+
 import pySim.ts_102_221
 from pySim.ts_51_011 import EF_ACMmax, EF_AAeM, EF_eMLPP, EF_CMI, EF_PNN
 from pySim.ts_51_011 import EF_MMSN, EF_MMSICP, EF_MMSUP, EF_MMSUCP, EF_VGCS, EF_VGCSS, EF_NIA
@@ -40,13 +44,10 @@ from pySim.ts_51_011 import EF_CBMID, EF_CBMIR, EF_ADN, EF_CFIS, EF_SMS, EF_MSIS
 from pySim.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_PLMNsel
 from pySim.ts_51_011 import EF_Kc, EF_CPBCCH, EF_InvScan
 from pySim.ts_102_221 import EF_ARR
-from pySim.tlv import *
 from pySim.filesystem import *
 from pySim.ts_31_102_telecom import DF_PHONEBOOK, EF_UServiceTable
 from pySim.ts_31_103_shared import EF_IMSConfigData, EF_XCAPConfigData, EF_MuDMiDConfigData
 from pySim.ts_31_103_shared import EF_AC_GBAUAPI, EF_IMSDCI
-from pySim.construct import *
-from pySim.utils import is_hexstr
 from pySim.cat import SMS_TPDU, DeviceIdentities, SMSPPDownload
 
 # Mapping between USIM Service Number and its description

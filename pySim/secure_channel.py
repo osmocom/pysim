@@ -16,7 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
-from pySim.utils import b2h, h2b, ResTuple, Hexstr
+from osmocom.utils import b2h, h2b, Hexstr
+
+from pySim.utils import ResTuple
 
 class SecureChannel(abc.ABC):
     @abc.abstractmethod

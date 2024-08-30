@@ -18,8 +18,8 @@
 import unittest
 import logging
 import base64
+from osmocom.utils import b2h, h2b
 
-from pySim.utils import b2h, h2b
 from pySim.esim.bsp import *
 import pySim.esim.rsp as rsp
 from pySim.esim import ActivationCode

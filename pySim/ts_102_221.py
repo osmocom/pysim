@@ -21,10 +21,11 @@ from bidict import bidict
 from construct import Select, Const, Bit, Struct, Int16ub, FlagsEnum, GreedyString, ValidationError
 from construct import Optional as COptional, Computed
 
-from pySim.construct import *
+from osmocom.construct import *
+from osmocom.utils import *
+from osmocom.tlv import *
 from pySim.utils import *
 from pySim.filesystem import *
-from pySim.tlv import *
 from pySim.profile import CardProfile
 from pySim.profile import match_uicc
 from pySim import iso7816_4

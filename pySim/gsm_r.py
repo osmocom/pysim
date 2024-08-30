@@ -28,8 +28,8 @@ from pySim.utils import *
 from struct import pack, unpack
 from construct import Struct, Bytes, Int8ub, Int16ub, Int24ub, Int32ub, FlagsEnum
 from construct import Optional as COptional
+from osmocom.construct import *
 
-from pySim.construct import *
 from pySim.profile import CardProfileAddon
 from pySim.filesystem import *
 

@@ -8,7 +8,8 @@ from pprint import pprint as pp
 from pySim.apdu import *
 from pySim.runtime import RuntimeState
 
-from pySim.utils import JsonEncoder
+from osmocom.utils import JsonEncoder
+
 from pySim.cards import UiccCardBase
 from pySim.commands import SimCardCommands
 from pySim.profile import CardProfile

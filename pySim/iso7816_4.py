@@ -18,10 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from construct import GreedyBytes, GreedyString
-from pySim.construct import *
-from pySim.utils import *
-from pySim.filesystem import *
-from pySim.tlv import *
+from osmocom.tlv import *
+from osmocom.construct import *
 
 # Table 91 + Section 8.2.1.2
 class ApplicationId(BER_TLV_IE, tag=0x4f):

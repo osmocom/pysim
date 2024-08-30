@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from construct import Optional as COptional
 from construct import Struct, GreedyRange, FlagsEnum, Int16ub, Int24ub, Padding, Bit, Const
-from pySim.construct import *
-from pySim.utils import *
-from pySim.tlv import *
+from osmocom.construct import *
+from osmocom.utils import *
+from osmocom.tlv import *
 
 # Section 11.6.2.3 / Table 11-58
 class SecurityDomainAid(BER_TLV_IE, tag=0x4f):

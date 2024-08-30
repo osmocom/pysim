@@ -18,8 +18,8 @@
 import unittest
 import logging
 
-from pySim.utils import b2h, h2b, all_subclasses
-from pySim.tlv import *
+from osmocom.utils import b2h, h2b, all_subclasses
+from osmocom.tlv import *
 
 import pySim.iso7816_4
 import pySim.ts_102_221

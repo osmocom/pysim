@@ -17,10 +17,10 @@
 
 import unittest
 import logging
+from osmocom.utils import b2h, h2b
 
 from pySim.global_platform import *
 from pySim.global_platform.scp import *
-from pySim.utils import b2h, h2b
 
 KIC = h2b('100102030405060708090a0b0c0d0e0f') # enc
 KID = h2b('101102030405060708090a0b0c0d0e0f') # MAC

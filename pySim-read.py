@@ -29,6 +29,8 @@ import random
 import re
 import sys
 
+from osmocom.utils import h2b, h2s, swap_nibbles, rpad
+
 from pySim.ts_51_011 import EF_SST_map, EF_AD
 from pySim.legacy.ts_51_011 import EF, DF
 from pySim.ts_31_102 import EF_UST_map
@@ -40,7 +42,7 @@ from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, argparse_add_reader_args
 from pySim.exceptions import SwMatchError
 from pySim.legacy.cards import card_detect, SimCard, UsimCard, IsimCard
-from pySim.utils import h2b, h2s, swap_nibbles, rpad, dec_imsi, dec_iccid, dec_msisdn
+from pySim.utils import dec_imsi, dec_iccid, dec_msisdn
 from pySim.legacy.utils import format_xplmn_w_act, dec_st
 
 option_parser = argparse.ArgumentParser(description='Legacy tool for reading some parts of a SIM card',

@@ -47,11 +47,13 @@ from io import StringIO
 
 from pprint import pprint as pp
 
+from osmocom.utils import h2b, b2h, i2h, swap_nibbles, rpad, JsonEncoder, is_hexstr, is_decimal
+from osmocom.utils import is_hexstr_or_decimal, Hexstr
+from osmocom.tlv import bertlv_parse_one
+
 from pySim.exceptions import *
 from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args, ProactiveHandler
-from pySim.utils import h2b, b2h, i2h, swap_nibbles, rpad, JsonEncoder, bertlv_parse_one, sw_match
-from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, Hexstr, dec_iccid
-from pySim.utils import is_hexstr_or_decimal, is_hexstr, is_decimal
+from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, dec_iccid, sw_match
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
 from pySim.filesystem import CardMF, CardEF, CardDF, CardADF

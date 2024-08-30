@@ -23,9 +23,8 @@ from bidict import bidict
 from construct import Int8ub, Byte, Bytes, Bit, Flag, BitsInteger
 from construct import Struct, Enum, Tell, BitStruct, this, Padding
 from construct import Prefixed, GreedyRange, GreedyBytes
-
-from pySim.construct import HexAdapter, BcdAdapter, TonNpi
-from pySim.utils import Hexstr, h2b, b2h
+from osmocom.construct import HexAdapter, BcdAdapter, TonNpi
+from osmocom.utils import Hexstr, h2b, b2h
 
 from smpp.pdu import pdu_types, operations
 

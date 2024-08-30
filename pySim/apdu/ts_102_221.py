@@ -22,11 +22,12 @@ import logging
 
 from construct import GreedyRange, Struct
 
-from pySim.construct import *
+from osmocom.utils import i2h
+from osmocom.construct import *
+
 from pySim.filesystem import *
 from pySim.runtime import RuntimeLchan
 from pySim.apdu import ApduCommand, ApduCommandSet
-from pySim.utils import i2h
 from pySim import cat
 
 logger = logging.getLogger(__name__)

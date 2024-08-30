@@ -29,12 +29,11 @@ import abc
 import typing
 from typing import List, Dict, Optional
 from termcolor import colored
-
 from construct import Byte, GreedyBytes
 from construct import Optional as COptional
+from osmocom.construct import *
+from osmocom.utils import *
 
-from pySim.construct import *
-from pySim.utils import *
 from pySim.runtime import RuntimeLchan, RuntimeState, lchan_nr_from_cla
 from pySim.filesystem import CardADF, CardFile, TransparentEF, LinFixedEF
 

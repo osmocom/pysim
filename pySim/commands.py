@@ -23,12 +23,13 @@
 
 from typing import List, Tuple
 import typing # construct also has a Union, so we do typing.Union below
-
 from construct import Construct, Struct, Const, Select
 from construct import Optional as COptional
-from pySim.construct import LV, filter_dict
-from pySim.utils import rpad, lpad, b2h, h2b, sw_match, bertlv_encode_len, h2i, i2h, str_sanitize, expand_hex, SwMatchstr
-from pySim.utils import Hexstr, SwHexstr, ResTuple
+from osmocom.construct import LV, filter_dict
+from osmocom.utils import rpad, lpad, b2h, h2b, h2i, i2h, str_sanitize, Hexstr
+from osmocom.tlv import bertlv_encode_len
+
+from pySim.utils import sw_match, expand_hex, SwHexstr, ResTuple, SwMatchstr
 from pySim.exceptions import SwMatchError
 from pySim.transport import LinkBase
 

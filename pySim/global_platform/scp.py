@@ -22,7 +22,9 @@ from Cryptodome.Cipher import DES3, DES
 from Cryptodome.Util.strxor import strxor
 from construct import Struct, Bytes, Int8ub, Int16ub, Const
 from construct import Optional as COptional
-from pySim.utils import b2h, bertlv_parse_len, bertlv_encode_len
+from osmocom.utils import b2h
+from osmocom.tlv import bertlv_parse_len, bertlv_encode_len
+
 from pySim.secure_channel import SecureChannel
 
 logger = logging.getLogger(__name__)

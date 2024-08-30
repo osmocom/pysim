@@ -21,9 +21,9 @@ import struct
 from typing import Optional, Tuple
 from construct import Enum, Int8ub, Int16ub, Struct, Bytes, GreedyBytes, BitsInteger, BitStruct
 from construct import Flag, Padding, Switch, this, PrefixedArray, GreedyRange
+from osmocom.construct import *
+from osmocom.utils import b2h
 
-from pySim.construct import *
-from pySim.utils import b2h
 from pySim.sms import UserDataHeader
 
 # ETS TS 102 225 gives the general command structure and the dialects for CAT_TP, TCP/IP and HTTPS

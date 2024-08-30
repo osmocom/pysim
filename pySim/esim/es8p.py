@@ -17,11 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Dict, List, Optional
-
 from cryptography.hazmat.primitives.asymmetric import ec
-
-from pySim.utils import b2h, h2b, bertlv_encode_tag, bertlv_encode_len, bertlv_parse_one_rawtag
-from pySim.utils import bertlv_return_one_rawtlv
+from osmocom.utils import b2h, h2b
+from osmocom.tlv import bertlv_encode_tag, bertlv_encode_len, bertlv_parse_one_rawtag
+from osmocom.tlv import bertlv_return_one_rawtlv
 
 import pySim.esim.rsp as rsp
 from pySim.esim.bsp import BspInstance

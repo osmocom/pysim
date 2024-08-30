@@ -20,9 +20,9 @@ Support for 3GPP TS 31.104 V17.0.0
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from osmocom.utils import *
+from osmocom.tlv import *
 from pySim.filesystem import *
-from pySim.utils import *
-from pySim.tlv import *
 from pySim.ts_31_102 import ADF_USIM
 from pySim.ts_51_011 import EF_IMSI, EF_AD
 import pySim.ts_102_221

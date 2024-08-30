@@ -20,8 +20,8 @@ Also known as SCP81 for SIM/USIM/UICC/eUICC/eSIM OTA.
 from construct import Struct, Int8ub, Int16ub, Bytes, GreedyBytes, GreedyString, BytesInteger
 from construct import this, len_, Rebuild, Const
 from construct import Optional as COptional
+from osmocom.tlv import BER_TLV_IE
 
-from pySim.tlv import BER_TLV_IE
 from pySim import cat
 
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import unittest
-from pySim.utils import h2b, b2h
-from pySim.construct import filter_dict
+from osmocom.utils import h2b, b2h
+from osmocom.construct import filter_dict
+
 from pySim.apdu import Apdu
 from pySim.apdu.ts_31_102 import UsimAuthenticateEven
 

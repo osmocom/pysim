@@ -22,10 +22,11 @@ import socket
 import os
 import argparse
 from typing import Optional
+from osmocom.utils import h2b, b2h, Hexstr
 
 from pySim.transport import LinkBase
 from pySim.exceptions import ReaderError, ProtocolError
-from pySim.utils import h2b, b2h, Hexstr, ResTuple
+from pySim.utils import ResTuple
 
 
 class L1CTLMessage:

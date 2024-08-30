@@ -28,10 +28,11 @@ from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.hazmat.primitives.asymmetric import ec
 
+from osmocom.utils import h2b, b2h, swap_nibbles, is_hexstr
+from osmocom.tlv import bertlv_parse_one_rawtag, bertlv_return_one_rawtlv
+
 import pySim.esim.rsp as rsp
 from pySim.esim import es9p, PMO
-from pySim.utils import h2b, b2h, swap_nibbles, is_hexstr
-from pySim.utils import bertlv_parse_one_rawtag, bertlv_return_one_rawtlv
 from pySim.esim.x509_cert import CertAndPrivkey
 from pySim.esim.es8p import BoundProfilePackage
 

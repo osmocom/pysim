@@ -22,8 +22,9 @@ import re
 import argparse
 from typing import Optional
 import serial
+from osmocom.utils import Hexstr
 
-from pySim.utils import Hexstr, ResTuple
+from pySim.utils import ResTuple
 from pySim.transport import LinkBase
 from pySim.exceptions import ReaderError, ProtocolError
 

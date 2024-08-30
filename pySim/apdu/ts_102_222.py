@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 
 from construct import Struct
+from osmocom.construct import *
 
-from pySim.construct import *
 from pySim.apdu import ApduCommand, ApduCommandSet
 from pySim.ts_102_221 import FcpTemplate
 

@@ -18,8 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Optional, Tuple
+from osmocom.utils import h2b, i2h, is_hex, Hexstr
+from osmocom.tlv import bertlv_parse_one
 
-from pySim.utils import h2b, i2h, is_hex, bertlv_parse_one, Hexstr
 from pySim.exceptions import *
 from pySim.filesystem import *
 

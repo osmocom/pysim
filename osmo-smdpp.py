@@ -32,7 +32,7 @@ from klein import Klein
 from twisted.web.iweb import IRequest
 import asn1tools
 
-from pySim.utils import h2b, b2h, swap_nibbles
+from osmocom.utils import h2b, b2h, swap_nibbles
 
 import pySim.esim.rsp as rsp
 from pySim.esim import saip, PMO

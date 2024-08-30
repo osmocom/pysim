@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import unittest
-from pySim.utils import h2b, b2h
+from osmocom.utils import h2b, b2h
 from pySim.sms import SMS_SUBMIT, SMS_DELIVER, AddressField
 from pySim.ota import *
 

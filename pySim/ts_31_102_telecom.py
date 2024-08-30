@@ -28,10 +28,10 @@ Needs to be a separate python module to avoid cyclic imports
 
 from construct import Optional as COptional
 from construct import Struct, Int16ub, Int32ub
+from osmocom.tlv import *
+from osmocom.construct import *
 
-from pySim.tlv import *
 from pySim.filesystem import *
-from pySim.construct import *
 
 # TS 31.102 Section 4.2.8
 class EF_UServiceTable(TransparentEF):

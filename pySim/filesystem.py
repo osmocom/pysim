@@ -35,10 +35,11 @@ import cmd2
 from cmd2 import CommandSet, with_default_category
 from smartcard.util import toBytes
 
-from pySim.utils import sw_match, h2b, b2h, is_hex, auto_int, auto_uint8, auto_uint16, is_hexstr, JsonEncoder
-from pySim.utils import bertlv_parse_one
+from osmocom.utils import h2b, b2h, is_hex, auto_int, auto_uint8, auto_uint16, is_hexstr, JsonEncoder
+from osmocom.tlv import bertlv_parse_one
+from osmocom.construct import filter_dict, parse_construct, build_construct
 
-from pySim.construct import filter_dict, parse_construct, build_construct
+from pySim.utils import sw_match
 from pySim.jsonpath import js_path_modify
 from pySim.commands import SimCardCommands
 from pySim.exceptions import SwMatchError

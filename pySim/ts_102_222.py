@@ -19,11 +19,9 @@
 
 from typing import List
 import argparse
-
 import cmd2
 from cmd2 import CommandSet, with_default_category
-
-from pySim.utils import b2h, auto_uint8, auto_uint16, is_hexstr
+from osmocom.utils import b2h, auto_uint8, auto_uint16, is_hexstr
 
 from pySim.ts_102_221 import *
 

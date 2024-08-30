@@ -22,11 +22,11 @@ import logging
 import zipfile
 from pathlib import Path as PlPath
 from typing import List
+from osmocom.utils import h2b, b2h, swap_nibbles
 
 from pySim.esim.saip import *
 from pySim.esim.saip.validation import CheckBasicStructure
 from pySim import javacard
-from pySim.utils import h2b, b2h, swap_nibbles
 from pySim.pprint import HexBytesPrettyPrinter
 
 pp = HexBytesPrettyPrinter(indent=4,width=500)

@@ -30,7 +30,7 @@ operation with pySim-shell.
 
 from typing import List, Dict, Optional
 from Cryptodome.Cipher import AES
-from pySim.utils import h2b, b2h
+from osmocom.utils import h2b, b2h
 
 import abc
 import csv

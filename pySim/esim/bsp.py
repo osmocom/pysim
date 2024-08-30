@@ -35,7 +35,8 @@ from cryptography.hazmat.primitives.kdf.x963kdf import X963KDF
 from Cryptodome.Cipher import AES
 from Cryptodome.Hash import CMAC
 
-from pySim.utils import bertlv_encode_len, bertlv_parse_one, b2h
+from osmocom.utils import b2h
+from osmocom.tlv import bertlv_encode_len, bertlv_parse_one
 
 # don't log by default
 logger = logging.getLogger(__name__)

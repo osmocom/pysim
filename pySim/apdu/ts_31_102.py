@@ -11,9 +11,9 @@ from typing import Dict
 
 from construct import BitStruct, Enum, BitsInteger, Int8ub, Bytes, this, Struct, If, Switch, Const
 from construct import Optional as COptional
+from osmocom.construct import *
 
 from pySim.filesystem import *
-from pySim.construct import *
 from pySim.ts_31_102 import SUCI_TlvDataObject
 from pySim.apdu import ApduCommand, ApduCommandSet
 

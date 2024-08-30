@@ -6,7 +6,8 @@
 import sys
 import argparse
 
-from pySim.utils import bertlv_parse_one, bertlv_encode_tag, b2h, h2b
+from osmocom.utils import b2h, h2b
+from osmocom.tlv import bertlv_parse_one, bertlv_encode_tag
 
 def process_one_level(content: bytes, indent: int):
     remainder = content

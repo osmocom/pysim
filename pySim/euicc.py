@@ -27,11 +27,12 @@ import argparse
 
 from construct import Array, Struct, FlagsEnum, GreedyRange
 from cmd2 import cmd2, CommandSet, with_default_category
+from osmocom.utils import Hexstr
+from osmocom.tlv import *
+from osmocom.construct import *
 
-from pySim.tlv import *
-from pySim.construct import *
-from pySim.commands import SimCardCommands
 from pySim.utils import Hexstr, SwHexstr, SwMatchstr
+from pySim.commands import SimCardCommands
 import pySim.global_platform
 
 def compute_eid_checksum(eid) -> str:

@@ -17,10 +17,9 @@
 
 import unittest
 import logging
+from osmocom.utils import *
 
-from pySim.utils import *
 from pySim.filesystem import *
-
 import pySim.iso7816_4
 import pySim.ts_102_221
 import pySim.ts_102_222

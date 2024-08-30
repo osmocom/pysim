@@ -8,9 +8,10 @@ import abc
 import argparse
 from typing import Optional, Tuple
 from construct import Construct
+from osmocom.utils import b2h, h2b, i2h, Hexstr
 
 from pySim.exceptions import *
-from pySim.utils import sw_match, b2h, h2b, i2h, Hexstr, SwHexstr, SwMatchstr, ResTuple
+from pySim.utils import SwHexstr, SwMatchstr, ResTuple, sw_match
 from pySim.cat import ProactiveCommand, CommandDetails, DeviceIdentities, Result
 
 #

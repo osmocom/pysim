@@ -20,15 +20,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import enum
 
 from construct import Bytewise, BitStruct, BitsInteger, Struct, FlagsEnum
+from osmocom.utils import *
+from osmocom.construct import *
 
-from pySim.utils import *
 from pySim.filesystem import *
 from pySim.profile import match_ruim
 from pySim.profile import CardProfile, CardProfileAddon
 from pySim.ts_51_011 import CardProfileSIM
 from pySim.ts_51_011 import DF_TELECOM, DF_GSM
 from pySim.ts_51_011 import EF_ServiceTable
-from pySim.construct import *
 
 
 # Mapping between CDMA Service Number and its description

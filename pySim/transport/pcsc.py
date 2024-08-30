@@ -27,9 +27,11 @@ from smartcard.Exceptions import NoCardException, CardRequestTimeoutException, C
 from smartcard.System import readers
 from smartcard.ExclusiveConnectCardConnection import ExclusiveConnectCardConnection
 
+from osmocom.utils import h2i, i2h, Hexstr
+
 from pySim.exceptions import NoCardError, ProtocolError, ReaderError
 from pySim.transport import LinkBase
-from pySim.utils import h2i, i2h, Hexstr, ResTuple
+from pySim.utils import ResTuple
 
 
 class PcscSimLink(LinkBase):

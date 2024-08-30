@@ -25,8 +25,8 @@ telecom-related protocol traces over UDP.
 import socket
 from construct import Optional as COptional
 from construct import Int8ub, Int8sb, Int32ub, BitStruct, Enum, GreedyBytes, Struct, Switch
-from construct import this, PaddedString
-from pySim.construct import *
+from construct import this, PaddedString, Flag, BitsInteger, Bytes
+from osmocom.construct import *
 
 # The root definition of GSMTAP can be found at
 # https://cgit.osmocom.org/cgit/libosmocore/tree/include/osmocom/core/gsmtap.h

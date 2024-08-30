@@ -18,8 +18,8 @@
 import unittest
 import logging
 import copy
+from osmocom.utils import h2b, b2h
 
-from pySim.utils import h2b, b2h
 from pySim.esim.saip import *
 from pySim.esim.saip.personalization import *
 from pprint import pprint as pp

@@ -17,13 +17,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pySim.construct import *
 from construct import *
 from construct import Optional as COptional
+from osmocom.construct import *
 
-#from pySim.utils import *
+from osmocom.tlv import BER_TLV_IE, TLV_IE_Collection
 from pySim.filesystem import CardDF, TransparentEF
-from pySim.tlv import BER_TLV_IE, TLV_IE_Collection
 
 # TS102 310 Section 7.1
 class EF_EAPKEYS(TransparentEF):

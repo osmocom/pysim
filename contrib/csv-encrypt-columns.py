@@ -22,8 +22,8 @@ import sys
 import csv
 import argparse
 from Cryptodome.Cipher import AES
+from osmocom.utils import h2b, b2h, Hexstr
 
-from pySim.utils import h2b, b2h, Hexstr
 from pySim.card_key_provider import CardKeyProviderCsv
 
 def dict_keys_to_upper(d: dict) -> dict:

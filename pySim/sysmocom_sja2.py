@@ -21,11 +21,11 @@ from struct import unpack
 from construct import FlagsEnum, Byte, Struct, Int8ub, Bytes, Mapping, Enum, Padding, BitsInteger
 from construct import Bit, this, Int32ub, Int16ub, Nibble, BytesInteger, GreedyRange, Const
 from construct import Optional as COptional
+from osmocom.utils import *
+from osmocom.construct import *
 
-from pySim.utils import *
 from pySim.filesystem import *
 from pySim.runtime import RuntimeState
-from pySim.construct import *
 import pySim
 
 key_type2str = {

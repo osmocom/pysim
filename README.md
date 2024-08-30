@@ -77,7 +77,7 @@ Please install the following dependencies:
  - cmd2 >= 1.5.0
  - colorlog
  - construct >= 2.9.51
- - gsm0338
+ - pyosmocom
  - jsonpath-ng
  - packaging
  - pycryptodomex

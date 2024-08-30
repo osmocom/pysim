@@ -20,9 +20,9 @@ hence need to be in a separate python module to avoid circular dependencies.
 #
 
 from construct import Struct, Switch, Bytes, GreedyString, GreedyBytes, Int8ub, Prefixed, Enum, Byte
-from pySim.construct import HexAdapter, Utf8Adapter
+from osmocom.tlv import BER_TLV_IE, TLV_IE_Collection
+from osmocom.construct import HexAdapter, Utf8Adapter
 from pySim.filesystem import *
-from pySim.tlv import BER_TLV_IE, TLV_IE_Collection
 
 # TS 31.103 Section 4.2.16
 class EF_UICCIARI(LinFixedEF):

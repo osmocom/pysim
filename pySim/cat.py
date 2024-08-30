@@ -23,9 +23,10 @@ from bidict import bidict
 from construct import Int8ub, Int16ub, Byte, Bytes, BitsInteger
 from construct import Struct, Enum, BitStruct, this
 from construct import GreedyBytes, Switch, GreedyRange, FlagsEnum
-from pySim.tlv import TLV_IE, COMPR_TLV_IE, BER_TLV_IE, TLV_IE_Collection
-from pySim.construct import PlmnAdapter, BcdAdapter, HexAdapter, GsmStringAdapter, TonNpi, GsmString
-from pySim.utils import b2h, dec_xplmn_w_act
+from osmocom.tlv import TLV_IE, COMPR_TLV_IE, BER_TLV_IE, TLV_IE_Collection
+from osmocom.construct import PlmnAdapter, BcdAdapter, HexAdapter, GsmStringAdapter, TonNpi, GsmString
+from osmocom.utils import b2h
+from pySim.utils import dec_xplmn_w_act
 
 # Tag values as per TS 101 220 Table 7.23
 
