@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from pySim.gsmtap import GsmtapSource
+from osmocom.gsmtap import GsmtapReceiver
 
 from pySim.apdu.ts_102_221 import ApduCommands as UiccApduCommands
 from pySim.apdu.ts_102_222 import ApduCommands as UiccAdmApduCommands
@@ -41,7 +41,7 @@ class GsmtapApduSource(ApduSource):
             bind_port: UDP port number to which the socket should be bound (default: 4729)
         """
         super().__init__()
-        self.gsmtap = GsmtapSource(bind_ip, bind_port)
+        self.gsmtap = GsmtapReceiver(bind_ip, bind_port)
 
     def read_packet(self) -> PacketType:
         gsmtap_msg, _addr = self.gsmtap.read_packet()

@@ -19,10 +19,9 @@
 import logging
 from typing import Tuple
 import pyshark
+from osmocom.gsmtap import GsmtapMessage
 
 from pySim.utils import h2b
-from pySim.gsmtap import GsmtapMessage
-
 from pySim.apdu.ts_102_221 import ApduCommands as UiccApduCommands
 from pySim.apdu.ts_102_222 import ApduCommands as UiccAdmApduCommands
 from pySim.apdu.ts_31_102 import ApduCommands as UsimApduCommands

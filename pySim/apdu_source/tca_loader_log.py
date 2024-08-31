@@ -17,7 +17,6 @@
 
 
 from pySim.utils import h2b
-from pySim.gsmtap import GsmtapSource
 
 from pySim.apdu.ts_102_221 import ApduCommands as UiccApduCommands
 from pySim.apdu.ts_102_222 import ApduCommands as UiccAdmApduCommands
