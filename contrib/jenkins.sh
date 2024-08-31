@@ -51,6 +51,12 @@ case "$JOB_TYPE" in
 "pylint")
 	# Print pylint version
 	pip3 freeze | grep pylint
+
+	virtualenv -p python3 venv --system-site-packages
+	. venv/bin/activate
+
+	pip install .
+
 	# Run pylint to find potential errors
 	# Ignore E1102: not-callable
 	#   pySim/filesystem.py: E1102: method is not callable (not-callable)
