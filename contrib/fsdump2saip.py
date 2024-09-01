@@ -92,8 +92,10 @@ class FsdumpToSaip:
             spinfo = pinfo.child_by_type(SpecialFileInfo)
             fill_p = pinfo.child_by_type(FillingPattern)
             repeat_p = pinfo.child_by_type(RepeatPattern)
+            # only exists for BER-TLV files
+            max_fsize = pinfo.child_by_type(MaximumFileSize)
 
-            if spinfo or fill_p or repeat_p:
+            if spinfo or fill_p or repeat_p or max_fsize:
                 r['proprietaryEFInfo'] = {}
             if spinfo:
                 r['proprietaryEFInfo']['specialFileInformation'] = spinfo.to_bytes()
@@ -101,6 +103,8 @@ class FsdumpToSaip:
                 r['proprietaryEFInfo']['fillPattern'] = fill_p.to_bytes()
             if repeat_p:
                 r['proprietaryEFInfo']['repeatPattern'] = repeat_p.to_bytes()
+            if max_fsize:
+                r['proprietaryEFInfo']['maximumFileSize'] = max_fsize.to_bytes()
 
         # TODO: linkPath
         return r
