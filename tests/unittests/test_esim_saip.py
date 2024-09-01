@@ -90,5 +90,34 @@ class OidTest(unittest.TestCase):
         self.assertTrue(oid.OID('1.0.1') > oid.OID('1.0'))
         self.assertTrue(oid.OID('1.0.2') > oid.OID('1.0.1'))
 
+class NonMatchTest(unittest.TestCase):
+    def test_nonmatch(self):
+        # non-matches before, in between and after matches
+        match_list = [Match(a=10, b=10, size=5), Match(a=20, b=20, size=4)]
+        nm_list = NonMatch.from_matchlist(match_list, 26)
+        self.assertEqual(nm_list, [NonMatch(a=0, b=0, size=10), NonMatch(a=15, b=15, size=5),
+                                   NonMatch(a=24, b=24, size=2)])
+
+    def test_nonmatch_beg(self):
+        # single match at beginning
+        match_list = [Match(a=0, b=0, size=5)]
+        nm_list = NonMatch.from_matchlist(match_list, 20)
+        self.assertEqual(nm_list, [NonMatch(a=5, b=5, size=15)])
+
+    def test_nonmatch_end(self):
+        # single match at end
+        match_list = [Match(a=19, b=19, size=5)]
+        nm_list = NonMatch.from_matchlist(match_list, 24)
+        self.assertEqual(nm_list, [NonMatch(a=0, b=0, size=19)])
+
+    def test_nonmatch_none(self):
+        # no match at all
+        match_list = []
+        nm_list = NonMatch.from_matchlist(match_list, 24)
+        self.assertEqual(nm_list, [NonMatch(a=0, b=0, size=24)])
+
+
+
+
 if __name__ == "__main__":
 	unittest.main()
