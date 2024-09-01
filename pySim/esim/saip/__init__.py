@@ -114,6 +114,7 @@ class File:
         self.nb_rec: Optional[int] = None
         self.high_update: bool = False
         self.shareable: bool = True
+        self.df_name = None
         # apply some defaults from profile
         if self.template:
             self.from_template(self.template)
