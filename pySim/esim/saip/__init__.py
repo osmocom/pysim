@@ -386,6 +386,7 @@ class ProfileElement:
         'pukCodes':                 'puk-Header',
         'pinCodes':                 'pin-Header',
         'securityDomain':           'sd-Header',
+        'df-5gprose':               'df-5g-prose-header',
         }
 
     def __init__(self, decoded = None, mandated: bool = True,
