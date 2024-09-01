@@ -817,7 +817,7 @@ class ProfileElementDf5GS(FsProfileElement):
             return
         # provide some reasonable defaults
         self.decoded['templateID'] = str(oid.DF_5GS_v3)
-        for fname in ['df-5gs']:
+        for fname in ['df-df-5gs']:
             self.decoded[fname] = []
 
 class ProfileElementEAP(FsProfileElement):
@@ -841,7 +841,7 @@ class ProfileElementDfSAIP(FsProfileElement):
             return
         # provide some reasonable defaults
         self.decoded['templateID'] = str(oid.DF_SAIP)
-        for fname in ['df-saip']:
+        for fname in ['df-df-saip']:
             self.decoded[fname] = []
 
 class ProfileElementDfSNPN(FsProfileElement):
@@ -853,7 +853,7 @@ class ProfileElementDfSNPN(FsProfileElement):
             return
         # provide some reasonable defaults
         self.decoded['templateID'] = str(oid.DF_SNPN)
-        for fname in ['df-snpn']:
+        for fname in ['df-df-snpn']:
             self.decoded[fname] = []
 
 class ProfileElementDf5GProSe(FsProfileElement):
