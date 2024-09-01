@@ -21,6 +21,8 @@ import io
 import os
 from typing import Tuple, List, Optional, Dict, Union
 from collections import OrderedDict
+from difflib import SequenceMatcher, Match
+
 import asn1tools
 import zipfile
 from pySim import javacard
@@ -43,6 +45,29 @@ from pySim.global_platform.uicc import UiccSdInstallParams
 asn1 = compile_asn1_subdir('saip')
 
 logger = logging.getLogger(__name__)
+
+class NonMatch(Match):
+    """Representing a contiguous non-matching block of data; the opposite of difflib.Match"""
+    @classmethod
+    def from_matchlist(cls, l: List[Match], size:int) -> List['NonMatch']:
+        """Build a list of non-matching blocks of data from its inverse (list of matching blocks).
+        The caller must ensure that the input list is ordered, non-overlapping and only contains
+        matches at equal offsets in a and b."""
+        res = []
+        cur = 0
+        for match in l:
+            if match.a != match.b:
+                raise ValueError('only works for equal-offset matches')
+            assert match.a >= cur
+            nm_len = match.a - cur
+            if nm_len > 0:
+                # there's no point in generating zero-lenth non-matching sections
+                res.append(cls(a=cur, b=cur, size=nm_len))
+            cur = match.a + match.size
+        if size > cur:
+            res.append(cls(a=cur, b=cur, size=size-cur))
+
+        return res
 
 class Naa:
     """A class defining a Network Access Application (NAA)"""
@@ -411,12 +436,38 @@ class File:
                 return ValueError("Unknown key '%s' in tuple list" % k)
         return stream.getvalue()
 
-    def file_content_to_tuples(self) -> List[Tuple]:
-        # FIXME: simplistic approach. needs optimization. We should first check if the content
-        # matches the expanded default value from the template. If it does, return empty list.
-        # Next, we should compute the diff between the default value and self.body, and encode
-        # that as a sequence of fillFileOffset and fillFileContent tuples.
-        return [('fillFileContent', self.body)]
+    def file_content_to_tuples(self, optimize:bool = False) -> List[Tuple]:
+        """Encode the file contents into a list of fillFileContent / fillFileOffset tuples that can be fed
+        into the asn.1 encoder.  If optimize is True, it will try to encode only the differences from the
+        fillFileContent of the profile template.  Otherwise, the entire file contents will be encoded
+        as-is."""
+        if not optimize:
+            # simplistic approach: encode the full file, ignoring the template/default
+            return [('fillFileContent', self.body)]
+        # Try to 'compress' the file body, based on the default file contents.
+        if self.template:
+            default = self.template.expand_default_value_pattern(length=len(self.body))
+            if not default:
+                sm = SequenceMatcher(a=b'\xff'*len(self.body), b=self.body)
+            else:
+                if default == self.body:
+                    # 100% match: return an empty tuple list to make eUICC use the default
+                    return []
+                sm = SequenceMatcher(a=default, b=self.body)
+        else:
+            # no template at all: we can only remove padding
+            sm = SequenceMatcher(a=b'\xff'*len(self.body), b=self.body)
+        matching_blocks = sm.get_matching_blocks()
+        # we can only make use of matches that have the same offset in 'a' and 'b'
+        matching_blocks = [x for x in matching_blocks if x.size > 0 and x.a == x.b]
+        non_matching_blocks = NonMatch.from_matchlist(matching_blocks, self.file_size)
+        ret = []
+        cur = 0
+        for block in non_matching_blocks:
+            ret.append(('fillFileOffset', block.a - cur))
+            ret.append(('fillFileContent', self.body[block.a:block.a+block.size]))
+            cur += block.size
+        return ret
 
     def __str__(self) -> str:
         return "File(%s)" % self.pe_name
