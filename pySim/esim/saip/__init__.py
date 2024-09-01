@@ -622,6 +622,9 @@ class ProfileElementGFM(ProfileElement):
         # indexed by PE-Name
         self.files = {}
         self.tdef = asn1.types['ProfileElement'].type.name_to_member[self.type]
+        if decoded:
+            return
+        self.decoded['fileManagementCMD'] = []
 
     def supports_file_for_path(self, path: Path, adf: Optional[str] = None) -> bool:
         """Does this ProfileElement support a file of given path?"""
