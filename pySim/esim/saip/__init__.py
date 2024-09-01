@@ -432,6 +432,8 @@ class File:
         return stream.getvalue()
 
     def file_content_to_tuples(self, optimize:bool = True) -> List[Tuple]:
+        if not self.file_type in ['TR', 'LF', 'CY', 'BT']:
+            return []
         if not optimize:
             # simplistic approach: encode the full file, ignoring the template/default
             return [('fillFileContent', self.body)]
