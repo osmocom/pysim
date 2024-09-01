@@ -117,9 +117,9 @@ class FileTemplate:
 
     def expand_default_value_pattern(self, length: Optional[int] = None) -> Optional[bytes]:
         """Expand the default value pattern to the specified length."""
-        if not length:
+        if length is None:
             length = self._default_value_len()
-        if not length:
+        if length is None:
             raise ValueError("%s does not have a default length" % self)
         if not self.default_val:
             return None
