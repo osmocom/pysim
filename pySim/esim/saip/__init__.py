@@ -441,6 +441,8 @@ class File:
         into the asn.1 encoder.  If optimize is True, it will try to encode only the differences from the
         fillFileContent of the profile template.  Otherwise, the entire file contents will be encoded
         as-is."""
+        if not self.file_type in ['TR', 'LF', 'CY', 'BT']:
+            return []
         if not optimize:
             # simplistic approach: encode the full file, ignoring the template/default
             return [('fillFileContent', self.body)]
