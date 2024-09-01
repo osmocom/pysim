@@ -112,6 +112,7 @@ class File:
         self.arr = None
         self.rec_len: Optional[int] = None
         self.nb_rec: Optional[int] = None
+        self._file_size = 0
         self.high_update: bool = False
         self.shareable: bool = True
         self.df_name = None
@@ -128,6 +129,16 @@ class File:
         if self.template:
             return self.template.name
         return None
+
+    @property
+    def file_size(self) -> Optional[int]:
+        """Return the size of the file in bytes."""
+        if self.file_type in ['LF', 'CY']:
+            return self.nb_rec * self.rec_len
+        elif self.file_type in ['TR', 'BT']:
+            return self._file_size
+        else:
+            return None
 
     @staticmethod
     def get_tuplelist_item(l: List[Tuple], key: str):
@@ -194,7 +205,7 @@ class File:
         if self.file_type in ['LF', 'CY']:
             fdb_dec['file_type'] = 'working_ef'
             if self.nb_rec and self.rec_len:
-                fileDescriptor['efFileSize'] = self._encode_file_size(self.nb_rec * self.rec_len)
+                fileDescriptor['efFileSize'] = self._encode_file_size(self.file_size)
             if self.file_type == 'LF':
                 fdb_dec['structure'] = 'linear_fixed'
             elif self.file_type == 'CY':
@@ -263,7 +274,7 @@ class File:
             if fdb_dec['file_type'] == 'working_ef':
                 efFileSize = fileDescriptor.get('efFileSize', None)
                 if efFileSize:
-                    self.file_size = self._decode_file_size(efFileSize)
+                    self._file_size = self._decode_file_size(efFileSize)
                 if fd_dec['num_of_rec']:
                     self.nb_rec = fd_dec['num_of_rec']
                 if fd_dec['record_len']:
@@ -277,7 +288,7 @@ class File:
                 elif fdb_dec['structure'] == 'ber_tlv':
                     self.file_type = 'BT'
                     if 'maximumFileSize' in pefi:
-                        self.file_size = self._decode_file_size(pefi['maximumFileSize'])
+                        self._file_size = self._decode_file_size(pefi['maximumFileSize'])
                 specialFileInformation = pefi.get('specialFileInformation', None)
                 if specialFileInformation:
                     if specialFileInformation[0] & 0x80:
