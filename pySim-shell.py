@@ -818,17 +818,17 @@ class PySimCommands(CommandSet):
         """Display information about the currently inserted card"""
         self._cmd.poutput("Card info:")
         self._cmd.poutput(" Name: %s" % self._cmd.card.name)
-        self._cmd.poutput(" ATR: %s" % self._cmd.rs.identity['ATR'])
+        self._cmd.poutput(" ATR: %s" % self._cmd.rs.identity['ATR'].lower())
         eid = self._cmd.rs.identity.get('EID', None)
         if eid:
-            self._cmd.poutput(" EID: %s" % eid)
-        self._cmd.poutput(" ICCID: %s" % self._cmd.rs.identity['ICCID'])
-        self._cmd.poutput(" Class-Byte: %s" % self._cmd.lchan.scc.cla_byte)
-        self._cmd.poutput(" Select-Ctrl: %s" % self._cmd.lchan.scc.sel_ctrl)
+            self._cmd.poutput(" EID: %s" % eid.lower())
+        self._cmd.poutput(" ICCID: %s" % self._cmd.rs.identity['ICCID'].lower())
+        self._cmd.poutput(" Class-Byte: %s" % self._cmd.lchan.scc.cla_byte.lower())
+        self._cmd.poutput(" Select-Ctrl: %s" % self._cmd.lchan.scc.sel_ctrl.lower())
         if len(self._cmd.rs.mf.applications) > 0:
             self._cmd.poutput(" AIDs:")
             for a in self._cmd.rs.mf.applications:
-                self._cmd.poutput("  %s" % a)
+                self._cmd.poutput("  %s" % a.lower())
 
 @with_default_category('ISO7816 Commands')
 class Iso7816Commands(CommandSet):
