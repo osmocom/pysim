@@ -826,8 +826,9 @@ class PySimCommands(CommandSet):
         self._cmd.poutput(" ICCID: %s" % self._cmd.rs.identity['ICCID'])
         self._cmd.poutput(" Class-Byte: %s" % self._cmd.lchan.scc.cla_byte)
         self._cmd.poutput(" Select-Ctrl: %s" % self._cmd.lchan.scc.sel_ctrl)
-        self._cmd.poutput(" AIDs:")
-        for a in self._cmd.rs.mf.applications:
+        if len(self._cmd.rs.mf.applications) > 0:
+            self._cmd.poutput(" AIDs:")
+            for a in self._cmd.rs.mf.applications:
                 self._cmd.poutput("  %s" % a)
 
 @with_default_category('ISO7816 Commands')
