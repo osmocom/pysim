@@ -1076,12 +1076,12 @@ class DF_GSM(CardDF):
             super().__init__()
 
         authenticate_parser = argparse.ArgumentParser()
-        authenticate_parser.add_argument('rand', type=is_hexstr, help='Random challenge')
+        authenticate_parser.add_argument('RAND', type=is_hexstr, help='Random challenge')
 
         @cmd2.with_argparser(authenticate_parser)
         def do_authenticate(self, opts):
             """Perform GSM Authentication."""
-            (data, sw) = self._cmd.lchan.scc.run_gsm(opts.rand)
+            (data, sw) = self._cmd.lchan.scc.run_gsm(opts.RAND)
             self._cmd.poutput_json(data)
 
 

@@ -348,8 +348,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         return -1
 
     bulk_script_parser = argparse.ArgumentParser()
-    bulk_script_parser.add_argument(
-        'script_path', help="path to the script file")
+    bulk_script_parser.add_argument('SCRIPT_PATH', help="path to the script file")
     bulk_script_parser.add_argument('--halt_on_error', help='stop card handling if an exeption occurs',
                                     action='store_true')
     bulk_script_parser.add_argument('--tries', type=int, default=2,
@@ -365,7 +364,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         """Run script on multiple cards (bulk provisioning)"""
 
         # Make sure that the script file exists and that it is readable.
-        if not os.access(opts.script_path, os.R_OK):
+        if not os.access(opts.SCRIPT_PATH, os.R_OK):
             self.poutput("Invalid script file!")
             return
 
@@ -390,7 +389,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
                         os.system(opts.pre_card_action)
 
                     # process the card
-                    rc = self._process_card(first, opts.script_path)
+                    rc = self._process_card(first, opts.SCRIPT_PATH)
                     if rc == 0:
                         success_count = success_count + 1
                         self._show_success_sign()
@@ -442,13 +441,13 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
             first = False
 
     echo_parser = argparse.ArgumentParser()
-    echo_parser.add_argument('string', help="string to echo on the shell", nargs='+')
+    echo_parser.add_argument('STRING', help="string to echo on the shell", nargs='+')
 
     @cmd2.with_argparser(echo_parser)
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_echo(self, opts):
         """Echo (print) a string on the console"""
-        self.poutput(' '.join(opts.string))
+        self.poutput(' '.join(opts.STRING))
 
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_version(self, opts):

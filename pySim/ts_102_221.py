@@ -906,14 +906,14 @@ class CardProfileUICC(CardProfile):
                 'Negotiated Duration: %u secs, Token: %s, SW: %s' % (duration, token, sw))
 
         resume_uicc_parser = argparse.ArgumentParser()
-        resume_uicc_parser.add_argument('token', type=str, help='Token provided during SUSPEND')
+        resume_uicc_parser.add_argument('TOKEN', type=str, help='Token provided during SUSPEND')
 
         @cmd2.with_argparser(resume_uicc_parser)
         def do_resume_uicc(self, opts):
             """Perform the REUSME UICC operation. Only supported on some UICC. Also: A power-cycle
             of the card is required between SUSPEND and RESUME, and only very few non-RESUME
             commands are permitted between SUSPEND and RESUME.  See TS 102 221 Section 11.1.22."""
-            self._cmd.card._scc.resume_uicc(opts.token)
+            self._cmd.card._scc.resume_uicc(opts.TOKEN)
 
         term_cap_parser = argparse.ArgumentParser()
         # power group

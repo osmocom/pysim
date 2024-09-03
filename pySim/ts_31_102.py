@@ -1707,14 +1707,14 @@ class ADF_USIM(CardADF):
     @with_default_category('Application-Specific Commands')
     class AddlShellCommands(CommandSet):
         authenticate_parser = argparse.ArgumentParser()
-        authenticate_parser.add_argument('rand', type=is_hexstr, help='Random challenge')
-        authenticate_parser.add_argument('autn', type=is_hexstr, help='Authentication Nonce')
+        authenticate_parser.add_argument('RAND', type=is_hexstr, help='Random challenge')
+        authenticate_parser.add_argument('AUTN', type=is_hexstr, help='Authentication Nonce')
         #authenticate_parser.add_argument('--context', help='Authentication context', default='3G')
 
         @cmd2.with_argparser(authenticate_parser)
         def do_authenticate(self, opts):
             """Perform Authentication and Key Agreement (AKA)."""
-            (data, _sw) = self._cmd.lchan.scc.authenticate(opts.rand, opts.autn)
+            (data, _sw) = self._cmd.lchan.scc.authenticate(opts.RAND, opts.AUTN)
             self._cmd.poutput_json(data)
 
         term_prof_parser = argparse.ArgumentParser()

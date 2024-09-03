@@ -627,19 +627,19 @@ class TransparentEF(CardEF):
         upd_bin_parser = argparse.ArgumentParser()
         upd_bin_parser.add_argument(
             '--offset', type=auto_uint16, default=0, help='Byte offset for start of read')
-        upd_bin_parser.add_argument('data', type=is_hexstr, help='Data bytes (hex format) to write')
+        upd_bin_parser.add_argument('DATA', type=is_hexstr, help='Data bytes (hex format) to write')
 
         @cmd2.with_argparser(upd_bin_parser)
         def do_update_binary(self, opts):
             """Update (Write) data of a transparent EF"""
-            (data, _sw) = self._cmd.lchan.update_binary(opts.data, opts.offset)
+            (data, _sw) = self._cmd.lchan.update_binary(opts.DATA, opts.offset)
             if data:
                 self._cmd.poutput(data)
 
         upd_bin_dec_parser = argparse.ArgumentParser()
         upd_bin_dec_parser.add_argument('--json-path', type=str,
                                         help='JSON path to modify specific element of file only')
-        upd_bin_dec_parser.add_argument('data', help='Abstract data (JSON format) to write')
+        upd_bin_dec_parser.add_argument('DATA', help='Abstract data (JSON format) to write')
 
         @cmd2.with_argparser(upd_bin_dec_parser)
         def do_update_binary_decoded(self, opts):
@@ -647,9 +647,9 @@ class TransparentEF(CardEF):
             if opts.json_path:
                 (data_json, _sw) = self._cmd.lchan.read_binary_dec()
                 js_path_modify(data_json, opts.json_path,
-                               json.loads(opts.data))
+                               json.loads(opts.DATA))
             else:
-                data_json = json.loads(opts.data)
+                data_json = json.loads(opts.DATA)
             (data, _sw) = self._cmd.lchan.update_binary_dec(data_json)
             if data:
                 self._cmd.poutput_json(data)
@@ -842,13 +842,13 @@ class LinFixedEF(CardEF):
         read_rec_parser.add_argument(
             '--count', type=auto_uint8, default=1, help='Number of records to be read, beginning at record_nr')
         read_rec_parser.add_argument(
-            'record_nr', type=auto_uint8, help='Number of record to be read')
+            'RECORD_NR', type=auto_uint8, help='Number of record to be read')
 
         @cmd2.with_argparser(read_rec_parser)
         def do_read_record(self, opts):
             """Read one or multiple records from a record-oriented EF"""
             for r in range(opts.count):
-                recnr = opts.record_nr + r
+                recnr = opts.RECORD_NR + r
                 (data, _sw) = self._cmd.lchan.read_record(recnr)
                 if len(data) > 0:
                     recstr = str(data)
@@ -860,12 +860,12 @@ class LinFixedEF(CardEF):
         read_rec_dec_parser.add_argument('--oneline', action='store_true',
                                          help='No JSON pretty-printing, dump as a single line')
         read_rec_dec_parser.add_argument(
-            'record_nr', type=auto_uint8, help='Number of record to be read')
+            'RECORD_NR', type=auto_uint8, help='Number of record to be read')
 
         @cmd2.with_argparser(read_rec_dec_parser)
         def do_read_record_decoded(self, opts):
             """Read + decode a record from a record-oriented EF"""
-            (data, _sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
+            (data, _sw) = self._cmd.lchan.read_record_dec(opts.RECORD_NR)
             self._cmd.poutput_json(data, opts.oneline)
 
         read_recs_parser = argparse.ArgumentParser()
@@ -899,13 +899,13 @@ class LinFixedEF(CardEF):
 
         upd_rec_parser = argparse.ArgumentParser()
         upd_rec_parser.add_argument(
-            'record_nr', type=auto_uint8, help='Number of record to be read')
-        upd_rec_parser.add_argument('data', type=is_hexstr, help='Data bytes (hex format) to write')
+            'RECORD_NR', type=auto_uint8, help='Number of record to be read')
+        upd_rec_parser.add_argument('DATA', type=is_hexstr, help='Data bytes (hex format) to write')
 
         @cmd2.with_argparser(upd_rec_parser)
         def do_update_record(self, opts):
             """Update (write) data to a record-oriented EF"""
-            (data, _sw) = self._cmd.lchan.update_record(opts.record_nr, opts.data)
+            (data, _sw) = self._cmd.lchan.update_record(opts.RECORD_NR, opts.DATA)
             if data:
                 self._cmd.poutput(data)
 
@@ -913,31 +913,31 @@ class LinFixedEF(CardEF):
         upd_rec_dec_parser.add_argument('--json-path', type=str,
                                         help='JSON path to modify specific element of record only')
         upd_rec_dec_parser.add_argument(
-            'record_nr', type=auto_uint8, help='Number of record to be read')
+            'RECORD_NR', type=auto_uint8, help='Number of record to be read')
         upd_rec_dec_parser.add_argument('data', help='Abstract data (JSON format) to write')
 
         @cmd2.with_argparser(upd_rec_dec_parser)
         def do_update_record_decoded(self, opts):
             """Encode + Update (write) data to a record-oriented EF"""
             if opts.json_path:
-                (data_json, _sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
+                (data_json, _sw) = self._cmd.lchan.read_record_dec(opts.RECORD_NR)
                 js_path_modify(data_json, opts.json_path,
                                json.loads(opts.data))
             else:
                 data_json = json.loads(opts.data)
             (data, _sw) = self._cmd.lchan.update_record_dec(
-                opts.record_nr, data_json)
+                opts.RECORD_NR, data_json)
             if data:
                 self._cmd.poutput(data)
 
         edit_rec_dec_parser = argparse.ArgumentParser()
         edit_rec_dec_parser.add_argument(
-            'record_nr', type=auto_uint8, help='Number of record to be edited')
+            'RECORD_NR', type=auto_uint8, help='Number of record to be edited')
 
         @cmd2.with_argparser(edit_rec_dec_parser)
         def do_edit_record_decoded(self, opts):
             """Edit the JSON representation of one record in an editor."""
-            (orig_json, _sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
+            (orig_json, _sw) = self._cmd.lchan.read_record_dec(opts.RECORD_NR)
             with tempfile.TemporaryDirectory(prefix='pysim_') as dirname:
                 filename = '%s/file' % dirname
                 # write existing data as JSON to file
@@ -951,7 +951,7 @@ class LinFixedEF(CardEF):
                     self._cmd.poutput("Data not modified, skipping write")
                 else:
                     (data, _sw) = self._cmd.lchan.update_record_dec(
-                        opts.record_nr, edited_json)
+                        opts.RECORD_NR, edited_json)
                     if data:
                         self._cmd.poutput_json(data)
 
@@ -1303,12 +1303,12 @@ class BerTlvEF(CardEF):
 
         retrieve_data_parser = argparse.ArgumentParser()
         retrieve_data_parser.add_argument(
-            'tag', type=auto_int, help='BER-TLV Tag of value to retrieve')
+            'TAG', type=auto_int, help='BER-TLV Tag of value to retrieve')
 
         @cmd2.with_argparser(retrieve_data_parser)
         def do_retrieve_data(self, opts):
             """Retrieve (Read) data from a BER-TLV EF"""
-            (data, _sw) = self._cmd.lchan.retrieve_data(opts.tag)
+            (data, _sw) = self._cmd.lchan.retrieve_data(opts.TAG)
             self._cmd.poutput(data)
 
         def do_retrieve_tags(self, _opts):
@@ -1318,24 +1318,24 @@ class BerTlvEF(CardEF):
 
         set_data_parser = argparse.ArgumentParser()
         set_data_parser.add_argument(
-            'tag', type=auto_int, help='BER-TLV Tag of value to set')
+            'TAG', type=auto_int, help='BER-TLV Tag of value to set')
         set_data_parser.add_argument('data', type=is_hexstr, help='Data bytes (hex format) to write')
 
         @cmd2.with_argparser(set_data_parser)
         def do_set_data(self, opts):
             """Set (Write) data for a given tag in a BER-TLV EF"""
-            (data, _sw) = self._cmd.lchan.set_data(opts.tag, opts.data)
+            (data, _sw) = self._cmd.lchan.set_data(opts.TAG, opts.data)
             if data:
                 self._cmd.poutput(data)
 
         del_data_parser = argparse.ArgumentParser()
         del_data_parser.add_argument(
-            'tag', type=auto_int, help='BER-TLV Tag of value to set')
+            'TAG', type=auto_int, help='BER-TLV Tag of value to set')
 
         @cmd2.with_argparser(del_data_parser)
         def do_delete_data(self, opts):
             """Delete data for a given tag in a BER-TLV EF"""
-            (data, _sw) = self._cmd.lchan.set_data(opts.tag, None)
+            (data, _sw) = self._cmd.lchan.set_data(opts.TAG, None)
             if data:
                 self._cmd.poutput(data)
 
