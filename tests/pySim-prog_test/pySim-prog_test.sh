@@ -134,6 +134,11 @@ function gen_ok_files {
 	    continue
 	fi
 	echo "Card is of type: $CARD_NAME"
+
+	if ! [ -r "$CARD_NAME.data" ]; then
+	    echo "Warning: no .data file for this card, skipping..."
+	    continue
+	fi
 	gen_ok_file $I $CARD_NAME
     done
 }
@@ -162,6 +167,11 @@ function run_test {
 	ADM=00000000
 	ADM_HEX=""
 	ADM_OPT="-a"
+
+	if ! [ -r "$CARD_NAME.data" ]; then
+	    echo "Warning: no .data file for this card, skipping..."
+	    continue
+	fi
 
 	source "$CARD_NAME.data"
 	if [ -n "$ADM_HEX" ]; then
