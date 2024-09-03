@@ -130,8 +130,8 @@ function gen_ok_files {
 	echo "Probing card in terminal #$I"
 	CARD_NAME=$(probe_card $I)
 	if [ -z "$CARD_NAME" ]; then
-	    echo "Error: Unresponsive card!"
-	    exit 1
+	    echo "Warning: Unresponsive card!"
+	    continue
 	fi
 	echo "Card is of type: $CARD_NAME"
 	gen_ok_file $I $CARD_NAME
@@ -146,8 +146,8 @@ function run_test {
 	echo "Probing card in terminal #$I"
 	CARD_NAME=$(probe_card $I)
 	if [ -z "$CARD_NAME" ]; then
-	    echo "Error: Unresponsive card!"
-	    exit 1
+	    echo "Warning: Unresponsive card, trying next terminal..."
+	    continue
 	fi
 	echo "Card is of type: $CARD_NAME"
 
@@ -216,7 +216,8 @@ N_TERMINALS=$OPT_N_TERMINALS
 # then the number of cards will be used as reader number.
 gen_card_list
 if [ $N_TERMINALS -eq 0 ]; then
-    N_TERMINALS=$N_CARDS
+    N_TERMINALS=`pcsc_scan -r | sed '$!d' | cut -d ':' -f 1`
+    ((N_TERMINALS++))
 fi
 echo "Number of card terminals installed: $N_TERMINALS"
 echo ""
