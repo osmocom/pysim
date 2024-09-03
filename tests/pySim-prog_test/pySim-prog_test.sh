@@ -119,7 +119,7 @@ function gen_ok_file {
 # reader
 function probe_card {
     TERMINAL=$1
-    RESULT=$(timeout 5 $PYSIM_PROG -p $TERMINAL -T | cut -d ":" -f 2 | tail -n 1 | xargs)
+    RESULT=$(timeout 5 $PYSIM_PROG -p $TERMINAL -T 2> /dev/null | cut -d ":" -f 2 | tail -n 1 | xargs)
     echo $RESULT
 }
 
