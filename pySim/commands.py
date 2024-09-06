@@ -794,8 +794,9 @@ class SimCardCommands:
         data, sw = self.send_apdu_checksw('8076010008' + token, apply_lchan = False)
         return (data, sw)
 
+    # GPC_SPE_034 11.3
     def get_data(self, tag: int, cla: int = 0x00):
-        data, sw = self.send_apdu('%02xca%04x00' % (cla, tag))
+        data, sw = self.send_apdu_checksw('%02xca%04x00' % (cla, tag))
         return (data, sw)
 
     # TS 31.102 Section 7.5.2
