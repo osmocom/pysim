@@ -35,6 +35,13 @@ from pySim.utils import Hexstr, SwHexstr, SwMatchstr
 from pySim.commands import SimCardCommands
 import pySim.global_platform
 
+# SGP.02 Section 2.2.2
+class Sgp02Eid(BER_TLV_IE, tag=0x5a):
+    _construct = BcdAdapter(GreedyBytes)
+
+# patch this into global_platform, to allow 'get_data sgp02_eid' in EF.ECASD
+pySim.global_platform.DataCollection.possible_nested.append(Sgp02Eid)
+
 def compute_eid_checksum(eid) -> str:
     """Compute and add/replace check digits of an EID value according to GSMA SGP.29 Section 10."""
     if isinstance(eid, str):
