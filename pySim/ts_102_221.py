@@ -786,7 +786,7 @@ class EF_UMPC(TransparentEF):
 
 class CardProfileUICC(CardProfile):
 
-    ORDER = 1
+    ORDER = 10
 
     def __init__(self, name='UICC'):
         files = [

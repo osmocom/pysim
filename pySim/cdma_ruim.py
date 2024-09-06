@@ -178,7 +178,7 @@ class DF_CDMA(CardDF):
 class CardProfileRUIM(CardProfile):
     '''R-UIM card profile as per 3GPP2 C.S0023-D'''
 
-    ORDER = 2
+    ORDER = 20
 
     def __init__(self):
         super().__init__('R-UIM', desc='CDMA R-UIM Card', cla="a0",
