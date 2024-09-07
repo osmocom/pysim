@@ -40,6 +40,12 @@ class ApduTracer:
     def trace_response(self, cmd, sw, resp):
         pass
 
+class StdoutApduTracer(ApduTracer):
+    """Minimalistic APDU tracer, printing commands to stdout."""
+    def trace_response(self, cmd, sw, resp):
+        print("-> %s %s" % (cmd[:10], cmd[10:]))
+        print("<- %s: %s" % (sw, resp))
+
 class ProactiveHandler(abc.ABC):
     """Abstract base class representing the interface of some code that handles
     the proactive commands, as returned by the card in responses to the FETCH
@@ -239,6 +245,8 @@ def argparse_add_reader_args(arg_parser: argparse.ArgumentParser):
     PcscSimLink.argparse_add_reader_args(arg_parser)
     ModemATCommandLink.argparse_add_reader_args(arg_parser)
     CalypsoSimLink.argparse_add_reader_args(arg_parser)
+    arg_parser.add_argument('--apdu-trace', action='store_true',
+                            help='Trace the command/response APDUs exchanged with the card')
 
     return arg_parser
 
@@ -247,6 +255,9 @@ def init_reader(opts, **kwargs) -> LinkBase:
     """
     Init card reader driver
     """
+    if opts.apdu_trace and not 'apdu_tracer' in kwargs:
+        kwargs['apdu_tracer'] = StdoutApduTracer()
+
     if opts.pcsc_dev is not None or opts.pcsc_regex is not None:
         from pySim.transport.pcsc import PcscSimLink
         sl = PcscSimLink(opts, **kwargs)
