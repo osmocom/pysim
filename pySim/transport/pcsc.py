@@ -97,7 +97,7 @@ class PcscSimLink(LinkBase):
     def disconnect(self):
         self._con.disconnect()
 
-    def reset_card(self):
+    def _reset_card(self):
         self.disconnect()
         self.connect()
         return 1

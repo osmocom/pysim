@@ -109,7 +109,7 @@ class CalypsoSimLink(LinkBase):
         rsp = self.sock.recv(exp_len)
         return rsp
 
-    def reset_card(self):
+    def _reset_card(self):
         # Request FULL reset
         req_msg = L1CTLMessageReset()
         self.sock.send(req_msg.gen_msg())

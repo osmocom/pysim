@@ -40,11 +40,17 @@ class ApduTracer:
     def trace_response(self, cmd, sw, resp):
         pass
 
+    def trace_reset(self):
+        pass
+
 class StdoutApduTracer(ApduTracer):
     """Minimalistic APDU tracer, printing commands to stdout."""
     def trace_response(self, cmd, sw, resp):
         print("-> %s %s" % (cmd[:10], cmd[10:]))
         print("<- %s: %s" % (sw, resp))
+
+    def trace_reset(self):
+        print("-- RESET")
 
 class ProactiveHandler(abc.ABC):
     """Abstract base class representing the interface of some code that handles
@@ -117,9 +123,16 @@ class LinkBase(abc.ABC):
         """
 
     @abc.abstractmethod
+    def _reset_card(self):
+        """Resets the card (power down/up)
+        """
+
     def reset_card(self):
         """Resets the card (power down/up)
         """
+        if self.apdu_tracer:
+            self.apdu_tracer.trace_reset()
+        return self._reset_card()
 
     def send_apdu_raw(self, pdu: Hexstr) -> ResTuple:
         """Sends an APDU with minimal processing

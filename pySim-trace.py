@@ -65,7 +65,7 @@ class DummySimLink(LinkBase):
     def disconnect(self):
         pass
 
-    def reset_card(self):
+    def _reset_card(self):
         return 1
 
     def get_atr(self):

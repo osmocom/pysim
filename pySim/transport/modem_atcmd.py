@@ -125,7 +125,7 @@ class ModemATCommandLink(LinkBase):
                 return
         raise ReaderError('Interface \'%s\' does not respond to \'AT\' command' % self._device)
 
-    def reset_card(self):
+    def _reset_card(self):
         # Reset the modem, just to be sure
         if self.send_at_cmd('ATZ') != [b'OK']:
             raise ReaderError('Failed to reset the modem')

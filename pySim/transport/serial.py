@@ -101,15 +101,15 @@ class SerialSimLink(LinkBase):
     def disconnect(self):
         pass  # Nothing to do really ...
 
-    def reset_card(self):
-        rv = self._reset_card()
+    def _reset_card(self):
+        rv = self.__reset_card()
         if rv == 0:
             raise NoCardError()
         if rv < 0:
             raise ProtocolError()
         return rv
 
-    def _reset_card(self):
+    def __reset_card(self):
         self._atr = None
         rst_meth_map = {
             'rts': self._sl.setRTS,
