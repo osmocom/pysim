@@ -116,6 +116,7 @@ def init_card(sl: LinkBase) -> Tuple[RuntimeState, SimCardBase]:
         except SwMatchError:
             # has ISD-R but not a SGP.22/SGP.32 eUICC - maybe SGP.02?
             pass
-        card.reset()
+        finally:
+            rs.reset()
 
     return rs, card
