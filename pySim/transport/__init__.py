@@ -333,11 +333,13 @@ def argparse_add_reader_args(arg_parser: argparse.ArgumentParser):
     from pySim.transport.pcsc import PcscSimLink
     from pySim.transport.modem_atcmd import ModemATCommandLink
     from pySim.transport.calypso import CalypsoSimLink
+    from pySim.transport.wsrc import WsrcSimLink
 
     SerialSimLink.argparse_add_reader_args(arg_parser)
     PcscSimLink.argparse_add_reader_args(arg_parser)
     ModemATCommandLink.argparse_add_reader_args(arg_parser)
     CalypsoSimLink.argparse_add_reader_args(arg_parser)
+    WsrcSimLink.argparse_add_reader_args(arg_parser)
     arg_parser.add_argument('--apdu-trace', action='store_true',
                             help='Trace the command/response APDUs exchanged with the card')
 
@@ -360,6 +362,9 @@ def init_reader(opts, **kwargs) -> LinkBase:
     elif opts.modem_dev is not None:
         from pySim.transport.modem_atcmd import ModemATCommandLink
         sl = ModemATCommandLink(opts, **kwargs)
+    elif opts.wsrc_server_url is not None:
+        from pySim.transport.wsrc import WsrcSimLink
+        sl = WsrcSimLink(opts, **kwargs)
     else:  # Serial reader is default
         print("No reader/driver specified; falling back to default (Serial reader)")
         from pySim.transport.serial import SerialSimLink

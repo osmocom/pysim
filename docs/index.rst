@@ -48,6 +48,7 @@ pySim consists of several parts:
    sim-rest
    suci-keytool
    saip-tool
+   wsrc
 
 
 Indices and tables
