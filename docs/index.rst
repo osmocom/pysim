@@ -46,6 +46,7 @@ pySim consists of several parts:
    osmo-smdpp
    sim-rest
    suci-keytool
+   wsrc
 
 
 Indices and tables
