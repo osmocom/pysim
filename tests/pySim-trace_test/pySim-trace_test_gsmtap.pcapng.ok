@@ -125,7 +125,7 @@ CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
 ===============================
 00 READ RECORD      MF/DF.TELECOM/DF.PHONEBOOK/EF.PBR   01       9000 {"raw": "a81ec0034f3a01c1034f3202c3034f5414c5034f0904c6034f5212c9034f2109a90ac4034f1108ca034f500daa14c2034f4a03c7034f4b06c8034f5313cb034f4f16ffffff"}
 ===============================
-00 READ RECORD      MF/ADF.USIM/EF.MSISDN               01       9000 {"msisdn": null}
+00 READ RECORD      MF/ADF.USIM/EF.MSISDN               01       9000 {"alpha_id": null, "len_of_bcd": 255, "ton_npi": {"ext": false, "type_of_number": "unknown", "numbering_plan_id": 7}, "dialing_nr": "19491234567890"}
 ===============================
 00 UPDATE RECORD    MF/ADF.USIM/EF.EPSNSC               01       9000 {"eps_nas__security__context": [{"ksi_asme": 7}, {"k_asme": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}, {"uplink_nas_count": 4294967295}, {"downlink_nas_count": 4294967295}, {"i_dof_nas_algorithms": "00"}]}
 ===============================
@@ -203,7 +203,7 @@ CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
 ===============================
 00 READ RECORD      MF/DF.TELECOM/EF.FDN                01       9000 {"alpha_id": "", "len_of_bcd": 255, "ton_npi": {"ext": true, "type_of_number": "reserved_for_extension", "numbering_plan_id": "reserved_for_extension"}, "dialing_nr": "", "cap_conf_id": 255, "ext2_record_id": 255}
 ===============================
-00 READ RECORD      MF/ADF.USIM/EF.MSISDN               01       9000 {"msisdn": null}
+00 READ RECORD      MF/ADF.USIM/EF.MSISDN               01       9000 {"alpha_id": null, "len_of_bcd": 255, "ton_npi": {"ext": false, "type_of_number": "unknown", "numbering_plan_id": 7}, "dialing_nr": "19491234567890"}
 ===============================
 00 SEARCH RECORD    MF/DF.TELECOM/EF.SDN                01       9000 {"cmd": {"file": "currently_selected_ef", "mode": "forward_search", "record_number": 1, "search_string": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}, "rsp": {"body": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], "sw": "9000"}}
 ===============================
@@ -357,7 +357,7 @@ CardReset(3b9f96801f878031e073fe211b674a4c753034054ba9)
 ===============================
 00 MANAGE CHANNEL                                       02       9000 {"mode": "open_channel", "created_channel": 2}
 ===============================
-00 READ RECORD      MF/ADF.USIM/EF.MSISDN               01       9000 {"msisdn": null}
+00 READ RECORD      MF/ADF.USIM/EF.MSISDN               01       9000 {"alpha_id": null, "len_of_bcd": 255, "ton_npi": {"ext": false, "type_of_number": "unknown", "numbering_plan_id": 7}, "dialing_nr": "19491234567890"}
 ===============================
 01 READ RECORD      MF/ADF.ISIM/EF.IMPU                 03       9000 {"impu": null}
 ===============================

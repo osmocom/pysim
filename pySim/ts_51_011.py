@@ -40,7 +40,6 @@ from osmocom.utils import *
 from osmocom.construct import *
 
 from pySim.utils import dec_iccid, enc_iccid, dec_imsi, enc_imsi, dec_plmn, enc_plmn, dec_xplmn_w_act
-from pySim.utils import dec_msisdn, enc_msisdn
 from pySim.profile import CardProfile, CardProfileAddon
 from pySim.filesystem import *
 from pySim.ts_31_102_telecom import DF_PHONEBOOK, DF_MULTIMEDIA, DF_MCS, DF_V2X
@@ -189,20 +188,54 @@ class EF_SMS(LinFixedEF):
 
 # TS 51.011 Section 10.5.5
 class EF_MSISDN(LinFixedEF):
+    _test_de_encode = [
+        ( 'ffffffffffffffffffffffffffffffffffffffff04b12143f5ffffffffffffffffff',
+            {"alpha_id": "", "len_of_bcd": 4, "ton_npi": {"ext": True, "type_of_number": "network_specific",
+                                                          "numbering_plan_id": "isdn_e164"},
+             "dialing_nr": "12345f"}),
+        ( '456967656e65205275666e756d6d6572ffffffff0891947172199181f3ffffffffff',
+            {"alpha_id": "Eigene Rufnummer", "len_of_bcd": 8, "ton_npi": {"ext": True, "type_of_number": "international",
+                                                                          "numbering_plan_id": "isdn_e164"},
+             "dialing_nr": "4917279119183f"}),
+    ]
+
+    # Ensure deprecated representations still work
+    _test_encode = [
+        ( 'ffffffffffffffffffffffffffffffffffffffff05b1716662f6ffffffffffffffff',
+            {"msisdn": [ 1, 3, "1766266"]}),
+        ( 'ffffffffffffffffffffffffffffffffffffffff06b121436587f9ffffffffffffff',
+            {"msisdn": "123456789"}),
+    ]
+
+    _test_no_pad = True
+
     def __init__(self, fid='6f40', sfid=None, name='EF.MSISDN', desc='MSISDN', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(15, 34), leftpad=True, **kwargs)
+        self._construct = Struct('alpha_id'/COptional(GsmOrUcs2Adapter(Rpad(Bytes(this._.total_len-14)))),
+                                 'len_of_bcd'/Int8ub,
+                                 'ton_npi'/TonNpi,
+                                 'dialing_nr'/ExtendedBcdAdapter(BcdAdapter(Rpad(Bytes(10)))),
+                                  Padding(2, pattern=b'\xff'))
 
-    def _decode_record_hex(self, raw_hex_data, **kwargs):
-        return {'msisdn': dec_msisdn(raw_hex_data)}
-
-    def _encode_record_hex(self, abstract, **kwargs):
-        msisdn = abstract['msisdn']
-        if type(msisdn) == str:
-            encoded_msisdn = enc_msisdn(msisdn)
-        else:
-            encoded_msisdn = enc_msisdn(msisdn[2], msisdn[0], msisdn[1])
-        alpha_identifier = (list(self.rec_len)[0] - len(encoded_msisdn) // 2) * "ff"
-        return alpha_identifier + encoded_msisdn
+    # Maintain compatibility with deprecated representations
+    def encode_record_hex(self, abstract_data: dict, record_nr: int, total_len: int = None) -> str:
+        if 'msisdn' in abstract_data:
+            msisdn = abstract_data['msisdn']
+            if type(msisdn) == str:
+                npi = 'isdn_e164'
+                ton = 'network_specific'
+                dialing_nr = msisdn + len(msisdn) % 2 * "f"
+            else:
+                npi = msisdn[0]
+                ton = msisdn[1]
+                dialing_nr = msisdn[2] + len(msisdn[2]) % 2 * "f"
+            abstract_data = {'alpha_id' : "",
+                             'len_of_bcd' : len(dialing_nr) // 2 + 1,
+                             'ton_npi' : {'ext' : True,
+                                          'type_of_number' : ton,
+                                          'numbering_plan_id' : npi},
+                             'dialing_nr' : dialing_nr}
+        return super().encode_record_hex(abstract_data, record_nr, total_len)
 
 # TS 51.011 Section 10.5.6
 class EF_SMSP(LinFixedEF):
