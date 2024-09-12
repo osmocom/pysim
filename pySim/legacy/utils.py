@@ -20,8 +20,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from typing import Optional, Tuple
 from pySim.utils import Hexstr, rpad, enc_plmn, h2i, i2s, s2h
 from pySim.utils import dec_xplmn_w_act, dec_xplmn, dec_mcc_from_plmn, dec_mnc_from_plmn
+from osmocom.utils import swap_nibbles, h2b, b2h
 
 def hexstr_to_Nbytearr(s, nbytes):
     return [s[i:i+(nbytes*2)] for i in range(0, len(s), (nbytes*2))]
@@ -330,3 +332,82 @@ def enc_addr_tlv(addr, addr_type='00'):
         s += '80' + ('%02x' % ((len(ipv4_str)//2)+2)) + '01' + 'ff' + ipv4_str
 
     return s
+
+
+def dec_msisdn(ef_msisdn: Hexstr) -> Optional[Tuple[int, int, Optional[str]]]:
+    """
+    Decode MSISDN from EF.MSISDN or EF.ADN (same structure).
+    See 3GPP TS 31.102, section 4.2.26 and 4.4.2.3.
+    """
+
+    # Convert from str to (kind of) 'bytes'
+    ef_msisdn = h2b(ef_msisdn)
+
+    # Make sure mandatory fields are present
+    if len(ef_msisdn) < 14:
+        raise ValueError("EF.MSISDN is too short")
+
+    # Skip optional Alpha Identifier
+    xlen = len(ef_msisdn) - 14
+    msisdn_lhv = ef_msisdn[xlen:]
+
+    # Parse the length (in bytes) of the BCD encoded number
+    bcd_len = msisdn_lhv[0]
+    # BCD length = length of dial num (max. 10 bytes) + 1 byte ToN and NPI
+    if bcd_len == 0xff:
+        return None
+    elif bcd_len > 11 or bcd_len < 1:
+        raise ValueError(
+            "Length of MSISDN (%d bytes) is out of range" % bcd_len)
+
+    # Parse ToN / NPI
+    ton = (msisdn_lhv[1] >> 4) & 0x07
+    npi = msisdn_lhv[1] & 0x0f
+    bcd_len -= 1
+
+    # No MSISDN?
+    if not bcd_len:
+        return (npi, ton, None)
+
+    msisdn = swap_nibbles(b2h(msisdn_lhv[2:][:bcd_len])).rstrip('f')
+    # International number 10.5.118/3GPP TS 24.008
+    if ton == 0x01:
+        msisdn = '+' + msisdn
+
+    return (npi, ton, msisdn)
+
+
+def enc_msisdn(msisdn: str, npi: int = 0x01, ton: int = 0x03) -> Hexstr:
+    """
+    Encode MSISDN as LHV so it can be stored to EF.MSISDN.
+    See 3GPP TS 31.102, section 4.2.26 and 4.4.2.3. (The result
+    will not contain the optional Alpha Identifier at the beginning.)
+
+    Default NPI / ToN values:
+      - NPI: ISDN / telephony numbering plan (E.164 / E.163),
+      - ToN: network specific or international number (if starts with '+').
+    """
+
+    # If no MSISDN is supplied then encode the file contents as all "ff"
+    if msisdn in ["", "+"]:
+        return "ff" * 14
+
+    # Leading '+' indicates International Number
+    if msisdn[0] == '+':
+        msisdn = msisdn[1:]
+        ton = 0x01
+
+    # An MSISDN must not exceed 20 digits
+    if len(msisdn) > 20:
+        raise ValueError("msisdn must not be longer than 20 digits")
+
+    # Append 'f' padding if number of digits is odd
+    if len(msisdn) % 2 > 0:
+        msisdn += 'f'
+
+    # BCD length also includes NPI/ToN header
+    bcd_len = len(msisdn) // 2 + 1
+    npi_ton = (npi & 0x0f) | ((ton & 0x07) << 4) | 0x80
+    bcd = rpad(swap_nibbles(msisdn), 10 * 2)  # pad to 10 octets
+
+    return ('%02x' % bcd_len) + ('%02x' % npi_ton) + bcd + ("ff" * 2)

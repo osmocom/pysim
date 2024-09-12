@@ -42,8 +42,8 @@ from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, argparse_add_reader_args
 from pySim.exceptions import SwMatchError
 from pySim.legacy.cards import card_detect, SimCard, UsimCard, IsimCard
-from pySim.utils import dec_imsi, dec_iccid, dec_msisdn
-from pySim.legacy.utils import format_xplmn_w_act, dec_st
+from pySim.utils import dec_imsi, dec_iccid
+from pySim.legacy.utils import format_xplmn_w_act, dec_st, dec_msisdn
 
 option_parser = argparse.ArgumentParser(description='Legacy tool for reading some parts of a SIM card',
                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)

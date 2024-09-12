@@ -7,11 +7,11 @@ from smartcard.util import toBytes
 from pytlv.TLV import *
 
 from pySim.cards import SimCardBase, UiccCardBase
-from pySim.utils import dec_iccid, enc_iccid, dec_imsi, enc_imsi, dec_msisdn, enc_msisdn
+from pySim.utils import dec_iccid, enc_iccid, dec_imsi, enc_imsi
 from pySim.utils import enc_plmn, get_addr_type
 from pySim.utils import is_hex, h2b, b2h, h2s, s2h, lpad, rpad
 from pySim.legacy.utils import enc_ePDGSelection, format_xplmn_w_act, format_xplmn, dec_st, enc_st
-from pySim.legacy.utils import format_ePDGSelection, dec_addr_tlv, enc_addr_tlv
+from pySim.legacy.utils import format_ePDGSelection, dec_addr_tlv, enc_addr_tlv, dec_msisdn, enc_msisdn
 from pySim.legacy.ts_51_011 import EF, DF
 from pySim.legacy.ts_31_102 import EF_USIM_ADF_map
 from pySim.legacy.ts_31_103 import EF_ISIM_ADF_map
