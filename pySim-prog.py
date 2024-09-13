@@ -623,6 +623,9 @@ def read_params_csv(opts, imsi=None, iccid=None):
 
 def write_params_hlr(opts, params):
     # SQLite3 OpenBSC HLR
+    # FIXME: The format of the osmo-hlr database has evolved, so that the code below will no longer work.
+    print("Warning: the database format of recent OsmoHLR versions is not compatible with pySim-prog!")
+
     if opts.write_hlr:
         import sqlite3
         conn = sqlite3.connect(opts.write_hlr)
