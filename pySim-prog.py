@@ -732,12 +732,12 @@ def process_card(scc, opts, first, ch):
     if opts.source == 'cmdline':
         cp = gen_parameters(opts)
     elif opts.source == 'csv':
-        imsi = None
-        iccid = None
         if opts.read_iccid:
             (res, _) = scc.read_binary(['3f00', '2fe2'], length=10)
             iccid = dec_iccid(res)
-        elif opts.read_imsi:
+        else:
+            iccid = opts.iccid
+        if opts.read_imsi:
             (res, _) = scc.read_binary(EF['IMSI'])
             imsi = swap_nibbles(res)[3:]
         else:
