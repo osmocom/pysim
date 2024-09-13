@@ -204,8 +204,7 @@ def parse_options():
             parser.error("CSV mode requires a CSV input file")
     elif options.source == 'cmdline':
         if ((options.imsi is None) or (options.iccid is None)) and (options.num is None):
-            parser.error(
-                "If either IMSI or ICCID isn't specified, num is required")
+            parser.error("If either IMSI or ICCID isn't specified, num is required")
     else:
         parser.error("Only `cmdline' and `csv' sources supported")
 
