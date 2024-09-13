@@ -725,6 +725,7 @@ def process_card(scc, opts, first, ch):
             card.reset()
 
     cp = None
+
     # Generate parameters
     if opts.source == 'cmdline':
         cp = gen_parameters(opts)
