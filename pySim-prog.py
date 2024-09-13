@@ -197,9 +197,8 @@ def parse_options():
         return options
 
     if options.source == 'csv':
-        if (options.imsi is None) and (options.batch_mode is False) and (options.read_imsi is False) and (options.read_iccid is False):
-            parser.error(
-                "CSV mode needs either an IMSI, --read-imsi, --read-iccid or batch mode")
+        if (options.imsi is None) and (options.iccid is None)  and (options.read_imsi is False) and (options.read_iccid is False):
+           parser.error("CSV mode requires one additional parameter: --read-iccid, --read-imsi, --iccid or --imsi")
         if options.read_csv is None:
             parser.error("CSV mode requires a CSV input file")
     elif options.source == 'cmdline':
