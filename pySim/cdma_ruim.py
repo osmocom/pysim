@@ -24,7 +24,6 @@ from osmocom.utils import *
 from osmocom.construct import *
 
 from pySim.filesystem import *
-from pySim.profile import match_ruim
 from pySim.profile import CardProfile, CardProfileAddon
 from pySim.ts_51_011 import CardProfileSIM
 from pySim.ts_51_011 import DF_TELECOM, DF_GSM
@@ -191,8 +190,11 @@ class CardProfileRUIM(CardProfile):
         return CardProfileSIM.decode_select_response(data_hex)
 
     @classmethod
-    def match_with_card(cls, scc: SimCardCommands) -> bool:
-        return match_ruim(scc)
+    def _try_match_card(cls, scc: SimCardCommands) -> None:
+        """ Try to access MF/DF.CDMA via 2G APDUs (3GPP TS 11.11), if this works,
+        the card is considered an R-UIM card for CDMA."""
+        cls._mf_select_test(scc, "a0", "0000", ["3f00", "7f25"])
+
 
 class AddonRUIM(CardProfileAddon):
     """An Addon that can be found on on a combined SIM + RUIM or UICC + RUIM to support CDMA."""

@@ -27,7 +27,6 @@ from osmocom.tlv import *
 from pySim.utils import *
 from pySim.filesystem import *
 from pySim.profile import CardProfile
-from pySim.profile import match_uicc
 from pySim import iso7816_4
 
 # A UICC will usually also support 2G functionality. If this is the case, we
@@ -885,8 +884,10 @@ class CardProfileUICC(CardProfile):
         return flatten_dict_lists(d['fcp_template'])
 
     @classmethod
-    def match_with_card(cls, scc: SimCardCommands) -> bool:
-        return match_uicc(scc)
+    def _try_match_card(cls, scc: SimCardCommands) -> None:
+        """ Try to access MF via UICC APDUs (3GPP TS 102.221), if this works, the
+        card is considered a UICC card."""
+        cls._mf_select_test(scc, "00", "0004", ["3f00"])
 
     @with_default_category('TS 102 221 Specific Commands')
     class AddlShellCommands(CommandSet):

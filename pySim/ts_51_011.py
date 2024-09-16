@@ -41,7 +41,6 @@ from osmocom.construct import *
 
 from pySim.utils import dec_iccid, enc_iccid, dec_imsi, enc_imsi, dec_plmn, enc_plmn, dec_xplmn_w_act
 from pySim.utils import dec_msisdn, enc_msisdn
-from pySim.profile import match_sim
 from pySim.profile import CardProfile, CardProfileAddon
 from pySim.filesystem import *
 from pySim.ts_31_102_telecom import DF_PHONEBOOK, DF_MULTIMEDIA, DF_MCS, DF_V2X
@@ -1193,8 +1192,8 @@ class CardProfileSIM(CardProfile):
         return ret
 
     @classmethod
-    def match_with_card(cls, scc: SimCardCommands) -> bool:
-        return match_sim(scc)
+    def _try_match_card(cls, scc: SimCardCommands) -> None:
+        cls._mf_select_test(scc, "a0", "0000", ["3f00"])
 
 
 class AddonSIM(CardProfileAddon):

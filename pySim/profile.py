@@ -25,53 +25,10 @@ import abc
 import operator
 from typing import List
 
+from pySim.exceptions import SwMatchError
 from pySim.commands import SimCardCommands
 from pySim.filesystem import CardApplication, interpret_sw
 from pySim.utils import all_subclasses
-
-def _mf_select_test(scc: SimCardCommands,
-                    cla_byte: str, sel_ctrl: str,
-                    fids: List[str]) -> bool:
-    cla_byte_bak = scc.cla_byte
-    sel_ctrl_bak = scc.sel_ctrl
-    scc.reset_card()
-
-    scc.cla_byte = cla_byte
-    scc.sel_ctrl = sel_ctrl
-    rc = True
-    try:
-        for fid in fids:
-            scc.select_file(fid)
-    except:
-        rc = False
-
-    scc.reset_card()
-    scc.cla_byte = cla_byte_bak
-    scc.sel_ctrl = sel_ctrl_bak
-    return rc
-
-
-def match_uicc(scc: SimCardCommands) -> bool:
-    """ Try to access MF via UICC APDUs (3GPP TS 102.221), if this works, the
-    card is considered a UICC card.
-    """
-    return _mf_select_test(scc, "00", "0004", ["3f00"])
-
-
-def match_sim(scc: SimCardCommands) -> bool:
-    """ Try to access MF via 2G APDUs (3GPP TS 11.11), if this works, the card
-    is also a simcard. This will be the case for most UICC cards, but there may
-    also be plain UICC cards without 2G support as well.
-    """
-    return _mf_select_test(scc, "a0", "0000", ["3f00"])
-
-
-def match_ruim(scc: SimCardCommands) -> bool:
-    """ Try to access MF/DF.CDMA via 2G APDUs (3GPP TS 11.11), if this works,
-    the card is considered an R-UIM card for CDMA.
-    """
-    return _mf_select_test(scc, "a0", "0000", ["3f00", "7f25"])
-
 
 class CardProfile:
     """A Card Profile describes a card, it's filesystem hierarchy, an [initial] list of
@@ -137,11 +94,37 @@ class CardProfile:
         """
         return data_hex
 
+    @staticmethod
+    def _mf_select_test(scc: SimCardCommands,
+                        cla_byte: str, sel_ctrl: str,
+                        fids: List[str]) -> bool:
+        """Helper function used by some derived _try_match_card() methods."""
+        scc.reset_card()
+
+        scc.cla_byte = cla_byte
+        scc.sel_ctrl = sel_ctrl
+        for fid in fids:
+            scc.select_file(fid)
+
     @classmethod
     @abc.abstractmethod
-    def match_with_card(cls, scc: SimCardCommands) -> bool:
-        """Check if the specific profile matches the card. This method is a
+    def _try_match_card(cls, scc: SimCardCommands) -> None:
+        """Try to see if the specific profile matches the card. This method is a
         placeholder that is overloaded by specific dirived classes. The method
+        actively probes the card to make sure the profile class matches the
+        physical card. This usually also means that the card is reset during
+        the process, so this method must not be called at random times. It may
+        only be called on startup.  If there is no exception raised, we assume
+        the card matches the profile.
+
+        Args:
+                scc: SimCardCommands class
+        """
+        pass
+
+    @classmethod
+    def match_with_card(cls, scc: SimCardCommands) -> bool:
+        """Check if the specific profile matches the card. The method
         actively probes the card to make sure the profile class matches the
         physical card. This usually also means that the card is reset during
         the process, so this method must not be called at random times. It may
@@ -152,7 +135,17 @@ class CardProfile:
         Returns:
                 match = True, no match = False
         """
-        return False
+        sel_backup = scc.sel_ctrl
+        cla_backup = scc.cla_byte
+        try:
+            cls._try_match_card(scc)
+            return True
+        except SwMatchError:
+            return False
+        finally:
+            scc.sel_ctrl = sel_backup
+            scc.cla_byte = cla_backup
+            scc.reset_card()
 
     @staticmethod
     def pick(scc: SimCardCommands):
