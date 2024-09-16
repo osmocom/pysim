@@ -137,9 +137,9 @@ class CardProfile:
         """
         return data_hex
 
-    @staticmethod
+    @classmethod
     @abc.abstractmethod
-    def match_with_card(scc: SimCardCommands) -> bool:
+    def match_with_card(cls, scc: SimCardCommands) -> bool:
         """Check if the specific profile matches the card. This method is a
         placeholder that is overloaded by specific dirived classes. The method
         actively probes the card to make sure the profile class matches the

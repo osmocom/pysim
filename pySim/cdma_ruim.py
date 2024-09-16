@@ -190,8 +190,8 @@ class CardProfileRUIM(CardProfile):
         # TODO: Response parameters/data in case of DF_CDMA (section 2.6)
         return CardProfileSIM.decode_select_response(data_hex)
 
-    @staticmethod
-    def match_with_card(scc: SimCardCommands) -> bool:
+    @classmethod
+    def match_with_card(cls, scc: SimCardCommands) -> bool:
         return match_ruim(scc)
 
 class AddonRUIM(CardProfileAddon):

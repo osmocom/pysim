@@ -1192,8 +1192,8 @@ class CardProfileSIM(CardProfile):
                 ret['life_cycle_status_int'] = 'terminated'
         return ret
 
-    @staticmethod
-    def match_with_card(scc: SimCardCommands) -> bool:
+    @classmethod
+    def match_with_card(cls, scc: SimCardCommands) -> bool:
         return match_sim(scc)
 
 

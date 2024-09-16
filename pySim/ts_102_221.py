@@ -884,8 +884,8 @@ class CardProfileUICC(CardProfile):
         d = t.to_dict()
         return flatten_dict_lists(d['fcp_template'])
 
-    @staticmethod
-    def match_with_card(scc: SimCardCommands) -> bool:
+    @classmethod
+    def match_with_card(cls, scc: SimCardCommands) -> bool:
         return match_uicc(scc)
 
     @with_default_category('TS 102 221 Specific Commands')
