@@ -19,15 +19,20 @@ support for profile personalization yet.
 
 osmo-smdpp currently
 
-* uses test certificates copied from GSMA SGP.26 into `./smdpp-data/certs`, assuming that your osmo-smdppp
-  would be running at the host name `testsmdpplus1.example.com`
+* [by default] uses test certificates copied from GSMA SGP.26 into `./smdpp-data/certs`, assuming that your
+  osmo-smdppp would be running at the host name `testsmdpplus1.example.com`. You can of course replace those
+  certificates with your own, whether SGP.26 derived or part of a *private root CA* setup with mathcing eUICCs.
 * doesn't understand profile state. Any profile can always be downloaded any number of times, irrespective
-  of the EID or whether it was donwloaded before
-* doesn't perform any personalization, so the IMSI/ICCID etc. are always identical
+  of the EID or whether it was donwloaded before.  This is actually very useful for R&D and testing, as it
+  doesn't require you to generate new profiles all the time.  This logic of course is unsuitable for
+  production usage.
+* doesn't perform any personalization, so the IMSI/ICCID etc. are always identical (the ones that are stored in
+  the respective UPP `.der` files)
 * **is absolutely insecure**, as it
 
- * does not perform any certificate verification
- * does not evaluate/consider any *Matching ID* or *Confirmation Code*
+ * does not perform all of the mandatory certificate verification (it checks the certificate chain, but not
+   the expiration dates nor any CRL)
+ * does not evaluate/consider any *Confirmation Code*
  * stores the sessions in an unencrypted _python shelve_ and is hence leaking one-time key materials
    used for profile encryption and signing.
 
@@ -82,7 +87,8 @@ osmo-smdpp currently doesn't have any configuration file or command line options
 and it will bind its plain-HTTP ES9+ interface to local TCP port 8000.
 
 The `smdpp-data/certs`` directory contains the DPtls, DPauth and DPpb as well as CI certificates
-used; they are copied from GSMA SGP.26 v2.
+used; they are copied from GSMA SGP.26 v2.  You can of course replace them with custom certificates
+if you're operating eSIM with a *private root CA*.
 
 The `smdpp-data/upp` directory contains the UPP (Unprotected Profile Package) used.  The file names (without
 .der suffix) are looked up by the matchingID parameter from the activation code presented by the LPA.
