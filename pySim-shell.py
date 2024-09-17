@@ -56,7 +56,7 @@ from pySim.transport import init_reader, ApduTracer, argparse_add_reader_args, P
 from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, dec_iccid, sw_match
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
-from pySim.filesystem import CardMF, CardEF, CardDF, CardADF
+from pySim.filesystem import CardMF, CardEF, CardDF, CardADF, LinFixedEF, TransparentEF, BerTlvEF
 from pySim.ts_102_221 import pin_names
 from pySim.ts_102_222 import Ts102222Commands
 from pySim.gsm_r import DF_EIRENE
@@ -766,9 +766,28 @@ class PySimCommands(CommandSet):
         """Display human readable file description for the currently selected file"""
         desc = self._cmd.lchan.selected_file.desc
         if desc:
-            self._cmd.poutput(desc)
+            self._cmd.poutput("%s: %s" % (self._cmd.lchan.selected_file, desc))
         else:
-            self._cmd.poutput("no description available")
+            self._cmd.poutput("%s: no description available" % self._cmd.lchan.selected_file)
+        self._cmd.poutput(" file structure: %s" % self._cmd.lchan.selected_file_structure())
+        if isinstance(self._cmd.lchan.selected_file, LinFixedEF):
+            self._cmd.poutput(" record length:")
+            self._cmd.poutput("  minimum_length: %s" % str(self._cmd.lchan.selected_file.rec_len[0]))
+            self._cmd.poutput("  recommended_length: %s" % str(self._cmd.lchan.selected_file.rec_len[1]))
+            self._cmd.poutput("  actual_length: %s" % str(self._cmd.lchan.selected_file_record_len()))
+            self._cmd.poutput(" number of records: %s" % str(self._cmd.lchan.selected_file_num_of_rec()))
+        elif isinstance(self._cmd.lchan.selected_file, TransparentEF):
+            self._cmd.poutput(" file size:")
+            self._cmd.poutput("  minimum_size: %s" % str(self._cmd.lchan.selected_file.size[0]))
+            self._cmd.poutput("  recommended_size: %s" % str(self._cmd.lchan.selected_file.size[1]))
+            self._cmd.poutput("  actual_size: %s" % str(self._cmd.lchan.selected_file_size()))
+        elif isinstance(self._cmd.lchan.selected_file, BerTlvEF):
+            self._cmd.poutput(" file size:")
+            self._cmd.poutput("  minimum_size: %s" % str(self._cmd.lchan.selected_file.size[0]))
+            self._cmd.poutput("  recommended_size: %s" % str(self._cmd.lchan.selected_file.size[1]))
+            self._cmd.poutput("  actual_size: %s" % str(self._cmd.lchan.selected_file_size()))
+            self._cmd.poutput("  reserved_file_size: %s" % str(self._cmd.lchan.selected_file_reserved_file_size()))
+            self._cmd.poutput("  maximum_file_size: %s" % str(self._cmd.lchan.selected_file_maximum_file_size()))
 
     verify_adm_parser = argparse.ArgumentParser()
     verify_adm_parser.add_argument('--pin-is-hex', action='store_true',

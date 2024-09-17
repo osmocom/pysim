@@ -217,6 +217,12 @@ class RuntimeLchan:
     def selected_file_size(self) -> Optional[int]:
         return self.selected_file_fcp.get('file_size')
 
+    def selected_file_reserved_file_size(self) -> Optional[int]:
+        return self.selected_file_fcp['proprietary_information'].get('reserved_file_size')
+
+    def selected_file_maximum_file_size(self) -> Optional[int]:
+        return self.selected_file_fcp['proprietary_information'].get('maximum_file_size')
+
     def get_cwd(self) -> CardDF:
         """Obtain the current working directory.
 
