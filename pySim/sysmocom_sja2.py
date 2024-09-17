@@ -252,7 +252,7 @@ class EF_USIM_AUTH_KEY(TransparentEF):
         else:
             return parse_construct(self._construct, raw_bin_data)
 
-    def _encode_bin(self, abstract_data: dict) -> bytearray:
+    def _encode_bin(self, abstract_data: dict, **kwargs) -> bytearray:
         if abstract_data['cfg']['algorithm'] == 'tuak':
             return build_construct(self._constr_tuak, abstract_data)
         else:

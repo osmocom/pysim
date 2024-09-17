@@ -743,7 +743,26 @@ class TransparentEF(CardEF):
             return t.to_dict()
         return {'raw': raw_bin_data.hex()}
 
-    def encode_bin(self, abstract_data: dict) -> bytearray:
+    def __get_size(self, total_len: Optional[int] = None) -> Optional[int]:
+        """Get the size (total length) of the file"""
+
+        # Caller has provided the actual total length of the file, this should be the default case
+        if total_len is not None:
+            return total_len
+
+        if self.size is None:
+            return None
+
+        # Alternatively use the recommended size from the specification
+        if self.size[1] is not None:
+            return self.size[1]
+        # In case no recommended size is specified, use the minimum size
+        if self.size[0] is not None:
+            return self.size[0]
+
+        return None
+
+    def encode_bin(self, abstract_data: dict, total_len: Optional[int] = None) -> bytearray:
         """Encode abstract representation into raw (binary) data.
 
         A derived class would typically provide an _encode_bin() or _encode_hex() method
@@ -752,17 +771,18 @@ class TransparentEF(CardEF):
 
         Args:
             abstract_data : dict representing the decoded data
+            total_len : expected total length of the encoded data (file size)
         Returns:
             binary encoded data
         """
         method = getattr(self, '_encode_bin', None)
         if callable(method):
-            return method(abstract_data)
+            return method(abstract_data, total_len = self.__get_size(total_len))
         method = getattr(self, '_encode_hex', None)
         if callable(method):
-            return h2b(method(abstract_data))
+            return h2b(method(abstract_data, total_len = self.__get_size(total_len)))
         if self._construct:
-            return build_construct(self._construct, abstract_data)
+            return build_construct(self._construct, abstract_data, {'total_len' : self.__get_size(total_len)})
         if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
@@ -770,7 +790,7 @@ class TransparentEF(CardEF):
         raise NotImplementedError(
             "%s encoder not yet implemented. Patches welcome." % self)
 
-    def encode_hex(self, abstract_data: dict) -> str:
+    def encode_hex(self, abstract_data: dict, total_len: Optional[int] = None) -> str:
         """Encode abstract representation into raw (hex string) data.
 
         A derived class would typically provide an _encode_bin() or _encode_hex() method
@@ -779,18 +799,19 @@ class TransparentEF(CardEF):
 
         Args:
             abstract_data : dict representing the decoded data
+            total_len : expected total length of the encoded data (file size)
         Returns:
             hex string encoded data
         """
         method = getattr(self, '_encode_hex', None)
         if callable(method):
-            return method(abstract_data)
+            return method(abstract_data, total_len = self.__get_size(total_len))
         method = getattr(self, '_encode_bin', None)
         if callable(method):
-            raw_bin_data = method(abstract_data)
+            raw_bin_data = method(abstract_data, total_len = self.__get_size(total_len))
             return b2h(raw_bin_data)
         if self._construct:
-            return b2h(build_construct(self._construct, abstract_data))
+            return b2h(build_construct(self._construct, abstract_data, {'total_len':self.__get_size(total_len)}))
         if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
@@ -1030,7 +1051,26 @@ class LinFixedEF(CardEF):
             return t.to_dict()
         return {'raw': raw_hex_data}
 
-    def encode_record_hex(self, abstract_data: dict, record_nr: int) -> str:
+    def __get_rec_len(self, total_len: Optional[int] = None) -> Optional[int]:
+        """Get the length (total length) of the file record"""
+
+        # Caller has provided the actual total length of the record, this should be the default case
+        if total_len is not None:
+            return total_len
+
+        if self.rec_len is None:
+            return None
+
+        # Alternatively use the recommended length from the specification
+        if self.rec_len[1] is not None:
+            return self.rec_len[1]
+        # In case no recommended length is specified, use the minimum length
+        if self.rec_len[0] is not None:
+            return self.rec_len[0]
+
+        return None
+
+    def encode_record_hex(self, abstract_data: dict, record_nr: int, total_len: Optional[int] = None) -> str:
         """Encode abstract representation into raw (hex string) data.
 
         A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
@@ -1040,18 +1080,19 @@ class LinFixedEF(CardEF):
         Args:
             abstract_data : dict representing the decoded data
             record_nr : record number (1 for first record, ...)
+            total_len : expected total length of the encoded data (record length)
         Returns:
             hex string encoded data
         """
         method = getattr(self, '_encode_record_hex', None)
         if callable(method):
-            return method(abstract_data, record_nr=record_nr)
+            return method(abstract_data, record_nr=record_nr, total_len = self.__get_rec_len(total_len))
         method = getattr(self, '_encode_record_bin', None)
         if callable(method):
-            raw_bin_data = method(abstract_data, record_nr=record_nr)
+            raw_bin_data = method(abstract_data, record_nr=record_nr, total_len = self.__get_rec_len(total_len))
             return b2h(raw_bin_data)
         if self._construct:
-            return b2h(build_construct(self._construct, abstract_data))
+            return b2h(build_construct(self._construct, abstract_data, {'total_len':self.__get_rec_len(total_len)}))
         if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
@@ -1059,7 +1100,7 @@ class LinFixedEF(CardEF):
         raise NotImplementedError(
             "%s encoder not yet implemented. Patches welcome." % self)
 
-    def encode_record_bin(self, abstract_data: dict, record_nr : int) -> bytearray:
+    def encode_record_bin(self, abstract_data: dict, record_nr : int, total_len: Optional[int] = None) -> bytearray:
         """Encode abstract representation into raw (binary) data.
 
         A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
@@ -1069,17 +1110,18 @@ class LinFixedEF(CardEF):
         Args:
             abstract_data : dict representing the decoded data
             record_nr : record number (1 for first record, ...)
+            total_len : expected total length of the encoded data (record length)
         Returns:
             binary encoded data
         """
         method = getattr(self, '_encode_record_bin', None)
         if callable(method):
-            return method(abstract_data, record_nr=record_nr)
+            return method(abstract_data, record_nr=record_nr, total_len = self.__get_rec_len(total_len))
         method = getattr(self, '_encode_record_hex', None)
         if callable(method):
-            return h2b(method(abstract_data, record_nr=record_nr))
+            return h2b(method(abstract_data, record_nr=record_nr, total_len = self.__get_rec_len(total_len)))
         if self._construct:
-            return build_construct(self._construct, abstract_data)
+            return build_construct(self._construct, abstract_data, {'total_len':self.__get_rec_len(total_len)})
         if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
@@ -1224,7 +1266,20 @@ class TransRecEF(TransparentEF):
             return t.to_dict()
         return {'raw': raw_hex_data}
 
-    def encode_record_hex(self, abstract_data: dict) -> str:
+    def __get_rec_len(self, total_len: Optional[int] = None) -> Optional[int]:
+        """Get the length (total length) of the file record"""
+
+        # Caller has provided the actual total length of the record, this should be the default case
+        if total_len is not None:
+            return total_len
+
+        # Alternatively use the record length from the specification
+        if self.rec_len:
+            return self.rec_len
+
+        return None
+
+    def encode_record_hex(self, abstract_data: dict, total_len: Optional[int] = None) -> str:
         """Encode abstract representation into raw (hex string) data.
 
         A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
@@ -1233,17 +1288,19 @@ class TransRecEF(TransparentEF):
 
         Args:
             abstract_data : dict representing the decoded data
+            total_len : expected total length of the encoded data (record length)
         Returns:
             hex string encoded data
         """
         method = getattr(self, '_encode_record_hex', None)
         if callable(method):
-            return method(abstract_data)
+            return method(abstract_data, total_len = self.__get_rec_len(total_len))
         method = getattr(self, '_encode_record_bin', None)
         if callable(method):
-            return b2h(method(abstract_data))
+            return b2h(method(abstract_data, total_len = self.__get_rec_len(total_len)))
         if self._construct:
-            return b2h(filter_dict(build_construct(self._construct, abstract_data)))
+            return b2h(filter_dict(build_construct(self._construct, abstract_data,
+                                                   {'total_len':self.__get_rec_len(total_len)})))
         if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
@@ -1251,7 +1308,7 @@ class TransRecEF(TransparentEF):
         raise NotImplementedError(
             "%s encoder not yet implemented. Patches welcome." % self)
 
-    def encode_record_bin(self, abstract_data: dict) -> bytearray:
+    def encode_record_bin(self, abstract_data: dict, total_len: Optional[int] = None) -> bytearray:
         """Encode abstract representation into raw (binary) data.
 
         A derived class would typically provide an _encode_record_bin() or _encode_record_hex()
@@ -1260,17 +1317,19 @@ class TransRecEF(TransparentEF):
 
         Args:
             abstract_data : dict representing the decoded data
+            total_len : expected total length of the encoded data (record length)
         Returns:
             binary encoded data
         """
         method = getattr(self, '_encode_record_bin', None)
         if callable(method):
-            return method(abstract_data)
+            return method(abstract_data, total_len = self.__get_rec_len(total_len))
         method = getattr(self, '_encode_record_hex', None)
         if callable(method):
-            return h2b(method(abstract_data))
+            return h2b(method(abstract_data, total_len = self.__get_rec_len(total_len)))
         if self._construct:
-            return filter_dict(build_construct(self._construct, abstract_data))
+            return filter_dict(build_construct(self._construct, abstract_data,
+                                               {'total_len':self.__get_rec_len(total_len)}))
         if self._tlv:
             t = self._tlv() if inspect.isclass(self._tlv) else self._tlv
             t.from_dict(abstract_data)
@@ -1283,8 +1342,8 @@ class TransRecEF(TransparentEF):
                   for i in range(0, len(raw_bin_data), self.rec_len)]
         return [self.decode_record_bin(x) for x in chunks]
 
-    def _encode_bin(self, abstract_data) -> bytes:
-        chunks = [self.encode_record_bin(x) for x in abstract_data]
+    def _encode_bin(self, abstract_data, **kwargs) -> bytes:
+        chunks = [self.encode_record_bin(x, total_len = kwargs.get('total_len', None)) for x in abstract_data]
         # FIXME: pad to file size
         return b''.join(chunks)
 

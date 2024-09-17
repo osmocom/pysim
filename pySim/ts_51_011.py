@@ -358,7 +358,7 @@ class EF_IMSI(TransparentEF):
     def _decode_hex(self, raw_hex):
         return {'imsi': dec_imsi(raw_hex)}
 
-    def _encode_hex(self, abstract):
+    def _encode_hex(self, abstract, **kwargs):
         return enc_imsi(abstract['imsi'])
 
     @with_default_category('File-Specific Commands')
@@ -446,7 +446,7 @@ class EF_ServiceTable(TransparentEF):
             }
         return ret
 
-    def _encode_bin(self, in_json):
+    def _encode_bin(self, in_json, **kwargs):
         # compute the required binary size
         bin_len = 0
         for srv in in_json.keys():
@@ -969,7 +969,7 @@ class EF_ICCID(TransparentEF):
     def _decode_hex(self, raw_hex):
         return {'iccid': dec_iccid(raw_hex)}
 
-    def _encode_hex(self, abstract):
+    def _encode_hex(self, abstract, **kwargs):
         return enc_iccid(abstract['iccid'])
 
 # TS 102 221 Section 13.3 / TS 31.101 Secction 13 / TS 51.011 Section 10.1.2

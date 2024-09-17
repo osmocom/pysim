@@ -524,7 +524,7 @@ class RuntimeLchan:
         Args:
             data : abstract data which is to be encoded and written
         """
-        data_hex = self.selected_file.encode_hex(data)
+        data_hex = self.selected_file.encode_hex(data, self.selected_file_size())
         return self.update_binary(data_hex)
 
     def read_record(self, rec_nr: int = 0):
@@ -574,7 +574,7 @@ class RuntimeLchan:
             rec_nr : Record number to read
             data_hex : Abstract data to be written
         """
-        data_hex = self.selected_file.encode_record_hex(data, rec_nr)
+        data_hex = self.selected_file.encode_record_hex(data, rec_nr, self.selected_file_record_len())
         return self.update_record(rec_nr, data_hex)
 
     def retrieve_data(self, tag: int = 0):

@@ -344,7 +344,7 @@ class EF_SUCI_Calc_Info(TransparentEF):
                 out.append({k: v})
         return out
 
-    def _encode_hex(self, in_json):
+    def _encode_hex(self, in_json, **kwargs):
         out_bytes = self._encode_prot_scheme_id_list(
             in_json['prot_scheme_id_list'])
         d = self._expand_pubkey_list(in_json['hnet_pubkey_list'])
@@ -396,8 +396,8 @@ class EF_SUCI_Calc_Info(TransparentEF):
             'hnet_pubkey_list':    hnet_pubkey_list
         }
 
-    def _encode_bin(self, in_json):
-        return h2b(self._encode_hex(in_json))
+    def _encode_bin(self, in_json, **kwargs):
+        return h2b(self._encode_hex(in_json, **kwargs))
 
 
 class EF_LI(TransRecEF):

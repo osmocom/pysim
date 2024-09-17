@@ -290,7 +290,7 @@ class EF_Predefined(LinFixedEF):
         else:
             return parse_construct(self.construct_others, raw_bin_data)
 
-    def _encode_record_bin(self, abstract_data : dict, record_nr : int) -> bytearray:
+    def _encode_record_bin(self, abstract_data : dict, record_nr : int, **kwargs) -> bytearray:
         r = None
         if record_nr == 1:
             r = self.construct_first.build(abstract_data)

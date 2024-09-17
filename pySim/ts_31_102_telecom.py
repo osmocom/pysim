@@ -59,7 +59,7 @@ class EF_UServiceTable(TransparentEF):
                     ret[service_nr]['description'] = self.table[service_nr]
         return ret
 
-    def _encode_bin(self, in_json):
+    def _encode_bin(self, in_json, **kwargs):
         # compute the required binary size
         bin_len = 0
         for srv in in_json.keys():

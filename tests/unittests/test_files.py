@@ -30,6 +30,9 @@ import pySim.sysmocom_sja2
 import pySim.gsm_r
 import pySim.cdma_ruim
 
+from construct import Int8ub, Struct, Padding, this
+from osmocom.tlv import BER_TLV_IE
+
 def get_qualified_name(c):
     """return the qualified (by module) name of a class."""
     return "%s.%s" % (c.__module__, c.__name__)
@@ -287,6 +290,251 @@ class TransparentEF_Test(unittest.TestCase):
                         logging.debug("Testing padded decode of %s", name)
                         re_dec = inst.decode_hex(encoded)
                         self.assertEqual(decoded, re_dec)
+
+
+class filesystem_enc_dec_test(unittest.TestCase):
+    """ The following set of tests is to verify the code paths in filesystem.py. There are several methods to encode
+    or decode a file. Depending on which methods (encode_hex, decode_hex, etc.) or structs (_construct, _tlv) are
+    define in the related file object, the encoding/decoding will take a different code path. In this test we will
+    try out all of the different encoding/decoding variants by defining one test file for each variant. Then we will
+    run an encoding/decoding cycle on each of the test files.
+
+    The test files will also include a padding that is dependent on the total_len keyword argument that is passed
+    via the construct context or via **kwargs in case the hand written encoding methods (encode_hex, encode_record_hex,
+    etc.) are used. This will ensure that total_len is passed correctly in all possible variants.
+    """
+
+    def test_encode_TransparentEF(self):
+
+        class TransparentEF_construct(TransparentEF):
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY', size=(2, 2),
+                         desc='dummy TransparentEF file to test encoding/decoding via _construct'):
+                super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                self._construct = Struct('test'/Int8ub, Padding(this._.total_len-1))
+
+        class TransparentEF_encode_hex(TransparentEF):
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY', size=(2, 2),
+                         desc='dummy TransparentEF file to test manual encoding/decoding via _encode/decode_hex'):
+                super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+            def _encode_hex(self, in_json, **kwargs):
+                return "%02x" % in_json['test'] + "00" * (kwargs.get('total_len') -1)
+            def _decode_hex(self, raw_hex):
+                return {'test': int(raw_hex[0:2],16)}
+
+        class TransparentEF_encode_bin(TransparentEF):
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY', size=(2, 2),
+                         desc='dummy TransparentEF file to test manual encoding/decoding via _encode/decode_bin'):
+                super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+            def _encode_bin(self, in_json, **kwargs):
+                return h2b("%02x" % in_json['test'] + "00" * (kwargs.get('total_len') -1))
+            def _decode_bin(self, raw_bin_data: bytearray):
+                return {'test': int(b2h(raw_bin_data[0:1]),16)}
+
+        class TransparentEF_tlv(TransparentEF):
+            class TestTlv(BER_TLV_IE, tag=0x81):
+                _construct = Int8ub
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY', size=(1, 1),
+                         desc='dummy TransparentEF file to test encoding/decoding via _tlv'):
+                super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+                self._tlv = TransparentEF_tlv.TestTlv
+
+        class TransparentEF_raw(TransparentEF):
+            class TestTlv(BER_TLV_IE, tag=0x81):
+                _construct = Int8ub
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY', size=(1, 1),
+                         desc='dummy TransparentEF file to test raw encoding/decoding'):
+                super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
+
+        def do_encdec_test(file):
+            res = file.encode_hex({'test':0x41})
+            self.assertEqual(res,hexstr("4100"))
+            res = file.encode_bin({'test':0x41})
+            self.assertEqual(b2h(res),hexstr("4100"))
+            res = file.encode_hex({'test':0x41}, total_len=3)
+            self.assertEqual(res,hexstr("410000"))
+            res = file.encode_bin({'test':0x41}, total_len=3)
+            self.assertEqual(b2h(res),hexstr("410000"))
+            res = file.decode_hex("4100")
+            self.assertEqual(res,{'test':0x41})
+            res = file.decode_bin(b'\x41\x01')
+            self.assertEqual(res,{'test':0x41})
+
+        def do_encdec_test_tlv(file):
+            res = file.encode_hex({'test_tlv':0x41})
+            self.assertEqual(res,hexstr("810141"))
+            res = file.encode_bin({'test_tlv':0x41})
+            self.assertEqual(b2h(res),hexstr("810141"))
+            res = file.decode_hex(hexstr("810141"))
+            self.assertEqual(res,{'test_tlv':0x41})
+            res = file.decode_bin(h2b("810141"))
+            self.assertEqual(res,{'test_tlv':0x41})
+
+        def do_encdec_test_raw(file):
+            res = file.decode_hex("41")
+            self.assertEqual(res,{'raw':'41'})
+            res = file.decode_bin(b'\x41')
+            self.assertEqual(res,{'raw':'41'})
+
+        do_encdec_test(TransparentEF_construct())
+        do_encdec_test(TransparentEF_encode_hex())
+        do_encdec_test(TransparentEF_encode_bin())
+        do_encdec_test_tlv(TransparentEF_tlv())
+        do_encdec_test_raw(TransparentEF_raw())
+
+    def test_encode_LinFixedEF(self):
+
+        class LinFixedEF_construct(LinFixedEF):
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY',
+                         desc='dummy LinFixedEF file to test encoding/decoding via _construct', **kwargs):
+                super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(2, 2), **kwargs)
+                self._construct = Struct('test'/Int8ub, Padding(this._.total_len-1))
+
+        class LinFixedEF_encode_hex(LinFixedEF):
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY',
+                         desc='dummy LinFixedEF file to test manual encoding/decoding via _encode/decode_hex', **kwargs):
+                super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(2, 2), **kwargs)
+            def _encode_record_hex(self, in_json, **kwargs):
+                return "%02x" % in_json['test'] + "00" * (kwargs.get('total_len') -1)
+            def _decode_record_hex(self, in_hex, **kwargs):
+                return {'test': int(in_hex[0:2],16)}
+
+        class LinFixedEF_encode_bin(LinFixedEF):
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY',
+                         desc='dummy LinFixedEF file to test manual encoding/decoding via _encode/decode_bin', **kwargs):
+                super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(2, 2), **kwargs)
+            def _encode_record_bin(self, in_json, **kwargs):
+                return h2b("%02x" % in_json['test'] + "00" * (kwargs.get('total_len') -1))
+            def _decode_record_bin(self, in_bin, **kwargs):
+                return {'test': int(b2h(in_bin[0:1]),16)}
+
+        class LinFixedEF_tlv(LinFixedEF):
+            class TestTlv(BER_TLV_IE, tag=0x81):
+                _construct = Int8ub
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY',
+                         desc='dummy LinFixedEF file to test encoding/decoding via _tlv', **kwargs):
+                super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(1, 1), **kwargs)
+                self._tlv = LinFixedEF_tlv.TestTlv
+
+        class LinFixedEF_raw(LinFixedEF):
+            class TestTlv(BER_TLV_IE, tag=0x81):
+                _construct = Int8ub
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY',
+                         desc='dummy LinFixedEF file to test raw encoding/decoding', **kwargs):
+                super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(1, 1), **kwargs)
+
+        def do_encdec_test(file):
+            res = file.encode_record_hex({'test':0x41}, 1)
+            self.assertEqual(res,hexstr("4100"))
+            res = file.encode_record_bin({'test':0x41}, 1)
+            self.assertEqual(b2h(res),hexstr("4100"))
+            res = file.encode_record_hex({'test':0x41}, 1, total_len=3)
+            self.assertEqual(res,hexstr("410000"))
+            res = file.encode_record_bin({'test':0x41}, 1, total_len=3)
+            self.assertEqual(b2h(res),hexstr("410000"))
+            res = file.decode_record_hex("4100", 1)
+            self.assertEqual(res,{'test':0x41})
+            res = file.decode_record_bin(b'\x41\x00', 1)
+            self.assertEqual(res,{'test':0x41})
+
+        def do_encdec_test_tlv(file):
+            res = file.encode_record_hex({'test_tlv':0x41}, 1)
+            self.assertEqual(res,hexstr("810141"))
+            res = file.encode_record_bin({'test_tlv':0x41}, 1)
+            self.assertEqual(b2h(res),hexstr("810141"))
+            res = file.decode_record_hex(hexstr("810141"), 1)
+            self.assertEqual(res,{'test_tlv':0x41})
+            res = file.decode_record_bin(h2b("810141"), 1)
+            self.assertEqual(res,{'test_tlv':0x41})
+
+        def do_encdec_test_raw(file):
+            res = file.decode_record_hex("41", 1)
+            self.assertEqual(res,{'raw':'41'})
+            res = file.decode_record_bin(b'\x41', 1)
+            self.assertEqual(res,{'raw':'41'})
+
+        do_encdec_test(LinFixedEF_construct())
+        do_encdec_test(LinFixedEF_encode_hex())
+        do_encdec_test(LinFixedEF_encode_bin())
+        do_encdec_test_tlv(LinFixedEF_tlv())
+        do_encdec_test_raw(LinFixedEF_raw())
+
+    def test_encode_TransRecEF(self):
+
+        class TransRecEF_construct(TransRecEF):
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY', size=(2, 2), rec_len=2,
+                         desc='dummy TransRecEF file to test encoding/decoding via _construct', **kwargs):
+                super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
+                self._construct = Struct('test'/Int8ub, Padding(this._.total_len-1))
+
+        class TransRecEF_encode_hex(TransRecEF):
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY', size=(2, 2), rec_len=2,
+                         desc='dummy TransRecEF file to test manual encoding/decoding via _encode/decode_hex', **kwargs):
+                super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
+            def _encode_record_hex(self, in_json, **kwargs):
+                return "%02x" % in_json['test'] + "00" * (kwargs.get('total_len') -1)
+            def _decode_record_hex(self, in_hex, **kwargs):
+                return {'test': int(in_hex[0:2],16)}
+
+        class TransRecEF_encode_bin(TransRecEF):
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY', size=(2, 2), rec_len=2,
+                         desc='dummy TransRecEF file to test manual encoding/decoding via _encode/decode_bin', **kwargs):
+                super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
+            def _encode_record_bin(self, in_json, **kwargs):
+                return h2b("%02x" % in_json['test'] + "00" * (kwargs.get('total_len') -1))
+            def _decode_record_bin(self, in_bin, **kwargs):
+                return {'test': int(b2h(in_bin[0:1]),16)}
+
+        class TransRecEF_tlv(TransRecEF):
+            class TestTlv(BER_TLV_IE, tag=0x81):
+                _construct = Int8ub
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY', size=(1, 1), rec_len=1,
+                         desc='dummy TransRecEF file to test encoding/decoding via _tlv', **kwargs):
+                super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
+                self._tlv = TransRecEF_tlv.TestTlv
+
+        class TransRecEF_raw(TransRecEF):
+            class TestTlv(BER_TLV_IE, tag=0x81):
+                _construct = Int8ub
+            def __init__(self, fid='0000', sfid=None, name='EF.DUMMY', size=(1, 1), rec_len=1,
+                         desc='dummy TransRecEF file to test raw encoding/decoding', **kwargs):
+                super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
+
+        def do_encdec_test(file):
+            res = file.encode_record_hex({'test':0x41})
+            self.assertEqual(res,hexstr("4100"))
+            res = file.encode_record_bin({'test':0x41})
+            self.assertEqual(b2h(res),hexstr("4100"))
+            res = file.encode_record_hex({'test':0x41}, total_len=3)
+            self.assertEqual(res,hexstr("410000"))
+            res = file.encode_record_bin({'test':0x41}, total_len=3)
+            self.assertEqual(b2h(res),hexstr("410000"))
+            res = file.decode_record_hex("4100")
+            self.assertEqual(res,{'test':0x41})
+            res = file.decode_record_bin(b'\x41\x00')
+            self.assertEqual(res,{'test':0x41})
+
+        def do_encdec_test_tlv(file):
+            res = file.encode_record_hex({'test_tlv':0x41})
+            self.assertEqual(res,hexstr("810141"))
+            res = file.encode_record_bin({'test_tlv':0x41})
+            self.assertEqual(b2h(res),hexstr("810141"))
+            res = file.decode_record_hex(hexstr("810141"))
+            self.assertEqual(res,{'test_tlv':0x41})
+            res = file.decode_record_bin(h2b("810141"))
+            self.assertEqual(res,{'test_tlv':0x41})
+
+        def do_encdec_test_raw(file):
+            res = file.decode_record_hex("41")
+            self.assertEqual(res,{'raw':'41'})
+            res = file.decode_record_bin(b'\x41')
+            self.assertEqual(res,{'raw':'41'})
+
+        do_encdec_test(TransRecEF_construct())
+        do_encdec_test(TransRecEF_encode_hex())
+        do_encdec_test(TransRecEF_encode_bin())
+        do_encdec_test_tlv(TransRecEF_tlv())
+        do_encdec_test_raw(TransRecEF_raw())
+
 
 if __name__ == '__main__':
     logger = logging.getLogger()
