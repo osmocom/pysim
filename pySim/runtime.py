@@ -211,6 +211,12 @@ class RuntimeLchan:
     def selected_file_num_of_rec(self) -> Optional[int]:
         return self.selected_file_fcp['file_descriptor'].get('num_of_rec')
 
+    def selected_file_record_len(self) -> Optional[int]:
+        return self.selected_file_fcp['file_descriptor'].get('record_len')
+
+    def selected_file_size(self) -> Optional[int]:
+        return self.selected_file_fcp.get('file_size')
+
     def get_cwd(self) -> CardDF:
         """Obtain the current working directory.
 
