@@ -131,13 +131,13 @@ class ExtendedBcdAdapter(Adapter):
 
 # TS 51.011 Section 10.5.1
 class EF_ADN(LinFixedEF):
-    _test_decode = [
-            ( '42204841203120536963ffffffff06810628560810ffffffffffffff',
+    _test_de_encode = [
+            ( '42204841203120536963FFFFFFFFFFFF06810628560810FFFFFFFFFFFFFF',
               { "alpha_id": "B HA 1 Sic", "len_of_bcd": 6, "ton_npi": { "ext": True, "type_of_number":
                                                                        "unknown", "numbering_plan_id":
                                                                        "isdn_e164" }, "dialing_nr":
                "6082658001", "cap_conf_id": 255, "ext1_record_id": 255 }),
-            ( '4B756E64656E626574726575756E67FFFFFF0791947112122721ffffffffffff',
+            ( '4B756E64656E626574726575756E67FF0791947112122721ffffffffffff',
               {"alpha_id": "Kundenbetreuung", "len_of_bcd": 7, "ton_npi": {"ext": True, "type_of_number":
                                                                            "international",
                                                                            "numbering_plan_id": "isdn_e164"},
