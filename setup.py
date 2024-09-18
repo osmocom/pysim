@@ -22,7 +22,7 @@ setup(
         "pytlv",
         "cmd2 >= 1.5.0",
         "jsonpath-ng",
-        "construct >= 2.9.51",
+        "construct >= 2.10.70",
         "bidict",
         "pyosmocom >= 0.0.3",
         "pyyaml >= 5.1",
