@@ -841,7 +841,7 @@ class EF_InvScan(TransparentEF):
 
 # TS 51.011 Section 10.3.46
 class EF_CFIS(LinFixedEF):
-    _test_decode = [
+    _test_de_encode = [
         ( '0100ffffffffffffffffffffffffffff',
           {"msp_number": 1, "cfu_indicator_status": { "voice": False, "fax": False, "data": False, "rfu": 0 },
                                                       "len_of_bcd": 255, "ton_npi": {"ext": True,
