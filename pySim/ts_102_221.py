@@ -637,8 +637,7 @@ SC_DO = DataObjectChoice('security_condition', 'Security Condition',
 
 # TS 102 221 Section 13.1
 class EF_DIR(LinFixedEF):
-    # FIXME: re-encode failure when changing to _test_de_encode
-    _test_decode = [
+    _test_de_encode = [
         ( '61294f10a0000000871002ffffffff890709000050055553696d31730ea00c80011781025f608203454150',
           { "application_template": [ { "application_id": h2b("a0000000871002ffffffff8907090000") },
                                       { "application_label": "USim1" },
