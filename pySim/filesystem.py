@@ -179,7 +179,7 @@ class CardFile:
         """Return a dict of {'identifier': self} tuples.
 
         Args:
-            alias : Add an alias with given name to 'self' 
+            alias : Add an alias with given name to 'self'
             flags : Specify which selectables to return 'FIDS' and/or 'NAMES';
                     If not specified, all selectables will be returned.
         Returns:
