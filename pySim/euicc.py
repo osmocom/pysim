@@ -34,7 +34,6 @@ from osmocom.construct import *
 from pySim.exceptions import SwMatchError
 from pySim.utils import Hexstr, SwHexstr, SwMatchstr
 from pySim.commands import SimCardCommands
-from pySim.profile.ts_102_221 import CardProfileUICC
 import pySim.global_platform
 
 # SGP.02 Section 2.2.2
@@ -557,43 +556,3 @@ class CardApplicationECASD(pySim.global_platform.CardApplicationSD):
     @with_default_category('Application-Specific Commands')
     class AddlShellCommands(CommandSet):
         pass
-
-class CardProfileEuiccSGP32(CardProfileUICC):
-    ORDER = 5
-
-    def __init__(self):
-        super().__init__(name='IoT eUICC (SGP.32)')
-
-    @classmethod
-    def _try_match_card(cls, scc: SimCardCommands) -> None:
-        # try a command only supported by SGP.32
-        scc.cla_byte = "00"
-        scc.select_adf(AID_ISD_R)
-        CardApplicationISDR.store_data_tlv(scc, GetCertsReq(), GetCertsResp)
-
-class CardProfileEuiccSGP22(CardProfileUICC):
-    ORDER = 6
-
-    def __init__(self):
-        super().__init__(name='Consumer eUICC (SGP.22)')
-
-    @classmethod
-    def _try_match_card(cls, scc: SimCardCommands) -> None:
-        # try to read EID from ISD-R
-        scc.cla_byte = "00"
-        scc.select_adf(AID_ISD_R)
-        eid = CardApplicationISDR.get_eid(scc)
-        # TODO: Store EID identity?
-
-class CardProfileEuiccSGP02(CardProfileUICC):
-    ORDER = 7
-
-    def __init__(self):
-        super().__init__(name='M2M eUICC (SGP.02)')
-
-    @classmethod
-    def _try_match_card(cls, scc: SimCardCommands) -> None:
-        scc.cla_byte = "00"
-        scc.select_adf(AID_ECASD)
-        scc.get_data(0x5a)
-        # TODO: Store EID identity?

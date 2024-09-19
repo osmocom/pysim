@@ -40,7 +40,7 @@ import pySim.ts_31_103
 import pySim.ts_31_104
 import pySim.ara_m
 import pySim.global_platform
-import pySim.euicc
+import pySim.profile.euicc
 
 def init_card(sl: LinkBase, skip_card_init: bool = False) -> Tuple[RuntimeState, SimCardBase]:
     """
