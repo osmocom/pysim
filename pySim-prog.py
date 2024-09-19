@@ -39,7 +39,7 @@ from pySim.commands import SimCardCommands
 from pySim.transport import init_reader, argparse_add_reader_args
 from pySim.legacy.cards import _cards_classes, card_detect
 from pySim.utils import derive_milenage_opc, calculate_luhn, dec_iccid
-from pySim.ts_51_011 import EF_AD
+from pySim.profile.ts_51_011 import EF_AD
 from pySim.legacy.ts_51_011 import EF
 from pySim.card_handler import *
 from pySim.utils import *

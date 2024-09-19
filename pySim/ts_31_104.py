@@ -24,7 +24,7 @@ from osmocom.utils import *
 from osmocom.tlv import *
 from pySim.filesystem import *
 from pySim.ts_31_102 import ADF_USIM
-from pySim.ts_51_011 import EF_IMSI, EF_AD
+from pySim.profile.ts_51_011 import EF_IMSI, EF_AD
 from pySim.profile.ts_102_221 import EF_ARR, CardProfileUICC
 
 

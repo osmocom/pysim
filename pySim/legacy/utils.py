@@ -148,7 +148,7 @@ def dec_st(st, table="sim") -> str:
         from pySim.ts_31_102 import EF_UST_map
         lookup_map = EF_UST_map
     else:
-        from pySim.ts_51_011 import EF_SST_map
+        from pySim.profile.ts_51_011 import EF_SST_map
         lookup_map = EF_SST_map
 
     st_bytes = [st[i:i+2] for i in range(0, len(st), 2)]

@@ -60,7 +60,6 @@ from pySim.card_handler import CardHandler, CardHandlerAuto
 from pySim.filesystem import CardMF, CardEF, CardDF, CardADF, LinFixedEF, TransparentEF, BerTlvEF
 from pySim.ts_102_221 import pin_names
 from pySim.ts_102_222 import Ts102222Commands
-from pySim.gsm_r import DF_EIRENE
 from pySim.cat import ProactiveCommand
 
 from pySim.card_key_provider import CardKeyProviderCsv, card_key_provider_register, card_key_provider_get_field

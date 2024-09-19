@@ -36,12 +36,12 @@ from osmocom.utils import is_hexstr
 from osmocom.tlv import *
 from osmocom.construct import *
 
-from pySim.ts_51_011 import EF_ACMmax, EF_AAeM, EF_eMLPP, EF_CMI, EF_PNN
-from pySim.ts_51_011 import EF_MMSN, EF_MMSICP, EF_MMSUP, EF_MMSUCP, EF_VGCS, EF_VGCSS, EF_NIA
-from pySim.ts_51_011 import EF_SMSR, EF_DCK, EF_EXT, EF_CNL, EF_OPL, EF_MBI, EF_MWIS
-from pySim.ts_51_011 import EF_CBMID, EF_CBMIR, EF_ADN, EF_CFIS, EF_SMS, EF_MSISDN, EF_SMSP, EF_SMSS
-from pySim.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_PLMNsel
-from pySim.ts_51_011 import EF_Kc, EF_CPBCCH, EF_InvScan
+from pySim.profile.ts_51_011 import EF_ACMmax, EF_AAeM, EF_eMLPP, EF_CMI, EF_PNN
+from pySim.profile.ts_51_011 import EF_MMSN, EF_MMSICP, EF_MMSUP, EF_MMSUCP, EF_VGCS, EF_VGCSS, EF_NIA
+from pySim.profile.ts_51_011 import EF_SMSR, EF_DCK, EF_EXT, EF_CNL, EF_OPL, EF_MBI, EF_MWIS
+from pySim.profile.ts_51_011 import EF_CBMID, EF_CBMIR, EF_ADN, EF_CFIS, EF_SMS, EF_MSISDN, EF_SMSP, EF_SMSS
+from pySim.profile.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_PLMNsel
+from pySim.profile.ts_51_011 import EF_Kc, EF_CPBCCH, EF_InvScan
 from pySim.profile.ts_102_221 import EF_ARR, CardProfileUICC
 from pySim.filesystem import *
 from pySim.ts_31_102_telecom import DF_PHONEBOOK, EF_UServiceTable

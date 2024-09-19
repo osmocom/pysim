@@ -31,7 +31,7 @@ import sys
 
 from osmocom.utils import h2b, h2s, swap_nibbles, rpad
 
-from pySim.ts_51_011 import EF_SST_map, EF_AD
+from pySim.profile.ts_51_011 import EF_SST_map, EF_AD
 from pySim.legacy.ts_51_011 import EF, DF
 from pySim.ts_31_102 import EF_UST_map
 from pySim.legacy.ts_31_102 import EF_USIM_ADF_map

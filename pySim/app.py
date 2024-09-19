@@ -22,7 +22,7 @@ from pySim.filesystem import CardModel, CardApplication
 from pySim.cards import card_detect, SimCardBase, UiccCardBase, CardBase
 from pySim.runtime import RuntimeState
 from pySim.profile import CardProfile
-from pySim.cdma_ruim import CardProfileRUIM
+from pySim.profile.cdma_ruim import CardProfileRUIM
 from pySim.profile.ts_102_221 import CardProfileUICC
 from pySim.utils import all_subclasses
 from pySim.exceptions import SwMatchError

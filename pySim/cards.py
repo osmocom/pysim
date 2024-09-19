@@ -26,7 +26,7 @@ from typing import Optional, Tuple
 from osmocom.utils import *
 
 from pySim.profile.ts_102_221 import EF_DIR, CardProfileUICC
-from pySim.ts_51_011 import DF_GSM
+from pySim.profile.ts_51_011 import DF_GSM
 from pySim.utils import SwHexstr
 from pySim.commands import Path, SimCardCommands
 

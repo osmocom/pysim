@@ -16,7 +16,7 @@ from pySim.legacy.ts_51_011 import EF, DF
 from pySim.legacy.ts_31_102 import EF_USIM_ADF_map
 from pySim.legacy.ts_31_103 import EF_ISIM_ADF_map
 
-from pySim.ts_51_011 import EF_AD, EF_SPN
+from pySim.profile.ts_51_011 import EF_AD, EF_SPN
 
 def format_addr(addr: str, addr_type: str) -> str:
     """

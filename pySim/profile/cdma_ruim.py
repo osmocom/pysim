@@ -25,9 +25,9 @@ from osmocom.construct import *
 
 from pySim.filesystem import *
 from pySim.profile import CardProfile, CardProfileAddon
-from pySim.ts_51_011 import CardProfileSIM
-from pySim.ts_51_011 import DF_TELECOM, DF_GSM
-from pySim.ts_51_011 import EF_ServiceTable
+from pySim.profile.ts_51_011 import CardProfileSIM
+from pySim.profile.ts_51_011 import DF_TELECOM, DF_GSM
+from pySim.profile.ts_51_011 import EF_ServiceTable
 
 
 # Mapping between CDMA Service Number and its description

@@ -43,7 +43,7 @@ from pySim.utils import dec_iccid, enc_iccid, dec_imsi, enc_imsi, dec_plmn, enc_
 from pySim.profile import CardProfile, CardProfileAddon
 from pySim.filesystem import *
 from pySim.ts_31_102_telecom import DF_PHONEBOOK, DF_MULTIMEDIA, DF_MCS, DF_V2X
-from pySim.gsm_r import AddonGSMR
+from pySim.profile.gsm_r import AddonGSMR
 
 # Mapping between SIM Service Number and its description
 EF_SST_map = {

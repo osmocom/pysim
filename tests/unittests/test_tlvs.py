@@ -26,10 +26,10 @@ import pySim.ts_102_221
 import pySim.ts_102_222
 import pySim.ts_31_102
 import pySim.ts_31_103
-import pySim.ts_51_011
+import pySim.profile.ts_51_011
 import pySim.sysmocom_sja2
-import pySim.gsm_r
-import pySim.cdma_ruim
+import pySim.profile.gsm_r
+import pySim.profile.cdma_ruim
 import pySim.global_platform
 import pySim.global_platform.http
 
