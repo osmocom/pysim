@@ -34,7 +34,7 @@ from osmocom.construct import *
 from pySim.exceptions import SwMatchError
 from pySim.utils import Hexstr, SwHexstr, SwMatchstr
 from pySim.commands import SimCardCommands
-from pySim.ts_102_221 import CardProfileUICC
+from pySim.profile.ts_102_221 import CardProfileUICC
 import pySim.global_platform
 
 # SGP.02 Section 2.2.2

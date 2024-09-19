@@ -25,6 +25,7 @@ from osmocom.utils import *
 from osmocom.construct import *
 
 from pySim.filesystem import *
+from pySim.profile.ts_102_221 import CardProfileUICC
 from pySim.runtime import RuntimeState
 import pySim
 
@@ -180,7 +181,7 @@ class DF_SYSTEM(CardDF):
         self.add_files(files)
 
     def decode_select_response(self, resp_hex):
-        return pySim.ts_102_221.CardProfileUICC.decode_select_response(resp_hex)
+        return CardProfileUICC.decode_select_response(resp_hex)
 
 
 class EF_USIM_SQN(TransparentEF):

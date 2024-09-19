@@ -31,8 +31,7 @@ from pySim.ts_51_011 import EF_AD, EF_SMS, EF_SMSS, EF_SMSR, EF_SMSP
 from pySim.ts_31_102 import ADF_USIM, EF_FromPreferred
 from pySim.ts_31_102_telecom import EF_UServiceTable
 from pySim.ts_31_103_shared import *
-import pySim.ts_102_221
-from pySim.ts_102_221 import EF_ARR
+from pySim.profile.ts_102_221 import EF_ARR, CardProfileUICC
 
 # Mapping between ISIM Service Number and its description
 EF_IST_map = {
@@ -226,7 +225,7 @@ class ADF_ISIM(CardADF):
         self.shell_commands += [ADF_USIM.AddlShellCommands()]
 
     def decode_select_response(self, data_hex):
-        return pySim.ts_102_221.CardProfileUICC.decode_select_response(data_hex)
+        return CardProfileUICC.decode_select_response(data_hex)
 
 
 # TS 31.103 Section 7.1

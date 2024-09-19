@@ -36,14 +36,13 @@ from osmocom.utils import is_hexstr
 from osmocom.tlv import *
 from osmocom.construct import *
 
-import pySim.ts_102_221
 from pySim.ts_51_011 import EF_ACMmax, EF_AAeM, EF_eMLPP, EF_CMI, EF_PNN
 from pySim.ts_51_011 import EF_MMSN, EF_MMSICP, EF_MMSUP, EF_MMSUCP, EF_VGCS, EF_VGCSS, EF_NIA
 from pySim.ts_51_011 import EF_SMSR, EF_DCK, EF_EXT, EF_CNL, EF_OPL, EF_MBI, EF_MWIS
 from pySim.ts_51_011 import EF_CBMID, EF_CBMIR, EF_ADN, EF_CFIS, EF_SMS, EF_MSISDN, EF_SMSP, EF_SMSS
 from pySim.ts_51_011 import EF_IMSI, EF_xPLMNwAcT, EF_SPN, EF_CBMI, EF_ACC, EF_PLMNsel
 from pySim.ts_51_011 import EF_Kc, EF_CPBCCH, EF_InvScan
-from pySim.ts_102_221 import EF_ARR
+from pySim.profile.ts_102_221 import EF_ARR, CardProfileUICC
 from pySim.filesystem import *
 from pySim.ts_31_102_telecom import DF_PHONEBOOK, EF_UServiceTable
 from pySim.ts_31_103_shared import EF_IMSConfigData, EF_XCAPConfigData, EF_MuDMiDConfigData
@@ -1750,7 +1749,7 @@ class ADF_USIM(CardADF):
         self.add_files(files)
 
     def decode_select_response(self, data_hex):
-        return pySim.ts_102_221.CardProfileUICC.decode_select_response(data_hex)
+        return CardProfileUICC.decode_select_response(data_hex)
 
     @with_default_category('Application-Specific Commands')
     class AddlShellCommands(CommandSet):

@@ -25,8 +25,7 @@ from osmocom.tlv import *
 from pySim.filesystem import *
 from pySim.ts_31_102 import ADF_USIM
 from pySim.ts_51_011 import EF_IMSI, EF_AD
-import pySim.ts_102_221
-from pySim.ts_102_221 import EF_ARR
+from pySim.profile.ts_102_221 import EF_ARR, CardProfileUICC
 
 
 class ADF_HPSIM(CardADF):
@@ -44,7 +43,7 @@ class ADF_HPSIM(CardADF):
         self.shell_commands += [ADF_USIM.AddlShellCommands()]
 
     def decode_select_response(self, data_hex):
-        return pySim.ts_102_221.CardProfileUICC.decode_select_response(data_hex)
+        return CardProfileUICC.decode_select_response(data_hex)
 
 
 # TS 31.104 Section 7.1

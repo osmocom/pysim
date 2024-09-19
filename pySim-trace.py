@@ -13,7 +13,7 @@ from osmocom.utils import JsonEncoder
 from pySim.cards import UiccCardBase
 from pySim.commands import SimCardCommands
 from pySim.profile import CardProfile
-from pySim.ts_102_221 import CardProfileUICC
+from pySim.profile.ts_102_221 import CardProfileUICC
 from pySim.ts_31_102 import CardApplicationUSIM
 from pySim.ts_31_103 import CardApplicationISIM
 from pySim.euicc import CardApplicationISDR, CardApplicationECASD
