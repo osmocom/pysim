@@ -32,6 +32,7 @@ from osmocom.tlv import bertlv_encode_len
 from pySim.utils import sw_match, expand_hex, SwHexstr, ResTuple, SwMatchstr
 from pySim.exceptions import SwMatchError
 from pySim.transport import LinkBase
+from pySim.ts_102_221 import decode_select_response
 
 # A path can be either just a FID or a list of FID
 Path = typing.Union[Hexstr, List[Hexstr]]
@@ -176,40 +177,6 @@ class SimCardCommands:
             raise SwMatchError(sw, sw_exp.lower(), self._tp.sw_interpreter)
         return (rsp, sw)
 
-    # Extract a single FCP item from TLV
-    def __parse_fcp(self, fcp: Hexstr):
-        # see also: ETSI TS 102 221, chapter 11.1.1.3.1 Response for MF,
-        # DF or ADF
-        from pytlv.TLV import TLV
-        tlvparser = TLV(['82', '83', '84', 'a5', '8a', '8b',
-                        '8c', '80', 'ab', 'c6', '81', '88'])
-
-        # pytlv is case sensitive!
-        fcp = fcp.lower()
-
-        if fcp[0:2] != '62':
-            raise ValueError(
-                'Tag of the FCP template does not match, expected 62 but got %s' % fcp[0:2])
-
-        # Unfortunately the spec is not very clear if the FCP length is
-        # coded as one or two byte vale, so we have to try it out by
-        # checking if the length of the remaining TLV string matches
-        # what we get in the length field.
-        # See also ETSI TS 102 221, chapter 11.1.1.3.0 Base coding.
-        # TODO: this likely just is normal BER-TLV ("All data objects are BER-TLV except if otherwise # defined.")
-        exp_tlv_len = int(fcp[2:4], 16)
-        if len(fcp[4:]) // 2 == exp_tlv_len:
-            skip = 4
-        else:
-            exp_tlv_len = int(fcp[2:6], 16)
-            if len(fcp[4:]) // 2 == exp_tlv_len:
-                skip = 6
-            raise ValueError('Cannot determine length of TLV-length')
-
-        # Skip FCP tag and length
-        tlv = fcp[skip:]
-        return tlvparser.parse(tlv)
-
     # Tell the length of a record by the card response
     # USIMs respond with an FCP template, which is different
     # from what SIMs responds. See also:
@@ -217,10 +184,8 @@ class SimCardCommands:
     # SIM: GSM 11.11, chapter 9.2.1 SELECT
     def __record_len(self, r) -> int:
         if self.sel_ctrl == "0004":
-            tlv_parsed = self.__parse_fcp(r[-1])
-            file_descriptor = tlv_parsed['82']
-            # See also ETSI TS 102 221, chapter 11.1.1.4.3 File Descriptor
-            return int(file_descriptor[4:8], 16)
+            fcp_parsed = decode_select_response(r[-1])
+            return fcp_parsed['file_descriptor']['record_len']
         else:
             return int(r[-1][28:30], 16)
 
@@ -228,8 +193,8 @@ class SimCardCommands:
     # above.
     def __len(self, r) -> int:
         if self.sel_ctrl == "0004":
-            tlv_parsed = self.__parse_fcp(r[-1])
-            return int(tlv_parsed['80'], 16)
+            fcp_parsed = decode_select_response(r[-1])
+            return fcp_parsed['file_size']
         else:
             return int(r[-1][4:8], 16)
 
