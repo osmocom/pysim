@@ -5,6 +5,7 @@
 # * WITH_MANUALS: build manual PDFs if set to "1"
 # * PUBLISH: upload manuals after building if set to "1" (ignored without WITH_MANUALS = "1")
 # * JOB_TYPE: one of 'test', 'distcheck', 'pylint', 'docs'
+# * SKIP_CLEAN_WORKSPACE: don't run osmo-clean-workspace.sh (for pyosmocom CI)
 #
 
 export PYTHONUNBUFFERED=1
@@ -16,7 +17,9 @@ if [ ! -d "./tests/" ] ; then
 	exit 1
 fi
 
-osmo-clean-workspace.sh
+if [ -z "$SKIP_CLEAN_WORKSPACE" ]; then
+	osmo-clean-workspace.sh
+fi
 
 case "$JOB_TYPE" in
 "test")
