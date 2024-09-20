@@ -1,0 +1,214 @@
+Using PC/SC reader interface
+Reading ...
+Autodetected card type: sysmoISIM-SJA5
+ICCID: 8949440000001155314
+IMSI: 001010000000102
+GID1: ffffffffffffffffffff
+GID2: ffffffffffffffffffff
+SMSP: ffffffffffffffffffffffffffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff000000
+SPN: Magic
+Show in HPLMN: True
+Hide in OPLMN: True
+PLMNsel: 00f110ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+PLMNwAcT:
+	00f110ffff # MCC: 001 MNC: 01 AcT: E-UTRAN NB-S1, E-UTRAN WB-S1, EC-GSM-IoT, GSM, GSM COMPACT, NG-RAN, UTRAN, cdma2000 1xRTT, cdma2000 HRPD
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+
+OPLMNwAcT:
+	00f110ffff # MCC: 001 MNC: 01 AcT: E-UTRAN NB-S1, E-UTRAN WB-S1, EC-GSM-IoT, GSM, GSM COMPACT, NG-RAN, UTRAN, cdma2000 1xRTT, cdma2000 HRPD
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+
+HPLMNAcT:
+	00f110ffff # MCC: 001 MNC: 01 AcT: E-UTRAN NB-S1, E-UTRAN WB-S1, EC-GSM-IoT, GSM, GSM COMPACT, NG-RAN, UTRAN, cdma2000 1xRTT, cdma2000 HRPD
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+	ffffff0000 # unused
+
+ACC: 0002
+MSISDN (NPI=1 ToN=3): 6766266
+Administrative data: 00000002
+	MS operation mode: normal
+	Ciphering Indicator: disabled
+SIM Service Table: ff33ffff3f003f0f300cf0c3f00000
+	Service 1 - CHV1 disable function
+	Service 2 - Abbreviated Dialling Numbers (ADN)
+	Service 3 - Fixed Dialling Numbers (FDN)
+	Service 4 - Short Message Storage (SMS)
+	Service 5 - Advice of Charge (AoC)
+	Service 6 - Capability Configuration Parameters (CCP)
+	Service 7 - PLMN selector
+	Service 8 - RFU
+	Service 9 - MSISDN
+	Service 10 - Extension1
+	Service 13 - Last Number Dialled (LND)
+	Service 14 - Cell Broadcast Message Identifier
+	Service 17 - Service Provider Name
+	Service 18 - Service Dialling Numbers (SDN)
+	Service 19 - Extension3
+	Service 20 - RFU
+	Service 21 - VGCS Group Identifier List (EFVGCS and EFVGCSS)
+	Service 22 - VBS Group Identifier List (EFVBS and EFVBSS)
+	Service 23 - enhanced Multi-Level Precedence and Pre-emption Service
+	Service 24 - Automatic Answer for eMLPP
+	Service 25 - Data download via SMS-CB
+	Service 26 - Data download via SMS-PP
+	Service 27 - Menu selection
+	Service 28 - Call control
+	Service 29 - Proactive SIM
+	Service 30 - Cell Broadcast Message Identifier Ranges
+	Service 31 - Barred Dialling Numbers (BDN)
+	Service 32 - Extension4
+	Service 33 - De-personalization Control Keys
+	Service 34 - Co-operative Network List
+	Service 35 - Short Message Status Reports
+	Service 36 - Network's indication of alerting in the MS
+	Service 37 - Mobile Originated Short Message control by SIM
+	Service 38 - GPRS
+	Service 49 - MExE
+	Service 50 - Reserved and shall be ignored
+	Service 51 - PLMN Network Name
+	Service 52 - Operator PLMN List
+	Service 53 - Mailbox Dialling Numbers
+	Service 54 - Message Waiting Indication Status
+	Service 57 - Multimedia Messaging Service (MMS)
+	Service 58 - Extension 8
+	Service 59 - MMS User Connectivity Parameters
+
+FPLMN:
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+	ffffff # unused
+
+USIM Service Table: beff9f9de73e04080000ff330000000600000000
+	Service 2 - Fixed Dialling Numbers (FDN)
+	Service 3 - Extension 2
+	Service 4 - Service Dialling Numbers (SDN)
+	Service 5 - Extension3
+	Service 6 - Barred Dialling Numbers (BDN)
+	Service 8 - Outgoing Call Information (OCI and OCT)
+	Service 9 - Incoming Call Information (ICI and ICT)
+	Service 10 - Short Message Storage (SMS)
+	Service 11 - Short Message Status Reports (SMSR)
+	Service 12 - Short Message Service Parameters (SMSP)
+	Service 13 - Advice of Charge (AoC)
+	Service 14 - Capability Configuration Parameters 2 (CCP2)
+	Service 15 - Cell Broadcast Message Identifier
+	Service 16 - Cell Broadcast Message Identifier Ranges
+	Service 17 - Group Identifier Level 1
+	Service 18 - Group Identifier Level 2
+	Service 19 - Service Provider Name
+	Service 20 - User controlled PLMN selector with Access Technology
+	Service 21 - MSISDN
+	Service 24 - Enhanced Multi-Level Precedence and Pre-emption Service
+	Service 25 - Automatic Answer for eMLPP
+	Service 27 - GSM Access
+	Service 28 - Data download via SMS-PP
+	Service 29 - Data download via SMS-CB
+	Service 32 - RUN AT COMMAND command
+	Service 33 - shall be set to 1
+	Service 34 - Enabled Services Table
+	Service 35 - APN Control List (ACL)
+	Service 38 - GSM security context
+	Service 39 - CPBCCH Information
+	Service 40 - Investigation Scan
+	Service 42 - Operator controlled PLMN selector with Access Technology
+	Service 43 - HPLMN selector with Access Technology
+	Service 44 - Extension 5
+	Service 45 - PLMN Network Name
+	Service 46 - Operator PLMN List
+	Service 51 - Service Provider Display Information
+	Service 60 - User Controlled PLMN selector for I-WLAN access
+	Service 81 - Home I-WLAN Specific Identifier List
+	Service 82 - I-WLAN Equivalent HPLMN Presentation Indication
+	Service 83 - I-WLAN HPLMN Priority Indication
+	Service 84 - I-WLAN Last Registered PLMN
+	Service 85 - EPS Mobility Management Information
+	Service 86 - Allowed CSG Lists and corresponding indications
+	Service 87 - Call control on EPS PDN connection by USIM
+	Service 88 - HPLMN Direct Access
+	Service 89 - eCall Data
+	Service 90 - Operator CSG Lists and corresponding indications
+	Service 93 - Communication Control for IMS by USIM
+	Service 94 - Extended Terminal Applications
+	Service 122 - 5GS Mobility Management Information
+	Service 123 - 5G Security Parameters
+
+ePDGId:
+	Not available
+
+ePDGSelection:
+	ffffffffffff # unused
+	ffffffffffff # unused
+	ffffffffffff # unused
+	ffffffffffff # unused
+
+P-CSCF:
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+
+Home Network Domain Name: Not available
+IMS private user identity: Not available
+IMS public user identity:
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+
+UICC IARI:
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+	Not available
+
+ISIM Service Table: 190208
+	Service 1 - P-CSCF address
+	Service 4 - GBA-based Local Key Establishment Mechanism
+	Service 5 - Support of P-CSCF discovery for IMS Local Break Out
+	Service 10 - Support of UICC access to IMS
+	Service 20 - WebRTC URI
+
+Done !
+
