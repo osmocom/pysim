@@ -819,7 +819,7 @@ class PySimCommands(CommandSet):
             adm_type = opts.adm_type or 'ADM1'
             # try to find an ADM-PIN if none is specified
             result = card_key_provider_get_field(adm_type, key='ICCID', value=iccid)
-            if opts.pin_is_hex:
+            if opts.pin_is_hex or (result and len(result) > 8):
                 pin_adm = sanitize_pin_adm(None, result)
             else:
                 pin_adm = sanitize_pin_adm(result)
