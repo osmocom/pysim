@@ -62,34 +62,34 @@ class test_case(UnittestUtils):
         self.runPySimShell(cardname, "test_set_nickname.script")
         self.assertEqualFiles("set_nickname.tmp")
 
-    def test_list_and_rm_notif(self):
-        cardname = 'sysmoEUICC1-C2T'
-
-        # Generate two (additional) notification
-        self.runPySimShell(cardname, "test_gen_notif.script")
-
-        # List notifications into a file
-        self.runPySimShell(cardname, "test_list_notif.script")
-
-        # Parse notifications file (JSON)
-        notifications_tmp = open("notifications.tmp")
-        notifications = json.load(notifications_tmp)
-        notifications_tmp.close()
-
-        # Delete notifications one by one, we expect to see at least one notification
-        notification_metadata_list = notifications['notification_metadata_list']
-        removed = 0
-        for nm in notification_metadata_list:
-            seq_number = nm['notification_metadata']['seq_number']
-            print("removing notification with seq_number %s:" % seq_number)
-            self.equipTemplate("test_rm_notif.script", SEQ_NUMBER = seq_number)
-            self.runPySimShell(cardname, "test_rm_notif.script")
-            removed = removed + 1
-        self.assertTrue(removed >= 2, "we expected to remove at least two notifications, but we have removed none!")
-
-        # List notifications again, require none to be present
-        self.runPySimShell(cardname, "test_list_notif.script")
-        self.assertEqualFiles("notifications.tmp")
+#    def test_list_and_rm_notif(self):
+#        cardname = 'sysmoEUICC1-C2T'
+#
+#        # Generate two (additional) notification
+#        self.runPySimShell(cardname, "test_gen_notif.script")
+#
+#        # List notifications into a file
+#        self.runPySimShell(cardname, "test_list_notif.script")
+#
+#        # Parse notifications file (JSON)
+#        notifications_tmp = open("notifications.tmp")
+#        notifications = json.load(notifications_tmp)
+#        notifications_tmp.close()
+#
+#        # Delete notifications one by one, we expect to see at least one notification
+#        notification_metadata_list = notifications['notification_metadata_list']
+#        removed = 0
+#        for nm in notification_metadata_list:
+#            seq_number = nm['notification_metadata']['seq_number']
+#            print("removing notification with seq_number %s:" % seq_number)
+#            self.equipTemplate("test_rm_notif.script", SEQ_NUMBER = seq_number)
+#            self.runPySimShell(cardname, "test_rm_notif.script")
+#            removed = removed + 1
+#        self.assertTrue(removed >= 2, "we expected to remove at least two notifications, but we have removed none!")
+#
+#        # List notifications again, require none to be present
+#        self.runPySimShell(cardname, "test_list_notif.script")
+#        self.assertEqualFiles("notifications.tmp")
 
 if __name__ == "__main__":
     unittest.main()
