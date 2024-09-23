@@ -1,0 +1,988 @@
+################################################################################
+# MF                                                                           #
+################################################################################
+# directory: MF (3f00)
+# file: MF (3f00)
+# RAW FCP Template: 000000003f000100000000000981020c0400838a838a
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'mf'}}, 'proprietary_info': {'available_memory': 0}, 'file_id': '3f00', 'file_characteristics': '81', 'num_direct_child_df': 2, 'num_direct_child_ef': 12, 'num_chv_unblock_adm_codes': 4}
+select MF
+# MF(3f00) has no exportable contents
+#
+################################################################################
+# MF/EF.ICCID                                                                  #
+################################################################################
+# directory: MF/EF.ICCID (3f00/2fe2)
+# file: EF.ICCID (2fe2)
+# structure: transparent
+# RAW FCP Template: 0000000a2fe204000cffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '2fe2', 'file_size': 10, 'access_conditions': '0cff', 'life_cycle_status_int': 'terminated'}
+select MF/EF.ICCID
+update_binary 112233445566778899f0
+#
+################################################################################
+# MF/EF.PL                                                                     #
+################################################################################
+# directory: MF/EF.PL (3f00/2f05)
+# bad file: MF/EF.PL/EF.PL, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.TELECOM                                                                #
+################################################################################
+# directory: MF/DF.TELECOM (3f00/7f10)
+# file: DF.TELECOM (7f10)
+# RAW FCP Template: 000000007f100200000000000981000d0400838a838a
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'df'}}, 'proprietary_info': {'available_memory': 0}, 'file_id': '7f10', 'file_characteristics': '81', 'num_direct_child_df': 0, 'num_direct_child_ef': 13, 'num_chv_unblock_adm_codes': 4}
+select MF/DF.TELECOM
+# DF(DF.TELECOM) has no exportable contents
+#
+################################################################################
+# MF/DF.TELECOM/EF.ADN                                                         #
+################################################################################
+# directory: MF/DF.TELECOM/EF.ADN (3f00/7f10/6f3a)
+# file: EF.ADN (6f3a)
+# structure: linear_fixed
+# RAW FCP Template: 000019646f3a040011ff220102011a
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'linear_fixed'}, 'record_len': 26, 'num_of_rec': 250}, 'proprietary_info': {}, 'file_id': '6f3a', 'file_size': 6500, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.TELECOM/EF.ADN
+update_record 1 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 2 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 3 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 4 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 5 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 6 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 7 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 8 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 9 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 10 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 11 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 12 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 13 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 14 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 15 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 16 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 17 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 18 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 19 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 20 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 21 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 22 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 23 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 24 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 25 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 26 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 27 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 28 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 29 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 30 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 31 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 32 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 33 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 34 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 35 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 36 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 37 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 38 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 39 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 40 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 41 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 42 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 43 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 44 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 45 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 46 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 47 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 48 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 49 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 50 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 51 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 52 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 53 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 54 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 55 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 56 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 57 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 58 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 59 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 60 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 61 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 62 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 63 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 64 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 65 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 66 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 67 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 68 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 69 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 70 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 71 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 72 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 73 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 74 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 75 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 76 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 77 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 78 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 79 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 80 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 81 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 82 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 83 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 84 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 85 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 86 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 87 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 88 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 89 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 90 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 91 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 92 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 93 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 94 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 95 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 96 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 97 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 98 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 99 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 100 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 101 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 102 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 103 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 104 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 105 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 106 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 107 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 108 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 109 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 110 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 111 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 112 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 113 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 114 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 115 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 116 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 117 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 118 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 119 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 120 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 121 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 122 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 123 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 124 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 125 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 126 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 127 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 128 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 129 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 130 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 131 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 132 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 133 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 134 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 135 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 136 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 137 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 138 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 139 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 140 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 141 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 142 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 143 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 144 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 145 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 146 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 147 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 148 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 149 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 150 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 151 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 152 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 153 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 154 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 155 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 156 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 157 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 158 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 159 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 160 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 161 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 162 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 163 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 164 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 165 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 166 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 167 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 168 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 169 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 170 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 171 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 172 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 173 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 174 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 175 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 176 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 177 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 178 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 179 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 180 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 181 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 182 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 183 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 184 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 185 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 186 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 187 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 188 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 189 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 190 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 191 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 192 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 193 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 194 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 195 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 196 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 197 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 198 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 199 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 200 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 201 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 202 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 203 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 204 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 205 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 206 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 207 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 208 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 209 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 210 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 211 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 212 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 213 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 214 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 215 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 216 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 217 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 218 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 219 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 220 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 221 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 222 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 223 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 224 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 225 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 226 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 227 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 228 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 229 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 230 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 231 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 232 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 233 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 234 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 235 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 236 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 237 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 238 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 239 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 240 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 241 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 242 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 243 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 244 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 245 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 246 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 247 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 248 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 249 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 250 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+#
+################################################################################
+# MF/DF.TELECOM/EF.FDN                                                         #
+################################################################################
+# directory: MF/DF.TELECOM/EF.FDN (3f00/7f10/6f3b)
+# file: EF.FDN (6f3b)
+# structure: linear_fixed
+# RAW FCP Template: 000001046f3b040012ffff0102011a
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'linear_fixed'}, 'record_len': 26, 'num_of_rec': 10}, 'proprietary_info': {}, 'file_id': '6f3b', 'file_size': 260, 'access_conditions': '12ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.TELECOM/EF.FDN
+update_record 1 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 2 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 3 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 4 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 5 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 6 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 7 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 8 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 9 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 10 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+#
+################################################################################
+# MF/DF.TELECOM/EF.SMS                                                         #
+################################################################################
+# directory: MF/DF.TELECOM/EF.SMS (3f00/7f10/6f3c)
+# file: EF.SMS (6f3c)
+# structure: linear_fixed
+# RAW FCP Template: 00001b806f3c040011ffff010201b0
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'linear_fixed'}, 'record_len': 176, 'num_of_rec': 40}, 'proprietary_info': {}, 'file_id': '6f3c', 'file_size': 7040, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.TELECOM/EF.SMS
+update_record 1 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 2 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 3 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 4 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 5 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 6 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 7 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 8 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 9 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 10 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 11 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 12 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 13 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 14 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 15 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 16 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 17 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 18 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 19 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 20 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 21 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 22 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 23 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 24 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 25 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 26 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 27 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 28 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 29 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 30 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 31 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 32 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 33 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 34 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 35 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 36 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 37 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 38 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 39 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 40 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#
+################################################################################
+# MF/DF.TELECOM/EF.CCP                                                         #
+################################################################################
+# directory: MF/DF.TELECOM/EF.CCP (3f00/7f10/6f3d)
+# file: EF.CCP (6f3d)
+# structure: linear_fixed
+# RAW FCP Template: 000000466f3d040011ffff0102010e
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'linear_fixed'}, 'record_len': 14, 'num_of_rec': 5}, 'proprietary_info': {}, 'file_id': '6f3d', 'file_size': 70, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.TELECOM/EF.CCP
+update_record 1 ffffffffffffffffffffffffffff
+update_record 2 ffffffffffffffffffffffffffff
+update_record 3 ffffffffffffffffffffffffffff
+update_record 4 ffffffffffffffffffffffffffff
+update_record 5 ffffffffffffffffffffffffffff
+#
+################################################################################
+# MF/DF.TELECOM/EF.ECCP                                                        #
+################################################################################
+# directory: MF/DF.TELECOM/EF.ECCP (3f00/7f10/6f4f)
+# bad file: MF/DF.TELECOM/EF.ECCP/EF.ECCP, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.TELECOM/EF.MSISDN                                                      #
+################################################################################
+# directory: MF/DF.TELECOM/EF.MSISDN (3f00/7f10/6f40)
+# file: EF.MSISDN (6f40)
+# structure: linear_fixed
+# RAW FCP Template: 000000346f40040011ffff0102011a
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'linear_fixed'}, 'record_len': 26, 'num_of_rec': 2}, 'proprietary_info': {}, 'file_id': '6f40', 'file_size': 52, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.TELECOM/EF.MSISDN
+update_record 1 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 2 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+#
+################################################################################
+# MF/DF.TELECOM/EF.SMSP                                                        #
+################################################################################
+# directory: MF/DF.TELECOM/EF.SMSP (3f00/7f10/6f42)
+# file: EF.SMSP (6f42)
+# structure: linear_fixed
+# RAW FCP Template: 000000506f42040011ffff01020128
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'linear_fixed'}, 'record_len': 40, 'num_of_rec': 2}, 'proprietary_info': {}, 'file_id': '6f42', 'file_size': 80, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.TELECOM/EF.SMSP
+update_record 1 ffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff000000
+update_record 2 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#
+################################################################################
+# MF/DF.TELECOM/EF.SMSS                                                        #
+################################################################################
+# directory: MF/DF.TELECOM/EF.SMSS (3f00/7f10/6f43)
+# file: EF.SMSS (6f43)
+# structure: transparent
+# RAW FCP Template: 000000026f43040011ffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f43', 'file_size': 2, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.TELECOM/EF.SMSS
+update_binary ffff
+#
+################################################################################
+# MF/DF.TELECOM/EF.LND                                                         #
+################################################################################
+# directory: MF/DF.TELECOM/EF.LND (3f00/7f10/6f44)
+# file: EF.LND (6f44)
+# structure: cyclic
+# RAW FCP Template: 000000826f44040011ffff0102031a
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'cyclic'}, 'record_len': 26, 'num_of_rec': 5}, 'proprietary_info': {}, 'file_id': '6f44', 'file_size': 130, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.TELECOM/EF.LND
+update_record 1 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 2 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 3 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 4 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+update_record 5 ffffffffffffffffffffffffffffffffffffffffffffffffffff
+#
+################################################################################
+# MF/DF.TELECOM/EF.SDN                                                         #
+################################################################################
+# directory: MF/DF.TELECOM/EF.SDN (3f00/7f10/6f49)
+# bad file: MF/DF.TELECOM/EF.SDN/EF.SDN, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.TELECOM/EF.EXT1                                                        #
+################################################################################
+# directory: MF/DF.TELECOM/EF.EXT1 (3f00/7f10/6f4a)
+# file: EF.EXT1 (6f4a)
+# structure: linear_fixed
+# RAW FCP Template: 000000416f4a040011ffff0102010d
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'linear_fixed'}, 'record_len': 13, 'num_of_rec': 5}, 'proprietary_info': {}, 'file_id': '6f4a', 'file_size': 65, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.TELECOM/EF.EXT1
+update_record 1 ffffffffffffffffffffffffff
+update_record 2 ffffffffffffffffffffffffff
+update_record 3 ffffffffffffffffffffffffff
+update_record 4 ffffffffffffffffffffffffff
+update_record 5 ffffffffffffffffffffffffff
+#
+################################################################################
+# MF/DF.TELECOM/EF.EXT2                                                        #
+################################################################################
+# directory: MF/DF.TELECOM/EF.EXT2 (3f00/7f10/6f4b)
+# file: EF.EXT2 (6f4b)
+# structure: linear_fixed
+# RAW FCP Template: 000000416f4b040012ffff0102010d
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'linear_fixed'}, 'record_len': 13, 'num_of_rec': 5}, 'proprietary_info': {}, 'file_id': '6f4b', 'file_size': 65, 'access_conditions': '12ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.TELECOM/EF.EXT2
+update_record 1 ffffffffffffffffffffffffff
+update_record 2 ffffffffffffffffffffffffff
+update_record 3 ffffffffffffffffffffffffff
+update_record 4 ffffffffffffffffffffffffff
+update_record 5 ffffffffffffffffffffffffff
+#
+################################################################################
+# MF/DF.TELECOM/EF.EXT3                                                        #
+################################################################################
+# directory: MF/DF.TELECOM/EF.EXT3 (3f00/7f10/6f4c)
+# bad file: MF/DF.TELECOM/EF.EXT3/EF.EXT3, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.TELECOM/EF.BDN                                                         #
+################################################################################
+# directory: MF/DF.TELECOM/EF.BDN (3f00/7f10/6f4d)
+# bad file: MF/DF.TELECOM/EF.BDN/EF.BDN, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.TELECOM/EF.EXT4                                                        #
+################################################################################
+# directory: MF/DF.TELECOM/EF.EXT4 (3f00/7f10/6f4e)
+# bad file: MF/DF.TELECOM/EF.EXT4/EF.EXT4, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.TELECOM/EF.SMSR                                                        #
+################################################################################
+# directory: MF/DF.TELECOM/EF.SMSR (3f00/7f10/6f47)
+# bad file: MF/DF.TELECOM/EF.SMSR/EF.SMSR, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.TELECOM/EF.CMI                                                         #
+################################################################################
+# directory: MF/DF.TELECOM/EF.CMI (3f00/7f10/6f58)
+# bad file: MF/DF.TELECOM/EF.CMI/EF.CMI, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM                                                                    #
+################################################################################
+# directory: MF/DF.GSM (3f00/7f20)
+# file: DF.GSM (7f20)
+# RAW FCP Template: 000000007f20020000000000099100170400838a838a
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'df'}}, 'proprietary_info': {'available_memory': 0}, 'file_id': '7f20', 'file_characteristics': '91', 'num_direct_child_df': 0, 'num_direct_child_ef': 23, 'num_chv_unblock_adm_codes': 4}
+select MF/DF.GSM
+# DF(DF.GSM) has no exportable contents
+#
+################################################################################
+# MF/DF.GSM/EF.LP                                                              #
+################################################################################
+# directory: MF/DF.GSM/EF.LP (3f00/7f20/6f05)
+# file: EF.LP (6f05)
+# structure: transparent
+# RAW FCP Template: 000000046f05040001ffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f05', 'file_size': 4, 'access_conditions': '01ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.LP
+update_binary 01ffffff
+#
+################################################################################
+# MF/DF.GSM/EF.IMSI                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.IMSI (3f00/7f20/6f07)
+# file: EF.IMSI (6f07)
+# structure: transparent
+# RAW FCP Template: 000000096f0704001bff1f01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f07', 'file_size': 9, 'access_conditions': '1bff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.IMSI
+update_binary 080910100000001020
+#
+################################################################################
+# MF/DF.GSM/EF.Kc                                                              #
+################################################################################
+# directory: MF/DF.GSM/EF.Kc (3f00/7f20/6f20)
+# file: EF.Kc (6f20)
+# structure: transparent
+# RAW FCP Template: 000000096f20040011ffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f20', 'file_size': 9, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.Kc
+update_binary 6f20000911ffff0100
+#
+################################################################################
+# MF/DF.GSM/EF.PLMNsel                                                         #
+################################################################################
+# directory: MF/DF.GSM/EF.PLMNsel (3f00/7f20/6f30)
+# file: EF.PLMNsel (6f30)
+# structure: transparent
+# RAW FCP Template: 0000002d6f30040011ffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f30', 'file_size': 45, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.PLMNsel
+update_binary 00f110ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#
+################################################################################
+# MF/DF.GSM/EF.HPPLMN                                                          #
+################################################################################
+# directory: MF/DF.GSM/EF.HPPLMN (3f00/7f20/6f31)
+# file: EF.HPPLMN (6f31)
+# structure: transparent
+# RAW FCP Template: 000000016f3104001bffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f31', 'file_size': 1, 'access_conditions': '1bff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.HPPLMN
+update_binary 05
+#
+################################################################################
+# MF/DF.GSM/EF.ACMmax                                                          #
+################################################################################
+# directory: MF/DF.GSM/EF.ACMmax (3f00/7f20/6f37)
+# file: EF.ACMmax (6f37)
+# structure: transparent
+# RAW FCP Template: 000000036f37040012ffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f37', 'file_size': 3, 'access_conditions': '12ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.ACMmax
+update_binary 000000
+#
+################################################################################
+# MF/DF.GSM/EF.SST                                                             #
+################################################################################
+# directory: MF/DF.GSM/EF.SST (3f00/7f20/6f38)
+# file: EF.SST (6f38)
+# structure: transparent
+# RAW FCP Template: 0000000a6f3804001bffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f38', 'file_size': 10, 'access_conditions': '1bff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.SST
+update_binary ff3fff0f0300f003000c
+#
+################################################################################
+# MF/DF.GSM/EF.ACM                                                             #
+################################################################################
+# directory: MF/DF.GSM/EF.ACM (3f00/7f20/6f39)
+# file: EF.ACM (6f39)
+# structure: cyclic
+# RAW FCP Template: 0000001e6f390440121fff01020303
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'cyclic'}, 'record_len': 3, 'num_of_rec': 10}, 'proprietary_info': {}, 'file_id': '6f39', 'file_size': 30, 'access_conditions': '121f', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.ACM
+update_record 1 000000
+update_record 2 000000
+update_record 3 000000
+update_record 4 000000
+update_record 5 000000
+update_record 6 000000
+update_record 7 000000
+update_record 8 000000
+update_record 9 000000
+update_record 10 000000
+#
+################################################################################
+# MF/DF.GSM/EF.GID1                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.GID1 (3f00/7f20/6f3e)
+# bad file: MF/DF.GSM/EF.GID1/EF.GID1, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.GID2                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.GID2 (3f00/7f20/6f3f)
+# bad file: MF/DF.GSM/EF.GID2/EF.GID2, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.SPN                                                             #
+################################################################################
+# directory: MF/DF.GSM/EF.SPN (3f00/7f20/6f46)
+# file: EF.SPN (6f46)
+# structure: transparent
+# RAW FCP Template: 000000116f4604000bffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f46', 'file_size': 17, 'access_conditions': '0bff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.SPN
+update_binary 014d61676963ffffffffffffffffffffff
+#
+################################################################################
+# MF/DF.GSM/EF.PUCT                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.PUCT (3f00/7f20/6f41)
+# file: EF.PUCT (6f41)
+# structure: transparent
+# RAW FCP Template: 000000056f41040012ffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f41', 'file_size': 5, 'access_conditions': '12ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.PUCT
+update_binary ffffff0000
+#
+################################################################################
+# MF/DF.GSM/EF.CBMI                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.CBMI (3f00/7f20/6f45)
+# file: EF.CBMI (6f45)
+# structure: transparent
+# RAW FCP Template: 000000286f45040011ffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f45', 'file_size': 40, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.CBMI
+update_binary ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#
+################################################################################
+# MF/DF.GSM/EF.BCCH                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.BCCH (3f00/7f20/6f74)
+# file: EF.BCCH (6f74)
+# structure: transparent
+# RAW FCP Template: 000000106f74040011ffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f74', 'file_size': 16, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.BCCH
+update_binary 00000000000000000000000000000000
+#
+################################################################################
+# MF/DF.GSM/EF.ACC                                                             #
+################################################################################
+# directory: MF/DF.GSM/EF.ACC (3f00/7f20/6f78)
+# file: EF.ACC (6f78)
+# structure: transparent
+# RAW FCP Template: 000000026f7804001bffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f78', 'file_size': 2, 'access_conditions': '1bff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.ACC
+update_binary ffff
+#
+################################################################################
+# MF/DF.GSM/EF.FPLMN                                                           #
+################################################################################
+# directory: MF/DF.GSM/EF.FPLMN (3f00/7f20/6f7b)
+# file: EF.FPLMN (6f7b)
+# structure: transparent
+# RAW FCP Template: 0000000c6f7b040011ffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f7b', 'file_size': 12, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.FPLMN
+update_binary ffffffffffffffffffffffff
+#
+################################################################################
+# MF/DF.GSM/EF.LOCI                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.LOCI (3f00/7f20/6f7e)
+# file: EF.LOCI (6f7e)
+# structure: transparent
+# RAW FCP Template: 0000000b6f7e040011ff1f01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f7e', 'file_size': 11, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.LOCI
+update_binary ffffffff09f199fffe0003
+#
+################################################################################
+# MF/DF.GSM/EF.AD                                                              #
+################################################################################
+# directory: MF/DF.GSM/EF.AD (3f00/7f20/6fad)
+# file: EF.AD (6fad)
+# structure: transparent
+# RAW FCP Template: 000000036fad04000bffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6fad', 'file_size': 3, 'access_conditions': '0bff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.AD
+update_binary 000000
+#
+################################################################################
+# MF/DF.GSM/EF.Phase                                                           #
+################################################################################
+# directory: MF/DF.GSM/EF.Phase (3f00/7f20/6fae)
+# file: EF.Phase (6fae)
+# structure: transparent
+# RAW FCP Template: 000000016fae04000bffff01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6fae', 'file_size': 1, 'access_conditions': '0bff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.Phase
+update_binary 03
+#
+################################################################################
+# MF/DF.GSM/EF.VGCS                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.VGCS (3f00/7f20/6fb1)
+# bad file: MF/DF.GSM/EF.VGCS/EF.VGCS, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.VGCSS                                                           #
+################################################################################
+# directory: MF/DF.GSM/EF.VGCSS (3f00/7f20/6fb2)
+# bad file: MF/DF.GSM/EF.VGCSS/EF.VGCSS, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.VBS                                                             #
+################################################################################
+# directory: MF/DF.GSM/EF.VBS (3f00/7f20/6fb3)
+# bad file: MF/DF.GSM/EF.VBS/EF.VBS, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.VBSS                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.VBSS (3f00/7f20/6fb4)
+# bad file: MF/DF.GSM/EF.VBSS/EF.VBSS, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.eMLPP                                                           #
+################################################################################
+# directory: MF/DF.GSM/EF.eMLPP (3f00/7f20/6fb5)
+# bad file: MF/DF.GSM/EF.eMLPP/EF.eMLPP, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.AAeM                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.AAeM (3f00/7f20/6fb6)
+# bad file: MF/DF.GSM/EF.AAeM/EF.AAeM, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.CBMID                                                           #
+################################################################################
+# directory: MF/DF.GSM/EF.CBMID (3f00/7f20/6f48)
+# bad file: MF/DF.GSM/EF.CBMID/EF.CBMID, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.ECC                                                             #
+################################################################################
+# directory: MF/DF.GSM/EF.ECC (3f00/7f20/6fb7)
+# bad file: MF/DF.GSM/EF.ECC/EF.ECC, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.CBMIR                                                           #
+################################################################################
+# directory: MF/DF.GSM/EF.CBMIR (3f00/7f20/6f50)
+# bad file: MF/DF.GSM/EF.CBMIR/EF.CBMIR, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.DCK                                                             #
+################################################################################
+# directory: MF/DF.GSM/EF.DCK (3f00/7f20/6f2c)
+# bad file: MF/DF.GSM/EF.DCK/EF.DCK, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.CNL                                                             #
+################################################################################
+# directory: MF/DF.GSM/EF.CNL (3f00/7f20/6f32)
+# bad file: MF/DF.GSM/EF.CNL/EF.CNL, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.NIA                                                             #
+################################################################################
+# directory: MF/DF.GSM/EF.NIA (3f00/7f20/6f51)
+# bad file: MF/DF.GSM/EF.NIA/EF.NIA, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.KcGPRS                                                          #
+################################################################################
+# directory: MF/DF.GSM/EF.KcGPRS (3f00/7f20/6f52)
+# file: EF.KcGPRS (6f52)
+# structure: transparent
+# RAW FCP Template: 000000096f52040011ffbb01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f52', 'file_size': 9, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.KcGPRS
+update_binary ffffffffffffffff07
+#
+################################################################################
+# MF/DF.GSM/EF.LOCIGPRS                                                        #
+################################################################################
+# directory: MF/DF.GSM/EF.LOCIGPRS (3f00/7f20/6f53)
+# file: EF.LOCIGPRS (6f53)
+# structure: transparent
+# RAW FCP Template: 0000000e6f53040011ffbb01020000
+# Decoded FCP Template: {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '6f53', 'file_size': 14, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}
+select MF/DF.GSM/EF.LOCIGPRS
+update_binary ffffffffffffff15f0010000ff01
+#
+################################################################################
+# MF/DF.GSM/EF.SUME                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.SUME (3f00/7f20/6f54)
+# bad file: MF/DF.GSM/EF.SUME/EF.SUME, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.PLMNwAcT                                                        #
+################################################################################
+# directory: MF/DF.GSM/EF.PLMNwAcT (3f00/7f20/6f60)
+# bad file: MF/DF.GSM/EF.PLMNwAcT/EF.PLMNwAcT, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.OPLMNwAcT                                                       #
+################################################################################
+# directory: MF/DF.GSM/EF.OPLMNwAcT (3f00/7f20/6f61)
+# bad file: MF/DF.GSM/EF.OPLMNwAcT/EF.OPLMNwAcT, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.HPLMNwAcT                                                       #
+################################################################################
+# directory: MF/DF.GSM/EF.HPLMNwAcT (3f00/7f20/6f62)
+# bad file: MF/DF.GSM/EF.HPLMNwAcT/EF.HPLMNwAcT, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.CPBCCH                                                          #
+################################################################################
+# directory: MF/DF.GSM/EF.CPBCCH (3f00/7f20/6f63)
+# bad file: MF/DF.GSM/EF.CPBCCH/EF.CPBCCH, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.InvScan                                                         #
+################################################################################
+# directory: MF/DF.GSM/EF.InvScan (3f00/7f20/6f64)
+# bad file: MF/DF.GSM/EF.InvScan/EF.InvScan, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.PNN                                                             #
+################################################################################
+# directory: MF/DF.GSM/EF.PNN (3f00/7f20/6fc5)
+# bad file: MF/DF.GSM/EF.PNN/EF.PNN, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.OPL                                                             #
+################################################################################
+# directory: MF/DF.GSM/EF.OPL (3f00/7f20/6fc6)
+# bad file: MF/DF.GSM/EF.OPL/EF.OPL, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.MBDN                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.MBDN (3f00/7f20/6fc7)
+# bad file: MF/DF.GSM/EF.MBDN/EF.MBDN, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.MBI                                                             #
+################################################################################
+# directory: MF/DF.GSM/EF.MBI (3f00/7f20/6fc9)
+# bad file: MF/DF.GSM/EF.MBI/EF.MBI, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.MWIS                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.MWIS (3f00/7f20/6fca)
+# bad file: MF/DF.GSM/EF.MWIS/EF.MWIS, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.CFIS                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.CFIS (3f00/7f20/6fcb)
+# bad file: MF/DF.GSM/EF.CFIS/EF.CFIS, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.EXT6                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.EXT6 (3f00/7f20/6fc8)
+# bad file: MF/DF.GSM/EF.EXT6/EF.EXT6, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.EXT7                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.EXT7 (3f00/7f20/6fcc)
+# bad file: MF/DF.GSM/EF.EXT7/EF.EXT7, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.SPDI                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.SPDI (3f00/7f20/6fcd)
+# bad file: MF/DF.GSM/EF.SPDI/EF.SPDI, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.MMSN                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.MMSN (3f00/7f20/6fce)
+# bad file: MF/DF.GSM/EF.MMSN/EF.MMSN, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.EXT8                                                            #
+################################################################################
+# directory: MF/DF.GSM/EF.EXT8 (3f00/7f20/6fcf)
+# bad file: MF/DF.GSM/EF.EXT8/EF.EXT8, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.MMSICP                                                          #
+################################################################################
+# directory: MF/DF.GSM/EF.MMSICP (3f00/7f20/6fd0)
+# bad file: MF/DF.GSM/EF.MMSICP/EF.MMSICP, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.MMSUP                                                           #
+################################################################################
+# directory: MF/DF.GSM/EF.MMSUP (3f00/7f20/6fd1)
+# bad file: MF/DF.GSM/EF.MMSUP/EF.MMSUP, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# MF/DF.GSM/EF.MMSUCP                                                          #
+################################################################################
+# directory: MF/DF.GSM/EF.MMSUCP (3f00/7f20/6fd2)
+# bad file: MF/DF.GSM/EF.MMSUCP/EF.MMSUCP, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#
+################################################################################
+# Export summary                                                               #
+################################################################################
+# total files visited: 75
+# bad files:           42
+#  MF/EF.PL/EF.PL, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.TELECOM/EF.ECCP/EF.ECCP, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.TELECOM/EF.SDN/EF.SDN, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.TELECOM/EF.EXT3/EF.EXT3, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.TELECOM/EF.BDN/EF.BDN, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.TELECOM/EF.EXT4/EF.EXT4, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.TELECOM/EF.SMSR/EF.SMSR, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.TELECOM/EF.CMI/EF.CMI, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.GID1/EF.GID1, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.GID2/EF.GID2, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.VGCS/EF.VGCS, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.VGCSS/EF.VGCSS, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.VBS/EF.VBS, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.VBSS/EF.VBSS, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.eMLPP/EF.eMLPP, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.AAeM/EF.AAeM, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.CBMID/EF.CBMID, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.ECC/EF.ECC, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.CBMIR/EF.CBMIR, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.DCK/EF.DCK, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.CNL/EF.CNL, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.NIA/EF.NIA, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.SUME/EF.SUME, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.PLMNwAcT/EF.PLMNwAcT, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.OPLMNwAcT/EF.OPLMNwAcT, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.HPLMNwAcT/EF.HPLMNwAcT, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.CPBCCH/EF.CPBCCH, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.InvScan/EF.InvScan, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.PNN/EF.PNN, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.OPL/EF.OPL, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.MBDN/EF.MBDN, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.MBI/EF.MBI, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.MWIS/EF.MWIS, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.CFIS/EF.CFIS, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.EXT6/EF.EXT6, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.EXT7/EF.EXT7, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.SPDI/EF.SPDI, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.MMSN/EF.MMSN, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.EXT8/EF.EXT8, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.MMSICP/EF.MMSICP, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.MMSUP/EF.MMSUP, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.GSM/EF.MMSUCP/EF.MMSUCP, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+# skipped dedicated files(s): 4
+#  MF/DF.TELECOM/DF.PHONEBOOK, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.TELECOM/DF.MULTIMEDIA, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.TELECOM/DF.MCS, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
+#  MF/DF.TELECOM/DF.V2X, SW match failed! Expected 9000 and got 9404: Referencing management - file ID not found or pattern not found
