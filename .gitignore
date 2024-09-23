@@ -3,3 +3,7 @@
 
 /docs/_*
 /docs/generated
+/.cache
+/.local
+/build
+/pySim.egg-info
