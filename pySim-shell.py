@@ -1056,6 +1056,8 @@ adm_group.add_argument('-a', '--pin-adm', metavar='PIN_ADM1', dest='pin_adm', de
 adm_group.add_argument('-A', '--pin-adm-hex', metavar='PIN_ADM1_HEX', dest='pin_adm_hex', default=None,
                        help='ADM PIN used for provisioning, as hex string (16 characters long)')
 
+option_parser.add_argument('-e', '--execute-command', action='append', default=[],
+                           help='A pySim-shell command that will be executed at startup')
 option_parser.add_argument("command", nargs='?',
                            help="A pySim-shell command that would optionally be executed at startup")
 option_parser.add_argument('command_args', nargs=argparse.REMAINDER,
@@ -1121,6 +1123,13 @@ if __name__ == '__main__':
             print("---------------------8<---------------------")
             print(e)
             print("---------------------8<---------------------")
+
+    # Run optional commands
+    for c in opts.execute_command:
+        if not startup_errors:
+            app.onecmd_plus_hooks(c)
+        else:
+            print("Errors during startup, refusing to execute command (%s)" % c)
 
     # Run optional command
     if opts.command:
