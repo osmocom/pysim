@@ -177,7 +177,7 @@ class ProfileMgmtOperation(BER_TLV_IE, tag=0x81):
 class ListNotificationReq(BER_TLV_IE, tag=0xbf28, nested=[ProfileMgmtOperation]):
     pass
 class SeqNumber(BER_TLV_IE, tag=0x80):
-    _construct = GreedyInteger()
+    _construct = Asn1DerInteger()
 class NotificationAddress(BER_TLV_IE, tag=0x0c):
     _construct = Utf8Adapter(GreedyBytes)
 class Iccid(BER_TLV_IE, tag=0x5a):
@@ -304,9 +304,9 @@ class EimFqdn(BER_TLV_IE, tag=0x81):
 class EimIdType(BER_TLV_IE, tag=0x82):
     _construct = Enum(Int8ub, eimIdTypeOid=1, eimIdTypeFqdn=2, eimIdTypeProprietary=3)
 class CounterValue(BER_TLV_IE, tag=0x83):
-    _construct = GreedyInteger
+    _construct = Asn1DerInteger()
 class AssociationToken(BER_TLV_IE, tag=0x84):
-    _construct = GreedyInteger
+    _construct = Asn1DerInteger()
 class EimSupportedProtocol(BER_TLV_IE, tag=0x87):
     _construct = Enum(Int8ub, eimRetrieveHttps=0, eimRetrieveCoaps=1, eimInjectHttps=2, eimInjectCoaps=3,
                       eimProprietary=4)
