@@ -405,14 +405,14 @@ class EF_LI(TransRecEF):
                  desc='Language Indication'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len)
 
-    def _decode_record_bin(self, in_bin, **_kwargs):
+    def _decode_record_bin(self, in_bin, **kwargs):
         if in_bin == b'\xff\xff':
             return None
         else:
             # officially this is 7-bit GSM alphabet with one padding bit in each byte
             return in_bin.decode('ascii')
 
-    def _encode_record_bin(self, in_json, **_kwargs):
+    def _encode_record_bin(self, in_json, **kwargs):
         if in_json is None:
             return b'\xff\xff'
         else:
@@ -505,7 +505,7 @@ class EF_ECC(LinFixedEF):
                  desc='Emergency Call Codes'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(4, 20))
 
-    def _decode_record_bin(self, in_bin, **_kwargs):
+    def _decode_record_bin(self, in_bin, **kwargs):
         # mandatory parts
         code = in_bin[:3]
         if code == b'\xff\xff\xff':
@@ -519,7 +519,7 @@ class EF_ECC(LinFixedEF):
             ret['alpha_id'] = parse_construct(EF_ECC.alpha_construct, alpha_id)
         return ret
 
-    def _encode_record_bin(self, in_json, **_kwargs):
+    def _encode_record_bin(self, in_json, **kwargs):
         if in_json is None:
             return b'\xff\xff\xff\xff'
         code = EF_ECC.cc_construct.build(in_json['call_code'])
@@ -682,7 +682,7 @@ class EF_RPLMNAcT(TransRecEF):
     def __init__(self, fid='6f65', sfid=None, name='EF.RPLMNAcTD', size=(2, 4), rec_len=2,
                  desc='RPLMN Last used Access Technology', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
-    def _decode_record_hex(self, in_hex, **_kwargs):
+    def _decode_record_hex(self, in_hex, **kwargs):
         return dec_act(in_hex)
     # TODO: Encode
 

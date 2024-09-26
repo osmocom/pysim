@@ -733,7 +733,7 @@ class EF_ARR(LinFixedEF):
                 raise ValueError
         return by_mode
 
-    def _decode_record_bin(self, raw_bin_data, **_kwargs):
+    def _decode_record_bin(self, raw_bin_data, **kwargs):
         # we can only guess if we should decode for EF or DF here :(
         arr_seq = DataObjectSequence('arr', sequence=[AM_DO_EF, SC_DO])
         dec = arr_seq.decode_multi(raw_bin_data)
@@ -741,7 +741,7 @@ class EF_ARR(LinFixedEF):
         # 'un-flattening' decoder, and hence would be unable to encode :(
         return dec[0]
 
-    def _encode_record_bin(self, in_json, **_kwargs):
+    def _encode_record_bin(self, in_json, **kwargs):
         # we can only guess if we should decode for EF or DF here :(
         arr_seq = DataObjectSequence('arr', sequence=[AM_DO_EF, SC_DO])
         return arr_seq.encode_multi(in_json)
