@@ -20,7 +20,7 @@ support for profile personalization yet.
 osmo-smdpp currently
 
 * [by default] uses test certificates copied from GSMA SGP.26 into `./smdpp-data/certs`, assuming that your
-  osmo-smdppp would be running at the host name `testsmdpplus1.example.com`. You can of course replace those
+  osmo-smdpp would be running at the host name `testsmdpplus1.example.com`. You can of course replace those
   certificates with your own, whether SGP.26 derived or part of a *private root CA* setup with mathcing eUICCs.
 * doesn't understand profile state. Any profile can always be downloaded any number of times, irrespective
   of the EID or whether it was donwloaded before.  This is actually very useful for R&D and testing, as it
