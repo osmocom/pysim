@@ -79,12 +79,8 @@ If you use `nginx` as web server, you can use the following configuration snippe
 You can of course achieve a similar functionality with apache, lighttpd or many other web server
 software.
 
-
-osmo-smdpp
-~~~~~~~~~~
-
-osmo-smdpp currently doesn't have any configuration file or command line options.  You just run it,
-and it will bind its plain-HTTP ES9+ interface to local TCP port 8000.
+supplementary files
+~~~~~~~~~~~~~~~~~~~
 
 The `smdpp-data/certs`` directory contains the DPtls, DPauth and DPpb as well as CI certificates
 used; they are copied from GSMA SGP.26 v2.  You can of course replace them with custom certificates
@@ -92,6 +88,13 @@ if you're operating eSIM with a *private root CA*.
 
 The `smdpp-data/upp` directory contains the UPP (Unprotected Profile Package) used.  The file names (without
 .der suffix) are looked up by the matchingID parameter from the activation code presented by the LPA.
+
+commandline options
+~~~~~~~~~~~~~~~~~~~
+
+osmo-smdpp currently doesn't have any configuration file or command line options.  You just run it,
+and it will bind its plain-HTTP ES9+ interface to local TCP port 8000.
+
 
 
 DNS setup for your LPA
