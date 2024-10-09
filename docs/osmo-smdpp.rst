@@ -33,7 +33,7 @@ osmo-smdpp currently
  * does not perform all of the mandatory certificate verification (it checks the certificate chain, but not
    the expiration dates nor any CRL)
  * does not evaluate/consider any *Confirmation Code*
- * stores the sessions in an unencrypted _python shelve_ and is hence leaking one-time key materials
+ * stores the sessions in an unencrypted *python shelve* and is hence leaking one-time key materials
    used for profile encryption and signing.
 
 
