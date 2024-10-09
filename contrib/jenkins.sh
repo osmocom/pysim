@@ -77,6 +77,11 @@ case "$JOB_TYPE" in
 		contrib/*.py
 	;;
 "docs")
+	virtualenv -p python3 venv --system-site-packages
+	. venv/bin/activate
+
+	pip install -r requirements.txt
+
 	rm -rf docs/_build
 	make -C "docs" html latexpdf
 
