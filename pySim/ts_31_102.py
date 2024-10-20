@@ -30,7 +30,7 @@ import enum
 
 from construct import Optional as COptional
 from construct import Int32ub, Nibble, GreedyRange, Struct, FlagsEnum, Switch, this, Int16ub, Padding
-from construct import Bytewise, Int24ub, PaddedString, PrefixedArray, If
+from construct import Bytewise, Int24ub, Int24sb, PaddedString, PrefixedArray, If
 
 from osmocom.utils import is_hexstr
 from osmocom.tlv import *
@@ -893,6 +893,54 @@ class EF_FromPreferred(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = BitStruct('rfu'/BitsRFU(7), 'from_preferred'/Flag)
 
+# TS 31.102 Section 4.2.112 + TS 23.032 Section 6.1
+GadPoint = Struct('latitude'/Int24sb, 'longitude'/Int24sb)
+
+# TS 31.102 Section 4.2.112 (Rel ??)
+class EF_EARFCNList(TransparentEF):
+    _test_de_encode = [
+        # single data object with one EARFCN + one area of 3 points
+        ('a01a8004000100008112000001100001000002100002000003100003',
+         [{'earfcn_list_tlv': [{'earfcn': 65536},
+                               {'geographical_area': [{'latitude': 1, 'longitude': 1048577},
+                                                      {'latitude': 2, 'longitude': 1048578},
+                                                      {'latitude': 3, 'longitude': 1048579}] }]}] ),
+        # single data object with one EARFCN + two areas of 3 + 4 points
+        ('a03480040001000081120000011000010000021000020000031000038118000001100001000002100002000003100003000004100004',
+         [{'earfcn_list_tlv': [{'earfcn': 65536},
+                               {'geographical_area': [{'latitude': 1, 'longitude': 1048577},
+                                                      {'latitude': 2, 'longitude': 1048578},
+                                                      {'latitude': 3, 'longitude': 1048579}] },
+                               {'geographical_area': [{'latitude': 1, 'longitude': 1048577},
+                                                      {'latitude': 2, 'longitude': 1048578},
+                                                      {'latitude': 3, 'longitude': 1048579},
+                                                      {'latitude': 4, 'longitude': 1048580}] }
+                               ] }] ),
+        # two concatenated data objects with 3 points each
+        ('a01a8004000100008112000001100001000002100002000003100003a01a8004000200008112000011100011000012100012000013100013',
+         [{'earfcn_list_tlv': [{'earfcn': 65536},
+                               {'geographical_area': [{'latitude': 1, 'longitude': 1048577},
+                                                      {'latitude': 2, 'longitude': 1048578},
+                                                      {'latitude': 3, 'longitude': 1048579}] }]},
+          {'earfcn_list_tlv': [{'earfcn': 131072},
+                               {'geographical_area': [{'latitude': 17, 'longitude': 1048593},
+                                                      {'latitude': 18, 'longitude': 1048594},
+                                                      {'latitude': 19, 'longitude': 1048595}] }]} ]),
+    ]
+    class Earfcn(BER_TLV_IE, tag=0x80):
+        _construct = Int32ub
+    class GeographicalArea(BER_TLV_IE, tag=0x81):
+        _construct = GreedyRange(GadPoint)
+    class EarfcnListTlv(BER_TLV_IE, tag=0xa0, nested=[Earfcn,GeographicalArea]):
+        pass
+    # we need a collection as there might be multiple concatenated instances
+    class EarfcnListTlvCollection(TLV_IE_Collection, nested=[EarfcnListTlv]):
+        pass
+    def __init__(self, fid='6ffd', sfid=None, name='EF.EARFCNList', size=(30, 100),
+                 desc='EARFCN list for MTC/NB-IOT UEs', **kwargs):
+        super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
+        self._tlv = self.EarfcnListTlvCollection
+
 # TS 31.102 Section 4.2.114 (Rel 18)
 class EF_eAKA(TransparentEF):
     def __init__(self, fid='6f01', sfid=None, name='EF.eAKA', size=(1, 1),
@@ -1675,7 +1723,7 @@ class ADF_USIM(CardADF):
             # TODO: EF.3GPPPSDATAOFF
             # TODO: EF.3GPPPSDATAOFFservicelist
             EF_XCAPConfigData(service=120),
-            # TODO: EF.EARFCNList
+            EF_EARFCNList(service=121),
             EF_MuDMiDConfigData(service=134),
             EF_eAKA(),
             EF_OCST(service=148),
