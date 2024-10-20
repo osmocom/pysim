@@ -293,7 +293,7 @@ class FilesTelecom(ProfileTemplate):
     oid = OID.DF_TELECOM
     base_path = Path('MF')
     files = [
-        FileTemplate(0x7f11, 'DF.TELECOM',   'DF', None, None,  14, None, None, False, params=['pinStatusTemplateDO']),
+        FileTemplate(0x7f10, 'DF.TELECOM',   'DF', None, None,  14, None, None, False, params=['pinStatusTemplateDO']),
         FileTemplate(0x6f06, 'EF.ARR',       'LF', None, None,  10, None, None, True, ['nb_rec', 'size']),
         FileTemplate(0x6f53, 'EF.RMA',       'LF', None, None,   3, None, None, True, ['nb_rec', 'size']),
         FileTemplate(0x6f54, 'EF.SUME',      'TR', None,   22,   3, None, None, True),
@@ -334,7 +334,7 @@ class FilesTelecomV2(ProfileTemplate):
     oid = OID.DF_TELECOM_v2
     base_path = Path('MF')
     files = [
-        FileTemplate(0x7f11, 'DF.TELECOM',   'DF', None, None,  14, None, None, False, params=['pinStatusTemplateDO']),
+        FileTemplate(0x7f10, 'DF.TELECOM',   'DF', None, None,  14, None, None, False, params=['pinStatusTemplateDO']),
         FileTemplate(0x6f06, 'EF.ARR',       'LF', None, None,  10, None, None, True, ['nb_rec', 'size']),
         FileTemplate(0x6f53, 'EF.RMA',       'LF', None, None,   3, None, None, True, ['nb_rec', 'size']),
         FileTemplate(0x6f54, 'EF.SUME',      'TR', None,   22,   3, None, None, True),
