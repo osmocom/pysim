@@ -589,7 +589,7 @@ class ADF_SD(CardADF):
         put_key_parser.add_argument('--old-key-version-nr', type=auto_uint8, default=0, help='Old Key Version Number')
         put_key_parser.add_argument('--key-version-nr', type=auto_uint8, required=True, help='Key Version Number')
         put_key_parser.add_argument('--key-id', type=auto_uint7, required=True, help='Key Identifier (base)')
-        put_key_parser.add_argument('--key-type', choices=KeyType.ksymapping.values(), action='append', required=True, help='Key Type')
+        put_key_parser.add_argument('--key-type', choices=list(KeyType.ksymapping.values()), action='append', required=True, help='Key Type')
         put_key_parser.add_argument('--key-data', type=is_hexstr, action='append', required=True, help='Key Data Block')
         put_key_parser.add_argument('--key-check', type=is_hexstr, action='append', help='Key Check Value')
         put_key_parser.add_argument('--suppress-key-check', action='store_true', help='Suppress generation of Key Check Values')
@@ -650,7 +650,7 @@ class ADF_SD(CardADF):
             return data
 
         get_status_parser = argparse.ArgumentParser()
-        get_status_parser.add_argument('subset', choices=StatusSubset.ksymapping.values(),
+        get_status_parser.add_argument('subset', choices=list(StatusSubset.ksymapping.values()),
                                        help='Subset of statuses to be included in the response')
         get_status_parser.add_argument('--aid', type=is_hexstr, default='',
                                        help='AID Search Qualifier (search only for given AID)')
@@ -685,9 +685,9 @@ class ADF_SD(CardADF):
             return grd_list
 
         set_status_parser = argparse.ArgumentParser()
-        set_status_parser.add_argument('scope', choices=SetStatusScope.ksymapping.values(),
+        set_status_parser.add_argument('scope', choices=list(SetStatusScope.ksymapping.values()),
                                        help='Defines the scope of the requested status change')
-        set_status_parser.add_argument('status', choices=CLifeCycleState.ksymapping.values(),
+        set_status_parser.add_argument('status', choices=list(CLifeCycleState.ksymapping.values()),
                                        help='Specify the new intended status')
         set_status_parser.add_argument('--aid', type=is_hexstr,
                                        help='AID of the target Application or Security Domain')
@@ -726,7 +726,7 @@ class ADF_SD(CardADF):
         inst_inst_parser.add_argument('--install-parameters', type=is_hexstr, default='',
                                       help='Install Parameters')
         inst_inst_parser.add_argument('--privilege', action='append', dest='privileges', default=[],
-                                      choices=Privileges._construct.flags.keys(),
+                                      choices=list(Privileges._construct.flags.keys()),
                                       help='Privilege granted to newly installed Application')
         inst_inst_parser.add_argument('--install-token', type=is_hexstr, default='',
                                       help='Install Token (Section GPCS C.4.2/C.4.7)')
