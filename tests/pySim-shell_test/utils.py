@@ -170,6 +170,7 @@ class UnittestUtils(unittest.TestCase):
         testcasepath = inspect.getfile(self.__class__)
         testcasename = testcasepath.split("/")[-2] + "." + self._testMethodName
         print(boxed_heading_str("testcase: " + testcasename))
+        self.pysim_shell_log_counter = 0
 
         # Find directories
         self.test_dir = os.path.dirname(testcasepath)
@@ -240,7 +241,8 @@ class UnittestUtils(unittest.TestCase):
            no_exceptions : fail the testcase in case any exceptions occurred while running pySim_shell
         """
 
-        logfile_name = "pySim-shell_" + self._testMethodName + ".log"
+        logfile_name = "pySim-shell_" + self._testMethodName + "_" + str(self.pysim_shell_log_counter) + ".log"
+        self.pysim_shell_log_counter+=1
 
         # Make sure the script file is available
         if not os.access(script, os.R_OK):
