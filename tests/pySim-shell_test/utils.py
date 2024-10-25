@@ -272,6 +272,11 @@ class UnittestUtils(unittest.TestCase):
         # Check for exceptions
         logfile = open(logfile_name)
         logfile_content = logfile.read()
+        if self.print_content:
+            print("pySim-shell logfile content: (%s)" % os.path.basename(logfile_name))
+            print("-----------------------8<-----------------------")
+            print(logfile_content)
+            print("-----------------------8<-----------------------")
         logfile.close()
         exception_regex_compiled = re.compile('.*EXCEPTION.*')
         exceptions_strings = re.findall(exception_regex_compiled, logfile_content)
