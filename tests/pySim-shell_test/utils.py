@@ -220,7 +220,7 @@ class UnittestUtils(unittest.TestCase):
         print("testcase execution done -- cleaning up ...")
         if not self.keepfiles:
             os.system("rm -f ./*.tmp")
-            os.system("rm -f ./" + self.__pySim_shell_logfile_name)
+            os.system("rm -f ./*.log")
             for template in self.__templates_generated:
                 os.system("rm -f ./" + template)
 
@@ -241,7 +241,6 @@ class UnittestUtils(unittest.TestCase):
         """
 
         logfile_name = "pySim-shell_" + self._testMethodName + ".log"
-        self.__pySim_shell_logfile_name = logfile_name
 
         # Make sure the script file is available
         if not os.access(script, os.R_OK):
