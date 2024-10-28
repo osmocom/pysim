@@ -110,9 +110,9 @@ class SimCardCommands:
 
         Args:
            pdu : string of hexadecimal characters (ex. "A0A40000023F00")
-           apply_lchan : apply the currently selected lchan to the CLA byte before sending
            sw : string of 4 hexadecimal characters (ex. "9000"). The user may mask out certain
-                        digits using a '?' to add some ambiguity if needed.
+                digits using a '?' to add some ambiguity if needed.
+           apply_lchan : apply the currently selected lchan to the CLA byte before sending
         Returns:
                 tuple(data, sw), where
                         data : string (in hex) of returned data (ex. "074F4EFFFF")
