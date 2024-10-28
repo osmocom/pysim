@@ -1,6 +1,6 @@
 regenerate: False
 keepfiles: False
-print_content: False
+print_content: True
 cards:
  - name : "sysmoISIM-SJA5-S17"
    atr : "3B9F96801F878031E073FE211B674A357530350265F8"

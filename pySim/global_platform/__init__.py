@@ -580,7 +580,7 @@ class ADF_SD(CardADF):
                                       {'last_block': len(remainder) == 0, 'encryption': encryption,
                                        'structure': structure, 'response': response_permitted})
                 hdr = "80E2%02x%02x%02x" % (p1b[0], block_nr, len(chunk))
-                data, _sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(chunk))
+                data, _sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(chunk) + "00")
                 block_nr += 1
                 response += data
             return data
@@ -646,7 +646,7 @@ class ADF_SD(CardADF):
             See GlobalPlatform CardSpecification v2.3 Section 11.8 for details."""
             key_data = kvn.to_bytes(1, 'big') + build_construct(ADF_SD.AddlShellCommands.KeyDataBasic, key_dict)
             hdr = "80D8%02x%02x%02x" % (old_kvn, kid, len(key_data))
-            data, _sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(key_data))
+            data, _sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(key_data) + "00")
             return data
 
         get_status_parser = argparse.ArgumentParser()
@@ -671,7 +671,7 @@ class ADF_SD(CardADF):
             grd_list = []
             while True:
                 hdr = "80F2%s%02x%02x" % (subset_hex, p2, len(cmd_data))
-                data, sw = self._cmd.lchan.scc.send_apdu(hdr + b2h(cmd_data))
+                data, sw = self._cmd.lchan.scc.send_apdu(hdr + b2h(cmd_data) + "00")
                 remainder = h2b(data)
                 while len(remainder):
                     # tlv sequence, each element is one GpRegistryRelatedData()
@@ -752,7 +752,7 @@ class ADF_SD(CardADF):
             self.install(p1, 0x00, b2h(ifi_bytes))
 
         def install(self, p1:int, p2:int, data:Hexstr) -> ResTuple:
-            cmd_hex = "80E6%02x%02x%02x%s" % (p1, p2, len(data)//2, data)
+            cmd_hex = "80E6%02x%02x%02x%s00" % (p1, p2, len(data)//2, data)
             return self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
 
         del_cc_parser = argparse.ArgumentParser()

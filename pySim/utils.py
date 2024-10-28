@@ -539,6 +539,52 @@ def boxed_heading_str(heading, width=80):
     return res
 
 
+def parse_command_apdu(apdu: bytes) -> int:
+    """Parse a given command APDU and return case (see also ISO/IEC 7816-3, Table 12 and Figure 26),
+    lc, le and the data field.
+
+    Args:
+            apdu : hexstring that contains the command APDU
+    Returns:
+            tuple containing case, lc and le values of the APDU (case, lc, le, data)
+    """
+
+    if len(apdu) == 4:
+        # Case #1, No command data field, no response data field
+        lc = 0
+        le = 0
+        data = b''
+        return (1, lc, le, data)
+    elif len(apdu) == 5:
+        # Case #2, No command data field, response data field present
+        lc = 0
+        le = apdu[4]
+        if le == 0:
+            le = 256
+        data = b''
+        return (2, lc, le, data)
+    elif len(apdu) > 5:
+        lc = apdu[4];
+        if lc == 0:
+            lc = 256
+        data = apdu[5:lc+5]
+        if len(apdu) == 5 + lc:
+            # Case #3, Command data field present, no response data field
+            le = 0
+            return (3, lc, le, data)
+        elif len(apdu) == 5 + lc + 1:
+            # Case #4, Command data field present, no response data field
+            le = apdu[5 + lc]
+            if le == 0:
+                le = 256
+            return (4, lc, le, data)
+        else:
+            raise ValueError('invalid APDU (%s), Lc=0x%02x (%d) does not match the length (%d) of the data field'
+                             % (b2h(apdu), lc, lc, len(apdu[5:])))
+    else:
+        raise ValueError('invalid APDU (%s), too short!' % b2h(apdu))
+
+
 class DataObject(abc.ABC):
     """A DataObject (DO) in the sense of ISO 7816-4.  Contrary to 'normal' TLVs where one
     simply has any number of different TLVs that may occur in any order at any point, ISO 7816

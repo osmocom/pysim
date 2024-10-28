@@ -55,7 +55,7 @@ class DummySimLink(LinkBase):
     def __str__(self):
         return "dummy"
 
-    def _send_apdu_raw(self, pdu):
+    def _send_apdu(self, pdu):
         #print("DummySimLink-apdu: %s" % pdu)
         return [], '9000'
 

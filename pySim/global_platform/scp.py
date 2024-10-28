@@ -24,7 +24,7 @@ from construct import Struct, Bytes, Int8ub, Int16ub, Const
 from construct import Optional as COptional
 from osmocom.utils import b2h
 from osmocom.tlv import bertlv_parse_len, bertlv_encode_len
-
+from pySim.utils import parse_command_apdu
 from pySim.secure_channel import SecureChannel
 
 logger = logging.getLogger(__name__)
@@ -248,7 +248,7 @@ class SCP02(SCP):
     def gen_init_update_apdu(self, host_challenge: bytes = b'\x00'*8) -> bytes:
         """Generate INITIALIZE UPDATE APDU."""
         self.host_challenge = host_challenge
-        return bytes([self._cla(), INS_INIT_UPDATE, self.card_keys.kvn, 0, 8]) + self.host_challenge
+        return bytes([self._cla(), INS_INIT_UPDATE, self.card_keys.kvn, 0, 8]) + self.host_challenge + b'\x00'
 
     def parse_init_update_resp(self, resp_bin: bytes):
         """Parse response to INITIALZIE UPDATE."""
@@ -280,9 +280,13 @@ class SCP02(SCP):
         if not self.do_cmac:
             return apdu
 
-        lc = len(apdu) - 5
-        assert len(apdu) >= 5, "Wrong APDU length: %d" % len(apdu)
-        assert len(apdu) == 5 or apdu[4] == lc, "Lc differs from length of data: %d vs %d" % (apdu[4], lc)
+        (case, lc, le, data) = parse_command_apdu(apdu)
+
+        # TODO: add support for extended length fields.
+        assert lc <= 256
+        assert le <= 256
+        lc &= 0xFF
+        le &= 0xFF
 
         # CLA without log. channel can be 80 or 00 only
         cla = apdu[0]
@@ -298,16 +302,25 @@ class SCP02(SCP):
             # CMAC on modified APDU
             mlc = lc + 8
             clac = cla | CLA_SM
-        mac = self.sk.calc_mac_1des(bytes([clac]) + apdu[1:4] + bytes([mlc]) + apdu[5:])
+        mac = self.sk.calc_mac_1des(bytes([clac]) + apdu[1:4] + bytes([mlc]) + data)
         if self.do_cenc:
             k = DES3.new(self.sk.enc, DES.MODE_CBC, b'\x00'*8)
-            data = k.encrypt(pad80(apdu[5:], 8))
+            data = k.encrypt(pad80(data, 8))
             lc = len(data)
-        else:
-            data = apdu[5:]
 
         lc += 8
         apdu = bytes([self._cla(True, b8)]) + apdu[1:4] + bytes([lc]) + data + mac
+
+        # Since we attach a signature, we will always send some data. This means that if the APDU is of case #4
+        # or case #2, we must attach an additional Le byte to signal that we expect a response. It is technically
+        # legal to use 0x00 (=256) as Le byte, even when the caller has specified a different value in the original
+        # APDU. This is due to the fact that Le always describes the maximum expected length of the response
+        # (see also ISO/IEC 7816-4, section 5.1). In addition to that, it should also important that depending on
+        # the configuration of the SCP, the response may also contain a signature that makes the response larger
+        # than specified in the Le field of the original APDU.
+        if case == 4 or case == 2:
+            apdu += b'\x00'
+
         return apdu
 
     def unwrap_rsp_apdu(self, sw: bytes, rsp_apdu: bytes) -> bytes:
@@ -454,7 +467,7 @@ class SCP03(SCP):
         if len(host_challenge) != self.s_mode:
             raise ValueError('Host Challenge must be %u bytes long' % self.s_mode)
         self.host_challenge = host_challenge
-        return bytes([self._cla(), INS_INIT_UPDATE, self.card_keys.kvn, 0, len(host_challenge)]) + host_challenge
+        return bytes([self._cla(), INS_INIT_UPDATE, self.card_keys.kvn, 0, len(host_challenge)]) + host_challenge + b'\x00'
 
     def parse_init_update_resp(self, resp_bin: bytes):
         """Parse response to INITIALIZE UPDATE."""
@@ -489,12 +502,16 @@ class SCP03(SCP):
         ins = apdu[1]
         p1 = apdu[2]
         p2 = apdu[3]
-        lc = apdu[4]
-        assert lc == len(apdu) - 5
-        cmd_data = apdu[5:]
+        (case, lc, le, cmd_data) = parse_command_apdu(apdu)
+
+        # TODO: add support for extended length fields.
+        assert lc <= 256
+        assert le <= 256
+        lc &= 0xFF
+        le &= 0xFF
 
         if self.do_cenc and not skip_cenc:
-            if lc == 0:
+            if case <= 2:
                 # No encryption shall be applied to a command where there is no command data field. In this
                 # case, the encryption counter shall still be incremented
                 self.sk.block_nr += 1
@@ -519,6 +536,11 @@ class SCP03(SCP):
         apdu = bytes([mcla, ins, p1, p2, mlc]) + cmd_data
         cmac = self.sk.calc_cmac(apdu)
         apdu += cmac[:self.s_mode]
+
+        # See comment in SCP03._wrap_cmd_apdu()
+        if case == 4 or case == 2:
+            apdu += b'\x00'
+
         return apdu
 
     def unwrap_rsp_apdu(self, sw: bytes, rsp_apdu: bytes) -> bytes:

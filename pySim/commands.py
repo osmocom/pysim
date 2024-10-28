@@ -142,8 +142,9 @@ class SimCardCommands:
                 Tuple of (decoded_data, sw)
         """
         cmd = cmd_constr.build(cmd_data) if cmd_data else ''
-        p3 = i2h([len(cmd)])
-        pdu = ''.join([cla, ins, p1, p2, p3, b2h(cmd)])
+        lc = i2h([len(cmd)]) if cmd_data else ''
+        le = '00' if resp_constr else ''
+        pdu = ''.join([cla, ins, p1, p2, lc, b2h(cmd), le])
         (data, sw) = self.send_apdu(pdu, apply_lchan = apply_lchan)
         if data:
             # filter the resulting dict to avoid '_io' members inside
@@ -247,7 +248,7 @@ class SimCardCommands:
         if not isinstance(dir_list, list):
             dir_list = [dir_list]
         for i in dir_list:
-            data, sw = self.send_apdu(self.cla_byte + "a4" + self.sel_ctrl + "02" + i)
+            data, sw = self.send_apdu(self.cla_byte + "a4" + self.sel_ctrl + "02" + i + "00")
             rv.append((data, sw))
             if sw != '9000':
                 return rv
@@ -277,11 +278,11 @@ class SimCardCommands:
                 fid : file identifier as hex string
         """
 
-        return self.send_apdu_checksw(self.cla_byte + "a4" + self.sel_ctrl + "02" + fid)
+        return self.send_apdu_checksw(self.cla_byte + "a4" + self.sel_ctrl + "02" + fid + "00")
 
     def select_parent_df(self) -> ResTuple:
         """Execute SELECT to switch to the parent DF """
-        return self.send_apdu_checksw(self.cla_byte + "a4030400")
+        return self.send_apdu_checksw(self.cla_byte + "a40304")
 
     def select_adf(self, aid: Hexstr) -> ResTuple:
         """Execute SELECT a given Applicaiton ADF.
@@ -291,7 +292,7 @@ class SimCardCommands:
         """
 
         aidlen = ("0" + format(len(aid) // 2, 'x'))[-2:]
-        return self.send_apdu_checksw(self.cla_byte + "a4" + "0404" + aidlen + aid)
+        return self.send_apdu_checksw(self.cla_byte + "a4" + "0404" + aidlen + aid + "00")
 
     def read_binary(self, ef: Path, length: int = None, offset: int = 0) -> ResTuple:
         """Execute READD BINARY.
@@ -494,9 +495,9 @@ class SimCardCommands:
     # TS 102 221 Section 11.3.1 low-level helper
     def _retrieve_data(self, tag: int, first: bool = True) -> ResTuple:
         if first:
-            pdu = '80cb008001%02x' % (tag)
+            pdu = '80cb008001%02x00' % (tag)
         else:
-            pdu = '80cb000000'
+            pdu = '80cb0000'
         return self.send_apdu_checksw(pdu)
 
     def retrieve_data(self, ef: Path, tag: int) -> ResTuple:
@@ -569,7 +570,7 @@ class SimCardCommands:
         if len(rand) != 32:
             raise ValueError('Invalid rand')
         self.select_path(['3f00', '7f20'])
-        return self.send_apdu_checksw('a088000010' + rand, sw='9000')
+        return self.send_apdu_checksw('a088000010' + rand + '00', sw='9000')
 
     def authenticate(self, rand: Hexstr, autn: Hexstr, context: str = '3g') -> ResTuple:
         """Execute AUTHENTICATE (USIM/ISIM).
@@ -602,7 +603,7 @@ class SimCardCommands:
 
     def status(self) -> ResTuple:
         """Execute a STATUS command as per TS 102 221 Section 11.1.2."""
-        return self.send_apdu_checksw('80F2000000')
+        return self.send_apdu_checksw('80F20000')
 
     def deactivate_file(self) -> ResTuple:
         """Execute DECATIVATE FILE command as per TS 102 221 Section 11.1.14."""
@@ -651,7 +652,7 @@ class SimCardCommands:
             p1 = 0x80
         else:
             p1 = 0x00
-        pdu = self.cla_byte + '70%02x%02x00' % (p1, lchan_nr)
+        pdu = self.cla_byte + '70%02x%02x' % (p1, lchan_nr)
         return self.send_apdu_checksw(pdu)
 
     def reset_card(self) -> Hexstr:

@@ -1,0 +1,26 @@
+set debug true
+set echo true
+set apdu_trace true
+set apdu_strict true
+
+# Establish secure channel:
+select ADF.ISD-R
+establish_scp03 --key-provider-suffix 1 --key-ver 50 --security-level $SEC_LEVEL
+
+# Case #1: (get status with no data field to mimic a case #1 APDU)
+# No command data field, No response data field present
+apdu 80F22002 --expect-sw 6a80 --expect-response-regex '^$$'
+
+# Case #2: (get data)
+# No command data field, Response data field present
+apdu 80ca006600 --expect-sw 9000 --expect-response-regex '^[a-fA-F0-9]+$$'
+
+# Case #3: (get status with wrong parameters to mimic a case #3 APDU)
+# Command data field present, No response data field
+apdu 80F220020a4f0212345c054f9f70c5 --expect-sw 6a88 --expect-response-regex '^$$'
+
+# Case #4: (get eid)
+# Command data field present, Response data field present
+apdu 80E2910006bf3e035c015a00 --expect-sw 9000 --expect-response-regex '^[a-fA-F0-9]+$$'
+
+release_scp

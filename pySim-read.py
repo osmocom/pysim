@@ -88,7 +88,7 @@ if __name__ == '__main__':
     scc.sel_ctrl = "0004"
 
     # Testing for Classic SIM or UICC
-    (res, sw) = sl.send_apdu(scc.cla_byte + "a4" + scc.sel_ctrl + "02" + "3f00")
+    (res, sw) = sl.send_apdu(scc.cla_byte + "a4" + scc.sel_ctrl + "02" + "3f00" + "00")
     if sw == '6e00':
         # Just a Classic SIM
         scc.cla_byte = "a0"

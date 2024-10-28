@@ -30,11 +30,11 @@ from smartcard.ExclusiveConnectCardConnection import ExclusiveConnectCardConnect
 from osmocom.utils import h2i, i2h, Hexstr
 
 from pySim.exceptions import NoCardError, ProtocolError, ReaderError
-from pySim.transport import LinkBase
+from pySim.transport import LinkBaseTpdu
 from pySim.utils import ResTuple
 
 
-class PcscSimLink(LinkBase):
+class PcscSimLink(LinkBaseTpdu):
     """ pySim: PCSC reader transport link."""
     name = 'PC/SC'
 
@@ -84,8 +84,19 @@ class PcscSimLink(LinkBase):
             # is disconnected
             self.disconnect()
 
-            # Explicitly select T=0 communication protocol
-            self._con.connect(CardConnection.T0_protocol)
+            # Make card connection and select a suitable communication protocol
+            self._con.connect()
+            supported_protocols = self._con.getProtocol();
+            self.disconnect()
+            if (supported_protocols & CardConnection.T0_protocol):
+                protocol =  CardConnection.T0_protocol
+                self.set_tpdu_format(0)
+            elif (supported_protocols & CardConnection.T1_protocol):
+                protocol = CardConnection.T1_protocol
+                self.set_tpdu_format(1)
+            else:
+                raise ReaderError('Unsupported card protocol')
+            self._con.connect(protocol)
         except CardConnectionException as exc:
             raise ProtocolError() from exc
         except NoCardException as exc:
@@ -102,12 +113,8 @@ class PcscSimLink(LinkBase):
         self.connect()
         return 1
 
-    def _send_apdu_raw(self, pdu: Hexstr) -> ResTuple:
-
-        apdu = h2i(pdu)
-
-        data, sw1, sw2 = self._con.transmit(apdu)
-
+    def send_tpdu(self, tpdu: Hexstr) -> ResTuple:
+        data, sw1, sw2 = self._con.transmit(h2i(tpdu))
         sw = [sw1, sw2]
 
         # Return value

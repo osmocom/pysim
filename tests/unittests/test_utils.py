@@ -4,6 +4,7 @@ import unittest
 from pySim import utils
 from pySim.legacy import utils as legacy_utils
 from pySim.ts_31_102 import EF_SUCI_Calc_Info
+from osmocom.utils import h2b
 
 # we don't really want to thest TS 102 221, but the underlying DataObject codebase
 from pySim.ts_102_221 import AM_DO_EF, AM_DO_DF, SC_DO
@@ -188,6 +189,20 @@ class TestLuhn(unittest.TestCase):
         self.assertEqual(utils.sanitize_iccid('8988211000000530081'), '89882110000005300811')
         # 18 digits; we expect luhn check digit to be added
         self.assertEqual(utils.sanitize_iccid('898821100000053008'), '8988211000000530082')
+
+class TestUtils(unittest.TestCase):
+    def test_parse_command_apdu(self):
+        # Case #1 APDU:
+        self.assertEqual(utils.parse_command_apdu(h2b('41414141')), (1,0,0,h2b('')))
+        # Case #2 APDU:
+        self.assertEqual(utils.parse_command_apdu(h2b('414141410F')), (2,0,15,h2b('')))
+        self.assertEqual(utils.parse_command_apdu(h2b('4141414100')), (2,0,256,h2b('')))
+        # Case #3 APDU:
+        self.assertEqual(utils.parse_command_apdu(h2b('41414141081122334455667788')), (3,8,0,h2b('1122334455667788')))
+        self.assertEqual(utils.parse_command_apdu(h2b('4141414100' + 256 * '42')), (3,256,0,h2b(256 * '42')))
+        # Case #4 APDU:
+        self.assertEqual(utils.parse_command_apdu(h2b('4141414108112233445566778804')), (4,8,4,h2b('1122334455667788')))
+        self.assertEqual(utils.parse_command_apdu(h2b('4141414100' + 256 * '42' + '00')), (4,256,256,h2b(256 * '42')))
 
 if __name__ == "__main__":
 	unittest.main()

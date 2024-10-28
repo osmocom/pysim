@@ -25,14 +25,14 @@ import serial
 from osmocom.utils import Hexstr
 
 from pySim.utils import ResTuple
-from pySim.transport import LinkBase
+from pySim.transport import LinkBaseTpdu
 from pySim.exceptions import ReaderError, ProtocolError
 
 # HACK: if somebody needs to debug this thing
 # log.root.setLevel(log.DEBUG)
 
 
-class ModemATCommandLink(LinkBase):
+class ModemATCommandLink(LinkBaseTpdu):
     """Transport Link for 3GPP TS 27.007 compliant modems."""
     name = "modem for Generic SIM Access (3GPP TS 27.007)"
 
@@ -145,12 +145,12 @@ class ModemATCommandLink(LinkBase):
     def wait_for_card(self, timeout: Optional[int] = None, newcardonly: bool = False):
         pass  # Nothing to do really ...
 
-    def _send_apdu_raw(self, pdu: Hexstr) -> ResTuple:
+    def send_tpdu(self, tpdu: Hexstr) -> ResTuple:
         # Make sure pdu has upper case hex digits [A-F]
-        pdu = pdu.upper()
+        tpdu = tpdu.upper()
 
         # Prepare the command as described in 8.17
-        cmd = 'AT+CSIM=%d,\"%s\"' % (len(pdu), pdu)
+        cmd = 'AT+CSIM=%d,\"%s\"' % (len(tpdu), tpdu)
         log.debug('Sending command: %s',  cmd)
 
         # Send AT+CSIM command to the modem
@@ -164,14 +164,14 @@ class ModemATCommandLink(LinkBase):
         # Make sure that the response has format: b'+CSIM: %d,\"%s\"'
         try:
             result = re.match(b'\+CSIM: (\d+),\"([0-9A-F]+)\"', rsp)
-            (_rsp_pdu_len, rsp_pdu) = result.groups()
+            (_rsp_tpdu_len, rsp_tpdu) = result.groups()
         except Exception as exc:
             raise ReaderError('Failed to parse response from modem: %s' % rsp) from exc
 
         # TODO: make sure we have at least SW
-        data = rsp_pdu[:-4].decode().lower()
-        sw = rsp_pdu[-4:].decode().lower()
-        log.debug('Command response: %s, %s',  data, sw)
+        data = rsp_tpdu[:-4].decode().lower()
+        sw = rsp_tpdu[-4:].decode().lower()
+        log.debug('Command response: %s, %s', data, sw)
         return data, sw
 
     def __str__(self) -> str:

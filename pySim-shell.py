@@ -114,6 +114,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         self.conserve_write = True
         self.json_pretty_print = True
         self.apdu_trace = False
+        self.apdu_strict = False
 
         self.add_settable(Settable2Compat('numeric_path', bool, 'Print File IDs instead of names', self,
                                           onchange_cb=self._onchange_numeric_path))
@@ -122,6 +123,9 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         self.add_settable(Settable2Compat('json_pretty_print', bool, 'Pretty-Print JSON output', self))
         self.add_settable(Settable2Compat('apdu_trace', bool, 'Trace and display APDUs exchanged with card', self,
                                           onchange_cb=self._onchange_apdu_trace))
+        self.add_settable(Settable2Compat('apdu_strict', bool,
+                                          'Enforce APDU responses according to ISO/IEC 7816-3, table 12', self,
+                                          onchange_cb=self._onchange_apdu_strict))
         self.equip(card, rs)
 
     def equip(self, card, rs):
@@ -197,6 +201,13 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
                 self.card._scc._tp.apdu_tracer = self.Cmd2ApduTracer(self)
             else:
                 self.card._scc._tp.apdu_tracer = None
+
+    def _onchange_apdu_strict(self, param_name, old, new):
+        if self.card:
+            if new == True:
+                self.card._scc._tp.apdu_strict = True
+            else:
+                self.card._scc._tp.apdu_strict = False
 
     class Cmd2ApduTracer(ApduTracer):
         def __init__(self, cmd2_app):

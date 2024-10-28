@@ -24,7 +24,7 @@ import argparse
 from typing import Optional
 from osmocom.utils import h2b, b2h, Hexstr
 
-from pySim.transport import LinkBase
+from pySim.transport import LinkBaseTpdu
 from pySim.exceptions import ReaderError, ProtocolError
 from pySim.utils import ResTuple
 
@@ -70,12 +70,12 @@ class L1CTLMessageSIM(L1CTLMessage):
     L1CTL_SIM_REQ = 0x16
     L1CTL_SIM_CONF = 0x17
 
-    def __init__(self, pdu):
+    def __init__(self, tpdu):
         super().__init__(self.L1CTL_SIM_REQ)
-        self.data += pdu
+        self.data += tpdu
 
 
-class CalypsoSimLink(LinkBase):
+class CalypsoSimLink(LinkBaseTpdu):
     """Transport Link for Calypso based phones."""
     name = 'Calypso-based (OsmocomBB) reader'
 
@@ -129,10 +129,10 @@ class CalypsoSimLink(LinkBase):
     def wait_for_card(self, timeout: Optional[int] = None, newcardonly: bool = False):
         pass  # Nothing to do really ...
 
-    def _send_apdu_raw(self, pdu: Hexstr) -> ResTuple:
+    def send_tpdu(self, tpdu: Hexstr) -> ResTuple:
 
-        # Request FULL reset
-        req_msg = L1CTLMessageSIM(h2b(pdu))
+        # Request sending of TPDU
+        req_msg = L1CTLMessageSIM(h2b(tpdu))
         self.sock.send(req_msg.gen_msg())
 
         # Read message length first

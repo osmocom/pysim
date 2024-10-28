@@ -11,7 +11,7 @@ from construct import Construct
 from osmocom.utils import b2h, h2b, i2h, Hexstr
 
 from pySim.exceptions import *
-from pySim.utils import SwHexstr, SwMatchstr, ResTuple, sw_match
+from pySim.utils import SwHexstr, SwMatchstr, ResTuple, sw_match, parse_command_apdu
 from pySim.cat import ProactiveCommand, CommandDetails, DeviceIdentities, Result
 
 #
@@ -90,14 +90,16 @@ class LinkBase(abc.ABC):
         self.sw_interpreter = sw_interpreter
         self.apdu_tracer = apdu_tracer
         self.proactive_handler = proactive_handler
+        self.apdu_strict = False
 
     @abc.abstractmethod
     def __str__(self) -> str:
         """Implementation specific method for printing an information to identify the device."""
 
     @abc.abstractmethod
-    def _send_apdu_raw(self, pdu: Hexstr) -> ResTuple:
-        """Implementation specific method for sending the PDU."""
+    def _send_apdu(self, apdu: Hexstr) -> ResTuple:
+        """Implementation specific method for sending the APDU. This method must accept APDUs as defined in
+        ISO/IEC 7816-3, section 12.1 """
 
     def set_sw_interpreter(self, interp):
         """Set an (optional) status word interpreter."""
@@ -134,61 +136,51 @@ class LinkBase(abc.ABC):
             self.apdu_tracer.trace_reset()
         return self._reset_card()
 
-    def send_apdu_raw(self, pdu: Hexstr) -> ResTuple:
+    def send_apdu(self, apdu: Hexstr) -> ResTuple:
         """Sends an APDU with minimal processing
 
         Args:
-           pdu : string of hexadecimal characters (ex. "A0A40000023F00")
+           apdu : string of hexadecimal characters (ex. "A0A40000023F00", must comply to ISO/IEC 7816-3, section 12.1)
         Returns:
            tuple(data, sw), where
                         data : string (in hex) of returned data (ex. "074F4EFFFF")
                         sw   : string (in hex) of status word (ex. "9000")
         """
+
+        # To make sure that no invalid APDUs can be passed further down into the transport layer, we parse the APDU.
+        (case, _lc, _le, _data) = parse_command_apdu(h2b(apdu))
+
         if self.apdu_tracer:
-            self.apdu_tracer.trace_command(pdu)
-        (data, sw) = self._send_apdu_raw(pdu)
+            self.apdu_tracer.trace_command(apdu)
+
+        # Handover APDU to concrete transport layer implementation
+        (data, sw) = self._send_apdu(apdu)
+
         if self.apdu_tracer:
-            self.apdu_tracer.trace_response(pdu, sw, data)
+            self.apdu_tracer.trace_response(apdu, sw, data)
+
+        # The APDU case (See aso ISO/IEC 7816-3, table 12) dictates if we should receive a response or not. If we
+        # receive a response in an APDU case that does not allow the reception of a respnse we print a warning to
+        # make the user/caller aware of the problem. Since the transaction is over at this point and data was received
+        # we count it as a successful transaction anyway, even though the spec was violated. The problem is most likely
+        # caused by a missing Le field in the APDU. This is an error that the caller/user should correct to avoid
+        # problems at some later point when a different transport protocol or transport layer implementation is used.
+        # All APDUs passed to this function must comply to ISO/IEC 7816-3, section 12.
+        if len(data) > 0 and (case == 3 or case == 1):
+            exeption_str = 'received unexpected response data, incorrect APDU-case ' + \
+            '(%d, should be %d, missing Le field?)!' % (case, case + 1)
+            if self.apdu_strict:
+                raise ValueError(exeption_str)
+            else:
+                print('Warning: %s' % exeption_str)
+
         return (data, sw)
 
-    def send_apdu(self, pdu: Hexstr) -> ResTuple:
-        """Sends an APDU and auto fetch response data
-
-        Args:
-           pdu : string of hexadecimal characters (ex. "A0A40000023F00")
-        Returns:
-           tuple(data, sw), where
-                        data : string (in hex) of returned data (ex. "074F4EFFFF")
-                        sw   : string (in hex) of status word (ex. "9000")
-        """
-        prev_pdu = pdu
-        data, sw = self.send_apdu_raw(pdu)
-
-        # When we have sent the first APDU, the SW may indicate that there are response bytes
-        # available. There are two SWs commonly used for this 9fxx (sim) and 61xx (usim), where
-        # xx is the number of response bytes available.
-        # See also:
-        if sw is not None:
-            while (sw[0:2] in ['9f', '61', '62', '63']):
-                # SW1=9F: 3GPP TS 51.011 9.4.1, Responses to commands which are correctly executed
-                # SW1=61: ISO/IEC 7816-4, Table 5 — General meaning of the interindustry values of SW1-SW2
-                # SW1=62: ETSI TS 102 221 7.3.1.1.4 Clause 4b): 62xx, 63xx, 9xxx != 9000
-                pdu_gr = pdu[0:2] + 'c00000' + sw[2:4]
-                prev_pdu = pdu_gr
-                d, sw = self.send_apdu_raw(pdu_gr)
-                data += d
-            if sw[0:2] == '6c':
-                # SW1=6C: ETSI TS 102 221 Table 7.1: Procedure byte coding
-                pdu_gr = prev_pdu[0:8] + sw[2:4]
-                data, sw = self.send_apdu_raw(pdu_gr)
-
-        return data, sw
-
-    def send_apdu_checksw(self, pdu: Hexstr, sw: SwMatchstr = "9000") -> ResTuple:
+    def send_apdu_checksw(self, apdu: Hexstr, sw: SwMatchstr = "9000") -> ResTuple:
         """Sends an APDU and check returned SW
 
         Args:
-           pdu : string of hexadecimal characters (ex. "A0A40000023F00")
+           apdu : string of hexadecimal characters (ex. "A0A40000023F00", must comply to ISO/IEC 7816-3, section 12.1)
            sw : string of 4 hexadecimal characters (ex. "9000"). The user may mask out certain
                         digits using a '?' to add some ambiguity if needed.
         Returns:
@@ -196,7 +188,7 @@ class LinkBase(abc.ABC):
                         data : string (in hex) of returned data (ex. "074F4EFFFF")
                         sw   : string (in hex) of status word (ex. "9000")
         """
-        rv = self.send_apdu(pdu)
+        rv = self.send_apdu(apdu)
         last_sw = rv[1]
 
         while sw == '9000' and sw_match(last_sw, '91xx'):
@@ -246,6 +238,89 @@ class LinkBase(abc.ABC):
         if not sw_match(rv[1], sw):
             raise SwMatchError(rv[1], sw.lower(), self.sw_interpreter)
         return rv
+
+
+class LinkBaseTpdu(LinkBase):
+
+    # Use the T=0 TPDU format by default as this is the most commonly used transport protocol.
+    protocol = 0
+
+    def set_tpdu_format(self, protocol: int):
+        """Set TPDU format. Each transport protocol has its specific TPDU format. This method allows the
+        concrete transport layer implementation to set the TPDU format it expects. (This method must not be
+        called by higher layers. Switching the TPDU format does not switch the transport protocol that the
+        reader uses on the wire)
+
+        Args:
+           protocol : number of the transport protocol used. (0 => T=0, 1 => T=1)
+        """
+        self.protocol = protocol
+
+    @abc.abstractmethod
+    def send_tpdu(self, tpdu: Hexstr) -> ResTuple:
+        """Implementation specific method for sending the resulting TPDU. This method must accept TPDUs as defined in
+        ETSI TS 102 221, section 7.3.1 and 7.3.2, depending on the protocol selected. """
+
+    def _send_apdu(self, apdu: Hexstr) -> ResTuple:
+        """Transforms APDU into a TPDU and sends it. The response TPDU is returned as APDU back to the caller.
+
+        Args:
+           apdu : string of hexadecimal characters (eg. "A0A40000023F00", must comply to ISO/IEC 7816-3, section 12)
+        Returns:
+           tuple(data, sw), where
+                        data : string (in hex) of returned data (ex. "074F4EFFFF")
+                        sw   : string (in hex) of status word (ex. "9000")
+        """
+
+        if self.protocol == 0:
+            return self.__send_apdu_T0(apdu)
+        elif self.protocol == 1:
+            return self.__send_apdu_transparent(apdu)
+        raise ValueError('unspported protocol selected (T=%d)' % self.protocol)
+
+    def __send_apdu_T0(self, apdu: Hexstr) -> ResTuple:
+        # Transform the given APDU to the T=0 TPDU format and send it. Automatically fetch the response (case #4 APDUs)
+        # (see also ETSI TS 102 221, section 7.3.1.1)
+
+        # Transform APDU to T=0 TPDU (see also ETSI TS 102 221, section 7.3.1)
+        (case, _lc, _le, _data) = parse_command_apdu(h2b(apdu))
+
+        if case == 1:
+            # Attach an Le field to all case #1 APDUs (see also ETSI TS 102 221, section 7.3.1.1.1)
+            tpdu = apdu + '00'
+        elif case == 4:
+            # Remove the Le field from all case #4 APDUs (see also ETSI TS 102 221, section 7.3.1.1.4)
+            tpdu = apdu[:-2]
+        else:
+            tpdu = apdu
+
+        prev_tpdu = tpdu
+        data, sw = self.send_tpdu(tpdu)
+
+        # When we have sent the first APDU, the SW may indicate that there are response bytes
+        # available. There are two SWs commonly used for this 9fxx (sim) and 61xx (usim), where
+        # xx is the number of response bytes available.
+        # See also:
+        if sw is not None:
+            while (sw[0:2] in ['9f', '61', '62', '63']):
+                # SW1=9F: 3GPP TS 51.011 9.4.1, Responses to commands which are correctly executed
+                # SW1=61: ISO/IEC 7816-4, Table 5 — General meaning of the interindustry values of SW1-SW2
+                # SW1=62: ETSI TS 102 221 7.3.1.1.4 Clause 4b): 62xx, 63xx, 9xxx != 9000
+                tpdu_gr = tpdu[0:2] + 'c00000' + sw[2:4]
+                prev_tpdu = tpdu_gr
+                d, sw = self.send_tpdu(tpdu_gr)
+                data += d
+            if sw[0:2] == '6c':
+                # SW1=6C: ETSI TS 102 221 Table 7.1: Procedure byte coding
+                tpdu_gr = prev_tpdu[0:8] + sw[2:4]
+                data, sw = self.send_tpdu(tpdu_gr)
+
+        return data, sw
+
+    def __send_apdu_transparent(self, apdu: Hexstr) -> ResTuple:
+        # In cases where the TPDU format is the same as the APDU format, we may pass the given APDU through without modification
+        # (This is the case for T=1, see also  ETSI TS 102 221, section 7.3.2.0.)
+        return self.send_tpdu(apdu)
 
 def argparse_add_reader_args(arg_parser: argparse.ArgumentParser):
     """Add all reader related arguments to the given argparse.Argumentparser instance."""

@@ -1,0 +1,20 @@
+set debug true
+set echo true
+set apdu_trace true
+set apdu_strict true
+
+# Case #1: (open channel #1)
+# No command data field, No response data field present
+apdu 00700001 --expect-sw 9000 --expect-response-regex '^$'
+
+# Case #2: (status)
+# No command data field, Response data field present
+apdu 80F2000000 --expect-sw 9000 --expect-response-regex '^[a-fA-F0-9]+$'
+
+# Case #3: (terminal capability)
+# Command data field present, No response data field
+apdu 80AA000005a903830180 --expect-sw 9000 --expect-response-regex '^$'
+
+# Case #4: (select MF)
+# Command data field present, Response data field present
+apdu 00a40004023f0000 --expect-sw 9000 --expect-response-regex '^[a-fA-F0-9]+$'

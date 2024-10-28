@@ -24,11 +24,11 @@ import serial
 from osmocom.utils import h2b, b2h, Hexstr
 
 from pySim.exceptions import NoCardError, ProtocolError
-from pySim.transport import LinkBase
+from pySim.transport import LinkBaseTpdu
 from pySim.utils import ResTuple
 
 
-class SerialSimLink(LinkBase):
+class SerialSimLink(LinkBaseTpdu):
     """ pySim: Transport Link for serial (RS232) based readers included with simcard"""
     name = 'Serial'
 
@@ -187,13 +187,13 @@ class SerialSimLink(LinkBase):
     def _rx_byte(self):
         return self._sl.read()
 
-    def _send_apdu_raw(self, pdu: Hexstr) -> ResTuple:
+    def send_tpdu(self, tpdu: Hexstr) -> ResTuple:
 
-        pdu = h2b(pdu)
-        data_len = pdu[4]  # P3
+        tpdu = h2b(tpdu)
+        data_len = tpdu[4]  # P3
 
         # Send first CLASS,INS,P1,P2,P3
-        self._tx_string(pdu[0:5])
+        self._tx_string(tpdu[0:5])
 
         # Wait ack which can be
         #  - INS: Command acked -> go ahead
@@ -201,7 +201,7 @@ class SerialSimLink(LinkBase):
         #  - SW1: The card can apparently proceed ...
         while True:
             b = self._rx_byte()
-            if ord(b) == pdu[1]:
+            if ord(b) == tpdu[1]:
                 break
             if b != '\x60':
                 # Ok, it 'could' be SW1
@@ -214,12 +214,12 @@ class SerialSimLink(LinkBase):
                 raise ProtocolError()
 
         # Send data (if any)
-        if len(pdu) > 5:
-            self._tx_string(pdu[5:])
+        if len(tpdu) > 5:
+            self._tx_string(tpdu[5:])
 
         # Receive data (including SW !)
-        #  length = [P3 - tx_data (=len(pdu)-len(hdr)) + 2 (SW1//2) ]
-        to_recv = data_len - len(pdu) + 5 + 2
+        #  length = [P3 - tx_data (=len(tpdu)-len(hdr)) + 2 (SW1//2) ]
+        to_recv = data_len - len(tpdu) + 5 + 2
 
         data = bytes(0)
         while len(data) < to_recv:

@@ -1,0 +1,21 @@
+set debug true
+set echo true
+set apdu_trace true
+
+# Case #1: (open channel #1)
+# No command data field, No response data field present
+# (in ISO/IEC 7816-3 format, this APDU would lack the 0x00 at the end)
+apdu 0070000100 --expect-sw 9000 --expect-response-regex '^$'
+
+# Case #2: (status)
+# No command data field, Response data field present
+apdu 80F2000000 --expect-sw 9000 --expect-response-regex '^[a-fA-F0-9]+$'
+
+# Case #3: (terminal capability)
+# Command data field present, No response data field
+apdu 80AA000005a903830180 --expect-sw 9000 --expect-response-regex '^$'
+
+# Case #4: (select MF)
+# Command data field present, Response data field present
+# (in ISO/IEC 7816-3 format, this APDU would have an additional 0x00 at the end)
+apdu 00a40004023f00 --expect-sw 9000 --expect-response-regex '^[a-fA-F0-9]+$'
