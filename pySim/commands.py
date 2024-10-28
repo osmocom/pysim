@@ -617,7 +617,7 @@ class SimCardCommands:
         return self.send_apdu_checksw(self.cla_byte + '44000002' + fid)
 
     def create_file(self, payload: Hexstr) -> ResTuple:
-        """Execute CREEATE FILE command as per TS 102 222 Section 6.3"""
+        """Execute CREATE FILE command as per TS 102 222 Section 6.3"""
         return self.send_apdu_checksw(self.cla_byte + 'e00000%02x%s' % (len(payload)//2, payload))
 
     def resize_file(self, payload: Hexstr) -> ResTuple:
