@@ -265,11 +265,9 @@ class UnittestUtils(unittest.TestCase):
         # Execute commandline
         cmdline += " > " + logfile_name + " 2>&1"
         print("Executing: " + cmdline)
-        rc = os.system(cmdline)
-        if rc:
-            raise RuntimeError("pySim-shell exits with error code %u" % rc)
+        py_sim_shell_rc = os.system(cmdline)
 
-        # Check for exceptions
+        # Read logfile
         logfile = open(logfile_name)
         logfile_content = logfile.read()
         if self.print_content:
@@ -278,6 +276,12 @@ class UnittestUtils(unittest.TestCase):
             print(logfile_content)
             print("-----------------------8<-----------------------")
         logfile.close()
+
+        # Exit early in case pySim-shell ran into a fundamental error
+        if py_sim_shell_rc:
+            raise RuntimeError("pySim-shell exits with error code %u" % py_sim_shell_rc)
+
+        # Check log for exceptions
         exception_regex_compiled = re.compile('.*EXCEPTION.*')
         exceptions_strings = re.findall(exception_regex_compiled, logfile_content)
         if exceptions_strings != []:
