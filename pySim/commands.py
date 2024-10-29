@@ -136,7 +136,7 @@ class SimCardCommands:
                 p2 : string (in hex) ISO 7116 Parameter 2 byte
                 cmd_cosntr : defining how to generate binary APDU command data
                 cmd_data : command data passed to cmd_constr
-                resp_cosntr : defining how to decode  binary APDU response data
+                resp_cosntr : defining how to decode binary APDU response data
                 apply_lchan : apply the currently selected lchan to the CLA byte before sending
         Returns:
                 Tuple of (decoded_data, sw)
