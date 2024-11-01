@@ -19,7 +19,7 @@ from typing import Tuple
 from pySim.transport import LinkBase
 from pySim.commands import SimCardCommands
 from pySim.filesystem import CardModel, CardApplication
-from pySim.cards import card_detect, SimCardBase, UiccCardBase
+from pySim.cards import card_detect, SimCardBase, UiccCardBase, CardBase
 from pySim.runtime import RuntimeState
 from pySim.profile import CardProfile
 from pySim.cdma_ruim import CardProfileRUIM
@@ -42,7 +42,7 @@ import pySim.ara_m
 import pySim.global_platform
 import pySim.euicc
 
-def init_card(sl: LinkBase) -> Tuple[RuntimeState, SimCardBase]:
+def init_card(sl: LinkBase, skip_card_init: bool = False) -> Tuple[RuntimeState, SimCardBase]:
     """
     Detect card in reader and setup card profile and runtime state. This
     function must be called at least once on startup. The card and runtime
@@ -56,6 +56,12 @@ def init_card(sl: LinkBase) -> Tuple[RuntimeState, SimCardBase]:
     # the card type.
     print("Waiting for card...")
     sl.wait_for_card(3)
+
+    # The user may opt to skip all card initialization. In this case only the
+    # most basic card profile is selected. This mode is suitable for blank
+    # cards that need card O/S initialization using APDU scripts first.
+    if skip_card_init:
+        return None, CardBase(scc)
 
     generic_card = False
     card = card_detect(scc)

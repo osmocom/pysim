@@ -228,7 +228,8 @@ class UnittestUtils(unittest.TestCase):
     def runPySimShell(self, cardname:str, script:str,
                       add_adm:bool = False,
                       add_csv:bool = False,
-                      no_exceptions = False):
+                      no_exceptions = False,
+                      skip_card_init = False):
 
         """ execute pySimShell.py. Each testcase should run pySim-shell at least once. The working directlry is the
         testcase directory.
@@ -261,6 +262,8 @@ class UnittestUtils(unittest.TestCase):
         if add_csv:
             adm1 = self.cards[cardname]['adm1']
             cmdline += " --csv " + self.top_dir + CARD_DATA_CSV
+        if skip_card_init:
+            cmdline += " --skip-card-init"
 
         # Execute commandline
         cmdline += " > " + logfile_name + " 2>&1"

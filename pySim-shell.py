@@ -1060,6 +1060,8 @@ global_group.add_argument("--card_handler", dest="card_handler_config", metavar=
                           help="Use automatic card handling machine")
 global_group.add_argument("--noprompt", help="Run in non interactive mode",
                           action='store_true', default=False)
+global_group.add_argument("--skip-card-init", help="Skip all card/profile initialization",
+                          action='store_true', default=False)
 
 adm_group = global_group.add_mutually_exclusive_group()
 adm_group.add_argument('-a', '--pin-adm', metavar='PIN_ADM1', dest='pin_adm', default=None,
@@ -1105,7 +1107,7 @@ if __name__ == '__main__':
     # is no card in the reader or the card is unresponsive. PysimApp is
     # able to tolerate and recover from that.
     try:
-        rs, card = init_card(sl)
+        rs, card = init_card(sl, opts.skip_card_init)
         app = PysimApp(card, rs, sl, ch)
     except:
         startup_errors = True
