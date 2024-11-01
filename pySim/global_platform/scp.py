@@ -474,7 +474,7 @@ class SCP03(SCP):
         return self.wrap_cmd_apdu(header + self.host_cryptogram, skip_cenc=True)
 
     def _wrap_cmd_apdu(self, apdu: bytes, skip_cenc: bool = False) -> bytes:
-        """Wrap Command APDU for SCP02: calculate MAC and encrypt."""
+        """Wrap Command APDU for SCP03: calculate MAC and encrypt."""
         cla = apdu[0]
         ins = apdu[1]
         p1 = apdu[2]
