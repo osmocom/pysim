@@ -274,7 +274,12 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_reset(self, opts):
         """Reset the Card."""
-        atr = self.rs.reset(self)
+        if self.rs is None:
+            # In case no runtime state is available we go the direct route
+            self.card._scc.reset_card()
+            atr = b2h(self.card._scc.get_atr())
+        else:
+            atr = self.rs.reset(self)
         self.poutput('Card ATR: %s' % atr)
         self.update_prompt()
 
