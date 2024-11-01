@@ -2,6 +2,13 @@ set debug true
 set echo true
 
 select ADF.ISD-R
+
 establish_scp03 --key-provider-suffix 1 --key-ver 50 --security-level 3
 get_data issuer_identification_number
+get_status isd
+release_scp
+
+establish_scp03 --key-provider-suffix 1 --key-ver 50 --security-level 1
+get_data issuer_identification_number
+get_status isd
 release_scp
