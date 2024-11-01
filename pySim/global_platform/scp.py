@@ -508,11 +508,11 @@ class SCP03(SCP):
             # channel number shall be set to zero, bit 4 shall be set to 0 and bit 3 shall be set to 1 to indicate
             # GlobalPlatform proprietary secure messaging.
             mcla = (cla & 0xF0) | CLA_SM
-            mapdu = bytes([mcla, ins, p1, p2, mlc]) + cmd_data
-            cmac = self.sk.calc_cmac(mapdu)
-            mapdu += cmac[:self.s_mode]
+            apdu = bytes([mcla, ins, p1, p2, mlc]) + cmd_data
+            cmac = self.sk.calc_cmac(apdu)
+            apdu += cmac[:self.s_mode]
 
-        return mapdu
+        return apdu
 
     def unwrap_rsp_apdu(self, sw: bytes, rsp_apdu: bytes) -> bytes:
         # No R-MAC shall be generated and no protection shall be applied to a response that includes an error
