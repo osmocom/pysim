@@ -21,6 +21,7 @@ from typing import List, Optional
 
 import json
 import traceback
+import re
 
 import cmd2
 from packaging import version
@@ -239,6 +240,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
 
     apdu_cmd_parser = argparse.ArgumentParser()
     apdu_cmd_parser.add_argument('--expect-sw', help='expect a specified status word', type=str, default=None)
+    apdu_cmd_parser.add_argument('--expect-response-regex', help='match response against regex', type=str, default=None)
     apdu_cmd_parser.add_argument('--raw', help='Bypass the logical channel (and secure channel)', action='store_true')
     apdu_cmd_parser.add_argument('APDU', type=is_hexstr, help='APDU as hex string')
 
@@ -264,6 +266,10 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         if opts.expect_sw:
             if not sw_match(sw, opts.expect_sw):
                 raise SwMatchError(sw, opts.expect_sw)
+        if opts.expect_response_regex:
+            response_regex_compiled = re.compile(opts.expect_response_regex)
+            if  re.match(response_regex_compiled, data) is None:
+                raise ValueError("RESP does not match regex \'%s\'" % opts.expect_response_regex)
 
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_reset(self, opts):
