@@ -1,0 +1,29 @@
+set debug true
+set echo true
+
+# In this test we start without initializing any card profile. In this situation
+# only the "apdu" command and the "reset" command will work.
+
+# Select a file deep in the file system using APDUs only
+apdu 00a40004023f0000 --expect-sw 9000 --expect-response-regex '^[a-fA-F0-9]+$'
+apdu 00a4040410a0000000871002ffffffff890709000000 --expect-sw 9000 --expect-response-regex '^[a-fA-F0-9]+$'
+apdu 00a40004026f0700 --expect-sw 9000 --expect-response-regex '^[a-fA-F0-9]+$'
+
+# Try a reset
+reset
+
+# If the reset had an effect, selecting a file at MF level should work
+apdu 00a40004022fe200 --expect-sw 9000 --expect-response-regex '^[a-fA-F0-9]+$'
+
+# Equip the card, this will do the profile initialization. After this,
+# pySim-shell commands should work normally.
+equip
+
+# Select a file deep in the file system
+select MF/ADF.USIM/EF.IMSI
+
+# Try again to reset the card
+reset
+
+# If the reset had an effect, selecting a file at MF level should work
+select EF.ICCID
