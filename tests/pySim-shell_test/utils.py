@@ -285,7 +285,7 @@ class UnittestUtils(unittest.TestCase):
             raise RuntimeError("pySim-shell exits with error code %u" % py_sim_shell_rc)
 
         # Check log for exceptions
-        exception_regex_compiled = re.compile('.*EXCEPTION.*')
+        exception_regex_compiled = re.compile('.*EXCEPTION.*|.*is not a recognized command, alias, or macro.*')
         exceptions_strings = re.findall(exception_regex_compiled, logfile_content)
         if exceptions_strings != []:
             print("The following exceptions occurred:")
