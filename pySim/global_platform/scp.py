@@ -275,34 +275,39 @@ class SCP02(SCP):
 
     def _wrap_cmd_apdu(self, apdu: bytes, *args, **kwargs) -> bytes:
         """Wrap Command APDU for SCP02: calculate MAC and encrypt."""
+        logger.debug("wrap_cmd_apdu(%s)", b2h(apdu))
+
+        if not self.do_cmac:
+            return apdu
+
         lc = len(apdu) - 5
         assert len(apdu) >= 5, "Wrong APDU length: %d" % len(apdu)
         assert len(apdu) == 5 or apdu[4] == lc, "Lc differs from length of data: %d vs %d" % (apdu[4], lc)
 
-        logger.debug("wrap_cmd_apdu(%s)", b2h(apdu))
-
+        # CLA without log. channel can be 80 or 00 only
         cla = apdu[0]
         b8 = cla & 0x80
         if cla & 0x03 or cla & CLA_SM:
             # nonzero logical channel in APDU, check that are the same
             assert cla == self._cla(False, b8), "CLA mismatch"
-        # CLA without log. channel can be 80 or 00 only
-        if self.do_cmac:
-            if self.mac_on_unmodified:
-                mlc = lc
-                clac = cla
-            else:                      # CMAC on modified APDU
-                mlc = lc + 8
-                clac = cla | CLA_SM
-            mac = self.sk.calc_mac_1des(bytes([clac]) + apdu[1:4] + bytes([mlc]) + apdu[5:])
-            if self.do_cenc:
-                k = DES3.new(self.sk.enc, DES.MODE_CBC, b'\x00'*8)
-                data = k.encrypt(pad80(apdu[5:], 8))
-                lc = len(data)
-            else:
-                data = apdu[5:]
-            lc += 8
-            apdu = bytes([self._cla(True, b8)]) + apdu[1:4] + bytes([lc]) + data + mac
+
+        if self.mac_on_unmodified:
+            mlc = lc
+            clac = cla
+        else:
+            # CMAC on modified APDU
+            mlc = lc + 8
+            clac = cla | CLA_SM
+        mac = self.sk.calc_mac_1des(bytes([clac]) + apdu[1:4] + bytes([mlc]) + apdu[5:])
+        if self.do_cenc:
+            k = DES3.new(self.sk.enc, DES.MODE_CBC, b'\x00'*8)
+            data = k.encrypt(pad80(apdu[5:], 8))
+            lc = len(data)
+        else:
+            data = apdu[5:]
+
+        lc += 8
+        apdu = bytes([self._cla(True, b8)]) + apdu[1:4] + bytes([lc]) + data + mac
         return apdu
 
     def unwrap_rsp_apdu(self, sw: bytes, rsp_apdu: bytes) -> bytes:
@@ -475,6 +480,11 @@ class SCP03(SCP):
 
     def _wrap_cmd_apdu(self, apdu: bytes, skip_cenc: bool = False) -> bytes:
         """Wrap Command APDU for SCP03: calculate MAC and encrypt."""
+        logger.debug("wrap_cmd_apdu(%s)", b2h(apdu))
+
+        if not self.do_cmac:
+            return apdu
+
         cla = apdu[0]
         ins = apdu[1]
         p1 = apdu[2]
@@ -484,7 +494,6 @@ class SCP03(SCP):
         cmd_data = apdu[5:]
 
         if self.do_cenc and not skip_cenc:
-            assert self.do_cmac
             if lc == 0:
                 # No encryption shall be applied to a command where there is no command data field. In this
                 # case, the encryption counter shall still be incremented
@@ -498,20 +507,18 @@ class SCP03(SCP):
                 # perform AES-CBC with ICV + S_ENC
                 cmd_data = self.sk._encrypt(padded_data)
 
-        if self.do_cmac:
-            # The length of the command message (Lc) shall be incremented by 8 (in S8 mode) or 16 (in S16
-            # mode) to indicate the inclusion of the C-MAC in the data field of the command message.
-            mlc = lc + self.s_mode
-            if mlc >= 256:
-                raise ValueError('Modified Lc (%u) would exceed maximum when appending %u bytes of mac' % (mlc, self.s_mode))
-            # The class byte shall be modified for the generation or verification of the C-MAC: The logical
-            # channel number shall be set to zero, bit 4 shall be set to 0 and bit 3 shall be set to 1 to indicate
-            # GlobalPlatform proprietary secure messaging.
-            mcla = (cla & 0xF0) | CLA_SM
-            apdu = bytes([mcla, ins, p1, p2, mlc]) + cmd_data
-            cmac = self.sk.calc_cmac(apdu)
-            apdu += cmac[:self.s_mode]
-
+        # The length of the command message (Lc) shall be incremented by 8 (in S8 mode) or 16 (in S16
+        # mode) to indicate the inclusion of the C-MAC in the data field of the command message.
+        mlc = lc + self.s_mode
+        if mlc >= 256:
+            raise ValueError('Modified Lc (%u) would exceed maximum when appending %u bytes of mac' % (mlc, self.s_mode))
+        # The class byte shall be modified for the generation or verification of the C-MAC: The logical
+        # channel number shall be set to zero, bit 4 shall be set to 0 and bit 3 shall be set to 1 to indicate
+        # GlobalPlatform proprietary secure messaging.
+        mcla = (cla & 0xF0) | CLA_SM
+        apdu = bytes([mcla, ins, p1, p2, mlc]) + cmd_data
+        cmac = self.sk.calc_cmac(apdu)
+        apdu += cmac[:self.s_mode]
         return apdu
 
     def unwrap_rsp_apdu(self, sw: bytes, rsp_apdu: bytes) -> bytes:
