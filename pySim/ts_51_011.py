@@ -886,6 +886,8 @@ class EF_OPL(LinFixedEF):
     _test_de_encode = [
         ( '62f2100000fffe01',
           { "lai": { "mcc_mnc": "262-01", "lac_min": "0000", "lac_max": "fffe" }, "pnn_record_id": 1 } ),
+        ( '216354789abcde12',
+          { "lai": { "mcc_mnc": "123-456", "lac_min": "789a", "lac_max": "bcde" }, "pnn_record_id": 18 } ),
     ]
     def __init__(self, fid='6fc6', sfid=None, name='EF.OPL', rec_len=(8, 8), desc='Operator PLMN List', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
