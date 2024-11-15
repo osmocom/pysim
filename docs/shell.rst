@@ -76,7 +76,7 @@ Advanced Topics
    :caption: Advanced pySIM-shell topics
 
    card-key-provider
-
+   remote-access
 
 cmd2 basics
 -----------
