@@ -144,8 +144,6 @@ The following example shows a typical minimal example
    "999700000053016","8988211000000530165","0040","89DE5ACB76E06D14B0F5D5CD3594E2B1","411C4B8273FD7607E1885E59F0831906","55184287"
    "999700000053017","8988211000000530173","0080","977852F7CEE83233F02E69E211626DE1","2EC35D48DBF2A99C07D4361F19EF338F","70284674"
 
-::
-
 The following commandline will instruct ``pySim-prog`` to use the provided CSV file as parameter source and the
 ICCID (read from the card before programming) as a key to identify the card. To use the IMSI as a key, the parameter
 ``--read-imsi`` can be used instead of ``--read-iccid``. However, this option is only recommended to be used in very
