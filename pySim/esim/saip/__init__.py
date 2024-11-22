@@ -114,6 +114,7 @@ class File:
         self.nb_rec: Optional[int] = None
         self._file_size = 0
         self.high_update: bool = False
+        self.read_and_update_when_deact: bool = False
         self.shareable: bool = True
         self.df_name = None
         self.fill_pattern = None
@@ -194,6 +195,7 @@ class File:
         fileDescriptor = {}
         fdb_dec = {}
         pefi = {}
+        spfi = 0
         if self.fid:
             fileDescriptor['fileID'] = self.fid.to_bytes(2, 'big')
         if self.sfi:
@@ -233,7 +235,11 @@ class File:
         if len(fd_dict):
             fileDescriptor['fileDescriptor'] = build_construct(FileDescriptor._construct, fd_dict)
         if self.high_update:
-            pefi['specialFileInformation'] = b'\x80' # TS 102 222 Table 5
+            spfi |= 0x80 # TS 102 222 Table 5
+        if self.read_and_update_when_deact:
+            spfi |= 0x40 # TS 102 222 Table 5
+        if spfi != 0x00:
+            pefi['specialFileInformation'] = spfi.to_bytes(1)
         if self.fill_pattern:
             if not self.fill_pattern_repeat:
                 pefi['fillPattern'] = self.fill_pattern
@@ -288,8 +294,11 @@ class File:
                         self._file_size = self._decode_file_size(pefi['maximumFileSize'])
                 specialFileInformation = pefi.get('specialFileInformation', None)
                 if specialFileInformation:
+                    # TS 102 222 Table 5
                     if specialFileInformation[0] & 0x80:
                         self.high_update = True
+                    if specialFileInformation[0] & 0x40:
+                        self.read_and_update_when_deact = True
                 if 'repeatPattern' in pefi:
                     self.fill_pattern = pefi['repeatPattern']
                     self.fill_pattern_repeat = True
