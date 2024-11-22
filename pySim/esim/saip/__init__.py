@@ -276,12 +276,15 @@ class File:
             self.shareable = fdb_dec['shareable']
             if fdb_dec['file_type'] == 'working_ef':
                 efFileSize = fileDescriptor.get('efFileSize', None)
-                if efFileSize:
-                    self._file_size = self._decode_file_size(efFileSize)
                 if fd_dec['num_of_rec']:
                     self.nb_rec = fd_dec['num_of_rec']
                 if fd_dec['record_len']:
                     self.rec_len = fd_dec['record_len']
+                if efFileSize:
+                    self._file_size = self._decode_file_size(efFileSize)
+                    if self.rec_len and self.nb_rec == None:
+                        # compute the number of records from file size and record length
+                        self.nb_rec = self._file_size // self.rec_len
                 if fdb_dec['structure'] == 'linear_fixed':
                     self.file_type = 'LF'
                 elif fdb_dec['structure'] == 'cyclic':
