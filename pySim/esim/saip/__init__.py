@@ -643,6 +643,14 @@ class FsProfileElement(ProfileElement):
                 file = File(k, v, template.files_by_pename.get(k, None))
                 self.add_file(file)
 
+    def create_file(self, pename: str) -> File:
+        """Programatically create a file by its PE-Name."""
+        template = templates.ProfileTemplateRegistry.get_by_oid(self.templateID)
+        file = File(pename, None, template.files_by_pename.get(pename, None))
+        self.add_file(file)
+        self.decoded[pename] = []
+        return file
+
     def _post_decode(self):
         # not entirely sure about doing this this automatism
         self.pe2files()
