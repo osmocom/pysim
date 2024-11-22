@@ -106,7 +106,7 @@ class File:
         self.pe_name = pename
         self._name = name
         self.template = template
-        self.body: Optional[bytes] = None
+        self._body: Optional[bytes] = None
         self.node: Optional['FsNode'] = None
         self.file_type = None
         self.fid: Optional[int] = None
@@ -191,6 +191,24 @@ class File:
         # All the files defined in the templates shall have, by default, shareable/not-shareable bit in the file descriptor set to "shareable".
         self.shareable = True
         self._template_derived = True
+        if hasattr(template, 'file_size'):
+            self._file_size = template.file_size
+
+    def _recompute_size(self):
+        """recompute the file size, if needed (body larger than current size)"""
+        body_size = len(self.body)
+        if self.file_size == None or self.file_size < body_size:
+            self._file_size = body_size
+
+    @property
+    def body(self):
+        return self._body
+
+    @body.setter
+    def body(self, value: bytes):
+        self._body = value
+        # we need to potentially update the file size after changing the body [size]
+        self._recompute_size()
 
     def to_fileDescriptor(self) -> dict:
         """Convert from internal representation to 'fileDescriptor' as used by asn1tools for SAIP"""
@@ -332,7 +350,7 @@ class File:
         if fd:
             self.from_fileDescriptor(dict(fd))
         # BODY
-        self.body = self.file_content_from_tuples(l)
+        self._body = self.file_content_from_tuples(l)
 
     @staticmethod
     def path_from_gfm(bin_path: bytes):
