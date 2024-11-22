@@ -25,6 +25,16 @@ from osmocom.utils import b2h, auto_uint8, auto_uint16, is_hexstr
 
 from pySim.ts_102_221 import *
 
+def expand_pattern(pattern: bytes, repeat: bool, size: int) -> bytes:
+    """Expand the fill/repeat pattern as per TS 102 222 Section 6.3.2.2.2 Tags C1/C2."""
+    if not repeat:
+        pad_len = size - len(pattern)
+        return pattern + pattern[-1:] * pad_len
+    else:
+        count = size // len(pattern)
+        part_len = size - count * len(pattern)
+        return pattern * count + pattern[:part_len]
+
 @with_default_category('TS 102 222 Administrative Commands')
 class Ts102222Commands(CommandSet):
     """Administrative commands for telecommunication applications."""

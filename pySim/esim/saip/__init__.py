@@ -18,6 +18,7 @@
 import logging
 import abc
 import io
+import os
 from typing import Tuple, List, Optional, Dict, Union
 from collections import OrderedDict
 import asn1tools
@@ -25,6 +26,7 @@ from osmocom.utils import b2h, h2b, Hexstr
 from osmocom.tlv import BER_TLV_IE, bertlv_parse_tag, bertlv_parse_len
 from osmocom.construct import build_construct, parse_construct, GreedyInteger
 
+from pySim import ts_102_222
 from pySim.utils import dec_imsi
 from pySim.ts_102_221 import FileDescriptor
 from pySim.filesystem import CardADF, Path
@@ -352,18 +354,29 @@ class File:
         ret += self.file_content_to_tuples()
         return ret
 
-    @staticmethod
-    def file_content_from_tuples(l: List[Tuple]) -> Optional[bytes]:
+    def expand_fill_pattern(self) -> bytes:
+        """Expand the fill/repeat pattern as per TS 102 222 Section 6.3.2.2.2"""
+        return ts_102_222.expand_pattern(self.fill_pattern, self.fill_pattern_repeat, self.file_size)
+
+    def file_content_from_tuples(self, l: List[Tuple]) -> Optional[bytes]:
         """linearize a list of fillFileContent / fillFileOffset tuples into a stream of bytes."""
         stream = io.BytesIO()
+        # Providing file content within "fillFileContent" / "fillFileOffset" shall have the same effect as
+        # creating a file with a fill/repeat pattern and thereafter updating the content via Update.
+        # Step 1: Fill with pattern from Fcp or Template
+        if self.fill_pattern:
+            stream.write(self.expand_fill_pattern())
+        elif self.template and self.template.default_val:
+            stream.write(self.template.expand_default_value_pattern(self.file_size))
+        stream.seek(0)
+        # then process the fillFileContent/fillFileOffset
         for k, v in l:
             if k == 'doNotCreate':
                 return None
             if k == 'fileDescriptor':
                 pass
             elif k == 'fillFileOffset':
-                # FIXME: respect the fillPattern!
-                stream.write(b'\xff' * v)
+                stream.seek(v, os.SEEK_CUR)
             elif k == 'fillFileContent':
                 stream.write(v)
             else:
