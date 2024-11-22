@@ -178,7 +178,7 @@ class File:
         self.file_type = template.file_type
         self.fid = template.fid
         self.sfi = template.sfi
-        self.arr = template.arr
+        self.arr = template.arr.to_bytes(1)
         if hasattr(template, 'rec_len'):
             self.rec_len = template.rec_len
         else:
