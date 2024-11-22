@@ -1500,6 +1500,27 @@ class ProfileElementSequence:
             pe.header['identification'] = i
             i += 1
 
+    def get_index_by_pe(self, pe: ProfileElement) -> int:
+        """Return a list with the indicies of all instances of PEs of petype."""
+        ret = []
+        i = 0
+        for cur in self.pe_list:
+            if cur == pe:
+                return i
+            i += 1
+        raise ValueError('PE %s is not part of PE Sequence' % (pe))
+
+    def insert_at_index(self, idx: int, pe: ProfileElement) -> None:
+        """Insert a given [new] ProfileElement at given index into the PE Sequence."""
+        self.pe_list.insert(idx, pe)
+        self._process_pelist()
+        self.renumber_identification()
+
+    def insert_after_pe(self, pe_before: ProfileElement, pe_new: ProfileElement) -> None:
+        """Insert a given [new] ProfileElement after a given [existing] PE in the PE Sequence."""
+        idx = self.get_index_by_pe(pe_before)
+        self.insert_at_index(idx+1, pe_new)
+
     def get_index_by_type(self, petype: str) -> List[int]:
         """Return a list with the indicies of all instances of PEs of petype."""
         ret = []
@@ -1515,9 +1536,7 @@ class ProfileElementSequence:
         # find MNO-SD index
         idx = self.get_index_by_type('securityDomain')[0]
         # insert _after_ MNO-SD
-        self.pe_list.insert(idx+1, ssd)
-        self._process_pelist()
-        self.renumber_identification()
+        self.insert_at_index(idx+1, ssd)
 
     def remove_naas_of_type(self, naa: Naa) -> None:
         """Remove all instances of NAAs of given type. This can be used, for example,
