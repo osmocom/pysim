@@ -216,13 +216,13 @@ class File:
         fdb_dec = {}
         pefi = {}
         spfi = 0
-        if self.fid:
+        if self.fid and self.fid != self.template.fid:
             fileDescriptor['fileID'] = self.fid.to_bytes(2, 'big')
-        if self.sfi:
+        if self.sfi and self.sfi != self.template.sfi:
             fileDescriptor['shortEFID'] = bytes([self.sfi])
         if self.df_name:
             fileDescriptor['dfName'] = self.df_name
-        if self.arr:
+        if self.arr and self.arr != self.template.arr.to_bytes(1):
             fileDescriptor['securityAttributesReferenced'] = self.arr
         if self.file_type in ['LF', 'CY']:
             fdb_dec['file_type'] = 'working_ef'
