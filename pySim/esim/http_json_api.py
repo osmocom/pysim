@@ -26,15 +26,15 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 class ApiParam(abc.ABC):
-    """A class reprsenting a single parameter in the API."""
+    """A class representing a single parameter in the API."""
     @classmethod
     def verify_decoded(cls, data):
-        """Verify the decoded reprsentation of a value. Should raise an exception if somthing is odd."""
+        """Verify the decoded representation of a value. Should raise an exception if something is odd."""
         pass
 
     @classmethod
     def verify_encoded(cls, data):
-        """Verify the encoded reprsentation of a value. Should raise an exception if somthing is odd."""
+        """Verify the encoded representation of a value. Should raise an exception if something is odd."""
         pass
 
     @classmethod

@@ -67,7 +67,7 @@ class Iccid(ConfigurableParameter):
     If the string of digits is only 18 digits long, a Luhn check digit will be added."""
 
     def validate(self):
-        # convert to string as it migt be an integer
+        # convert to string as it might be an integer
         iccid_str = str(self.input_value)
         if len(iccid_str) < 18 or len(iccid_str) > 20:
             raise ValueError('ICCID must be 18, 19 or 20 digits long')
@@ -86,7 +86,7 @@ class Imsi(ConfigurableParameter):
     the last digit of the IMSI."""
 
     def validate(self):
-        # convert to string as it migt be an integer
+        # convert to string as it might be an integer
         imsi_str = str(self.input_value)
         if len(imsi_str) < 6 or len(imsi_str) > 15:
             raise ValueError('IMSI must be 6..15 digits long')
@@ -300,7 +300,7 @@ class Adm2(Pin, keyReference=0x0B):
 
 
 class AlgoConfig(ConfigurableParameter, metaclass=ClassVarMeta):
-    """Configurable Algorithm parameter.  bytes."""
+    """Configurable Algorithm parameter."""
     key = None
     def validate(self):
         if not isinstance(self.input_value, (io.BytesIO, bytes, bytearray)):

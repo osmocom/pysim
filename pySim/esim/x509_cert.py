@@ -31,7 +31,7 @@ def check_signed(signed: x509.Certificate, signer: x509.Certificate) -> bool:
     """Verify if 'signed' certificate was signed using 'signer'."""
     # this code only works for ECDSA, but this is all we need for GSMA eSIM
     pkey = signer.public_key()
-    # this 'signed.signature_algorithm_parameters' below requires cryptopgraphy 41.0.0 :(
+    # this 'signed.signature_algorithm_parameters' below requires cryptography 41.0.0 :(
     pkey.verify(signed.signature, signed.tbs_certificate_bytes, signed.signature_algorithm_parameters)
 
 def cert_get_subject_key_id(cert: x509.Certificate) -> bytes:
@@ -189,7 +189,7 @@ class CertAndPrivkey:
     def ecdsa_sign(self, plaintext: bytes) -> bytes:
         """Sign some input-data using an ECDSA signature compliant with SGP.22,
         which internally refers to Global Platform 2.2 Annex E, which in turn points
-        to BSI TS-03111 which states "concatengated raw R + S values". """
+        to BSI TS-03111 which states "concatenated raw R + S values". """
         sig = self.priv_key.sign(plaintext, ec.ECDSA(hashes.SHA256()))
         # convert from DER format to BSI TR-03111; first get long integers; then convert those to bytes
         return ecdsa_dss_to_tr03111(sig)

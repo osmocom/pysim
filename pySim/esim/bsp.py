@@ -225,7 +225,7 @@ class BspInstance:
         return cls(s_enc, s_mac, initial_mcv)
 
     def encrypt_and_mac_one(self, tag: int, plaintext:bytes) -> bytes:
-        """Encrypt + MAC a single plaintext TLV. Returns the protected ciphertex."""
+        """Encrypt + MAC a single plaintext TLV. Returns the protected ciphertext."""
         assert tag <= 255
         assert len(plaintext) <= self.max_payload_size
         logger.debug("encrypt_and_mac_one(tag=0x%x, plaintext=%s)", tag, b2h(plaintext))
@@ -250,11 +250,11 @@ class BspInstance:
         return result
 
     def mac_only_one(self, tag: int, plaintext: bytes) -> bytes:
-        """MAC a single plaintext TLV. Returns the protected ciphertex."""
+        """MAC a single plaintext TLV. Returns the protected ciphertext."""
         assert tag <= 255
         assert len(plaintext) < self.max_payload_size
         maced = self.m_algo.auth(tag, plaintext)
-        # The data block counter for ICV caluclation is incremented also for each segment with C-MAC only.
+        # The data block counter for ICV calculation is incremented also for each segment with C-MAC only.
         self.c_algo.block_nr += 1
         return maced
 
@@ -288,7 +288,7 @@ class BspInstance:
     def demac_only_one(self, ciphertext: bytes) -> bytes:
         payload = self.m_algo.verify(ciphertext)
         _tdict, _l, val, _remain = bertlv_parse_one(payload)
-        # The data block counter for ICV caluclation is incremented also for each segment with C-MAC only.
+        # The data block counter for ICV calculation is incremented also for each segment with C-MAC only.
         self.c_algo.block_nr += 1
         return val
 
