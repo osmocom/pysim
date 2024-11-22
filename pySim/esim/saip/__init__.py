@@ -450,7 +450,7 @@ class ProfileElement:
     @property
     def header_name(self) -> str:
         """Return the name of the header field within the profile element."""
-        # unneccessarry compliaction by inconsistent naming :(
+        # unnecessary complication by inconsistent naming :(
         if self.type.startswith('opt-'):
             return self.type.replace('-','') + '-header'
         if self.type in self.header_name_translation_dict:
@@ -933,7 +933,7 @@ class SecurityDomainKeyComponent:
                 'macLength': self.mac_length}
 
 class SecurityDomainKey:
-    """Represenation of a key used for SCP access to a security domain."""
+    """Representation of a key used for SCP access to a security domain."""
     def __init__(self, key_version_number: int, key_id: int, key_usage_qualifier: dict,
                  key_components: List[SecurityDomainKeyComponent]):
         self.key_usage_qualifier = key_usage_qualifier
@@ -1276,7 +1276,7 @@ class ProfileElementSequence:
     sequence."""
     def __init__(self):
         """After calling the constructor, you have to further initialize the instance by either
-        calling the parse_der() method, or by manually adding individual PEs, including the hedaer and
+        calling the parse_der() method, or by manually adding individual PEs, including the header and
         end PEs."""
         self.pe_list: List[ProfileElement] = []
         self.pe_by_type: Dict = {}
@@ -1298,7 +1298,7 @@ class ProfileElementSequence:
     def add_hdr_and_end(self):
         """Initialize the PE Sequence with a header and end PE."""
         if len(self.pe_list):
-            raise ValueError("Cannot add header + end PE to a non-enmpty PE-Sequence")
+            raise ValueError("Cannot add header + end PE to a non-empty PE-Sequence")
         # start with a minimal/empty sequence of header + end
         self.append(ProfileElementHeader())
         self.append(ProfileElementEnd())
@@ -1315,7 +1315,7 @@ class ProfileElementSequence:
 
     def get_pe_for_type(self, tname: str) -> Optional[ProfileElement]:
         """Return a single profile element for given profile element type. Works only for
-        types of which there is only a signle instance in the PE Sequence!"""
+        types of which there is only a single instance in the PE Sequence!"""
         l = self.get_pes_for_type(tname)
         if len(l) == 0:
             return None
@@ -1323,7 +1323,7 @@ class ProfileElementSequence:
         return l[0]
 
     def get_pes_for_templateID(self, tid: oid.OID) -> List[ProfileElement]:
-        """Return list of profile elements present for given profile eleemnt type."""
+        """Return list of profile elements present for given profile element type."""
         res = []
         for pe in self.pe_list:
             if not pe.templateID:
