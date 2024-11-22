@@ -116,6 +116,8 @@ class File:
         self.high_update: bool = False
         self.shareable: bool = True
         self.df_name = None
+        self.fill_pattern = None
+        self.fill_pattern_repeat = False
         # apply some defaults from profile
         if self.template:
             self.from_template(self.template)
@@ -174,8 +176,6 @@ class File:
         self.fid = template.fid
         self.sfi = template.sfi
         self.arr = template.arr
-        #self.default_val = template.default_val
-        #self.default_val_repeat = template.default_val_repeat
         if hasattr(template, 'rec_len'):
             self.rec_len = template.rec_len
         else:
@@ -234,14 +234,11 @@ class File:
             fileDescriptor['fileDescriptor'] = build_construct(FileDescriptor._construct, fd_dict)
         if self.high_update:
             pefi['specialFileInformation'] = b'\x80' # TS 102 222 Table 5
-        try:
-            if self.template and self.template.default_val_repeat:
-                pefi['repeatPattern'] = self.template.expand_default_value_pattern()
-            elif self.template and self.template.default_val:
-                pefi['fillPattern'] = self.template.expand_default_value_pattern()
-        except ValueError:
-            # ignore this here as without a file or record length we cannot do this
-            pass
+        if self.fill_pattern:
+            if not self.fill_pattern_repeat:
+                pefi['fillPattern'] = self.fill_pattern
+            else:
+                pefi['repeatPattern'] = self.fill_pattern
         if len(pefi.keys()):
             # TODO: When overwriting the default "proprietaryEFInfo" for a template EF for which a
             # default fill or repeat pattern is defined; it is hence recommended to provide the
@@ -292,11 +289,13 @@ class File:
                 specialFileInformation = pefi.get('specialFileInformation', None)
                 if specialFileInformation:
                     if specialFileInformation[0] & 0x80:
-                        self.hihgi_update = True
+                        self.high_update = True
                 if 'repeatPattern' in pefi:
-                    self.repeat_pattern = pefi['repeatPattern']
-                if 'defaultPattern' in pefi:
-                    self.repeat_pattern = pefi['defaultPattern']
+                    self.fill_pattern = pefi['repeatPattern']
+                    self.fill_pattern_repeat = True
+                if 'fillPattern' in pefi:
+                    self.fill_pattern = pefi['fillPattern']
+                    self.fill_pattern_repeat = False
             elif fdb_dec['file_type'] == 'df':
                 # only set it, if an earlier call to from_template() didn't alrady set it, as
                 # the template can differentiate between MF, DF and ADF (unlike FDB)
