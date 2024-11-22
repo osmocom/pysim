@@ -219,18 +219,23 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
             self.cmd2.poutput("<- %s: %s" % (sw, resp))
 
     def update_prompt(self):
+        if self.rs and self.rs.adm_verified:
+            prompt_char = '#'
+        else:
+            prompt_char = '>'
+
         if self.lchan:
             path_str = self.lchan.selected_file.fully_qualified_path_str(not self.numeric_path)
             scp = self.lchan.scc.scp
             if scp:
-                self.prompt = 'pySIM-shell (%s:%02u:%s)> ' % (str(scp), self.lchan.lchan_nr, path_str)
+                self.prompt = 'pySIM-shell (%s:%02u:%s)%c ' % (str(scp), self.lchan.lchan_nr, path_str, prompt_char)
             else:
-                self.prompt = 'pySIM-shell (%02u:%s)> ' % (self.lchan.lchan_nr, path_str)
+                self.prompt = 'pySIM-shell (%02u:%s)%c ' % (self.lchan.lchan_nr, path_str, prompt_char)
         else:
             if self.card:
-                self.prompt = 'pySIM-shell (no card profile)> '
+                self.prompt = 'pySIM-shell (no card profile)%c ' % prompt_char
             else:
-                self.prompt = 'pySIM-shell (no card)> '
+                self.prompt = 'pySIM-shell (no card)%c ' % prompt_char
 
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_intro(self, _):
@@ -855,6 +860,8 @@ class PySimCommands(CommandSet):
             self._cmd.lchan.scc.verify_chv(adm_chv_num, h2b(pin_adm))
         else:
             raise ValueError("error: cannot authenticate, no adm-pin!")
+        self._cmd.rs.adm_verified = True
+        self._cmd.update_prompt()
 
     def do_cardinfo(self, opts):
         """Display information about the currently inserted card"""

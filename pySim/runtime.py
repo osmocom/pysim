@@ -53,6 +53,7 @@ class RuntimeState:
         # this is a dict of card identities which different parts of the code might populate,
         # typically with something like ICCID, EID, ATR, ...
         self.identity = {}
+        self.adm_verified = False
 
         # make sure the class and selection control bytes, which are specified
         # by the card profile are used
@@ -139,6 +140,7 @@ class RuntimeState:
             if lchan_nr == 0:
                 continue
             del self.lchan[lchan_nr]
+        self.adm_verified = False
         atr = i2h(self.card.reset())
         if cmd_app:
             cmd_app.lchan = self.lchan[0]
