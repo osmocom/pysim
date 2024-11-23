@@ -1130,7 +1130,8 @@ class ProfileElementUSIM(FsProfileElement):
 
     @property
     def imsi(self) -> Optional[str]:
-        f = File('ef-imsi', self.decoded['ef-imsi'])
+        template = templates.ProfileTemplateRegistry.get_by_oid(self.templateID)
+        f = File('ef-imsi', self.decoded['ef-imsi'], template.files_by_pename.get('ef-imsi', None))
         return dec_imsi(b2h(f.body))
 
 class ProfileElementOptUSIM(FsProfileElement):
