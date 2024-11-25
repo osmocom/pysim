@@ -43,6 +43,7 @@ pySim consists of several parts:
    legacy
    library
    osmo-smdpp
+   sim-rest
 
 
 Indices and tables
