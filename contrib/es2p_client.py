@@ -17,7 +17,7 @@
 
 import copy
 import argparse
-from pySim.esim import es2p
+from pySim.esim import es2p, ActivationCode
 
 EID_HELP='EID of the eUICC for which eSIM shall be made available'
 ICCID_HELP='The ICCID of the eSIM that shall be made available'
@@ -73,6 +73,11 @@ if __name__ == '__main__':
         res = peer.call_downloadOrder(data)
     elif opts.command == 'confirm-order':
         res = peer.call_confirmOrder(data)
+        matchingId = res.get('matchingId', None)
+        smdpAddress = res.get('smdpAddress', None)
+        if matchingId:
+            ac = ActivationCode(smdpAddress, matchingId, cc_required=bool(opts.confirmationCode))
+            print("Activation Code: '%s'" % ac.to_string())
     elif opts.command == 'cancel-order':
         res = peer.call_cancelOrder(data)
     elif opts.command == 'release-profile':
