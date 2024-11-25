@@ -876,6 +876,7 @@ class EF_ePDGSelection(TransparentEF):
     _test_de_encode = [
         ( '800600f110000100', {'e_pdg_selection': [{'plmn': '001-01', 'epdg_priority': 1, 'epdg_fqdn_format': 'operator_identified' }] }),
         ( '800600110000a001', {'e_pdg_selection': [{'plmn': '001-001', 'epdg_priority': 160, 'epdg_fqdn_format': 'location_based' }] }),
+        ( '800600011000a001', {'e_pdg_selection': [{'plmn': '001-010', 'epdg_priority': 160, 'epdg_fqdn_format': 'location_based' }] }),
     ]
     class ePDGSelection(BER_TLV_IE, tag=0x80):
         _construct = GreedyRange(Struct('plmn'/PlmnAdapter(Bytes(3)),
