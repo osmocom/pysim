@@ -1118,7 +1118,7 @@ es10x_store_data
 
 .. argparse::
    :module: pySim.euicc
-   :func: ADF_ISDR.AddlShellCommands.es10x_store_data_parser
+   :func: CardApplicationISDR.AddlShellCommands.es10x_store_data_parser
 
 get_euicc_configured_addresses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1137,7 +1137,7 @@ set_default_dp_address
 
 .. argparse::
    :module: pySim.euicc
-   :func: ADF_ISDR.AddlShellCommands.set_def_dp_addr_parser
+   :func: CardApplicationISDR.AddlShellCommands.set_def_dp_addr_parser
 
 get_euicc_challenge
 ~~~~~~~~~~~~~~~~~~~
@@ -1280,7 +1280,7 @@ remove_notification_from_list
 
 .. argparse::
    :module: pySim.euicc
-   :func: ADF_ISDR.AddlShellCommands.rem_notif_parser
+   :func: CardApplicationISDR.AddlShellCommands.rem_notif_parser
 
 Example::
 
@@ -1329,7 +1329,7 @@ enable_profile
 
 .. argparse::
    :module: pySim.euicc
-   :func: ADF_ISDR.AddlShellCommands.en_prof_parser
+   :func: CardApplicationISDR.AddlShellCommands.en_prof_parser
 
 Example (successful)::
 
@@ -1351,7 +1351,7 @@ disable_profile
 
 .. argparse::
    :module: pySim.euicc
-   :func: ADF_ISDR.AddlShellCommands.dis_prof_parser
+   :func: CardApplicationISDR.AddlShellCommands.dis_prof_parser
 
 Example (successful)::
 
@@ -1365,7 +1365,7 @@ delete_profile
 
 .. argparse::
    :module: pySim.euicc
-   :func: ADF_ISDR.AddlShellCommands.del_prof_parser
+   :func: CardApplicationISDR.AddlShellCommands.del_prof_parser
 
 Example::
 
@@ -1392,7 +1392,7 @@ set_nickname
 
 .. argparse::
    :module: pySim.euicc
-   :func: ADF_ISDR.AddlShellCommands.set_nickname_parser
+   :func: CardApplicationISDR.AddlShellCommands.set_nickname_parser
 
 Example::
 
