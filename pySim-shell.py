@@ -155,6 +155,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         # When a card object and a runtime state is present, (re)equip pySim-shell with everything that is
         # needed to operate on cards.
         if self.card and self.rs:
+            self.rs.reset()
             self.lchan = self.rs.lchan[0]
             self._onchange_conserve_write(
                 'conserve_write', False, self.conserve_write)
