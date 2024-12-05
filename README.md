@@ -1,16 +1,29 @@
-pySim - Read, Write and Browse Programmable SIM/USIM/ISIM/HPSIM Cards
-=====================================================================
+pySim - Tools for reading, decoding, browsing SIM/USIM/ISIM/HPSIM/eUICC Cards
+=============================================================================
 
-This repository contains a number of Python programs that can be used
-to read, program (write) and browse all fields/parameters/files on
-SIM/USIM/ISIM/HPSIM cards used in 3GPP cellular networks from 2G to 5G.
+This repository contains a number of Python programs related to working with
+subscriber identity modules of cellular networks, including but not limited
+to SIM, UICC, USIM, ISIM, HPSIMs and eUICCs.
+
+* `pySim-shell.py` can be used to interactively explore, read and decode contents
+  of any of the supported card models / card applications.  Furthermore, if
+  you have the credentials to your card (ADM PIN), you can also write to the card,
+  i.e. edit its contents.
+* `pySim-read.py` and `pySim-prog.py` are _legacy_ tools for batch programming
+  some very common parameters to an entire batch of programmable cards
+* `pySim-trace.py` is a tool to do an in-depth decode of SIM card protocol traces
+  such as those obtained by [Osmocom SIMtrace2](https://osmocom.org/projects/simtrace2/wiki)
+  or [osmo-qcdiag](https://osmocom.org/projects/osmo-qcdiag/wiki).
+* `osmo-smdpp.py` is a proof-of-concept GSMA SGP.22 Consumer eSIM SM-DP+ for lab/research
+* there are more related tools, particularly in the `contrib` directory.
 
 Note that the access control configuration of normal production cards
 issue by operators will restrict significantly which files a normal
 user can read, and particularly write to.
 
 The full functionality of pySim hence can only be used with on so-called
-programmable SIM/USIM/ISIM/HPSIM cards.
+programmable SIM/USIM/ISIM/HPSIM cards, such as the various
+[sysmocom programmable card products](https://shop.sysmocom.de/SIM/).
 
 Such SIM/USIM/ISIM/HPSIM cards are special cards, which - unlike those
 issued by regular commercial operators - come with the kind of keys that
@@ -49,9 +62,9 @@ pySim-shell vs. legacy tools
 ----------------------------
 
 While you will find a lot of online resources still describing the use of
-pySim-prog.py and pySim-read.py, those tools are considered legacy by
+`pySim-prog.py` and `pySim-read.py`, those tools are considered legacy by
 now and have by far been superseded by the much more capable
-pySim-shell.  We strongly encourage users to adopt pySim-shell, unless
+`pySim-shell.py`.  We strongly encourage users to adopt pySim-shell, unless
 they have very specific requirements like batch programming of large
 quantities of cards, which is about the only remaining use case for the
 legacy tools.
