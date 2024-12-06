@@ -320,9 +320,9 @@ class ADF_ARAM(CardADF):
             '--device-app-id', required=True, help='Identifies the specific device application that the rule appplies to. Hash of Certificate of Application Provider, or UUID. (20/32 hex bytes)')
         aid_grp = store_ref_ar_do_parse.add_mutually_exclusive_group()
         aid_grp.add_argument(
-            '--aid', help='Identifies the specific SE application for which rules are to be stored. Can be a partial AID, containing for example only the RID.  (5-16 hex bytes)')
+            '--aid', help='Identifies the specific SE application for which rules are to be stored. Can be a partial AID, containing for example only the RID. (5-16 or 0 hex bytes)')
         aid_grp.add_argument('--aid-empty', action='store_true',
-                             help='No specific SE application, applies to all applications')
+                             help='No specific SE application, applies to implicitly selected application (all channels)')
         store_ref_ar_do_parse.add_argument(
             '--pkg-ref', help='Full Android Java package name (up to 127 chars ASCII)')
         # AR-DO
@@ -423,10 +423,13 @@ class CardApplicationARAM(CardApplication):
         # matching key.
         if dictlist is None:
             return None
-        obj = None
         for d in dictlist:
-            obj = d.get(key, obj)
-        return obj
+            if key in d:
+                obj = d.get(key)
+                if obj is None:
+                    return ""
+                return obj
+        return None
 
     @staticmethod
     def __export_ref_ar_do_list(ref_ar_do_list):
@@ -437,6 +440,7 @@ class CardApplicationARAM(CardApplication):
         if ref_do_list and ar_do_list:
             # Get ref_do parameters
             aid_ref_do = CardApplicationARAM.__export_get_from_dictlist('aid_ref_do', ref_do_list)
+            aid_ref_empty_do = CardApplicationARAM.__export_get_from_dictlist('aid_ref_empty_do', ref_do_list)
             dev_app_id_ref_do = CardApplicationARAM.__export_get_from_dictlist('dev_app_id_ref_do', ref_do_list)
             pkg_ref_do = CardApplicationARAM.__export_get_from_dictlist('pkg_ref_do', ref_do_list)
 
@@ -447,9 +451,11 @@ class CardApplicationARAM(CardApplication):
 
             # Write command-line
             export_str += "aram_store_ref_ar_do"
-            if aid_ref_do:
+            if aid_ref_do is not None and len(aid_ref_do) > 0:
                 export_str += (" --aid %s" % aid_ref_do)
-            else:
+            elif aid_ref_do is not None:
+                export_str += " --aid \"\""
+            if aid_ref_empty_do is not None:
                 export_str += " --aid-empty"
             if dev_app_id_ref_do:
                 export_str += (" --device-app-id %s" % dev_app_id_ref_do)

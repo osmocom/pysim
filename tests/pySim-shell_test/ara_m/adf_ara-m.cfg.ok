@@ -110,7 +110,7 @@
                     {
                         "ref_do": [
                             {
-                                "aid_ref_do": "ffffffffffdd"
+                                "aid_ref_do": null
                             },
                             {
                                 "dev_app_id_ref_do": "a1234567890123bb1f140de987aaa891bbbf0bdd"
