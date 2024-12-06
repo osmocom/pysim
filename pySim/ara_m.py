@@ -448,24 +448,26 @@ class CardApplicationARAM(CardApplication):
             # Write command-line
             export_str += "aram_store_ref_ar_do"
             if aid_ref_do:
-                export_str += (" --aid %s" % aid_ref_do)
+                export_str += (" --aid \"%s\"" % aid_ref_do)
             else:
                 export_str += " --aid-empty"
             if dev_app_id_ref_do:
-                export_str += (" --device-app-id %s" % dev_app_id_ref_do)
+                export_str += (" --device-app-id \"%s\"" % dev_app_id_ref_do)
             if apdu_ar_do and 'generic_access_rule' in apdu_ar_do:
                 export_str += (" --apdu-%s" % apdu_ar_do['generic_access_rule'])
             elif apdu_ar_do and 'apdu_filter' in apdu_ar_do:
                 export_str += (" --apdu-filter ")
+                export_str += "\""
                 for apdu_filter in apdu_ar_do['apdu_filter']:
                     export_str += apdu_filter['header']
                     export_str += apdu_filter['mask']
+                export_str += "\""
             if nfc_ar_do and 'nfc_event_access_rule' in nfc_ar_do:
                 export_str += (" --nfc-%s" % nfc_ar_do['nfc_event_access_rule'])
             if perm_ar_do:
-                export_str += (" --android-permissions %s" % perm_ar_do['permissions'])
+                export_str += (" --android-permissions \"%s\"" % perm_ar_do['permissions'])
             if pkg_ref_do:
-                export_str += (" --pkg-ref %s" % pkg_ref_do['package_name_string'])
+                export_str += (" --pkg-ref \"%s\"" % pkg_ref_do['package_name_string'])
             export_str += "\n"
         return export_str
 
