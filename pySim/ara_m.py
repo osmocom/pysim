@@ -38,17 +38,17 @@ import pySim.global_platform
 
 
 class AidRefDO(BER_TLV_IE, tag=0x4f):
-    # SEID v1.1 Table 6-3
+    # GPD_SPE_013 v1.1 Table 6-3
     _construct = HexAdapter(GreedyBytes)
 
 
 class AidRefEmptyDO(BER_TLV_IE, tag=0xc0):
-    # SEID v1.1 Table 6-3
+    # GPD_SPE_013 v1.1 Table 6-3
     pass
 
 
 class DevAppIdRefDO(BER_TLV_IE, tag=0xc1):
-    # SEID v1.1 Table 6-4
+    # GPD_SPE_013 v1.1 Table 6-4
     _construct = HexAdapter(GreedyBytes)
 
 
@@ -58,12 +58,12 @@ class PkgRefDO(BER_TLV_IE, tag=0xca):
 
 
 class RefDO(BER_TLV_IE, tag=0xe1, nested=[AidRefDO, AidRefEmptyDO, DevAppIdRefDO, PkgRefDO]):
-    # SEID v1.1 Table 6-5
+    # GPD_SPE_013 v1.1 Table 6-5
     pass
 
 
 class ApduArDO(BER_TLV_IE, tag=0xd0):
-    # SEID v1.1 Table 6-8
+    # GPD_SPE_013 v1.1 Table 6-8
     def _from_bytes(self, do: bytes):
         if len(do) == 1:
             if do[0] == 0x00:
@@ -108,7 +108,7 @@ class ApduArDO(BER_TLV_IE, tag=0xd0):
 
 
 class NfcArDO(BER_TLV_IE, tag=0xd1):
-    # SEID v1.1 Table 6-9
+    # GPD_SPE_013 v1.1 Table 6-9
     _construct = Struct('nfc_event_access_rule' /
                         Enum(Int8ub, never=0, always=1))
 
@@ -120,122 +120,122 @@ class PermArDO(BER_TLV_IE, tag=0xdb):
 
 
 class ArDO(BER_TLV_IE, tag=0xe3, nested=[ApduArDO, NfcArDO, PermArDO]):
-    # SEID v1.1 Table 6-7
+    # GPD_SPE_013 v1.1 Table 6-7
     pass
 
 
 class RefArDO(BER_TLV_IE, tag=0xe2, nested=[RefDO, ArDO]):
-    # SEID v1.1 Table 6-6
+    # GPD_SPE_013 v1.1 Table 6-6
     pass
 
 
 class ResponseAllRefArDO(BER_TLV_IE, tag=0xff40, nested=[RefArDO]):
-    # SEID v1.1 Table 4-2
+    # GPD_SPE_013 v1.1 Table 4-2
     pass
 
 
 class ResponseArDO(BER_TLV_IE, tag=0xff50, nested=[ArDO]):
-    # SEID v1.1 Table 4-3
+    # GPD_SPE_013 v1.1 Table 4-3
     pass
 
 
 class ResponseRefreshTagDO(BER_TLV_IE, tag=0xdf20):
-    # SEID v1.1 Table 4-4
+    # GPD_SPE_013 v1.1 Table 4-4
     _construct = Struct('refresh_tag'/HexAdapter(Bytes(8)))
 
 
 class DeviceInterfaceVersionDO(BER_TLV_IE, tag=0xe6):
-    # SEID v1.1 Table 6-12
+    # GPD_SPE_013 v1.1 Table 6-12
     _construct = Struct('major'/Int8ub, 'minor'/Int8ub, 'patch'/Int8ub)
 
 
 class DeviceConfigDO(BER_TLV_IE, tag=0xe4, nested=[DeviceInterfaceVersionDO]):
-    # SEID v1.1 Table 6-10
+    # GPD_SPE_013 v1.1 Table 6-10
     pass
 
 
 class ResponseDeviceConfigDO(BER_TLV_IE, tag=0xff7f, nested=[DeviceConfigDO]):
-    # SEID v1.1 Table 5-14
+    # GPD_SPE_013 v1.1 Table 5-14
     pass
 
 
 class AramConfigDO(BER_TLV_IE, tag=0xe5, nested=[DeviceInterfaceVersionDO]):
-    # SEID v1.1 Table 6-11
+    # GPD_SPE_013 v1.1 Table 6-11
     pass
 
 
 class ResponseAramConfigDO(BER_TLV_IE, tag=0xdf21, nested=[AramConfigDO]):
-    # SEID v1.1 Table 4-5
+    # GPD_SPE_013 v1.1 Table 4-5
     pass
 
 
 class CommandStoreRefArDO(BER_TLV_IE, tag=0xf0, nested=[RefArDO]):
-    # SEID v1.1 Table 5-2
+    # GPD_SPE_013 v1.1 Table 5-2
     pass
 
 
 class CommandDelete(BER_TLV_IE, tag=0xf1, nested=[AidRefDO, AidRefEmptyDO, RefDO, RefArDO]):
-    # SEID v1.1 Table 5-4
+    # GPD_SPE_013 v1.1 Table 5-4
     pass
 
 
 class CommandUpdateRefreshTagDO(BER_TLV_IE, tag=0xf2):
-    # SEID V1.1 Table 5-6
+    # GPD_SPE_013 V1.1 Table 5-6
     pass
 
 
 class CommandRegisterClientAidsDO(BER_TLV_IE, tag=0xf7, nested=[AidRefDO, AidRefEmptyDO]):
-    # SEID v1.1 Table 5-7
+    # GPD_SPE_013 v1.1 Table 5-7
     pass
 
 
 class CommandGet(BER_TLV_IE, tag=0xf3, nested=[AidRefDO, AidRefEmptyDO]):
-    # SEID v1.1 Table 5-8
+    # GPD_SPE_013 v1.1 Table 5-8
     pass
 
 
 class CommandGetAll(BER_TLV_IE, tag=0xf4):
-    # SEID v1.1 Table 5-9
+    # GPD_SPE_013 v1.1 Table 5-9
     pass
 
 
 class CommandGetClientAidsDO(BER_TLV_IE, tag=0xf6):
-    # SEID v1.1 Table 5-10
+    # GPD_SPE_013 v1.1 Table 5-10
     pass
 
 
 class CommandGetNext(BER_TLV_IE, tag=0xf5):
-    # SEID v1.1 Table 5-11
+    # GPD_SPE_013 v1.1 Table 5-11
     pass
 
 
 class CommandGetDeviceConfigDO(BER_TLV_IE, tag=0xf8):
-    # SEID v1.1 Table 5-12
+    # GPD_SPE_013 v1.1 Table 5-12
     pass
 
 
 class ResponseAracAidDO(BER_TLV_IE, tag=0xff70, nested=[AidRefDO, AidRefEmptyDO]):
-    # SEID v1.1 Table 5-13
+    # GPD_SPE_013 v1.1 Table 5-13
     pass
 
 
 class BlockDO(BER_TLV_IE, tag=0xe7):
-    # SEID v1.1 Table 6-13
+    # GPD_SPE_013 v1.1 Table 6-13
     _construct = Struct('offset'/Int16ub, 'length'/Int8ub)
 
 
-# SEID v1.1 Table 4-1
+# GPD_SPE_013 v1.1 Table 4-1
 class GetCommandDoCollection(TLV_IE_Collection, nested=[RefDO, DeviceConfigDO]):
     pass
 
 
-# SEID v1.1 Table 4-2
+# GPD_SPE_013 v1.1 Table 4-2
 class GetResponseDoCollection(TLV_IE_Collection, nested=[ResponseAllRefArDO, ResponseArDO,
                                                          ResponseRefreshTagDO, ResponseAramConfigDO]):
     pass
 
 
-# SEID v1.1 Table 5-1
+# GPD_SPE_013 v1.1 Table 5-1
 class StoreCommandDoCollection(TLV_IE_Collection,
                                nested=[BlockDO, CommandStoreRefArDO, CommandDelete,
                                        CommandUpdateRefreshTagDO, CommandRegisterClientAidsDO,
@@ -244,7 +244,7 @@ class StoreCommandDoCollection(TLV_IE_Collection,
     pass
 
 
-# SEID v1.1 Section 5.1.2
+# GPD_SPE_013 v1.1 Section 5.1.2
 class StoreResponseDoCollection(TLV_IE_Collection,
                                 nested=[ResponseAllRefArDO, ResponseAracAidDO, ResponseDeviceConfigDO]):
     pass
