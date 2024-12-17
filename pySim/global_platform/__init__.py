@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import io
 from copy import deepcopy
 from typing import Optional, List, Dict, Tuple
 from construct import Optional as COptional
@@ -32,6 +33,7 @@ from pySim.global_platform.scp import SCP02, SCP03
 from pySim.filesystem import *
 from pySim.profile import CardProfile
 from pySim.ota import SimFileAccessAndToolkitAppSpecParams
+from pySim.javacard import CapFile
 
 # GPCS Table 11-48 Load Parameter Tags
 class NonVolatileCodeMinMemoryReq(BER_TLV_IE, tag=0xC6):
@@ -464,8 +466,7 @@ class LifeCycleState(BER_TLV_IE, tag=0x9f70):
 
 # Section 11.4.3.1 Table 11-36 + Section 11.1.2
 class Privileges(BER_TLV_IE, tag=0xc5):
-    # we only support 3-byte encoding. Can't use StripTrailerAdapter as length==2 is not permitted. sigh.
-    _construct = FlagsEnum(Int24ub,
+    _construct = FlagsEnum(StripTrailerAdapter(GreedyBytes, 3, steps = [1, 3]),
                            security_domain=0x800000, dap_verification=0x400000,
                            delegated_management=0x200000, card_lock=0x100000, card_terminate=0x080000,
                            card_reset=0x040000, cvm_management=0x020000,
@@ -751,6 +752,31 @@ class ADF_SD(CardADF):
             ifi_bytes = build_construct(InstallForInstallCD, decoded)
             self.install(p1, 0x00, b2h(ifi_bytes))
 
+        inst_load_parser = argparse.ArgumentParser()
+        inst_load_parser.add_argument('--load-file-aid', type=is_hexstr, required=True,
+                                      help='AID of the loded file')
+        inst_load_parser.add_argument('--security-domain-aid', type=is_hexstr, default='',
+                                      help='AID of the Security Domain into which the file shalle be added')
+        inst_load_parser.add_argument('--load-file-hash', type=is_hexstr, default='',
+                                      help='Load File Data Block Hash (GPC_SPE_034, section C.2)')
+        inst_load_parser.add_argument('--load-parameters', type=is_hexstr, default='',
+                                      help='Load Parameters (GPC_SPE_034, section 11.5.2.3.7, table 11-49)')
+        inst_load_parser.add_argument('--load-token', type=is_hexstr, default='',
+                                      help='Load Token (GPC_SPE_034, section C.4.1)')
+
+        @cmd2.with_argparser(inst_load_parser)
+        def do_install_for_load(self, opts):
+            """Perform GlobalPlatform INSTALL [for load] command."""
+            if opts.load_token != '' and opts.load_file_hash == '':
+                raise ValueError('Load File Data Block Hash is mandatory if a Load Token is present')
+            InstallForLoadCD = Struct('load_file_aid'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+                                      'security_domain_aid'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+                                      'load_file_hash'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+                                      'load_parameters'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+                                      'load_token'/HexAdapter(Prefixed(Int8ub, GreedyBytes)))
+            ifl_bytes = build_construct(InstallForLoadCD, vars(opts))
+            self.install(0x02, 0x00, b2h(ifl_bytes))
+
         def install(self, p1:int, p2:int, data:Hexstr) -> ResTuple:
             cmd_hex = "80E6%02x%02x%02x%s00" % (p1, p2, len(data)//2, data)
             return self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
@@ -793,6 +819,45 @@ class ADF_SD(CardADF):
         def delete(self, p1:int, p2:int, data:Hexstr) -> ResTuple:
             cmd_hex = "80E4%02x%02x%02x%s00" % (p1, p2, len(data)//2, data)
             return self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
+
+        load_parser = argparse.ArgumentParser()
+        load_parser.add_argument('--from-hex', help='load from hex string')
+        load_parser.add_argument('--from-file', help='load from binary file')
+        load_parser.add_argument('--from-cap-file', help='load from JAVA-card CAP file')
+
+        @cmd2.with_argparser(load_parser)
+        def do_load(self, opts):
+            """Perform a GlobalPlatform LOAD command. We currently only support loading without DAP and
+            without ciphering."""
+            if opts.from_hex is not None:
+                    self.load(h2b(opts.from_hex))
+            elif opts.from_file is not None:
+                with open(opts.from_file, 'rb') as f:
+                    self.load(f.read())
+            elif opts.from_cap_file is not None:
+                cap = CapFile(opts.from_cap_file)
+                load_file = cap.get_loadfile()
+                self.load(h2b(load_file))
+            else:
+                raise ValueError('load source not specified!')
+
+        def load(self, contents:bytes, chunk_len:int = 240):
+            # TODO:tune chunk_len based on the overhead of the used SCP?
+            # build TLV according to GPC_SPE_034 section 11.6.2.3 / Table 11-58 for unencrypted case
+            remainder = b'\xC4' + bertlv_encode_len(len(contents)) + contents
+            # transfer this in vaious chunks to the card
+            total_size = len(remainder)
+            block_nr = 0
+            while len(remainder):
+                block = remainder[:chunk_len]
+                remainder = remainder[chunk_len:]
+                # build LOAD command APDU according to GPC_SPE_034 section 11.6.2 / Table 11-56
+                p1 = 0x00 if len(remainder) else 0x80
+                p2 = block_nr % 256
+                block_nr += 1
+                cmd_hex = "80E8%02x%02x%02x%s00" % (p1, p2, len(block), b2h(block))
+                _rsp_hex, _sw = self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
+            self._cmd.poutput("Loaded a total of %u bytes in %u blocks. Don't forget install_for_install (and make selectable) now!" % (total_size, block_nr))
 
         est_scp02_parser = argparse.ArgumentParser()
         est_scp02_parser.add_argument('--key-ver', type=auto_uint8, required=True, help='Key Version Number (KVN)')
