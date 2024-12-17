@@ -1047,6 +1047,12 @@ delete_key
    :module: pySim.global_platform
    :func: ADF_SD.AddlShellCommands.del_key_parser
 
+load
+~~~~
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.load_parser
+
 install_for_personalization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. argparse::
@@ -1058,6 +1064,12 @@ install_for_install
 .. argparse::
    :module: pySim.global_platform
    :func: ADF_SD.AddlShellCommands.inst_inst_parser
+
+install_for_load
+~~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.inst_load_parser
 
 delete_card_content
 ~~~~~~~~~~~~~~~~~~~
