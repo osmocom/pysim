@@ -21,6 +21,7 @@ from osmocom.utils import b2h, h2b
 
 from pySim.global_platform import *
 from pySim.global_platform.scp import *
+from pySim.global_platform.install_param import *
 
 KIC = h2b('100102030405060708090a0b0c0d0e0f') # enc
 KID = h2b('101102030405060708090a0b0c0d0e0f') # MAC
@@ -288,6 +289,14 @@ class SCP03_KCV_Test(unittest.TestCase):
         self.assertEqual(compute_kcv('aes', KEYSET_AES128.mac), h2b('013808'))
         self.assertEqual(compute_kcv('aes', KEYSET_AES128.dek), h2b('840DE5'))
 
+
+class Install_param_Test(unittest.TestCase):
+    def test_gen_install_parameters(self):
+        load_parameters = gen_install_parameters(256, 256, '010001001505000000000000000000000000')
+        self.assertEqual(load_parameters, 'c900ef1cc8020100c7020100ca12010001001505000000000000000000000000')
+
+        load_parameters = gen_install_parameters(None, None, '')
+        self.assertEqual(load_parameters, 'c900')
 
 if __name__ == "__main__":
 	unittest.main()
