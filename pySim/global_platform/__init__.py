@@ -30,6 +30,7 @@ from osmocom.construct import *
 from pySim.utils import ResTuple
 from pySim.card_key_provider import card_key_provider_get_field
 from pySim.global_platform.scp import SCP02, SCP03
+from pySim.global_platform.install_param import gen_install_parameters
 from pySim.filesystem import *
 from pySim.profile import CardProfile
 from pySim.ota import SimFileAccessAndToolkitAppSpecParams
@@ -858,6 +859,53 @@ class ADF_SD(CardADF):
                 cmd_hex = "80E8%02x%02x%02x%s00" % (p1, p2, len(block), b2h(block))
                 _rsp_hex, _sw = self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
             self._cmd.poutput("Loaded a total of %u bytes in %u blocks. Don't forget install_for_install (and make selectable) now!" % (total_size, block_nr))
+
+        install_cap_parser = argparse.ArgumentParser()
+        install_cap_parser.add_argument('cap_file', type=str, metavar='FILE',
+                                        help='JAVA-CARD CAP file to install')
+        install_cap_parser.add_argument('--install-parameters', type=is_hexstr, default='',
+                                        help='install Parameters (GPC_SPE_034, section 11.5.2.3.7, table 11-49)')
+        install_cap_parser.add_argument('--install-parameters-volatile-memory-quota', type=int, default=None,
+                                        help='install Parameters (GPC_SPE_034, section 11.5.2.3.7, table 11-49)')
+        install_cap_parser.add_argument('--install-parameters-non-volatile-memory-quota', type=int, default=None,
+                                        help='Install Parameters (GPC_SPE_034, section 11.5.2.3.7, table 11-49)')
+        install_cap_parser.add_argument('--install-parameters-stk', type=is_hexstr, default=None,
+                                        help='Load Parameters (ETSI TS 102 226, section 8.2.1.3.2.1)')
+
+        @cmd2.with_argparser(install_cap_parser)
+        def do_install_cap(self, opts):
+            """Perform a .cap file installation using GlobalPlatform LOAD and INSTALL commands."""
+
+            self._cmd.poutput("loading cap file: %s ..." % opts.cap_file)
+            cap = CapFile(opts.cap_file)
+
+            security_domain_aid = self._cmd.lchan.selected_file.aid
+            load_file = cap.get_loadfile()
+            load_file_aid = cap.get_loadfile_aid()
+            module_aid = cap.get_applet_aid()
+            application_aid = module_aid
+            if opts.install_parameters != '':
+                install_parameters = opts.install_parameters;
+            else:
+                install_parameters = gen_install_parameters(opts.install_parameters_non_volatile_memory_quota,
+                                                            opts.install_parameters_volatile_memory_quota,
+                                                            opts.install_parameters_stk)
+            self._cmd.poutput("parameters:")
+            self._cmd.poutput(" security-domain-aid: %s" % security_domain_aid)
+            self._cmd.poutput(" load-file: %u bytes" % (len(load_file) // 2))
+            self._cmd.poutput(" load-file-aid: %s" % load_file_aid)
+            self._cmd.poutput(" module-aid: %s" % module_aid)
+            self._cmd.poutput(" application-aid: %s" % application_aid)
+            self._cmd.poutput(" install-parameters: %s" % install_parameters)
+
+            self._cmd.poutput("step #1: install for load...")
+            self.do_install_for_load("--load-file-aid %s --security-domain-aid %s" % (load_file_aid, security_domain_aid))
+            self._cmd.poutput("step #2: load...")
+            self.load(h2b(load_file))
+            self._cmd.poutput("step #3: install_for_install (and make selectable)...")
+            self.do_install_for_install("--load-file-aid %s --module-aid %s --application-aid %s --install-parameters %s --make-selectable" %
+                                        (load_file_aid, module_aid, application_aid, install_parameters))
+            self._cmd.poutput("done.")
 
         est_scp02_parser = argparse.ArgumentParser()
         est_scp02_parser.add_argument('--key-ver', type=auto_uint8, required=True, help='Key Version Number (KVN)')
