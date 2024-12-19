@@ -859,6 +859,42 @@ class ADF_SD(CardADF):
                 _rsp_hex, _sw = self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
             self._cmd.poutput("Loaded a total of %u bytes in %u blocks. Don't forget install_for_install (and make selectable) now!" % (total_size, block_nr))
 
+        install_cap_parser = argparse.ArgumentParser()
+        install_cap_parser.add_argument('cap_file', type=str, metavar='FILE',
+                                        help='JAVA-CARD CAP file to install')
+
+        @cmd2.with_argparser(install_cap_parser)
+        def do_install_cap(self, opts):
+            """Perform a .cap file installation using GlobalPlatform LOAD and INSTALL commands."""
+
+            self._cmd.poutput("loading cap file: %s ..." % opts.cap_file)
+            cap = CapFile(opts.cap_file)
+
+            security_domain_aid = self._cmd.lchan.selected_file.aid
+            load_file = cap.get_loadfile()
+            load_file_aid = cap.get_loadfile_aid()
+            module_aid = cap.get_applet_aid()
+            application_aid = module_aid
+            #TODO: generate this string from commandline parameters
+            install_parameters = "C900EF1CC8020100C7020100CA12010001001505000000000000000000000000"
+
+            self._cmd.poutput("parameters:")
+            self._cmd.poutput(" security-domain-aid: %s" % security_domain_aid)
+            self._cmd.poutput(" load-file: %u bytes" % (len(load_file) // 2))
+            self._cmd.poutput(" load-file-aid: %s" % load_file_aid)
+            self._cmd.poutput(" module-aid: %s" % module_aid)
+            self._cmd.poutput(" application-aid: %s" % application_aid)
+            self._cmd.poutput(" install-parameters: %s" % install_parameters)
+
+            self._cmd.poutput("install for load...")
+            self.do_install_for_load("--load-file-aid %s --security-domain-aid %s" % (load_file_aid, security_domain_aid))
+            self._cmd.poutput("load...")
+            self.load(h2b(load_file))
+            self._cmd.poutput("install_for_install (and make selectable)...")
+            self.do_install_for_install("--load-file-aid %s --module-aid %s --application-aid %s --install-parameters %s --make-selectable" %
+                                        (load_file_aid, module_aid, application_aid, install_parameters))
+            self._cmd.poutput("done.")
+
         est_scp02_parser = argparse.ArgumentParser()
         est_scp02_parser.add_argument('--key-ver', type=auto_uint8, required=True, help='Key Version Number (KVN)')
         est_scp02_parser.add_argument('--host-challenge', type=is_hexstr,
