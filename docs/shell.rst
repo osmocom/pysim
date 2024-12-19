@@ -67,6 +67,7 @@ Usage Examples
    :caption: Tutorials for pySIM-shell:
 
    suci-tutorial
+   cap-tutorial
 
 
 Advanced Topics
@@ -1052,6 +1053,12 @@ load
 .. argparse::
    :module: pySim.global_platform
    :func: ADF_SD.AddlShellCommands.load_parser
+
+install_cap
+~~~~~~~~~~~
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.install_cap_parser
 
 install_for_personalization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
