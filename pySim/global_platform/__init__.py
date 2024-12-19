@@ -791,7 +791,7 @@ class ADF_SD(CardADF):
             self.delete(0x00, p2, cmd)
 
         def delete(self, p1:int, p2:int, data:Hexstr) -> ResTuple:
-            cmd_hex = "80E4%02x%02x%02x%s" % (p1, p2, len(data)//2, data)
+            cmd_hex = "80E4%02x%02x%02x%s00" % (p1, p2, len(data)//2, data)
             return self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
 
         est_scp02_parser = argparse.ArgumentParser()
