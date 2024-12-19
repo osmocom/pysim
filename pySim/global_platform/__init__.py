@@ -897,13 +897,6 @@ class CardApplicationISD(CardApplicationSD):
         super().__init__(aid=aid, name='ADF.ISD', desc='Issuer Security Domain')
         self.adf.scp_key_identity = 'ICCID'
 
-#class CardProfileGlobalPlatform(CardProfile):
-#    ORDER = 23
-#
-#    def __init__(self, name='GlobalPlatform'):
-#        super().__init__(name, desc='GlobalPlatfomr 2.1.1', cla=['00','80','84'], sw=sw_table)
-
-
 class GpCardKeyset:
     """A single set of GlobalPlatform card keys and the associated KVN."""
     def __init__(self, kvn: int, enc: bytes, mac: bytes, dek: bytes):
