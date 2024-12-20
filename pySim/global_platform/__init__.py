@@ -724,7 +724,7 @@ class ADF_SD(CardADF):
         inst_inst_parser.add_argument('--application-aid', type=is_hexstr, required=True,
                                       help='Application AID')
         inst_inst_parser.add_argument('--install-parameters', type=is_hexstr, default='',
-                                      help='Install Parameters')
+                                      help='Install Parameters (GPC_SPE_034, section 11.5.2.3.7, table 11-49)')
         inst_inst_parser.add_argument('--privilege', action='append', dest='privileges', default=[],
                                       choices=list(Privileges._construct.flags.keys()),
                                       help='Privilege granted to newly installed Application')
