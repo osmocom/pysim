@@ -224,8 +224,10 @@ class SCP02(SCP):
 
     constr_iur = Struct('key_div_data'/Bytes(10), 'key_ver'/Int8ub, Const(b'\x02'),
                         'seq_counter'/Int16ub, 'card_challenge'/Bytes(6), 'card_cryptogram'/Bytes(8))
-    # The 0x70 is a non-spec special-case of sysmoISIM-SJA2/SJA5 and possibly more sysmocom products
-    kvn_ranges = [[0x20, 0x2f], [0x70, 0x70]]
+    # Key Version Number 0x00 refers to the first available key, see also: GPC_SPE_034, section E.5.1.3
+    # Key Version Number 0x70 is a non-spec special-case of sysmoISIM-SJA2/SJA5 and possibly more sysmocom products
+    # Key Version Number 0x01 is a non-spec special-case of sysmoUSIM-SJS1
+    kvn_ranges = [[0x00, 0x00], [0x01, 0x01], [0x20, 0x2f], [0x70, 0x70]]
 
     def __init__(self, *args, **kwargs):
         self.overhead = 8
