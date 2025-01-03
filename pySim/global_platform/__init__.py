@@ -795,7 +795,7 @@ class ADF_SD(CardADF):
             return self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
 
         est_scp02_parser = argparse.ArgumentParser()
-        est_scp02_parser.add_argument('--key-ver', type=auto_uint8, required=True, help='Key Version Number (KVN)')
+        est_scp02_parser.add_argument('--key-ver', type=auto_uint8, default=0, help='Key Version Number (KVN)')
         est_scp02_parser.add_argument('--host-challenge', type=is_hexstr,
                                       help='Hard-code the host challenge; default: random')
         est_scp02_parser.add_argument('--security-level', type=auto_uint8, default=0x01,
@@ -900,7 +900,9 @@ class CardApplicationISD(CardApplicationSD):
 class GpCardKeyset:
     """A single set of GlobalPlatform card keys and the associated KVN."""
     def __init__(self, kvn: int, enc: bytes, mac: bytes, dek: bytes):
-        assert 0 < kvn < 256
+        # The Key Version Number is an 8 bit integer number, where 0 refers to the first available key,
+        # see also: GPC_SPE_034, section E.5.1.3
+        assert 0 <= kvn < 256
         assert len(enc) == len(mac) == len(dek)
         self.kvn = kvn
         self.enc = enc

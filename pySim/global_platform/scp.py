@@ -113,7 +113,39 @@ CLA_SM = 0x04
 class SCP(SecureChannel, abc.ABC):
     """Abstract base class containing some common interface + functionality for SCP protocols."""
     def __init__(self, card_keys: 'GpCardKeyset', lchan_nr: int = 0):
-        if hasattr(self, 'kvn_range'):
+
+        # Spec references that explain KVN ranges:
+        # TS 102 225 Annex A.1 states KVN 0x01..0x0F shall be used for SCP80
+        # GPC_GUI_003 states
+        #   * For the Issuer Security Domain, this is initially Key Version Number 'FF' which has been deliberately
+        #     chosen to be outside of the allowable range ('01' to '7F') for a Key Version Number.
+        #   * It is logical that the initial keys in the Issuer Security Domain be replaced by an initial issuer Key
+        #     Version Number in the range '01' to '6F'.
+        #   * Key Version Numbers '70' to '72' and '74' to '7F' are reserved for future use.
+        #   * On an implementation supporting Supplementary Security Domains, the RSA public key with a Key Version
+        #     Number '73' and a Key Identifier of '01' has the following functionality in a Supplementary Security
+        #     Domain with the DAP Verification privilege [...]
+        # GPC_GUI_010 V1.0.1 Section 6 states
+        #   * Key Version number range ('20' to '2F') is reserved for SCP02
+        #   * Key Version 'FF' is reserved for use by an Issuer Security Domain supporting SCP02, and cannot be used
+        #     for SCP80. This initial key set shall be replaced by a key set with a Key Version Number in the
+        #     ('20' to '2F') range.
+        #   * Key Version number range ('01' to '0F') is reserved for SCP80
+        #   * Key Version number '70' with Key Identifier '01' is reserved for the Token Key, which is either a RSA
+        #     public key or a DES key
+        #   * Key Version number '71' with Key Identifier '01' is reserved for the Receipt Key, which is a DES key
+        #   * Key Version Number '11' is reserved for DAP as specified in ETSI TS 102 226 [2]
+        #   * Key Version Number '73' with Key Identifier '01' is reserved for the DAP verification key as specified
+        #     in sections 3.3.3 and 4 of [4], which is either an RSA public key or DES key
+        #   * Key Version Number '74' is reserved for the CASD Keys (cf. section 9.2)
+        #   * Key Version Number '75' with Key Identifier '01' is reserved for the key used to decipher the Ciphered
+        #     Load File Data Block described in section 4.8 of [5].
+
+        if card_keys.kvn == 0:
+            # Key Version Number 0x00 refers to the first available key, so we won't carry out
+            # a range check in this case. See also: GPC_SPE_034, section E.5.1.3
+            pass
+        elif hasattr(self, 'kvn_range'):
             if not card_keys.kvn in range(self.kvn_range[0], self.kvn_range[1]+1):
                 raise ValueError('%s cannot be used with KVN outside range 0x%02x..0x%02x' %
                                  (self.__class__.__name__, self.kvn_range[0], self.kvn_range[1]))
@@ -224,8 +256,9 @@ class SCP02(SCP):
 
     constr_iur = Struct('key_div_data'/Bytes(10), 'key_ver'/Int8ub, Const(b'\x02'),
                         'seq_counter'/Int16ub, 'card_challenge'/Bytes(6), 'card_cryptogram'/Bytes(8))
-    # The 0x70 is a non-spec special-case of sysmoISIM-SJA2/SJA5 and possibly more sysmocom products
-    kvn_ranges = [[0x20, 0x2f], [0x70, 0x70]]
+    # Key Version Number 0x70 is a non-spec special-case of sysmoISIM-SJA2/SJA5 and possibly more sysmocom products
+    # Key Version Number 0x01 is a non-spec special-case of sysmoUSIM-SJS1
+    kvn_ranges = [[0x01, 0x01], [0x20, 0x2f], [0x70, 0x70]]
 
     def __init__(self, *args, **kwargs):
         self.overhead = 8
