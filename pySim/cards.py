@@ -73,6 +73,16 @@ class CardBase:
         # callers having to do hasattr('read_aids') ahead of every call.
         return []
 
+    def adf_present(self, adf: str = "usim") -> bool:
+        # a non-UICC doesn't have any applications. Convenience helper to avoid
+        # callers having to do hasattr('adf_present') ahead of every call.
+        return False
+
+    def select_adf_by_aid(self, adf: str = "usim", scc: Optional[SimCardCommands] = None) -> Tuple[Optional[Hexstr], Optional[SwHexstr]]:
+        # a non-UICC doesn't have any applications. Convenience helper to avoid
+        # callers having to do hasattr('select_adf_by_aid') ahead of every call.
+        return (None, None)
+
 
 class SimCardBase(CardBase):
     """Here we only add methods for commands specified in TS 51.011, without
