@@ -80,7 +80,7 @@ class WsrcSimLink(LinkBase):
         self.client.reset_card()
         return 1
 
-    def _send_apdu_raw(self, pdu: Hexstr) -> ResTuple:
+    def _send_apdu(self, pdu: Hexstr) -> ResTuple:
         return self.client.xceive_apdu_raw(pdu)
 
     def __str__(self) -> str:

@@ -44,6 +44,21 @@ class WsClientBlocking(abc.ABC):
         return rx_js
 
     def transceive_json(self, tx_msg_type: str, tx_d: Optional[dict], rx_msg_type: str) -> dict:
+        #As far as I understand, this sends something like this:
+        #{'command': '00a40004022f0000', 'msg_type': 'c_apdu'}
+        #
+        #Maybe the message type should be excluded from the dict like:
+        #
+        #{'msg_type':'c_apdu', 'msg':{'command': '00a40004022f0000'}}
+        #
+        #I ran into this problem some time ago, when the message type descriptor is part of the message, then
+        #things tend to get difficult as soon as there are more then one message item. Then the msg_type mixes with
+        #the items of the message. At the moment the protocol is really simple, so this is not a problem yet, but
+        #maybe we need to extend it later.
+        #
+        #Maybe it would be a good idea to write a JSON schema, even if we don't use it to verify the messages, this
+        #would definetly help to see if json format definition is clean.
+        #
         self.tx_json(tx_msg_type, tx_d)
         rx = self.rx_json()
         assert rx['msg_type'] == rx_msg_type

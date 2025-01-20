@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+#shouldn't this be python3 (in unber.py it is)?
 import json
 import asyncio
 import logging
@@ -13,7 +13,7 @@ from pySim.utils import SwMatchstr, ResTuple, sw_match, dec_iccid
 from pySim.exceptions import SwMatchError
 from pySim.wsrc import WSRC_DEFAULT_PORT_USER, WSRC_DEFAULT_PORT_CARD
 
-logging.basicConfig(format="[%(levelname)s] %(asctime)s %(message)s", level=logging.INFO)
+logging.basicConfig(format="[%(levelname)s] %(asctime)s %(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 card_clients = set()
@@ -153,7 +153,10 @@ class CardClient(WsClient):
         await self.xceive_apdu_checksw('00a40000023f00') # SELECT MF
         await self.xceive_apdu_checksw('00a40000022fe2') # SELECT EF.ICCID
         res, sw = await self.xceive_apdu_checksw('00b0000000') # READ BINARY
-        return dec_iccid(res)
+        return res
+        #return dec_iccid(res)
+        #pySim-shell seems to use hexstr, while we use the decoded ICCID string, which may not
+        #always be a valid hexstring (e.g. 988812010000500381f1 -> 8988211000000530181)
 
     async def get_eid_sgp22(self):
         """high-level method to obtain the EID of a SGP.22 consumer eUICC"""
@@ -195,6 +198,9 @@ class CardClient(WsClient):
     @staticmethod
     def find_client_for_id(id_type: str, id_str: str) -> Optional['CardClient']:
         for c in card_clients:
+            #When the card is not ready, we will not see it here. The client will not know why. Another client may be
+            #currently talking to the card, or the card may not be connected. I think it is important that the
+            #user knows what happened, so that diagnosis of the problem is easier.
             if c.state != 'ready':
                 continue
             c_id = c.identity.get(id_type.upper(), None)
@@ -207,6 +213,18 @@ class UserClient(WsClient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.state = 'init'
+        #The user only has two state, "init" and "associated". When the card is disassociated (I guess this only happens
+        #when the card client disconnects while the user is currently working/associated with the card) the state goes
+        #back to init and then user_clients.remove(user) is called. Maybe it should go to a final state "disconnected"
+        #instead?
+        #
+        #I also noticed that when I terminate the card client, the connection with the user stays open until the user
+        #sends the next APDU, then there are exceptions on the server side and the connection is eventually closed.
+        #Maybe this should be handled gracefullier, maybe we can even send some error message (I see there is a
+        #msg_type for that) back that tells that the user that the card client vanished. In a real life environment the
+        #user will be far away from the card reader and a ConnectionClosedError could mean a lot of different things.
+        #When I suddenly remove the card from the reader I get the same error, but that this time it is because the
+        #wsrc_card_client crashes. Also here the transfer of an error code before the crash would make a lot of sende I think.
         self.card = None
 
     async def associate_card(self, card: CardClient):
