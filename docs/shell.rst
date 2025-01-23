@@ -1393,6 +1393,13 @@ Example::
       "delete_result": "ok"
   }
 
+euicc_memory_reset
+~~~~~~~~~~~~~~~~~~
+
+.. argparse::
+   :module: pySim.euicc
+   :func: CardApplicationISDR.AddlShellCommands.mem_res_parser
+
 
 get_eid
 ~~~~~~~

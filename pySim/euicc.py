@@ -268,6 +268,17 @@ class DeleteProfileReq(BER_TLV_IE, tag=0xbf33, nested=[IsdpAid, Iccid]):
 class DeleteProfileResp(BER_TLV_IE, tag=0xbf33, nested=[DeleteResult]):
     pass
 
+# SGP.22 Section 5.7.19: EuiccMemoryReset
+class ResetOptions(BER_TLV_IE, tag=0x82):
+    _construct = FlagsEnum(Byte, deleteOperationalProfiles=0x80, deleteFieldLoadedTestProfiles=0x40,
+                           resetDefaultSmdpAddress=0x20)
+class ResetResult(BER_TLV_IE, tag=0x80):
+    _construct = Enum(Int8ub, ok=0, nothingToDelete=1, undefinedError=127)
+class EuiccMemoryResetReq(BER_TLV_IE, tag=0xbf34, nested=[ResetOptions]):
+    pass
+class EuiccMemoryResetResp(BER_TLV_IE, tag=0xbf34, nested=[ResetResult]):
+    pass
+
 # SGP.22 Section 5.7.20 GetEID
 class EidValue(BER_TLV_IE, tag=0x5a):
     _construct = HexAdapter(GreedyBytes)
@@ -504,6 +515,30 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
             d = dp.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['delete_profile_resp']))
 
+        mem_res_parser = argparse.ArgumentParser()
+        mem_res_parser.add_argument('--delete-operational', action='store_true',
+                                    help='Delete all operational profiles')
+        mem_res_parser.add_argument('--delete-test-field-installed', action='store_true',
+                                    help='Delete all test profiles, except pre-installed ones')
+        mem_res_parser.add_argument('--reset-smdp-address', action='store_true',
+                                    help='Reset the SM-DP+ address')
+
+        @cmd2.with_argparser(mem_res_parser)
+        def do_euicc_memory_reset(self, opts):
+            """Perform an ES10c eUICCMemoryReset function. This will permanently delete the selected subset of
+            profiles from the eUICC."""
+            flags = {}
+            if opts.delete_operational:
+                flags['deleteOperationalProfiles'] = True
+            if opts.delete_test_field_installed:
+                flags['deleteFieldLoadedTestProfiles'] = True
+            if opts.reset_smdp_address:
+                flags['resetDefaultSmdpAddress'] = True
+
+            mr_cmd = EuiccMemoryResetReq(children=[ResetOptions(decoded=flags)])
+            mr = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, mr_cmd, EuiccMemoryResetResp)
+            d = mr.to_dict()
+            self._cmd.poutput_json(flatten_dict_lists(d['euicc_memory_reset_resp']))
 
         def do_get_eid(self, _opts):
             """Perform an ES10c GetEID function."""
