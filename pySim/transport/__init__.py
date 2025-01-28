@@ -120,6 +120,11 @@ class LinkBase(abc.ABC):
         """
 
     @abc.abstractmethod
+    def get_atr(self) -> Hexstr:
+        """Retrieve card ATR
+        """
+
+    @abc.abstractmethod
     def disconnect(self):
         """Disconnect from card
         """

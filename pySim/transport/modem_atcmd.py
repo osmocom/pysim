@@ -139,6 +139,9 @@ class ModemATCommandLink(LinkBaseTpdu):
     def connect(self):
         pass  # Nothing to do really ...
 
+    def get_atr(self) -> Hexstr:
+        return "3b00" # Dummy ATR
+
     def disconnect(self):
         pass  # Nothing to do really ...
 

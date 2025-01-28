@@ -123,6 +123,9 @@ class CalypsoSimLink(LinkBaseTpdu):
     def connect(self):
         self.reset_card()
 
+    def get_atr(self) -> Hexstr:
+        return "3b00" # Dummy ATR
+
     def disconnect(self):
         pass  # Nothing to do really ...
 
