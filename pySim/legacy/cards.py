@@ -781,7 +781,7 @@ class SysmoSIMgr1(GrcardSim):
     def autodetect(kls, scc):
         try:
             # Look for ATR
-            if scc.get_atr() == toBytes("3B 99 18 00 11 88 22 33 44 55 66 77 60"):
+            if scc.get_atr() == toBytes("3b991800118822334455667760"):
                 return kls(scc)
         except:
             return None
@@ -826,7 +826,7 @@ class SysmoSIMgr2(SimCard):
     def autodetect(kls, scc):
         try:
             # Look for ATR
-            if scc.get_atr() == toBytes("3B 7D 94 00 00 55 55 53 0A 74 86 93 0B 24 7C 4D 54 68"):
+            if scc.get_atr() == toBytes("3b7d9400005555530a7486930b247c4d5468"):
                 return kls(scc)
         except:
             return None
@@ -904,7 +904,7 @@ class SysmoUSIMSJS1(UsimCard):
     def autodetect(kls, scc):
         try:
             # Look for ATR
-            if scc.get_atr() == toBytes("3B 9F 96 80 1F C7 80 31 A0 73 BE 21 13 67 43 20 07 18 00 00 01 A5"):
+            if scc.get_atr() == toBytes("3b9f96801fc78031a073be21136743200718000001a5"):
                 return kls(scc)
         except:
             return None
@@ -1032,7 +1032,7 @@ class FairwavesSIM(UsimCard):
     def autodetect(kls, scc):
         try:
             # Look for ATR
-            if scc.get_atr() == toBytes("3B 9F 96 80 1F C7 80 31 A0 73 BE 21 13 67 44 22 06 10 00 00 01 A9"):
+            if scc.get_atr() == toBytes("3b9f96801fc78031a073be21136744220610000001a9"):
                 return kls(scc)
         except:
             return None
@@ -1166,7 +1166,7 @@ class OpenCellsSim(SimCard):
     def autodetect(kls, scc):
         try:
             # Look for ATR
-            if scc.get_atr() == toBytes("3B 9F 95 80 1F C3 80 31 E0 73 FE 21 13 57 86 81 02 86 98 44 18 A8"):
+            if scc.get_atr() == toBytes("3b9f95801fc38031e073fe21135786810286984418a8"):
                 return kls(scc)
         except:
             return None
@@ -1215,7 +1215,7 @@ class WavemobileSim(UsimCard):
     def autodetect(kls, scc):
         try:
             # Look for ATR
-            if scc.get_atr() == toBytes("3B 9F 95 80 1F C7 80 31 E0 73 F6 21 13 67 4D 45 16 00 43 01 00 8F"):
+            if scc.get_atr() == toBytes("3b9f95801fc78031e073f62113674d4516004301008f"):
                 return kls(scc)
         except:
             return None
@@ -1305,17 +1305,17 @@ class SysmoISIMSJA2(UsimCard, IsimCard):
     def autodetect(kls, scc):
         try:
             # Try card model #1
-            atr = "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 4C 75 30 34 05 4B A9"
+            atr = "3b9f96801f878031e073fe211b674a4c753034054ba9"
             if scc.get_atr() == toBytes(atr):
                 return kls(scc)
 
             # Try card model #2
-            atr = "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 4C 75 31 33 02 51 B2"
+            atr = "3b9f96801f878031e073fe211b674a4c7531330251b2"
             if scc.get_atr() == toBytes(atr):
                 return kls(scc)
 
             # Try card model #3
-            atr = "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 4C 52 75 31 04 51 D5"
+            atr = "3b9f96801f878031e073fe211b674a4c5275310451d5"
             if scc.get_atr() == toBytes(atr):
                 return kls(scc)
         except:
@@ -1554,15 +1554,15 @@ class SysmoISIMSJA5(SysmoISIMSJA2):
     def autodetect(kls, scc):
         try:
             # Try card model #1 (9FJ)
-            atr = "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 35 75 30 35 02 51 CC"
+            atr = "3b9f96801f878031e073fe211b674a357530350251cc"
             if scc.get_atr() == toBytes(atr):
                 return kls(scc)
             # Try card model #2 (SLM17)
-            atr = "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 35 75 30 35 02 65 F8"
+            atr = "3b9f96801f878031e073fe211b674a357530350265f8"
             if scc.get_atr() == toBytes(atr):
                 return kls(scc)
             # Try card model #3 (9FV)
-            atr = "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 35 75 30 35 02 59 C4"
+            atr = "3b9f96801f878031e073fe211b674a357530350259c4"
             if scc.get_atr() == toBytes(atr):
                 return kls(scc)
         except:
@@ -1592,7 +1592,7 @@ class GialerSim(UsimCard):
     def autodetect(cls, scc):
         try:
             # Look for ATR
-            if scc.get_atr() == toBytes('3B 9F 95 80 1F C7 80 31 A0 73 B6 A1 00 67 CF 32 15 CA 9C D7 09 20'):
+            if scc.get_atr() == toBytes('3b9f95801fc78031a073b6a10067cf3215ca9cd70920'):
                 return cls(scc)
         except:
             return None

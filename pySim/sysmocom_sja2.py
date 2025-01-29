@@ -298,9 +298,9 @@ class EF_GBA_INT_KEY(LinFixedEF):
 
 
 class SysmocomSJA2(CardModel):
-    _atrs = ["3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 4C 75 30 34 05 4B A9",
-             "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 4C 75 31 33 02 51 B2",
-             "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 4C 52 75 31 04 51 D5"]
+    _atrs = ["3b9f96801f878031e073fe211b674a4c753034054ba9",
+             "3b9f96801f878031e073fe211b674a4c7531330251b2",
+             "3b9f96801f878031e073fe211b674a4c5275310451d5"]
 
     @classmethod
     def add_files(cls, rs: RuntimeState):
@@ -329,9 +329,9 @@ class SysmocomSJA2(CardModel):
             isim_adf.add_files(files_adf_isim)
 
 class SysmocomSJA5(CardModel):
-    _atrs = ["3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 35 75 30 35 02 51 CC",
-             "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 35 75 30 35 02 65 F8",
-             "3B 9F 96 80 1F 87 80 31 E0 73 FE 21 1B 67 4A 35 75 30 35 02 59 C4"]
+    _atrs = ["3b9f96801f878031e073fe211b674a357530350251cc",
+             "3b9f96801f878031e073fe211b674a357530350265f8",
+             "3b9f96801f878031e073fe211b674a357530350259c4"]
 
     @classmethod
     def add_files(cls, rs: RuntimeState):
