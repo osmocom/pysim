@@ -294,7 +294,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         if self.rs is None:
             # In case no runtime state is available we go the direct route
             self.card._scc.reset_card()
-            atr = b2h(self.card._scc.get_atr())
+            atr = self.card._scc.get_atr()
         else:
             atr = self.rs.reset(self)
         self.poutput('Card ATR: %s' % atr)

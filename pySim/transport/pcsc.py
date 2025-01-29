@@ -103,7 +103,7 @@ class PcscSimLink(LinkBaseTpdu):
             raise NoCardError() from exc
 
     def get_atr(self) -> Hexstr:
-        return self._con.getATR()
+        return i2h(self._con.getATR())
 
     def disconnect(self):
         self._con.disconnect()

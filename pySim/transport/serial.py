@@ -21,7 +21,7 @@ import os
 import argparse
 from typing import Optional
 import serial
-from osmocom.utils import h2b, b2h, Hexstr
+from osmocom.utils import h2b, b2h, i2h, Hexstr
 
 from pySim.exceptions import NoCardError, ProtocolError
 from pySim.transport import LinkBaseTpdu
@@ -96,7 +96,7 @@ class SerialSimLink(LinkBaseTpdu):
         self.reset_card()
 
     def get_atr(self) -> Hexstr:
-        return self._atr
+        return i2h(self._atr)
 
     def disconnect(self):
         pass  # Nothing to do really ...

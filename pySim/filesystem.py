@@ -1530,8 +1530,7 @@ class CardModel(abc.ABC):
         """Test if given card matches this model."""
         card_atr = scc.get_atr()
         for atr in cls._atrs:
-            atr_bin = toBytes(atr)
-            if atr_bin == card_atr:
+            if atr == card_atr:
                 print("Detected CardModel:", cls.__name__)
                 return True
         return False

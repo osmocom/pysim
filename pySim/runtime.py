@@ -141,7 +141,7 @@ class RuntimeState:
                 continue
             del self.lchan[lchan_nr]
         self.adm_verified = False
-        atr = i2h(self.card.reset())
+        atr = self.card.reset()
         if cmd_app:
             cmd_app.lchan = self.lchan[0]
         # select MF to reset internal state and to verify card really works
