@@ -1159,14 +1159,18 @@ if __name__ == '__main__':
     # Run optional commands
     for c in opts.execute_command:
         if not startup_errors:
-            app.onecmd_plus_hooks(c)
+            stop = app.onecmd_plus_hooks(c)
+            if stop == True:
+                sys.exit(0)
         else:
             print("Errors during startup, refusing to execute command (%s)" % c)
 
     # Run optional command
     if opts.command:
         if not startup_errors:
-            app.onecmd_plus_hooks('{} {}'.format(opts.command, ' '.join(opts.command_args)))
+            stop = app.onecmd_plus_hooks('{} {}'.format(opts.command, ' '.join(opts.command_args)))
+            if stop == True:
+                sys.exit(0)
         else:
             print("Errors during startup, refusing to execute command (%s)" % opts.command)
 
@@ -1177,7 +1181,9 @@ if __name__ == '__main__':
                 print("Error: script file (%s) not readable!" % opts.script)
                 startup_errors = True
             else:
-                app.onecmd_plus_hooks('{} {}'.format('run_script', opts.script), add_to_history = False)
+                stop = app.onecmd_plus_hooks('{} {}'.format('run_script', opts.script), add_to_history = False)
+                if stop == True:
+                    sys.exit(0)
         else:
             print("Errors during startup, refusing to execute script (%s)" % opts.script)
 
