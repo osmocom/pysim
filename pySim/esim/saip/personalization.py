@@ -35,15 +35,76 @@ def file_replace_content(file: List[Tuple], new_content: bytes):
     return file
 
 class ConfigurableParameter:
-    """Base class representing a part of the eSIM profile that is configurable during the
-    personalization process (with dynamic data from elsewhere)."""
+    r"""Base class representing a part of the eSIM profile that is configurable during the
+    personalization process (with dynamic data from elsewhere).
+
+    This class is abstract, you will only use subclasses in practice.
+
+    Subclasses have to implement the apply_val() classmethods, and may choose to override the default validate_val()
+    implementation.
+    The default validate_val() is a generic validator that uses the following class members (defined in subclasses) to
+    configure the validation; if any of them is None, it means that the particular validation is skipped:
+
+    allow_types: a list of types permitted as argument to validate_val(); allow_types = (bytes, str,)
+    allow_chars: if val is a str, accept only these characters; allow_chars = "0123456789"
+    strip_chars: if val is a str, remove these characters; strip_chars = ' \t\r\n'
+    min_len: minimum length of an input str; min_len = 4
+    max_len: maximum length of an input str; max_len = 8
+    allow_len: permit only specific lengths; allow_len = (8, 16, 32)
+
+    Subclasses may change the meaning of these by overriding validate_val(), for example that the length counts
+    resulting bytes instead of a hexstring length. Most subclasses will be covered by the default validate_val().
+
+    Usage examples, by example of Iccid:
+
+    1) use a ConfigurableParameter instance, with .input_value and .value state:
+
+      iccid = Iccid()
+      try:
+        iccid.input_value = '123456789012345678'
+        iccid.validate()
+      except ValueError:
+        print(f"failed to validate {iccid.name} == {iccid.input_value}")
+
+      pes = ProfileElementSequence.from_der(der_data_from_file)
+      try:
+        iccid.apply(pes)
+      except ValueError:
+        print(f"failed to apply {iccid.name} := {iccid.input_value}")
+
+      changed_der = pes.to_der()
+
+    2) use a ConfigurableParameter class, without state:
+
+      cls = Iccid
+      input_val = '123456789012345678'
+
+      try:
+        clean_val = cls.validate_val(input_val)
+      except ValueError:
+        print(f"failed to validate {cls.get_name()} = {input_val}")
+
+      pes = ProfileElementSequence.from_der(der_data_from_file)
+      try:
+        cls.apply_val(pes, clean_val)
+      except ValueError:
+        print(f"failed to apply {cls.get_name()} = {input_val}")
+
+      changed_der = pes.to_der()
+    """
 
     # A subclass can set an explicit string as name (like name = "PIN1").
     # If name is left None, then __init__() will set self.name to a name derived from the python class name (like
     # "pin1"). See also the get_name() classmethod when you have no instance at hand.
     name = None
+    allow_types = (str, int, )
+    allow_chars = None
+    strip_chars = None
+    min_len = None
+    max_len = None
+    allow_len = None # a list of specific lengths
 
-    def __init__(self, input_value):
+    def __init__(self, input_value=None):
         self.input_value = input_value # the raw input value as given by caller
         self.value = None # the processed input value (e.g. with check digit) as produced by validate()
 
@@ -63,49 +124,133 @@ class ConfigurableParameter:
         return camel_to_snake(cls.__name__)
 
     def validate(self):
-        """Optional validation method. Can be used by derived classes to perform validation
-        of the input value (self.value).  Will raise an exception if validation fails."""
-        # default implementation: simply copy input_value over to value
-        self.value = self.input_value
+        """Validate self.input_value and place the result in self.value.
+        This is also called implicitly by apply(), if self.value is still None.
+        To override validation in a subclass, rather re-implement the classmethod validate_val()."""
+        try:
+            self.value = self.__class__.validate_val(self.input_value)
+        except (TypeError, ValueError, KeyError) as e:
+            raise ValueError(f'{self.name}: {e}') from e
 
-    @abc.abstractmethod
     def apply(self, pes: ProfileElementSequence):
+        """Place self.value into the ProfileElementSequence at the right place.
+        If self.value is None, this implicitly calls self.validate() first, to generate a sanitized self.value from
+        self.input_value.
+        To override apply() in a subclass, rather override the classmethod apply_val()."""
+        if self.value is None:
+            self.validate()
+            assert self.value is not None
+        try:
+            self.__class__.apply_val(pes, self.value)
+        except (TypeError, ValueError, KeyError) as e:
+            raise ValueError(f'{self.name}: {e}') from e
+
+    @classmethod
+    def validate_val(cls, val):
+        """This is a default implementation, with the behavior configured by subclasses' allow_types...max_len settings.
+        subclasses may override this function:
+        Validate the contents of val, and raise ValueError on validation errors.
+        Return a sanitized version of val, that is ready for cls.apply_val().
+        """
+
+        if cls.allow_types is not None:
+            if not isinstance(val, cls.allow_types):
+                raise ValueError(f'input value must be one of {cls.allow_types}, not {type(val)}')
+        elif val is None:
+            raise ValueError('there is no value (val is None)')
+
+        if isinstance(val, str):
+            if cls.strip_chars is not None:
+                val = ''.join(c for c in val if c not in cls.strip_chars)
+            if cls.allow_chars is not None:
+                if any(c not in cls.allow_chars for c in val):
+                    raise ValueError(f"invalid characters in input value {val!r}, valid chars are {cls.allow_chars}")
+        if cls.allow_len is not None:
+            l = cls.allow_len
+            # cls.allow_len could be one int, or a tuple of ints. Wrap a single int also in a tuple.
+            if not isinstance(l, (tuple, list)):
+                l = (l,)
+            if len(val) not in l:
+                raise ValueError(f'length must be one of {cls.allow_len}, not {len(val)}: {val!r}')
+        if cls.min_len is not None:
+            if len(val) < cls.min_len:
+                raise ValueError(f'length must be at least {cls.min_len}, not {len(val)}: {val!r}')
+        if cls.max_len is not None:
+            if len(val) > cls.max_len:
+                raise ValueError(f'length must be at most {cls.max_len}, not {len(val)}: {val!r}')
+        return val
+
+    @classmethod
+    @abc.abstractmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        """This is what subclasses implement: store a value in a decoded profile package.
+        Write the given val in the right format in all the right places in pes."""
         pass
 
-class Iccid(ConfigurableParameter):
-    """Configurable ICCID.  Expects the value to be a string of decimal digits.
-    If the string of digits is only 18 digits long, a Luhn check digit will be added."""
+    @classmethod
+    def get_len_range(cls):
+        """considering all of min_len, max_len and allow_len, get a tuple of the resulting (min, max) of permitted
+        value length. For example, if an input value is an int, which needs to be represented with a minimum nr of
+        digits, this function is useful to easily get that minimum permitted length.
+        """
+        vals = []
+        if cls.allow_len is not None:
+            if isinstance(cls.allow_len, (tuple, list)):
+                vals.extend(cls.allow_len)
+            else:
+                vals.append(cls.allow_len)
+        if cls.min_len is not None:
+            vals.append(cls.min_len)
+        if cls.max_len is not None:
+            vals.append(cls.max_len)
+        if not vals:
+            return (None, None)
+        return (min(vals), max(vals))
 
-    def validate(self):
-        # convert to string as it might be an integer
-        iccid_str = str(self.input_value)
-        if len(iccid_str) < 18 or len(iccid_str) > 20:
-            raise ValueError('ICCID must be 18, 19 or 20 digits long')
-        if not iccid_str.isdecimal():
-            raise ValueError('ICCID must only contain decimal digits')
-        self.value = sanitize_iccid(iccid_str)
 
-    def apply(self, pes: ProfileElementSequence):
+class DecimalParam(ConfigurableParameter):
+    """Decimal digits. The input value may be a string of decimal digits like '012345', or an int. The output of
+    validate_val() is a string with only decimal digits 0-9, in the required length with leading zeros if necessary.
+    """
+    allow_types = (str, int)
+    allow_chars = '0123456789'
+
+    @classmethod
+    def validate_val(cls, val):
+        if isinstance(val, int):
+            min_len, max_len = cls.get_len_range()
+            l = min_len or 1
+            val = '%0*d' % (l, val)
+        return super().validate_val(val)
+
+
+class Iccid(DecimalParam):
+    """ICCID Parameter. Input: string of decimal digits.
+    If the string of digits is only 18 digits long, add a Luhn check digit."""
+    min_len = 18
+    max_len = 20
+
+    @classmethod
+    def validate_val(cls, val):
+        iccid_str = super().validate_val(val)
+        return sanitize_iccid(iccid_str)
+
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
         # patch the header
-        pes.get_pe_for_type('header').decoded['iccid'] = h2b(rpad(self.value, 20))
+        pes.get_pe_for_type('header').decoded['iccid'] = h2b(rpad(val, 20))
         # patch MF/EF.ICCID
-        file_replace_content(pes.get_pe_for_type('mf').decoded['ef-iccid'], h2b(enc_iccid(self.value)))
+        file_replace_content(pes.get_pe_for_type('mf').decoded['ef-iccid'], h2b(enc_iccid(val)))
 
-class Imsi(ConfigurableParameter):
+class Imsi(DecimalParam):
     """Configurable IMSI. Expects value to be a string of digits. Automatically sets the ACC to
     the last digit of the IMSI."""
+    min_len = 6
+    max_len = 15
 
-    def validate(self):
-        # convert to string as it might be an integer
-        imsi_str = str(self.input_value)
-        if len(imsi_str) < 6 or len(imsi_str) > 15:
-            raise ValueError('IMSI must be 6..15 digits long')
-        if not imsi_str.isdecimal():
-            raise ValueError('IMSI must only contain decimal digits')
-        self.value = imsi_str
-
-    def apply(self, pes: ProfileElementSequence):
-        imsi_str = self.value
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        imsi_str = val
         # we always use the least significant byte of the IMSI as ACC
         acc = (1 << int(imsi_str[-1]))
         # patch ADF.USIM/EF.IMSI
