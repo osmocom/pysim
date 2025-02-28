@@ -56,6 +56,7 @@ def file_tuples_content_as_bytes(l: List[Tuple]) -> Optional[bytes]:
 class ConfigurableParameter:
     """Base class representing a part of the eSIM profile that is configurable during the
     personalization process (with dynamic data from elsewhere)."""
+    name = None
     allow_types = (str, int, )
     allow_chars = None
     strip_chars = None
@@ -66,6 +67,14 @@ class ConfigurableParameter:
     def __init__(self, input_value=None):
         self.input_value = input_value # the raw input value as given by caller
         self.value = None # the processed input value (e.g. with check digit) as produced by validate()
+        if self.name is None:
+            self.name = self.get_name()
+
+    @classmethod
+    def get_name(cls):
+        if cls.name:
+            return cls.name
+        return cls.__name__
 
     def validate(self):
         '''Validate self.input_value and place the result in self.value.
@@ -185,6 +194,7 @@ class DecimalParam(ConfigurableParameter):
 class Iccid(DecimalParam):
     """ICCID Parameter. Input: string of decimal digits.
        If the string of digits is only 18 digits long, add a Luhn check digit."""
+    name = 'ICCID'
     min_len = 18
     max_len = 20
 
@@ -214,6 +224,8 @@ class Iccid(DecimalParam):
 class Imsi(DecimalParam):
     """Configurable IMSI. Expects value to be a string of digits. Automatically sets the ACC to
     the last digit of the IMSI."""
+
+    name = 'IMSI'
     min_len = 6
     max_len = 15
 
@@ -466,9 +478,11 @@ class Puk(DecimalHexParam):
                     yield cls.decimal_hex_to_str(pukCode['pukValue'])
 
 class Puk1(Puk):
+    name = 'PUK1'
     keyReference = 0x01
 
 class Puk2(Puk):
+    name = 'PUK2'
     keyReference = 0x81
 
 class Pin(DecimalHexParam):
@@ -512,9 +526,11 @@ class Pin(DecimalHexParam):
         yield from cls._read_all_pinvalues_from_pe(pes.pes_by_naa['mf'][0])
 
 class Pin1(Pin):
+    name = 'PIN1'
     keyReference = 0x01
 
 class Pin2(Pin):
+    name = 'PIN2'
     keyReference = 0x81
 
     @classmethod
@@ -538,9 +554,11 @@ class Pin2(Pin):
                 yield from cls._read_all_pinvalues_from_pe(pe)
 
 class Adm1(Pin):
+    name = 'ADM1'
     keyReference = 0x0A
 
 class Adm2(Pin):
+    name = 'ADM2'
     keyReference = 0x0B
 
 class AlgorithmID(DecimalParam):
@@ -579,6 +597,7 @@ class AlgorithmID(DecimalParam):
 
 
 class K(BinaryParam):
+    name = 'K'
     key = 'key'
     allow_len = int(128/8)
 
@@ -604,6 +623,7 @@ class K(BinaryParam):
             yield algoConfiguration[1][cls.key]
 
 class Opc(K):
+    name = 'OPc'
     key = 'opc'
 
     @classmethod
