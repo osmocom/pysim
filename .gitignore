@@ -7,5 +7,6 @@
 /.local
 /build
 /pySim.egg-info
+/smdpp-data/sm-dp-sessions
 dist
 tags
