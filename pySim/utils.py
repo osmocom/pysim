@@ -1109,3 +1109,9 @@ class CardCommandSet:
         if cla and not cmd.match_cla(cla):
             return None
         return cmd
+
+
+def all_subclasses_of(cls):
+    for subc in cls.__subclasses__():
+        yield subc
+        yield from all_subclasses_of(subc)
