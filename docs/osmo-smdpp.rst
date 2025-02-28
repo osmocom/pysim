@@ -82,7 +82,7 @@ software.
 supplementary files
 ~~~~~~~~~~~~~~~~~~~
 
-The `smdpp-data/certs`` directory contains the DPtls, DPauth and DPpb as well as CI certificates
+The `smdpp-data/certs` directory contains the DPtls, DPauth and DPpb as well as CI certificates
 used; they are copied from GSMA SGP.26 v2.  You can of course replace them with custom certificates
 if you're operating eSIM with a *private root CA*.
 
