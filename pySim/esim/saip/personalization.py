@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import abc
 import io
 from typing import List, Tuple
 
@@ -34,18 +33,7 @@ def file_replace_content(file: List[Tuple], new_content: bytes):
     file.append(('fillFileContent', new_content))
     return file
 
-class ClassVarMeta(abc.ABCMeta):
-    """Metaclass that puts all additional keyword-args into the class. We use this to have one
-    class definition for something like a PIN, and then have derived classes for PIN1, PIN2, ..."""
-    def __new__(metacls, name, bases, namespace, **kwargs):
-        #print("Meta_new_(metacls=%s, name=%s, bases=%s, namespace=%s, kwargs=%s)" % (metacls, name, bases, namespace, kwargs))
-        x = super().__new__(metacls, name, bases, namespace)
-        for k, v in kwargs.items():
-            setattr(x, k, v)
-        setattr(x, 'name', camel_to_snake(name))
-        return x
-
-class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
+class ConfigurableParameter:
     """Base class representing a part of the eSIM profile that is configurable during the
     personalization process (with dynamic data from elsewhere)."""
     def __init__(self, input_value):
@@ -105,7 +93,7 @@ class Imsi(ConfigurableParameter):
         # TODO: DF.GSM_ACCESS if not linked?
 
 
-class SdKey(ConfigurableParameter, metaclass=ClassVarMeta):
+class SdKey(ConfigurableParameter):
     """Configurable Security Domain (SD) Key.  Value is presented as bytes."""
     # these will be set by derived classes
     key_type = None
@@ -144,59 +132,108 @@ class SdKey(ConfigurableParameter, metaclass=ClassVarMeta):
         for pe in pes.get_pes_for_type('securityDomain'):
             self._apply_sd(pe)
 
-class SdKeyScp80_01(SdKey, kvn=0x01, key_type=0x88, permitted_len=[16,24,32]): # AES key type
-    pass
-class SdKeyScp80_01Kic(SdKeyScp80_01, key_id=0x01, key_usage_qual=0x18): # FIXME: ordering?
-    pass
-class SdKeyScp80_01Kid(SdKeyScp80_01, key_id=0x02, key_usage_qual=0x14):
-    pass
-class SdKeyScp80_01Kik(SdKeyScp80_01, key_id=0x03, key_usage_qual=0x48):
-    pass
+class SdKeyScp80_01(SdKey):
+    kvn = 0x01
+    key_type = 0x88 # AES key type
+    allow_len = (16,24,32)
 
-class SdKeyScp81_01(SdKey, kvn=0x81): # FIXME
-    pass
-class SdKeyScp81_01Psk(SdKeyScp81_01, key_id=0x01, key_type=0x85, key_usage_qual=0x3C):
-    pass
-class SdKeyScp81_01Dek(SdKeyScp81_01, key_id=0x02, key_type=0x88, key_usage_qual=0x48):
-    pass
+class SdKeyScp80_01Kic(SdKeyScp80_01):
+    key_id = 0x01
+    key_usage_qual = 0x18 # FIXME: ordering?
 
-class SdKeyScp02_20(SdKey, kvn=0x20, key_type=0x88, permitted_len=[16,24,32]): # AES key type
-    pass
-class SdKeyScp02_20Enc(SdKeyScp02_20, key_id=0x01, key_usage_qual=0x18):
-    pass
-class SdKeyScp02_20Mac(SdKeyScp02_20, key_id=0x02, key_usage_qual=0x14):
-    pass
-class SdKeyScp02_20Dek(SdKeyScp02_20, key_id=0x03, key_usage_qual=0x48):
-    pass
+class SdKeyScp80_01Kid(SdKeyScp80_01):
+    key_id = 0x02
+    key_usage_qual = 0x14
 
-class SdKeyScp03_30(SdKey, kvn=0x30, key_type=0x88, permitted_len=[16,24,32]): # AES key type
-    pass
-class SdKeyScp03_30Enc(SdKeyScp03_30, key_id=0x01, key_usage_qual=0x18):
-    pass
-class SdKeyScp03_30Mac(SdKeyScp03_30, key_id=0x02, key_usage_qual=0x14):
-    pass
-class SdKeyScp03_30Dek(SdKeyScp03_30, key_id=0x03, key_usage_qual=0x48):
-    pass
-
-class SdKeyScp03_31(SdKey, kvn=0x31, key_type=0x88, permitted_len=[16,24,32]): # AES key type
-    pass
-class SdKeyScp03_31Enc(SdKeyScp03_31, key_id=0x01, key_usage_qual=0x18):
-    pass
-class SdKeyScp03_31Mac(SdKeyScp03_31, key_id=0x02, key_usage_qual=0x14):
-    pass
-class SdKeyScp03_31Dek(SdKeyScp03_31, key_id=0x03, key_usage_qual=0x48):
-    pass
-
-class SdKeyScp03_32(SdKey, kvn=0x32, key_type=0x88, permitted_len=[16,24,32]): # AES key type
-    pass
-class SdKeyScp03_32Enc(SdKeyScp03_32, key_id=0x01, key_usage_qual=0x18):
-    pass
-class SdKeyScp03_32Mac(SdKeyScp03_32, key_id=0x02, key_usage_qual=0x14):
-    pass
-class SdKeyScp03_32Dek(SdKeyScp03_32, key_id=0x03, key_usage_qual=0x48):
-    pass
+class SdKeyScp80_01Kik(SdKeyScp80_01):
+    key_id = 0x03
+    key_usage_qual = 0x48
 
 
+class SdKeyScp81_01(SdKey):
+    kvn = 0x81 # FIXME
+
+class SdKeyScp81_01Psk(SdKeyScp81_01):
+    key_id = 0x01
+    key_type = 0x85
+    key_usage_qual = 0x3C
+
+class SdKeyScp81_01Dek(SdKeyScp81_01):
+    key_id = 0x02
+    key_type = 0x88
+    key_usage_qual = 0x48
+
+
+class SdKeyScp02_20(SdKey):
+    kvn = 0x20
+    key_type = 0x88 # AES key type
+    allow_len = (16,24,32)
+
+class SdKeyScp02_20Enc(SdKeyScp02_20):
+    key_id = 0x01
+    key_usage_qual = 0x18
+
+class SdKeyScp02_20Mac(SdKeyScp02_20):
+    key_id = 0x02
+    key_usage_qual = 0x14
+
+class SdKeyScp02_20Dek(SdKeyScp02_20):
+    key_id = 0x03
+    key_usage_qual = 0x48
+
+
+class SdKeyScp03_30(SdKey):
+    kvn = 0x30
+    key_type = 0x88 # AES key type
+    allow_len = (16,24,32)
+
+class SdKeyScp03_30Enc(SdKeyScp03_30):
+    key_id = 0x01
+    key_usage_qual = 0x18
+
+class SdKeyScp03_30Mac(SdKeyScp03_30):
+    key_id = 0x02
+    key_usage_qual = 0x14
+
+class SdKeyScp03_30Dek(SdKeyScp03_30):
+    key_id = 0x03
+    key_usage_qual = 0x48
+
+
+class SdKeyScp03_31(SdKey):
+    kvn = 0x31
+    key_type = 0x88 # AES key type
+    allow_len = (16,24,32)
+
+class SdKeyScp03_31Enc(SdKeyScp03_31):
+    key_id = 0x01
+    key_usage_qual = 0x18
+
+class SdKeyScp03_31Mac(SdKeyScp03_31):
+    key_id = 0x02
+    key_usage_qual = 0x14
+
+class SdKeyScp03_31Dek(SdKeyScp03_31):
+    key_id = 0x03
+    key_usage_qual = 0x48
+
+
+class SdKeyScp03_32(SdKey):
+    kvn = 0x32
+    key_type = 0x88 # AES key type
+    allow_len = (16,24,32)
+
+class SdKeyScp03_32Enc(SdKeyScp03_32):
+    key_id = 0x01
+    key_usage_qual = 0x18
+
+class SdKeyScp03_32Mac(SdKeyScp03_32):
+    key_id = 0x02
+    key_usage_qual = 0x14
+
+class SdKeyScp03_32Dek(SdKeyScp03_32):
+    key_id = 0x03
+    key_usage_qual = 0x48
 
 
 def obtain_singleton_pe_from_pelist(l: List[ProfileElement], wanted_type: str) -> ProfileElement:
@@ -208,7 +245,7 @@ def obtain_first_pe_from_pelist(l: List[ProfileElement], wanted_type: str) -> Pr
     filtered = list(filter(lambda x: x.type == wanted_type, l))
     return filtered[0]
 
-class Puk(ConfigurableParameter, metaclass=ClassVarMeta):
+class Puk(ConfigurableParameter):
     """Configurable PUK (Pin Unblock Code). String ASCII-encoded digits."""
     keyReference = None
     def validate(self):
@@ -235,7 +272,7 @@ class Puk1(Puk, keyReference=0x01):
 class Puk2(Puk, keyReference=0x81):
     pass
 
-class Pin(ConfigurableParameter, metaclass=ClassVarMeta):
+class Pin(ConfigurableParameter):
     """Configurable PIN (Personal Identification Number).  String of digits."""
     keyReference = None
     def validate(self):
@@ -259,7 +296,8 @@ class Pin(ConfigurableParameter, metaclass=ClassVarMeta):
                  pinCode['pinValue'] = h2b(padded_pin)
                  return
         raise ValueError('cannot find pinCode')
-class AppPin(ConfigurableParameter, metaclass=ClassVarMeta):
+
+class AppPin(ConfigurableParameter):
     """Configurable PIN (Personal Identification Number).  String of digits."""
     keyReference = None
     def validate(self):
@@ -299,7 +337,7 @@ class Adm2(Pin, keyReference=0x0B):
     pass
 
 
-class AlgoConfig(ConfigurableParameter, metaclass=ClassVarMeta):
+class AlgoConfig(ConfigurableParameter):
     """Configurable Algorithm parameter."""
     key = None
     def validate(self):
