@@ -581,15 +581,15 @@ class SmDppHttpServer:
 
 def main(argv):
     parser = argparse.ArgumentParser()
-    #parser.add_argument("-H", "--host", help="Host/IP to bind HTTP to", default="localhost")
-    #parser.add_argument("-p", "--port", help="TCP port to bind HTTP to", default=8000)
+    parser.add_argument("-H", "--host", help="Host/IP to bind HTTP to", default="localhost")
+    parser.add_argument("-p", "--port", help="TCP port to bind HTTP to", default=8000)
     #parser.add_argument("-v", "--verbose", help="increase output verbosity", action='count', default=0)
 
     args = parser.parse_args()
 
     hs = SmDppHttpServer(HOSTNAME, os.path.join(DATA_DIR, 'certs', 'CertificateIssuer'), use_brainpool=False)
     #hs.app.run(endpoint_description="ssl:port=8000:dhParameters=dh_param_2048.pem")
-    hs.app.run("localhost", 8000)
+    hs.app.run(args.host, args.port)
 
 if __name__ == "__main__":
     main(sys.argv)
