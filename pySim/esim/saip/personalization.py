@@ -20,7 +20,7 @@ import io
 from typing import List, Tuple
 
 from osmocom.tlv import camel_to_snake
-from pySim.utils import enc_iccid, enc_imsi, h2b, rpad, sanitize_iccid
+from pySim.utils import enc_iccid, enc_imsi, h2b, rpad, sanitize_iccid, all_subclasses_of
 from pySim.esim.saip import ProfileElement, ProfileElementSequence
 
 def remove_unwanted_tuples_from_list(l: List[Tuple], unwanted_keys: List[str]) -> List[Tuple]:
@@ -93,10 +93,14 @@ class ConfigurableParameter:
       changed_der = pes.to_der()
     """
 
+    # for get_all_implementations(), telling callers about all practically useful parameters
+    is_abstract = True
+
     # A subclass can set an explicit string as name (like name = "PIN1").
     # If name is left None, then __init__() will set self.name to a name derived from the python class name (like
     # "pin1"). See also the get_name() classmethod when you have no instance at hand.
     name = None
+
     allow_types = (str, int, )
     allow_chars = None
     strip_chars = None
@@ -208,6 +212,15 @@ class ConfigurableParameter:
             return (None, None)
         return (min(vals), max(vals))
 
+    @classmethod
+    def get_all_implementations(cls, blacklist=None, allow_abstract=False):
+        # return a set() so that multiple inheritance does not return dups
+        return set(c
+                   for c in all_subclasses_of(cls)
+                   if ((allow_abstract or not c.is_abstract)
+                       and ((not blacklist) or (c not in blacklist)))
+                  )
+
 
 class DecimalParam(ConfigurableParameter):
     """Decimal digits. The input value may be a string of decimal digits like '012345', or an int. The output of
@@ -272,6 +285,7 @@ class BinaryParam(ConfigurableParameter):
 class Iccid(DecimalParam):
     """ICCID Parameter. Input: string of decimal digits.
     If the string of digits is only 18 digits long, add a Luhn check digit."""
+    is_abstract = False
     name = 'ICCID'
     min_len = 18
     max_len = 20
@@ -292,6 +306,7 @@ class Iccid(DecimalParam):
 class Imsi(DecimalParam):
     """Configurable IMSI. Expects value to be a string of digits. Automatically sets the ACC to
     the last digit of the IMSI."""
+    is_abstract = False
 
     name = 'IMSI'
     min_len = 6
@@ -479,10 +494,12 @@ class Puk(DecimalHexParam):
                          f" cannot find pukCode with keyReference={cls.keyReference}")
 
 class Puk1(Puk):
+    is_abstract = False
     name = 'PUK1'
     keyReference = 0x01
 
 class Puk2(Puk):
+    is_abstract = False
     name = 'PUK2'
     keyReference = 0x81
 
@@ -514,11 +531,13 @@ class Pin(DecimalHexParam):
                              + f' {cls.get_name()} cannot find pinCode with keyReference={cls.keyReference}')
 
 class Pin1(Pin):
+    is_abstract = False
     name = 'PIN1'
     default_value = '0' * 4  # PIN are usually 4 digits
     keyReference = 0x01
 
 class Pin2(Pin1):
+    is_abstract = False
     name = 'PIN2'
     keyReference = 0x81
 
@@ -535,10 +554,12 @@ class Pin2(Pin1):
                             + f' {cls.get_name()} cannot find pinCode with keyReference={cls.keyReference} in {naa=}')
 
 class Adm1(Pin):
+    is_abstract = False
     name = 'ADM1'
     keyReference = 0x0A
 
 class Adm2(Adm1):
+    is_abstract = False
     name = 'ADM2'
     keyReference = 0x0B
 
@@ -560,6 +581,7 @@ class AlgoConfig(ConfigurableParameter):
 
 
 class AlgorithmID(DecimalParam, AlgoConfig):
+    is_abstract = False
     algo_config_key = 'algorithmID'
     allow_len = 1
     default_value = 1  # Milenage
@@ -576,6 +598,7 @@ class AlgorithmID(DecimalParam, AlgoConfig):
 
 class K(BinaryParam, AlgoConfig):
     """use validate_val() from BinaryParam, and apply_val() from AlgoConfig"""
+    is_abstract = False
     name = 'K'
     algo_config_key = 'key'
     allow_len = int(128/8) # length in bytes (from BinaryParam)
