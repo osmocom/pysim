@@ -266,6 +266,13 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
             return (None, None)
         return (min(vals), max(vals))
 
+    @classmethod
+    def get_typical_input_len(cls):
+        '''return a good length to use as the visible width of a user interface input field.
+           May be overridden by subclasses.
+           This default implementation returns the maximum allowed value length -- a good fit for most subclasses.
+           '''
+        return cls.get_len_range()[1] or 16
 
 class DecimalParam(ConfigurableParameter):
     """Decimal digits. The input value may be a string of decimal digits like '012345', or an int. The output of
@@ -367,6 +374,16 @@ class BinaryParam(ConfigurableParameter):
 
         val = super().validate_val(val)
         return bytes(val)
+
+    @classmethod
+    def get_typical_input_len(cls):
+        # override to return twice the length, because of hex digits.
+        min_len, max_len = cls.get_len_range()
+        if max_len is None:
+            return None
+        # two hex characters per value octet.
+        # (maybe *3 to also allow for spaces?)
+        return max_len * 2
 
 
 class EnumParam(ConfigurableParameter):
