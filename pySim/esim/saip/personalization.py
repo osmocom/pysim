@@ -53,9 +53,17 @@ def file_tuples_content_as_bytes(l: List[Tuple]) -> Optional[bytes]:
             return ValueError("Unknown key '%s' in tuple list" % k)
     return stream.getvalue()
 
+def all_subclasses_of(cls):
+    for subc in cls.__subclasses__():
+        yield subc
+        yield from all_subclasses_of(subc)
+
+
 class ConfigurableParameter:
     """Base class representing a part of the eSIM profile that is configurable during the
     personalization process (with dynamic data from elsewhere)."""
+    is_abstract = True # for get_all_implementations(), telling callers about all practically useful parameters
+
     name = None
     allow_types = (str, int, )
     allow_chars = None
@@ -179,6 +187,14 @@ class ConfigurableParameter:
             return (None, None)
         return (min(vals), max(vals))
 
+    @classmethod
+    def get_all_implementations(cls, blacklist=None, allow_abstract=False):
+        return list(c
+                    for c in all_subclasses_of(cls)
+                    if ((allow_abstract or not c.is_abstract)
+                        and ((not blacklist) or (c not in blacklist)))
+                   )
+
 
 class DecimalParam(ConfigurableParameter):
     allow_types = (str, int)
@@ -195,6 +211,8 @@ class DecimalParam(ConfigurableParameter):
 class Iccid(DecimalParam):
     """ICCID Parameter. Input: string of decimal digits.
        If the string of digits is only 18 digits long, add a Luhn check digit."""
+    is_abstract = False
+
     name = 'ICCID'
     min_len = 18
     max_len = 20
@@ -226,6 +244,7 @@ class Iccid(DecimalParam):
 class Imsi(DecimalParam):
     """Configurable IMSI. Expects value to be a string of digits. Automatically sets the ACC to
     the last digit of the IMSI."""
+    is_abstract = False
 
     name = 'IMSI'
     min_len = 6
@@ -482,10 +501,12 @@ class Puk(DecimalHexParam):
                     yield cls.decimal_hex_to_str(pukCode['pukValue'])
 
 class Puk1(Puk):
+    is_abstract = False
     name = 'PUK1'
     keyReference = 0x01
 
 class Puk2(Puk):
+    is_abstract = False
     name = 'PUK2'
     keyReference = 0x81
 
@@ -531,10 +552,12 @@ class Pin(DecimalHexParam):
         yield from cls._read_all_pinvalues_from_pe(pes.pes_by_naa['mf'][0])
 
 class Pin1(Pin):
+    is_abstract = False
     name = 'PIN1'
     keyReference = 0x01
 
 class Pin2(Pin):
+    is_abstract = False
     name = 'PIN2'
     keyReference = 0x81
 
@@ -559,15 +582,18 @@ class Pin2(Pin):
                 yield from cls._read_all_pinvalues_from_pe(pe)
 
 class Adm1(Pin):
+    is_abstract = False
     name = 'ADM1'
     keyReference = 0x0A
     default_value = '0' * Pin.max_len
 
 class Adm2(Adm1):
+    is_abstract = False
     name = 'ADM2'
     keyReference = 0x0B
 
 class AlgorithmID(DecimalParam):
+    is_abstract = False
     key = 'algorithmID'
     allow_len = 1
     default_value = 3
@@ -604,6 +630,7 @@ class AlgorithmID(DecimalParam):
 
 
 class K(BinaryParam):
+    is_abstract = False
     name = 'K'
     key = 'key'
     allow_len = int(128/8) # length in bytes (from BinaryParam)
