@@ -304,44 +304,37 @@ class Imsi(DecimalParam):
         # TODO: DF.GSM_ACCESS if not linked?
 
 
-class SdKey(ConfigurableParameter):
+class SdKey(BinaryParam):
     """Configurable Security Domain (SD) Key.  Value is presented as bytes."""
-    # these will be set by derived classes
+    # these will be set by subclasses
     key_type = None
     key_id = None
     kvn = None
     key_usage_qual = None
-    permitted_len = []
 
-    def validate(self):
-        if not isinstance(self.input_value, (io.BytesIO, bytes, bytearray)):
-            raise ValueError('Value must be of bytes-like type')
-        if self.permitted_len:
-            if len(self.input_value) not in self.permitted_len:
-                raise ValueError('Value length must be %s' % self.permitted_len)
-        self.value = self.input_value
-
-    def _apply_sd(self, pe: ProfileElement):
+    @classmethod
+    def _apply_sd(cls, pe: ProfileElement, value):
         assert pe.type == 'securityDomain'
         for key in pe.decoded['keyList']:
-            if key['keyIdentifier'][0] == self.key_id and key['keyVersionNumber'][0] == self.kvn:
+            if key['keyIdentifier'][0] == cls.key_id and key['keyVersionNumber'][0] == cls.kvn:
                 assert len(key['keyComponents']) == 1
-                key['keyComponents'][0]['keyData'] = self.value
+                key['keyComponents'][0]['keyData'] = value
                 return
         # Could not find matching key to patch, create a new one
         key = {
-            'keyUsageQualifier': bytes([self.key_usage_qual]),
-            'keyIdentifier': bytes([self.key_id]),
-            'keyVersionNumber': bytes([self.kvn]),
+            'keyUsageQualifier': bytes([cls.key_usage_qual]),
+            'keyIdentifier': bytes([cls.key_id]),
+            'keyVersionNumber': bytes([cls.kvn]),
             'keyComponents': [
-                { 'keyType': bytes([self.key_type]), 'keyData': self.value },
+                { 'keyType': bytes([cls.key_type]), 'keyData': value },
             ]
         }
         pe.decoded['keyList'].append(key)
 
-    def apply(self, pes: ProfileElementSequence):
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, value):
         for pe in pes.get_pes_for_type('securityDomain'):
-            self._apply_sd(pe)
+            cls._apply_sd(pe, value)
 
 class SdKeyScp80_01(SdKey):
     kvn = 0x01
