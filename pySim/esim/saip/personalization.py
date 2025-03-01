@@ -234,6 +234,27 @@ class DecimalParam(ConfigurableParameter):
         return super().validate_val(val)
 
 
+class DecimalHexParam(DecimalParam):
+    """The input value is decimal digits. The decimal value is stored such that each hexadecimal digit represents one
+    decimal digit, useful for various PIN type parameters.
+
+    Optionally, the value is stored with padding, for example: rpad = 8 would store '123' as '123fffff'. This is also
+    common in PIN type parameters.
+    """
+    rpad = None
+    rpad_char = 'f'
+
+    @classmethod
+    def validate_val(cls, val):
+        val = super().validate_val(val)
+        val = ''.join('%02x' % ord(x) for x in val)
+        if cls.rpad is not None:
+            c = cls.rpad_char
+            val = rpad(val, cls.rpad, c)
+        # a DecimalHexParam subclass expects the apply_val() input to be a bytes instance ready for the pes
+        return h2b(val)
+
+
 class Iccid(DecimalParam):
     """ICCID Parameter. Input: string of decimal digits.
     If the string of digits is only 18 digits long, add a Luhn check digit."""
@@ -415,34 +436,32 @@ def obtain_first_pe_from_pelist(l: List[ProfileElement], wanted_type: str) -> Pr
     filtered = list(filter(lambda x: x.type == wanted_type, l))
     return filtered[0]
 
-class Puk(ConfigurableParameter, metaclass=ClassVarMeta):
+class Puk(DecimalHexParam):
     """Configurable PUK (Pin Unblock Code). String ASCII-encoded digits."""
+    allow_len = 8
+    rpad = 16
     keyReference = None
-    def validate(self):
-        if isinstance(self.input_value, int):
-            self.value = '%08d' % self.input_value
-        else:
-            self.value = self.input_value
-        # FIXME: valid length?
-        if not self.value.isdecimal():
-            raise ValueError('PUK must only contain decimal digits')
 
-    def apply(self, pes: ProfileElementSequence):
-        puk = ''.join(['%02x' % (ord(x)) for x in self.value])
-        padded_puk = rpad(puk, 16)
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        val_bytes = val
         mf_pes = pes.pes_by_naa['mf'][0]
         pukCodes = obtain_singleton_pe_from_pelist(mf_pes, 'pukCodes')
         for pukCode in pukCodes.decoded['pukCodes']:
-            if pukCode['keyReference'] == self.keyReference:
-                pukCode['pukValue'] = h2b(padded_puk)
+            if pukCode['keyReference'] == cls.keyReference:
+                pukCode['pukValue'] = val_bytes
                 return
-        raise ValueError('cannot find pukCode')
-class Puk1(Puk, keyReference=0x01):
-    pass
-class Puk2(Puk, keyReference=0x81):
-    pass
+        raise ValueError("input template UPP has unexpected structure:"
+                         f" cannot find pukCode with keyReference={cls.keyReference}")
 
-class Pin(ConfigurableParameter, metaclass=ClassVarMeta):
+class Puk1(Puk):
+    keyReference = 0x01
+
+class Puk2(Puk):
+    keyReference = 0x81
+
+
+class Pin(ConfigurableParameter,metaclass=ClassVarMeta):
     """Configurable PIN (Personal Identification Number).  String of digits."""
     keyReference = None
     def validate(self):
