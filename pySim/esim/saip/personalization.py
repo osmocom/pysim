@@ -245,6 +245,29 @@ class DecimalHexParam(DecimalParam):
         return h2b(val)
 
 
+class BinaryParam(ConfigurableParameter):
+    allow_types = (str, io.BytesIO, bytes, bytearray)
+    allow_chars = '0123456789abcdefABCDEF'
+    strip_chars = ' \t\r\n'
+
+    @classmethod
+    def validate_val(cls, val):
+        # take care that min_len and max_len are applied to the binary length by converting to bytes first
+        if isinstance(val, str):
+            if cls.strip_chars is not None:
+                val = ''.join(c for c in val if c not in cls.strip_chars)
+            if len(val) & 1:
+                raise ValueError('Invalid hexadecimal string, must have even number of digits:'
+                                 f' {val!r} {len(val)=}')
+            try:
+                val = h2b(val)
+            except ValueError as e:
+                raise ValueError(f'Invalid hexadecimal string: {val!r} {len(val)=}') from e
+
+        val = super().validate_val(val)
+        return bytes(val)
+
+
 class Iccid(DecimalParam):
     """ICCID Parameter. Input: string of decimal digits.
     If the string of digits is only 18 digits long, add a Luhn check digit."""
@@ -511,29 +534,41 @@ class Adm1(Pin):
 class Adm2(Pin):
     keyReference = 0x0B
 
-
 class AlgoConfig(ConfigurableParameter):
-    """Configurable Algorithm parameter."""
-    key = None
-    def validate(self):
-        if not isinstance(self.input_value, (io.BytesIO, bytes, bytearray)):
-            raise ValueError('Value must be of bytes-like type')
-        self.value = self.input_value
-    def apply(self, pes: ProfileElementSequence):
+    algo_config_key = None
+
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        found = 0
         for pe in pes.get_pes_for_type('akaParameter'):
             algoConfiguration = pe.decoded['algoConfiguration']
             if algoConfiguration[0] != 'algoParameter':
                 continue
-            algoConfiguration[1][self.key] = self.value
+            algoConfiguration[1][cls.algo_config_key] = val
+            found += 1
+        if not found:
+            raise ValueError('input template UPP has unexpected structure:'
+                             f' {cls.__name__} cannot find algoParameter with key={cls.algo_config_key}')
 
-class K(AlgoConfig):
-    key = 'key'
-class Opc(AlgoConfig):
-    key = 'opc'
 
-class AlgorithmID(AlgoConfig):
-    key = 'algorithmID'
-    def validate(self):
-        if self.input_value not in [1, 2, 3]:
-            raise ValueError('Invalid algorithmID %s' % (self.input_value))
-        self.value = self.input_value
+class AlgorithmID(DecimalParam, AlgoConfig):
+    algo_config_key = 'algorithmID'
+    allow_len = 1
+
+    @classmethod
+    def validate_val(cls, val):
+        val = super().validate_val(val)
+        val = int(val)
+        valid = (1, 2, 3)
+        if val not in valid:
+            raise ValueError(f'Invalid algorithmID {val!r}, must be one of {valid}')
+        return val
+
+
+class K(BinaryParam, AlgoConfig):
+    """use validate_val() from BinaryParam, and apply_val() from AlgoConfig"""
+    algo_config_key = 'key'
+    allow_len = int(128/8) # length in bytes (from BinaryParam)
+
+class Opc(K):
+    algo_config_key = 'opc'
