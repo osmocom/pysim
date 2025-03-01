@@ -24,6 +24,7 @@ from osmocom.tlv import camel_to_snake
 from osmocom.utils import hexstr
 from pySim.utils import enc_iccid, dec_iccid, enc_imsi, dec_imsi, h2b, b2h, rpad, sanitize_iccid
 from pySim.esim.saip import ProfileElement, ProfileElementSequence
+from pySim.esim.saip import param_source
 from pySim.ts_51_011 import EF_SMSP
 
 def unrpad(s: hexstr, c='f') -> hexstr:
@@ -137,6 +138,7 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
     max_len = None
     allow_len = None # a list of specific lengths
     example_input = None
+    default_source = None # a param_source.ParamSource subclass
 
     def __init__(self, input_value=None):
         self.input_value = input_value # the raw input value as given by caller
@@ -345,6 +347,7 @@ class BinaryParam(ConfigurableParameter):
     allow_types = (str, io.BytesIO, bytes, bytearray)
     allow_chars = '0123456789abcdefABCDEF'
     strip_chars = ' \t\r\n'
+    default_source = param_source.RandomHexDigitSource
 
     @classmethod
     def validate_val(cls, val):
@@ -371,6 +374,7 @@ class Iccid(DecimalParam):
     min_len = 18
     max_len = 20
     example_input = '998877665544332211'
+    default_source = param_source.IncDigitSource
 
     @classmethod
     def validate_val(cls, val):
@@ -403,6 +407,7 @@ class Imsi(DecimalParam):
     min_len = 6
     max_len = 15
     example_input = '00101' + ('0' * 10)
+    default_source = param_source.IncDigitSource
 
     @classmethod
     def apply_val(cls, pes: ProfileElementSequence, val):
@@ -438,6 +443,7 @@ class SmspTpScAddr(ConfigurableParameter):
     max_len = 21 # '+' and 20 digits
     min_len = 1
     example_input = '+49301234567'
+    default_source = param_source.ConstantSource
 
     @classmethod
     def validate_val(cls, val):
@@ -622,6 +628,7 @@ class Puk(DecimalHexParam):
     rpad = 16
     keyReference = None
     example_input = '0' * allow_len
+    default_source = param_source.RandomDigitSource
 
     @classmethod
     def apply_val(cls, pes: ProfileElementSequence, val):
@@ -657,6 +664,7 @@ class Pin(DecimalHexParam):
     min_len = 4
     max_len = 8
     example_input = '0' * max_len
+    default_source = param_source.RandomDigitSource
     keyReference = None
 
     @staticmethod
@@ -769,6 +777,7 @@ class AlgorithmID(DecimalParam, AlgoConfig):
     algo_config_key = 'algorithmID'
     allow_len = 1
     example_input = 1  # Milenage
+    default_source = param_source.ConstantSource
 
     @classmethod
     def validate_val(cls, val):
@@ -798,6 +807,7 @@ class MilenageRotationConstants(BinaryParam, AlgoConfig):
     algo_config_key = 'rotationConstants'
     allow_len = 5 # length in bytes (from BinaryParam)
     example_input = '40 00 20 40 60'
+    default_source = param_source.ConstantSource
 
     @classmethod
     def validate_val(cls, val):
@@ -826,6 +836,7 @@ class MilenageXoringConstants(BinaryParam, AlgoConfig):
                      ' 00000000000000000000000000000002'
                      ' 00000000000000000000000000000004'
                      ' 00000000000000000000000000000008')
+    default_source = param_source.ConstantSource
 
 class TuakNumberOfKeccak(IntegerParam, AlgoConfig):
     """Number of iterations of Keccak-f[1600] permutation as recomended by Section 7.2 of 3GPP TS 35.231"""
@@ -834,3 +845,4 @@ class TuakNumberOfKeccak(IntegerParam, AlgoConfig):
     min_val = 1
     max_val = 255
     example_input = '1'
+    default_source = param_source.ConstantSource
