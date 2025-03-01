@@ -139,6 +139,7 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
     max_len = None
     allow_len = None # a list of specific lengths
     example_input = None
+    default_source = None # a param_source.ParamSource subclass
 
     def __init__(self, input_value=None):
         self.input_value = input_value # the raw input value as given by caller
@@ -349,6 +350,7 @@ class BinaryParam(ConfigurableParameter):
     allow_types = (str, io.BytesIO, bytes, bytearray)
     allow_chars = '0123456789abcdefABCDEF'
     strip_chars = ' \t\r\n'
+    default_source = param_source.RandomHexDigitSource
 
     @classmethod
     def validate_val(cls, val):
@@ -375,6 +377,7 @@ class Iccid(DecimalParam):
     min_len = 18
     max_len = 20
     example_input = '998877665544332211'
+    default_source = param_source.IncDigitSource
 
     @classmethod
     def validate_val(cls, val):
@@ -407,6 +410,7 @@ class Imsi(DecimalParam):
     min_len = 6
     max_len = 15
     example_input = '00101' + ('0' * 10)
+    default_source = param_source.IncDigitSource
 
     @classmethod
     def apply_val(cls, pes: ProfileElementSequence, val):
@@ -620,6 +624,7 @@ class Puk(DecimalHexParam):
     rpad = 16
     keyReference = None
     example_input = '0' * allow_len
+    default_source = param_source.RandomDigitSource
 
     @classmethod
     def apply_val(cls, pes: ProfileElementSequence, val):
@@ -655,6 +660,7 @@ class Pin(DecimalHexParam):
     min_len = 4
     max_len = 8
     example_input = '0' * max_len
+    default_source = param_source.RandomDigitSource
     keyReference = None
 
     @staticmethod
@@ -767,6 +773,7 @@ class AlgorithmID(DecimalParam, AlgoConfig):
     algo_config_key = 'algorithmID'
     allow_len = 1
     example_input = 1  # Milenage
+    default_source = param_source.ConstantSource
 
     @classmethod
     def validate_val(cls, val):
@@ -796,6 +803,7 @@ class MilenageRotationConstants(BinaryParam, AlgoConfig):
     algo_config_key = 'rotationConstants'
     allow_len = 5 # length in bytes (from BinaryParam)
     example_input = '0a 0b 0c 0d 0e'
+    default_source = param_source.ConstantSource
 
     @classmethod
     def validate_val(cls, val):
@@ -832,6 +840,7 @@ class TuakNumberOfKeccak(IntegerParam, AlgoConfig):
     min_val = 1
     max_val = 255
     example_input = '1'
+    default_source = param_source.ConstantSource
 
 
 class BatchPersonalization:
