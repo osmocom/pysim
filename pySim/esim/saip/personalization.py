@@ -115,6 +115,7 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
     min_len = None
     max_len = None
     allow_len = None # a list of specific lengths
+    example_input = None
 
     def __init__(self, input_value=None):
         self.input_value = input_value # the raw input value as given by caller
@@ -306,6 +307,7 @@ class Iccid(DecimalParam):
     name = 'ICCID'
     min_len = 18
     max_len = 20
+    example_input = '998877665544332211'
 
     @classmethod
     def validate_val(cls, val):
@@ -326,6 +328,7 @@ class Imsi(DecimalParam):
     name = 'IMSI'
     min_len = 6
     max_len = 15
+    example_input = '00101' + ('0' * 10)
 
     @classmethod
     def apply_val(cls, pes: ProfileElementSequence, val):
@@ -348,6 +351,7 @@ class SmspTpScAddr(ConfigurableParameter):
     strip_chars = ' \t\r\n'
     max_len = 21 # '+' and 20 digits
     min_len = 1
+    example_input = '+49301234567'
 
     @classmethod
     def validate_val(cls, val):
@@ -497,6 +501,7 @@ class Puk(DecimalHexParam):
     allow_len = 8
     rpad = 16
     keyReference = None
+    example_input = '0' * allow_len
 
     @classmethod
     def apply_val(cls, pes: ProfileElementSequence, val):
@@ -523,6 +528,7 @@ class Pin(DecimalHexParam):
     rpad = 16
     min_len = 4
     max_len = 8
+    example_input = '0' * max_len
     keyReference = None
 
     @staticmethod
@@ -546,9 +552,10 @@ class Pin(DecimalHexParam):
 
 class Pin1(Pin):
     name = 'PIN1'
+    example_input = '0' * 4  # PIN are usually 4 digits
     keyReference = 0x01
 
-class Pin2(Pin):
+class Pin2(Pin1):
     name = 'PIN2'
     keyReference = 0x81
 
@@ -568,7 +575,7 @@ class Adm1(Pin):
     name = 'ADM1'
     keyReference = 0x0A
 
-class Adm2(Pin):
+class Adm2(Adm1):
     name = 'ADM2'
     keyReference = 0x0B
 
@@ -591,6 +598,7 @@ class AlgoConfig(ConfigurableParameter):
 class AlgorithmID(DecimalParam, AlgoConfig):
     algo_config_key = 'algorithmID'
     allow_len = 1
+    example_input = 1  # Milenage
 
     @classmethod
     def validate_val(cls, val):
@@ -606,6 +614,7 @@ class K(BinaryParam, AlgoConfig):
     name = 'K'
     algo_config_key = 'key'
     allow_len = (128 // 8, 256 // 8) # length in bytes (from BinaryParam); TUAK also allows 256 bit
+    example_input = '00' * allow_len[0]
 
 class Opc(K):
     name = 'OPc'
@@ -618,6 +627,7 @@ class MilenageRotationConstants(BinaryParam, AlgoConfig):
     name = 'MilenageRotation'
     algo_config_key = 'rotationConstants'
     allow_len = 5 # length in bytes (from BinaryParam)
+    example_input = '40 00 20 40 60'
 
     @classmethod
     def validate_val(cls, val):
@@ -641,6 +651,11 @@ class MilenageXoringConstants(BinaryParam, AlgoConfig):
     name = 'MilenageXOR'
     algo_config_key = 'xoringConstants'
     allow_len = 80 # length in bytes (from BinaryParam)
+    example_input = ('00000000000000000000000000000000'
+                     ' 00000000000000000000000000000001'
+                     ' 00000000000000000000000000000002'
+                     ' 00000000000000000000000000000004'
+                     ' 00000000000000000000000000000008')
 
 class TuakNumberOfKeccak(IntegerParam, AlgoConfig):
     """Number of iterations of Keccak-f[1600] permutation as recomended by Section 7.2 of 3GPP TS 35.231"""
@@ -648,3 +663,4 @@ class TuakNumberOfKeccak(IntegerParam, AlgoConfig):
     algo_config_key = 'numberOfKeccak'
     min_val = 1
     max_val = 255
+    example_input = '1'
