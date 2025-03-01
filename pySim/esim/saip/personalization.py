@@ -254,6 +254,51 @@ class DecimalHexParam(DecimalParam):
         # a DecimalHexParam subclass expects the apply_val() input to be a bytes instance ready for the pes
         return h2b(val)
 
+class IntegerParam(ConfigurableParameter):
+    allow_types = (str, int)
+    allow_chars = '0123456789'
+
+    # two integers, if the resulting int should be range limited
+    min_val = None
+    max_val = None
+
+    @classmethod
+    def validate_val(cls, val):
+        val = super().validate_val(val)
+        val = int(val)
+        exceeds_limits = False
+        if cls.min_val is not None:
+            if val < cls.min_val:
+                exceeds_limits = True
+        if cls.max_val is not None:
+            if val > cls.max_val:
+                exceeds_limits = True
+        if exceeds_limits:
+            raise ValueError(f'Value {val} is out of range, must be [{cls.min_val}..{cls.max_val}]')
+        return val
+
+class BinaryParam(ConfigurableParameter):
+    allow_types = (str, io.BytesIO, bytes, bytearray)
+    allow_chars = '0123456789abcdefABCDEF'
+    strip_chars = ' \t\r\n'
+
+    @classmethod
+    def validate_val(cls, val):
+        # take care that min_len and max_len are applied to the binary length by converting to bytes first
+        if isinstance(val, str):
+            if cls.strip_chars is not None:
+                val = ''.join(c for c in val if c not in cls.strip_chars)
+            if len(val) & 1:
+                raise ValueError('Invalid hexadecimal string, must have even number of digits:'
+                                 f' {val!r} {len(val)=}')
+            try:
+                val = h2b(val)
+            except ValueError as e:
+                raise ValueError(f'Invalid hexadecimal string: {val!r} {len(val)=}') from e
+
+        val = super().validate_val(val)
+        return bytes(val)
+
 
 class Iccid(DecimalParam):
     """ICCID Parameter. Input: string of decimal digits.
@@ -513,42 +558,60 @@ class Adm1(Pin):
 class Adm2(Pin):
     keyReference = 0x0B
 
+class AlgoConfig(ConfigurableParameter):
+    algo_config_key = None
 
-class AlgoConfig(ConfigurableParameter, metaclass=ClassVarMeta):
-    """Configurable Algorithm parameter."""
-    key = None
-    def validate(self):
-        if not isinstance(self.input_value, (io.BytesIO, bytes, bytearray)):
-            raise ValueError('Value must be of bytes-like type')
-        self.value = self.input_value
-    def apply(self, pes: ProfileElementSequence):
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        found = 0
         for pe in pes.get_pes_for_type('akaParameter'):
             algoConfiguration = pe.decoded['algoConfiguration']
             if algoConfiguration[0] != 'algoParameter':
                 continue
-            algoConfiguration[1][self.key] = self.value
+            algoConfiguration[1][cls.algo_config_key] = val
+            found += 1
+        if not found:
+            raise ValueError('input template UPP has unexpected structure:'
+                             f' {cls.__name__} cannot find algoParameter with key={cls.algo_config_key}')
 
-class K(AlgoConfig, key='key'):
-    pass
-class Opc(AlgoConfig, key='opc'):
-    pass
-class AlgorithmID(AlgoConfig, key='algorithmID'):
-    def validate(self):
-        if self.input_value not in [1, 2, 3]:
-            raise ValueError('Invalid algorithmID %s' % (self.input_value))
-        self.value = self.input_value
-class MilenageRotationConstants(AlgoConfig, key='rotationConstants'):
+class AlgorithmID(DecimalParam, AlgoConfig):
+    algo_config_key = 'algorithmID'
+    allow_len = 1
+
+    @classmethod
+    def validate_val(cls, val):
+        val = super().validate_val(val)
+        val = int(val)
+        valid = (1, 2, 3)
+        if val not in valid:
+            raise ValueError(f'Invalid algorithmID {val!r}, must be one of {valid}')
+        return val
+
+class K(BinaryParam, AlgoConfig):
+    """use validate_val() from BinaryParam, and apply_val() from AlgoConfig"""
+    algo_config_key = 'key'
+    allow_len = (128 // 8, 256 // 8) # length in bytes (from BinaryParam); TUAK also allows 256 bit
+
+class Opc(K):
+    algo_config_key = 'opc'
+
+class MilenageRotationConstants(BinaryParam, AlgoConfig):
     """rotation constants r1,r2,r3,r4,r5 of Milenage, Range 0..127. See 3GPP TS 35.206 Sections 2.3 + 5.3.
     Provided as octet-string concatenation of all 5 constants.  Expects a bytes-like object of length 5, with
     each byte in the range of 0..127.  The default value by 3GPP is '4000204060' (hex notation)"""
-    def validate(self):
-        super().validate()
-        if len(self.input_value) != 5:
-            raise ValueError('Length of value must be 5 octets')
-        for r in self.input_value:
-            if r > 127:
-                raise ValueError('r values must be between 0 and 127')
-class MilenageXoringConstants(AlgoConfig, key='xoringConstants'):
+    algo_config_key = 'rotationConstants'
+    allow_len = 5 # length in bytes (from BinaryParam)
+
+    @classmethod
+    def validate_val(cls, val):
+        "allow_len checks the length, this in addition checks the value range"
+        val = super().validate_val(val)
+        assert isinstance(val, bytes)
+        if any(r > 127 for r in val):
+            raise ValueError('r values must be in the range 0..127')
+        return val
+
+class MilenageXoringConstants(BinaryParam, AlgoConfig):
     """XOR-ing constants c1,c2,c3,c4,c5 of Milenage, 128bit each. See 3GPP TS 35.206 Sections 2.3 + 5.3.
     Provided as octet-string concatenation of all 5 constants. The default value by 3GPP is the concetenation
     of:
@@ -558,16 +621,11 @@ class MilenageXoringConstants(AlgoConfig, key='xoringConstants'):
      00000000000000000000000000000004
      00000000000000000000000000000008
     """
-    def validate(self):
-        super().validate()
-        if len(self.input_value) != 80:
-            raise ValueError('Length of value must be 80 octets')
-class TuakNumberOfKeccak(AlgoConfig, key='numberOfKeccak'):
-    """Number of iterations of Keccak-f[1600] permutation as recomended by Section 7.2 of 3GPP TS 35.231.
-    The default value by 3GPP is 1."""
-    def validate(self):
-        if not isinstance(self.input_value, int):
-            raise ValueError('Value must be an integer')
-        if self.input_value < 1 or self.input_value > 255:
-            raise ValueError('Value must be an integer between 1 and 255')
-        self.value = self.input_value
+    algo_config_key = 'xoringConstants'
+    allow_len = 80 # length in bytes (from BinaryParam)
+
+class TuakNumberOfKeccak(IntegerParam, AlgoConfig):
+    """Number of iterations of Keccak-f[1600] permutation as recomended by Section 7.2 of 3GPP TS 35.231"""
+    algo_config_key = 'numberOfKeccak'
+    min_val = 1
+    max_val = 255
