@@ -17,7 +17,7 @@
 
 import abc
 import io
-from typing import List, Tuple
+from typing import List, Tuple, Generator
 
 from osmocom.tlv import camel_to_snake
 from pySim.utils import enc_iccid, enc_imsi, h2b, rpad, sanitize_iccid
