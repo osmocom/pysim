@@ -17,11 +17,13 @@
 
 import abc
 import io
-from typing import List, Tuple
+import copy
+from typing import List, Tuple, Generator
 
 from osmocom.tlv import camel_to_snake
 from pySim.utils import enc_iccid, enc_imsi, h2b, rpad, sanitize_iccid, all_subclasses_of
 from pySim.esim.saip import ProfileElement, ProfileElementSequence
+from pySim.esim.saip import param_source
 
 def remove_unwanted_tuples_from_list(l: List[Tuple], unwanted_keys: List[str]) -> List[Tuple]:
     """In a list of tuples, remove all tuples whose first part equals 'unwanted_key'."""
@@ -607,3 +609,101 @@ class K(BinaryParam, AlgoConfig):
 class Opc(K):
     name = 'OPc'
     algo_config_key = 'opc'
+
+
+class BatchPersonalization:
+    """Produce a series of eSIM profiles from predefined parameters.
+    Personalization parameters are derived from pysim.esim.saip.param_source.ParamSource.
+
+    Usage example:
+
+    der_input = some_file.open('rb').read()
+    pes = ProfileElementSequence.from_der(der_input)
+    p = pers.BatchPersonalization(
+        n=10,
+        src_pes=pes,
+        csv_rows=get_csv_reader())
+
+    p.add_param_and_src(
+        personalization.Iccid(),
+        param_source.IncDigitSource(
+            num_digits=18,
+            first_value=123456789012340001,
+            last_value=123456789012340010))
+
+    # add more parameters here, using ConfigurableParameter and ParamSource subclass instances to define the profile
+    # ...
+
+    # generate all 10 profiles (from n=10 above)
+    for result_pes in p.generate_profiles():
+        upp = result_pes.to_der()
+        store_upp(upp)
+    """
+
+    class ParamAndSrc:
+        'tie a ConfigurableParameter to a source of actual values'
+        def __init__(self, param:ConfigurableParameter, src:param_source.ParamSource):
+            self.param = param
+            self.src = src
+
+    def __init__(self,
+                 n:int,
+                 src_pes:ProfileElementSequence,
+                 params:list[ParamAndSrc]=None,
+                 csv_rows:Generator=None,
+                ):
+        """
+        n: number of eSIM profiles to generate.
+        src_pes: a decoded eSIM profile as ProfileElementSequence, to serve as template. This is not modified, only
+                 copied.
+        params: list of ParamAndSrc instances, defining a ConfigurableParameter and corresponding ParamSource to fill in
+                profile values.
+        csv_rows: A list or generator producing all CSV rows one at a time, starting with a row containing the column
+                  headers. This is compatible with the python csv.reader. Each row gets passed to
+                  ParamSource.get_next(), such that ParamSource implementations can access the row items.
+                  See param_source.CsvSource.
+        """
+        self.n = n
+        self.params = params or []
+        self.src_pes = src_pes
+        self.csv_rows = csv_rows
+
+    def add_param_and_src(self, param:ConfigurableParameter, src:param_source.ParamSource):
+        self.params.append(BatchPersonalization.ParamAndSrc(param=param, src=src))
+
+    def generate_profiles(self):
+        # get first row of CSV: column names
+        csv_columns = None
+        if self.csv_rows:
+            try:
+                csv_columns = next(self.csv_rows)
+            except StopIteration as e:
+                raise ValueError('the input CSV file appears to be empty') from e
+
+        for i in range(self.n):
+            csv_row = None
+            if self.csv_rows and csv_columns:
+                try:
+                    csv_row_list = next(self.csv_rows)
+                except StopIteration as e:
+                    raise ValueError(f'not enough rows in the input CSV for eSIM nr {i+1} of {self.n}') from e
+
+                csv_row = dict(zip(csv_columns, csv_row_list))
+
+            pes = copy.deepcopy(self.src_pes)
+
+            for p in self.params:
+                try:
+                    input_value = p.src.get_next(csv_row=csv_row)
+                    assert input_value is not None
+                    value = p.param.__class__.validate_val(input_value)
+                    p.param.__class__.apply_val(pes, value)
+                except (
+                        TypeError,
+                        ValueError,
+                        KeyError,
+                       ) as e:
+                    raise ValueError(f'{p.param.name} fed by {p.src.name}: {e}'
+                                     f' (input_value={p.param.input_value!r} value={p.param.value!r})') from e
+
+            yield pes
