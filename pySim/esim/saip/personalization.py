@@ -24,9 +24,11 @@ from typing import List, Tuple, Generator, Optional
 from osmocom.tlv import camel_to_snake
 from osmocom.utils import hexstr
 from pySim.utils import enc_iccid, dec_iccid, enc_imsi, dec_imsi, h2b, b2h, rpad, sanitize_iccid
-from pySim.esim.saip import ProfileElement, ProfileElementSequence
-from pySim.esim.saip import param_source
 from pySim.ts_51_011 import EF_SMSP
+from pySim.esim.saip import param_source
+from pySim.esim.saip import ProfileElement, ProfileElementSD, ProfileElementSequence
+from pySim.esim.saip import SecurityDomainKey, SecurityDomainKeyComponent
+from pySim.global_platform import KeyUsageQualifier, KeyType
 
 def unrpad(s: hexstr, c='f') -> hexstr:
     return hexstr(s.rstrip(c))
@@ -607,36 +609,40 @@ class SdKey(BinaryParam, metaclass=ClassVarMeta):
     key_usage_qual = None
 
     @classmethod
-    def _apply_sd(cls, pe: ProfileElement, value):
-        assert pe.type == 'securityDomain'
-        for key in pe.decoded['keyList']:
-            if key['keyIdentifier'][0] == cls.key_id and key['keyVersionNumber'][0] == cls.kvn:
-                assert len(key['keyComponents']) == 1
-                key['keyComponents'][0]['keyData'] = value
-                return
-        # Could not find matching key to patch, create a new one
-        key = {
-            'keyUsageQualifier': bytes([cls.key_usage_qual]),
-            'keyIdentifier': bytes([cls.key_id]),
-            'keyVersionNumber': bytes([cls.kvn]),
-            'keyComponents': [
-                { 'keyType': bytes([cls.key_type]), 'keyData': value },
-            ]
-        }
-        pe.decoded['keyList'].append(key)
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        set_components = [ SecurityDomainKeyComponent(cls.key_type, val) ]
 
-    @classmethod
-    def apply_val(cls, pes: ProfileElementSequence, value):
-        for pe in pes.get_pes_for_type('securityDomain'):
-            cls._apply_sd(pe, value)
+        for pe in pes.pe_list:
+            if pe.type != 'securityDomain':
+                continue
+            assert isinstance(pe, ProfileElementSD)
+
+            key = pe.find_key(key_version_number=cls.kvn, key_id=cls.key_id)
+            if not key:
+                # Could not find matching key to patch, create a new one
+                key = SecurityDomainKey(
+                        key_version_number=cls.kvn,
+                        key_id=cls.key_id,
+                        key_usage_qualifier=KeyUsageQualifier.build(cls.key_usage_qual),
+                        key_components=set_components,
+                        )
+                pe.add_key(key)
+            else:
+                key.key_components = set_components
 
     @classmethod
     def get_values_from_pes(cls, pes: ProfileElementSequence):
-        for pe in pes.get_pes_for_type('securityDomain'):
-            for key in pe.decoded['keyList']:
-                if key['keyIdentifier'][0] == cls.key_id and key['keyVersionNumber'][0] == cls.kvn:
-                    if len(key['keyComponents']) >= 1:
-                        yield { cls.name: b2h(key['keyComponents'][0]['keyData']) }
+        for pe in pes.pe_list:
+            if pe.type != 'securityDomain':
+                continue
+            assert isinstance(pe, ProfileElementSD)
+
+            key = pe.find_key(key_version_number=cls.kvn, key_id=cls.key_id)
+            if not key:
+                continue
+            kc = key.get_key_component(cls.key_type)
+            if kc:
+                yield { cls.name: b2h(kc) }
 
 class SdKeyScp80_01(SdKey, kvn=0x01, key_type=0x88, permitted_len=[16,24,32]): # AES key type
     pass

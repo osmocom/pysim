@@ -1071,6 +1071,13 @@ class SecurityDomainKey:
                 'keyVersionNumber': bytes([self.key_version_number]),
                 'keyComponents': [k.to_saip_dict() for k in self.key_components]}
 
+    def get_key_component(self, key_type):
+        for kc in self.key_components:
+            if kc.key_type == key_type:
+                return kc.key_data
+        return None
+
+
 class ProfileElementSD(ProfileElement):
     """Class representing a securityDomain ProfileElement."""
     type = 'securityDomain'
