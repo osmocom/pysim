@@ -627,7 +627,7 @@ class MilenageRotationConstants(BinaryParam, AlgoConfig):
     name = 'MilenageRotation'
     algo_config_key = 'rotationConstants'
     allow_len = 5 # length in bytes (from BinaryParam)
-    example_input = '0a 0b 0c 0d 0e'
+    example_input = '40 00 20 40 60'
 
     @classmethod
     def validate_val(cls, val):
