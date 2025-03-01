@@ -63,6 +63,7 @@ class ConfigurableParameter:
     min_len = None
     max_len = None
     allow_len = None # a list of specific lengths
+    default_value = None
 
     def __init__(self, input_value=None):
         self.input_value = input_value # the raw input value as given by caller
@@ -197,6 +198,7 @@ class Iccid(DecimalParam):
     name = 'ICCID'
     min_len = 18
     max_len = 20
+    default_value = '0' * 18
 
     @classmethod
     def validate_val(cls, val):
@@ -228,6 +230,7 @@ class Imsi(DecimalParam):
     name = 'IMSI'
     min_len = 6
     max_len = 15
+    default_value = '00101' + ('0' * 10)
 
     @classmethod
     def apply_val(cls, pes: ProfileElementSequence, val):
@@ -456,6 +459,7 @@ class Puk(DecimalHexParam):
     allow_len = 8
     rpad = 16
     keyReference = None
+    default_value = '0' * allow_len
 
     @classmethod
     def apply_val(cls, pes: ProfileElementSequence, val):
@@ -491,6 +495,7 @@ class Pin(DecimalHexParam):
     min_len = 4
     max_len = 8
     keyReference = None
+    default_value = '0' * max_len
 
     @staticmethod
     def _apply_pinvalue(pe: ProfileElement, keyReference, val_bytes):
@@ -556,14 +561,16 @@ class Pin2(Pin):
 class Adm1(Pin):
     name = 'ADM1'
     keyReference = 0x0A
+    default_value = '0' * Pin.max_len
 
-class Adm2(Pin):
+class Adm2(Adm1):
     name = 'ADM2'
     keyReference = 0x0B
 
 class AlgorithmID(DecimalParam):
     key = 'algorithmID'
     allow_len = 1
+    default_value = 3
 
     @classmethod
     def validate_val(cls, val):
@@ -599,7 +606,8 @@ class AlgorithmID(DecimalParam):
 class K(BinaryParam):
     name = 'K'
     key = 'key'
-    allow_len = int(128/8)
+    allow_len = int(128/8) # length in bytes (from BinaryParam)
+    default_value = '00' * allow_len
 
     @classmethod
     def apply_val(cls, pes: ProfileElementSequence, val):
