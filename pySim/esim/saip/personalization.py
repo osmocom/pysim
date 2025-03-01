@@ -352,6 +352,7 @@ class SmspTpScAddr(ConfigurableParameter):
     strip_chars = ' \t\r\n'
     max_len = 21 # '+' and 20 digits
     min_len = 1
+    example_input = '+49301234567'
 
     @classmethod
     def validate_val(cls, val):
@@ -627,7 +628,7 @@ class MilenageRotationConstants(BinaryParam, AlgoConfig):
     name = 'MilenageRotation'
     algo_config_key = 'rotationConstants'
     allow_len = 5 # length in bytes (from BinaryParam)
-    example_input = '0a 0b 0c 0d 0e'
+    example_input = '40 00 20 40 60'
 
     @classmethod
     def validate_val(cls, val):
