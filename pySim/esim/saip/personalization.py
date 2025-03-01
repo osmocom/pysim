@@ -428,7 +428,34 @@ class Adm2(Pin):
     keyReference = 0x0B
 
 
-class AlgoConfig(ConfigurableParameter):
+class AlgorithmID(DecimalParam):
+    key = 'algorithmID'
+    allow_len = 1
+
+    @classmethod
+    def validate_val(cls, val):
+        val = super().validate_val(val)
+        val = int(val)
+        valid = (1, 2, 3)
+        if val not in valid:
+            raise ValueError(f'Invalid algorithmID {val!r}, must be one of {valid}')
+        return val
+
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        found = 0
+        for pe in pes.get_pes_for_type('akaParameter'):
+            algoConfiguration = pe.decoded['algoConfiguration']
+            if algoConfiguration[0] != 'algoParameter':
+                continue
+            algoConfiguration[1][cls.key] = val
+            found += 1
+        if not found:
+            raise ValueError('input template UPP has unexpected structure:'
+                             f' {cls.name} cannot find algoParameter with key={cls.key}')
+
+
+class AlgoConfig(ConfigurableParameter, metaclass=ClassVarMeta):
     """Configurable Algorithm parameter."""
     key = None
     def validate(self):
@@ -446,8 +473,3 @@ class K(AlgoConfig, key='key'):
     pass
 class Opc(AlgoConfig, key='opc'):
     pass
-class AlgorithmID(AlgoConfig, key='algorithmID'):
-    def validate(self):
-        if self.input_value not in [1, 2, 3]:
-            raise ValueError('Invalid algorithmID %s' % (self.input_value))
-        self.value = self.input_value
