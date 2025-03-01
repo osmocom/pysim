@@ -427,6 +427,9 @@ class SdKeyScp03_32Dek(SdKeyScp03_32, key_id=0x03, key_usage_qual=0x48):
 
 
 
+def obtain_all_pe_from_pelist(l: List[ProfileElement], wanted_type: str) -> ProfileElement:
+    return (pe for pe in l if pe.type == wanted_type)
+
 def obtain_singleton_pe_from_pelist(l: List[ProfileElement], wanted_type: str) -> ProfileElement:
     filtered = list(filter(lambda x: x.type == wanted_type, l))
     assert len(filtered) == 1
@@ -460,69 +463,55 @@ class Puk1(Puk):
 class Puk2(Puk):
     keyReference = 0x81
 
+class Pin(DecimalHexParam):
+    """Configurable PIN (Personal Identification Number).  String of digits."""
+    rpad = 16
+    min_len = 4
+    max_len = 8
+    keyReference = None
 
-class Pin(ConfigurableParameter,metaclass=ClassVarMeta):
-    """Configurable PIN (Personal Identification Number).  String of digits."""
-    keyReference = None
-    def validate(self):
-        if isinstance(self.input_value, int):
-            self.value = '%04d' % self.input_value
-        else:
-            self.value = self.input_value
-        if len(self.value) < 4 or len(self.value) > 8:
-            raise ValueError('PIN mus be 4..8 digits long')
-        if not self.value.isdecimal():
-            raise ValueError('PIN must only contain decimal digits')
-    def apply(self, pes: ProfileElementSequence):
-        pin = ''.join(['%02x' % (ord(x)) for x in self.value])
-        padded_pin = rpad(pin, 16)
-        mf_pes = pes.pes_by_naa['mf'][0]
-        pinCodes = obtain_first_pe_from_pelist(mf_pes, 'pinCodes')
-        if pinCodes.decoded['pinCodes'][0] != 'pinconfig':
-            return
-        for pinCode in pinCodes.decoded['pinCodes'][1]:
-            if pinCode['keyReference'] == self.keyReference:
-                 pinCode['pinValue'] = h2b(padded_pin)
-                 return
-        raise ValueError('cannot find pinCode')
-class AppPin(ConfigurableParameter, metaclass=ClassVarMeta):
-    """Configurable PIN (Personal Identification Number).  String of digits."""
-    keyReference = None
-    def validate(self):
-        if isinstance(self.input_value, int):
-            self.value = '%04d' % self.input_value
-        else:
-            self.value = self.input_value
-        if len(self.value) < 4 or len(self.value) > 8:
-            raise ValueError('PIN mus be 4..8 digits long')
-        if not self.value.isdecimal():
-            raise ValueError('PIN must only contain decimal digits')
-    def _apply_one(self, pe: ProfileElement):
-        pin = ''.join(['%02x' % (ord(x)) for x in self.value])
-        padded_pin = rpad(pin, 16)
-        pinCodes = obtain_first_pe_from_pelist(pe, 'pinCodes')
-        if pinCodes.decoded['pinCodes'][0] != 'pinconfig':
-            return
-        for pinCode in pinCodes.decoded['pinCodes'][1]:
-            if pinCode['keyReference'] == self.keyReference:
-                pinCode['pinValue'] = h2b(padded_pin)
-                return
-        raise ValueError('cannot find pinCode')
-    def apply(self, pes: ProfileElementSequence):
+    @staticmethod
+    def _apply_pinvalue(pe: ProfileElement, keyReference, val_bytes):
+        for pinCodes in obtain_all_pe_from_pelist(pe, 'pinCodes'):
+            if pinCodes.decoded['pinCodes'][0] != 'pinconfig':
+                continue
+
+            for pinCode in pinCodes.decoded['pinCodes'][1]:
+                if pinCode['keyReference'] == keyReference:
+                     pinCode['pinValue'] = val_bytes
+                     return True
+        return False
+
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        val_bytes = val
+        if not cls._apply_pinvalue(pes.pes_by_naa['mf'][0], cls.keyReference, val_bytes):
+            raise ValueError('input template UPP has unexpected structure:'
+                             + f' {cls.get_name()} cannot find pinCode with keyReference={cls.keyReference}')
+
+class Pin1(Pin):
+    keyReference = 0x01
+
+class Pin2(Pin):
+    keyReference = 0x81
+
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        val_bytes = val
+        # PIN2 is special: telecom + usim + isim + csim
         for naa in pes.pes_by_naa:
             if naa not in ['usim','isim','csim','telecom']:
                 continue
             for instance in pes.pes_by_naa[naa]:
-                self._apply_one(instance)
-class Pin1(Pin, keyReference=0x01):
-    pass
-# PIN2 is special: telecom + usim + isim + csim
-class Pin2(AppPin, keyReference=0x81):
-    pass
-class Adm1(Pin, keyReference=0x0A):
-    pass
-class Adm2(Pin, keyReference=0x0B):
-    pass
+                if not cls._apply_pinvalue(instance, cls.keyReference, val_bytes):
+                    raise ValueError('input template UPP has unexpected structure:'
+                            + f' {cls.get_name()} cannot find pinCode with keyReference={cls.keyReference} in {naa=}')
+
+class Adm1(Pin):
+    keyReference = 0x0A
+
+class Adm2(Pin):
+    keyReference = 0x0B
 
 
 class AlgoConfig(ConfigurableParameter, metaclass=ClassVarMeta):
