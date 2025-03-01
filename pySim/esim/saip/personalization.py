@@ -174,6 +174,28 @@ class Imsi(DecimalParam):
         # TODO: DF.GSM_ACCESS if not linked?
 
 
+class BinaryParam(ConfigurableParameter):
+    allow_types = (str, io.BytesIO, bytes, bytearray)
+    allow_chars = '0123456789abcdefABCDEF'
+    strip_chars = ' \t\r\n'
+
+    @classmethod
+    def validate_val(cls, val):
+        # take care that min_len and max_len are applied to the binary length by converting to bytes first
+        if type(val) is str:
+            if cls.strip_chars is not None:
+                val = ''.join(c for c in val if c not in cls.strip_chars)
+            if len(val) & 1:
+                raise ValueError('Invalid hexadecimal string, must have even number of digits:'
+                                 f' {val!r} {len(val)=}') from e
+            try:
+                val = h2b(val)
+            except ValueError as e:
+                raise ValueError(f'Invalid hexadecimal string: {val!r} {len(val)=}') from e
+
+        val = super().validate_val(val)
+        return bytes(val)
+
 class SdKey(ConfigurableParameter):
     """Configurable Security Domain (SD) Key.  Value is presented as bytes."""
     # these will be set by derived classes
@@ -455,21 +477,22 @@ class AlgorithmID(DecimalParam):
                              f' {cls.name} cannot find algoParameter with key={cls.key}')
 
 
-class AlgoConfig(ConfigurableParameter, metaclass=ClassVarMeta):
-    """Configurable Algorithm parameter."""
-    key = None
-    def validate(self):
-        if not isinstance(self.input_value, (io.BytesIO, bytes, bytearray)):
-            raise ValueError('Value must be of bytes-like type')
-        self.value = self.input_value
-    def apply(self, pes: ProfileElementSequence):
+class K(BinaryParam):
+    key = 'key'
+    allow_len = int(128/8)
+
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        found = 0
         for pe in pes.get_pes_for_type('akaParameter'):
             algoConfiguration = pe.decoded['algoConfiguration']
             if algoConfiguration[0] != 'algoParameter':
                 continue
-            algoConfiguration[1][self.key] = self.value
+            algoConfiguration[1][cls.key] = val
+            found += 1
+        if not found:
+            raise ValueError('input template UPP has unexpected structure:'
+                             f' {cls.name} cannot find algoParameter with key={cls.key}')
 
-class K(AlgoConfig, key='key'):
-    pass
-class Opc(AlgoConfig, key='opc'):
-    pass
+class Opc(K):
+    key = 'opc'
