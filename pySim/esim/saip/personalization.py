@@ -357,20 +357,60 @@ class SdKey(BinaryParam):
             if kc:
                 yield b2h(kc)
 
-class SdKeyScp80_01(SdKey):
-    kvn = 0x01
-    key_type = 0x88 # AES key type
+class SdKeyDES(SdKey):
+    name = 'DES'
+    key_type = KeyType.des # 80
     allow_len = (16,24,32)
+    default_value = '00' * 32
+
+class SdKeyScp80_01(SdKeyDES):
+    name = 'SCP01 ' + SdKeyDES.name
+    kvn = 0x01
 
 class SdKeyScp80_01Kic(SdKeyScp80_01):
+    is_abstract = False
+    name = SdKeyScp80_01.name + '-KIC'
     key_id = 0x01
     key_usage_qual = 0x18 # FIXME: ordering?
 
 class SdKeyScp80_01Kid(SdKeyScp80_01):
+    is_abstract = False
+    name = SdKeyScp80_01.name + '-KID'
     key_id = 0x02
     key_usage_qual = 0x14
 
 class SdKeyScp80_01Kik(SdKeyScp80_01):
+    is_abstract = False
+    name = SdKeyScp80_01.name + '-KIK'
+    key_id = 0x03
+    key_usage_qual = 0x48
+
+
+class SdKeyAES(SdKey):
+    name = 'AES'
+    key_type = KeyType.aes # 88
+    allow_len = (16, 24, 32)
+    default_value = '00' * 32
+
+class SdKeyScp88_02(SdKeyAES):
+    name = 'SCP02 ' + SdKeyAES.name
+    kvn = 0x02
+
+class SdKeyScp88_02Kic(SdKeyScp88_02):
+    is_abstract = False
+    name = SdKeyScp88_02.name + ' KIC'
+    key_id = 0x01
+    key_usage_qual = 0x18 # FIXME: ordering?
+
+class SdKeyScp88_02Kid(SdKeyScp88_02):
+    is_abstract = False
+    name = SdKeyScp88_02.name + ' KID'
+    key_id = 0x02
+    key_usage_qual = 0x14
+
+class SdKeyScp88_02Kik(SdKeyScp88_02):
+    is_abstract = False
+    name = SdKeyScp88_02.name + ' KIK'
     key_id = 0x03
     key_usage_qual = 0x48
 
@@ -379,84 +419,116 @@ class SdKeyScp81_01(SdKey):
     kvn = 0x81 # FIXME
 
 class SdKeyScp81_01Psk(SdKeyScp81_01):
+    is_abstract = False
+    name = 'SCP81.01-PSK'
     key_id = 0x01
-    key_type = 0x85
+    key_type = KeyType.tls_psk # 0x85
     key_usage_qual = 0x3C
 
 class SdKeyScp81_01Dek(SdKeyScp81_01):
+    is_abstract = False
+    name = 'SCP81.01-DEK'
     key_id = 0x02
-    key_type = 0x88
+    key_type = KeyType.aes # 88
     key_usage_qual = 0x48
 
 
 class SdKeyScp02_20(SdKey):
     kvn = 0x20
-    key_type = 0x88 # AES key type
+    key_type = KeyType.aes # 88
     allow_len = (16,24,32)
+    default_value = '00' * 32
 
 class SdKeyScp02_20Enc(SdKeyScp02_20):
+    is_abstract = False
+    name = 'SCP02.20-ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 
 class SdKeyScp02_20Mac(SdKeyScp02_20):
+    is_abstract = False
+    name = 'SCP02.20-MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 
 class SdKeyScp02_20Dek(SdKeyScp02_20):
+    is_abstract = False
+    name = 'SCP02.20-DEK'
     key_id = 0x03
-    key_usage_qual = 0x48
+    key_usage_qual = bytes((0x48,))
 
 
 class SdKeyScp03_30(SdKey):
     kvn = 0x30
-    key_type = 0x88 # AES key type
+    key_type = KeyType.aes # 88
     allow_len = (16,24,32)
+    default_value = '00' * 32
 
 class SdKeyScp03_30Enc(SdKeyScp03_30):
+    is_abstract = False
+    name = 'SCP03.30-ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 
 class SdKeyScp03_30Mac(SdKeyScp03_30):
+    is_abstract = False
+    name = 'SCP03.30-MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 
 class SdKeyScp03_30Dek(SdKeyScp03_30):
+    is_abstract = False
+    name = 'SCP03.30-DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 
 class SdKeyScp03_31(SdKey):
     kvn = 0x31
-    key_type = 0x88 # AES key type
+    key_type = KeyType.aes # 88
     allow_len = (16,24,32)
+    default_value = '00' * 32
 
 class SdKeyScp03_31Enc(SdKeyScp03_31):
+    is_abstract = False
+    name = 'SCP03.31-ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 
 class SdKeyScp03_31Mac(SdKeyScp03_31):
+    is_abstract = False
+    name = 'SCP03.31-MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 
 class SdKeyScp03_31Dek(SdKeyScp03_31):
+    is_abstract = False
+    name = 'SCP03.31-DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 
 class SdKeyScp03_32(SdKey):
     kvn = 0x32
-    key_type = 0x88 # AES key type
+    key_type = KeyType.aes # 88
     allow_len = (16,24,32)
+    default_value = '00' * 32
 
 class SdKeyScp03_32Enc(SdKeyScp03_32):
+    is_abstract = False
+    name = 'SCP03.32-ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 
 class SdKeyScp03_32Mac(SdKeyScp03_32):
+    is_abstract = False
+    name = 'SCP03.32-MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 
 class SdKeyScp03_32Dek(SdKeyScp03_32):
+    is_abstract = False
+    name = 'SCP03.32-DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
