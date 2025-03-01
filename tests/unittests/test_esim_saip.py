@@ -63,6 +63,44 @@ class SaipTest(unittest.TestCase):
         # TODO: we don't actually test the results here, but we just verify there is no exception
         pes.to_der()
 
+    def test_personalization2(self):
+        """Test some of the personalization operations."""
+        pes = ProfileElementSequence.from_der(self.per_input)
+        prev_val = set(SdKeyScp80_01Kic.get_values_from_pes(pes))
+        print(f'{prev_val=}')
+        self.assertTrue(prev_val)
+
+        set_val = '42342342342342342342342342342342'
+        param = SdKeyScp80_01Kic(set_val)
+        param.validate()
+        param.apply(pes)
+
+        get_val1 = set(SdKeyScp80_01Kic.get_values_from_pes(pes))
+        print(f'{get_val1=} {set_val=}')
+        self.assertEqual(get_val1, set((set_val,)))
+
+        get_val1b = set(SdKeyScp80_01Kic.get_values_from_pes(pes))
+        print(f'{get_val1b=} {set_val=}')
+        self.assertEqual(get_val1b, set((set_val,)))
+
+        print("HELLOO")
+        der = pes.to_der()
+        print("DONEDONE")
+
+        get_val1c = set(SdKeyScp80_01Kic.get_values_from_pes(pes))
+        print(f'{get_val1c=} {set_val=}')
+        self.assertEqual(get_val1c, set((set_val,)))
+
+        # assertTrue to not dump the entire der.
+        # Expecting the modified DER to be different. If this assertion fails, then no change has happened in the output
+        # DER and the ConfigurableParameter subclass is buggy.
+        self.assertTrue(der != self.per_input)
+
+        pes2 = ProfileElementSequence.from_der(der)
+        get_val2 = set(SdKeyScp80_01Kic.get_values_from_pes(pes2))
+        print(f'{get_val2=} {set_val=}')
+        self.assertEqual(get_val2, set((set_val,)))
+
     def test_constructor_encode(self):
         """Test that DER-encoding of PE created by "empty" constructor works without raising exception."""
         for cls in [ProfileElementMF, ProfileElementPuk, ProfileElementPin, ProfileElementTelecom,
