@@ -17,12 +17,14 @@
 
 import abc
 import io
-from typing import List, Tuple, Optional
+import copy
+from typing import List, Tuple, Optional, Generator
 
 from osmocom.tlv import camel_to_snake
 from osmocom.utils import hexstr
-from pySim.utils import enc_iccid, dec_iccid, enc_imsi, dec_imsi, h2b, b2h, rpad, sanitize_iccid
+from pySim.utils import enc_iccid, dec_iccid, enc_imsi, dec_imsi, h2b, b2h, rpad, sanitize_iccid, all_subclasses_of
 from pySim.esim.saip import ProfileElement, ProfileElementSequence
+from pySim.esim.saip import param_source
 
 def unrpad(s: hexstr, c='f') -> hexstr:
     return hexstr(s.rstrip(c))
@@ -53,11 +55,6 @@ def file_tuples_content_as_bytes(l: List[Tuple]) -> Optional[bytes]:
         else:
             return ValueError("Unknown key '%s' in tuple list" % k)
     return stream.getvalue()
-
-def all_subclasses_of(cls):
-    for subc in cls.__subclasses__():
-        yield subc
-        yield from all_subclasses_of(subc)
 
 
 class ConfigurableParameter:
@@ -719,3 +716,63 @@ class K(BinaryParam, AlgoConfig):
 class Opc(K):
     name = 'OPc'
     algo_config_key = 'opc'
+
+
+class BatchPersonalization:
+
+    class ParamAndSrc:
+        'tie a ConfigurableParameter to a source of actual values'
+        def __init__(self, param:ConfigurableParameter, src:param_source.ParamSource):
+            self.param = param
+            self.src = src
+
+    def __init__(self,
+                 n:int,
+                 src_pes:ProfileElementSequence,
+                 params:list[ParamAndSrc]=None,
+                 csv_rows:Generator=None,
+                ):
+        self.n = n
+        self.params = params or []
+        self.src_pes = src_pes
+        self.csv_rows = csv_rows
+
+    def add_param_and_src(self, param:ConfigurableParameter, src:param_source.ParamSource):
+        self.params.append(BatchPersonalization.ParamAndSrc(param=param, src=src))
+
+    def generate_profiles(self):
+        # get first row of CSV: column names
+        csv_columns = None
+        if self.csv_rows:
+            try:
+                csv_columns = next(self.csv_rows)
+            except StopIteration as e:
+                raise ValueError('the input CSV file appears to be empty') from e
+
+        for i in range(self.n):
+            csv_row = None
+            if self.csv_rows and csv_columns:
+                try:
+                    csv_row_list = next(self.csv_rows)
+                except StopIteration as e:
+                    raise ValueError(f'not enough rows in the input CSV for eSIM nr {i+1} of {self.n}') from e
+
+                csv_row = dict(zip(csv_columns, csv_row_list))
+
+            pes = copy.deepcopy(self.src_pes)
+
+            for p in self.params:
+                try:
+                    input_value = p.src.get_next(csv_row=csv_row)
+                    assert input_value is not None
+                    value = p.param.__class__.validate_val(input_value)
+                    p.param.__class__.apply_val(pes, value)
+                except (
+                        TypeError,
+                        ValueError,
+                        KeyError,
+                       ) as e:
+                    raise ValueError(f'{p.param.name} fed by {p.src.name}: {e}'
+                                     f' (input_value={p.param.input_value!r} value={p.param.value!r})') from e
+
+            yield pes
