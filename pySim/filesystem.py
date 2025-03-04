@@ -1224,6 +1224,13 @@ class TransRecEF(TransparentEF):
         Returns:
             abstract_data; dict representing the decoded data
         """
+
+        # The record data length should always be equal or at least greater than the record length defined for the
+        # TransRecEF. Short records may be occur when the length of the underlying TransparentEF is not a multiple
+        # of the TransRecEF record length.
+        if len(raw_hex_data) // 2 < self.__get_rec_len():
+            return {'raw': raw_hex_data}
+
         method = getattr(self, '_decode_record_hex', None)
         if callable(method):
             return method(raw_hex_data)
@@ -1251,6 +1258,11 @@ class TransRecEF(TransparentEF):
         Returns:
             abstract_data; dict representing the decoded data
         """
+
+        # See comment in decode_record_hex (above)
+        if len(raw_bin_data) < self.__get_rec_len():
+            return {'raw': b2h(raw_bin_data)}
+
         method = getattr(self, '_decode_record_bin', None)
         if callable(method):
             return method(raw_bin_data)
