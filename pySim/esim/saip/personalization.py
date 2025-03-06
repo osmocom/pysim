@@ -18,6 +18,7 @@
 import abc
 import io
 import copy
+import re
 from typing import List, Tuple, Generator, Optional
 
 from osmocom.tlv import camel_to_snake
@@ -334,6 +335,56 @@ class BinaryParam(ConfigurableParameter):
 
         val = super().validate_val(val)
         return bytes(val)
+
+
+class EnumParam(ConfigurableParameter):
+    value_map = {}
+    _value_map_reverse = None
+
+    @classmethod
+    def validate_val(cls, val):
+        orig_val = val
+        intval = None
+        if isinstance(val, str):
+            intval = cls.map_name_to_val(val)
+
+            # if the str is not one of the known value_map.values(), is it maybe an int string of one of
+            # value_map.keys()?
+            if intval is None and val.isdigit():
+                val = int(val)
+                # then step into isinstance(int) below
+
+        if intval is None and isinstance(val, int):
+            if val in cls.value_map:
+                intval = val
+
+        if intval not in cls.value_map:
+            raise ValueError(f"{cls.get_name()}: invalid argument: {orig_val!r}. Valid arguments are:"
+                             f" {', '.join(cls.value_map.keys())}")
+
+        return intval
+
+    @classmethod
+    def map_name_to_val(cls, name:str) -> int:
+        if cls._value_map_reverse is None:
+            cls._value_map_reverse = dict((cls.clean_val_str(v), k) for k, v in cls.value_map.items())
+        return cls._value_map_reverse.get(cls.clean_val_str(name))
+
+    @classmethod
+    def map_val_to_name(cls, val:int, strict=False) -> str:
+        name = cls.value_map.get(val)
+        if strict and name is None:
+            raise ValueError(f"Problem in {cls.get_name()}: {name!r} is not a known value."
+                    f" Known values are: {cls.value_map!r}")
+        return name
+
+    @classmethod
+    def name_normalize(cls, name:str) -> str:
+        return cls.map_val_to_name(cls.map_name_to_val())
+
+    @classmethod
+    def clean_val_str(cls, val):
+        return re.sub('[^0-9A-Za-z-_]', '', val).lower()
 
 
 class Iccid(DecimalParam):
@@ -708,22 +759,31 @@ class AlgoConfig(ConfigurableParameter):
                 continue
             yield { cls.name: algoConfiguration[1][cls.algo_config_key] }
 
-
-class AlgorithmID(DecimalParam, AlgoConfig):
+class AlgorithmID(EnumParam, AlgoConfig):
+    '''use validate_val() from EnumParam, and apply_val() from AlgoConfig.
+    In get_values_from_pes(), return enum value names, not raw values.'''
     is_abstract = False
-    algo_config_key = 'algorithmID'
-    allow_len = 1
-    default_value = 1  # Milenage
+    name = "Algorithm"
+
+    # as in pySim/esim/asn1/saip/PE_Definitions-3.3.1.asn
+    value_map = {
+            1: "Milenage",
+            2: "TUAK",
+            3: "usim-test",
+        }
+    default_value = value_map[1]  # Milenage
     default_source = param_source.ConstantSource
 
+    algo_config_key = 'algorithmID'
+
     @classmethod
-    def validate_val(cls, val):
-        val = super().validate_val(val)
-        val = int(val)
-        valid = (1, 2, 3)
-        if val not in valid:
-            raise ValueError(f'Invalid algorithmID {val!r}, must be one of {valid}')
-        return val
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        # return enum names, not raw values.
+        return (cls.map_val_to_name(val, strict=True)
+                for val in super(cls, cls).get_values_from_pes(pes))
+        # use of super(): this intends to call AlgoConfig.get_values_from_pes() so that the cls argument is this cls
+        # here; i.e. AlgoConfig.get_values_from_pes(pes) doesn't work, because AlgoConfig needs to look up
+        # cls.algo_config_key.
 
 
 class K(BinaryParam, AlgoConfig):
