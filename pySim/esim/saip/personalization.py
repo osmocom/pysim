@@ -17,6 +17,7 @@
 
 import io
 import copy
+import re
 from typing import List, Tuple, Optional, Generator
 
 from osmocom.tlv import camel_to_snake
@@ -691,24 +692,70 @@ class Adm2(Adm1):
     name = 'ADM2'
     keyReference = 0x0B
 
-class AlgorithmID(DecimalParam):
-    is_abstract = False
-    key = 'algorithmID'
-    allow_len = 1
-    default_value = 3
-    default_source = param_source.ConstantSource
+class EnumParam(ConfigurableParameter):
+    value_map = {}
+    _value_map_reverse = None
 
     @classmethod
     def validate_val(cls, val):
-        val = super().validate_val(val)
-        val = int(val)
-        valid = (1, 2, 3)
-        if val not in valid:
-            raise ValueError(f'Invalid algorithmID {val!r}, must be one of {valid}')
-        return val
+        orig_val = val
+        intval = None
+        if isinstance(val, str):
+            intval = cls.map_name_to_val(val)
+
+            # if the str is not one of the known value_map.values(), is it maybe an int string of one of
+            # value_map.keys()?
+            if intval is None and val.isdigit():
+                val = int(val)
+                # then step into isinstance(int) below
+
+        if intval is None and isinstance(val, int):
+            if val in value_map:
+                intval = val
+
+        if intval not in cls.value_map:
+            raise ValueError(f"{cls.get_name()}: invalid argument: {orig_val!r}. Valid arguments are:"
+                             f" {', '.join(cls.value_map.keys())}")
+
+        return intval
+
+    @classmethod
+    def map_name_to_val(cls, name:str) -> int:
+        if cls._value_map_reverse is None:
+            cls._value_map_reverse = dict((cls.clean_val_str(v), k) for k, v in cls.value_map.items())
+        return cls._value_map_reverse.get(cls.clean_val_str(name))
+
+    @classmethod
+    def map_val_to_name(cls, val:int) -> str:
+        return cls.value_map.get(val)
+
+    @classmethod
+    def name_normalize(cls, name:str) -> str:
+        return cls.map_val_to_name(cls.map_name_to_val())
+
+    @classmethod
+    def clean_val_str(cls, val):
+        return re.sub('[^0-9A-Za-z-_]', '', val).lower()
+
+class AlgorithmID(EnumParam):
+    is_abstract = False
+    name = "Algorithm"
+
+    # as in pySim/esim/asn1/saip/PE_Definitions-3.3.1.asn
+    value_map = {
+            1: "Milenage",
+            2: "TUAK",
+            3: "usim-test",
+        }
+    default_value = value_map[1]
+    default_source = param_source.ConstantSource
+
+    key = 'algorithmID'
 
     @classmethod
     def apply_val(cls, pes: ProfileElementSequence, val):
+        # val is an int of a valid value_map key, as returned from EnumParam.validate_val()
+        assert val in cls.value_map
         found = 0
         for pe in pes.get_pes_for_type('akaParameter'):
             algoConfiguration = pe.decoded['algoConfiguration']
@@ -726,7 +773,11 @@ class AlgorithmID(DecimalParam):
             algoConfiguration = pe.decoded['algoConfiguration']
             if algoConfiguration[0] != 'algoParameter':
                 continue
-            yield algoConfiguration[1][cls.key]
+            val = algoConfiguration[1][cls.key]
+            name = cls.map_val_to_name(val)
+            if name is None:
+                raise ValueError(f"Problem when reading {cls.name}: {cls.key}={val!r} is not a known value")
+            yield name
 
 
 class K(BinaryParam):
