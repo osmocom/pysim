@@ -16,7 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
+import enum
 import io
+import re
 from typing import List, Tuple, Generator, Optional
 
 from osmocom.tlv import camel_to_snake
@@ -350,6 +352,72 @@ class BinaryParam(ConfigurableParameter):
 
         val = super().validate_val(val)
         return bytes(val)
+
+
+class EnumParam(ConfigurableParameter):
+    """ConfigurableParameter for named integer enumeration values.
+
+    Subclasses must define a nested enum.IntEnum named 'Values' listing all valid names and their
+    integer codes.  apply_val() and get_values_from_pes() are not implemented here and this must
+    be inherited from another mixin."""
+
+    class Values(enum.IntEnum):
+        pass  # subclasses override this
+
+    @classmethod
+    def validate_val(cls, val) -> int:
+        if isinstance(val, int):
+            try:
+                return int(cls.Values(val))
+            except ValueError:
+                pass
+        elif isinstance(val, str):
+            member = cls.map_name_to_val(val, strict=False)
+            if member is not None:
+                return member
+
+        valid = ', '.join(m.name for m in cls.Values)
+        raise ValueError(f"{cls.get_name()}: invalid argument: {val!r}. Valid arguments are: {valid}")
+
+    @classmethod
+    def map_name_to_val(cls, name: str, strict=True) -> int:
+        """Return the integer value for a given enum member name. Performs an exact match first,
+        then falls back to fuzzy matching (case-insensitive, punctuation-insensitive)."""
+        try:
+            return int(cls.Values[name])
+        except KeyError:
+            pass
+
+        clean = cls.clean_name_str(name)
+        for member in cls.Values:
+            if cls.clean_name_str(member.name) == clean:
+                return int(member)
+
+        if strict:
+            valid = ', '.join(m.name for m in cls.Values)
+            raise ValueError(f"{cls.get_name()}: {name!r} is not a known value. Known values are: {valid}")
+        return None
+
+    @classmethod
+    def map_val_to_name(cls, val, strict=False) -> str:
+        """Return the enum member name for a given integer value."""
+        try:
+            return cls.Values(val).name
+        except ValueError:
+            if strict:
+                raise ValueError(f"{cls.get_name()}: {val!r} ({type(val).__name__}) is not a known value.")
+            return None
+
+    @classmethod
+    def name_normalize(cls, name: str) -> str:
+        """Map a (possibly fuzzy) name to its canonical enum member name."""
+        return cls.Values(cls.map_name_to_val(name)).name
+
+    @classmethod
+    def clean_name_str(cls, val: str) -> str:
+        """Strip punctuation and case for fuzzy name comparison.
+        Treats hyphens and underscores as equivalent (both removed)."""
+        return re.sub('[^0-9A-Za-z]', '', val).lower()
 
 
 class Iccid(DecimalParam):
@@ -775,21 +843,34 @@ class AlgoConfig(ConfigurableParameter):
             # if it is an int (algorithmID), just pass thru as int
             yield { cls.name: val }
 
-
-class AlgorithmID(DecimalParam, AlgoConfig):
+class AlgorithmID(EnumParam, AlgoConfig):
+    """use validate_val() from EnumParam, and apply_val() from AlgoConfig.
+    In get_values_from_pes(), return enum value names, not raw values."""
+    name = "Algorithm"
     algo_config_key = 'algorithmID'
-    allow_len = 1
-    example_input = 1  # Milenage
+    example_input = "Milenage"
     default_source = param_source.ConstantSource
 
+    # as in pySim/esim/asn1/saip/PE_Definitions-3.3.1.asn
+    class Values(enum.IntEnum):
+        Milenage  = 1
+        TUAK      = 2
+        usim_test = 3  # input 'usim-test' also accepted via fuzzy matching
+
+    # EnumParam.validate_val() returns the int values from Values
+
     @classmethod
-    def validate_val(cls, val):
-        val = super().validate_val(val)
-        val = int(val)
-        valid = (1, 2, 3)
-        if val not in valid:
-            raise ValueError(f'Invalid algorithmID {val!r}, must be one of {valid}')
-        return val
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        # return enum names, not raw values.
+        # use of super(): this intends to call AlgoConfig.get_values_from_pes() so that the cls argument is this cls
+        # here (AlgorithmID); i.e. AlgoConfig.get_values_from_pes(pes) doesn't work, because AlgoConfig needs to look up
+        # cls.algo_config_key.
+        for d in super(cls, cls).get_values_from_pes(pes):
+            if cls.name in d:
+                # convert int to value string
+                val = d[cls.name]
+                d[cls.name] = cls.map_val_to_name(val, strict=True)
+            yield d
 
 class K(BinaryParam, AlgoConfig):
     """use validate_val() from BinaryParam, and apply_val() from AlgoConfig"""
