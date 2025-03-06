@@ -18,6 +18,7 @@
 import abc
 import io
 import os
+import re
 from typing import List, Tuple, Generator, Optional
 
 from osmocom.tlv import camel_to_snake
@@ -366,6 +367,70 @@ class BinaryParam(ConfigurableParameter):
 
         val = super().validate_val(val)
         return bytes(val)
+
+
+class EnumParam(ConfigurableParameter):
+    value_map = {
+            # For example:
+            #'Meaningful label for value 23': 0x23,
+            # Where 0x23 is a valid value to use for apply_val().
+        }
+    _value_map_reverse = None
+
+    @classmethod
+    def validate_val(cls, val):
+        orig_val = val
+        enum_val = None
+        if isinstance(val, str):
+            enum_name = val
+            enum_val = cls.map_name_to_val(enum_name)
+
+        # if the str is not one of the known value_map.keys(), is it maybe one of value_map.keys()?
+        if enum_val is None and val in cls.value_map.values():
+            enum_val = val
+
+        if enum_val not in cls.value_map.values():
+            raise ValueError(f"{cls.get_name()}: invalid argument: {orig_val!r}. Valid arguments are:"
+                             f" {', '.join(cls.value_map.keys())}")
+
+        return enum_val
+
+    @classmethod
+    def map_name_to_val(cls, name:str, strict=True):
+        val = cls.value_map.get(name)
+        if val is not None:
+            return val
+
+        clean_name = cls.clean_name_str(name)
+        for k, v in cls.value_map.items():
+            if clean_name == cls.clean_name_str(k):
+                return v
+
+        if strict:
+            raise ValueError(f"Problem in {cls.get_name()}: {name!r} is not a known value."
+                    f" Known values are: {cls.value_map.keys()!r}")
+        return None
+
+    @classmethod
+    def map_val_to_name(cls, val, strict=False) -> str:
+        if cls._value_map_reverse is None:
+            cls._value_map_reverse = dict((v, k) for k, v in cls.value_map.items())
+
+        name = cls._value_map_reverse.get(val)
+        if name:
+            return name
+        if strict:
+            raise ValueError(f"Problem in {cls.get_name()}: {val!r} ({type(val)}) is not a known value."
+                    f" Known values are: {cls.value_map.values()!r}")
+        return None
+
+    @classmethod
+    def name_normalize(cls, name:str) -> str:
+        return cls.map_val_to_name(cls.map_name_to_val(name))
+
+    @classmethod
+    def clean_name_str(cls, val):
+        return re.sub('[^0-9A-Za-z-_]', '', val).lower()
 
 
 class Iccid(DecimalParam):
@@ -773,21 +838,36 @@ class AlgoConfig(ConfigurableParameter):
             # if it is an int (algorithmID), just pass thru as int
             yield { cls.name: val }
 
+class AlgorithmID(EnumParam, AlgoConfig):
+    '''use validate_val() from EnumParam, and apply_val() from AlgoConfig.
+    In get_values_from_pes(), return enum value names, not raw values.'''
+    name = "Algorithm"
 
-class AlgorithmID(DecimalParam, AlgoConfig):
-    algo_config_key = 'algorithmID'
-    allow_len = 1
-    example_input = 1  # Milenage
+    # as in pySim/esim/asn1/saip/PE_Definitions-3.3.1.asn
+    value_map = {
+            "Milenage" : 1,
+            "TUAK" : 2,
+            "usim-test" : 3,
+        }
+    example_input = "Milenage"
     default_source = param_source.ConstantSource
 
+    algo_config_key = 'algorithmID'
+
+    # EnumParam.validate_val() returns the int values from value_map
+
     @classmethod
-    def validate_val(cls, val):
-        val = super().validate_val(val)
-        val = int(val)
-        valid = (1, 2, 3)
-        if val not in valid:
-            raise ValueError(f'Invalid algorithmID {val!r}, must be one of {valid}')
-        return val
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        # return enum names, not raw values.
+        # use of super(): this intends to call AlgoConfig.get_values_from_pes() so that the cls argument is this cls
+        # here (AlgorithmID); i.e. AlgoConfig.get_values_from_pes(pes) doesn't work, because AlgoConfig needs to look up
+        # cls.algo_config_key.
+        for d in super(cls, cls).get_values_from_pes(pes):
+            if cls.name in d:
+                # convert int to value string
+                val = d[cls.name]
+                d[cls.name] = cls.map_val_to_name(val, strict=True)
+            yield d
 
 class K(BinaryParam, AlgoConfig):
     """use validate_val() from BinaryParam, and apply_val() from AlgoConfig"""
