@@ -112,7 +112,7 @@ class SdKey(ConfigurableParameter, metaclass=ClassVarMeta):
     key_id = None
     kvn = None
     key_usage_qual = None
-    permitted_len = None
+    permitted_len = []
 
     def validate(self):
         if not isinstance(self.input_value, (io.BytesIO, bytes, bytearray)):
