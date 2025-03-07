@@ -17,12 +17,17 @@
 
 import abc
 import io
-from typing import List, Tuple, Generator
+import os
+from typing import List, Tuple, Generator, Optional
 
 from osmocom.tlv import camel_to_snake
-from pySim.utils import enc_iccid, enc_imsi, h2b, rpad, sanitize_iccid
+from osmocom.utils import hexstr
+from pySim.utils import enc_iccid, dec_iccid, enc_imsi, dec_imsi, h2b, b2h, rpad, sanitize_iccid
 from pySim.esim.saip import ProfileElement, ProfileElementSequence
 from pySim.ts_51_011 import EF_SMSP
+
+def unrpad(s: hexstr, c='f') -> hexstr:
+    return hexstr(s.rstrip(c))
 
 def remove_unwanted_tuples_from_list(l: List[Tuple], unwanted_keys: List[str]) -> List[Tuple]:
     """In a list of tuples, remove all tuples whose first part equals 'unwanted_key'."""
@@ -45,6 +50,22 @@ class ClassVarMeta(abc.ABCMeta):
             setattr(x, k, v)
         setattr(x, 'name', camel_to_snake(name))
         return x
+
+def file_tuples_content_as_bytes(l: List[Tuple]) -> Optional[bytes]:
+    """linearize a list of fillFileContent / fillFileOffset tuples into a stream of bytes."""
+    stream = io.BytesIO()
+    for k, v in l:
+        if k == 'doNotCreate':
+            return None
+        if k == 'fileDescriptor':
+            pass
+        elif k == 'fillFileOffset':
+            stream.seek(v, os.SEEK_CUR)
+        elif k == 'fillFileContent':
+            stream.write(v)
+        else:
+            return ValueError("Unknown key '%s' in tuple list" % k)
+    return stream.getvalue()
 
 class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
     r"""Base class representing a part of the eSIM profile that is configurable during the
@@ -200,6 +221,31 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
         pass
 
     @classmethod
+    @abc.abstractmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence) -> Generator:
+        '''This is what subclasses implement: yield all values from a decoded profile package.
+           Find all values in the pes, and yield them decoded to a valid cls.input_value format.
+           Should be a generator function, i.e. use 'yield' instead of 'return'.
+
+           Usage example:
+
+             cls = esim.saip.personalization.Iccid
+             # use a set() to get a list of unique values from all results
+             vals = set( cls.get_values_from_pes(pes) )
+             if len(vals) != 1:
+                 raise ValueError(f'{cls.name}: need exactly one value, got {vals}')
+             # the set contains a single value, return it
+             return vals.pop()
+
+           Implementation example:
+
+             for pe in pes:
+                if my_condition(pe):
+                    yield b2h(my_bin_value_from(pe))
+           '''
+        pass
+
+    @classmethod
     def get_len_range(cls):
         """considering all of min_len, max_len and allow_len, get a tuple of the resulting (min, max) of permitted
         value length. For example, if an input value is an int, which needs to be represented with a minimum nr of
@@ -256,6 +302,17 @@ class DecimalHexParam(DecimalParam):
         # a DecimalHexParam subclass expects the apply_val() input to be a bytes instance ready for the pes
         return h2b(val)
 
+    @classmethod
+    def decimal_hex_to_str(cls, val):
+        'useful for get_values_from_pes() implementations of subclasses'
+        if isinstance(val, bytes):
+            val = b2h(val)
+        assert isinstance(val, hexstr)
+        if cls.rpad is not None:
+            c = cls.rpad_char or 'f'
+            val = unrpad(val, c)
+        return val.to_bytes().decode('ascii')
+
 class IntegerParam(ConfigurableParameter):
     allow_types = (str, int)
     allow_chars = '0123456789'
@@ -278,6 +335,14 @@ class IntegerParam(ConfigurableParameter):
         if exceeds_limits:
             raise ValueError(f'Value {val} is out of range, must be [{cls.min_val}..{cls.max_val}]')
         return val
+
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        for valdict in super().get_values_from_pes(pes):
+            for key, val in valdict.items():
+                if isinstance(val, int):
+                    valdict[key] = str(val)
+            yield valdict
 
 class BinaryParam(ConfigurableParameter):
     allow_types = (str, io.BytesIO, bytes, bytearray)
@@ -322,6 +387,17 @@ class Iccid(DecimalParam):
         # patch MF/EF.ICCID
         file_replace_content(pes.get_pe_for_type('mf').decoded['ef-iccid'], h2b(enc_iccid(val)))
 
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        padded = b2h(pes.get_pe_for_type('header').decoded['iccid'])
+        iccid = unrpad(padded)
+        yield iccid
+
+        for pe in pes.get_pes_for_type('mf'):
+            iccid_f = pe.files.get('ef-iccid', None)
+            if iccid_f is not None:
+                yield dec_iccid(b2h(iccid_f.body))
+
 class Imsi(DecimalParam):
     """Configurable IMSI. Expects value to be a string of digits. Automatically sets the ACC to
     the last digit of the IMSI."""
@@ -341,6 +417,14 @@ class Imsi(DecimalParam):
             file_replace_content(pe.decoded['ef-imsi'], h2b(enc_imsi(imsi_str)))
             file_replace_content(pe.decoded['ef-acc'], acc.to_bytes(2, 'big'))
         # TODO: DF.GSM_ACCESS if not linked?
+
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        for pe in pes.get_pes_for_type('usim'):
+            imsi_f = pe.files.get('ef-imsi', None)
+            acc_f = pe.files.get('ef-acc', None)
+            if imsi_f:
+                yield dec_imsi(b2h(imsi_f.body))
 
 class SmspTpScAddr(ConfigurableParameter):
     """Configurable SMSC (SMS Service Centre) TP-SC-ADDR. Expects to be a phone number in national or
@@ -398,6 +482,32 @@ class SmspTpScAddr(ConfigurableParameter):
             # re-generate the pe.decoded member from the File instance
             pe.file2pe(f_smsp)
 
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        for pe in pes.get_pes_for_type('usim'):
+            f_smsp = pe.files['ef-smsp']
+            ef_smsp = EF_SMSP()
+            ef_smsp_dec = ef_smsp.decode_record_bin(f_smsp.body, 1)
+
+            tp_sc_addr = ef_smsp_dec.get('tp_sc_addr', None)
+            if not tp_sc_addr:
+                continue
+
+            digits = tp_sc_addr.get('call_number', None)
+            if not digits:
+                continue
+
+            ton_npi = tp_sc_addr.get('ton_npi', None)
+            if not ton_npi:
+                continue
+            international = ton_npi.get('type_of_number', None)
+            if international is None:
+                continue
+            international = (international == 'international')
+
+            yield (international, digits)
+
+
 class SdKey(BinaryParam, metaclass=ClassVarMeta):
     """Configurable Security Domain (SD) Key.  Value is presented as bytes."""
     # these will be set by subclasses
@@ -429,6 +539,14 @@ class SdKey(BinaryParam, metaclass=ClassVarMeta):
     def apply_val(cls, pes: ProfileElementSequence, value):
         for pe in pes.get_pes_for_type('securityDomain'):
             cls._apply_sd(pe, value)
+
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        for pe in pes.get_pes_for_type('securityDomain'):
+            for key in pe.decoded['keyList']:
+                if key['keyIdentifier'][0] == cls.key_id and key['keyVersionNumber'][0] == cls.kvn:
+                    if len(key['keyComponents']) >= 1:
+                        yield b2h(key['keyComponents'][0]['keyData'])
 
 class SdKeyScp80_01(SdKey, kvn=0x01, key_type=0x88, permitted_len=[16,24,32]): # AES key type
     pass
@@ -516,6 +634,14 @@ class Puk(DecimalHexParam):
         raise ValueError("input template UPP has unexpected structure:"
                          f" cannot find pukCode with keyReference={cls.keyReference}")
 
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        mf_pes = pes.pes_by_naa['mf'][0]
+        for pukCodes in obtain_all_pe_from_pelist(mf_pes, 'pukCodes'):
+            for pukCode in pukCodes.decoded['pukCodes']:
+                if pukCode['keyReference'] == cls.keyReference:
+                    yield cls.decimal_hex_to_str(pukCode['pukValue'])
+
 class Puk1(Puk):
     name = 'PUK1'
     keyReference = 0x01
@@ -551,6 +677,20 @@ class Pin(DecimalHexParam):
             raise ValueError('input template UPP has unexpected structure:'
                              + f' {cls.get_name()} cannot find pinCode with keyReference={cls.keyReference}')
 
+    @classmethod
+    def _read_all_pinvalues_from_pe(cls, pe: ProfileElement):
+        for pinCodes in obtain_all_pe_from_pelist(pe, 'pinCodes'):
+            if pinCodes.decoded['pinCodes'][0] != 'pinconfig':
+                continue
+
+            for pinCode in pinCodes.decoded['pinCodes'][1]:
+                if pinCode['keyReference'] == cls.keyReference:
+                     yield cls.decimal_hex_to_str(pinCode['pinValue'])
+
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        yield from cls._read_all_pinvalues_from_pe(pes.pes_by_naa['mf'][0])
+
 class Pin1(Pin):
     name = 'PIN1'
     example_input = '0' * 4  # PIN are usually 4 digits
@@ -571,6 +711,14 @@ class Pin2(Pin1):
                 if not cls._apply_pinvalue(instance, cls.keyReference, val_bytes):
                     raise ValueError('input template UPP has unexpected structure:'
                             + f' {cls.get_name()} cannot find pinCode with keyReference={cls.keyReference} in {naa=}')
+
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        for naa in pes.pes_by_naa:
+            if naa not in ['usim','isim','csim','telecom']:
+                continue
+            for pe in pes.pes_by_naa[naa]:
+                yield from cls._read_all_pinvalues_from_pe(pe)
 
 class Adm1(Pin):
     name = 'ADM1'
@@ -595,6 +743,22 @@ class AlgoConfig(ConfigurableParameter):
         if not found:
             raise ValueError('input template UPP has unexpected structure:'
                              f' {cls.__name__} cannot find algoParameter with key={cls.algo_config_key}')
+
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        for pe in pes.get_pes_for_type('akaParameter'):
+            algoConfiguration = pe.decoded['algoConfiguration']
+            if len(algoConfiguration) < 2:
+                continue
+            if algoConfiguration[0] != 'algoParameter':
+                continue
+            if not algoConfiguration[1]:
+                continue
+            val = algoConfiguration[1].get(cls.algo_config_key, None)
+            if val is None:
+                continue
+            yield algoConfiguration[1][cls.algo_config_key]
+
 
 class AlgorithmID(DecimalParam, AlgoConfig):
     algo_config_key = 'algorithmID'
