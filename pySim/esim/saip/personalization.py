@@ -305,6 +305,7 @@ class BinaryParam(ConfigurableParameter):
 class Iccid(DecimalParam):
     """ICCID Parameter. Input: string of decimal digits.
     If the string of digits is only 18 digits long, add a Luhn check digit."""
+    name = 'ICCID'
     min_len = 18
     max_len = 20
 
@@ -323,6 +324,8 @@ class Iccid(DecimalParam):
 class Imsi(DecimalParam):
     """Configurable IMSI. Expects value to be a string of digits. Automatically sets the ACC to
     the last digit of the IMSI."""
+
+    name = 'IMSI'
     min_len = 6
     max_len = 15
 
@@ -341,6 +344,8 @@ class SmspTpScAddr(ConfigurableParameter):
     """Configurable SMSC (SMS Service Centre) TP-SC-ADDR. Expects to be a phone number in national or
     international format (designated by a leading +). Automatically sets the NPI to E.164 and the TON based on
     presence or absence of leading +."""
+
+    name = 'SMSP-TP-SC-ADDR'
 
     @classmethod
     def validate_val(cls, val):
@@ -503,9 +508,11 @@ class Puk(DecimalHexParam):
                          f" cannot find pukCode with keyReference={cls.keyReference}")
 
 class Puk1(Puk):
+    name = 'PUK1'
     keyReference = 0x01
 
 class Puk2(Puk):
+    name = 'PUK2'
     keyReference = 0x81
 
 class Pin(DecimalHexParam):
@@ -535,9 +542,11 @@ class Pin(DecimalHexParam):
                              + f' {cls.get_name()} cannot find pinCode with keyReference={cls.keyReference}')
 
 class Pin1(Pin):
+    name = 'PIN1'
     keyReference = 0x01
 
 class Pin2(Pin):
+    name = 'PIN2'
     keyReference = 0x81
 
     @classmethod
@@ -553,9 +562,11 @@ class Pin2(Pin):
                             + f' {cls.get_name()} cannot find pinCode with keyReference={cls.keyReference} in {naa=}')
 
 class Adm1(Pin):
+    name = 'ADM1'
     keyReference = 0x0A
 
 class Adm2(Pin):
+    name = 'ADM2'
     keyReference = 0x0B
 
 class AlgoConfig(ConfigurableParameter):
@@ -589,16 +600,19 @@ class AlgorithmID(DecimalParam, AlgoConfig):
 
 class K(BinaryParam, AlgoConfig):
     """use validate_val() from BinaryParam, and apply_val() from AlgoConfig"""
+    name = 'K'
     algo_config_key = 'key'
     allow_len = (128 // 8, 256 // 8) # length in bytes (from BinaryParam); TUAK also allows 256 bit
 
 class Opc(K):
+    name = 'OPc'
     algo_config_key = 'opc'
 
 class MilenageRotationConstants(BinaryParam, AlgoConfig):
     """rotation constants r1,r2,r3,r4,r5 of Milenage, Range 0..127. See 3GPP TS 35.206 Sections 2.3 + 5.3.
     Provided as octet-string concatenation of all 5 constants.  Expects a bytes-like object of length 5, with
     each byte in the range of 0..127.  The default value by 3GPP is '4000204060' (hex notation)"""
+    name = 'MilenageRotation'
     algo_config_key = 'rotationConstants'
     allow_len = 5 # length in bytes (from BinaryParam)
 
@@ -621,11 +635,13 @@ class MilenageXoringConstants(BinaryParam, AlgoConfig):
      00000000000000000000000000000004
      00000000000000000000000000000008
     """
+    name = 'MilenageXOR'
     algo_config_key = 'xoringConstants'
     allow_len = 80 # length in bytes (from BinaryParam)
 
 class TuakNumberOfKeccak(IntegerParam, AlgoConfig):
     """Number of iterations of Keccak-f[1600] permutation as recomended by Section 7.2 of 3GPP TS 35.231"""
+    name = 'KECCAK-N'
     algo_config_key = 'numberOfKeccak'
     min_val = 1
     max_val = 255
