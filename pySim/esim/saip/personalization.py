@@ -271,6 +271,7 @@ class BinaryParam(ConfigurableParameter):
 class Iccid(DecimalParam):
     """ICCID Parameter. Input: string of decimal digits.
     If the string of digits is only 18 digits long, add a Luhn check digit."""
+    name = 'ICCID'
     min_len = 18
     max_len = 20
 
@@ -289,6 +290,8 @@ class Iccid(DecimalParam):
 class Imsi(DecimalParam):
     """Configurable IMSI. Expects value to be a string of digits. Automatically sets the ACC to
     the last digit of the IMSI."""
+
+    name = 'IMSI'
     min_len = 6
     max_len = 15
 
@@ -472,9 +475,11 @@ class Puk(DecimalHexParam):
                          f" cannot find pukCode with keyReference={cls.keyReference}")
 
 class Puk1(Puk):
+    name = 'PUK1'
     keyReference = 0x01
 
 class Puk2(Puk):
+    name = 'PUK2'
     keyReference = 0x81
 
 class Pin(DecimalHexParam):
@@ -504,9 +509,11 @@ class Pin(DecimalHexParam):
                              + f' {cls.get_name()} cannot find pinCode with keyReference={cls.keyReference}')
 
 class Pin1(Pin):
+    name = 'PIN1'
     keyReference = 0x01
 
 class Pin2(Pin):
+    name = 'PIN2'
     keyReference = 0x81
 
     @classmethod
@@ -522,9 +529,11 @@ class Pin2(Pin):
                             + f' {cls.get_name()} cannot find pinCode with keyReference={cls.keyReference} in {naa=}')
 
 class Adm1(Pin):
+    name = 'ADM1'
     keyReference = 0x0A
 
 class Adm2(Pin):
+    name = 'ADM2'
     keyReference = 0x0B
 
 class AlgoConfig(ConfigurableParameter):
@@ -560,8 +569,10 @@ class AlgorithmID(DecimalParam, AlgoConfig):
 
 class K(BinaryParam, AlgoConfig):
     """use validate_val() from BinaryParam, and apply_val() from AlgoConfig"""
+    name = 'K'
     algo_config_key = 'key'
     allow_len = int(128/8) # length in bytes (from BinaryParam)
 
 class Opc(K):
+    name = 'OPc'
     algo_config_key = 'opc'
