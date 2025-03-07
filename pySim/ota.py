@@ -410,6 +410,7 @@ class OtaDialectSms(OtaDialect):
             ciph = encoded[2+8:]
             envelope_data = otak.crypt.decrypt(ciph)
         else:
+            cpl = None # FIXME this line was just added to silence pylint possibly-used-before-assignment
             part_head = encoded[:8]
             envelope_data = encoded[8:]
 
