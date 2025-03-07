@@ -97,7 +97,7 @@ class ProfileMetadata:
         self.notifications.append((event, address))
 
     def gen_store_metadata_request(self) -> bytes:
-        """Generate encoded (but unsigned) StoreMetadataReqest DO (SGP.22 5.5.3)"""
+        """Generate encoded (but unsigned) StoreMetadataRequest DO (SGP.22 5.5.3)"""
         smr = {
             'iccid': self.iccid_bin,
             'serviceProviderName': self.spn,
