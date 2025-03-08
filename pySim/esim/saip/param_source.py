@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import random
+import re
 from pySim.utils import all_subclasses_of
 
 class ParamSourceExn(Exception):
@@ -70,7 +71,28 @@ class ConstantSource(ParamSource):
     def get_next(self, csv_row:dict=None):
         return self.val
 
-class RandomDigitSource(ParamSource):
+class InputExpandingParamSource(ParamSource):
+
+    @classmethod
+    def expand_str(cls, s:str):
+        # user convenience syntax '0*32' becomes '00000000000000000000000000000000'
+        if '*' not in s:
+            return s
+        tokens = re.split(r"([^ \t]+)[ \t]*\*[ \t]*([0-9]+)", s)
+        if len(tokens) < 3:
+            return s
+        parts = []
+        for unchanged, snippet, repeat_str in zip(tokens[0::3], tokens[1::3], tokens[2::3]):
+            parts.append(unchanged)
+            repeat = int(repeat_str)
+            parts.append(snippet * repeat)
+        return ''.join(parts)
+
+    @classmethod
+    def from_str(cls, s:str):
+        return cls(cls.expand_str(s))
+
+class RandomDigitSource(InputExpandingParamSource):
     'return a different sequence of random decimal digits each'
     is_abstract = False
     name = 'random decimal digits'
@@ -100,6 +122,8 @@ class RandomDigitSource(ParamSource):
 
     @classmethod
     def from_str(cls, s:str):
+        s = cls.expand_str(s)
+
         if '..' in s:
             first_str, last_str = s.split('..')
             first_str = first_str.strip()
@@ -112,7 +136,7 @@ class RandomDigitSource(ParamSource):
         last_value = int(last_str) if last_str is not None else '9' * len(first_str)
         return cls(num_digits=len(first_str), first_value=first_value, last_value=last_value)
 
-class RandomHexDigitSource(ParamSource):
+class RandomHexDigitSource(InputExpandingParamSource):
     'return a different sequence of random hexadecimal digits each'
     is_abstract = False
     name = 'random hexadecimal digits'
@@ -133,6 +157,7 @@ class RandomHexDigitSource(ParamSource):
 
     @classmethod
     def from_str(cls, s:str):
+        s = cls.expand_str(s)
         return cls(num_digits=len(s.strip()))
 
 class IncDigitSource(RandomDigitSource):
