@@ -461,7 +461,7 @@ class Iccid(DecimalParam):
     name = 'ICCID'
     min_len = 18
     max_len = 20
-    default_value = '0' * 18
+    default_value = '0*18'
     default_source = param_source.IncDigitSource
 
     @classmethod
@@ -611,7 +611,7 @@ class SdKey(BinaryParam):
 class SdKeyAes(SdKey):
     key_type = KeyType.aes
     allow_len = (16,24,32)
-    default_value = '00' * 32
+    default_value = '00*32'
 
 class SdKeyDes(SdKey):
     key_type = KeyType.des
@@ -930,7 +930,7 @@ class Puk(DecimalHexParam):
     allow_len = 8
     rpad = 16
     keyReference = None
-    default_value = '0' * allow_len
+    default_value = f'0*{allow_len}'
     default_source = param_source.RandomDigitSource
 
     @classmethod
@@ -968,7 +968,7 @@ class Pin(DecimalHexParam):
     rpad = 16
     min_len = 4
     max_len = 8
-    default_value = '0' * max_len
+    default_value = f'0*{max_len}'
     default_source = param_source.RandomDigitSource
     keyReference = None
 
@@ -1009,7 +1009,7 @@ class Pin(DecimalHexParam):
 class Pin1(Pin):
     is_abstract = False
     name = 'PIN1'
-    default_value = '0' * 4  # PIN are usually 4 digits
+    default_value = '0*4'  # PIN are usually 4 digits
     keyReference = 0x01
 
 class Pin2(Pin1):
@@ -1119,7 +1119,7 @@ class K(BinaryParam, AlgoConfig):
     name = 'K'
     algo_config_key = 'key'
     allow_len = 128 // 8 # length in bytes (from BinaryParam)
-    default_value = '00' * allow_len
+    default_value = f'00*{allow_len}'
 
 class Opc(K):
     name = 'OPc'
@@ -1150,7 +1150,7 @@ class MilenageXoringConstants(BinaryParam, AlgoConfig):
     name = 'MilenageXOR'
     algo_config_key = 'xoringConstants'
     allow_len = 80 # length in bytes (from BinaryParam)
-    default_value = ' '.join(('00' * 16,) * 5)
+    default_value = f'00*{allow_len}'
 
 class TuakNumberOfKeccak(IntegerParam, AlgoConfig):
     """Number of iterations of Keccak-f[1600] permutation as recomended by Section 7.2 of 3GPP TS 35.231"""
