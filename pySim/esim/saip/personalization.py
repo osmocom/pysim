@@ -413,7 +413,7 @@ class Iccid(DecimalParam):
     name = 'ICCID'
     min_len = 18
     max_len = 20
-    default_value = '0' * 18
+    default_value = '0*18'
     default_source = param_source.IncDigitSource
 
     @classmethod
@@ -524,7 +524,7 @@ class SdKeyDES(SdKey):
     name = 'DES'
     key_type = KeyType.des # 80
     allow_len = (16,24,32)
-    default_value = '00' * 32
+    default_value = '00*32'
 
 class SdKeyScp80_01(SdKeyDES):
     name = 'SCP01 ' + SdKeyDES.name
@@ -553,7 +553,7 @@ class SdKeyAES(SdKey):
     name = 'AES'
     key_type = KeyType.aes # 88
     allow_len = (16, 24, 32)
-    default_value = '00' * 32
+    default_value = '00*32'
 
 class SdKeyScp88_02(SdKeyAES):
     name = 'SCP02 ' + SdKeyAES.name
@@ -600,7 +600,7 @@ class SdKeyScp02_20(SdKey):
     kvn = 0x20
     key_type = KeyType.aes # 88
     allow_len = (16,24,32)
-    default_value = '00' * 32
+    default_value = '00*32'
 
 class SdKeyScp02_20Enc(SdKeyScp02_20):
     is_abstract = False
@@ -625,7 +625,7 @@ class SdKeyScp03_30(SdKey):
     kvn = 0x30
     key_type = KeyType.aes # 88
     allow_len = (16,24,32)
-    default_value = '00' * 32
+    default_value = '00*32'
 
 class SdKeyScp03_30Enc(SdKeyScp03_30):
     is_abstract = False
@@ -650,7 +650,7 @@ class SdKeyScp03_31(SdKey):
     kvn = 0x31
     key_type = KeyType.aes # 88
     allow_len = (16,24,32)
-    default_value = '00' * 32
+    default_value = '00*32'
 
 class SdKeyScp03_31Enc(SdKeyScp03_31):
     is_abstract = False
@@ -675,7 +675,7 @@ class SdKeyScp03_32(SdKey):
     kvn = 0x32
     key_type = KeyType.aes # 88
     allow_len = (16,24,32)
-    default_value = '00' * 32
+    default_value = '00*32'
 
 class SdKeyScp03_32Enc(SdKeyScp03_32):
     is_abstract = False
@@ -714,7 +714,7 @@ class Puk(DecimalHexParam):
     allow_len = 8
     rpad = 16
     keyReference = None
-    default_value = '0' * allow_len
+    default_value = f'0*{allow_len}'
     default_source = param_source.RandomDigitSource
 
     @classmethod
@@ -752,7 +752,7 @@ class Pin(DecimalHexParam):
     rpad = 16
     min_len = 4
     max_len = 8
-    default_value = '0' * max_len
+    default_value = f'0*{max_len}'
     default_source = param_source.RandomDigitSource
     keyReference = None
 
@@ -793,7 +793,7 @@ class Pin(DecimalHexParam):
 class Pin1(Pin):
     is_abstract = False
     name = 'PIN1'
-    default_value = '0' * 4  # PIN are usually 4 digits
+    default_value = '0*4'  # PIN are usually 4 digits
     keyReference = 0x01
 
 class Pin2(Pin1):
@@ -888,7 +888,7 @@ class K(BinaryParam, AlgoConfig):
     name = 'K'
     algo_config_key = 'key'
     allow_len = int(128/8) # length in bytes (from BinaryParam)
-    default_value = '00' * allow_len
+    default_value = f'00*{allow_len}'
     default_source = param_source.RandomHexDigitSource
 
 class Opc(K):
