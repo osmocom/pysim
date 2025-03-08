@@ -700,7 +700,7 @@ class Puk(DecimalHexParam):
     allow_len = 8
     rpad = 16
     keyReference = None
-    example_input = '0' * allow_len
+    example_input = f'0*{allow_len}'
     default_source = param_source.RandomDigitSource
 
     @classmethod
@@ -736,7 +736,7 @@ class Pin(DecimalHexParam):
     rpad = 16
     min_len = 4
     max_len = 8
-    example_input = '0' * max_len
+    example_input = f'0*{max_len}'
     default_source = param_source.RandomDigitSource
     keyReference = None
 
@@ -776,7 +776,7 @@ class Pin(DecimalHexParam):
 
 class Pin1(Pin):
     name = 'PIN1'
-    example_input = '0' * 4  # PIN are usually 4 digits
+    example_input = '0*4'  # PIN are usually 4 digits
     keyReference = 0x01
 
 class Pin2(Pin1):
@@ -881,7 +881,7 @@ class K(BinaryParam, AlgoConfig):
     name = 'K'
     algo_config_key = 'key'
     allow_len = (128 // 8, 256 // 8) # length in bytes (from BinaryParam); TUAK also allows 256 bit
-    example_input = '00' * allow_len[0]
+    example_input = f'00*{allow_len[0]}'
 
 class Opc(K):
     name = 'OPc'
