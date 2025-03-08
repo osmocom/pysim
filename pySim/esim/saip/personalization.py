@@ -430,7 +430,7 @@ class Iccid(DecimalParam):
     name = 'ICCID'
     min_len = 18
     max_len = 20
-    default_value = '0' * 18
+    default_value = '0*18'
     default_source = param_source.IncDigitSource
 
     @classmethod
@@ -581,7 +581,7 @@ class SdKey(BinaryParam):
 class SdKeyAes(SdKey):
     key_type = KeyType.aes
     allow_len = (16,24,32)
-    default_value = '00' * 32
+    default_value = '00*32'
 
 
 class SdKeyScp80(SdKeyAes):
@@ -873,7 +873,7 @@ class Puk(DecimalHexParam):
     allow_len = 8
     rpad = 16
     keyReference = None
-    default_value = '0' * allow_len
+    default_value = f'0*{allow_len}'
     default_source = param_source.RandomDigitSource
 
     @classmethod
@@ -911,7 +911,7 @@ class Pin(DecimalHexParam):
     rpad = 16
     min_len = 4
     max_len = 8
-    default_value = '0' * max_len
+    default_value = f'0*{max_len}'
     default_source = param_source.RandomDigitSource
     keyReference = None
 
@@ -952,7 +952,7 @@ class Pin(DecimalHexParam):
 class Pin1(Pin):
     is_abstract = False
     name = 'PIN1'
-    default_value = '0' * 4  # PIN are usually 4 digits
+    default_value = '0*4'  # PIN are usually 4 digits
     keyReference = 0x01
 
 class Pin2(Pin1):
@@ -1057,7 +1057,7 @@ class K(BinaryParam, AlgoConfig):
     name = 'K'
     algo_config_key = 'key'
     allow_len = int(128/8) # length in bytes (from BinaryParam)
-    default_value = '00' * allow_len
+    default_value = f'00*{allow_len}'
     default_source = param_source.RandomHexDigitSource
 
 class Opc(K):
