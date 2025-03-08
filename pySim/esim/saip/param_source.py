@@ -31,6 +31,7 @@ class ParamSourceUndefinedExn(ParamSourceExn):
 
 class ParamSource:
     'abstract parameter source. For usage, see personalization.BatchPersonalization.'
+    is_abstract = True
 
     # This name should be short but descriptive, useful for a user interface, like 'random decimal digits'.
     name = 'none'
@@ -41,7 +42,7 @@ class ParamSource:
         # return a set() so that multiple inheritance does not return dups
         return set(c
                    for c in all_subclasses_of(cls)
-                   if ((not blacklist) or (c not in blacklist))
+                   if (not c.is_abstract) and ((not blacklist) or (c not in blacklist))
                   )
 
     @classmethod
@@ -60,6 +61,7 @@ class ParamSource:
 
 class ConstantSource(ParamSource):
     'one value for all'
+    is_abstract = False
     name = 'constant'
 
     def __init__(self, val:str):
@@ -70,6 +72,7 @@ class ConstantSource(ParamSource):
 
 class RandomDigitSource(ParamSource):
     'return a different sequence of random decimal digits each'
+    is_abstract = False
     name = 'random decimal digits'
 
     def __init__(self, num_digits, first_value, last_value):
@@ -111,6 +114,7 @@ class RandomDigitSource(ParamSource):
 
 class RandomHexDigitSource(ParamSource):
     'return a different sequence of random hexadecimal digits each'
+    is_abstract = False
     name = 'random hexadecimal digits'
 
     def __init__(self, num_digits):
@@ -133,6 +137,7 @@ class RandomHexDigitSource(ParamSource):
 
 class IncDigitSource(RandomDigitSource):
     'incrementing sequence of digits'
+    is_abstract = False
     name = 'incrementing decimal digits'
 
     def __init__(self, *args, **kwargs):
@@ -162,6 +167,7 @@ class IncDigitSource(RandomDigitSource):
 
 class CsvSource(ParamSource):
     'apply a column from a CSV row, as passed in to ParamSource.get_next(csv_row)'
+    is_abstract = False
     name = 'from CSV'
 
     def __init__(self, csv_column):
