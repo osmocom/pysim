@@ -1,4 +1,4 @@
-pySim-shell
+﻿pySim-shell
 ===========
 
 pySim-shell is an interactive command line shell for all kind of interactions with SIM cards,
@@ -1004,6 +1004,24 @@ aram_delete_all
 This command will request deletion of all access rules stored within the
 ARA-M applet.  Use it with caution, there is no undo.  Any rules later
 intended must be manually inserted again using :ref:`aram_store_ref_ar_do`
+
+
+aram_lock
+~~~~~~~~~
+This command allows to lock the access to the STORE DATA command. This renders
+all access rules stored within the ARA-M applet effectively read-only. The lock
+can only be removed via a secure channel to the security domain and is therefore
+suitable to prevent unauthorized changes to ARA-M rules.
+
+Removal of the lock:
+::
+
+  pySIM-shell (SCP02[01]:00:MF/ADF.ISD)> install_for_personalization A00000015141434C00
+  pySIM-shell (SCP02[01]:00:MF/ADF.ISD)> apdu --expect-sw 9000 80E2900001A2
+
+NOTE: ARA-M Locking is a proprietary feature that is specific to sysmocom's
+fork of Bertrand Martel's ARA-M implementation. ARA-M Locking is supported in
+newer (2025) applet versions from v0.1.0 onward.
 
 
 GlobalPlatform commands

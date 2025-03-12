@@ -389,6 +389,11 @@ class ADF_ARAM(CardADF):
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
 
+        def do_aram_lock(self, opts):
+            """Lock STORE DATA command to prevent unauthorized changes
+            (Proprietary feature that is specific to sysmocom's fork of Bertrand Martel’s ARA-M implementation.)"""
+            self._cmd.lchan.scc.send_apdu_checksw('80e2900001A1', '9000')
+
 
 # SEAC v1.1 Section 4.1.2.2 + 5.1.2.2
 sw_aram = {
