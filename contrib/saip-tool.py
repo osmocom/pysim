@@ -22,6 +22,7 @@ import logging
 from pathlib import Path as PlPath
 from typing import List
 from osmocom.utils import h2b, b2h, swap_nibbles
+from osmocom.construct import GreedyBytes, StripHeaderAdapter
 
 from pySim.esim.saip import *
 from pySim.esim.saip.validation import CheckBasicStructure
@@ -61,10 +62,44 @@ parser_rn.add_argument('--naa-type', required=True, choices=NAAs.keys(), help='N
 # TODO: add an --naa-index or the like, so only one given instance can be removed
 
 parser_info = subparsers.add_parser('info', help='Display information about the profile')
+parser_info.add_argument('--apps', action='store_true', help='List applications and their related instances')
 
 parser_eapp = subparsers.add_parser('extract-apps', help='Extract applications as loadblock file')
 parser_eapp.add_argument('--output-dir', default='.', help='Output directory (where to store files)')
 parser_eapp.add_argument('--format', default='cap', choices=['ijc', 'cap'], help='Data format of output files')
+
+parser_aapp = subparsers.add_parser('add-app', help='Add application to PE-Sequence')
+parser_aapp.add_argument('--output-file', required=True, help='Output file name')
+parser_aapp.add_argument('--applet-file', required=True, help='Applet file name')
+parser_aapp.add_argument('--aid', required=True, help='Load package AID')
+parser_aapp.add_argument('--sd-aid', default=None, help='Security Domain AID')
+parser_aapp.add_argument('--non-volatile-code-limit', default=None, type=int, help='Non volatile code limit (C6)')
+parser_aapp.add_argument('--volatile-data-limit', default=None, type=int, help='Volatile data limit (C7)')
+parser_aapp.add_argument('--non-volatile-data-limit', default=None, type=int, help='Non volatile data limit (C8)')
+parser_aapp.add_argument('--hash-value', default=None, help='Hash value')
+
+parser_rapp = subparsers.add_parser('remove-app', help='Remove application from PE-Sequence')
+parser_rapp.add_argument('--output-file', required=True, help='Output file name')
+parser_rapp.add_argument('--aid', required=True, help='Load package AID')
+
+parser_aappi = subparsers.add_parser('add-app-inst', help='Add application instance to Application PE')
+parser_aappi.add_argument('--output-file', required=True, help='Output file name')
+parser_aappi.add_argument('--aid', required=True, help='Load package AID')
+parser_aappi.add_argument('--class-aid', required=True, help='Class AID')
+parser_aappi.add_argument('--inst-aid', required=True, help='Instance AID (must match Load package AID)')
+parser_aappi.add_argument('--app-privileges', default='000000', help='Application privileges')
+parser_aappi.add_argument('--volatile-memory-quota', default=None, type=int, help='Volatile memory quota (C7)')
+parser_aappi.add_argument('--non-volatile-memory-quota', default=None, type=int, help='Non volatile memory quota (C8)')
+parser_aappi.add_argument('--app-spec-pars', default='00', help='Application specific parameters (C9)')
+parser_aappi.add_argument('--uicc-toolkit-app-spec-pars', help='UICC toolkit application specific parameters field')
+parser_aappi.add_argument('--uicc-access-app-spec-pars', help='UICC Access application specific parameters field')
+parser_aappi.add_argument('--uicc-adm-access-app-spec-pars', help='UICC Administrative access application specific parameters field')
+parser_aappi.add_argument('--process-data', default=[], action='append', help='Process personalization APDUs')
+
+parser_rappi = subparsers.add_parser('remove-app-inst', help='Remove application instance from Application PE')
+parser_rappi.add_argument('--output-file', required=True, help='Output file name')
+parser_rappi.add_argument('--aid', required=True, help='Load package AID')
+parser_rappi.add_argument('--inst-aid', required=True, help='Instance AID')
 
 parser_info = subparsers.add_parser('tree', help='Display the filesystem tree')
 
@@ -162,6 +197,82 @@ def do_remove_naa(pes: ProfileElementSequence, opts):
     pes.remove_naas_of_type(naa)
     write_pes(pes, opts.output_file)
 
+def info_apps(pes:ProfileElementSequence):
+    def show_member(dictionary:Optional[dict], member:str, indent:str="\t", mandatory:bool = False, limit:bool = False):
+        if dictionary is None:
+            return
+        value = dictionary.get(member, None)
+        if value is None and mandatory == True:
+            print("%s%s: (missing!)" % (indent, member))
+            return
+        elif value is None:
+            return
+
+        if limit and len(value) > 40:
+            print("%s%s: '%s...%s' (%u bytes)" % (indent, member, b2h(value[:20]), b2h(value[-20:]), len(value)))
+        else:
+            print("%s%s: '%s' (%u bytes)" % (indent, member, b2h(value), len(value)))
+
+    apps = pes.pe_by_type.get('application', [])
+    if len(apps) == 0:
+        print("No Application PE present!")
+        return;
+
+    for app_pe in enumerate(apps):
+        print("Application #%u:" % app_pe[0])
+        print("\tloadBlock:")
+        load_block = app_pe[1].decoded['loadBlock']
+        show_member(load_block, 'loadPackageAID', "\t\t", True)
+        show_member(load_block, 'securityDomainAID', "\t\t")
+        show_member(load_block, 'nonVolatileCodeLimitC6', "\t\t")
+        show_member(load_block, 'volatileDataLimitC7', "\t\t")
+        show_member(load_block, 'nonVolatileDataLimitC8', "\t\t")
+        show_member(load_block, 'hashValue', "\t\t")
+        show_member(load_block, 'loadBlockObject', "\t\t", True, True)
+        for inst in enumerate(app_pe[1].decoded.get('instanceList', [])):
+            print("\tinstanceList[%u]:" % inst[0])
+            show_member(inst[1], 'applicationLoadPackageAID', "\t\t", True)
+            if inst[1].get('applicationLoadPackageAID', None) != load_block.get('loadPackageAID', None):
+                print("\t\t(applicationLoadPackageAID should be the same as loadPackageAID!)")
+            show_member(inst[1], 'classAID', "\t\t", True)
+            show_member(inst[1], 'instanceAID', "\t\t", True)
+            show_member(inst[1], 'extraditeSecurityDomainAID', "\t\t")
+            show_member(inst[1], 'applicationPrivileges', "\t\t", True)
+            show_member(inst[1], 'lifeCycleState', "\t\t", True)
+            show_member(inst[1], 'applicationSpecificParametersC9', "\t\t", True)
+            sys_specific_pars = inst[1].get('systemSpecificParameters', None)
+            if sys_specific_pars:
+                print("\t\tsystemSpecificParameters:")
+                show_member(sys_specific_pars, 'volatileMemoryQuotaC7', "\t\t\t")
+                show_member(sys_specific_pars, 'nonVolatileMemoryQuotaC8', "\t\t\t")
+                show_member(sys_specific_pars, 'globalServiceParameters', "\t\t\t")
+                show_member(sys_specific_pars, 'implicitSelectionParameter', "\t\t\t")
+                show_member(sys_specific_pars, 'volatileReservedMemory', "\t\t\t")
+                show_member(sys_specific_pars, 'nonVolatileReservedMemory', "\t\t\t")
+                show_member(sys_specific_pars, 'ts102226SIMFileAccessToolkitParameter', "\t\t\t")
+                additional_cl_pars = inst.get('ts102226AdditionalContactlessParameters', None)
+                if additional_cl_pars:
+                    print("\t\t\tts102226AdditionalContactlessParameters:")
+                    show_member(additional_cl_pars, 'protocolParameterData', "\t\t\t\t")
+                show_member(sys_specific_pars, 'userInteractionContactlessParameters', "\t\t\t")
+                show_member(sys_specific_pars, 'cumulativeGrantedVolatileMemory', "\t\t\t")
+                show_member(sys_specific_pars, 'cumulativeGrantedNonVolatileMemory', "\t\t\t")
+            app_pars = inst[1].get('applicationParameters', None)
+            if app_pars:
+                print("\t\tapplicationParameters:")
+                show_member(app_pars, 'uiccToolkitApplicationSpecificParametersField', "\t\t\t")
+                show_member(app_pars, 'uiccAccessApplicationSpecificParametersField', "\t\t\t")
+                show_member(app_pars, 'uiccAdministrativeAccessApplicationSpecificParametersField', "\t\t\t")
+            ctrl_ref_tp = inst[1].get('controlReferenceTemplate', None)
+            if ctrl_ref_tp:
+                print("\t\tcontrolReferenceTemplate:")
+                show_member(ctrl_ref_tp, 'applicationProviderIdentifier', "\t\t\t", True)
+            process_data = inst[1].get('processData', None)
+            if process_data:
+                print("\t\tprocessData:")
+                for proc in process_data:
+                    print("\t\t\t" + b2h(proc))
+
 def do_info(pes: ProfileElementSequence, opts):
     def get_naa_count(pes: ProfileElementSequence) -> dict:
         """return a dict with naa-type (usim, isim) as key and the count of NAA instances as value."""
@@ -169,6 +280,10 @@ def do_info(pes: ProfileElementSequence, opts):
         for naa_type in pes.pes_by_naa:
             ret[naa_type] = len(pes.pes_by_naa[naa_type])
         return ret
+
+    if opts.apps:
+        info_apps(pes)
+        return;
 
     pe_hdr_dec = pes.pe_by_type['header'][0].decoded
     print()
@@ -233,6 +348,76 @@ def do_extract_apps(pes:ProfileElementSequence, opts):
         print("Writing Load Package AID: %s to file %s" % (package_aid, fname))
         app_pe.to_file(fname)
 
+def do_add_app(pes:ProfileElementSequence, opts):
+    print("Applying applet file: '%s'..." % opts.applet_file)
+    app_pe = ProfileElementApplication.from_file(opts.applet_file,
+                                                 opts.aid,
+                                                 opts.sd_aid,
+                                                 opts.non_volatile_code_limit,
+                                                 opts.volatile_data_limit,
+                                                 opts.non_volatile_data_limit,
+                                                 opts.hash_value)
+
+    security_domain = pes.pe_by_type.get('securityDomain', [])
+    if len(security_domain) == 0:
+        print("profile package does not contain a securityDomain, please add a securityDomain PE first!")
+    elif len(security_domain) > 1:
+        print("adding an application PE to profiles with multiple securityDomain is not supported yet!")
+    else:
+        pes.insert_after_pe(security_domain[0], app_pe)
+        print("application PE inserted into PE Sequence after securityDomain PE AID: %s" %
+              b2h(security_domain[0].decoded['instance']['instanceAID']))
+        write_pes(pes, opts.output_file)
+
+def do_remove_app(pes:ProfileElementSequence, opts):
+    apps = pes.pe_by_type.get('application', [])
+    for app_pe in apps:
+        package_aid = b2h(app_pe.decoded['loadBlock']['loadPackageAID'])
+        if opts.aid == package_aid:
+            identification = app_pe.identification
+            opts_remove_pe = argparse.Namespace()
+            opts_remove_pe.identification = [app_pe.identification]
+            opts_remove_pe.type = []
+            opts_remove_pe.output_file = opts.output_file
+            print("Found Load Package AID: %s, removing related PE (id=%u) from Sequence..." %
+                  (package_aid, identification))
+            do_remove_pe(pes, opts_remove_pe)
+            return
+    print("Load Package AID: %s not found in PE Sequence" % opts.aid)
+
+def do_add_app_inst(pes:ProfileElementSequence, opts):
+    apps = pes.pe_by_type.get('application', [])
+    for app_pe in apps:
+        package_aid = b2h(app_pe.decoded['loadBlock']['loadPackageAID'])
+        if opts.aid == package_aid:
+            print("Found Load Package AID: %s, adding new instance AID: %s to Application PE..." %
+                  (opts.aid, opts.inst_aid))
+            app_pe.add_instance(opts.aid,
+                                opts.class_aid,
+                                opts.inst_aid,
+                                opts.app_privileges,
+                                opts.app_spec_pars,
+                                opts.uicc_toolkit_app_spec_pars,
+                                opts.uicc_access_app_spec_pars,
+                                opts.uicc_adm_access_app_spec_pars,
+                                opts.volatile_memory_quota,
+                                opts.non_volatile_memory_quota,
+                                opts.process_data)
+            write_pes(pes, opts.output_file)
+            return
+    print("Load Package AID: %s not found in PE Sequence" % opts.aid)
+
+def do_remove_app_inst(pes:ProfileElementSequence, opts):
+    apps = pes.pe_by_type.get('application', [])
+    for app_pe in apps:
+        if opts.aid == b2h(app_pe.decoded['loadBlock']['loadPackageAID']):
+            print("Found Load Package AID: %s, removing instance AID: %s from Application PE..." %
+                  (opts.aid, opts.inst_aid))
+            app_pe.remove_instance(opts.inst_aid)
+            write_pes(pes, opts.output_file)
+            return
+    print("Load Package AID: %s not found in PE Sequence" % opts.aid)
+
 def do_tree(pes:ProfileElementSequence, opts):
     pes.mf.print_tree()
 
@@ -265,5 +450,13 @@ if __name__ == '__main__':
         do_info(pes, opts)
     elif opts.command == 'extract-apps':
         do_extract_apps(pes, opts)
+    elif opts.command == 'add-app':
+        do_add_app(pes, opts)
+    elif opts.command == 'remove-app':
+        do_remove_app(pes, opts)
+    elif opts.command == 'add-app-inst':
+        do_add_app_inst(pes, opts)
+    elif opts.command == 'remove-app-inst':
+        do_remove_app_inst(pes, opts)
     elif opts.command == 'tree':
         do_tree(pes, opts)
