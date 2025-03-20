@@ -22,9 +22,11 @@ import os
 from typing import Tuple, List, Optional, Dict, Union
 from collections import OrderedDict
 import asn1tools
+import zipfile
+from pySim import javacard
 from osmocom.utils import b2h, h2b, Hexstr
 from osmocom.tlv import BER_TLV_IE, bertlv_parse_tag, bertlv_parse_len
-from osmocom.construct import build_construct, parse_construct, GreedyInteger
+from osmocom.construct import build_construct, parse_construct, GreedyInteger, GreedyBytes, StripHeaderAdapter
 
 from pySim import ts_102_222
 from pySim.utils import dec_imsi
@@ -37,6 +39,7 @@ from pySim.esim.saip import templates
 from pySim.esim.saip import oid
 from pySim.global_platform import KeyType, KeyUsageQualifier
 from pySim.global_platform.uicc import UiccSdInstallParams
+from pySim.javacard import CapFile
 
 asn1 = compile_asn1_subdir('saip')
 
@@ -506,7 +509,7 @@ class ProfileElement:
             # TODO: cdmaParameter
             'securityDomain': ProfileElementSD,
             'rfm': ProfileElementRFM,
-            # TODO: application
+            'application': ProfileElementApplication,
             # TODO: nonStandard
             'end': ProfileElementEnd,
             'mf': ProfileElementMF,
@@ -1086,6 +1089,71 @@ class ProfileElementSSD(ProfileElementSD):
                 # TAR: 6C7565, MSL: 12
                 'uiccToolkitApplicationSpecificParametersField': h2b('01000001000000020112036C756500'),
             }
+
+class ProfileElementApplication(ProfileElement):
+    """Class representing an application ProfileElement."""
+    type = 'application'
+
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
+
+    @classmethod
+    def from_file(cls,
+                  filename:str,
+                  aid:Hexstr,
+                  sd_aid:Hexstr = None,
+                  non_volatile_code_limit:int = None,
+                  volatile_data_limit:int = None,
+                  non_volatile_data_limit:int = None,
+                  hash_value:Hexstr = None) -> 'ProfileElementApplication':
+        """Fill contents of application ProfileElement from a .cap file."""
+
+        inst = cls()
+        Construct_data_limit = StripHeaderAdapter(GreedyBytes, 4, steps = [2,4])
+
+        if filename.lower().endswith('.cap'):
+            cap = CapFile(filename)
+            load_block_object = cap.get_loadfile()
+        elif filename.lower().endswith('.ijc'):
+            fd = open(filename, 'rb')
+            load_block_object = fd.read()
+        else:
+            raise ValueError('Invalid file type, file must either .cap or .ijc')
+
+        # Mandatory
+        inst.decoded['loadBlock'] = {
+            'loadPackageAID': h2b(aid),
+            'loadBlockObject': load_block_object
+        }
+
+        # Optional
+        if sd_aid:
+            inst.decoded['loadBlock']['securityDomainAID'] = h2b(sd_aid)
+        if non_volatile_code_limit:
+            inst.decoded['loadBlock']['nonVolatileCodeLimitC6'] = Construct_data_limit.build(non_volatile_code_limit)
+        if volatile_data_limit:
+            inst.decoded['loadBlock']['volatileDataLimitC7'] = Construct_data_limit.build(volatile_data_limit)
+        if non_volatile_data_limit:
+            inst.decoded['loadBlock']['nonVolatileDataLimitC8'] = Construct_data_limit.build(non_volatile_data_limit)
+        if hash_value:
+            inst.decoded['loadBlock']['hashValue'] = h2b(hash_value)
+
+        return inst
+
+    def to_file(self, filename:str):
+        """Write loadBlockObject contents of application ProfileElement to a .cap or .ijc file."""
+
+        load_package_aid = b2h(self.decoded['loadBlock']['loadPackageAID'])
+        load_block_object = self.decoded['loadBlock']['loadBlockObject']
+
+        if filename.lower().endswith('.cap'):
+            with io.BytesIO(load_block_object) as f, zipfile.ZipFile(filename, 'w') as z:
+                javacard.ijc_to_cap(f, z, load_package_aid)
+        elif filename.lower().endswith('.ijc'):
+            with open(filename, 'wb') as f:
+                f.write(load_block_object)
+        else:
+            raise ValueError('Invalid file type, file must either .cap or .ijc')
 
 class ProfileElementRFM(ProfileElement):
     type = 'rfm'
