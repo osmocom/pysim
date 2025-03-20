@@ -26,7 +26,7 @@ import zipfile
 from pySim import javacard
 from osmocom.utils import b2h, h2b, Hexstr
 from osmocom.tlv import BER_TLV_IE, bertlv_parse_tag, bertlv_parse_len
-from osmocom.construct import build_construct, parse_construct, GreedyInteger
+from osmocom.construct import build_construct, parse_construct, GreedyInteger, GreedyBytes, StripHeaderAdapter
 
 from pySim import ts_102_222
 from pySim.utils import dec_imsi
@@ -1096,6 +1096,49 @@ class ProfileElementApplication(ProfileElement):
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
         super().__init__(decoded, **kwargs)
 
+    @classmethod
+    def from_file(cls,
+                  filename:str,
+                  aid:Hexstr,
+                  sd_aid:Hexstr = None,
+                  non_volatile_code_limit:int = None,
+                  volatile_data_limit:int = None,
+                  non_volatile_data_limit:int = None,
+                  hash_value:Hexstr = None) -> 'ProfileElementApplication':
+        """Fill contents of application ProfileElement from a .cap file."""
+
+        inst = cls()
+        Construct_data_limit = StripHeaderAdapter(GreedyBytes, 4, steps = [2,4])
+
+        if filename.lower().endswith('.cap'):
+            cap = javacard.CapFile(filename)
+            load_block_object = cap.get_loadfile()
+        elif filename.lower().endswith('.ijc'):
+            fd = open(filename, 'rb')
+            load_block_object = fd.read()
+        else:
+            raise ValueError('Invalid file type, file must either .cap or .ijc')
+
+        # Mandatory
+        inst.decoded['loadBlock'] = {
+            'loadPackageAID': h2b(aid),
+            'loadBlockObject': load_block_object
+        }
+
+        # Optional
+        if sd_aid:
+            inst.decoded['loadBlock']['securityDomainAID'] = h2b(sd_aid)
+        if non_volatile_code_limit:
+            inst.decoded['loadBlock']['nonVolatileCodeLimitC6'] = Construct_data_limit.build(non_volatile_code_limit)
+        if volatile_data_limit:
+            inst.decoded['loadBlock']['volatileDataLimitC7'] = Construct_data_limit.build(volatile_data_limit)
+        if non_volatile_data_limit:
+            inst.decoded['loadBlock']['nonVolatileDataLimitC8'] = Construct_data_limit.build(non_volatile_data_limit)
+        if hash_value:
+            inst.decoded['loadBlock']['hashValue'] = h2b(hash_value)
+
+        return inst
+
     def to_file(self, filename:str):
         """Write loadBlockObject contents of application ProfileElement to a .cap or .ijc file."""
 
@@ -1110,6 +1153,69 @@ class ProfileElementApplication(ProfileElement):
                 f.write(load_block_object)
         else:
             raise ValueError('Invalid file type, file must either .cap or .ijc')
+
+    def add_instance(self,
+                     aid:Hexstr,
+                     class_aid:Hexstr,
+                     inst_aid:Hexstr,
+                     app_privileges:Hexstr,
+                     app_spec_pars:Hexstr,
+                     uicc_toolkit_app_spec_pars:Hexstr = None,
+                     uicc_access_app_spec_pars:Hexstr = None,
+                     uicc_adm_access_app_spec_pars:Hexstr = None,
+                     volatile_memory_quota:Hexstr = None,
+                     non_volatile_memory_quota:Hexstr = None,
+                     process_data:list[Hexstr] = None):
+        """Create a new instance and add it to the instanceList"""
+
+        # Mandatory
+        inst = {'applicationLoadPackageAID': h2b(aid),
+                'classAID': h2b(class_aid),
+                'instanceAID': h2b(inst_aid),
+                'applicationPrivileges': h2b(app_privileges),
+                'applicationSpecificParametersC9': h2b(app_spec_pars)}
+
+        # Optional
+        if uicc_toolkit_app_spec_pars or uicc_access_app_spec_pars or uicc_adm_access_app_spec_pars:
+            inst['applicationParameters'] = {}
+            if uicc_toolkit_app_spec_pars:
+                inst['applicationParameters']['uiccToolkitApplicationSpecificParametersField'] = \
+                    h2b(uicc_toolkit_app_spec_pars)
+            if uicc_access_app_spec_pars:
+                inst['applicationParameters']['uiccAccessApplicationSpecificParametersField'] = \
+                    h2b(uicc_access_app_spec_pars)
+            if uicc_adm_access_app_spec_pars:
+                inst['applicationParameters']['uiccAdministrativeAccessApplicationSpecificParametersField'] = \
+                    h2b(uicc_adm_access_app_spec_pars)
+        if volatile_memory_quota is not None or non_volatile_memory_quota is not None:
+            inst['systemSpecificParameters'] = {}
+            Construct_data_limit = StripHeaderAdapter(GreedyBytes, 4, steps = [2,4])
+            if volatile_memory_quota is not None:
+                inst['systemSpecificParameters']['volatileMemoryQuotaC7'] = \
+                    Construct_data_limit.build(volatile_memory_quota)
+            if non_volatile_memory_quota is not None:
+                inst['systemSpecificParameters']['nonVolatileMemoryQuotaC8'] = \
+                    Construct_data_limit.build(non_volatile_memory_quota)
+        if len(process_data) > 0:
+            inst['processData'] = []
+        for proc in process_data:
+            inst['processData'].append(h2b(proc))
+
+        # Append created instance to instance list
+        if 'instanceList' not in self.decoded.keys():
+            self.decoded['instanceList'] = []
+        self.decoded['instanceList'].append(inst)
+
+    def remove_instance(self, inst_aid:Hexstr):
+        """Remove an instance from the instanceList"""
+        inst_list = self.decoded.get('instanceList', [])
+        for inst in enumerate(inst_list):
+            if b2h(inst[1].get('instanceAID', None)) == inst_aid:
+                inst_list.pop(inst[0])
+                return
+        raise ValueError("instance AID: '%s' not present in instanceList, cannot remove instance" % inst[1])
+
+
 
 class ProfileElementRFM(ProfileElement):
     type = 'rfm'
