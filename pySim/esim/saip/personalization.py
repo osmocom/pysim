@@ -223,26 +223,24 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
     @classmethod
     @abc.abstractmethod
     def get_values_from_pes(cls, pes: ProfileElementSequence) -> Generator:
-        '''This is what subclasses implement: yield all values from a decoded profile package.
+        """This is what subclasses implement: yield all values from a decoded profile package.
            Find all values in the pes, and yield them decoded to a valid cls.input_value format.
            Should be a generator function, i.e. use 'yield' instead of 'return'.
 
-           Usage example:
+           Yielded value must be a dict(). Usually, an implementation will return only one key, like
 
-             cls = esim.saip.personalization.Iccid
-             # use a set() to get a list of unique values from all results
-             vals = set( cls.get_values_from_pes(pes) )
-             if len(vals) != 1:
-                 raise ValueError(f'{cls.name}: need exactly one value, got {vals}')
-             # the set contains a single value, return it
-             return vals.pop()
+              { "ICCID": "1234567890123456789" }
+
+           Some implementations have more than one value to return, like
+
+              { "IMSI": "00101012345678", "IMSI-ACC" : "5" }
 
            Implementation example:
 
              for pe in pes:
                 if my_condition(pe):
-                    yield b2h(my_bin_value_from(pe))
-           '''
+                    yield { cls.name: b2h(my_bin_value_from(pe)) }
+           """
         pass
 
     @classmethod
@@ -391,12 +389,12 @@ class Iccid(DecimalParam):
     def get_values_from_pes(cls, pes: ProfileElementSequence):
         padded = b2h(pes.get_pe_for_type('header').decoded['iccid'])
         iccid = unrpad(padded)
-        yield iccid
+        yield { cls.name: iccid }
 
         for pe in pes.get_pes_for_type('mf'):
             iccid_f = pe.files.get('ef-iccid', None)
             if iccid_f is not None:
-                yield dec_iccid(b2h(iccid_f.body))
+                yield { cls.name: dec_iccid(b2h(iccid_f.body)) }
 
 class Imsi(DecimalParam):
     """Configurable IMSI. Expects value to be a string of digits. Automatically sets the ACC to
@@ -423,8 +421,12 @@ class Imsi(DecimalParam):
         for pe in pes.get_pes_for_type('usim'):
             imsi_f = pe.files.get('ef-imsi', None)
             acc_f = pe.files.get('ef-acc', None)
+            y = {}
             if imsi_f:
-                yield dec_imsi(b2h(imsi_f.body))
+                y[cls.name] = dec_imsi(b2h(imsi_f.body))
+            if acc_f:
+                y[cls.name + '-ACC'] = b2h(acc_f.body)
+            yield y
 
 class SmspTpScAddr(ConfigurableParameter):
     """Configurable SMSC (SMS Service Centre) TP-SC-ADDR. Expects to be a phone number in national or
@@ -546,7 +548,7 @@ class SdKey(BinaryParam, metaclass=ClassVarMeta):
             for key in pe.decoded['keyList']:
                 if key['keyIdentifier'][0] == cls.key_id and key['keyVersionNumber'][0] == cls.kvn:
                     if len(key['keyComponents']) >= 1:
-                        yield b2h(key['keyComponents'][0]['keyData'])
+                        yield { cls.name: b2h(key['keyComponents'][0]['keyData']) }
 
 class SdKeyScp80_01(SdKey, kvn=0x01, key_type=0x88, permitted_len=[16,24,32]): # AES key type
     pass
@@ -640,7 +642,7 @@ class Puk(DecimalHexParam):
         for pukCodes in obtain_all_pe_from_pelist(mf_pes, 'pukCodes'):
             for pukCode in pukCodes.decoded['pukCodes']:
                 if pukCode['keyReference'] == cls.keyReference:
-                    yield cls.decimal_hex_to_str(pukCode['pukValue'])
+                    yield { cls.name: cls.decimal_hex_to_str(pukCode['pukValue']) }
 
 class Puk1(Puk):
     name = 'PUK1'
@@ -679,13 +681,14 @@ class Pin(DecimalHexParam):
 
     @classmethod
     def _read_all_pinvalues_from_pe(cls, pe: ProfileElement):
+        "This is a separate function because subclasses may feed different pe arguments."
         for pinCodes in obtain_all_pe_from_pelist(pe, 'pinCodes'):
             if pinCodes.decoded['pinCodes'][0] != 'pinconfig':
                 continue
 
             for pinCode in pinCodes.decoded['pinCodes'][1]:
                 if pinCode['keyReference'] == cls.keyReference:
-                     yield cls.decimal_hex_to_str(pinCode['pinValue'])
+                     yield { cls.name: cls.decimal_hex_to_str(pinCode['pinValue']) }
 
     @classmethod
     def get_values_from_pes(cls, pes: ProfileElementSequence):
@@ -757,7 +760,10 @@ class AlgoConfig(ConfigurableParameter):
             val = algoConfiguration[1].get(cls.algo_config_key, None)
             if val is None:
                 continue
-            yield algoConfiguration[1][cls.algo_config_key]
+            if isinstance(val, bytes):
+                val = b2h(val)
+            # if it is an int (algorithmID), just pass thru as int
+            yield { cls.name: val }
 
 
 class AlgorithmID(DecimalParam, AlgoConfig):
