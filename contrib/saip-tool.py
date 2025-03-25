@@ -48,6 +48,10 @@ parser_dump.add_argument('--dump-decoded', action='store_true', help='Dump decod
 
 parser_check = subparsers.add_parser('check', help='Run constraint checkers on PE-Sequence')
 
+parser_rpe = subparsers.add_parser('extract-pe', help='Extract specified PE to (DER encoded) file')
+parser_rpe.add_argument('--pe-file', required=True, help='PE file name')
+parser_rpe.add_argument('--identification', type=int, help='Extract PE matching specified identification')
+
 parser_rpe = subparsers.add_parser('remove-pe', help='Remove specified PEs from PE-Sequence')
 parser_rpe.add_argument('--output-file', required=True, help='Output file name')
 parser_rpe.add_argument('--identification', type=int, action='append', help='Remove PEs matching specified identification')
@@ -125,6 +129,14 @@ def do_check(pes: ProfileElementSequence, opts):
     checker = CheckBasicStructure()
     checker.check(pes)
     print("All good!")
+
+def do_extract_pe(pes: ProfileElementSequence, opts):
+    new_pe_list = []
+    for pe in pes.pe_list:
+        if pe.identification == opts.identification:
+            print("Extracting PE %s (id=%u) to file %s..." % (pe, pe.identification, opts.pe_file))
+            with open(opts.pe_file, 'wb') as f:
+                f.write(pe.to_der())
 
 def do_remove_pe(pes: ProfileElementSequence, opts):
     new_pe_list = []
@@ -248,6 +260,8 @@ if __name__ == '__main__':
         do_dump(pes, opts)
     elif opts.command == 'check':
         do_check(pes, opts)
+    elif opts.command == 'extract-pe':
+        do_extract_pe(pes, opts)
     elif opts.command == 'remove-pe':
         do_remove_pe(pes, opts)
     elif opts.command == 'remove-naa':
