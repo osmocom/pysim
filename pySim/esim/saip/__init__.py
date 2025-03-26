@@ -1349,6 +1349,13 @@ class ProfileElementHeader(ProfileElement):
         if profile_type:
             self.decoded['profileType'] = profile_type
 
+    def mandatory_service_add(self, service_name):
+        self.decoded['eUICC-Mandatory-services'][service_name] = None
+
+    def mandatory_service_remove(self, service_name):
+        if service_name in self.decoded['eUICC-Mandatory-services'].keys():
+            del self.decoded['eUICC-Mandatory-services'][service_name]
+
 class ProfileElementEnd(ProfileElement):
     type = 'end'
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
