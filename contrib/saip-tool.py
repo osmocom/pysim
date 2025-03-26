@@ -54,7 +54,8 @@ parser_rpe.add_argument('--identification', type=int, help='Extract PE matching 
 
 parser_rpe = subparsers.add_parser('remove-pe', help='Remove specified PEs from PE-Sequence')
 parser_rpe.add_argument('--output-file', required=True, help='Output file name')
-parser_rpe.add_argument('--identification', type=int, action='append', help='Remove PEs matching specified identification')
+parser_rpe.add_argument('--identification', default=[], type=int, action='append', help='Remove PEs matching specified identification')
+parser_rpe.add_argument('--type', default=[], action='append', help='Remove PEs matching specified type')
 
 parser_rn = subparsers.add_parser('remove-naa', help='Remove speciifed NAAs from PE-Sequence')
 parser_rn.add_argument('--output-file', required=True, help='Output file name')
@@ -146,6 +147,9 @@ def do_remove_pe(pes: ProfileElementSequence, opts):
             if identification in opts.identification:
                 print("Removing PE %s (id=%u) from Sequence..." % (pe, identification))
                 continue
+        if pe.type in opts.type:
+            print("Removing PE %s (type=%s) from Sequence..." % (pe, pe.type))
+            continue
         new_pe_list.append(pe)
 
     pes.pe_list = new_pe_list
