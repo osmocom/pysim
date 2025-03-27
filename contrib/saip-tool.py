@@ -65,6 +65,12 @@ parser_eapp.add_argument('--format', default='cap', choices=['ijc', 'cap'], help
 
 parser_info = subparsers.add_parser('tree', help='Display the filesystem tree')
 
+def write_pes(pes: ProfileElementSequence, output_file:str):
+    """write the PE sequence to a file"""
+    print("Writing %u PEs to file '%s'..." % (len(pes.pe_list), output_file))
+    with open(output_file, 'wb') as f:
+        f.write(pes.to_der())
+
 def do_split(pes: ProfileElementSequence, opts):
     i = 0
     for pe in pes.pe_list:
@@ -132,9 +138,7 @@ def do_remove_pe(pes: ProfileElementSequence, opts):
 
     pes.pe_list = new_pe_list
     pes._process_pelist()
-    print("Writing %u PEs to file '%s'..." % (len(pes.pe_list), opts.output_file))
-    with open(opts.output_file, 'wb') as f:
-        f.write(pes.to_der())
+    write_pes(pes, opts.output_file)
 
 def do_remove_naa(pes: ProfileElementSequence, opts):
     if not opts.naa_type in NAAs:
@@ -142,9 +146,7 @@ def do_remove_naa(pes: ProfileElementSequence, opts):
     naa = NAAs[opts.naa_type]
     print("Removing NAAs of type '%s' from Sequence..." % opts.naa_type)
     pes.remove_naas_of_type(naa)
-    print("Writing %u PEs to file '%s'..." % (len(pes.pe_list), opts.output_file))
-    with open(opts.output_file, 'wb') as f:
-        f.write(pes.to_der())
+    write_pes(pes, opts.output_file)
 
 def do_info(pes: ProfileElementSequence, opts):
     def get_naa_count(pes: ProfileElementSequence) -> dict:
