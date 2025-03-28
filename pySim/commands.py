@@ -735,7 +735,7 @@ class SimCardCommands:
         Args:
                 payload : payload as hex string
         """
-        return self.send_apdu_checksw('80c20000%02x%s' % (len(payload)//2, payload), apply_lchan = False)
+        return self.send_apdu_checksw('80c20000%02x%s' % (len(payload)//2, payload) + "00", apply_lchan = False)
 
     def terminal_profile(self, payload: Hexstr) -> ResTuple:
         """Send TERMINAL PROFILE to card
