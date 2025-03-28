@@ -164,8 +164,8 @@ class LinkBase(abc.ABC):
         if self.apdu_tracer:
             self.apdu_tracer.trace_response(apdu, sw, data)
 
-        # The APDU case (See aso ISO/IEC 7816-3, table 12) dictates if we should receive a response or not. If we
-        # receive a response in an APDU case that does not allow the reception of a respnse we print a warning to
+        # The APDU case (See also ISO/IEC 7816-3, table 12) dictates if we should receive a response or not. If we
+        # receive a response in an APDU case that does not allow the reception of a response we print a warning to
         # make the user/caller aware of the problem. Since the transaction is over at this point and data was received
         # we count it as a successful transaction anyway, even though the spec was violated. The problem is most likely
         # caused by a missing Le field in the APDU. This is an error that the caller/user should correct to avoid
