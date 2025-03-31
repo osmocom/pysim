@@ -22,6 +22,8 @@ import os
 from typing import Tuple, List, Optional, Dict, Union
 from collections import OrderedDict
 import asn1tools
+import zipfile
+from pySim import javacard
 from osmocom.utils import b2h, h2b, Hexstr
 from osmocom.tlv import BER_TLV_IE, bertlv_parse_tag, bertlv_parse_len
 from osmocom.construct import build_construct, parse_construct, GreedyInteger
@@ -506,7 +508,7 @@ class ProfileElement:
             # TODO: cdmaParameter
             'securityDomain': ProfileElementSD,
             'rfm': ProfileElementRFM,
-            # TODO: application
+            'application': ProfileElementApplication,
             # TODO: nonStandard
             'end': ProfileElementEnd,
             'mf': ProfileElementMF,
@@ -1086,6 +1088,28 @@ class ProfileElementSSD(ProfileElementSD):
                 # TAR: 6C7565, MSL: 12
                 'uiccToolkitApplicationSpecificParametersField': h2b('01000001000000020112036C756500'),
             }
+
+class ProfileElementApplication(ProfileElement):
+    """Class representing an application ProfileElement."""
+    type = 'application'
+
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
+
+    def to_file(self, filename:str):
+        """Write loadBlockObject contents of application ProfileElement to a .cap or .ijc file."""
+
+        load_package_aid = b2h(self.decoded['loadBlock']['loadPackageAID'])
+        load_block_object = self.decoded['loadBlock']['loadBlockObject']
+
+        if filename.lower().endswith('.cap'):
+            with io.BytesIO(load_block_object) as f, zipfile.ZipFile(filename, 'w') as z:
+                javacard.ijc_to_cap(f, z, load_package_aid)
+        elif filename.lower().endswith('.ijc'):
+            with open(filename, 'wb') as f:
+                f.write(load_block_object)
+        else:
+            raise ValueError('Invalid file type, file must either .cap or .ijc')
 
 class ProfileElementRFM(ProfileElement):
     type = 'rfm'

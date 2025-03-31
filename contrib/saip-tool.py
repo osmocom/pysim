@@ -19,14 +19,12 @@ import os
 import sys
 import argparse
 import logging
-import zipfile
 from pathlib import Path as PlPath
 from typing import List
 from osmocom.utils import h2b, b2h, swap_nibbles
 
 from pySim.esim.saip import *
 from pySim.esim.saip.validation import CheckBasicStructure
-from pySim import javacard
 from pySim.pprint import HexBytesPrettyPrinter
 
 pp = HexBytesPrettyPrinter(indent=4,width=500)
@@ -231,16 +229,9 @@ def do_extract_apps(pes:ProfileElementSequence, opts):
     apps = pes.pe_by_type.get('application', [])
     for app_pe in apps:
         package_aid = b2h(app_pe.decoded['loadBlock']['loadPackageAID'])
-
         fname = os.path.join(opts.output_dir, '%s-%s.%s' % (pes.iccid, package_aid, opts.format))
-        load_block_obj = app_pe.decoded['loadBlock']['loadBlockObject']
         print("Writing Load Package AID: %s to file %s" % (package_aid, fname))
-        if opts.format == 'ijc':
-            with open(fname, 'wb') as f:
-                f.write(load_block_obj)
-        else:
-            with io.BytesIO(load_block_obj) as f, zipfile.ZipFile(fname, 'w') as z:
-                javacard.ijc_to_cap(f, z, package_aid)
+        app_pe.to_file(fname)
 
 def do_tree(pes:ProfileElementSequence, opts):
     pes.mf.print_tree()
