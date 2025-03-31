@@ -101,6 +101,12 @@ parser_rappi.add_argument('--output-file', required=True, help='Output file name
 parser_rappi.add_argument('--aid', required=True, help='Load package AID')
 parser_rappi.add_argument('--inst-aid', required=True, help='Instance AID')
 
+esrv_flag_choices = [t.name for t in asn1.types['ServicesList'].type.root_members]
+parser_esrv = subparsers.add_parser('edit-mand-srv-list', help='Add/Remove service flag from/to mandatory services list')
+parser_esrv.add_argument('--output-file', required=True, help='Output file name')
+parser_esrv.add_argument('--add-flag', default=[], choices=esrv_flag_choices, action='append', help='Add flag to mandatory services list')
+parser_esrv.add_argument('--remove-flag', default=[], choices=esrv_flag_choices, action='append', help='Remove flag from mandatory services list')
+
 parser_info = subparsers.add_parser('tree', help='Display the filesystem tree')
 
 def write_pes(pes: ProfileElementSequence, output_file:str):
@@ -418,6 +424,25 @@ def do_remove_app_inst(pes:ProfileElementSequence, opts):
             return
     print("Load Package AID: %s not found in PE Sequence" % opts.aid)
 
+def do_edit_mand_srv_list(pes: ProfileElementSequence, opts):
+    header = pes.pe_by_type.get('header', [])[0]
+
+    for s in opts.add_flag:
+        print("Adding service '%s' to mandatory services list..." % s)
+        header.mandatory_service_add(s)
+    for s in opts.remove_flag:
+        if s in header.decoded['eUICC-Mandatory-services'].keys():
+            print("Removing service '%s' from mandatory services list..." % s)
+            header.mandatory_service_remove(s)
+        else:
+            print("Service '%s' not present in mandatory services list, cannot remove!" % s)
+
+    print("The following services are now set mandatory:")
+    for s in header.decoded['eUICC-Mandatory-services'].keys():
+        print("\t%s" % s)
+
+    write_pes(pes, opts.output_file)
+
 def do_tree(pes:ProfileElementSequence, opts):
     pes.mf.print_tree()
 
@@ -458,5 +483,7 @@ if __name__ == '__main__':
         do_add_app_inst(pes, opts)
     elif opts.command == 'remove-app-inst':
         do_remove_app_inst(pes, opts)
+    elif opts.command == 'edit-mand-srv-list':
+        do_edit_mand_srv_list(pes, opts)
     elif opts.command == 'tree':
         do_tree(pes, opts)
