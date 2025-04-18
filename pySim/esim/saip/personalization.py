@@ -175,8 +175,7 @@ class ConfigurableParameter:
 
     @classmethod
     def validate_val(cls, val):
-        """This function is a default implementation, with the behavior configured by subclasses' allow_types...max_len
-        settings.
+        """This is a default implementation, with the behavior configured by subclasses' allow_types...max_len settings.
         subclasses may override this function:
         Validate the contents of val, and raise ValueError on validation errors.
         Return a sanitized version of val, that is ready for cls.apply_val().
