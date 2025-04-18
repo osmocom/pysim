@@ -574,252 +574,252 @@ class SdKeyAes(SdKey):
 
 
 class SdKeyScp80Kvn01(SdKeyAes):
-    name = 'SCP80kvn01'
+    name = 'SCP80 01'
     kvn = 0x01
 class SdKeyScp80Kvn01Enc(SdKeyScp80Kvn01):
     is_abstract = False
-    name = SdKeyScp80Kvn01.name + 'ENC'
+    name = SdKeyScp80Kvn01.name + ' ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 class SdKeyScp80Kvn01Mac(SdKeyScp80Kvn01):
     is_abstract = False
-    name = SdKeyScp80Kvn01.name + 'MAC'
+    name = SdKeyScp80Kvn01.name + ' MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 class SdKeyScp80Kvn01Dek(SdKeyScp80Kvn01):
     is_abstract = False
-    name = SdKeyScp80Kvn01.name + 'DEK'
+    name = SdKeyScp80Kvn01.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 class SdKeyScp80Kvn02(SdKeyAes):
-    name = 'SCP80kvn02'
+    name = 'SCP80 02'
     kvn = 0x02
 class SdKeyScp80Kvn02Enc(SdKeyScp80Kvn02):
     is_abstract = False
-    name = SdKeyScp80Kvn02.name + 'ENC'
+    name = SdKeyScp80Kvn02.name + ' ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 class SdKeyScp80Kvn02Mac(SdKeyScp80Kvn02):
     is_abstract = False
-    name = SdKeyScp80Kvn02.name + 'MAC'
+    name = SdKeyScp80Kvn02.name + ' MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 class SdKeyScp80Kvn02Dek(SdKeyScp80Kvn02):
     is_abstract = False
-    name = SdKeyScp80Kvn02.name + 'DEK'
+    name = SdKeyScp80Kvn02.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 class SdKeyScp80Kvn03(SdKeyAes):
-    name = 'SCP80kvn03'
+    name = 'SCP80 03'
     kvn = 0x03
 class SdKeyScp80Kvn03Enc(SdKeyScp80Kvn03):
     is_abstract = False
-    name = SdKeyScp80Kvn03.name + 'ENC'
+    name = SdKeyScp80Kvn03.name + ' ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 class SdKeyScp80Kvn03Mac(SdKeyScp80Kvn03):
     is_abstract = False
-    name = SdKeyScp80Kvn03.name + 'MAC'
+    name = SdKeyScp80Kvn03.name + ' MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 class SdKeyScp80Kvn03Dek(SdKeyScp80Kvn03):
     is_abstract = False
-    name = SdKeyScp80Kvn03.name + 'DEK'
+    name = SdKeyScp80Kvn03.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 
 class SdKeyScp81Kvn81(SdKeyAes):
-    name = 'SCP81kvn81'
+    name = 'SCP81 81'
     kvn = 0x81
 class SdKeyScp81Kvn81Enc(SdKeyScp81Kvn81):
     is_abstract = False
-    name = SdKeyScp81Kvn81.name + 'ENC'
+    name = SdKeyScp81Kvn81.name + ' ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 class SdKeyScp81Kvn81Mac(SdKeyScp81Kvn81):
     is_abstract = False
-    name = SdKeyScp81Kvn81.name + 'MAC'
+    name = SdKeyScp81Kvn81.name + ' MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 class SdKeyScp81Kvn81Dek(SdKeyScp81Kvn81):
     is_abstract = False
-    name = SdKeyScp81Kvn81.name + 'DEK'
+    name = SdKeyScp81Kvn81.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 class SdKeyScp81Kvn82(SdKeyAes):
-    name = 'SCP81kvn82'
+    name = 'SCP81 82'
     kvn = 0x82
 class SdKeyScp81Kvn82Enc(SdKeyScp81Kvn82):
     is_abstract = False
-    name = SdKeyScp81Kvn82.name + 'ENC'
+    name = SdKeyScp81Kvn82.name + ' ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 class SdKeyScp81Kvn82Mac(SdKeyScp81Kvn82):
     is_abstract = False
-    name = SdKeyScp81Kvn82.name + 'MAC'
+    name = SdKeyScp81Kvn82.name + ' MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 class SdKeyScp81Kvn82Dek(SdKeyScp81Kvn82):
     is_abstract = False
-    name = SdKeyScp81Kvn82.name + 'DEK'
+    name = SdKeyScp81Kvn82.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 class SdKeyScp81Kvn83(SdKeyAes):
-    name = 'SCP81kvn83'
+    name = 'SCP81 83'
     kvn = 0x83
 class SdKeyScp81Kvn83Enc(SdKeyScp81Kvn83):
     is_abstract = False
-    name = SdKeyScp81Kvn83.name + 'ENC'
+    name = SdKeyScp81Kvn83.name + ' ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 class SdKeyScp81Kvn83Mac(SdKeyScp81Kvn83):
     is_abstract = False
-    name = SdKeyScp81Kvn83.name + 'MAC'
+    name = SdKeyScp81Kvn83.name + ' MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 class SdKeyScp81Kvn83Dek(SdKeyScp81Kvn83):
     is_abstract = False
-    name = SdKeyScp81Kvn83.name + 'DEK'
+    name = SdKeyScp81Kvn83.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 
 class SdKeyScp02Kvn20(SdKeyAes):
-    name = 'SCP02kvn20'
+    name = 'SCP02 20'
     kvn = 0x20
 class SdKeyScp02Kvn20Enc(SdKeyScp02Kvn20):
     is_abstract = False
-    name = SdKeyScp02Kvn20.name + 'ENC'
+    name = SdKeyScp02Kvn20.name + ' ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 class SdKeyScp02Kvn20Mac(SdKeyScp02Kvn20):
     is_abstract = False
-    name = SdKeyScp02Kvn20.name + 'MAC'
+    name = SdKeyScp02Kvn20.name + ' MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 class SdKeyScp02Kvn20Dek(SdKeyScp02Kvn20):
     is_abstract = False
-    name = SdKeyScp02Kvn20.name + 'DEK'
+    name = SdKeyScp02Kvn20.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 class SdKeyScp02Kvn21(SdKeyAes):
-    name = 'SCP02kvn21'
+    name = 'SCP02 21'
     kvn = 0x21
 class SdKeyScp02Kvn21Enc(SdKeyScp02Kvn21):
     is_abstract = False
-    name = SdKeyScp02Kvn21.name + 'ENC'
+    name = SdKeyScp02Kvn21.name + ' ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 class SdKeyScp02Kvn21Mac(SdKeyScp02Kvn21):
     is_abstract = False
-    name = SdKeyScp02Kvn21.name + 'MAC'
+    name = SdKeyScp02Kvn21.name + ' MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 class SdKeyScp02Kvn21Dek(SdKeyScp02Kvn21):
     is_abstract = False
-    name = SdKeyScp02Kvn21.name + 'DEK'
+    name = SdKeyScp02Kvn21.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 class SdKeyScp02Kvn22(SdKeyAes):
-    name = 'SCP02kvn22'
+    name = 'SCP02 22'
     kvn = 0x22
 class SdKeyScp02Kvn22Enc(SdKeyScp02Kvn22):
     is_abstract = False
-    name = SdKeyScp02Kvn22.name + 'ENC'
+    name = SdKeyScp02Kvn22.name + ' ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 class SdKeyScp02Kvn22Mac(SdKeyScp02Kvn22):
     is_abstract = False
-    name = SdKeyScp02Kvn22.name + 'MAC'
+    name = SdKeyScp02Kvn22.name + ' MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 class SdKeyScp02Kvn22Dek(SdKeyScp02Kvn22):
     is_abstract = False
-    name = SdKeyScp02Kvn22.name + 'DEK'
+    name = SdKeyScp02Kvn22.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 class SdKeyScp02Kvnff(SdKeyAes):
-    name = 'SCP02kvnff'
+    name = 'SCP02 ff'
     kvn = 0xff
 class SdKeyScp02KvnffEnc(SdKeyScp02Kvnff):
     is_abstract = False
-    name = SdKeyScp02Kvnff.name + 'ENC'
+    name = SdKeyScp02Kvnff.name + ' ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 class SdKeyScp02KvnffMac(SdKeyScp02Kvnff):
     is_abstract = False
-    name = SdKeyScp02Kvnff.name + 'MAC'
+    name = SdKeyScp02Kvnff.name + ' MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 class SdKeyScp02KvnffDek(SdKeyScp02Kvnff):
     is_abstract = False
-    name = SdKeyScp02Kvnff.name + 'DEK'
+    name = SdKeyScp02Kvnff.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 
 class SdKeyScp03Kvn30(SdKeyAes):
-    name = 'SCP03kvn30'
+    name = 'SCP03 30'
     kvn = 0x30
 class SdKeyScp03Kvn30Enc(SdKeyScp03Kvn30):
     is_abstract = False
-    name = SdKeyScp03Kvn30.name + 'ENC'
+    name = SdKeyScp03Kvn30.name + ' ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 class SdKeyScp03Kvn30Mac(SdKeyScp03Kvn30):
     is_abstract = False
-    name = SdKeyScp03Kvn30.name + 'MAC'
+    name = SdKeyScp03Kvn30.name + ' MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 class SdKeyScp03Kvn30Dek(SdKeyScp03Kvn30):
     is_abstract = False
-    name = SdKeyScp03Kvn30.name + 'DEK'
+    name = SdKeyScp03Kvn30.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 class SdKeyScp03Kvn31(SdKeyAes):
-    name = 'SCP03kvn31'
+    name = 'SCP03 31'
     kvn = 0x31
 class SdKeyScp03Kvn31Enc(SdKeyScp03Kvn31):
     is_abstract = False
-    name = SdKeyScp03Kvn31.name + 'ENC'
+    name = SdKeyScp03Kvn31.name + ' ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 class SdKeyScp03Kvn31Mac(SdKeyScp03Kvn31):
     is_abstract = False
-    name = SdKeyScp03Kvn31.name + 'MAC'
+    name = SdKeyScp03Kvn31.name + ' MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 class SdKeyScp03Kvn31Dek(SdKeyScp03Kvn31):
     is_abstract = False
-    name = SdKeyScp03Kvn31.name + 'DEK'
+    name = SdKeyScp03Kvn31.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
 class SdKeyScp03Kvn32(SdKeyAes):
-    name = 'SCP03kvn32'
+    name = 'SCP03 32'
     kvn = 0x32
 class SdKeyScp03Kvn32Enc(SdKeyScp03Kvn32):
     is_abstract = False
-    name = SdKeyScp03Kvn32.name + 'ENC'
+    name = SdKeyScp03Kvn32.name + ' ENC'
     key_id = 0x01
     key_usage_qual = 0x18
 class SdKeyScp03Kvn32Mac(SdKeyScp03Kvn32):
     is_abstract = False
-    name = SdKeyScp03Kvn32.name + 'MAC'
+    name = SdKeyScp03Kvn32.name + ' MAC'
     key_id = 0x02
     key_usage_qual = 0x14
 class SdKeyScp03Kvn32Dek(SdKeyScp03Kvn32):
     is_abstract = False
-    name = SdKeyScp03Kvn32.name + 'DEK'
+    name = SdKeyScp03Kvn32.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
 
