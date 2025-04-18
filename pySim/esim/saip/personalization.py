@@ -504,7 +504,7 @@ class SdKey(BinaryParam):
                 key = SecurityDomainKey(
                         key_version_number=cls.kvn,
                         key_id=cls.key_id,
-                        key_usage_qualifier=KeyUsageQualifier.build(cls.key_usage_qual),
+                        key_usage_qualifier=cls.key_usage_qual,
                         key_components=set_components,
                         )
                 pe.add_key(key)
