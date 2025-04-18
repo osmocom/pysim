@@ -91,6 +91,7 @@ class UiccSdInstallParams(TLV_IE_Collection, nested=[UiccScp, AcceptExtradAppsAn
 
 # Key Usage:
 # KVN 0x01 .. 0x0F reserved for SCP80
+# KVN 0x81 .. 0x8f reserved for SCP81
 # KVN 0x11 reserved for DAP specified in ETSI TS 102 226
 # KVN 0x20 .. 0x2F reserved for SCP02
 #   KID 0x01 = ENC; 0x02 = MAC; 0x03 = DEK
