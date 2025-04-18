@@ -274,6 +274,13 @@ class ConfigurableParameter:
                        and ((not blacklist) or (c not in blacklist)))
                   )
 
+    @classmethod
+    def is_super_of(cls, other_class):
+        try:
+            return issubclass(other_class, cls)
+        except TypeError:
+            return False
+
 class DecimalParam(ConfigurableParameter):
     """Decimal digits. The input value may be a string of decimal digits like '012345', or an int. The output of
     validate_val() is a string with only decimal digits 0-9, in the required length with leading zeros if necessary.
