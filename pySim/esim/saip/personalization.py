@@ -19,6 +19,7 @@ import abc
 import io
 import os
 import re
+import pprint
 from typing import List, Tuple, Generator, Optional
 
 from osmocom.tlv import camel_to_snake
@@ -275,6 +276,13 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
            This default implementation returns the maximum allowed value length -- a good fit for most subclasses.
            '''
         return cls.get_len_range()[1] or 16
+
+    @classmethod
+    def is_super_of(cls, other_class):
+        try:
+            return issubclass(other_class, cls)
+        except TypeError:
+            return False
 
 class DecimalParam(ConfigurableParameter):
     """Decimal digits. The input value may be a string of decimal digits like '012345', or an int. The output of
