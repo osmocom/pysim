@@ -363,52 +363,66 @@ class BinaryParam(ConfigurableParameter):
 
 
 class EnumParam(ConfigurableParameter):
-    value_map = {}
+    value_map = {
+            # For example:
+            #'Meaningful label for value 23': 0x23,
+            # Where 0x23 is a valid value to use for apply_val().
+        }
     _value_map_reverse = None
 
     @classmethod
     def validate_val(cls, val):
         orig_val = val
-        intval = None
+        enum_val = None
         if isinstance(val, str):
-            intval = cls.map_name_to_val(val)
+            enum_name = val
+            enum_val = cls.map_name_to_val(enum_name)
 
-            # if the str is not one of the known value_map.values(), is it maybe an int string of one of
-            # value_map.keys()?
-            if intval is None and val.isdigit():
-                val = int(val)
-                # then step into isinstance(int) below
+        # if the str is not one of the known value_map.keys(), is it maybe one of value_map.keys()?
+        if enum_val is None and val in cls.value_map.values():
+            enum_val = val
 
-        if intval is None and isinstance(val, int):
-            if val in cls.value_map:
-                intval = val
-
-        if intval not in cls.value_map:
+        if enum_val not in cls.value_map.values():
             raise ValueError(f"{cls.get_name()}: invalid argument: {orig_val!r}. Valid arguments are:"
                              f" {', '.join(cls.value_map.keys())}")
 
-        return intval
+        return enum_val
 
     @classmethod
-    def map_name_to_val(cls, name:str) -> int:
-        if cls._value_map_reverse is None:
-            cls._value_map_reverse = dict((cls.clean_val_str(v), k) for k, v in cls.value_map.items())
-        return cls._value_map_reverse.get(cls.clean_val_str(name))
+    def map_name_to_val(cls, name:str, strict=True):
+        val = cls.value_map.get(name)
+        if val is not None:
+            return val
 
-    @classmethod
-    def map_val_to_name(cls, val:int, strict=False) -> str:
-        name = cls.value_map.get(val)
-        if strict and name is None:
+        clean_name = cls.clean_name_str(name)
+        for k, v in cls.value_map.items():
+            if clean_name == cls.clean_name_str(k):
+                return v
+
+        if strict:
             raise ValueError(f"Problem in {cls.get_name()}: {name!r} is not a known value."
-                    f" Known values are: {cls.value_map!r}")
-        return name
+                    f" Known values are: {cls.value_map.keys()!r}")
+        return None
+
+    @classmethod
+    def map_val_to_name(cls, val, strict=False) -> str:
+        if cls._value_map_reverse is None:
+            cls._value_map_reverse = dict((v, k) for k, v in cls.value_map.items())
+
+        name = cls._value_map_reverse.get(val)
+        if name:
+            return name
+        if strict:
+            raise ValueError(f"Problem in {cls.get_name()}: {val!r} ({type(val)}) is not a known value."
+                    f" Known values are: {cls.value_map.values()!r}")
+        return None
 
     @classmethod
     def name_normalize(cls, name:str) -> str:
-        return cls.map_val_to_name(cls.map_name_to_val())
+        return cls.map_val_to_name(cls.map_name_to_val(name))
 
     @classmethod
-    def clean_val_str(cls, val):
+    def clean_name_str(cls, val):
         return re.sub('[^0-9A-Za-z-_]', '', val).lower()
 
 
@@ -485,6 +499,7 @@ class SdKey(BinaryParam):
     # these will be set by subclasses
     key_type = None
     kvn = None
+    reserved_kvn = tuple() # tuple of all reserved kvn for a given SCPxx
     key_id = None
     key_usage_qual = None
     default_source = param_source.RandomHexDigitSource
@@ -573,8 +588,12 @@ class SdKeyAes(SdKey):
     default_value = '00*32'
 
 
-class SdKeyScp80Kvn01(SdKeyAes):
-    name = 'SCP80 01'
+class SdKeyScp80(SdKeyAes):
+    name = 'SCP80'
+    reserved_kvn = tuple(range(0x01, 0x0f + 1))
+
+class SdKeyScp80Kvn01(SdKeyScp80):
+    name = 'SCP80 KVN01'
     kvn = 0x01
 class SdKeyScp80Kvn01Enc(SdKeyScp80Kvn01):
     is_abstract = False
@@ -592,8 +611,8 @@ class SdKeyScp80Kvn01Dek(SdKeyScp80Kvn01):
     key_id = 0x03
     key_usage_qual = 0x48
 
-class SdKeyScp80Kvn02(SdKeyAes):
-    name = 'SCP80 02'
+class SdKeyScp80Kvn02(SdKeyScp80):
+    name = 'SCP80 KVN02'
     kvn = 0x02
 class SdKeyScp80Kvn02Enc(SdKeyScp80Kvn02):
     is_abstract = False
@@ -611,8 +630,8 @@ class SdKeyScp80Kvn02Dek(SdKeyScp80Kvn02):
     key_id = 0x03
     key_usage_qual = 0x48
 
-class SdKeyScp80Kvn03(SdKeyAes):
-    name = 'SCP80 03'
+class SdKeyScp80Kvn03(SdKeyScp80):
+    name = 'SCP80 KVN03'
     kvn = 0x03
 class SdKeyScp80Kvn03Enc(SdKeyScp80Kvn03):
     is_abstract = False
@@ -631,8 +650,12 @@ class SdKeyScp80Kvn03Dek(SdKeyScp80Kvn03):
     key_usage_qual = 0x48
 
 
-class SdKeyScp81Kvn81(SdKeyAes):
-    name = 'SCP81 81'
+class SdKeyScp81(SdKeyAes):
+    name = 'SCP81'
+    reserved_kvn = tuple(range(0x81, 0x8f + 1))
+
+class SdKeyScp81Kvn81(SdKeyScp81):
+    name = 'SCP81 KVN81'
     kvn = 0x81
 class SdKeyScp81Kvn81Enc(SdKeyScp81Kvn81):
     is_abstract = False
@@ -650,8 +673,8 @@ class SdKeyScp81Kvn81Dek(SdKeyScp81Kvn81):
     key_id = 0x03
     key_usage_qual = 0x48
 
-class SdKeyScp81Kvn82(SdKeyAes):
-    name = 'SCP81 82'
+class SdKeyScp81Kvn82(SdKeyScp81):
+    name = 'SCP81 KVN82'
     kvn = 0x82
 class SdKeyScp81Kvn82Enc(SdKeyScp81Kvn82):
     is_abstract = False
@@ -669,8 +692,8 @@ class SdKeyScp81Kvn82Dek(SdKeyScp81Kvn82):
     key_id = 0x03
     key_usage_qual = 0x48
 
-class SdKeyScp81Kvn83(SdKeyAes):
-    name = 'SCP81 83'
+class SdKeyScp81Kvn83(SdKeyScp81):
+    name = 'SCP81 KVN83'
     kvn = 0x83
 class SdKeyScp81Kvn83Enc(SdKeyScp81Kvn83):
     is_abstract = False
@@ -689,7 +712,10 @@ class SdKeyScp81Kvn83Dek(SdKeyScp81Kvn83):
     key_usage_qual = 0x48
 
 
-class SdKeyScp02Kvn20(SdKeyAes):
+class SdKeyScp02(SdKeyAes):
+    name = 'SCP02'
+    reserved_kvn = tuple(range(0x20, 0x2f + 1)) + (0xff, )
+class SdKeyScp02Kvn20(SdKeyScp02):
     name = 'SCP02 20'
     kvn = 0x20
 class SdKeyScp02Kvn20Enc(SdKeyScp02Kvn20):
@@ -708,7 +734,7 @@ class SdKeyScp02Kvn20Dek(SdKeyScp02Kvn20):
     key_id = 0x03
     key_usage_qual = 0x48
 
-class SdKeyScp02Kvn21(SdKeyAes):
+class SdKeyScp02Kvn21(SdKeyScp02):
     name = 'SCP02 21'
     kvn = 0x21
 class SdKeyScp02Kvn21Enc(SdKeyScp02Kvn21):
@@ -727,7 +753,7 @@ class SdKeyScp02Kvn21Dek(SdKeyScp02Kvn21):
     key_id = 0x03
     key_usage_qual = 0x48
 
-class SdKeyScp02Kvn22(SdKeyAes):
+class SdKeyScp02Kvn22(SdKeyScp02):
     name = 'SCP02 22'
     kvn = 0x22
 class SdKeyScp02Kvn22Enc(SdKeyScp02Kvn22):
@@ -746,7 +772,7 @@ class SdKeyScp02Kvn22Dek(SdKeyScp02Kvn22):
     key_id = 0x03
     key_usage_qual = 0x48
 
-class SdKeyScp02Kvnff(SdKeyAes):
+class SdKeyScp02Kvnff(SdKeyScp02):
     name = 'SCP02 ff'
     kvn = 0xff
 class SdKeyScp02KvnffEnc(SdKeyScp02Kvnff):
@@ -766,7 +792,11 @@ class SdKeyScp02KvnffDek(SdKeyScp02Kvnff):
     key_usage_qual = 0x48
 
 
-class SdKeyScp03Kvn30(SdKeyAes):
+class SdKeyScp03(SdKeyAes):
+    name = 'SCP03 30'
+    reserved_kvn = tuple(range(0x30, 0x3f + 1))
+
+class SdKeyScp03Kvn30(SdKeyScp03):
     name = 'SCP03 30'
     kvn = 0x30
 class SdKeyScp03Kvn30Enc(SdKeyScp03Kvn30):
@@ -785,7 +815,7 @@ class SdKeyScp03Kvn30Dek(SdKeyScp03Kvn30):
     key_id = 0x03
     key_usage_qual = 0x48
 
-class SdKeyScp03Kvn31(SdKeyAes):
+class SdKeyScp03Kvn31(SdKeyScp03):
     name = 'SCP03 31'
     kvn = 0x31
 class SdKeyScp03Kvn31Enc(SdKeyScp03Kvn31):
@@ -804,7 +834,7 @@ class SdKeyScp03Kvn31Dek(SdKeyScp03Kvn31):
     key_id = 0x03
     key_usage_qual = 0x48
 
-class SdKeyScp03Kvn32(SdKeyAes):
+class SdKeyScp03Kvn32(SdKeyScp03):
     name = 'SCP03 32'
     kvn = 0x32
 class SdKeyScp03Kvn32Enc(SdKeyScp03Kvn32):
@@ -981,7 +1011,11 @@ class AlgoConfig(ConfigurableParameter):
             algoConfiguration = pe.decoded['algoConfiguration']
             if algoConfiguration[0] != 'algoParameter':
                 continue
-            yield { cls.name: algoConfiguration[1][cls.algo_config_key] }
+            val = algoConfiguration[1][cls.algo_config_key]
+            if isinstance(val, bytes):
+                val = b2h(val)
+            # if it is an int (algorithmID), just pass thru as int
+            yield { cls.name: val }
 
 class AlgorithmID(EnumParam, AlgoConfig):
     '''use validate_val() from EnumParam, and apply_val() from AlgoConfig.
@@ -991,26 +1025,29 @@ class AlgorithmID(EnumParam, AlgoConfig):
 
     # as in pySim/esim/asn1/saip/PE_Definitions-3.3.1.asn
     value_map = {
-            1: "Milenage",
-            2: "TUAK",
-            3: "usim-test",
+            "Milenage" : 1,
+            "TUAK" : 2,
+            "usim-test" : 3,
         }
-    default_value = value_map[1]  # Milenage
+    default_value = "Milenage"
     default_source = param_source.ConstantSource
 
     algo_config_key = 'algorithmID'
 
+    # EnumParam.validate_val() returns the int values from value_map
+
     @classmethod
     def get_values_from_pes(cls, pes: ProfileElementSequence):
         # return enum names, not raw values.
-        for d in super(cls, cls).get_values_from_pes(pes):
-            if cls.name in d:
-                val = d[cls.name]
-                d[cls.name] = cls.map_val_to_name(val, strict=True)
-            yield d
         # use of super(): this intends to call AlgoConfig.get_values_from_pes() so that the cls argument is this cls
         # here (AlgorithmID); i.e. AlgoConfig.get_values_from_pes(pes) doesn't work, because AlgoConfig needs to look up
         # cls.algo_config_key.
+        for d in super(cls, cls).get_values_from_pes(pes):
+            if cls.name in d:
+                # convert int to value string
+                val = d[cls.name]
+                d[cls.name] = cls.map_val_to_name(val, strict=True)
+            yield d
 
 
 class K(BinaryParam, AlgoConfig):
@@ -1090,7 +1127,7 @@ class BatchPersonalization:
 class UppAudit(dict):
 
     @classmethod
-    def from_der(cls, der: bytes, params: List):
+    def from_der(cls, der: bytes, params: List, additional_sd_keys=True):
         '''return a dict of parameter name and set of parameter values found in a DER encoded profile.
         Read all parameters listed in params. This calls only classmethods, so each entry in params can either be a class or
         an instance of a class, of a (non-abstract) ConfigurableParameter subclass. For example, params = [Imsi, ] is
@@ -1110,9 +1147,23 @@ class UppAudit(dict):
                     upp_audit.add_values(valdict)
             except (TypeError, ValueError) as e:
                 raise ValueError(f'Error during audit for parameter {key}: {e}') from e
+
+        if not additional_sd_keys:
+            return upp_audit
+
+        # additional_sd_keys
+        for pe in pes.pe_list:
+            if pe.type != 'securityDomain':
+                continue
+            assert isinstance(pe, ProfileElementSD)
+
+            for key in pe.keys:
+                audit_key = f'SdKey_KVN{key.key_version_number:02x}_ID{key.key_identifier:02x}'
+                audit_val = f'{key.key_components!r} {key.key_usage_qualifier!r}'
+                upp_audit[audit_key] = audit_val
         return upp_audit
 
-    def get_single_val(self, param, validate=True):
+    def get_single_val(self, param, validate=True, allow_absent=False, absent_val=None):
         '''Return the audit's value for the given ConfigurableParameter class'''
         cp = None
         if ConfigurableParameter.is_super_of(param):
@@ -1122,11 +1173,17 @@ class UppAudit(dict):
             key = param
         assert isinstance(key, str)
         v = self.get(key)
-        if not (isinstance(v, set) and len(v) == 1):
+        if v is None and allow_absent:
+            return absent_val
+        if not isinstance(v, set):
+            raise ValueError(f'audit value should be a set(), got {v!r}')
+        if len(v) != 1:
             raise ValueError(f'expected a single value for {key}, got {v!r}')
         v = tuple(v)[0]
         if validate and cp:
-            v = cp.validate_val(v)
+            # run value by the ConfigurableParameter's validation.
+            # (do not use the returned value, because the returned value is encoded for a PES)
+            cp.validate_val(v)
         return v
 
     @staticmethod
@@ -1218,11 +1275,12 @@ class BatchAudit(list):
 
     def to_csv_rows(self, headers=True):
         '''generator that yields all audits' values as rows, useful feed to a csv.writer.'''
+        params = tuple(sorted(self.params, key=lambda param: param.get_name()))
         if headers:
-            yield (p.get_name() for p in self.params)
+            yield (p.get_name() for p in params)
 
-        for audit in self.audits:
-            yield (audit.get_single_val(p) for p in self.params)
+        for audit in self:
+            yield (audit.get_single_val(p, allow_absent=True, absent_val="") for p in params)
 
 def bytes_to_hexstr(b:bytes, sep=''):
     return sep.join(f'{x:02x}' for x in b)
