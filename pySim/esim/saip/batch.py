@@ -19,10 +19,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-from typing import Generator
+import pprint
+from typing import List, Generator
 from pySim.esim.saip.personalization import ConfigurableParameter
 from pySim.esim.saip import param_source
 from pySim.esim.saip import ProfileElementSequence, ProfileElementSD
+from pySim.global_platform import KeyUsageQualifier
+from osmocom.utils import b2h
 
 class BatchPersonalization:
     """Produce a series of eSIM profiles from predefined parameters.
@@ -125,7 +128,7 @@ class UppAudit(dict):
     """
 
     @classmethod
-    def from_der(cls, der: bytes, params: List, der_size=False):
+    def from_der(cls, der: bytes, params: List, der_size=False, additional_sd_keys=False):
         '''return a dict of parameter name and set of selected parameter values found in a DER encoded profile. Note:
         some ConfigurableParameter implementations return more than one key-value pair, for example, Imsi returns
         both 'IMSI' and 'IMSI-ACC' parameters.
@@ -142,6 +145,12 @@ class UppAudit(dict):
         For example, params = [Imsi, ] is equivalent to params = [Imsi(), ].
 
         For der_size=True, also include a {'der_size':12345} entry.
+
+        For additional_sd_keys=True, output also all Security Domain KVN that there are *no* ConfigurableParameter
+        subclasses for. For example, SCP80 has reserved kvn 0x01..0x0f, but we offer only Scp80Kvn01, Scp80Kvn02,
+        Scp80Kvn03. So we would not show kvn 0x04..0x0f in an audit. additional_sd_keys=True includes audits of all SD
+        key KVN there may be in the UPP. This helps to spot SD keys that may already be present in a UPP template, with
+        unexpected / unusual kvn.
         '''
 
         # make an instance of this class
@@ -157,6 +166,22 @@ class UppAudit(dict):
                     upp_audit.add_values(valdict)
             except (TypeError, ValueError) as e:
                 raise ValueError(f'Error during audit for parameter {param}: {e}') from e
+
+        if not additional_sd_keys:
+            return upp_audit
+
+        # additional_sd_keys
+        for pe in pes.pe_list:
+            if pe.type != 'securityDomain':
+                continue
+            assert isinstance(pe, ProfileElementSD)
+
+            for key in pe.keys:
+                audit_key = f'SdKey_KVN{key.key_version_number:02x}_ID{key.key_identifier:02x}'
+                kuq_bin = KeyUsageQualifier.build(key.key_usage_qualifier).hex()
+                audit_val = f'{key.key_components=!r} key_usage_qualifier=0x{kuq_bin}={key.key_usage_qualifier!r}'
+                upp_audit[audit_key] = set((audit_val, ))
+
         return upp_audit
 
     def get_single_val(self, key, validate=True, allow_absent=False, absent_val=None):
