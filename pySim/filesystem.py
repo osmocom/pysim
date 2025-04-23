@@ -301,7 +301,7 @@ class CardFile:
 
     @staticmethod
     def export(as_json: bool, lchan):
-        """
+        r"""
         Export file contents in the form of commandline script. This method is meant to be overloaded by a subclass in
         case any exportable contents are present. The generated script may contain multiple command lines separated by
         line breaks ("\n"), where the last commandline shall have no line break at the end
