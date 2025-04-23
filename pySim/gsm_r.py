@@ -26,7 +26,7 @@ order to describe the files specified in UIC Reference P38 T 9001 5.0 "FFFIS for
 
 from pySim.utils import *
 from struct import pack, unpack
-from construct import Struct, Bytes, Int8ub, Int16ub, Int24ub, Int32ub, FlagsEnum
+from construct import Struct, Int8ub, Int16ub, Int24ub, Int32ub, FlagsEnum
 from construct import Optional as COptional
 from osmocom.construct import *
 

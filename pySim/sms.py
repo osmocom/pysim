@@ -20,10 +20,10 @@
 import typing
 import abc
 from bidict import bidict
-from construct import Int8ub, Byte, Bytes, Bit, Flag, BitsInteger
+from construct import Int8ub, Byte, Bit, Flag, BitsInteger
 from construct import Struct, Enum, Tell, BitStruct, this, Padding
-from construct import Prefixed, GreedyRange, GreedyBytes
-from osmocom.construct import HexAdapter, BcdAdapter, TonNpi
+from construct import Prefixed, GreedyRange
+from osmocom.construct import HexAdapter, BcdAdapter, TonNpi, Bytes, GreedyBytes
 from osmocom.utils import Hexstr, h2b, b2h
 
 from smpp.pdu import pdu_types, operations

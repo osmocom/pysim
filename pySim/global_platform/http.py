@@ -17,9 +17,10 @@ Also known as SCP81 for SIM/USIM/UICC/eUICC/eSIM OTA.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from construct import Struct, Int8ub, Int16ub, Bytes, GreedyBytes, GreedyString, BytesInteger
+from construct import Struct, Int8ub, Int16ub, GreedyString, BytesInteger
 from construct import this, len_, Rebuild, Const
 from construct import Optional as COptional
+from osmocom.construct import Bytes, GreedyBytes
 from osmocom.tlv import BER_TLV_IE
 
 from pySim import cat

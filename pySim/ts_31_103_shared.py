@@ -19,9 +19,9 @@ hence need to be in a separate python module to avoid circular dependencies.
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from construct import Struct, Switch, Bytes, GreedyString, GreedyBytes, Int8ub, Prefixed, Enum, Byte
+from construct import Struct, Switch, GreedyString, Int8ub, Prefixed, Enum, Byte
 from osmocom.tlv import BER_TLV_IE, TLV_IE_Collection
-from osmocom.construct import HexAdapter, Utf8Adapter
+from osmocom.construct import Bytes, HexAdapter, Utf8Adapter, GreedyBytes
 from pySim.filesystem import *
 
 # TS 31.103 Section 4.2.16

@@ -26,7 +26,7 @@ Support for the Secure Element Access Control, specifically the ARA-M inside an 
 #
 
 
-from construct import GreedyBytes, GreedyString, Struct, Enum, Int8ub, Int16ub
+from construct import GreedyString, Struct, Enum, Int8ub, Int16ub
 from construct import Optional as COptional
 from osmocom.construct import *
 from osmocom.tlv import *

@@ -20,11 +20,11 @@ as described in 3GPP TS 31.111."""
 
 from typing import List
 from bidict import bidict
-from construct import Int8ub, Int16ub, Byte, Bytes, BitsInteger
+from construct import Int8ub, Int16ub, Byte, BitsInteger
 from construct import Struct, Enum, BitStruct, this
-from construct import GreedyBytes, Switch, GreedyRange, FlagsEnum
+from construct import Switch, GreedyRange, FlagsEnum
 from osmocom.tlv import TLV_IE, COMPR_TLV_IE, BER_TLV_IE, TLV_IE_Collection
-from osmocom.construct import PlmnAdapter, BcdAdapter, HexAdapter, GsmStringAdapter, TonNpi, GsmString
+from osmocom.construct import PlmnAdapter, BcdAdapter, HexAdapter, GsmStringAdapter, TonNpi, GsmString, Bytes, GreedyBytes
 from osmocom.utils import b2h
 from pySim.utils import dec_xplmn_w_act
 

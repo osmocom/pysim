@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from struct import unpack
-from construct import FlagsEnum, Byte, Struct, Int8ub, Bytes, Mapping, Enum, Padding, BitsInteger
+from construct import FlagsEnum, Byte, Struct, Int8ub, Mapping, Enum, Padding, BitsInteger
 from construct import Bit, this, Int32ub, Int16ub, Nibble, BytesInteger, GreedyRange, Const
 from construct import Optional as COptional
 from osmocom.utils import *

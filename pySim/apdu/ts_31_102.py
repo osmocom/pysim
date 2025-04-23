@@ -9,7 +9,7 @@ APDU commands of 3GPP TS 31.102 V16.6.0
 """
 from typing import Dict
 
-from construct import BitStruct, Enum, BitsInteger, Int8ub, Bytes, this, Struct, If, Switch, Const
+from construct import BitStruct, Enum, BitsInteger, Int8ub, this, Struct, If, Switch, Const
 from construct import Optional as COptional
 from osmocom.construct import *
 

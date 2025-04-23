@@ -22,7 +22,7 @@ Various constants from 3GPP TS 31.103 V18.1.0
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from construct import Struct, Switch, this, Bytes, GreedyString
+from construct import Struct, Switch, this, GreedyString
 from osmocom.utils import *
 from osmocom.tlv import *
 from osmocom.construct import *

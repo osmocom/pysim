@@ -29,7 +29,7 @@ import abc
 import typing
 from typing import List, Dict, Optional
 from termcolor import colored
-from construct import Byte, GreedyBytes
+from construct import Byte
 from construct import Optional as COptional
 from osmocom.construct import *
 from osmocom.utils import *

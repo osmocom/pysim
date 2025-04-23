@@ -19,7 +19,7 @@ import zlib
 import abc
 import struct
 from typing import Optional, Tuple
-from construct import Enum, Int8ub, Int16ub, Struct, Bytes, GreedyBytes, BitsInteger, BitStruct
+from construct import Enum, Int8ub, Int16ub, Struct, BitsInteger, BitStruct
 from construct import Flag, Padding, Switch, this, PrefixedArray, GreedyRange
 from osmocom.construct import *
 from osmocom.utils import b2h

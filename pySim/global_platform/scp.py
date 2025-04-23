@@ -20,8 +20,9 @@ import logging
 from typing import Optional
 from Cryptodome.Cipher import DES3, DES
 from Cryptodome.Util.strxor import strxor
-from construct import Struct, Bytes, Int8ub, Int16ub, Const
+from construct import Struct, Int8ub, Int16ub, Const
 from construct import Optional as COptional
+from osmocom.construct import Bytes
 from osmocom.utils import b2h
 from osmocom.tlv import bertlv_parse_len, bertlv_encode_len
 from pySim.utils import parse_command_apdu
