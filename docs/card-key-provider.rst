@@ -1,6 +1,5 @@
-
 Retrieving card-individual keys via CardKeyProvider
-==================================================
+===================================================
 
 When working with a batch of cards, or more than one card in general, it
 is a lot of effort to manually retrieve the card-specific PIN (like
