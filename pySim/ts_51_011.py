@@ -250,7 +250,7 @@ class EF_SMSP(LinFixedEF):
             "tp_sc_addr": { "length": 255, "ton_npi": { "ext": True, "type_of_number": "reserved_for_extension",
                                                         "numbering_plan_id": "reserved_for_extension" },
                             "call_number": "" },
-            "tp_pid": "00", "tp_dcs": "00", "tp_vp_minutes": 1440 } ),
+            "tp_pid": b"\x00", "tp_dcs": b"\x00", "tp_vp_minutes": 1440 } ),
     ]
     _test_no_pad = True
     class ValidityPeriodAdapter(Adapter):
@@ -286,8 +286,8 @@ class EF_SMSP(LinFixedEF):
                                  'tp_dest_addr'/ScAddr,
                                  'tp_sc_addr'/ScAddr,
 
-                                 'tp_pid'/HexAdapter(Bytes(1)),
-                                 'tp_dcs'/HexAdapter(Bytes(1)),
+                                 'tp_pid'/Bytes(1),
+                                 'tp_dcs'/Bytes(1),
                                  'tp_vp_minutes'/EF_SMSP.ValidityPeriodAdapter(Byte))
 
 # TS 51.011 Section 10.5.7
@@ -309,14 +309,14 @@ class EF_SMSR(LinFixedEF):
     def __init__(self, fid='6f47', sfid=None, name='EF.SMSR', desc='SMS status reports', rec_len=(30, 30), **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct(
-            'sms_record_id'/Int8ub, 'sms_status_report'/HexAdapter(Bytes(29)))
+            'sms_record_id'/Int8ub, 'sms_status_report'/Bytes(29))
 
 
 class EF_EXT(LinFixedEF):
     def __init__(self, fid, sfid=None, name='EF.EXT', desc='Extension', rec_len=(13, 13), **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct(
-            'record_type'/Int8ub, 'extension_data'/HexAdapter(Bytes(11)), 'identifier'/Int8ub)
+            'record_type'/Int8ub, 'extension_data'/Bytes(11), 'identifier'/Int8ub)
 
 # TS 51.011 Section 10.5.16
 class EF_CMI(LinFixedEF):
@@ -589,11 +589,11 @@ class EF_ACC(TransparentEF):
 class EF_LOCI(TransparentEF):
     _test_de_encode = [
             ( "7802570222f81009780000",
-              { "tmsi": "78025702", "lai": "22f8100978", "tmsi_time": 0, "lu_status": "updated" } ),
+              { "tmsi": h2b("78025702"), "lai": h2b("22f8100978"), "tmsi_time": 0, "lu_status": "updated" } ),
         ]
     def __init__(self, fid='6f7e', sfid=None, name='EF.LOCI', desc='Location Information', size=(11, 11)):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
-        self._construct = Struct('tmsi'/HexAdapter(Bytes(4)), 'lai'/HexAdapter(Bytes(5)), 'tmsi_time'/Int8ub,
+        self._construct = Struct('tmsi'/Bytes(4), 'lai'/Bytes(5), 'tmsi_time'/Int8ub,
                                  'lu_status'/Enum(Byte, updated=0, not_updated=1, plmn_not_allowed=2,
                                                   location_area_not_allowed=3))
 
@@ -751,22 +751,22 @@ class EF_NIA(LinFixedEF):
 # TS 51.011 Section 10.3.32
 class EF_Kc(TransparentEF):
     _test_de_encode = [
-        ( "837d783609a3858f05", { "kc": "837d783609a3858f", "cksn": 5 } ),
+        ( "837d783609a3858f05", { "kc": h2b("837d783609a3858f"), "cksn": 5 } ),
     ]
     def __init__(self, fid='6f20', sfid=None, name='EF.Kc', desc='Ciphering key Kc', size=(9, 9), **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
-        self._construct = Struct('kc'/HexAdapter(Bytes(8)), 'cksn'/Int8ub)
+        self._construct = Struct('kc'/Bytes(8), 'cksn'/Int8ub)
 
 # TS 51.011 Section 10.3.33
 class EF_LOCIGPRS(TransparentEF):
     _test_de_encode = [
         ( "ffffffffffffff22f8990000ff01",
-          { "ptmsi": "ffffffff", "ptmsi_sig": "ffffff", "rai": "22f8990000ff", "rau_status": "not_updated" } ),
+          { "ptmsi": h2b("ffffffff"), "ptmsi_sig": h2b("ffffff"), "rai": h2b("22f8990000ff"), "rau_status": "not_updated" } ),
     ]
     def __init__(self, fid='6f53', sfid=None, name='EF.LOCIGPRS', desc='GPRS Location Information', size=(14, 14)):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
-        self._construct = Struct('ptmsi'/HexAdapter(Bytes(4)), 'ptmsi_sig'/HexAdapter(Bytes(3)),
-                                 'rai'/HexAdapter(Bytes(6)),
+        self._construct = Struct('ptmsi'/Bytes(4), 'ptmsi_sig'/Bytes(3),
+                                 'rai'/Bytes(6),
                                  'rau_status'/Enum(Byte, updated=0, not_updated=1, plmn_not_allowed=2,
                                                    routing_area_not_allowed=3))
 
@@ -867,12 +867,12 @@ class EF_PNN(LinFixedEF):
     class FullNameForNetwork(BER_TLV_IE, tag=0x43):
         # TS 24.008 10.5.3.5a
         # TODO: proper decode
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
 
     class ShortNameForNetwork(BER_TLV_IE, tag=0x45):
         # TS 24.008 10.5.3.5a
         # TODO: proper decode
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
 
     class NetworkNameCollection(TLV_IE_Collection, nested=[FullNameForNetwork, ShortNameForNetwork]):
         pass
@@ -885,14 +885,14 @@ class EF_PNN(LinFixedEF):
 class EF_OPL(LinFixedEF):
     _test_de_encode = [
         ( '62f2100000fffe01',
-          { "lai": { "mcc_mnc": "262-01", "lac_min": "0000", "lac_max": "fffe" }, "pnn_record_id": 1 } ),
+          { "lai": { "mcc_mnc": "262-01", "lac_min": h2b("0000"), "lac_max": h2b("fffe") }, "pnn_record_id": 1 } ),
         ( '216354789abcde12',
-          { "lai": { "mcc_mnc": "123-456", "lac_min": "789a", "lac_max": "bcde" }, "pnn_record_id": 18 } ),
+          { "lai": { "mcc_mnc": "123-456", "lac_min": h2b("789a"), "lac_max": h2b("bcde") }, "pnn_record_id": 18 } ),
     ]
     def __init__(self, fid='6fc6', sfid=None, name='EF.OPL', rec_len=(8, 8), desc='Operator PLMN List', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
         self._construct = Struct('lai'/Struct('mcc_mnc'/PlmnAdapter(Bytes(3)),
-                                 'lac_min'/HexAdapter(Bytes(2)), 'lac_max'/HexAdapter(Bytes(2))), 'pnn_record_id'/Int8ub)
+                                 'lac_min'/Bytes(2), 'lac_max'/Bytes(2)), 'pnn_record_id'/Int8ub)
 
 # TS 51.011 Section 10.3.44 + TS 31.102 4.2.62
 class EF_MBI(LinFixedEF):
@@ -941,8 +941,8 @@ class EF_SPDI(TransparentEF):
 class EF_MMSN(LinFixedEF):
     def __init__(self, fid='6fce', sfid=None, name='EF.MMSN', rec_len=(4, 20), desc='MMS Notification', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
-        self._construct = Struct('mms_status'/HexAdapter(Bytes(2)), 'mms_implementation'/HexAdapter(Bytes(1)),
-                                 'mms_notification'/HexAdapter(Bytes(this._.total_len-4)), 'ext_record_nr'/Byte)
+        self._construct = Struct('mms_status'/Bytes(2), 'mms_implementation'/Bytes(1),
+                                 'mms_notification'/Bytes(this._.total_len-4), 'ext_record_nr'/Byte)
 
 # TS 51.011 Annex K.1
 class MMS_Implementation(BER_TLV_IE, tag=0x80):

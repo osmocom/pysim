@@ -36,8 +36,8 @@ class DecTestCase(unittest.TestCase):
 			{'priority': 1, 'identifier': 1, 'key_index': 2},
 			{'priority': 2, 'identifier': 0, 'key_index': 0}],
 		'hnet_pubkey_list': [
-			{'hnet_pubkey_identifier': 27, 'hnet_pubkey': hnet_pubkey_profile_b.lower()}, # because h2b/b2h returns all lower-case
-			{'hnet_pubkey_identifier': 30, 'hnet_pubkey': hnet_pubkey_profile_a.lower()}]
+			{'hnet_pubkey_identifier': 27, 'hnet_pubkey': h2b(hnet_pubkey_profile_b)}, # because h2b/b2h returns all lower-case
+			{'hnet_pubkey_identifier': 30, 'hnet_pubkey': h2b(hnet_pubkey_profile_a)}]
 	}
 
 	def testSplitHexStringToListOf5ByteEntries(self):

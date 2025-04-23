@@ -167,7 +167,7 @@ class EF_GBABP(TransparentEF):
 class EF_GBANL(LinFixedEF):
     class NAF_ID(BER_TLV_IE, tag=0x80):
         _construct = Struct('fqdn'/Utf8Adapter(Bytes(this._.total_len-5)),
-                            'ua_spi'/HexAdapter(Bytes(5)))
+                            'ua_spi'/Bytes(5))
     class B_TID(BER_TLV_IE, tag=0x81):
         _construct = Utf8Adapter(GreedyBytes)
     # pylint: disable=undefined-variable

@@ -119,11 +119,11 @@ class FileDescriptor(BER_TLV_IE, tag=0x82):
 
 # ETSI TS 102 221 11.1.1.4.4
 class FileIdentifier(BER_TLV_IE, tag=0x83):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # ETSI TS 102 221 11.1.1.4.5
 class DfName(BER_TLV_IE, tag=0x84):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # ETSI TS 102 221 11.1.1.4.6.1
 class UiccCharacteristics(BER_TLV_IE, tag=0x80):
@@ -217,7 +217,7 @@ class SecurityAttribExpanded(BER_TLV_IE, tag=0xab):
 # ETSI TS 102 221 11.1.1.4.7.3
 class SecurityAttribReferenced(BER_TLV_IE, tag=0x8b):
     # TODO: longer format with SEID
-    _construct = Struct('ef_arr_file_id'/HexAdapter(Bytes(2)), 'ef_arr_record_nr'/Int8ub)
+    _construct = Struct('ef_arr_file_id'/Bytes(2), 'ef_arr_record_nr'/Int8ub)
 
 # ETSI TS 102 221 11.1.1.4.8
 class ShortFileIdentifier(BER_TLV_IE, tag=0x88):

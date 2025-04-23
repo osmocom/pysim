@@ -120,7 +120,7 @@ class SetDefaultDpAddress(BER_TLV_IE, tag=0xbf3f, nested=[DefaultDpAddress, SetD
 
 # SGP.22 Section 5.7.7: GetEUICCChallenge
 class EuiccChallenge(BER_TLV_IE, tag=0x80):
-    _construct = HexAdapter(Bytes(16))
+    _construct = Bytes(16)
 class GetEuiccChallenge(BER_TLV_IE, tag=0xbf2e, nested=[EuiccChallenge]):
     pass
 
@@ -128,7 +128,7 @@ class GetEuiccChallenge(BER_TLV_IE, tag=0xbf2e, nested=[EuiccChallenge]):
 class SVN(BER_TLV_IE, tag=0x82):
     _construct = VersionType
 class SubjectKeyIdentifier(BER_TLV_IE, tag=0x04):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 class EuiccCiPkiListForVerification(BER_TLV_IE, tag=0xa9, nested=[SubjectKeyIdentifier]):
     pass
 class EuiccCiPkiListForSigning(BER_TLV_IE, tag=0xaa, nested=[SubjectKeyIdentifier]):
@@ -140,15 +140,15 @@ class ProfileVersion(BER_TLV_IE, tag=0x81):
 class EuiccFirmwareVer(BER_TLV_IE, tag=0x83):
     _construct = VersionType
 class ExtCardResource(BER_TLV_IE, tag=0x84):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 class UiccCapability(BER_TLV_IE, tag=0x85):
-    _construct = HexAdapter(GreedyBytes) # FIXME
+    _construct = GreedyBytes # FIXME
 class TS102241Version(BER_TLV_IE, tag=0x86):
     _construct = VersionType
 class GlobalPlatformVersion(BER_TLV_IE, tag=0x87):
     _construct = VersionType
 class RspCapability(BER_TLV_IE, tag=0x88):
-    _construct = HexAdapter(GreedyBytes) # FIXME
+    _construct = GreedyBytes # FIXME
 class EuiccCategory(BER_TLV_IE, tag=0x8b):
     _construct = Enum(Int8ub, other=0, basicEuicc=1, mediumEuicc=2, contactlessEuicc=3)
 class PpVersion(BER_TLV_IE, tag=0x04):
@@ -211,7 +211,7 @@ class TagList(BER_TLV_IE, tag=0x5c):
 class ProfileInfoListReq(BER_TLV_IE, tag=0xbf2d, nested=[TagList]): # FIXME: SearchCriteria
     pass
 class IsdpAid(BER_TLV_IE, tag=0x4f):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 class ProfileState(BER_TLV_IE, tag=0x9f70):
     _construct = Enum(Int8ub, disabled=0, enabled=1)
 class ProfileNickname(BER_TLV_IE, tag=0x90):
@@ -281,7 +281,7 @@ class EuiccMemoryResetResp(BER_TLV_IE, tag=0xbf34, nested=[ResetResult]):
 
 # SGP.22 Section 5.7.20 GetEID
 class EidValue(BER_TLV_IE, tag=0x5a):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 class GetEuiccData(BER_TLV_IE, tag=0xbf3e, nested=[TagList, EidValue]):
     pass
 
@@ -373,7 +373,7 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
         ged_cmd = GetEuiccData(children=[TagList(decoded=[0x5A])])
         ged = CardApplicationISDR.store_data_tlv(scc, ged_cmd, GetEuiccData)
         d = ged.to_dict()
-        return flatten_dict_lists(d['get_euicc_data'])['eid_value']
+        return b2h(flatten_dict_lists(d['get_euicc_data'])['eid_value'])
 
     def decode_select_response(self, data_hex: Hexstr) -> object:
         t = FciTemplate()

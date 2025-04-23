@@ -27,9 +27,9 @@ from pySim.filesystem import CardDF, TransparentEF
 # TS102 310 Section 7.1
 class EF_EAPKEYS(TransparentEF):
     class Msk(BER_TLV_IE, tag=0x80):
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
     class Emsk(BER_TLV_IE, tag=0x81):
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
     class MskCollection(TLV_IE_Collection, nested=[EF_EAPKEYS.Msk, EF_EAPKEYS.Emsk]):
         pass
 

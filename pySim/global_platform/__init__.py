@@ -318,7 +318,7 @@ class CurrentSecurityLevel(BER_TLV_IE, tag=0xd3):
 
 # GlobalPlatform v2.3.1 Section 11.3.3.1.3
 class ApplicationAID(BER_TLV_IE, tag=0x4f):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 class ApplicationTemplate(BER_TLV_IE, tag=0x61, ntested=[ApplicationAID]):
     pass
 class ListOfApplications(BER_TLV_IE, tag=0x2f00, nested=[ApplicationTemplate]):
@@ -425,10 +425,10 @@ class FciTemplate(BER_TLV_IE, tag=0x6f, nested=FciTemplateNestedList):
     pass
 
 class IssuerIdentificationNumber(BER_TLV_IE, tag=0x42):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 class CardImageNumber(BER_TLV_IE, tag=0x45):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 class SequenceCounterOfDefaultKvn(BER_TLV_IE, tag=0xc1):
     _construct = GreedyInteger()
@@ -487,7 +487,7 @@ class ImplicitSelectionParameter(BER_TLV_IE, tag=0xcf):
 
 # Section 11.4.3.1 Table 11-36
 class ExecutableLoadFileAID(BER_TLV_IE, tag=0xc4):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # Section 11.4.3.1 Table 11-36
 class ExecutableLoadFileVersionNumber(BER_TLV_IE, tag=0xce):
@@ -495,15 +495,15 @@ class ExecutableLoadFileVersionNumber(BER_TLV_IE, tag=0xce):
     # specification. It shall consist of the version information contained in the original Load File: on a
     # Java Card based card, this version number represents the major and minor version attributes of the
     # original Load File Data Block.
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # Section 11.4.3.1 Table 11-36
 class ExecutableModuleAID(BER_TLV_IE, tag=0x84):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # Section 11.4.3.1 Table 11-36
 class AssociatedSecurityDomainAID(BER_TLV_IE, tag=0xcc):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # Section 11.4.3.1 Table 11-36
 class GpRegistryRelatedData(BER_TLV_IE, tag=0xe3, nested=[ApplicationAID, LifeCycleState, Privileges,
@@ -640,8 +640,8 @@ class ADF_SD(CardADF):
 
         # Table 11-68: Key Data Field - Format 1 (Basic Format)
         KeyDataBasic = GreedyRange(Struct('key_type'/KeyType,
-                                          'kcb'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
-                                          'kcv'/HexAdapter(Prefixed(Int8ub, GreedyBytes))))
+                                          'kcb'/Prefixed(Int8ub, GreedyBytes),
+                                          'kcv'/Prefixed(Int8ub, GreedyBytes)))
 
         def put_key(self, old_kvn:int, kvn: int, kid: int, key_dict: dict) -> bytes:
             """Perform the GlobalPlatform PUT KEY command in order to store a new key on the card.
@@ -704,7 +704,7 @@ class ADF_SD(CardADF):
         def set_status(self, scope:str, status:str, aid:Hexstr = ''):
             SetStatus = Struct(Const(0x80, Byte), Const(0xF0, Byte),
                                'scope'/SetStatusScope, 'status'/CLifeCycleState,
-                               'aid'/HexAdapter(Prefixed(Int8ub, COptional(GreedyBytes))))
+                               'aid'/Prefixed(Int8ub, COptional(GreedyBytes)))
             apdu = build_construct(SetStatus, {'scope':scope, 'status':status, 'aid':aid})
             _data, _sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(apdu))
 
@@ -738,12 +738,12 @@ class ADF_SD(CardADF):
         @cmd2.with_argparser(inst_inst_parser)
         def do_install_for_install(self, opts):
             """Perform GlobalPlatform INSTALL [for install] command in order to install an application."""
-            InstallForInstallCD = Struct('load_file_aid'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
-                                         'module_aid'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
-                                         'application_aid'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
+            InstallForInstallCD = Struct('load_file_aid'/Prefixed(Int8ub, GreedyBytes),
+                                         'module_aid'/Prefixed(Int8ub, GreedyBytes),
+                                         'application_aid'/Prefixed(Int8ub, GreedyBytes),
                                          'privileges'/Prefixed(Int8ub, Privileges._construct),
-                                         'install_parameters'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
-                                         'install_token'/HexAdapter(Prefixed(Int8ub, GreedyBytes)))
+                                         'install_parameters'/Prefixed(Int8ub, GreedyBytes),
+                                         'install_token'/Prefixed(Int8ub, GreedyBytes))
             p1 = 0x04
             if opts.make_selectable:
                 p1 |= 0x08
@@ -770,11 +770,11 @@ class ADF_SD(CardADF):
             """Perform GlobalPlatform INSTALL [for load] command in order to prepare to load an application."""
             if opts.load_token != '' and opts.load_file_hash == '':
                 raise ValueError('Load File Data Block Hash is mandatory if a Load Token is present')
-            InstallForLoadCD = Struct('load_file_aid'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
-                                      'security_domain_aid'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
-                                      'load_file_hash'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
-                                      'load_parameters'/HexAdapter(Prefixed(Int8ub, GreedyBytes)),
-                                      'load_token'/HexAdapter(Prefixed(Int8ub, GreedyBytes)))
+            InstallForLoadCD = Struct('load_file_aid'/Prefixed(Int8ub, GreedyBytes),
+                                      'security_domain_aid'/Prefixed(Int8ub, GreedyBytes),
+                                      'load_file_hash'/Prefixed(Int8ub, GreedyBytes),
+                                      'load_parameters'/Prefixed(Int8ub, GreedyBytes),
+                                      'load_token'/Prefixed(Int8ub, GreedyBytes))
             ifl_bytes = build_construct(InstallForLoadCD, vars(opts))
             self.install(0x02, 0x00, b2h(ifl_bytes))
 

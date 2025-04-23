@@ -217,7 +217,7 @@ EF_EST_map = {
 
 # 3gPP TS 31.102 Section 7.5.2.1
 class SUCI_TlvDataObject(BER_TLV_IE, tag=0xA1):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 ######################################################################
 # ADF.USIM
@@ -230,7 +230,7 @@ class EF_5GS3GPPNSC(LinFixedEF):
         _construct = Int8ub
 
     class K_AMF(BER_TLV_IE, tag=0x81):
-        _construct = HexAdapter(Bytes(32))
+        _construct = Bytes(32)
 
     class UplinkNASCount(BER_TLV_IE, tag=0x82):
         _construct = Int32ub
@@ -260,10 +260,10 @@ class EF_5GS3GPPNSC(LinFixedEF):
 # 3GPP TS 31.102 Section 4.4.11.6
 class EF_5GAUTHKEYS(TransparentEF):
     class K_AUSF(BER_TLV_IE, tag=0x80):
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
 
     class K_SEAF(BER_TLV_IE, tag=0x81):
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
 
     class FiveGAuthKeys(TLV_IE_Collection, nested=[K_AUSF, K_SEAF]):
         pass
@@ -281,9 +281,9 @@ class EF_SUCI_Calc_Info(TransparentEF):
                                                                                       "identifier": 0,
                                                                                       "key_index": 0}],
            "hnet_pubkey_list": [{"hnet_pubkey_identifier": 10, "hnet_pubkey":
-                                 "4e858c4d49d1343e6181284c47ca721730c98742cb7c6182d2e8126e08088d36"},
+                                 h2b("4e858c4d49d1343e6181284c47ca721730c98742cb7c6182d2e8126e08088d36")},
                                 {"hnet_pubkey_identifier": 11, "hnet_pubkey":
-                                 "d1bc365f4997d17ce4374e72181431cbfeba9e1b98d7618f79d48561b144672a"}]} ),
+                                 h2b("d1bc365f4997d17ce4374e72181431cbfeba9e1b98d7618f79d48561b144672a")}]} ),
     ]
     # 3GPP TS 31.102 Section 4.4.11.8
     class ProtSchemeIdList(BER_TLV_IE, tag=0xa0):
@@ -298,7 +298,7 @@ class EF_SUCI_Calc_Info(TransparentEF):
 
     class HnetPubkey(BER_TLV_IE, tag=0x81):
         # contents according to RFC 7748 / RFC 5480
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
 
     class HnetPubkeyList(BER_TLV_IE, tag=0xa1, nested=[HnetPubkeyIdentifier, HnetPubkey]):
         pass
@@ -425,7 +425,7 @@ class EF_Keys(TransparentEF):
                  desc='Ciphering and Integrity Keys'):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
         self._construct = Struct(
-            'ksi'/Int8ub, 'ck'/HexAdapter(Bytes(16)), 'ik'/HexAdapter(Bytes(16)))
+            'ksi'/Int8ub, 'ck'/Bytes(16), 'ik'/Bytes(16))
 
 # TS 31.102 Section 4.2.6
 class EF_HPPLMN(TransparentEF):
@@ -536,15 +536,15 @@ class EF_ECC(LinFixedEF):
 class EF_LOCI(TransparentEF):
     _test_de_encode = [
         ( '47d1264a62f21037211e00',
-          { "tmsi": "47d1264a", "lai": { "mcc_mnc": "262-01", "lac": "3721" },
+          { "tmsi": h2b("47d1264a"), "lai": { "mcc_mnc": "262-01", "lac": h2b("3721") },
             "rfu": 30, "lu_status": 0 } ),
         ( 'ffffffff62f2200000ff01',
-          {"tmsi": "ffffffff", "lai": {"mcc_mnc": "262-02", "lac": "0000"}, "rfu": 255, "lu_status": 1} ),
+          {"tmsi": h2b("ffffffff"), "lai": {"mcc_mnc": "262-02", "lac": h2b("0000") }, "rfu": 255, "lu_status": 1} ),
     ]
     def __init__(self, fid='6f7e', sfid=0x0b, name='EF.LOCI', desc='Location information', size=(11, 11)):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
-        Lai = Struct('mcc_mnc'/PlmnAdapter(Bytes(3)), 'lac'/HexAdapter(Bytes(2)))
-        self._construct = Struct('tmsi'/HexAdapter(Bytes(4)), 'lai'/Lai, 'rfu'/Int8ub, 'lu_status'/Int8ub)
+        Lai = Struct('mcc_mnc'/PlmnAdapter(Bytes(3)), 'lac'/Bytes(2))
+        self._construct = Struct('tmsi'/Bytes(4), 'lai'/Lai, 'rfu'/Int8ub, 'lu_status'/Int8ub)
 
 # TS 31.102 Section 4.2.18
 class EF_AD(TransparentEF):
@@ -585,15 +585,15 @@ class EF_AD(TransparentEF):
 class EF_PSLOCI(TransparentEF):
     def __init__(self, fid='6f73', sfid=0x0c, name='EF.PSLOCI', desc='PS Location information', size=(14, 14)):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size)
-        self._construct = Struct('ptmsi'/HexAdapter(Bytes(4)), 'ptmsi_sig'/HexAdapter(Bytes(3)),
-                                 'rai'/HexAdapter(Bytes(6)), 'rau_status'/Int8ub)
+        self._construct = Struct('ptmsi'/Bytes(4), 'ptmsi_sig'/Bytes(3),
+                                 'rai'/Bytes(6), 'rau_status'/Int8ub)
 
 # TS 31.102 Section 4.2.33
 class EF_ICI(CyclicEF):
     def __init__(self, fid='6f80', sfid=0x14, name='EF.ICI', rec_len=(28, 48),
                  desc='Incoming Call Information', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
-        self._construct = Struct('alpha_id'/HexAdapter(Bytes(this._.total_len-28)),
+        self._construct = Struct('alpha_id'/Bytes(this._.total_len-28),
                                  'len_of_bcd_contents'/Int8ub,
                                  'ton_npi'/Int8ub,
                                  'call_number'/BcdAdapter(Bytes(10)),
@@ -602,14 +602,14 @@ class EF_ICI(CyclicEF):
                                  'date_and_time'/BcdAdapter(Bytes(7)),
                                  'duration'/Int24ub,
                                  'status'/Byte,
-                                 'link_to_phonebook'/HexAdapter(Bytes(3)))
+                                 'link_to_phonebook'/Bytes(3))
 
 # TS 31.102 Section 4.2.34
 class EF_OCI(CyclicEF):
     def __init__(self, fid='6f81', sfid=0x15, name='EF.OCI', rec_len=(27, 47),
                  desc='Outgoing Call Information', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
-        self._construct = Struct('alpha_id'/HexAdapter(Bytes(this._.total_len-27)),
+        self._construct = Struct('alpha_id'/Bytes(this._.total_len-27),
                                  'len_of_bcd_contents'/Int8ub,
                                  'ton_npi'/Int8ub,
                                  'call_number'/BcdAdapter(Bytes(10)),
@@ -617,7 +617,7 @@ class EF_OCI(CyclicEF):
                                  'ext5_record_id'/Int8ub,
                                  'date_and_time'/BcdAdapter(Bytes(7)),
                                  'duration'/Int24ub,
-                                 'link_to_phonebook'/HexAdapter(Bytes(3)))
+                                 'link_to_phonebook'/Bytes(3))
 
 # TS 31.102 Section 4.2.35
 class EF_ICT(CyclicEF):
@@ -655,7 +655,7 @@ class EF_ACL(TransparentEF):
     def __init__(self, fid='6f57', sfid=None, name='EF.ACL', size=(32, None),
                  desc='Access Point Name Control List', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
-        self._construct = Struct('num_of_apns'/Int8ub, 'tlvs'/HexAdapter(GreedyBytes))
+        self._construct = Struct('num_of_apns'/Int8ub, 'tlvs'/GreedyBytes)
 
 # TS 31.102 Section 4.2.51
 class EF_START_HFN(TransparentEF):
@@ -705,16 +705,16 @@ class EF_MSK(LinFixedEF):
     def __init__(self, fid='6fd7', sfid=None, name='EF.MSK', desc='MBMS Service Key List', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(20, None), **kwargs)
         msk_ts_constr = Struct('msk_id'/Int32ub, 'timestamp_counter'/Int32ub)
-        self._construct = Struct('key_domain_id'/HexAdapter(Bytes(3)),
+        self._construct = Struct('key_domain_id'/Bytes(3),
                                  'num_msk_id'/Int8ub,
                                  'msk_ids'/msk_ts_constr[this.num_msk_id])
 # TS 31.102 Section 4.2.81
 class EF_MUK(LinFixedEF):
     class MUK_Idr(BER_TLV_IE, tag=0x80):
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
 
     class MUK_Idi(BER_TLV_IE, tag=0x82):
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
 
     class MUK_ID(BER_TLV_IE, tag=0xA0, nested=[MUK_Idr, MUK_Idi]):
         pass
@@ -732,10 +732,10 @@ class EF_MUK(LinFixedEF):
 # TS 31.102 Section 4.2.83
 class EF_GBANL(LinFixedEF):
     class NAF_ID(BER_TLV_IE, tag=0x80):
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
 
     class B_TID(BER_TLV_IE, tag=0x81):
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
 
     class EF_GBANL_Collection(BER_TLV_IE, nested=[NAF_ID, B_TID]):
         pass
@@ -759,7 +759,7 @@ class EF_EHPLMNPI(TransparentEF):
 # TS 31.102 Section 4.2.87
 class EF_NAFKCA(LinFixedEF):
     class NAF_KeyCentreAddress(BER_TLV_IE, tag=0x80):
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
     def __init__(self, fid='6fdd', sfid=None, name='EF.NAFKCA', rec_len=(None, None),
                  desc='NAF Key Centre Address', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=rec_len, **kwargs)
@@ -770,11 +770,11 @@ class EF_NCP_IP(LinFixedEF):
     class DataDestAddrRange(TLV_IE, tag=0x83):
         _construct = Struct('type_of_address'/Enum(Byte, IPv4=0x21, IPv6=0x56),
                             'prefix_length'/Int8ub,
-                            'prefix'/HexAdapter(GreedyBytes))
+                            'prefix'/GreedyBytes)
 
     class AccessPointName(TLV_IE, tag=0x80):
         # coded as per TS 23.003
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
 
     class Login(TLV_IE, tag=0x81):
         # as per SMS DCS TS 23.038
@@ -803,8 +803,8 @@ class EF_EPSLOCI(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         upd_status_constr = Enum(
             Byte, updated=0, not_updated=1, roaming_not_allowed=2)
-        self._construct = Struct('guti'/HexAdapter(Bytes(12)),
-                                 'last_visited_registered_tai'/HexAdapter(Bytes(5)),
+        self._construct = Struct('guti'/Bytes(12),
+                                 'last_visited_registered_tai'/Bytes(5),
                                  'eps_update_status'/upd_status_constr)
 
 # TS 31.102 Section 4.2.92
@@ -813,7 +813,7 @@ class EF_EPSNSC(LinFixedEF):
         _construct = Int8ub
 
     class K_ASME(BER_TLV_IE, tag=0x81):
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
 
     class UplinkNASCount(BER_TLV_IE, tag=0x82):
         _construct = Int32ub
@@ -822,7 +822,7 @@ class EF_EPSNSC(LinFixedEF):
         _construct = Int32ub
 
     class IDofNASAlgorithms(BER_TLV_IE, tag=0x84):
-        _construct = HexAdapter(GreedyBytes)
+        _construct = GreedyBytes
 
     class EPS_NAS_Security_Context(BER_TLV_IE, tag=0xa0,
                                    nested=[KSI_ASME, K_ASME, UplinkNASCount, DownlinkNASCount,
@@ -1062,8 +1062,8 @@ class EF_5GS3GPPLOCI(TransparentEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         upd_status_constr = Enum(
             Byte, updated=0, not_updated=1, roaming_not_allowed=2)
-        self._construct = Struct('5g_guti'/HexAdapter(Bytes(13)),
-                                 'last_visited_registered_tai_in_5gs'/HexAdapter(Bytes(6)),
+        self._construct = Struct('5g_guti'/Bytes(13),
+                                 'last_visited_registered_tai_in_5gs'/Bytes(6),
                                  '5gs_update_status'/upd_status_constr)
 
 # TS 31.102 Section 4.4.11.7 (Rel 15)
@@ -1083,8 +1083,8 @@ class EF_UAC_AIC(TransparentEF):
 class EF_OPL5G(LinFixedEF):
     def __init__(self, fid='4f08', sfid=0x08, name='EF.OPL5G', desc='5GS Operator PLMN List', **kwargs):
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, rec_len=(10, None), **kwargs)
-        Tai = Struct('mcc_mnc'/PlmnAdapter(Bytes(3)), 'tac_min'/HexAdapter(Bytes(3)),
-                     'tac_max'/HexAdapter(Bytes(3)))
+        Tai = Struct('mcc_mnc'/PlmnAdapter(Bytes(3)), 'tac_min'/Bytes(3),
+                     'tac_max'/Bytes(3))
         self._construct = Struct('tai'/Tai, 'pnn_record_id'/Int8ub)
 
 # TS 31.102 Section 4.4.11.10 (Rel 15)
@@ -1119,7 +1119,7 @@ class EF_Routing_Indicator(TransparentEF):
         # operator decides to assign less than 4 digits to Routing Indicator, the remaining digits
         # shall be coded as "1111" to fill the 4 digits coding of Routing Indicator
         self._construct = Struct('routing_indicator'/Rpad(BcdAdapter(Bytes(2)), 'f', 2),
-                                 'rfu'/HexAdapter(Bytes(2)))
+                                 'rfu'/Bytes(2))
 
 # TS 31.102 Section 4.4.11.13 (Rel 16)
 class EF_TN3GPPSNN(TransparentEF):
@@ -1135,14 +1135,14 @@ class EF_CAG(TransparentEF):
     def __init__(self, fid='4f0d', sfid=0x0d, name='EF.CAG',
                  desc='Pre-configured CAG information list EF', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
-        self._construct = HexAdapter(GreedyBytes)
+        self._construct = GreedyBytes
 
 # TS 31.102 Section 4.4.11.15 (Rel 17)
 class EF_SOR_CMCI(TransparentEF):
     def __init__(self, fid='4f0e', sfid=0x0e, name='EF.SOR-CMCI',
                  desc='Steering Of Roaming - Connected Mode Control Information', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
-        self._construct = HexAdapter(GreedyBytes)
+        self._construct = GreedyBytes
 
 # TS 31.102 Section 4.4.11.17 (Rel 17)
 class EF_DRI(TransparentEF):
@@ -1153,9 +1153,9 @@ class EF_DRI(TransparentEF):
                                  'parameters_indicator_status'/FlagsEnum(Byte, roaming_wait_range=1,
                                                                          return_wait_range=2,
                                                                          applicability_indicator=3),
-                                 'roaming_wait_range'/HexAdapter(Bytes(2)),
-                                 'return_wait_range'/HexAdapter(Bytes(2)),
-                                 'applicability_indicator'/HexAdapter(Byte))
+                                 'roaming_wait_range'/Bytes(2),
+                                 'return_wait_range'/Bytes(2),
+                                 'applicability_indicator'/Byte)
 
 # TS 31.102 Section 4.4.12.2 (Rel 17)
 class EF_PWS_SNPN(TransparentEF):
@@ -1173,7 +1173,7 @@ class EF_NID(LinFixedEF):
         self._construct = Struct('assignment_mode'/Enum(Byte, coordinated_ass_opt1=0,
                                                               self_ass=1,
                                                               coordinated_ass_opt2=2),
-                                 'network_identifier'/HexAdapter(Bytes(5)))
+                                 'network_identifier'/Bytes(5))
 
 # TS 31.102 Section 4.4.12 (Rel 17)
 class DF_SNPN(CardDF):
@@ -1413,7 +1413,7 @@ class EF_5MBSUECONFIG(TransparentEF):
                             'nid'/COptional(Bytes(6)))
     class Tmgi(BER_TLV_IE, tag=0x81):
         TmgiEntry = Struct('tmgi'/Bytes(6),
-                           'usd_fid'/HexAdapter(Bytes(2)),
+                           'usd_fid'/Bytes(2),
                            'service_type'/FlagsEnum(Byte, mbs_service_announcement=1, mbs_user_service=2))
         _construct = GreedyRange(TmgiEntry)
     class NrArfcnList(BER_TLV_IE, tag=0x82):
@@ -1482,7 +1482,7 @@ class EF_KAUSF_DERIVATION(TransparentEF):
     def __init__(self, fid='4f16', sfid=0x16, name='EF.KAUSF_DERIVATION',
                  desc='K_AUSF derivation configuration', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
-        self._construct = Struct('k_ausf_deriv_cfg'/FlagsEnum(Byte, use_msk=1), 'rfu'/HexAdapter(GreedyBytes))
+        self._construct = Struct('k_ausf_deriv_cfg'/FlagsEnum(Byte, use_msk=1), 'rfu'/GreedyBytes)
 
 # TS 31.102 Section 4.4.5
 class DF_WLAN(CardDF):
@@ -1826,7 +1826,7 @@ class ADF_USIM(CardADF):
             do = SUCI_TlvDataObject()
             do.from_tlv(h2b(data))
             do_d = do.to_dict()
-            self._cmd.poutput('SUCI TLV Data Object: %s' % do_d['suci__tlv_data_object'])
+            self._cmd.poutput('SUCI TLV Data Object: %s' % b2h(do_d['suci__tlv_data_object']))
 
 
 # TS 31.102 Section 7.3

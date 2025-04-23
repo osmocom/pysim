@@ -184,13 +184,13 @@ class EF_CallconfI(LinFixedEF):
 class EF_Shunting(TransparentEF):
     """Section 7.6"""
     _test_de_encode = [
-        ( "03f8ffffff000000", { "common_gid": 3, "shunting_gid": "f8ffffff000000" } ),
+        ( "03f8ffffff000000", { "common_gid": 3, "shunting_gid": h2b("f8ffffff000000") } ),
     ]
     def __init__(self):
         super().__init__(fid='6ff4', sfid=None,
                          name='EF.Shunting', desc='Shunting', size=(8, 8))
         self._construct = Struct('common_gid'/Int8ub,
-                                 'shunting_gid'/HexAdapter(Bytes(7)))
+                                 'shunting_gid'/Bytes(7))
 
 
 class EF_GsmrPLMN(LinFixedEF):
@@ -199,13 +199,13 @@ class EF_GsmrPLMN(LinFixedEF):
         ( "22f860f86f8d6f8e01", { "plmn": "228-06", "class_of_network": {
                                     "supported": { "vbs": True, "vgcs": True, "emlpp": True,
                                     "fn": True, "eirene": True }, "preference": 0 },
-                                  "ic_incoming_ref_tbl": "6f8d", "outgoing_ref_tbl": "6f8e",
-                                  "ic_table_ref": "01" } ),
+                                  "ic_incoming_ref_tbl": h2b("6f8d"), "outgoing_ref_tbl": h2b("6f8e"),
+                                  "ic_table_ref": h2b("01") } ),
         ( "22f810416f8d6f8e02", { "plmn": "228-01", "class_of_network": {
                                     "supported": { "vbs": False, "vgcs": False, "emlpp": False,
                                     "fn": True, "eirene": False }, "preference": 1 },
-                                  "ic_incoming_ref_tbl": "6f8d", "outgoing_ref_tbl": "6f8e",
-                                  "ic_table_ref": "02" } ),
+                                  "ic_incoming_ref_tbl": h2b("6f8d"), "outgoing_ref_tbl": h2b("6f8e"),
+                                  "ic_table_ref": h2b("02") } ),
     ]
     def __init__(self):
         super().__init__(fid='6ff5', sfid=None, name='EF.GsmrPLMN',
@@ -213,24 +213,24 @@ class EF_GsmrPLMN(LinFixedEF):
         self._construct = Struct('plmn'/PlmnAdapter(Bytes(3)),
                                  'class_of_network'/BitStruct('supported'/FlagsEnum(BitsInteger(5), vbs=1, vgcs=2, emlpp=4, fn=8, eirene=16),
                                                               'preference'/BitsInteger(3)),
-                                 'ic_incoming_ref_tbl'/HexAdapter(Bytes(2)),
-                                 'outgoing_ref_tbl'/HexAdapter(Bytes(2)),
-                                 'ic_table_ref'/HexAdapter(Bytes(1)))
+                                 'ic_incoming_ref_tbl'/Bytes(2),
+                                 'outgoing_ref_tbl'/Bytes(2),
+                                 'ic_table_ref'/Bytes(1))
 
 
 class EF_IC(LinFixedEF):
     """Section 7.8"""
     _test_de_encode = [
-        ( "f06f8e40f10001", { "next_table_type": "decision", "id_of_next_table": "6f8e",
+        ( "f06f8e40f10001", { "next_table_type": "decision", "id_of_next_table": h2b("6f8e"),
                               "ic_decision_value": "041f", "network_string_table_index": 1 } ),
-        ( "ffffffffffffff", { "next_table_type": "empty", "id_of_next_table": "ffff",
+        ( "ffffffffffffff", { "next_table_type": "empty", "id_of_next_table": h2b("ffff"),
                               "ic_decision_value": "ffff", "network_string_table_index": 65535 } ),
     ]
     def __init__(self):
         super().__init__(fid='6f8d', sfid=None, name='EF.IC',
                          desc='International Code', rec_len=(7, 7))
         self._construct = Struct('next_table_type'/NextTableType,
-                                 'id_of_next_table'/HexAdapter(Bytes(2)),
+                                 'id_of_next_table'/Bytes(2),
                                  'ic_decision_value'/BcdAdapter(Bytes(2)),
                                  'network_string_table_index'/Int16ub)
 
@@ -252,18 +252,18 @@ class EF_NW(LinFixedEF):
 class EF_Switching(LinFixedEF):
     """Section 8.4"""
     _test_de_encode = [
-        ( "f26f87f0ff00", { "next_table_type": "num_dial_digits", "id_of_next_table": "6f87",
+        ( "f26f87f0ff00", { "next_table_type": "num_dial_digits", "id_of_next_table": h2b("6f87"),
                             "decision_value": "0fff", "string_table_index": 0 } ),
-        ( "f06f8ff1ff01", { "next_table_type": "decision", "id_of_next_table": "6f8f",
+        ( "f06f8ff1ff01", { "next_table_type": "decision", "id_of_next_table": h2b("6f8f"),
                             "decision_value": "1fff", "string_table_index": 1 } ),
-        ( "f16f89f5ff05", { "next_table_type": "predefined", "id_of_next_table": "6f89",
+        ( "f16f89f5ff05", { "next_table_type": "predefined", "id_of_next_table": h2b("6f89"),
                             "decision_value": "5fff", "string_table_index": 5 } ),
     ]
     def __init__(self, fid='1234', name='Switching', desc=None):
         super().__init__(fid=fid, sfid=None,
                          name=name, desc=desc, rec_len=(6, 6))
         self._construct = Struct('next_table_type'/NextTableType,
-                                 'id_of_next_table'/HexAdapter(Bytes(2)),
+                                 'id_of_next_table'/Bytes(2),
                                  'decision_value'/BcdAdapter(Bytes(2)),
                                  'string_table_index'/Int8ub)
 
@@ -271,12 +271,12 @@ class EF_Switching(LinFixedEF):
 class EF_Predefined(LinFixedEF):
     """Section 8.5"""
     _test_de_encode = [
-        ( "f26f85", 1, { "next_table_type": "num_dial_digits", "id_of_next_table": "6f85" } ),
+        ( "f26f85", 1, { "next_table_type": "num_dial_digits", "id_of_next_table": h2b("6f85") } ),
         ( "f0ffc8", 2, { "predefined_value1": "0fff", "string_table_index1": 200 } ),
     ]
     # header and other records have different structure. WTF !?!
     construct_first = Struct('next_table_type'/NextTableType,
-                             'id_of_next_table'/HexAdapter(Bytes(2)))
+                             'id_of_next_table'/Bytes(2))
     construct_others = Struct('predefined_value1'/BcdAdapter(Bytes(2)),
                               'string_table_index1'/Int8ub)
 
@@ -301,13 +301,13 @@ class EF_Predefined(LinFixedEF):
 class EF_DialledVals(TransparentEF):
     """Section 8.6"""
     _test_de_encode = [
-        ( "ffffff22", { "next_table_type": "empty", "id_of_next_table": "ffff", "dialed_digits": "22" } ),
-        ( "f16f8885", { "next_table_type": "predefined", "id_of_next_table": "6f88", "dialed_digits": "58" }),
+        ( "ffffff22", { "next_table_type": "empty", "id_of_next_table": h2b("ffff"), "dialed_digits": "22" } ),
+        ( "f16f8885", { "next_table_type": "predefined", "id_of_next_table": h2b("6f88"), "dialed_digits": "58" }),
     ]
     def __init__(self, fid='1234', name='DialledVals', desc=None):
         super().__init__(fid=fid, sfid=None, name=name, desc=desc, size=(4, 4))
         self._construct = Struct('next_table_type'/NextTableType,
-                                 'id_of_next_table'/HexAdapter(Bytes(2)),
+                                 'id_of_next_table'/Bytes(2),
                                  'dialed_digits'/BcdAdapter(Bytes(1)))
 
 

@@ -23,7 +23,7 @@ from osmocom.tlv import *
 
 class AppSpecificParams(BER_TLV_IE, tag=0xC9):
     # GPD_SPE_013, table 11-49
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 class VolatileMemoryQuota(BER_TLV_IE, tag=0xC7):
     # GPD_SPE_013, table 11-49
@@ -36,7 +36,7 @@ class NonVolatileMemoryQuota(BER_TLV_IE, tag=0xC8):
 class StkParameter(BER_TLV_IE, tag=0xCA):
     # GPD_SPE_013, table 11-49
     # ETSI TS 102 226, section 8.2.1.3.2.1
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 class SystemSpecificParams(BER_TLV_IE, tag=0xEF, nested=[VolatileMemoryQuota, NonVolatileMemoryQuota, StkParameter]):
     # GPD_SPE_013 v1.1 Table 6-5

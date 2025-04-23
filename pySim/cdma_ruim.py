@@ -115,7 +115,7 @@ class EF_AD(TransparentEF):
     '''3.4.33 Administrative Data'''
 
     _test_de_encode = [
-        ( "000000", { 'ms_operation_mode' : 'normal', 'additional_info' : '0000', 'rfu' : '' } ),
+        ( "000000", { 'ms_operation_mode' : 'normal', 'additional_info' : b'\x00\x00', 'rfu' : b'' } ),
     ]
     _test_no_pad = True
 
@@ -134,9 +134,9 @@ class EF_AD(TransparentEF):
             # Byte 1: Display Condition
             'ms_operation_mode'/Enum(Byte, self.OP_MODE),
             # Bytes 2-3: Additional information
-            'additional_info'/HexAdapter(Bytes(2)),
+            'additional_info'/Bytes(2),
             # Bytes 4..: RFU
-            'rfu'/HexAdapter(GreedyBytesRFU),
+            'rfu'/GreedyBytesRFU,
         )
 
 

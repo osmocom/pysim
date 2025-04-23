@@ -21,7 +21,7 @@ hence need to be in a separate python module to avoid circular dependencies.
 
 from construct import Struct, Switch, GreedyString, Int8ub, Prefixed, Enum, Byte
 from osmocom.tlv import BER_TLV_IE, TLV_IE_Collection
-from osmocom.construct import Bytes, HexAdapter, Utf8Adapter, GreedyBytes
+from osmocom.construct import Bytes, Utf8Adapter, GreedyBytes
 from pySim.filesystem import *
 
 # TS 31.103 Section 4.2.16
@@ -36,7 +36,7 @@ class EF_UICCIARI(LinFixedEF):
 # TS 31.103 Section 4.2.18
 class EF_IMSConfigData(BerTlvEF):
     class ImsConfigDataEncoding(BER_TLV_IE, tag=0x80):
-        _construct = HexAdapter(Bytes(1))
+        _construct = Bytes(1)
     class ImsConfigData(BER_TLV_IE, tag=0x81):
         _construct = GreedyString
     # pylint: disable=undefined-variable
@@ -103,7 +103,7 @@ class EF_WebRTCURI(LinFixedEF):
 # TS 31.103 Section 4.2.21
 class EF_MuDMiDConfigData(BerTlvEF):
     class MudMidConfigDataEncoding(BER_TLV_IE, tag=0x80):
-        _construct = HexAdapter(Bytes(1))
+        _construct = Bytes(1)
     class MudMidConfigData(BER_TLV_IE, tag=0x81):
         _construct = GreedyString
     # pylint: disable=undefined-variable

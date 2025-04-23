@@ -24,8 +24,8 @@ from construct import Int8ub, Int16ub, Byte, BitsInteger
 from construct import Struct, Enum, BitStruct, this
 from construct import Switch, GreedyRange, FlagsEnum
 from osmocom.tlv import TLV_IE, COMPR_TLV_IE, BER_TLV_IE, TLV_IE_Collection
-from osmocom.construct import PlmnAdapter, BcdAdapter, HexAdapter, GsmStringAdapter, TonNpi, GsmString, Bytes, GreedyBytes
-from osmocom.utils import b2h
+from osmocom.construct import PlmnAdapter, BcdAdapter, GsmStringAdapter, TonNpi, GsmString, Bytes, GreedyBytes
+from osmocom.utils import b2h, h2b
 from pySim.utils import dec_xplmn_w_act
 
 # Tag values as per TS 101 220 Table 7.23
@@ -255,24 +255,24 @@ class Result(COMPR_TLV_IE, tag=0x83):
                             'launch_browser_generic_error': AddlInfoLaunchBrowser,
                             'bearer_independent_protocol_error': AddlInfoBip,
                             'frames_error': AddlInfoFrames
-                        }, default=HexAdapter(GreedyBytes)))
+                        }, default=GreedyBytes))
 
 # TS 102 223 Section 8.13  + TS 31.111 Section 8.13
 class SMS_TPDU(COMPR_TLV_IE, tag=0x8B):
-    _construct = Struct('tpdu'/HexAdapter(GreedyBytes))
+    _construct = Struct('tpdu'/GreedyBytes)
 
 # TS 31.111 Section 8.14
 class SsString(COMPR_TLV_IE, tag=0x89):
-    _construct = Struct('ton_npi'/TonNpi, 'ss_string'/HexAdapter(GreedyBytes))
+    _construct = Struct('ton_npi'/TonNpi, 'ss_string'/GreedyBytes)
 
 
 # TS 102 223 Section 8.15
 class TextString(COMPR_TLV_IE, tag=0x8D):
     _test_de_encode = [
-        ( '8d090470617373776f7264', {'dcs': 4, 'text_string': '70617373776f7264'} ),
+        ( '8d090470617373776f7264', {'dcs': 4, 'text_string': b'password'} )
     ]
     _construct = Struct('dcs'/Int8ub, # TS 03.38
-                        'text_string'/HexAdapter(GreedyBytes))
+                        'text_string'/GreedyBytes)
 
 # TS 102 223 Section 8.16
 class Tone(COMPR_TLV_IE, tag=0x8E):
@@ -308,11 +308,11 @@ class Tone(COMPR_TLV_IE, tag=0x8E):
 # TS 31 111 Section 8.17
 class USSDString(COMPR_TLV_IE, tag=0x8A):
     _construct = Struct('dcs'/Int8ub,
-                        'ussd_string'/HexAdapter(GreedyBytes))
+                        'ussd_string'/GreedyBytes)
 
 # TS 102 223 Section 8.18
 class FileList(COMPR_TLV_IE, tag=0x92):
-    FileId=HexAdapter(Bytes(2))
+    FileId=Bytes(2)
     _construct = Struct('number_of_files'/Int8ub,
                         'files'/GreedyRange(FileId))
 
@@ -335,7 +335,7 @@ class NetworkMeasurementResults(COMPR_TLV_IE, tag=0x96):
 # TS 102 223 Section 8.23
 class DefaultText(COMPR_TLV_IE, tag=0x97):
     _construct = Struct('dcs'/Int8ub,
-                        'text_string'/HexAdapter(GreedyBytes))
+                        'text_string'/GreedyBytes)
 
 # TS 102 223 Section 8.24
 class ItemsNextActionIndicator(COMPR_TLV_IE, tag=0x98):
@@ -394,7 +394,7 @@ class ItemIconIdentifierList(COMPR_TLV_IE, tag=0x9f):
 
 # TS 102 223 Section 8.35
 class CApdu(COMPR_TLV_IE, tag=0xA2):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 102 223 Section 8.37
 class TimerIdentifier(COMPR_TLV_IE, tag=0xA4):
@@ -406,7 +406,7 @@ class TimerValue(COMPR_TLV_IE, tag=0xA5):
 
 # TS 102 223 Section 8.40
 class AtCommand(COMPR_TLV_IE, tag=0xA8):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 102 223 Section 8.43
 class ImmediateResponse(COMPR_TLV_IE, tag=0xAB):
@@ -418,7 +418,7 @@ class DtmfString(COMPR_TLV_IE, tag=0xAC):
 
 # TS 102 223 Section 8.45
 class Language(COMPR_TLV_IE, tag=0xAD):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 31.111 Section 8.46
 class TimingAdvance(COMPR_TLV_IE, tag=0xC6):
@@ -440,7 +440,7 @@ class Bearer(COMPR_TLV_IE, tag=0xB2):
 
 # TS 102 223 Section 8.50
 class ProvisioningFileReference(COMPR_TLV_IE, tag=0xB3):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 102 223 Section 8.51
 class BrowserTerminationCause(COMPR_TLV_IE, tag=0xB4):
@@ -449,7 +449,7 @@ class BrowserTerminationCause(COMPR_TLV_IE, tag=0xB4):
 # TS 102 223 Section 8.52
 class BearerDescription(COMPR_TLV_IE, tag=0xB5):
     _test_de_encode = [
-        ( 'b50103', {'bearer_parameters': '', 'bearer_type': 'default'} ),
+        ( 'b50103', {'bearer_parameters': b'', 'bearer_type': 'default'} ),
     ]
     # TS 31.111 Section 8.52.1
     BearerParsCs = Struct('data_rate'/Int8ub,
@@ -492,11 +492,11 @@ class BearerDescription(COMPR_TLV_IE, tag=0xB5):
                                                         'packet_grps_utran_eutran': BearerParsPacket,
                                                         'packet_with_extd_params': BearerParsPacketExt,
                                                         'ng_ran': BearerParsNgRan,
-                                                    }, default=HexAdapter(GreedyBytes)))
+                                                    }, default=GreedyBytes))
 
 # TS 102 223 Section 8.53
 class ChannelData(COMPR_TLV_IE, tag = 0xB6):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 102 223 Section 8.54
 class ChannelDataLength(COMPR_TLV_IE, tag = 0xB7):
@@ -510,15 +510,15 @@ class BufferSize(COMPR_TLV_IE, tag = 0xB9):
 class ChannelStatus(COMPR_TLV_IE, tag = 0xB8):
     # complex decoding, depends on out-of-band context/knowledge :(
     # for default / TCP Client mode: bit 8 of first byte indicates connected, 3 LSB indicate channel nr
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 102 223 Section 8.58
 class OtherAddress(COMPR_TLV_IE, tag = 0xBE):
     _test_de_encode = [
-        ( 'be052101020304', {'address': '01020304', 'type_of_address': 'ipv4'} ),
+        ( 'be052101020304', {'address': h2b('01020304'), 'type_of_address': 'ipv4'} ),
     ]
     _construct = Struct('type_of_address'/Enum(Int8ub, ipv4=0x21, ipv6=0x57),
-                        'address'/HexAdapter(GreedyBytes))
+                        'address'/GreedyBytes)
 
 # TS 102 223 Section 8.59
 class UiccTransportLevel(COMPR_TLV_IE, tag = 0xBC):
@@ -532,7 +532,7 @@ class UiccTransportLevel(COMPR_TLV_IE, tag = 0xBC):
 
 # TS 102 223 Section 8.60
 class Aid(COMPR_TLV_IE, tag=0xAF):
-    _construct = Struct('aid'/HexAdapter(GreedyBytes))
+    _construct = Struct('aid'/GreedyBytes)
 
 # TS 102 223 Section 8.61
 class AccessTechnology(COMPR_TLV_IE, tag=0xBF):
@@ -546,35 +546,35 @@ class ServiceRecord(COMPR_TLV_IE, tag=0xC1):
     BearerTechId = Enum(Int8ub, technology_independent=0, bluetooth=1, irda=2, rs232=3, usb=4)
     _construct = Struct('local_bearer_technology'/BearerTechId,
                         'service_identifier'/Int8ub,
-                        'service_record'/HexAdapter(GreedyBytes))
+                        'service_record'/GreedyBytes)
 
 # TS 102 223 Section 8.64
 class DeviceFilter(COMPR_TLV_IE, tag=0xC2):
     _construct = Struct('local_bearer_technology'/ServiceRecord.BearerTechId,
-                        'device_filter'/HexAdapter(GreedyBytes))
+                        'device_filter'/GreedyBytes)
 
 # TS 102 223 Section 8.65
 class ServiceSearchIE(COMPR_TLV_IE, tag=0xC3):
     _construct = Struct('local_bearer_technology'/ServiceRecord.BearerTechId,
-                        'service_search'/HexAdapter(GreedyBytes))
+                        'service_search'/GreedyBytes)
 
 # TS 102 223 Section 8.66
 class AttributeInformation(COMPR_TLV_IE, tag=0xC4):
     _construct = Struct('local_bearer_technology'/ServiceRecord.BearerTechId,
-                        'attribute_information'/HexAdapter(GreedyBytes))
+                        'attribute_information'/GreedyBytes)
 
 
 # TS 102 223 Section 8.68
 class RemoteEntityAddress(COMPR_TLV_IE, tag=0xC9):
     _construct = Struct('coding_type'/Enum(Int8ub, ieee802_16=0, irda=1),
-                        'address'/HexAdapter(GreedyBytes))
+                        'address'/GreedyBytes)
 
 # TS 102 223 Section 8.70
 class NetworkAccessName(COMPR_TLV_IE, tag=0xC7):
     _test_de_encode = [
-        ( 'c704036e6161', '036e6161' ),
+        ( 'c704036e6161', h2b('036e6161') ),
     ]
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 102 223 Section 8.72
 class TextAttribute(COMPR_TLV_IE, tag=0xD0):
@@ -618,15 +618,15 @@ class FrameIdentifier(COMPR_TLV_IE, tag=0xE8):
 
 # TS 102 223 Section 8.82
 class MultimediaMessageReference(COMPR_TLV_IE, tag=0xEA):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 102 223 Section 8.83
 class MultimediaMessageIdentifier(COMPR_TLV_IE, tag=0xEB):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 102 223 Section 8.85
 class MmContentIdentifier(COMPR_TLV_IE, tag=0xEE):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 102 223 Section 8.89
 class ActivateDescriptor(COMPR_TLV_IE, tag=0xFB):
@@ -649,7 +649,7 @@ class ContactlessFunctionalityState(COMPR_TLV_IE, tag=0xD4):
 # TS 31.111 Section 8.91
 class RoutingAreaIdentification(COMPR_TLV_IE, tag=0xF3):
     _construct = Struct('mcc_mnc'/PlmnAdapter(Bytes(3)),
-                        'lac'/HexAdapter(Bytes(2)),
+                        'lac'/Bytes(2),
                         'rac'/Int8ub)
 
 # TS 31.111 Section 8.92
@@ -709,15 +709,15 @@ class EcatSequenceNumber(COMPR_TLV_IE, tag=0xA1):
 
 # TS 102 223 Section 8.99
 class EncryptedTlvList(COMPR_TLV_IE, tag=0xA2):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 102 223 Section 8.100
 class Mac(COMPR_TLV_IE, tag=0xE0):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 102 223 Section 8.101
 class SaTemplate(COMPR_TLV_IE, tag=0xA3):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 102 223 Section 8.103
 class RefreshEnforcementPolicy(COMPR_TLV_IE, tag=0xBA):
@@ -725,7 +725,7 @@ class RefreshEnforcementPolicy(COMPR_TLV_IE, tag=0xBA):
 
 # TS 102 223 Section 8.104
 class DnsServerAddress(COMPR_TLV_IE, tag=0xC0):
-    _construct = HexAdapter(GreedyBytes)
+    _construct = GreedyBytes
 
 # TS 102 223 Section 8.105
 class SupportedRadioAccessTechnologies(COMPR_TLV_IE, tag=0xB4):
