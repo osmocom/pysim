@@ -36,24 +36,25 @@ reference the load block AID and pick, among other application related parameter
 
 Example: Adding a JAVA-card applet to an existing profile package
 ::
-        # Step #1: Create the application PE and load the ijc contents from the .cap file:
-        $ ./contrib/saip-tool.py upp.der add-app --output-file upp_with_app.der --applet-file app.cap --aid '1122334455'
-        Read 28 PEs from file 'upp.der'
-        Applying applet file: 'app.cap'...
-        application PE inserted into PE Sequence after securityDomain PE AID: a000000151000000
-        Writing 29 PEs to file 'upp_with_app.der'...
 
-        # Step #2: Create the application instance inside the application PE created in step #1:
-        $ ./contrib/saip-tool.py upp_with_app.der add-app-inst --output-file upp_with_app_and_instance.der \
-                --aid '1122334455' \
-                --class-aid '112233445501' \
-                --inst-aid '112233445501' \
-                --app-privileges '00' \
-                --app-spec-pars '00' \
-                --uicc-toolkit-app-spec-pars '01001505000000000000000000000000'
-	Read 29 PEs from file 'upp_with_app.der'
-	Found Load Package AID: 1122334455, adding new instance AID: 112233445501 to Application PE...
-        Writing 29 PEs to file 'upp_with_app_and_instance.der'...
+  # Step #1: Create the application PE and load the ijc contents from the .cap file:
+  $ ./contrib/saip-tool.py upp.der add-app --output-file upp_with_app.der --applet-file app.cap --aid '1122334455'
+  Read 28 PEs from file 'upp.der'
+  Applying applet file: 'app.cap'...
+  application PE inserted into PE Sequence after securityDomain PE AID: a000000151000000
+  Writing 29 PEs to file 'upp_with_app.der'...
+
+  # Step #2: Create the application instance inside the application PE created in step #1:
+  $ ./contrib/saip-tool.py upp_with_app.der add-app-inst --output-file upp_with_app_and_instance.der \
+          --aid '1122334455' \
+          --class-aid '112233445501' \
+          --inst-aid '112233445501' \
+          --app-privileges '00' \
+          --app-spec-pars '00' \
+          --uicc-toolkit-app-spec-pars '01001505000000000000000000000000'
+  Read 29 PEs from file 'upp_with_app.der'
+  Found Load Package AID: 1122334455, adding new instance AID: 112233445501 to Application PE...
+  Writing 29 PEs to file 'upp_with_app_and_instance.der'...
 
 NOTE: The parameters of the sub-commands `add-app` and `add-app-inst` are application specific. It is up to the application
 developer to pick parameters that suit the application correctly. For an exact command reference see section
@@ -70,30 +71,32 @@ to check if the applet insertaion was carried out as expected.
 
 Example: Listing applications and their parameters
 ::
-        $ ./contrib/saip-tool.py upp_with_app_and_instance.der info --apps
-        Read 29 PEs from file 'upp_with_app_and_instance.der'
-        Application #0:
-                loadBlock:
-                        loadPackageAID: '1122334455' (5 bytes)
-                        loadBlockObject: '01000fdecaffed010204000105d07002ca440200...681080056810a00633b44104b431066800a10231' (569 bytes)
-                instanceList[0]:
-                        applicationLoadPackageAID: '1122334455' (5 bytes)
-                        classAID: '112233445501' (8 bytes)
-                        instanceAID: '112233445501' (8 bytes)
-                        applicationPrivileges: '00' (1 bytes)
-                        lifeCycleState: '07' (1 bytes)
-                        applicationSpecificParametersC9: '00' (1 bytes)
-                        applicationParameters:
-                                uiccToolkitApplicationSpecificParametersField: '01001505000000000000000000000000' (16 bytes)
+
+  $ ./contrib/saip-tool.py upp_with_app_and_instance.der info --apps
+  Read 29 PEs from file 'upp_with_app_and_instance.der'
+  Application #0:
+          loadBlock:
+                  loadPackageAID: '1122334455' (5 bytes)
+                  loadBlockObject: '01000fdecaffed010204000105d07002ca440200...681080056810a00633b44104b431066800a10231' (569 bytes)
+          instanceList[0]:
+                  applicationLoadPackageAID: '1122334455' (5 bytes)
+                  classAID: '112233445501' (8 bytes)
+                  instanceAID: '112233445501' (8 bytes)
+                  applicationPrivileges: '00' (1 bytes)
+                  lifeCycleState: '07' (1 bytes)
+                  applicationSpecificParametersC9: '00' (1 bytes)
+                  applicationParameters:
+                          uiccToolkitApplicationSpecificParametersField: '01001505000000000000000000000000' (16 bytes)
 
 In case further analysis with external tools or transfer of applications from one profile package to another is
 necessary, the executable code in the `loadBlockObject` field can be extracted to an `.ijc` or an `.cap` file.
 
 Example: Extracting applications from a profile package
 ::
-        $ ./contrib/saip-tool.py upp_with_app_and_instance.der extract-apps --output-dir ./apps --format ijc
-        Read 29 PEs from file 'upp_with_app_and_instance.der'
-        Writing Load Package AID: 1122334455 to file ./apps/8949449999999990023f-1122334455.ijc
+
+  $ ./contrib/saip-tool.py upp_with_app_and_instance.der extract-apps --output-dir ./apps --format ijc
+  Read 29 PEs from file 'upp_with_app_and_instance.der'
+  Writing Load Package AID: 1122334455 to file ./apps/8949449999999990023f-1122334455.ijc
 
 
 Removing applications
@@ -104,11 +107,12 @@ An application PE can be removed using sub-command `remove-app`. The user passes
 
 Example: Remove an application from a profile package
 ::
-        $ ./contrib/saip-tool.py upp_with_app_and_instance.der remove-app --output-file upp_without_app.der --aid '1122334455'
-        Read 29 PEs from file 'upp_with_app_and_instance.der'
-        Found Load Package AID: 1122334455, removing related PE (id=23) from Sequence...
-        Removing PE application (id=23) from Sequence...
-        Writing 28 PEs to file 'upp_without_app.der'...
+
+  $ ./contrib/saip-tool.py upp_with_app_and_instance.der remove-app --output-file upp_without_app.der --aid '1122334455'
+  Read 29 PEs from file 'upp_with_app_and_instance.der'
+  Found Load Package AID: 1122334455, removing related PE (id=23) from Sequence...
+  Removing PE application (id=23) from Sequence...
+  Writing 28 PEs to file 'upp_without_app.der'...
 
 In some cases it is useful to remove only an instance from an existing application PE. This may be the case when the
 an application developer wants to modify parameters of an application by removing and re-adding the instance. The
@@ -116,11 +120,12 @@ operation basically rolls the state back to step 1 explained in section :ref:`In
 
 Example: Remove an application instance from an application PE
 ::
-        $ ./contrib/saip-tool.py upp_with_app_and_instance.der remove-app-inst --output-file upp_without_app.der --aid '1122334455' --inst-aid '112233445501'
-        Read 29 PEs from file 'upp_with_app_and_instance.der'
-	Found Load Package AID: 1122334455, removing instance AID: 112233445501 from Application PE...
-        Removing instance from Application PE...
-        Writing 29 PEs to file 'upp_with_app.der'...
+
+  $ ./contrib/saip-tool.py upp_with_app_and_instance.der remove-app-inst --output-file upp_without_app.der --aid '1122334455' --inst-aid '112233445501'
+  Read 29 PEs from file 'upp_with_app_and_instance.der'
+  Found Load Package AID: 1122334455, removing instance AID: 112233445501 from Application PE...
+  Removing instance from Application PE...
+  Writing 29 PEs to file 'upp_with_app.der'...
 
 
 saip-tool syntax
