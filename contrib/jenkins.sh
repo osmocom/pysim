@@ -82,6 +82,10 @@ case "$JOB_TYPE" in
 
 	pip install -r requirements.txt
 
+	# XXX: workaround for https://github.com/python-cmd2/cmd2/issues/1414
+	# 2.4.3 was the last stable release not affected by this bug (OS#6776)
+	pip install cmd2==2.4.3
+
 	rm -rf docs/_build
 	make -C "docs" html latexpdf
 
