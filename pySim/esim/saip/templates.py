@@ -1,5 +1,5 @@
-# Implementation of SimAlliance/TCA Interoperable Profile Template handling
-#
+"""Implementation of SimAlliance/TCA Interoperable Profile Templates."""
+
 # (C) 2024 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -224,8 +224,8 @@ class ProfileTemplateRegistry:
 # below are transcribed template definitions from "ANNEX A (Normative): File Structure Templates Definition"
 # of "Profile interoperability specification V3.3.1 Final" (unless other version explicitly specified).
 
-# Section 9.2
 class FilesAtMF(ProfileTemplate):
+    """Files at MF as per Section 9.2"""
     created_by_default = True
     oid = OID.MF
     files = [
@@ -238,8 +238,8 @@ class FilesAtMF(ProfileTemplate):
     ]
 
 
-# Section 9.3
 class FilesCD(ProfileTemplate):
+    """Files at DF.CD as per Section 9.3"""
     created_by_default = False
     oid = OID.DF_CD
     files = [
@@ -287,8 +287,8 @@ for i in range(0x90, 0x98):
 for i in range(0x98, 0xa0):
     df_pb_files.append(FileTemplate(0x4f00+i, 'EF.CCP1', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi'], ppath=[0x5f3a]))
 
-# Section 9.4 v2.3.1
 class FilesTelecom(ProfileTemplate):
+    """Files at DF.TELECOM as per Section 9.4 v2.3.1"""
     created_by_default = False
     oid = OID.DF_TELECOM
     base_path = Path('MF')
@@ -328,8 +328,8 @@ class FilesTelecom(ProfileTemplate):
     ]
 
 
-# Section 9.4
 class FilesTelecomV2(ProfileTemplate):
+    """Files at DF.TELECOM as per Section 9.4"""
     created_by_default = False
     oid = OID.DF_TELECOM_v2
     base_path = Path('MF')
@@ -379,8 +379,8 @@ class FilesTelecomV2(ProfileTemplate):
     ]
 
 
-# Section 9.5.1 v2.3.1
 class FilesUsimMandatory(ProfileTemplate):
+    """Mandatory Files at ADF.USIM as per Section 9.5.1 v2.3.1"""
     created_by_default = True
     oid = OID.ADF_USIM_by_default
     files = [
@@ -410,8 +410,8 @@ class FilesUsimMandatory(ProfileTemplate):
         FileTemplate(0x6fe4, 'EF.EPSNSC',    'LF',    1,   80,   5, 0x18, 'FF...FF', False, ass_serv=[85], high_update=True),
     ]
 
-# Section 9.5.1
 class FilesUsimMandatoryV2(ProfileTemplate):
+    """Mandatory Files at ADF.USIM as per Section 9.5.1"""
     created_by_default = True
     oid = OID.ADF_USIM_by_default_v2
     files = [
@@ -442,8 +442,8 @@ class FilesUsimMandatoryV2(ProfileTemplate):
     ]
 
 
-# Section 9.5.2 v2.3.1
 class FilesUsimOptional(ProfileTemplate):
+    """Optional Files at ADF.USIM as per Section 9.5.2 v2.3.1"""
     created_by_default = False
     optional = True
     oid = OID.ADF_USIMopt_not_by_default
@@ -529,6 +529,7 @@ class FilesUsimOptional(ProfileTemplate):
 
 # Section 9.5.2
 class FilesUsimOptionalV2(ProfileTemplate):
+    """Optional Files at ADF.USIM as per Section 9.5.2"""
     created_by_default = False
     optional = True
     oid = OID.ADF_USIMopt_not_by_default_v2
@@ -622,8 +623,8 @@ class FilesUsimOptionalV2(ProfileTemplate):
         FileTemplate(0x6ffd, 'EF.MudMidCfgdata','BT', None, None,2, None, None, True, ['size'], ass_serv=[134]),
     ]
 
-# Section 9.5.2.3 v3.3.1
 class FilesUsimOptionalV3(ProfileTemplate):
+    """Optional Files at ADF.USIM as per Section 9.5.2.3 v3.3.1"""
     created_by_default = False
     optional = True
     oid = OID.ADF_USIMopt_not_by_default_v3
@@ -633,16 +634,16 @@ class FilesUsimOptionalV3(ProfileTemplate):
         FileTemplate(0x6f01, 'EF.eAKA', 'TR', None, 1, 3, None, None, True, ['size'], ass_serv=[134]),
     ]
 
-# Section 9.5.3
 class FilesUsimDfPhonebook(ProfileTemplate):
+    """DF.PHONEBOOK Files at ADF.USIM as per Section 9.5.3"""
     created_by_default = False
     oid = OID.DF_PHONEBOOK_ADF_USIM
     base_path = Path('ADF.USIM')
     files = df_pb_files
 
 
-# Section 9.5.4
 class FilesUsimDfGsmAccess(ProfileTemplate):
+    """DF.GSM-ACCESS Files at ADF.USIM as per Section 9.5.4"""
     created_by_default = False
     oid = OID.DF_GSM_ACCESS_ADF_USIM
     base_path = Path('ADF.USIM')
@@ -656,8 +657,8 @@ class FilesUsimDfGsmAccess(ProfileTemplate):
     ]
 
 
-# Section 9.5.11 v2.3.1
 class FilesUsimDf5GS(ProfileTemplate):
+    """DF.5GS Files at ADF.USIM as per Section 9.5.11 v2.3.1"""
     created_by_default = False
     oid = OID.DF_5GS
     base_path = Path('ADF.USIM')
@@ -677,8 +678,8 @@ class FilesUsimDf5GS(ProfileTemplate):
     ]
 
 
-# Section 9.5.11.2
 class FilesUsimDf5GSv2(ProfileTemplate):
+    """DF.5GS Files at ADF.USIM as per Section 9.5.11.2"""
     created_by_default = False
     oid = OID.DF_5GS_v2
     base_path = Path('ADF.USIM')
@@ -700,8 +701,8 @@ class FilesUsimDf5GSv2(ProfileTemplate):
     ]
 
 
-# Section 9.5.11.3
 class FilesUsimDf5GSv3(ProfileTemplate):
+    """DF.5GS Files at ADF.USIM as per Section 9.5.11.3"""
     created_by_default = False
     oid = OID.DF_5GS_v3
     base_path = Path('ADF.USIM')
@@ -724,8 +725,8 @@ class FilesUsimDf5GSv3(ProfileTemplate):
         FileTemplate(0x4f0c, 'EF.TN3GPPSNN',         'TR', None,    1,   2, 0x0c, '00', False, ass_serv=[135]),
     ]
 
-# Section 9.5.11.4
 class FilesUsimDf5GSv4(ProfileTemplate):
+    """DF.5GS Files at ADF.USIM as per Section 9.5.11.4"""
     created_by_default = False
     oid = OID.DF_5GS_v4
     base_path = Path('ADF.USIM')
@@ -756,8 +757,8 @@ class FilesUsimDf5GSv4(ProfileTemplate):
     ]
 
 
-# Section 9.5.12
 class FilesUsimDfSaip(ProfileTemplate):
+    """DF.SAIP Files at ADF.USIM as per Section 9.5.12"""
     created_by_default = False
     oid = OID.DF_SAIP
     base_path = Path('ADF.USIM')
@@ -767,8 +768,8 @@ class FilesUsimDfSaip(ProfileTemplate):
         FileTemplate(0x4f01, 'EF.SUCICalcInfo','TR', None, None, 3, None, 'FF...FF', False, ['size'], ass_serv=[125], pe_name='ef-suci-calc-info-usim'),
     ]
 
-# Section 9.5.13
 class FilesDfSnpn(ProfileTemplate):
+    """DF.SNPN Files at ADF.USIM as per Section 9.5.13"""
     created_by_default = False
     oid = OID.DF_SNPN
     base_path = Path('ADF.USIM')
@@ -778,8 +779,8 @@ class FilesDfSnpn(ProfileTemplate):
         FileTemplate(0x4f01, 'EF.PWS_SNPN',     'TR', None,    1,  10, None, None, True, ass_serv=[143]),
     ]
 
-# Section 9.5.14
 class FilesDf5GProSe(ProfileTemplate):
+    """DF.ProSe Files at ADF.USIM as per Section 9.5.14"""
     created_by_default = False
     oid = OID.DF_5GProSe
     base_path = Path('ADF.USIM')
@@ -794,8 +795,8 @@ class FilesDf5GProSe(ProfileTemplate):
         FileTemplate(0x4f06, 'EF.5G_PROSE_UIR',   'TR', None,   32,   2, 0x06, None,  True, ass_serv=[139,1005]),
     ]
 
-# Section 9.6.1
 class FilesIsimMandatory(ProfileTemplate):
+    """Mandatory Files at ADF.ISIM as per Section 9.6.1"""
     created_by_default = True
     oid = OID.ADF_ISIM_by_default
     files = [
@@ -809,8 +810,8 @@ class FilesIsimMandatory(ProfileTemplate):
     ]
 
 
-# Section 9.6.2 v2.3.1
 class FilesIsimOptional(ProfileTemplate):
+    """Optional Files at ADF.ISIM as per Section 9.6.2 of v2.3.1"""
     created_by_default = False
     optional = True
     oid = OID.ADF_ISIMopt_not_by_default
@@ -829,8 +830,8 @@ class FilesIsimOptional(ProfileTemplate):
     ]
 
 
-# Section 9.6.2
 class FilesIsimOptionalv2(ProfileTemplate):
+    """Optional Files at ADF.ISIM as per Section 9.6.2"""
     created_by_default = False
     optional = True
     oid = OID.ADF_ISIMopt_not_by_default_v2
@@ -857,8 +858,8 @@ class FilesIsimOptionalv2(ProfileTemplate):
 # TODO: CSIM
 
 
-# Section 9.8
 class FilesEap(ProfileTemplate):
+    """Files at DF.EAP as per Section 9.8"""
     created_by_default = False
     oid = OID.DF_EAP
     files = [

@@ -1,5 +1,5 @@
-# Implementation of SimAlliance/TCA Interoperable Profile handling
-#
+"""Implementation of Personalization of eSIM profiles in SimAlliance/TCA Interoperable Profile."""
+
 # (C) 2023-2024 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify

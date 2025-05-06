@@ -1,11 +1,9 @@
-# Early proof-of-concept implementation of
-# GSMA eSIM RSP (Remote SIM Provisioning BSP (BPP Protection Protocol),
-# where BPP is the Bound  Profile Package.  So the full expansion is the
-# "GSMA eSIM Remote SIM Provisioning Bound Profile Packate Protection Protocol"
-#
-# Originally (SGP.22 v2.x) this was called SCP03t, but it has since been
-# renamed to BSP.
-#
+"""Implementation of GSMA eSIM RSP (Remote SIM Provisioning BSP (BPP Protection Protocol),
+where BPP is the Bound  Profile Package.  So the full expansion is the
+"GSMA eSIM Remote SIM Provisioning Bound Profile Packate Protection Protocol"
+
+Originally (SGP.22 v2.x) this was called SCP03t, but it has since been renamed to BSP."""
+
 # (C) 2023 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -45,6 +43,7 @@ logger.addHandler(logging.NullHandler())
 MAX_SEGMENT_SIZE = 1020
 
 class BspAlgo(abc.ABC):
+    """Base class representing a cryptographic algorithm within the BSP (BPP Security Protocol)."""
     blocksize: int
 
     def _get_padding(self, in_len: int, multiple: int, padding: int = 0) -> bytes:
@@ -62,6 +61,7 @@ class BspAlgo(abc.ABC):
         return self.__class__.__name__
 
 class BspAlgoCrypt(BspAlgo, abc.ABC):
+    """Base class representing an encryption/decryption algorithm within the BSP (BPP Security Protocol)."""
 
     def __init__(self, s_enc: bytes):
         self.s_enc = s_enc
@@ -93,6 +93,7 @@ class BspAlgoCrypt(BspAlgo, abc.ABC):
         """Actual implementation, to be implemented by derived class."""
 
 class BspAlgoCryptAES128(BspAlgoCrypt):
+    """AES-CBC-128 implementation of the BPP Security Protocol for GSMA SGP.22 eSIM."""
     name = 'AES-CBC-128'
     blocksize = 16
 
@@ -133,6 +134,7 @@ class BspAlgoCryptAES128(BspAlgoCrypt):
 
 
 class BspAlgoMac(BspAlgo, abc.ABC):
+    """Base class representing a message authentication code algorithm within the BSP (BPP Security Protocol)."""
     l_mac = 0 # must be overridden by derived class
 
     def __init__(self, s_mac: bytes, initial_mac_chaining_value: bytes):
@@ -167,6 +169,7 @@ class BspAlgoMac(BspAlgo, abc.ABC):
         """To be implemented by algorithm specific derived class."""
 
 class BspAlgoMacAES128(BspAlgoMac):
+    """AES-CMAC-128 implementation of the BPP Security Protocol for GSMA SGP.22 eSIM."""
     name = 'AES-CMAC-128'
     l_mac = 8
 

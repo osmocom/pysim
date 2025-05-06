@@ -1,5 +1,5 @@
-# Implementation of SimAlliance/TCA Interoperable Profile handling
-#
+"""Implementation of SimAlliance/TCA Interoperable Profile handling"""
+
 # (C) 2023-2024 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -45,7 +45,7 @@ asn1 = compile_asn1_subdir('saip')
 logger = logging.getLogger(__name__)
 
 class Naa:
-    """A class defining a Network Access Application (NAA)."""
+    """A class defining a Network Access Application (NAA)"""
     name = None
     # AID prefix, as used for ADF and EF.DIR
     aid = None
@@ -61,6 +61,7 @@ class Naa:
         return 'adf-' + cls.mandatory_services[0]
 
 class NaaCsim(Naa):
+    """A class representing the CSIM (CDMA) Network Access Application (NAA)"""
     name = "csim"
     aid = h2b("")
     mandatory_services = ["csim"]
@@ -68,6 +69,7 @@ class NaaCsim(Naa):
     templates = [oid.ADF_CSIM_by_default, oid.ADF_CSIMopt_not_by_default]
 
 class NaaUsim(Naa):
+    """A class representing the USIM Network Access Application (NAA)"""
     name = "usim"
     aid = h2b("a0000000871002")
     mandatory_services = ["usim"]
@@ -80,6 +82,7 @@ class NaaUsim(Naa):
     adf = ADF_USIM()
 
 class NaaIsim(Naa):
+    """A class representing the ISIM Network Access Application (NAA)"""
     name = "isim"
     aid = h2b("a0000000871004")
     mandatory_services = ["isim"]
@@ -750,6 +753,7 @@ class ProfileElementGFM(ProfileElement):
 
 
 class ProfileElementMF(FsProfileElement):
+    """Class representing the ProfileElement for the MF (Master File)"""
     type = 'mf'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -763,6 +767,7 @@ class ProfileElementMF(FsProfileElement):
         # TODO: resize EF.DIR?
 
 class ProfileElementPuk(ProfileElement):
+    """Class representing the ProfileElement for a PUK (PIN Unblocking Code)"""
     type = 'pukCodes'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -793,6 +798,7 @@ class ProfileElementPuk(ProfileElement):
 
 
 class ProfileElementPin(ProfileElement):
+    """Class representing the ProfileElement for a PIN (Personal Identification Number)"""
     type = 'pinCodes'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -829,6 +835,7 @@ class ProfileElementPin(ProfileElement):
 
 
 class ProfileElementTelecom(FsProfileElement):
+    """Class representing the ProfileElement for DF.TELECOM"""
     type = 'telecom'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -841,6 +848,7 @@ class ProfileElementTelecom(FsProfileElement):
             self.decoded[fname] = []
 
 class ProfileElementCD(FsProfileElement):
+    """Class representing the ProfileElement for DF.CD"""
     type = 'cd'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -853,6 +861,7 @@ class ProfileElementCD(FsProfileElement):
             self.decoded[fname] = []
 
 class ProfileElementPhonebook(FsProfileElement):
+    """Class representing the ProfileElement for DF.PHONEBOOK"""
     type = 'phonebook'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -865,6 +874,7 @@ class ProfileElementPhonebook(FsProfileElement):
             self.decoded[fname] = []
 
 class ProfileElementGsmAccess(FsProfileElement):
+    """Class representing the ProfileElement for ADF.USIM/DF.GSM-ACCESS"""
     type = 'gsm-access'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -877,6 +887,7 @@ class ProfileElementGsmAccess(FsProfileElement):
             self.decoded[fname] = []
 
 class ProfileElementDf5GS(FsProfileElement):
+    """Class representing the ProfileElement for ADF.USIM/DF.5GS"""
     type = 'df-5gs'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -889,6 +900,7 @@ class ProfileElementDf5GS(FsProfileElement):
             self.decoded[fname] = []
 
 class ProfileElementEAP(FsProfileElement):
+    """Class representing the ProfileElement for DF.EAP"""
     type = 'eap'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -901,6 +913,7 @@ class ProfileElementEAP(FsProfileElement):
             self.decoded[fname] = []
 
 class ProfileElementDfSAIP(FsProfileElement):
+    """Class representing the ProfileElement for DF.SAIP"""
     type = 'df-saip'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -913,6 +926,7 @@ class ProfileElementDfSAIP(FsProfileElement):
             self.decoded[fname] = []
 
 class ProfileElementDfSNPN(FsProfileElement):
+    """Class representing the ProfileElement for DF.SNPN"""
     type = 'df-snpn'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -925,6 +939,7 @@ class ProfileElementDfSNPN(FsProfileElement):
             self.decoded[fname] = []
 
 class ProfileElementDf5GProSe(FsProfileElement):
+    """Class representing the ProfileElement for DF.5GProSe"""
     type = 'df-5gprose'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -1218,6 +1233,7 @@ class ProfileElementApplication(ProfileElement):
 
 
 class ProfileElementRFM(ProfileElement):
+    """Class representing the ProfileElement for RFM (Remote File Management)."""
     type = 'rfm'
 
     def __init__(self, decoded: Optional[dict] = None,
@@ -1243,6 +1259,7 @@ class ProfileElementRFM(ProfileElement):
                 }
 
 class ProfileElementUSIM(FsProfileElement):
+    """Class representing the ProfileElement for ADF.USIM Mandatory Files"""
     type = 'usim'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -1265,6 +1282,7 @@ class ProfileElementUSIM(FsProfileElement):
         return dec_imsi(b2h(f.body))
 
 class ProfileElementOptUSIM(FsProfileElement):
+    """Class representing the ProfileElement for ADF.USIM Optional Files"""
     type = 'opt-usim'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -1275,6 +1293,7 @@ class ProfileElementOptUSIM(FsProfileElement):
         self.decoded['templateID'] = str(oid.ADF_USIMopt_not_by_default_v2)
 
 class ProfileElementISIM(FsProfileElement):
+    """Class representing the ProfileElement for ADF.ISIM Mandatory Files"""
     type = 'isim'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -1291,6 +1310,7 @@ class ProfileElementISIM(FsProfileElement):
         return b2h(self.decoded['adf-isim'][0][1]['dfName'])
 
 class ProfileElementOptISIM(FsProfileElement):
+    """Class representing the ProfileElement for ADF.ISIM Optional Files"""
     type = 'opt-isim'
 
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
@@ -1302,6 +1322,7 @@ class ProfileElementOptISIM(FsProfileElement):
 
 
 class ProfileElementAKA(ProfileElement):
+    """Class representing the ProfileElement for Authentication and Key Agreement (AKA)."""
     type = 'akaParameter'
     # TODO: RES size for USIM test algorithm can be set to 32, 64 or 128 bits. This value was
     # previously limited to 128 bits.  Recommendation: Avoid using RES size 32 or 64 in Profiles
@@ -1381,6 +1402,7 @@ class ProfileElementAKA(ProfileElement):
         })
 
 class ProfileElementHeader(ProfileElement):
+    """Class representing the ProfileElement for the Header of the PE-Sequence."""
     type = 'header'
     def __init__(self, decoded: Optional[dict] = None,
                  ver_major: Optional[int] = 2, ver_minor: Optional[int] = 3,
@@ -1421,6 +1443,7 @@ class ProfileElementHeader(ProfileElement):
             raise ValueError("service not in eUICC-Mandatory-services list, cannot remove")
 
 class ProfileElementEnd(ProfileElement):
+    """Class representing the ProfileElement for the End of the PE-Sequence."""
     type = 'end'
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
         super().__init__(decoded, **kwargs)

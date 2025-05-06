@@ -1,5 +1,5 @@
-# Implementation of SimAlliance/TCA Interoperable Profile handling
-#
+"""Implementation of SimAlliance/TCA Interoperable Profile validation."""
+
 # (C) 2023-2024 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,16 +19,21 @@
 from pySim.esim.saip import *
 
 class ProfileError(Exception):
+    """Raised when a ProfileConstraintChecker finds an error in a file [structure]."""
     pass
 
 class ProfileConstraintChecker:
+    """Base class of a constraint checker for a ProfileElementSequence."""
     def check(self, pes: ProfileElementSequence):
+        """Execute all the check_* methods of the ProfileConstraintChecker against the given
+        ProfileElementSequence"""
         for name in dir(self):
             if name.startswith('check_'):
                 method = getattr(self, name)
                 method(pes)
 
 class CheckBasicStructure(ProfileConstraintChecker):
+    """ProfileConstraintChecker for the basic profile structure constraints."""
     def _is_after_if_exists(self, pes: ProfileElementSequence, opt:str, after:str):
         opt_pe = pes.get_pe_for_type(opt)
         if opt_pe:
@@ -38,6 +43,7 @@ class CheckBasicStructure(ProfileConstraintChecker):
             # FIXME: check order
 
     def check_start_and_end(self, pes: ProfileElementSequence):
+        """Check for mandatory header and end ProfileElements at the right position."""
         if pes.pe_list[0].type != 'header':
             raise ProfileError('first element is not header')
         if pes.pe_list[1].type != 'mf':
@@ -47,6 +53,7 @@ class CheckBasicStructure(ProfileConstraintChecker):
             raise ProfileError('last element is not end')
 
     def check_number_of_occurrence(self, pes: ProfileElementSequence):
+        """Check The number of occurrence of various ProfileElements."""
         # check for invalid number of occurrences
         if len(pes.get_pes_for_type('header')) != 1:
             raise ProfileError('multiple ProfileHeader')
@@ -60,6 +67,7 @@ class CheckBasicStructure(ProfileConstraintChecker):
                 raise ProfileError('multiple PE-%s' % tn.upper())
 
     def check_optional_ordering(self, pes: ProfileElementSequence):
+        """Check the ordering of optional PEs following the respective mandatory ones."""
         # ordering and required depenencies
         self._is_after_if_exists(pes,'opt-usim', 'usim')
         self._is_after_if_exists(pes,'opt-isim', 'isim')
@@ -104,17 +112,21 @@ class CheckBasicStructure(ProfileConstraintChecker):
 FileChoiceList = List[Tuple]
 
 class FileError(ProfileError):
+    """Raised when a FileConstraintChecker finds an error in a file [structure]."""
     pass
 
 class FileConstraintChecker:
     def check(self, l: FileChoiceList):
+        """Execute all the check_* methods of the FileConstraintChecker against the given FileChoiceList"""
         for name in dir(self):
             if name.startswith('check_'):
                 method = getattr(self, name)
                 method(l)
 
 class FileCheckBasicStructure(FileConstraintChecker):
+    """Validator for the basic structure of a decoded file."""
     def check_seqence(self, l: FileChoiceList):
+        """Check the sequence/ordering."""
         by_type = {}
         for k, v in l:
             if k in by_type:

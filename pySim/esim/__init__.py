@@ -61,8 +61,8 @@ def compile_asn1_subdir(subdir_name:str, codec='der'):
     return asn1tools.compile_string(asn_txt, codec=codec)
 
 
-# SGP.22 section 4.1 Activation Code
 class ActivationCode:
+    """SGP.22 section 4.1 Activation Code"""
     def __init__(self, hostname:str, token:str, oid: Optional[str] = None, cc_required: Optional[bool] = False):
         if '$' in hostname:
             raise ValueError('$ sign not permitted in hostname')
@@ -78,6 +78,7 @@ class ActivationCode:
 
     @staticmethod
     def decode_str(ac: str) -> dict:
+        """decode an activation code from its string representation."""
         if ac[0] != '1':
             raise ValueError("Unsupported AC_Format '%s'!" % ac[0])
         ac_elements = ac.split('$')

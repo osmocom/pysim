@@ -1,6 +1,5 @@
-# Implementation of GSMA eSIM RSP (Remote SIM Provisioning) ES8+
-# as per SGP22 v3.0 Section 5.5
-#
+"""Implementation of GSMA eSIM RSP (Remote SIM Provisioning) ES8+ as per SGP22 v3.0 Section 5.5"""
+
 # (C) 2023-2024 by Harald Welte <laforge@osmocom.org>
 #
 # This program is free software: you can redistribute it and/or modify
