@@ -43,6 +43,7 @@ pySim consists of several parts:
    legacy
    smpp2sim
    library
+   library-esim
    osmo-smdpp
    sim-rest
    suci-keytool
