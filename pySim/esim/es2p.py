@@ -33,7 +33,7 @@ logger.setLevel(logging.DEBUG)
 
 class param:
     class Iccid(ApiParamString):
-        """String representation of 19 or 20 digits, where the 20th digit MAY optionally be the padding
+        """String representation of 18 to 20 digits, where the 20th digit MAY optionally be the padding
         character F."""
         @classmethod
         def _encode(cls, data):
@@ -46,7 +46,7 @@ class param:
 
         @classmethod
         def verify_encoded(cls, data):
-            if len(data) not in [19, 20]:
+            if len(data) not in (18, 19, 20):
                 raise ValueError('ICCID (%s) length (%u) invalid' % (data, len(data)))
 
         @classmethod
@@ -59,7 +59,7 @@ class param:
         @classmethod
         def verify_decoded(cls, data):
             data = str(data)
-            if len(data) not in [19, 20]:
+            if len(data) not in (18, 19, 20):
                 raise ValueError('ICCID (%s) length (%u) invalid' % (data, len(data)))
             if len(data) == 19:
                 decimal_part = data
