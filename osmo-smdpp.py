@@ -17,6 +17,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature, encode_dss_signature
+from cryptography import x509
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, PrivateFormat, NoEncryption
 import json
 import sys
 import argparse
@@ -42,27 +48,203 @@ from pySim.esim.x509_cert import CertAndPrivkey, CertificateSet, cert_get_subjec
 
 # HACK: make this configurable
 DATA_DIR = './smdpp-data'
-HOSTNAME = 'testsmdpplus1.example.com' # must match certificates!
+HOSTNAME = 'testsmdpplus1.example.com'  # must match certificates!
 
 
 def b64encode2str(req: bytes) -> str:
     """Encode given input bytes as base64 and return result as string."""
     return base64.b64encode(req).decode('ascii')
 
+
 def set_headers(request: IRequest):
     """Set the request headers as mandatory by GSMA eSIM RSP."""
     request.setHeader('Content-Type', 'application/json;charset=UTF-8')
     request.setHeader('X-Admin-Protocol', 'gsma/rsp/v2.1.0')
 
+
+def validate_request_headers(request: IRequest):
+    """Validate mandatory HTTP headers according to SGP.22."""
+    content_type = request.getHeader('Content-Type')
+    if not content_type or not content_type.startswith('application/json'):
+        raise ApiError('1.2.1', '2.1', 'Invalid Content-Type header')
+
+    admin_protocol = request.getHeader('X-Admin-Protocol')
+    if admin_protocol and not admin_protocol.startswith('gsma/rsp/v'):
+        raise ApiError('1.2.2', '2.1', 'Unsupported X-Admin-Protocol version')
+
+def get_eum_certificate_variant(eum_cert) -> str:
+    """Determine EUM certificate variant by checking Certificate Policies extension.
+    Returns 'O' for old variant, or 'NEW' for Ov3/A/B/C variants."""
+
+    try:
+        cert_policies_ext = eum_cert.extensions.get_extension_for_oid(
+            x509.oid.ExtensionOID.CERTIFICATE_POLICIES
+        )
+
+        for policy in cert_policies_ext.value:
+            policy_oid = policy.policy_identifier.dotted_string
+            print(f"Found certificate policy: {policy_oid}")
+
+            if policy_oid == '2.23.146.1.2.1.2':
+                print("Detected EUM certificate variant: O (old)")
+                return 'O'
+            elif policy_oid == '2.23.146.1.2.1.0.0.0':
+                print("Detected EUM certificate variant: Ov3/A/B/C (new)")
+                return 'NEW'
+    except x509.ExtensionNotFound:
+        print("No Certificate Policies extension found")
+    except Exception as e:
+        print(f"Error checking certificate policies: {e}")
+
+def parse_permitted_eins_from_cert(eum_cert) -> List[str]:
+    """Extract permitted IINs from EUM certificate using the appropriate method
+    based on certificate variant (O vs Ov3/A/B/C).
+    Returns list of permitted IINs (basically prefixes that valid EIDs must start with)."""
+
+    # Determine certificate variant first
+    cert_variant = get_eum_certificate_variant(eum_cert)
+    permitted_iins = []
+
+    if cert_variant == 'O':
+        # Old variant - use nameConstraints extension
+        print("Using nameConstraints parsing for variant O certificate")
+        permitted_iins.extend(_parse_name_constraints_eins(eum_cert))
+
+    else:
+        # New variants (Ov3, A, B, C) - use GSMA permittedEins extension
+        print("Using GSMA permittedEins parsing for newer certificate variant")
+        permitted_iins.extend(_parse_gsma_permitted_eins(eum_cert))
+
+    unique_iins = list(set(permitted_iins))
+
+    print(f"Total unique permitted IINs found: {len(unique_iins)}")
+    return unique_iins
+
+def _parse_gsma_permitted_eins(eum_cert) -> List[str]:
+    """Parse the GSMA permittedEins extension using correct ASN.1 structure.
+    PermittedEins ::= SEQUENCE OF PrintableString
+    Each string contains an IIN (Issuer Identification Number) - a prefix of valid EIDs."""
+    permitted_iins = []
+
+    try:
+        permitted_eins_oid = x509.ObjectIdentifier('2.23.146.1.2.2.0')  # sgp26: 2.23.146.1.2.2.0 = ASN1:SEQUENCE:permittedEins
+
+        for ext in eum_cert.extensions:
+            if ext.oid == permitted_eins_oid:
+                print(f"Found GSMA permittedEins extension: {ext.oid}")
+
+                # Get the DER-encoded extension value
+                ext_der = ext.value.value if hasattr(ext.value, 'value') else ext.value
+
+                if isinstance(ext_der, bytes):
+                    try:
+                        import asn1tools
+
+                        permitted_eins_schema = """
+                        PermittedEins DEFINITIONS ::= BEGIN
+                            PermittedEins ::= SEQUENCE OF PrintableString
+                        END
+                        """
+                        decoder = asn1tools.compile_string(permitted_eins_schema)
+                        decoded_strings = decoder.decode('PermittedEins', ext_der)
+
+                        for iin_string in decoded_strings:
+                            # Each string contains an IIN -> prefix of euicc EID
+                            iin_clean = iin_string.strip().upper()
+
+                            # IINs is 8 chars per sgp22, var len according to sgp29, fortunately we don't care
+                            if (len(iin_clean) == 8 and
+                                all(c in '0123456789ABCDEF' for c in iin_clean) and
+                                    len(iin_clean) % 2 == 0):
+                                permitted_iins.append(iin_clean)
+                                print(f"Found permitted IIN (GSMA): {iin_clean}")
+                            else:
+                                print(f"Invalid IIN format: {iin_string} (cleaned: {iin_clean})")
+                    except Exception as e:
+                        print(f"Error parsing GSMA permittedEins extension: {e}")
+
+    except Exception as e:
+        print(f"Error accessing GSMA certificate extensions: {e}")
+
+    return permitted_iins
+
+
+def _parse_name_constraints_eins(eum_cert) -> List[str]:
+    """Parse permitted IINs from nameConstraints extension (variant O)."""
+    permitted_iins = []
+
+    try:
+        # Look for nameConstraints extension
+        name_constraints_ext = eum_cert.extensions.get_extension_for_oid(
+            x509.oid.ExtensionOID.NAME_CONSTRAINTS
+        )
+
+        print("Found nameConstraints extension (variant O)")
+        name_constraints = name_constraints_ext.value
+
+        # Check permittedSubtrees for IIN constraints
+        if name_constraints.permitted_subtrees:
+            for subtree in name_constraints.permitted_subtrees:
+                print(f"Processing permitted subtree: {subtree}")
+
+                if isinstance(subtree, x509.DirectoryName):
+                    for attribute in subtree.value:
+                        # IINs for O in serialNumber
+                        if attribute.oid == x509.oid.NameOID.SERIAL_NUMBER:
+                            serial_value = attribute.value.upper()
+                            # sgp22 8, sgp29 var len, fortunately we don't care
+                            if (len(serial_value) == 8 and
+                                all(c in '0123456789ABCDEF' for c in serial_value) and
+                                    len(serial_value) % 2 == 0):
+                                permitted_iins.append(serial_value)
+                                print(f"Found permitted IIN (nameConstraints/DN): {serial_value}")
+
+    except x509.ExtensionNotFound:
+        print("No nameConstraints extension found")
+    except Exception as e:
+        print(f"Error parsing nameConstraints: {e}")
+
+    return permitted_iins
+
+
+def validate_eid_range(eid: str, eum_cert) -> bool:
+    """Validate that EID is within the permitted EINs of the EUM certificate."""
+    if not eid or len(eid) != 32:
+        print(f"Invalid EID format: {eid}")
+        return False
+
+    try:
+        permitted_eins = parse_permitted_eins_from_cert(eum_cert)
+
+        if not permitted_eins:
+            print("Warning: No permitted EINs found in EUM certificate")
+            return False
+
+        eid_normalized = eid.upper()
+        print(f"Validating EID {eid_normalized} against {len(permitted_eins)} permitted EINs")
+
+        for permitted_ein in permitted_eins:
+                if eid_normalized.startswith(permitted_ein):
+                    print(f"EID {eid_normalized} matches permitted EIN {permitted_ein}")
+                    return True
+
+        print(f"EID {eid_normalized} is not in any permitted EIN list")
+        return False
+
+    except Exception as e:
+        print(f"Error validating EID: {e}")
+        return False
+
+
 def build_status_code(subject_code: str, reason_code: str, subject_id: Optional[str], message: Optional[str]) -> Dict:
-    r = {'subjectCode': subject_code, 'reasonCode': reason_code }
+    r = {'subjectCode': subject_code, 'reasonCode': reason_code}
     if subject_id:
         r['subjectIdentifier'] = subject_id
     if message:
         r['message'] = message
     return r
 
-def build_resp_header(js: dict, status: str = 'Executed-Success', status_code_data = None) -> None:
+def build_resp_header(js: dict, status: str = 'Executed-Success', status_code_data=None) -> None:
     # SGP.22 v3.0 6.5.1.4
     js['header'] = {
         'functionExecutionStatus': {
@@ -72,12 +254,6 @@ def build_resp_header(js: dict, status: str = 'Executed-Success', status_code_da
     if status_code_data:
         js['header']['functionExecutionStatus']['statusCodeData'] = status_code_data
 
-from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature, encode_dss_signature
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, PrivateFormat, NoEncryption
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives import hashes
-from cryptography.exceptions import InvalidSignature
-from cryptography import x509
 
 def ecdsa_tr03111_to_dss(sig: bytes) -> bytes:
     """convert an ECDSA signature from BSI TR-03111 format to DER: first get long integers; then encode those."""
@@ -116,9 +292,9 @@ class SmDppHttpServer:
                     with open(os.path.join(dirpath, filename), 'rb') as f:
                         cert = x509.load_pem_x509_certificate(f.read())
                 if cert:
-                    # verify it is a CI certificate (keyCertSign + i-rspRole-ci)
-                    if not cert_policy_has_oid(cert, oid.id_rspRole_ci):
-                        raise ValueError("alleged CI certificate %s doesn't have CI policy" % filename)
+                    # # verify it is a CI certificate (keyCertSign + i-rspRole-ci)
+                    # if not cert_policy_has_oid(cert, oid.id_rspRole_ci):
+                    #     raise ValueError("alleged CI certificate %s doesn't have CI policy" % filename)
                     certs.append(cert)
         return certs
 
@@ -133,6 +309,20 @@ class SmDppHttpServer:
             if subject_pkid and subject_pkid.key_identifier == ci_pkid:
                 return cert
         return None
+
+    def validate_certificate_chain_for_verification(self, euicc_ci_pkid_list: List[bytes]) -> bool:
+        """Validate that SM-DP+ has valid certificate chains for the given CI PKIDs."""
+        for ci_pkid in euicc_ci_pkid_list:
+            ci_cert = self.ci_get_cert_for_pkid(ci_pkid)
+            if ci_cert:
+                # Check if our DPauth certificate chains to this CI
+                try:
+                    cs = CertificateSet(ci_cert)
+                    cs.verify_cert_chain(self.dp_auth.cert)
+                    return True
+                except VerifyError:
+                    continue
+        return False
 
     def __init__(self, server_hostname: str, ci_certs_path: str, use_brainpool: bool = False):
         self.server_hostname = server_hostname
@@ -179,11 +369,10 @@ class SmDppHttpServer:
         functionality, such as JSON decoding/encoding and debug-printing."""
         @functools.wraps(func)
         def _api_wrapper(self, request: IRequest):
-            # TODO: evaluate User-Agent + X-Admin-Protocol header
-            # TODO: reject any non-JSON Content-type
+            validate_request_headers(request)
 
             content = json.loads(request.content.read())
-            print("Rx JSON: %s" % json.dumps(content))
+            # print("Rx JSON: %s" % json.dumps(content))
             set_headers(request)
 
             output = func(self, request, content)
@@ -191,7 +380,7 @@ class SmDppHttpServer:
                 return ''
 
             build_resp_header(output)
-            print("Tx JSON: %s" % json.dumps(output))
+            # print("Tx JSON: %s" % json.dumps(output))
             return json.dumps(output)
         return _api_wrapper
 
@@ -202,7 +391,7 @@ class SmDppHttpServer:
         # Verify that the received address matches its own SM-DP+ address, where the comparison SHALL be
         # case-insensitive. Otherwise, the SM-DP+ SHALL return a status code "SM-DP+ Address - Refused".
         if content['smdpAddress'] != self.server_hostname:
-           raise ApiError('8.8.1', '3.8', 'Invalid SM-DP+ Address')
+            raise ApiError('8.8.1', '3.8', 'Invalid SM-DP+ Address')
 
         euiccChallenge = b64decode(content['euiccChallenge'])
         if len(euiccChallenge) != 16:
@@ -211,13 +400,19 @@ class SmDppHttpServer:
         euiccInfo1_bin = b64decode(content['euiccInfo1'])
         euiccInfo1 = rsp.asn1.decode('EUICCInfo1', euiccInfo1_bin)
         print("Rx euiccInfo1: %s" % euiccInfo1)
-        #euiccInfo1['svn']
+        # euiccInfo1['svn']
 
         # TODO: If euiccCiPKIdListForSigningV3 is present ...
 
         pkid_list = euiccInfo1['euiccCiPKIdListForSigning']
         if 'euiccCiPKIdListForSigningV3' in euiccInfo1:
             pkid_list = pkid_list + euiccInfo1['euiccCiPKIdListForSigningV3']
+
+        # Validate that SM-DP+ supports certificate chains for verification
+        # verification_pkid_list = euiccInfo1.get('euiccCiPKIdListForVerification', [])
+        # if verification_pkid_list and not self.validate_certificate_chain_for_verification(verification_pkid_list):
+        #     raise ApiError('8.8.4', '3.7', 'The SM-DP+ has no CERT.DPauth.SIG which chains to one of the eSIM CA Root CA Certificate with a Public Key supported by the eUICC')
+
         # verify it supports one of the keys indicated by euiccCiPKIdListForSigning
         ci_cert = None
         for x in pkid_list:
@@ -230,14 +425,7 @@ class SmDppHttpServer:
             else:
                 ci_cert = None
         if not ci_cert:
-           raise ApiError('8.8.2', '3.1', 'None of the proposed Public Key Identifiers is supported by the SM-DP+')
-
-        # TODO: Determine the set of CERT.DPauth.SIG that satisfy the following criteria:
-        # * Part of a certificate chain ending at one of the eSIM CA RootCA Certificate, whose Public Keys is
-        #   supported by the eUICC (indicated by euiccCiPKIdListForVerification).
-        # * Using a certificate chain that the eUICC and the LPA both support:
-        #euiccInfo1['euiccCiPKIdListForVerification']
-        #   raise ApiError('8.8.4', '3.7', 'The SM-DP+ has no CERT.DPauth.SIG which chains to one of the eSIM CA Root CA CErtificate with a Public Key supported by the eUICC')
+            raise ApiError('8.8.2', '3.1', 'None of the proposed Public Key Identifiers is supported by the SM-DP+')
 
         # Generate a TransactionID which is used to identify the ongoing RSP session. The TransactionID
         # SHALL be unique within the scope and lifetime of each SM-DP+.
@@ -253,7 +441,7 @@ class SmDppHttpServer:
             'euiccChallenge': euiccChallenge,
             'serverAddress': self.server_hostname,
             'serverChallenge': serverChallenge,
-            }
+        }
         print("Tx serverSigned1: %s" % serverSigned1)
         serverSigned1_bin = rsp.asn1.encode('ServerSigned1', serverSigned1)
         print("Tx serverSigned1: %s" % rsp.asn1.decode('ServerSigned1', serverSigned1_bin))
@@ -267,9 +455,9 @@ class SmDppHttpServer:
         output['transactionId'] = transactionId
         server_cert_aki = self.dp_auth.get_authority_key_identifier()
         output['euiccCiPKIdToBeUsed'] = b64encode2str(b'\x04\x14' + server_cert_aki.key_identifier)
-        output['serverCertificate'] = b64encode2str(self.dp_auth.get_cert_as_der()) # CERT.DPauth.SIG
+        output['serverCertificate'] = b64encode2str(self.dp_auth.get_cert_as_der())  # CERT.DPauth.SIG
         # FIXME: add those certificate
-        #output['otherCertsInChain'] = b64encode2str()
+        # output['otherCertsInChain'] = b64encode2str()
 
         # create SessionState and store it in rss
         self.rss[transactionId] = rsp.RspSessionState(transactionId, serverChallenge,
@@ -288,8 +476,8 @@ class SmDppHttpServer:
         print("Rx %s: %s" % authenticateServerResp)
         if authenticateServerResp[0] == 'authenticateResponseError':
             r_err = authenticateServerResp[1]
-            #r_err['transactionId']
-            #r_err['authenticateErrorCode']
+            # r_err['transactionId']
+            # r_err['authenticateErrorCode']
             raise ValueError("authenticateResponseError %s" % r_err)
 
         r_ok = authenticateServerResp[1]
@@ -313,7 +501,7 @@ class SmDppHttpServer:
         if ss is None:
             raise ApiError('8.10.1', '3.9', 'Unknown')
         ss.euicc_cert = euicc_cert
-        ss.eum_cert = eum_cert # TODO: do we need this in the state?
+        ss.eum_cert = eum_cert  # TODO: do we need this in the state?
 
         # Verify that the Root Certificate of the eUICC certificate chain corresponds to the
         # euiccCiPKIdToBeUsed or TODO: euiccCiPKIdToBeUsedV3
@@ -330,16 +518,17 @@ class SmDppHttpServer:
             raise ApiError('8.1.3', '6.1', 'Verification failed (certificate chain)')
         #   raise ApiError('8.1.3', '6.3', 'Expired')
 
-
         # Verify euiccSignature1 over euiccSigned1 using pubkey from euiccCertificate.
         # Otherwise, the SM-DP+ SHALL return a status code "eUICC - Verification failed"
         if not self._ecdsa_verify(euicc_cert, euiccSignature1_bin, euiccSigned1_bin):
             raise ApiError('8.1', '6.1', 'Verification failed (euiccSignature1 over euiccSigned1)')
 
-        # TODO: verify EID of eUICC cert is  within permitted range of EUM cert
-
         ss.eid = ss.euicc_cert.subject.get_attributes_for_oid(x509.oid.NameOID.SERIAL_NUMBER)[0].value
         print("EID (from eUICC cert): %s" % ss.eid)
+
+        # Verify EID is within permitted range of EUM certificate
+        if not validate_eid_range(ss.eid, eum_cert):
+            raise ApiError('8.1.4', '6.1', 'EID is not within the permitted range of the EUM certificate')
 
         # Verify that the serverChallenge attached to the ongoing RSP session matches the
         # serverChallenge returned by the eUICC. Otherwise, the SM-DP+ SHALL return a status code "eUICC -
@@ -360,7 +549,7 @@ class SmDppHttpServer:
                 # look up profile based on matchingID.  We simply check if a given file exists for now..
                 path = os.path.join(self.upp_dir, matchingId) + '.der'
                 # prevent directory traversal attack
-                if os.path.commonprefix((os.path.realpath(path),self.upp_dir)) != self.upp_dir:
+                if os.path.commonprefix((os.path.realpath(path), self.upp_dir)) != self.upp_dir:
                     raise ApiError('8.2.6', '3.8', 'Refused')
                 if not os.path.isfile(path) or not os.access(path, os.R_OK):
                     raise ApiError('8.2.6', '3.8', 'Refused')
@@ -385,8 +574,8 @@ class SmDppHttpServer:
         smdpSigned2 = {
             'transactionId': h2b(ss.transactionId),
             'ccRequiredFlag': False,        # whether the Confirmation Code is required
-            #'bppEuiccOtpk': None,           # whether otPK.EUICC.ECKA already used for binding the BPP, tag '5F49'
-            }
+            # 'bppEuiccOtpk': None,           # whether otPK.EUICC.ECKA already used for binding the BPP, tag '5F49'
+        }
         smdpSigned2_bin = rsp.asn1.encode('SmdpSigned2', smdpSigned2)
 
         ss.smdpSignature2_do = b'\x5f\x37\x40' + self.dp_pb.ecdsa_sign(smdpSigned2_bin + b'\x5f\x37\x40' + euiccSignature1_bin)
@@ -398,7 +587,7 @@ class SmDppHttpServer:
             'profileMetadata': b64encode2str(profileMetadata_bin),
             'smdpSigned2': b64encode2str(smdpSigned2_bin),
             'smdpSignature2': b64encode2str(ss.smdpSignature2_do),
-            'smdpCertificate': b64encode2str(self.dp_pb.get_cert_as_der()), # CERT.DPpb.SIG
+            'smdpCertificate': b64encode2str(self.dp_pb.get_cert_as_der()),  # CERT.DPpb.SIG
         }
 
     @app.route('/gsma/rsp2/es9plus/getBoundProfilePackage', methods=['POST'])
@@ -418,8 +607,8 @@ class SmDppHttpServer:
 
         if prepDownloadResp[0] == 'downloadResponseError':
             r_err = prepDownloadResp[1]
-            #r_err['transactionId']
-            #r_err['downloadErrorCode']
+            # r_err['transactionId']
+            # r_err['downloadErrorCode']
             raise ValueError("downloadResponseError %s" % r_err)
 
         r_ok = prepDownloadResp[1]
@@ -444,8 +633,8 @@ class SmDppHttpServer:
         ss.smdp_ot = ec.generate_private_key(self.dp_pb.get_curve())
         # extract the public key in (hopefully) the right format for the ES8+ interface
         ss.smdp_otpk = ss.smdp_ot.public_key().public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
-        print("smdpOtpk: %s" % b2h(ss.smdp_otpk))
-        print("smdpOtsk: %s" % b2h(ss.smdp_ot.private_bytes(Encoding.DER, PrivateFormat.PKCS8, NoEncryption())))
+        # print("smdpOtpk: %s" % b2h(ss.smdp_otpk))
+        # print("smdpOtsk: %s" % b2h(ss.smdp_ot.private_bytes(Encoding.DER, PrivateFormat.PKCS8, NoEncryption())))
 
         ss.host_id = b'mahlzeit'
 
@@ -461,7 +650,7 @@ class SmDppHttpServer:
             upp = UnprotectedProfilePackage.from_der(f.read(), metadata=ss.profileMetadata)
             # HACK: Use empty PPP as we're still debuggin the configureISDP step, and we want to avoid
             # cluttering the log with stuff happening after the failure
-            #upp = UnprotectedProfilePackage.from_der(b'', metadata=ss.profileMetadata)
+            # upp = UnprotectedProfilePackage.from_der(b'', metadata=ss.profileMetadata)
         if False:
             # Use random keys
             bpp = BoundProfilePackage.from_upp(upp)
@@ -472,10 +661,24 @@ class SmDppHttpServer:
 
         # update non-volatile state with updated ss object
         self.rss[transactionId] = ss
-        return {
+        rv =  {
             'transactionId': transactionId,
             'boundProfilePackage': b64encode2str(bpp.encode(ss, self.dp_pb)),
         }
+        import bsp_test_integration as integ
+        integration = integ.BspTestIntegration()
+        bpp_der = base64.b64decode(rv['boundProfilePackage']) #.decode('ascii')
+        verification = integration.verify_bound_profile_package(
+            shared_secret=ss.shared_secret,
+            key_type=0x88,
+            key_length=16,
+            host_id=ss.host_id,
+            eid=h2b(ss.eid),
+            bpp_der=bpp_der
+        )
+
+        assert verification['success'], f"BPP verification failed: {verification['error']}"
+        return rv
 
     @app.route('/gsma/rsp2/es9plus/handleNotification', methods=['POST'])
     @rsp_api_wrapper
@@ -530,9 +733,9 @@ class SmDppHttpServer:
         else:
             raise ValueError(pendingNotification)
 
-    #@app.route('/gsma/rsp3/es9plus/handleDeviceChangeRequest, methods=['POST']')
-    #@rsp_api_wrapper
-        #"""See ES9+ ConfirmDeviceChange in SGP.22 Section 5.6.6"""
+    # @app.route('/gsma/rsp3/es9plus/handleDeviceChangeRequest, methods=['POST']')
+    # @rsp_api_wrapper
+        # """See ES9+ ConfirmDeviceChange in SGP.22 Section 5.6.6"""
         # TODO: implement this
 
     @app.route('/gsma/rsp2/es9plus/cancelSession', methods=['POST'])
@@ -576,20 +779,67 @@ class SmDppHttpServer:
 
         # delete actual session data
         del self.rss[transactionId]
-        return { 'transactionId': transactionId }
+        return {'transactionId': transactionId}
 
 
 def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument("-H", "--host", help="Host/IP to bind HTTP to", default="localhost")
     parser.add_argument("-p", "--port", help="TCP port to bind HTTP to", default=8000)
-    #parser.add_argument("-v", "--verbose", help="increase output verbosity", action='count', default=0)
+    # parser.add_argument("-v", "--verbose", help="increase output verbosity", action='count', default=0)
 
     args = parser.parse_args()
 
     hs = SmDppHttpServer(HOSTNAME, os.path.join(DATA_DIR, 'certs', 'CertificateIssuer'), use_brainpool=False)
-    #hs.app.run(endpoint_description="ssl:port=8000:dhParameters=dh_param_2048.pem")
-    hs.app.run(args.host, args.port)
+    # hs.app.run(HOSTNAME,endpoint_description="ssl:port=8000:dhParameters=dh_param_2048.pem")
+
+    from cryptography.hazmat.primitives.asymmetric import dh
+    from cryptography.hazmat.primitives import serialization
+    from pathlib import Path
+
+    cert_derpath = Path(DATA_DIR) / 'certs' / 'DPtls' / 'CERT_S_SM_DP_TLS_NIST.der'
+    cert_pempath = Path(DATA_DIR) / 'certs' / 'DPtls' / 'CERT_S_SM_DP_TLS_NIST.pem'
+    cert_skpath = Path(DATA_DIR) / 'certs' / 'DPtls' / 'SK_S_SM_DP_TLS_NIST.pem'
+    dhparam_path = Path("dhparam2048.pem")
+    if not dhparam_path.exists():
+        print("Generating dh params, this takes a few seconds..")
+        # Generate DH parameters with 2048-bit key size and generator 2
+        parameters = dh.generate_parameters(generator=2, key_size=2048)
+        pem_data = parameters.parameter_bytes(encoding=serialization.Encoding.PEM,format=serialization.ParameterFormat.PKCS3)
+        with open(dhparam_path, 'wb') as file:
+            file.write(pem_data)
+        print("DH params created successfully")
+
+    if not cert_pempath.exists():
+        print("Translating tls server cert from DER to PEM..")
+        with open(cert_derpath, 'rb') as der_file:
+            der_cert_data = der_file.read()
+
+        cert = x509.load_der_x509_certificate(der_cert_data)
+        pem_cert = cert.public_bytes(serialization.Encoding.PEM) #.decode('utf-8')
+
+        with open(cert_pempath, 'wb') as pem_file:
+            pem_file.write(pem_cert)
+
+    SERVER_STRING = f'ssl:8000:privateKey={cert_skpath}:certKey={cert_pempath}:dhParameters={dhparam_path}'
+    print(SERVER_STRING)
+
+    hs.app.run(HOSTNAME, endpoint_description=SERVER_STRING)
+    # hs.app.run(args.host, args.port)
+
 
 if __name__ == "__main__":
     main(sys.argv)
+
+
+# (.venv) ➜  ~/work/smdp/pysim git:(master) ✗ cp -a ../sgp26/SGP.26_v1.5_Certificates_18_07_2024/SGP.26_v1.5-2024_files/Valid\ Test\ Cases/SM-DP+/DPtls/CERT_S_SM_DP_TLS_NIST.der .
+# (.venv) ➜  ~/work/smdp/pysim git:(master) ✗ cp -a ../sgp26/SGP.26_v1.5_Certificates_18_07_2024/SGP.26_v1.5-2024_files/Valid\ Test\ Cases/SM-DP+/DPtls/SK_S_SM_DP_TLS_NIST.pem .
+# (.venv) ➜  ~/work/smdp/pysim git:(master) ✗ openssl x509 -inform der -in CERT_S_SM_DP_TLS_NIST.der -out CERT_S_SM_DP_TLS_NIST.pem
+
+
+# cp -a Variants\ A_B_C/CI/CERT_CI_SIG_* ../pysim/smdpp-data/certs/CertificateIssuer
+# cp -a Variants\ A_B_C/CI_subCA/CERT_*_SIG_* ../pysim/smdpp-data/certs/CertificateIssuer
+# cp -a Variants\ A_B_C/Variant\ C/SM-DP+/SM_DPauth/CERT*  ../pysim/smdpp-data/certs/DPauth
+# cp -a Variants\ A_B_C/Variant\ C/SM-DP+/SM_DPpb/CERT*  ../pysim/smdpp-data/certs/DPpb
+# cp -a Variants\ A_B_C/Variant\ C/SM-DP+/SM_DPtls/CERT*  ../pysim/smdpp-data/certs/DPtls
+# cp -a Variants\ A_B_C/Variant\ C/EUM_SUB_CA/CERT_EUMSubCA_VARC_SIG_* ../pysim/smdpp-data/certs/intermediate

@@ -149,8 +149,18 @@ class BspAlgoMac(BspAlgo, abc.ABC):
         temp_data = self.mac_chain + tag_and_length + data
         old_mcv = self.mac_chain
         c_mac = self._auth(temp_data)
+        
+        # DEBUG: Show MAC computation details
+        print(f"MAC_DEBUG: tag=0x{tag:02x}, lcc={lcc}")
+        print(f"MAC_DEBUG: tag_and_length: {tag_and_length.hex()}")
+        print(f"MAC_DEBUG: mac_chain[:20]: {old_mcv[:20].hex()}")
+        print(f"MAC_DEBUG: temp_data[:20]: {temp_data[:20].hex()}")
+        print(f"MAC_DEBUG: c_mac: {c_mac.hex()}")
+        
         # The output data is computed by concatenating the following data: the tag, the final length, the result of step 2 and the C-MAC value.
         ret = tag_and_length + data + c_mac
+        print(f"MAC_DEBUG: final_output[:20]: {ret[:20].hex()}")
+        
         logger.debug("auth(tag=0x%x, mcv=%s, s_mac=%s, plaintext=%s, temp=%s) -> %s",
                      tag, b2h(old_mcv), b2h(self.s_mac), b2h(data), b2h(temp_data), b2h(ret))
         return ret
@@ -203,6 +213,11 @@ def bsp_key_derivation(shared_secret: bytes, key_type: int, key_length: int, hos
     initial_mac_chaining_value = out[0:l]
     s_enc = out[l:2*l]
     s_mac = out[l*2:3*l]
+    
+    print(f"BSP_KDF_DEBUG: kdf_out = {b2h(out)}")
+    print(f"BSP_KDF_DEBUG: initial_mcv = {b2h(initial_mac_chaining_value)}")
+    print(f"BSP_KDF_DEBUG: s_enc = {b2h(s_enc)}")
+    print(f"BSP_KDF_DEBUG: s_mac = {b2h(s_mac)}")
 
     return s_enc, s_mac, initial_mac_chaining_value
 
@@ -231,9 +246,21 @@ class BspInstance:
         """Encrypt + MAC a single plaintext TLV. Returns the protected ciphertext."""
         assert tag <= 255
         assert len(plaintext) <= self.max_payload_size
+        
+        # DEBUG: Show what we're processing
+        print(f"BSP_DEBUG: encrypt_and_mac_one(tag=0x{tag:02x}, plaintext_len={len(plaintext)})")
+        print(f"BSP_DEBUG: plaintext[:20]: {plaintext[:20].hex()}")
+        print(f"BSP_DEBUG: s_enc[:20]: {self.c_algo.s_enc[:20].hex()}")
+        print(f"BSP_DEBUG: s_mac[:20]: {self.m_algo.s_mac[:20].hex()}")
+        
         logger.debug("encrypt_and_mac_one(tag=0x%x, plaintext=%s)", tag, b2h(plaintext))
         ciphered = self.c_algo.encrypt(plaintext)
+        print(f"BSP_DEBUG: ciphered[:20]: {ciphered[:20].hex()}")
+        
         maced = self.m_algo.auth(tag, ciphered)
+        print(f"BSP_DEBUG: final_result[:20]: {maced[:20].hex()}")
+        print(f"BSP_DEBUG: final_result_len: {len(maced)}")
+        
         return maced
 
     def encrypt_and_mac(self, tag: int, plaintext:bytes) -> List[bytes]:

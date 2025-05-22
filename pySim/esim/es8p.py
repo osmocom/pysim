@@ -196,8 +196,12 @@ class BoundProfilePackage(ProfilePackage):
         # 'initialiseSecureChannelRequest'
         bpp_seq = rsp.asn1.encode('InitialiseSecureChannelRequest', iscr)
         # firstSequenceOf87
+        print(f"BPP_ENCODE_DEBUG: Encrypting ConfigureISDP with BSP keys")
+        print(f"BPP_ENCODE_DEBUG: BSP S-ENC: {bsp.c_algo.s_enc.hex()}")
+        print(f"BPP_ENCODE_DEBUG: BSP S-MAC: {bsp.m_algo.s_mac.hex()}")
         bpp_seq += encode_seq(0xa0, bsp.encrypt_and_mac(0x87, conf_idsp_bin))
         # sequenceOF88
+        print(f"BPP_ENCODE_DEBUG: MAC-only StoreMetadata with BSP keys")
         bpp_seq += encode_seq(0xa1, bsp.mac_only(0x88, smr_bin))
 
         if self.ppp: # we have to use session keys
