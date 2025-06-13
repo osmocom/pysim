@@ -49,4 +49,12 @@ setup(
                 'asn1/saip/*.asn',
             ],
     },
+    extras_require={
+        "smdpp": [
+            "klein",
+            "service-identity",
+            "pyopenssl",
+            "requests",
+        ]
+    },
 )
