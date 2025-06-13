@@ -64,6 +64,169 @@ def validate_request_headers(request: IRequest):
     if admin_protocol and not admin_protocol.startswith('gsma/rsp/v'):
         raise ApiError('1.2.2', '2.1', 'Unsupported X-Admin-Protocol version')
 
+def get_eum_certificate_variant(eum_cert) -> str:
+    """Determine EUM certificate variant by checking Certificate Policies extension.
+    Returns 'O' for old variant, or 'NEW' for Ov3/A/B/C variants."""
+
+    try:
+        cert_policies_ext = eum_cert.extensions.get_extension_for_oid(
+            x509.oid.ExtensionOID.CERTIFICATE_POLICIES
+        )
+
+        for policy in cert_policies_ext.value:
+            policy_oid = policy.policy_identifier.dotted_string
+            print(f"Found certificate policy: {policy_oid}")
+
+            if policy_oid == '2.23.146.1.2.1.2':
+                print("Detected EUM certificate variant: O (old)")
+                return 'O'
+            elif policy_oid == '2.23.146.1.2.1.0.0.0':
+                print("Detected EUM certificate variant: Ov3/A/B/C (new)")
+                return 'NEW'
+    except x509.ExtensionNotFound:
+        print("No Certificate Policies extension found")
+    except Exception as e:
+        print(f"Error checking certificate policies: {e}")
+
+def parse_permitted_eins_from_cert(eum_cert) -> List[str]:
+    """Extract permitted IINs from EUM certificate using the appropriate method
+    based on certificate variant (O vs Ov3/A/B/C).
+    Returns list of permitted IINs (basically prefixes that valid EIDs must start with)."""
+
+    # Determine certificate variant first
+    cert_variant = get_eum_certificate_variant(eum_cert)
+    permitted_iins = []
+
+    if cert_variant == 'O':
+        # Old variant - use nameConstraints extension
+        print("Using nameConstraints parsing for variant O certificate")
+        permitted_iins.extend(_parse_name_constraints_eins(eum_cert))
+
+    else:
+        # New variants (Ov3, A, B, C) - use GSMA permittedEins extension
+        print("Using GSMA permittedEins parsing for newer certificate variant")
+        permitted_iins.extend(_parse_gsma_permitted_eins(eum_cert))
+
+    unique_iins = list(set(permitted_iins))
+
+    print(f"Total unique permitted IINs found: {len(unique_iins)}")
+    return unique_iins
+
+def _parse_gsma_permitted_eins(eum_cert) -> List[str]:
+    """Parse the GSMA permittedEins extension using correct ASN.1 structure.
+    PermittedEins ::= SEQUENCE OF PrintableString
+    Each string contains an IIN (Issuer Identification Number) - a prefix of valid EIDs."""
+    permitted_iins = []
+
+    try:
+        permitted_eins_oid = x509.ObjectIdentifier('2.23.146.1.2.2.0')  # sgp26: 2.23.146.1.2.2.0 = ASN1:SEQUENCE:permittedEins
+
+        for ext in eum_cert.extensions:
+            if ext.oid == permitted_eins_oid:
+                print(f"Found GSMA permittedEins extension: {ext.oid}")
+
+                # Get the DER-encoded extension value
+                ext_der = ext.value.value if hasattr(ext.value, 'value') else ext.value
+
+                if isinstance(ext_der, bytes):
+                    try:
+                        import asn1tools
+
+                        permitted_eins_schema = """
+                        PermittedEins DEFINITIONS ::= BEGIN
+                            PermittedEins ::= SEQUENCE OF PrintableString
+                        END
+                        """
+                        decoder = asn1tools.compile_string(permitted_eins_schema)
+                        decoded_strings = decoder.decode('PermittedEins', ext_der)
+
+                        for iin_string in decoded_strings:
+                            # Each string contains an IIN -> prefix of euicc EID
+                            iin_clean = iin_string.strip().upper()
+
+                            # IINs is 8 chars per sgp22, var len according to sgp29, fortunately we don't care
+                            if (len(iin_clean) == 8 and
+                                all(c in '0123456789ABCDEF' for c in iin_clean) and
+                                    len(iin_clean) % 2 == 0):
+                                permitted_iins.append(iin_clean)
+                                print(f"Found permitted IIN (GSMA): {iin_clean}")
+                            else:
+                                print(f"Invalid IIN format: {iin_string} (cleaned: {iin_clean})")
+                    except Exception as e:
+                        print(f"Error parsing GSMA permittedEins extension: {e}")
+
+    except Exception as e:
+        print(f"Error accessing GSMA certificate extensions: {e}")
+
+    return permitted_iins
+
+
+def _parse_name_constraints_eins(eum_cert) -> List[str]:
+    """Parse permitted IINs from nameConstraints extension (variant O)."""
+    permitted_iins = []
+
+    try:
+        # Look for nameConstraints extension
+        name_constraints_ext = eum_cert.extensions.get_extension_for_oid(
+            x509.oid.ExtensionOID.NAME_CONSTRAINTS
+        )
+
+        print("Found nameConstraints extension (variant O)")
+        name_constraints = name_constraints_ext.value
+
+        # Check permittedSubtrees for IIN constraints
+        if name_constraints.permitted_subtrees:
+            for subtree in name_constraints.permitted_subtrees:
+                print(f"Processing permitted subtree: {subtree}")
+
+                if isinstance(subtree, x509.DirectoryName):
+                    for attribute in subtree.value:
+                        # IINs for O in serialNumber
+                        if attribute.oid == x509.oid.NameOID.SERIAL_NUMBER:
+                            serial_value = attribute.value.upper()
+                            # sgp22 8, sgp29 var len, fortunately we don't care
+                            if (len(serial_value) == 8 and
+                                all(c in '0123456789ABCDEF' for c in serial_value) and
+                                    len(serial_value) % 2 == 0):
+                                permitted_iins.append(serial_value)
+                                print(f"Found permitted IIN (nameConstraints/DN): {serial_value}")
+
+    except x509.ExtensionNotFound:
+        print("No nameConstraints extension found")
+    except Exception as e:
+        print(f"Error parsing nameConstraints: {e}")
+
+    return permitted_iins
+
+
+def validate_eid_range(eid: str, eum_cert) -> bool:
+    """Validate that EID is within the permitted EINs of the EUM certificate."""
+    if not eid or len(eid) != 32:
+        print(f"Invalid EID format: {eid}")
+        return False
+
+    try:
+        permitted_eins = parse_permitted_eins_from_cert(eum_cert)
+
+        if not permitted_eins:
+            print("Warning: No permitted EINs found in EUM certificate")
+            return False
+
+        eid_normalized = eid.upper()
+        print(f"Validating EID {eid_normalized} against {len(permitted_eins)} permitted EINs")
+
+        for permitted_ein in permitted_eins:
+                if eid_normalized.startswith(permitted_ein):
+                    print(f"EID {eid_normalized} matches permitted EIN {permitted_ein}")
+                    return True
+
+        print(f"EID {eid_normalized} is not in any permitted EIN list")
+        return False
+
+    except Exception as e:
+        print(f"Error validating EID: {e}")
+        return False
+
 def build_status_code(subject_code: str, reason_code: str, subject_id: Optional[str], message: Optional[str]) -> Dict:
     r = {'subjectCode': subject_code, 'reasonCode': reason_code }
     if subject_id:
@@ -345,10 +508,12 @@ class SmDppHttpServer:
         if not self._ecdsa_verify(euicc_cert, euiccSignature1_bin, euiccSigned1_bin):
             raise ApiError('8.1', '6.1', 'Verification failed (euiccSignature1 over euiccSigned1)')
 
-        # TODO: verify EID of eUICC cert is  within permitted range of EUM cert
-
         ss.eid = ss.euicc_cert.subject.get_attributes_for_oid(x509.oid.NameOID.SERIAL_NUMBER)[0].value
         print("EID (from eUICC cert): %s" % ss.eid)
+
+        # Verify EID is within permitted range of EUM certificate
+        if not validate_eid_range(ss.eid, eum_cert):
+            raise ApiError('8.1.4', '6.1', 'EID is not within the permitted range of the EUM certificate')
 
         # Verify that the serverChallenge attached to the ongoing RSP session matches the
         # serverChallenge returned by the eUICC. Otherwise, the SM-DP+ SHALL return a status code "eUICC -
