@@ -54,6 +54,16 @@ def set_headers(request: IRequest):
     request.setHeader('Content-Type', 'application/json;charset=UTF-8')
     request.setHeader('X-Admin-Protocol', 'gsma/rsp/v2.1.0')
 
+def validate_request_headers(request: IRequest):
+    """Validate mandatory HTTP headers according to SGP.22."""
+    content_type = request.getHeader('Content-Type')
+    if not content_type or not content_type.startswith('application/json'):
+        raise ApiError('1.2.1', '2.1', 'Invalid Content-Type header')
+
+    admin_protocol = request.getHeader('X-Admin-Protocol')
+    if admin_protocol and not admin_protocol.startswith('gsma/rsp/v'):
+        raise ApiError('1.2.2', '2.1', 'Unsupported X-Admin-Protocol version')
+
 def build_status_code(subject_code: str, reason_code: str, subject_id: Optional[str], message: Optional[str]) -> Dict:
     r = {'subjectCode': subject_code, 'reasonCode': reason_code }
     if subject_id:
@@ -179,8 +189,7 @@ class SmDppHttpServer:
         functionality, such as JSON decoding/encoding and debug-printing."""
         @functools.wraps(func)
         def _api_wrapper(self, request: IRequest):
-            # TODO: evaluate User-Agent + X-Admin-Protocol header
-            # TODO: reject any non-JSON Content-type
+            validate_request_headers(request)
 
             content = json.loads(request.content.read())
             print("Rx JSON: %s" % json.dumps(content))
