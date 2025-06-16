@@ -2040,7 +2040,8 @@ class FsNodeADF(FsNodeDF):
         super().__init__(fid, parent, file, name)
 
     def __str__(self):
-        return '%s(%s)' % (self.__class__.__name__, b2h(self.df_name))
+        # self.df_name is usually None for an ADF like ADF.USIM or ADF.ISIM so we need to guard against it
+        return '%s(%s)' % (self.__class__.__name__, b2h(self.df_name) if self.df_name else None)
 
 class FsNodeMF(FsNodeDF):
     """The MF (Master File) in the filesystem hierarchy."""
