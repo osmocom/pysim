@@ -25,6 +25,9 @@ import pySim.esim.rsp as rsp
 from pySim.esim.bsp import BspInstance
 from pySim.esim import PMO
 
+import logging
+logger = logging.getLogger(__name__)
+
 # Given that GSMA RSP uses ASN.1 in a very weird way, we actually cannot encode the full data type before
 # signing, but we have to build parts of it separately first, then sign that, so we can put the signature
 # into the same sequence as the signed data.  We use the existing pySim TLV code for this.
@@ -196,8 +199,12 @@ class BoundProfilePackage(ProfilePackage):
         # 'initialiseSecureChannelRequest'
         bpp_seq = rsp.asn1.encode('InitialiseSecureChannelRequest', iscr)
         # firstSequenceOf87
+        logger.debug(f"BPP_ENCODE_DEBUG: Encrypting ConfigureISDP with BSP keys")
+        logger.debug(f"BPP_ENCODE_DEBUG: BSP S-ENC: {bsp.c_algo.s_enc.hex()}")
+        logger.debug(f"BPP_ENCODE_DEBUG: BSP S-MAC: {bsp.m_algo.s_mac.hex()}")
         bpp_seq += encode_seq(0xa0, bsp.encrypt_and_mac(0x87, conf_idsp_bin))
         # sequenceOF88
+        logger.debug(f"BPP_ENCODE_DEBUG: MAC-only StoreMetadata with BSP keys")
         bpp_seq += encode_seq(0xa1, bsp.mac_only(0x88, smr_bin))
 
         if self.ppp: # we have to use session keys
