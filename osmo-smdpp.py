@@ -17,6 +17,93 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# asn1tools issue https://github.com/eerimoq/asn1tools/issues/194
+# must be first here
+import asn1tools
+import asn1tools.codecs.ber
+import asn1tools.codecs.der
+# do not move the code
+def fix_asn1_oid_decoding():
+    fix_asn1_schema = """
+    TestModule DEFINITIONS ::= BEGIN
+        TestOid ::= SEQUENCE {
+            oid OBJECT IDENTIFIER
+        }
+    END
+    """
+
+    fix_asn1_asn1 = asn1tools.compile_string(fix_asn1_schema, codec='der')
+    fix_asn1_oid_string = '2.999.10'
+    fix_asn1_encoded = fix_asn1_asn1.encode('TestOid', {'oid': fix_asn1_oid_string})
+    fix_asn1_decoded = fix_asn1_asn1.decode('TestOid', fix_asn1_encoded)
+
+    if (fix_asn1_decoded['oid'] != fix_asn1_oid_string):
+        # ASN.1 OBJECT IDENTIFIER Decoding Issue:
+        #
+        # In ASN.1 BER/DER encoding, the first two arcs of an OBJECT IDENTIFIER are
+        # combined into a single value: (40 * arc0) + arc1. This is encoded as a base-128
+        # variable-length quantity (and commonly known as VLQ or base-128 encoding)
+        # as specified in ITU-T X.690 §8.19, it can span multiple bytes if
+        # the value is large.
+        #
+        # For arc0 = 0 or 1, arc1 must be in [0, 39]. For arc0 = 2, arc1 can be any non-negative integer.
+        # All subsequent arcs (arc2, arc3, ...) are each encoded as a separate base-128 VLQ.
+        #
+        # The decoding bug occurs when the decoder does not properly split the first
+        # subidentifier for arc0 = 2 and arc1 >= 40. Instead of decoding:
+        #   - arc0 = 2
+        #   - arc1 = (first_subidentifier - 80)
+        # it may incorrectly interpret the first_subidentifier as arc0 = (first_subidentifier // 40),
+        # arc1 = (first_subidentifier % 40), which is only valid for arc1 < 40.
+        #
+        # This patch handles it properly for all valid OBJECT IDENTIFIERs
+        # with large second arcs, by applying the ASN.1 rules:
+        #   - if first_subidentifier < 40: arc0 = 0, arc1 = first_subidentifier
+        #   - elif first_subidentifier < 80: arc0 = 1, arc1 = first_subidentifier - 40
+        #   - else: arc0 = 2, arc1 = first_subidentifier - 80
+        #
+        # This problem is not uncommon, see for example https://github.com/randombit/botan/issues/4023
+
+        def fixed_decode_object_identifier(data, offset, end_offset):
+            """Decode ASN.1 OBJECT IDENTIFIER from bytes to dotted string, fixing large second arc handling."""
+            def read_subidentifier(data, offset):
+                value = 0
+                while True:
+                    b = data[offset]
+                    value = (value << 7) | (b & 0x7F)
+                    offset += 1
+                    if not (b & 0x80):
+                        break
+                return value, offset
+
+            subid, offset = read_subidentifier(data, offset)
+            if subid < 40:
+                first = 0
+                second = subid
+            elif subid < 80:
+                first = 1
+                second = subid - 40
+            else:
+                first = 2
+                second = subid - 80
+            arcs = [first, second]
+
+            while offset < end_offset:
+                subid, offset = read_subidentifier(data, offset)
+                arcs.append(subid)
+
+            return '.'.join(str(x) for x in arcs)
+
+        asn1tools.codecs.ber.decode_object_identifier = fixed_decode_object_identifier
+        asn1tools.codecs.der.decode_object_identifier = fixed_decode_object_identifier
+
+        # test our patch
+        asn1 = asn1tools.compile_string(fix_asn1_schema, codec='der')
+        decoded = asn1.decode('TestOid', fix_asn1_encoded)['oid']
+        assert fix_asn1_oid_string == str(decoded)
+
+fix_asn1_oid_decoding()
+
 from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature, encode_dss_signature
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
@@ -37,7 +124,6 @@ import base64
 from base64 import b64decode
 from klein import Klein
 from twisted.web.iweb import IRequest
-import asn1tools
 
 from osmocom.utils import h2b, b2h, swap_nibbles
 
@@ -140,8 +226,6 @@ def _parse_gsma_permitted_eins(eum_cert) -> List[str]:
 
                 if isinstance(ext_der, bytes):
                     try:
-                        import asn1tools
-
                         permitted_eins_schema = """
                         PermittedEins DEFINITIONS ::= BEGIN
                             PermittedEins ::= SEQUENCE OF PrintableString
