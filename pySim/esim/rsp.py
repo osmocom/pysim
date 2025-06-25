@@ -94,9 +94,57 @@ class RspSessionState:
         self.__dict__.update(state)
 
 
-class RspSessionStore(shelve.DbfilenameShelf):
-    """A derived class as wrapper around the database-backed non-volatile storage 'shelve', in case we might
-    need to extend it in the future. We use it to store RspSessionState objects indexed by transactionId."""
+class RspSessionStore:
+    """A wrapper around the database-backed storage 'shelve' for storing RspSessionState objects.
+    Can be configured to use either file-based storage or in-memory storage.
+    We use it to store RspSessionState objects indexed by transactionId."""
+
+    def __init__(self, filename: Optional[str] = None, in_memory: bool = False):
+        self._in_memory = in_memory
+
+        if in_memory:
+            self._shelf = shelve.Shelf(dict())
+        else:
+            if filename is None:
+                raise ValueError("filename is required for file-based session store")
+            self._shelf = shelve.open(filename)
+
+    # dunder magic
+    def __getitem__(self, key):
+        return self._shelf[key]
+
+    def __setitem__(self, key, value):
+        self._shelf[key] = value
+
+    def __delitem__(self, key):
+        del self._shelf[key]
+
+    def __contains__(self, key):
+        return key in self._shelf
+
+    def __iter__(self):
+        return iter(self._shelf)
+
+    def __len__(self):
+        return len(self._shelf)
+
+    # everything else
+    def __getattr__(self, name):
+        """Delegate attribute access to the underlying shelf object."""
+        return getattr(self._shelf, name)
+
+    def close(self):
+        """Close the session store."""
+        if hasattr(self._shelf, 'close'):
+            self._shelf.close()
+        if self._in_memory:
+            # For in-memory store, clear the reference
+            self._shelf = None
+
+    def sync(self):
+        """Synchronize the cache with the underlying storage."""
+        if hasattr(self._shelf, 'sync'):
+            self._shelf.sync()
 
 def extract_euiccSigned1(authenticateServerResponse: bytes) -> bytes:
     """Extract the raw, DER-encoded binary euiccSigned1 field from the given AuthenticateServerResponse. This
