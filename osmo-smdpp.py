@@ -17,6 +17,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature, encode_dss_signature
+from cryptography import x509
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec, dh
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, PrivateFormat, NoEncryption, ParameterFormat
+from pathlib import Path
 import json
 import sys
 import argparse
@@ -245,12 +252,6 @@ def build_resp_header(js: dict, status: str = 'Executed-Success', status_code_da
     if status_code_data:
         js['header']['functionExecutionStatus']['statusCodeData'] = status_code_data
 
-from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature, encode_dss_signature
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, PrivateFormat, NoEncryption
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives import hashes
-from cryptography.exceptions import InvalidSignature
-from cryptography import x509
 
 def ecdsa_tr03111_to_dss(sig: bytes) -> bytes:
     """convert an ECDSA signature from BSI TR-03111 format to DER: first get long integers; then encode those."""
