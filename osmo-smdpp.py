@@ -311,6 +311,20 @@ class SmDppHttpServer:
                 return cert
         return None
 
+    def validate_certificate_chain_for_verification(self, euicc_ci_pkid_list: List[bytes]) -> bool:
+        """Validate that SM-DP+ has valid certificate chains for the given CI PKIDs."""
+        for ci_pkid in euicc_ci_pkid_list:
+            ci_cert = self.ci_get_cert_for_pkid(ci_pkid)
+            if ci_cert:
+                # Check if our DPauth certificate chains to this CI
+                try:
+                    cs = CertificateSet(ci_cert)
+                    cs.verify_cert_chain(self.dp_auth.cert)
+                    return True
+                except VerifyError:
+                    continue
+        return False
+
     def __init__(self, server_hostname: str, ci_certs_path: str, common_cert_path: str, use_brainpool: bool = False):
         self.server_hostname = server_hostname
         self.upp_dir = os.path.realpath(os.path.join(DATA_DIR, 'upp'))
@@ -394,6 +408,12 @@ class SmDppHttpServer:
         pkid_list = euiccInfo1['euiccCiPKIdListForSigning']
         if 'euiccCiPKIdListForSigningV3' in euiccInfo1:
             pkid_list = pkid_list + euiccInfo1['euiccCiPKIdListForSigningV3']
+
+        # Validate that SM-DP+ supports certificate chains for verification
+        verification_pkid_list = euiccInfo1.get('euiccCiPKIdListForVerification', [])
+        if verification_pkid_list and not self.validate_certificate_chain_for_verification(verification_pkid_list):
+            raise ApiError('8.8.4', '3.7', 'The SM-DP+ has no CERT.DPauth.SIG which chains to one of the eSIM CA Root CA Certificate with a Public Key supported by the eUICC')
+
         # verify it supports one of the keys indicated by euiccCiPKIdListForSigning
         ci_cert = None
         for x in pkid_list:
@@ -407,13 +427,6 @@ class SmDppHttpServer:
                 ci_cert = None
         if not ci_cert:
            raise ApiError('8.8.2', '3.1', 'None of the proposed Public Key Identifiers is supported by the SM-DP+')
-
-        # TODO: Determine the set of CERT.DPauth.SIG that satisfy the following criteria:
-        # * Part of a certificate chain ending at one of the eSIM CA RootCA Certificate, whose Public Keys is
-        #   supported by the eUICC (indicated by euiccCiPKIdListForVerification).
-        # * Using a certificate chain that the eUICC and the LPA both support:
-        #euiccInfo1['euiccCiPKIdListForVerification']
-        #   raise ApiError('8.8.4', '3.7', 'The SM-DP+ has no CERT.DPauth.SIG which chains to one of the eSIM CA Root CA CErtificate with a Public Key supported by the eUICC')
 
         # Generate a TransactionID which is used to identify the ongoing RSP session. The TransactionID
         # SHALL be unique within the scope and lifetime of each SM-DP+.
