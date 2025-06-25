@@ -25,6 +25,7 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key, E
 from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 
 from pySim.utils import b2h
+from . import x509_err
 
 def check_signed(signed: x509.Certificate, signer: x509.Certificate) -> bool:
     """Verify if 'signed' certificate was signed using 'signer'."""
@@ -63,9 +64,6 @@ class oid:
     id_rspRole_dp_pb_v2 = x509.ObjectIdentifier(ID_RSP_ROLE + '.5')
     id_rspRole_ds_tls_v2 = x509.ObjectIdentifier(ID_RSP_ROLE + '.6')
     id_rspRole_ds_auth_v2 = x509.ObjectIdentifier(ID_RSP_ROLE + '.7')
-
-class VerifyError(Exception):
-    """An error during certificate verification,"""
 
 class CertificateSet:
     """A set of certificates consisting of a trusted [self-signed] CA root certificate,
@@ -135,7 +133,7 @@ class CertificateSet:
             # we cannot check if there's no CRL
             return
         if self.crl.get_revoked_certificate_by_serial_number(cert.serial_nr):
-            raise VerifyError('Certificate is present in CRL, verification failed')
+            raise x509_err.CertificateRevoked()
 
     def verify_cert_chain(self, cert: x509.Certificate, max_depth: int = 100):
         """Verify if a given certificate's signature chain can be traced back to the root CA of this
@@ -150,13 +148,13 @@ class CertificateSet:
                 return
             parent_cert = self.intermediate_certs.get(aki, None)
             if not parent_cert:
-                raise VerifyError('Could not find intermediate certificate for AuthKeyId %s' % b2h(aki))
+                raise x509_err.MissingIntermediateCert(b2h(aki))
             check_signed(c, parent_cert)
             # if we reach here, we passed (no exception raised)
             c = parent_cert
             depth += 1
             if depth > max_depth:
-                raise VerifyError('Maximum depth %u exceeded while verifying certificate chain' % max_depth)
+                raise x509_err.MaxDepthExceeded(max_depth, depth)
 
 
 def ecdsa_dss_to_tr03111(sig: bytes) -> bytes:
