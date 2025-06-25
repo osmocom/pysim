@@ -10,3 +10,6 @@
 /smdpp-data/sm-dp-sessions
 dist
 tags
+smdpp-data/certs/DPtls/CERT_S_SM_DP_TLS_NIST.pem
+smdpp-data/generated
+smdpp-data/certs/dhparam2048.pem

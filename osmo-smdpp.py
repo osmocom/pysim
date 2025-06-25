@@ -308,13 +308,13 @@ class SmDppHttpServer:
                 return cert
         return None
 
-    def __init__(self, server_hostname: str, ci_certs_path: str, use_brainpool: bool = False):
+    def __init__(self, server_hostname: str, ci_certs_path: str, common_cert_path: str, use_brainpool: bool = False):
         self.server_hostname = server_hostname
         self.upp_dir = os.path.realpath(os.path.join(DATA_DIR, 'upp'))
         self.ci_certs = self.load_certs_from_path(ci_certs_path)
         # load DPauth cert + key
         self.dp_auth = CertAndPrivkey(oid.id_rspRole_dp_auth_v2)
-        cert_dir = os.path.join(DATA_DIR, 'certs')
+        cert_dir = common_cert_path
         if use_brainpool:
             self.dp_auth.cert_from_der_file(os.path.join(cert_dir, 'DPauth', 'CERT_S_SM_DPauth_ECDSA_BRP.der'))
             self.dp_auth.privkey_from_pem_file(os.path.join(cert_dir, 'DPauth', 'SK_S_SM_DPauth_ECDSA_BRP.pem'))
@@ -758,13 +758,43 @@ def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument("-H", "--host", help="Host/IP to bind HTTP to", default="localhost")
     parser.add_argument("-p", "--port", help="TCP port to bind HTTP to", default=8000)
-    #parser.add_argument("-v", "--verbose", help="increase output verbosity", action='count', default=0)
-
+    parser.add_argument("-c", "--certdir", help=f"cert subdir relative to {DATA_DIR}", default="certs")
+    parser.add_argument("-s", "--nossl", help="do NOT use ssl", action='store_true', default=False)
     args = parser.parse_args()
 
-    hs = SmDppHttpServer(HOSTNAME, os.path.join(DATA_DIR, 'certs', 'CertificateIssuer'), use_brainpool=False)
-    #hs.app.run(endpoint_description="ssl:port=8000:dhParameters=dh_param_2048.pem")
-    hs.app.run(args.host, args.port)
+    common_cert_path = os.path.join(DATA_DIR, args.certdir)
+    hs = SmDppHttpServer(server_hostname=HOSTNAME, ci_certs_path=os.path.join(common_cert_path, 'CertificateIssuer'), common_cert_path=common_cert_path, use_brainpool=False)
+    if(args.nossl):
+        hs.app.run(args.host, args.port)
+    else:
+        cert_derpath = Path(common_cert_path) / 'DPtls' / 'CERT_S_SM_DP_TLS_NIST.der'
+        cert_pempath = Path(common_cert_path) / 'DPtls' / 'CERT_S_SM_DP_TLS_NIST.pem'
+        cert_skpath = Path(common_cert_path) / 'DPtls' / 'SK_S_SM_DP_TLS_NIST.pem'
+        dhparam_path = Path(common_cert_path) / "dhparam2048.pem"
+        if not dhparam_path.exists():
+            print("Generating dh params, this takes a few seconds..")
+            # Generate DH parameters with 2048-bit key size and generator 2
+            parameters = dh.generate_parameters(generator=2, key_size=2048)
+            pem_data = parameters.parameter_bytes(encoding=Encoding.PEM,format=ParameterFormat.PKCS3)
+            with open(dhparam_path, 'wb') as file:
+                file.write(pem_data)
+            print("DH params created successfully")
+
+        if not cert_pempath.exists():
+            print("Translating tls server cert from DER to PEM..")
+            with open(cert_derpath, 'rb') as der_file:
+                der_cert_data = der_file.read()
+
+            cert = x509.load_der_x509_certificate(der_cert_data)
+            pem_cert = cert.public_bytes(Encoding.PEM) #.decode('utf-8')
+
+            with open(cert_pempath, 'wb') as pem_file:
+                pem_file.write(pem_cert)
+
+        SERVER_STRING = f'ssl:{args.port}:privateKey={cert_skpath}:certKey={cert_pempath}:dhParameters={dhparam_path}'
+        print(SERVER_STRING)
+
+        hs.app.run(host=HOSTNAME, port=args.port, endpoint_description=SERVER_STRING)
 
 if __name__ == "__main__":
     main(sys.argv)
