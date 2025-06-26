@@ -652,6 +652,7 @@ class SdKeyScp80Kvn03Dek(SdKeyScp80Kvn03):
     key_id = 0x03
     key_usage_qual = 0x48
 
+# "omitting" SdKeyScp80Kvn04 ... Kvn0f
 
 class SdKeyScp81(SdKeyAes):
     name = 'SCP81'
@@ -714,6 +715,7 @@ class SdKeyScp81Kvn83Dek(SdKeyScp81Kvn83):
     key_id = 0x03
     key_usage_qual = 0x48
 
+# "omitting" SdKeyScp81Kvn84 ... Kvn8f
 
 class SdKeyScp02(SdKeyAes):
     name = 'SCP02'
@@ -774,6 +776,8 @@ class SdKeyScp02Kvn22Dek(SdKeyScp02Kvn22):
     name = SdKeyScp02Kvn22.name + ' DEK'
     key_id = 0x03
     key_usage_qual = 0x48
+
+# "omitting" SdKeyScp02Kvn23 ... Kvn2f
 
 class SdKeyScp02Kvnff(SdKeyScp02):
     name = 'SCP02 ff'
@@ -856,6 +860,7 @@ class SdKeyScp03Kvn32Dek(SdKeyScp03Kvn32):
     key_id = 0x03
     key_usage_qual = 0x48
 
+# "omitting" SdKeyScp03Kvn33 ... Kvn3f
 
 def obtain_all_pe_from_pelist(l: List[ProfileElement], wanted_type: str) -> ProfileElement:
     return (pe for pe in l if pe.type == wanted_type)
