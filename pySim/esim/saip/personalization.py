@@ -221,6 +221,26 @@ class ConfigurableParameter:
         pass
 
     @classmethod
+    def get_value_from_pes(cls, pes: ProfileElementSequence):
+        """Same as get_values_from_pes() but expecting a single value.
+           get_values_from_pes() may return values like this:
+             [{ 'AlgorithmID': 'Milenage' }, { 'AlgorithmID': 'Milenage' }]
+           This ensures that all these entries are identical and would return only
+              { 'AlgorithmID': 'Milenage' }.
+
+           This is relevant for any profile element that may appear multiple times in the same PES (only a few),
+           where each occurrence should reflect the same value (all currently known parameters).
+        """
+
+        val = None
+        for v in cls.get_values_from_pes(pes):
+            if val is None:
+                val = v
+            elif val != v:
+                    raise ValueError(f'get_value_from_pes(): got distinct values: {val!r} != {v!r}')
+        return val
+
+    @classmethod
     def get_values_from_pes(cls, pes: ProfileElementSequence) -> Generator:
         """This is what subclasses implement: yield all values from a decoded profile package.
            Find all values in the pes, and yield them decoded to a valid cls.input_value format.
