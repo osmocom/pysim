@@ -198,6 +198,9 @@ class ConfigurableParameter:
             if cls.allow_chars is not None:
                 if any(c not in cls.allow_chars for c in val):
                     raise ValueError(f"invalid characters in input value {val!r}, valid chars are {cls.allow_chars}")
+        elif isinstance(val, io.BytesIO):
+            val = val.getvalue()
+
         if cls.allow_len is not None:
             l = cls.allow_len
             # cls.allow_len could be one int, or a tuple of ints. Wrap a single int also in a tuple.
