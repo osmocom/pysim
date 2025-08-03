@@ -20,6 +20,7 @@
 import io
 import sys
 import unittest
+import io
 from importlib import resources
 from osmocom.utils import hexstr
 from pySim.esim.saip import ProfileElementSequence
@@ -160,6 +161,10 @@ class ConfigurableParameterTest(unittest.TestCase):
                       val=bytearray(b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16'),
                       expect_clean_val=b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16',
                       expect_val='01020304050607080910111213141516'),
+            Paramtest(param_cls=p13n.K,
+                      val=io.BytesIO(b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16'),
+                      expect_clean_val=b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16',
+                      expect_val='01020304050607080910111213141516'),
 
             Paramtest(param_cls=p13n.Opc,
                       val='01020304050607080910111213141516',
@@ -171,6 +176,10 @@ class ConfigurableParameterTest(unittest.TestCase):
                       expect_val='01020304050607080910111213141516'),
             Paramtest(param_cls=p13n.Opc,
                       val=bytearray(b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16'),
+                      expect_clean_val=b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16',
+                      expect_val='01020304050607080910111213141516'),
+            Paramtest(param_cls=p13n.Opc,
+                      val=io.BytesIO(b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16'),
                       expect_clean_val=b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16',
                       expect_val='01020304050607080910111213141516'),
             ]
@@ -240,6 +249,11 @@ class ConfigurableParameterTest(unittest.TestCase):
                           ),
                 Paramtest(param_cls=sdkey_cls,
                           val=bytearray(b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16'),
+                          expect_clean_val=b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16',
+                          expect_val='01020304050607080910111213141516',
+                          ),
+                Paramtest(param_cls=sdkey_cls,
+                          val=io.BytesIO(b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16'),
                           expect_clean_val=b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16',
                           expect_val='01020304050607080910111213141516',
                           ),

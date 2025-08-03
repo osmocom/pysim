@@ -71,6 +71,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1A_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1A_NoBERTLV.der Opc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
@@ -80,6 +84,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1A_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1A_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
@@ -103,6 +111,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp80Kvn01Enc(val=	b'\x01\x02\x03\x04\x05\
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP80 KVN01 ENC': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp80Kvn01Enc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP80 KVN01 ENC': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp80Kvn02Dek(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
@@ -120,6 +132,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp80Kvn02Dek(val=	b'\x01\x02\x03\x04\x05\
 	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp80Kvn02Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp80Kvn02Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
 
@@ -143,6 +159,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp81Kvn81Mac(val=	b'\x01\x02\x03\x04\x05\
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP81 KVN81 MAC': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp81Kvn81Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP81 KVN81 MAC': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp81Kvn83Enc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
@@ -160,6 +180,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp81Kvn83Enc(val=	b'\x01\x02\x03\x04\x05\
 	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp81Kvn83Enc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp81Kvn83Enc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
 
@@ -183,6 +207,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp02Kvn20Dek(val=	b'\x01\x02\x03\x04\x05\
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 20 DEK': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp02Kvn20Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP02 20 DEK': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp02Kvn21Mac(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
@@ -200,6 +228,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp02Kvn21Mac(val=	b'\x01\x02\x03\x04\x05\
 	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp02Kvn21Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp02Kvn21Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
 
@@ -223,6 +255,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp02KvnffEnc(val=	b'\x01\x02\x03\x04\x05\
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 ff ENC': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp02KvnffEnc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP02 ff ENC': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp03Kvn30Dek(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 30 DEK': '01020304050607080910111213141516'}:{hexstr}
@@ -243,6 +279,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp03Kvn30Dek(val=	b'\x01\x02\x03\x04\x05\
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 30 DEK': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp03Kvn30Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP03 30 DEK': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp03Kvn31Mac(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
@@ -260,6 +300,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp03Kvn31Mac(val=	b'\x01\x02\x03\x04\x05\
 	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp03Kvn31Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1A_NoBERTLV.der SdKeyScp03Kvn31Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
 
@@ -335,6 +379,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Opc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
@@ -344,6 +392,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
@@ -367,6 +419,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp80Kvn01Enc(val=	b'\x01\x02\x03\x04\x0
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP80 KVN01 ENC': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp80Kvn01Enc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP80 KVN01 ENC': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp80Kvn02Dek(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
@@ -384,6 +440,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp80Kvn02Dek(val=	b'\x01\x02\x03\x04\x0
 	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp80Kvn02Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp80Kvn02Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
 
@@ -407,6 +467,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp81Kvn81Mac(val=	b'\x01\x02\x03\x04\x0
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP81 KVN81 MAC': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp81Kvn81Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP81 KVN81 MAC': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp81Kvn83Enc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
@@ -424,6 +488,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp81Kvn83Enc(val=	b'\x01\x02\x03\x04\x0
 	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp81Kvn83Enc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp81Kvn83Enc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
 
@@ -447,6 +515,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp02Kvn20Dek(val=	b'\x01\x02\x03\x04\x0
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 20 DEK': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp02Kvn20Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP02 20 DEK': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp02Kvn21Mac(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
@@ -464,6 +536,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp02Kvn21Mac(val=	b'\x01\x02\x03\x04\x0
 	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp02Kvn21Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp02Kvn21Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
 
@@ -487,6 +563,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp02KvnffEnc(val=	b'\x01\x02\x03\x04\x0
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 ff ENC': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp02KvnffEnc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP02 ff ENC': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp03Kvn30Dek(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 30 DEK': '01020304050607080910111213141516'}:{hexstr}
@@ -507,6 +587,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp03Kvn30Dek(val=	b'\x01\x02\x03\x04\x0
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 30 DEK': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp03Kvn30Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP03 30 DEK': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp03Kvn31Mac(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
@@ -524,6 +608,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp03Kvn31Mac(val=	b'\x01\x02\x03\x04\x0
 	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp03Kvn31Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der SdKeyScp03Kvn31Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
 
@@ -599,6 +687,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1B_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1B_NoBERTLV.der Opc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
@@ -608,6 +700,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1B_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
@@ -631,6 +727,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp80Kvn01Enc(val=	b'\x01\x02\x03\x04\x05\
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP80 KVN01 ENC': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp80Kvn01Enc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP80 KVN01 ENC': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp80Kvn02Dek(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
@@ -648,6 +748,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp80Kvn02Dek(val=	b'\x01\x02\x03\x04\x05\
 	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp80Kvn02Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp80Kvn02Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
 
@@ -671,6 +775,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp81Kvn81Mac(val=	b'\x01\x02\x03\x04\x05\
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP81 KVN81 MAC': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp81Kvn81Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP81 KVN81 MAC': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp81Kvn83Enc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
@@ -688,6 +796,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp81Kvn83Enc(val=	b'\x01\x02\x03\x04\x05\
 	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp81Kvn83Enc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp81Kvn83Enc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
 
@@ -711,6 +823,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp02Kvn20Dek(val=	b'\x01\x02\x03\x04\x05\
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 20 DEK': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp02Kvn20Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP02 20 DEK': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp02Kvn21Mac(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
@@ -728,6 +844,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp02Kvn21Mac(val=	b'\x01\x02\x03\x04\x05\
 	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp02Kvn21Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp02Kvn21Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
 
@@ -751,6 +871,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp02KvnffEnc(val=	b'\x01\x02\x03\x04\x05\
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 ff ENC': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp02KvnffEnc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP02 ff ENC': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp03Kvn30Dek(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 30 DEK': '01020304050607080910111213141516'}:{hexstr}
@@ -771,6 +895,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp03Kvn30Dek(val=	b'\x01\x02\x03\x04\x05\
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 30 DEK': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp03Kvn30Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP03 30 DEK': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp03Kvn31Mac(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
@@ -788,6 +916,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp03Kvn31Mac(val=	b'\x01\x02\x03\x04\x05\
 	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp03Kvn31Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der SdKeyScp03Kvn31Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
 
@@ -863,6 +995,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_NoBERTLV.der Opc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
@@ -872,6 +1008,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x1
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
@@ -895,6 +1035,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp80Kvn01Enc(val=	b'\x01\x02\x03\x04\x05\x
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP80 KVN01 ENC': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp80Kvn01Enc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP80 KVN01 ENC': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp80Kvn02Dek(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
@@ -912,6 +1056,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp80Kvn02Dek(val=	b'\x01\x02\x03\x04\x05\x
 	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp80Kvn02Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp80Kvn02Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP80 KVN02 DEK': '01020304050607080910111213141516'}:{hexstr}
 
@@ -935,6 +1083,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp81Kvn81Mac(val=	b'\x01\x02\x03\x04\x05\x
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP81 KVN81 MAC': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp81Kvn81Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP81 KVN81 MAC': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp81Kvn83Enc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
@@ -952,6 +1104,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp81Kvn83Enc(val=	b'\x01\x02\x03\x04\x05\x
 	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp81Kvn83Enc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp81Kvn83Enc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP81 KVN83 ENC': '01020304050607080910111213141516'}:{hexstr}
 
@@ -975,6 +1131,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp02Kvn20Dek(val=	b'\x01\x02\x03\x04\x05\x
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 20 DEK': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp02Kvn20Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP02 20 DEK': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp02Kvn21Mac(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
@@ -992,6 +1152,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp02Kvn21Mac(val=	b'\x01\x02\x03\x04\x05\x
 	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp02Kvn21Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp02Kvn21Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 21 MAC': '01020304050607080910111213141516'}:{hexstr}
 
@@ -1015,6 +1179,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp02KvnffEnc(val=	b'\x01\x02\x03\x04\x05\x
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP02 ff ENC': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp02KvnffEnc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP02 ff ENC': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp03Kvn30Dek(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 30 DEK': '01020304050607080910111213141516'}:{hexstr}
@@ -1035,6 +1203,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp03Kvn30Dek(val=	b'\x01\x02\x03\x04\x05\x
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 30 DEK': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp03Kvn30Dek(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP03 30 DEK': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp03Kvn31Mac(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
@@ -1052,5 +1224,9 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp03Kvn31Mac(val=	b'\x01\x02\x03\x04\x05\x
 	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp03Kvn31Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp03Kvn31Mac(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'SCP03 31 MAC': '01020304050607080910111213141516'}:{hexstr}
