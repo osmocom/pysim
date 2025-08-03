@@ -71,6 +71,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1A_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1A_NoBERTLV.der Opc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
@@ -80,6 +84,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1A_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1A_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
@@ -155,6 +163,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Opc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
@@ -164,6 +176,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
@@ -239,6 +255,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.1B_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.1B_NoBERTLV.der Opc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
@@ -248,6 +268,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1B_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
@@ -323,6 +347,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
 
+ok: TS48v5_SAIP2.3_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
+
 ok: TS48v5_SAIP2.3_NoBERTLV.der Opc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
@@ -332,5 +360,9 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x1
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytearray)
+	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der Opc(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'OPc': '01020304050607080910111213141516'}:{hexstr}
