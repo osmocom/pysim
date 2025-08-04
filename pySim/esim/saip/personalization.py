@@ -385,7 +385,7 @@ class IntegerParam(ConfigurableParameter):
             yield valdict
 
 class BinaryParam(ConfigurableParameter):
-    allow_types = (str, io.BytesIO, bytes, bytearray)
+    allow_types = (str, io.BytesIO, bytes, bytearray, int)
     allow_chars = '0123456789abcdefABCDEF'
     strip_chars = ' \t\r\n'
     default_source = param_source.RandomHexDigitSource
@@ -393,6 +393,10 @@ class BinaryParam(ConfigurableParameter):
     @classmethod
     def validate_val(cls, val):
         # take care that min_len and max_len are applied to the binary length by converting to bytes first
+        if isinstance(val, int):
+            min_len, _max_len = cls.get_len_range()
+            val = '%0*d' % (min_len, val)
+
         if isinstance(val, str):
             if cls.strip_chars is not None:
                 val = ''.join(c for c in val if c not in cls.strip_chars)
