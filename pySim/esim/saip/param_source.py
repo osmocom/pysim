@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import random
+import secrets
 import re
 from osmocom.utils import b2h
 
@@ -124,7 +124,7 @@ class DecimalRangeSource(InputExpandingParamSource):
         return "%0*d" % (self.num_digits, val)  # pylint: disable=consider-using-f-string
 
 class RandomSourceMixin:
-    random_impl = random.SystemRandom()
+    random_impl = secrets.SystemRandom()
 
 class RandomDigitSource(DecimalRangeSource, RandomSourceMixin):
     """return a different sequence of random decimal digits each"""
