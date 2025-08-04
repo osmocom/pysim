@@ -124,7 +124,7 @@ class DecimalRangeSource(InputExpandingParamSource):
         return "%0*d" % (self.num_digits, val)  # pylint: disable=consider-using-f-string
 
 class RandomSourceMixin:
-    random_impl = random # TODO secure random source?
+    random_impl = random.SystemRandom()
 
 class RandomDigitSource(DecimalRangeSource, RandomSourceMixin):
     """return a different sequence of random decimal digits each"""
