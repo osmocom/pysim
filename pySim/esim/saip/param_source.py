@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import random
+import secrets
 import re
 from pySim.utils import all_subclasses_of
 from osmocom.utils import b2h
@@ -94,7 +94,7 @@ class InputExpandingParamSource(ParamSource):
         return cls(cls.expand_str(s))
 
 class RandomSourceMixin:
-    random_impl = random.SystemRandom()
+    random_impl = secrets.SystemRandom()
 
 class RandomDigitSource(InputExpandingParamSource, RandomSourceMixin):
     'return a different sequence of random decimal digits each'
