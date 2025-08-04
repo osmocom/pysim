@@ -94,7 +94,7 @@ class InputExpandingParamSource(ParamSource):
         return cls(cls.expand_str(s))
 
 class RandomSourceMixin:
-    random_impl = random # TODO secure random source?
+    random_impl = random.SystemRandom()
 
 class RandomDigitSource(InputExpandingParamSource, RandomSourceMixin):
     'return a different sequence of random decimal digits each'
