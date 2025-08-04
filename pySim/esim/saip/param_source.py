@@ -121,7 +121,7 @@ class DecimalRangeSource(InputExpandingParamSource):
         return cls(num_digits=len(first_str), first_value=first_value, last_value=last_value)
 
 class RandomSourceMixin:
-    random_impl = random # TODO secure random source?
+    random_impl = random.SystemRandom()
 
 class RandomDigitSource(DecimalRangeSource, RandomSourceMixin):
     """return a different sequence of random decimal digits each"""
