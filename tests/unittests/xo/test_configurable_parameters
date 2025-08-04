@@ -19,6 +19,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der Puk1(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'PUK1': '12345678'}:{str}
 
+ok: TS48v5_SAIP2.1A_NoBERTLV.der Puk1(val=	12345678:int)
+	clean_val=	b'12345678':bytearray
+	read_back_val=	{'PUK1': '12345678'}:{str}
+
 ok: TS48v5_SAIP2.1A_NoBERTLV.der Puk2(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'PUK2': '12345678'}:{str}
@@ -35,6 +39,18 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der Pin1(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'PIN1': '12345678'}:{str}
 
+ok: TS48v5_SAIP2.1A_NoBERTLV.der Pin1(val=	1234:int)
+	clean_val=	b'1234\xff\xff\xff\xff':bytearray
+	read_back_val=	{'PIN1': '1234'}:{str}
+
+ok: TS48v5_SAIP2.1A_NoBERTLV.der Pin1(val=	123456:int)
+	clean_val=	b'123456\xff\xff':bytearray
+	read_back_val=	{'PIN1': '123456'}:{str}
+
+ok: TS48v5_SAIP2.1A_NoBERTLV.der Pin1(val=	12345678:int)
+	clean_val=	b'12345678':bytearray
+	read_back_val=	{'PIN1': '12345678'}:{str}
+
 ok: TS48v5_SAIP2.1A_NoBERTLV.der Adm1(val=	'1234':str)
 	clean_val=	b'1234\xff\xff\xff\xff':bytearray
 	read_back_val=	{'ADM1': '1234'}:{str}
@@ -47,6 +63,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der Adm1(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'ADM1': '12345678'}:{str}
 
+ok: TS48v5_SAIP2.1A_NoBERTLV.der Adm1(val=	123456:int)
+	clean_val=	b'123456\xff\xff':bytearray
+	read_back_val=	{'ADM1': '123456'}:{str}
+
 ok: TS48v5_SAIP2.1A_NoBERTLV.der AlgorithmID(val=	'Milenage':str)
 	clean_val=	1:int
 	read_back_val=	{'Algorithm': 'Milenage'}:{str}
@@ -56,6 +76,18 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der AlgorithmID(val=	'TUAK':str)
 	read_back_val=	{'Algorithm': 'TUAK'}:{str}
 
 ok: TS48v5_SAIP2.1A_NoBERTLV.der AlgorithmID(val=	'usim-test':str)
+	clean_val=	3:int
+	read_back_val=	{'Algorithm': 'usim-test'}:{str}
+
+ok: TS48v5_SAIP2.1A_NoBERTLV.der AlgorithmID(val=	1:int)
+	clean_val=	1:int
+	read_back_val=	{'Algorithm': 'Milenage'}:{str}
+
+ok: TS48v5_SAIP2.1A_NoBERTLV.der AlgorithmID(val=	2:int)
+	clean_val=	2:int
+	read_back_val=	{'Algorithm': 'TUAK'}:{str}
+
+ok: TS48v5_SAIP2.1A_NoBERTLV.der AlgorithmID(val=	3:int)
 	clean_val=	3:int
 	read_back_val=	{'Algorithm': 'usim-test'}:{str}
 
@@ -74,6 +106,10 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10
 ok: TS48v5_SAIP2.1A_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1A_NoBERTLV.der K(val=	11020304050607080910111213141516:int)
+	clean_val=	b'\x11\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'K': '11020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1A_NoBERTLV.der Opc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
@@ -111,6 +147,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Puk1(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'PUK1': '12345678'}:{str}
 
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Puk1(val=	12345678:int)
+	clean_val=	b'12345678':bytearray
+	read_back_val=	{'PUK1': '12345678'}:{str}
+
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Puk2(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'PUK2': '12345678'}:{str}
@@ -127,6 +167,18 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Pin1(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'PIN1': '12345678'}:{str}
 
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Pin1(val=	1234:int)
+	clean_val=	b'1234\xff\xff\xff\xff':bytearray
+	read_back_val=	{'PIN1': '1234'}:{str}
+
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Pin1(val=	123456:int)
+	clean_val=	b'123456\xff\xff':bytearray
+	read_back_val=	{'PIN1': '123456'}:{str}
+
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Pin1(val=	12345678:int)
+	clean_val=	b'12345678':bytearray
+	read_back_val=	{'PIN1': '12345678'}:{str}
+
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Adm1(val=	'1234':str)
 	clean_val=	b'1234\xff\xff\xff\xff':bytearray
 	read_back_val=	{'ADM1': '1234'}:{str}
@@ -139,6 +191,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Adm1(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'ADM1': '12345678'}:{str}
 
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Adm1(val=	123456:int)
+	clean_val=	b'123456\xff\xff':bytearray
+	read_back_val=	{'ADM1': '123456'}:{str}
+
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der AlgorithmID(val=	'Milenage':str)
 	clean_val=	1:int
 	read_back_val=	{'Algorithm': 'Milenage'}:{str}
@@ -148,6 +204,18 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der AlgorithmID(val=	'TUAK':str)
 	read_back_val=	{'Algorithm': 'TUAK'}:{str}
 
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der AlgorithmID(val=	'usim-test':str)
+	clean_val=	3:int
+	read_back_val=	{'Algorithm': 'usim-test'}:{str}
+
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der AlgorithmID(val=	1:int)
+	clean_val=	1:int
+	read_back_val=	{'Algorithm': 'Milenage'}:{str}
+
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der AlgorithmID(val=	2:int)
+	clean_val=	2:int
+	read_back_val=	{'Algorithm': 'TUAK'}:{str}
+
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der AlgorithmID(val=	3:int)
 	clean_val=	3:int
 	read_back_val=	{'Algorithm': 'usim-test'}:{str}
 
@@ -166,6 +234,10 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_BERTLV_SUCI.der K(val=	11020304050607080910111213141516:int)
+	clean_val=	b'\x11\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'K': '11020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der Opc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
@@ -203,6 +275,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der Puk1(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'PUK1': '12345678'}:{str}
 
+ok: TS48v5_SAIP2.1B_NoBERTLV.der Puk1(val=	12345678:int)
+	clean_val=	b'12345678':bytearray
+	read_back_val=	{'PUK1': '12345678'}:{str}
+
 ok: TS48v5_SAIP2.1B_NoBERTLV.der Puk2(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'PUK2': '12345678'}:{str}
@@ -219,6 +295,18 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der Pin1(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'PIN1': '12345678'}:{str}
 
+ok: TS48v5_SAIP2.1B_NoBERTLV.der Pin1(val=	1234:int)
+	clean_val=	b'1234\xff\xff\xff\xff':bytearray
+	read_back_val=	{'PIN1': '1234'}:{str}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der Pin1(val=	123456:int)
+	clean_val=	b'123456\xff\xff':bytearray
+	read_back_val=	{'PIN1': '123456'}:{str}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der Pin1(val=	12345678:int)
+	clean_val=	b'12345678':bytearray
+	read_back_val=	{'PIN1': '12345678'}:{str}
+
 ok: TS48v5_SAIP2.1B_NoBERTLV.der Adm1(val=	'1234':str)
 	clean_val=	b'1234\xff\xff\xff\xff':bytearray
 	read_back_val=	{'ADM1': '1234'}:{str}
@@ -231,6 +319,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der Adm1(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'ADM1': '12345678'}:{str}
 
+ok: TS48v5_SAIP2.1B_NoBERTLV.der Adm1(val=	123456:int)
+	clean_val=	b'123456\xff\xff':bytearray
+	read_back_val=	{'ADM1': '123456'}:{str}
+
 ok: TS48v5_SAIP2.1B_NoBERTLV.der AlgorithmID(val=	'Milenage':str)
 	clean_val=	1:int
 	read_back_val=	{'Algorithm': 'Milenage'}:{str}
@@ -240,6 +332,18 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der AlgorithmID(val=	'TUAK':str)
 	read_back_val=	{'Algorithm': 'TUAK'}:{str}
 
 ok: TS48v5_SAIP2.1B_NoBERTLV.der AlgorithmID(val=	'usim-test':str)
+	clean_val=	3:int
+	read_back_val=	{'Algorithm': 'usim-test'}:{str}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der AlgorithmID(val=	1:int)
+	clean_val=	1:int
+	read_back_val=	{'Algorithm': 'Milenage'}:{str}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der AlgorithmID(val=	2:int)
+	clean_val=	2:int
+	read_back_val=	{'Algorithm': 'TUAK'}:{str}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der AlgorithmID(val=	3:int)
 	clean_val=	3:int
 	read_back_val=	{'Algorithm': 'usim-test'}:{str}
 
@@ -258,6 +362,10 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10
 ok: TS48v5_SAIP2.1B_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der K(val=	11020304050607080910111213141516:int)
+	clean_val=	b'\x11\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'K': '11020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.1B_NoBERTLV.der Opc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
@@ -295,6 +403,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der Puk1(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'PUK1': '12345678'}:{str}
 
+ok: TS48v5_SAIP2.3_NoBERTLV.der Puk1(val=	12345678:int)
+	clean_val=	b'12345678':bytearray
+	read_back_val=	{'PUK1': '12345678'}:{str}
+
 ok: TS48v5_SAIP2.3_NoBERTLV.der Puk2(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'PUK2': '12345678'}:{str}
@@ -311,6 +423,18 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der Pin1(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'PIN1': '12345678'}:{str}
 
+ok: TS48v5_SAIP2.3_NoBERTLV.der Pin1(val=	1234:int)
+	clean_val=	b'1234\xff\xff\xff\xff':bytearray
+	read_back_val=	{'PIN1': '1234'}:{str}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der Pin1(val=	123456:int)
+	clean_val=	b'123456\xff\xff':bytearray
+	read_back_val=	{'PIN1': '123456'}:{str}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der Pin1(val=	12345678:int)
+	clean_val=	b'12345678':bytearray
+	read_back_val=	{'PIN1': '12345678'}:{str}
+
 ok: TS48v5_SAIP2.3_NoBERTLV.der Adm1(val=	'1234':str)
 	clean_val=	b'1234\xff\xff\xff\xff':bytearray
 	read_back_val=	{'ADM1': '1234'}:{str}
@@ -323,6 +447,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der Adm1(val=	'12345678':str)
 	clean_val=	b'12345678':bytearray
 	read_back_val=	{'ADM1': '12345678'}:{str}
 
+ok: TS48v5_SAIP2.3_NoBERTLV.der Adm1(val=	123456:int)
+	clean_val=	b'123456\xff\xff':bytearray
+	read_back_val=	{'ADM1': '123456'}:{str}
+
 ok: TS48v5_SAIP2.3_NoBERTLV.der AlgorithmID(val=	'Milenage':str)
 	clean_val=	1:int
 	read_back_val=	{'Algorithm': 'Milenage'}:{str}
@@ -332,6 +460,18 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der AlgorithmID(val=	'TUAK':str)
 	read_back_val=	{'Algorithm': 'TUAK'}:{str}
 
 ok: TS48v5_SAIP2.3_NoBERTLV.der AlgorithmID(val=	'usim-test':str)
+	clean_val=	3:int
+	read_back_val=	{'Algorithm': 'usim-test'}:{str}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der AlgorithmID(val=	1:int)
+	clean_val=	1:int
+	read_back_val=	{'Algorithm': 'Milenage'}:{str}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der AlgorithmID(val=	2:int)
+	clean_val=	2:int
+	read_back_val=	{'Algorithm': 'TUAK'}:{str}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der AlgorithmID(val=	3:int)
 	clean_val=	3:int
 	read_back_val=	{'Algorithm': 'usim-test'}:{str}
 
@@ -350,6 +490,10 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\
 ok: TS48v5_SAIP2.3_NoBERTLV.der K(val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':BytesIO)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
 	read_back_val=	{'K': '01020304050607080910111213141516'}:{hexstr}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der K(val=	11020304050607080910111213141516:int)
+	clean_val=	b'\x11\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
+	read_back_val=	{'K': '11020304050607080910111213141516'}:{hexstr}
 
 ok: TS48v5_SAIP2.3_NoBERTLV.der Opc(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
