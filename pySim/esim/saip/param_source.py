@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from abc import ABC, abstractmethod
-import random
+import secrets
 import re
 from osmocom.utils import b2h
 
@@ -126,7 +126,7 @@ class DecimalRangeSource(InputExpandingParamSource):
         return cls(num_digits=len(first_str), first_value=first_value, last_value=last_value)
 
 class RandomSourceMixin:
-    random_impl = random.SystemRandom()
+    random_impl = secrets.SystemRandom()
 
 class RandomDigitSource(DecimalRangeSource, RandomSourceMixin):
     """return a different sequence of random decimal digits each"""
