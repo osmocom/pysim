@@ -93,7 +93,10 @@ class InputExpandingParamSource(ParamSource):
     def from_str(cls, s:str):
         return cls(cls.expand_str(s))
 
-class RandomDigitSource(InputExpandingParamSource):
+class RandomSourceMixin:
+    random_impl = random # TODO secure random source?
+
+class RandomDigitSource(InputExpandingParamSource, RandomSourceMixin):
     'return a different sequence of random decimal digits each'
     is_abstract = False
     name = 'random decimal digits'
@@ -115,7 +118,7 @@ class RandomDigitSource(InputExpandingParamSource):
         self.val_first_last = (first_value, last_value)
 
     def get_next(self, csv_row:dict=None):
-        val = random.randint(*self.val_first_last) # TODO secure random source?
+        val = self.random_impl.randint(*self.val_first_last)
         return self.val_to_digit(val)
 
     def val_to_digit(self, val:int):
@@ -137,7 +140,7 @@ class RandomDigitSource(InputExpandingParamSource):
         last_value = int(last_str) if last_str is not None else '9' * len(first_str)
         return cls(num_digits=len(first_str), first_value=first_value, last_value=last_value)
 
-class RandomHexDigitSource(InputExpandingParamSource):
+class RandomHexDigitSource(InputExpandingParamSource, RandomSourceMixin):
     'return a different sequence of random hexadecimal digits each'
     is_abstract = False
     name = 'random hexadecimal digits'
@@ -153,7 +156,7 @@ class RandomHexDigitSource(InputExpandingParamSource):
         self.num_digits = num_digits
 
     def get_next(self, csv_row:dict=None):
-        val = random.randbytes(self.num_digits // 2) # TODO secure random source?
+        val = self.random_impl.randbytes(self.num_digits // 2)
         return b2h(val)
 
     @classmethod
