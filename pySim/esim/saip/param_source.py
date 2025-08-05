@@ -123,15 +123,18 @@ class DecimalRangeSource(InputExpandingParamSource):
     def val_to_digit(self, val:int):
         return "%0*d" % (self.num_digits, val)  # pylint: disable=consider-using-f-string
 
-class RandomDigitSource(DecimalRangeSource):
+class RandomSourceMixin:
+    random_impl = random # TODO secure random source?
+
+class RandomDigitSource(DecimalRangeSource, RandomSourceMixin):
     """return a different sequence of random decimal digits each"""
     name = "random decimal digits"
 
     def get_next(self, csv_row:dict=None):
-        val = random.randint(*self.val_first_last) # TODO secure random source?
+        val = self.random_impl.randint(*self.val_first_last)
         return self.val_to_digit(val)
 
-class RandomHexDigitSource(InputExpandingParamSource):
+class RandomHexDigitSource(InputExpandingParamSource, RandomSourceMixin):
     """return a different sequence of random hexadecimal digits each"""
     name = "random hexadecimal digits"
     numeric_base = 16
@@ -149,7 +152,7 @@ class RandomHexDigitSource(InputExpandingParamSource):
         self.num_digits = num_digits
 
     def get_next(self, csv_row:dict=None):
-        val = random.randbytes(self.num_digits // 2) # TODO secure random source?
+        val = self.random_impl.randbytes(self.num_digits // 2)
         return b2h(val)
 
 class IncDigitSource(DecimalRangeSource):
