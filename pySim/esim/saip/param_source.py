@@ -19,6 +19,7 @@
 
 import random
 import re
+from osmocom.utils import b2h
 
 class ParamSourceExn(Exception):
     pass
@@ -143,7 +144,7 @@ class RandomHexDigitSource(InputExpandingParamSource):
 
     def get_next(self, csv_row:dict=None):
         val = random.randbytes(self.num_digits // 2) # TODO secure random source?
-        return val
+        return b2h(val)
 
     @classmethod
     def from_str(cls, s:str):
