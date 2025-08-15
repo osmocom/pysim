@@ -342,7 +342,9 @@ class SmDppHttpServer:
         else:
             self.dp_pb.cert_from_der_file(os.path.join(cert_dir, 'DPpb', 'CERT_S_SM_DPpb_ECDSA_NIST.der'))
             self.dp_pb.privkey_from_pem_file(os.path.join(cert_dir, 'DPpb', 'SK_S_SM_DPpb_ECDSA_NIST.pem'))
-        self.rss = rsp.RspSessionStore(os.path.join(DATA_DIR, "sm-dp-sessions"))
+        # Use different session database files for BRP and NIST to avoid file locking during concurrent runs
+        session_db_suffix = "BRP" if use_brainpool else "NIST"
+        self.rss = rsp.RspSessionStore(os.path.join(DATA_DIR, f"sm-dp-sessions-{session_db_suffix}"))
 
     @app.handle_errors(ApiError)
     def handle_apierror(self, request: IRequest, failure):
@@ -773,18 +775,21 @@ def main(argv):
     parser.add_argument("-c", "--certdir", help=f"cert subdir relative to {DATA_DIR}", default="certs")
     parser.add_argument("-s", "--nossl", help="do NOT use ssl", action='store_true', default=False)
     parser.add_argument("-v", "--verbose", help="dump more raw info", action='store_true', default=False)
+    parser.add_argument("-b", "--brainpool", help="Use Brainpool curves instead of NIST",
+                        action='store_true', default=False)
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING)
 
     common_cert_path = os.path.join(DATA_DIR, args.certdir)
-    hs = SmDppHttpServer(server_hostname=HOSTNAME, ci_certs_path=os.path.join(common_cert_path, 'CertificateIssuer'), common_cert_path=common_cert_path, use_brainpool=False)
+    hs = SmDppHttpServer(server_hostname=HOSTNAME, ci_certs_path=os.path.join(common_cert_path, 'CertificateIssuer'), common_cert_path=common_cert_path, use_brainpool=args.brainpool)
     if(args.nossl):
         hs.app.run(args.host, args.port)
     else:
-        cert_derpath = Path(common_cert_path) / 'DPtls' / 'CERT_S_SM_DP_TLS_NIST.der'
-        cert_pempath = Path(common_cert_path) / 'DPtls' / 'CERT_S_SM_DP_TLS_NIST.pem'
-        cert_skpath = Path(common_cert_path) / 'DPtls' / 'SK_S_SM_DP_TLS_NIST.pem'
+        curve_type = 'BRP' if args.brainpool else 'NIST'
+        cert_derpath = Path(common_cert_path) / 'DPtls' / f'CERT_S_SM_DP_TLS_{curve_type}.der'
+        cert_pempath = Path(common_cert_path) / 'DPtls' / f'CERT_S_SM_DP_TLS_{curve_type}.pem'
+        cert_skpath = Path(common_cert_path) / 'DPtls' / f'SK_S_SM_DP_TLS_{curve_type}.pem'
         dhparam_path = Path(common_cert_path) / "dhparam2048.pem"
         if not dhparam_path.exists():
             print("Generating dh params, this takes a few seconds..")
