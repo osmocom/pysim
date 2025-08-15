@@ -149,7 +149,7 @@ class CertificateSet:
                 check_signed(c, self.root_cert)
                 return
             parent_cert = self.intermediate_certs.get(aki, None)
-            if not aki:
+            if not parent_cert:
                 raise VerifyError('Could not find intermediate certificate for AuthKeyId %s' % b2h(aki))
             check_signed(c, parent_cert)
             # if we reach here, we passed (no exception raised)
