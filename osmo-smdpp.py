@@ -405,7 +405,7 @@ class SmDppHttpServer:
                     continue
         return False
 
-    def __init__(self, server_hostname: str, ci_certs_path: str, common_cert_path: str, use_brainpool: bool = False):
+    def __init__(self, server_hostname: str, ci_certs_path: str, common_cert_path: str, use_brainpool: bool = False, in_memory: bool = False):
         self.server_hostname = server_hostname
         self.upp_dir = os.path.realpath(os.path.join(DATA_DIR, 'upp'))
         self.ci_certs = self.load_certs_from_path(ci_certs_path)
@@ -426,9 +426,15 @@ class SmDppHttpServer:
         else:
             self.dp_pb.cert_from_der_file(os.path.join(cert_dir, 'DPpb', 'CERT_S_SM_DPpb_ECDSA_NIST.der'))
             self.dp_pb.privkey_from_pem_file(os.path.join(cert_dir, 'DPpb', 'SK_S_SM_DPpb_ECDSA_NIST.pem'))
-        # Use different session database files for BRP and NIST to avoid file locking during concurrent runs
-        session_db_suffix = "BRP" if use_brainpool else "NIST"
-        self.rss = rsp.RspSessionStore(os.path.join(DATA_DIR, f"sm-dp-sessions-{session_db_suffix}"))
+        if in_memory:
+            self.rss = rsp.RspSessionStore(in_memory=True)
+            logger.info("Using in-memory session storage")
+        else:
+            # Use different session database files for BRP and NIST to avoid file locking during concurrent runs
+            session_db_suffix = "BRP" if use_brainpool else "NIST"
+            db_path = os.path.join(DATA_DIR, f"sm-dp-sessions-{session_db_suffix}")
+            self.rss = rsp.RspSessionStore(filename=db_path, in_memory=False)
+            logger.info(f"Using file-based session storage: {db_path}")
 
     @app.handle_errors(ApiError)
     def handle_apierror(self, request: IRequest, failure):
@@ -860,6 +866,8 @@ def main(argv):
     parser.add_argument("-s", "--nossl", help="do NOT use ssl", action='store_true', default=False)
     parser.add_argument("-v", "--verbose", help="dump more raw info", action='store_true', default=False)
     parser.add_argument("-b", "--brainpool", help="Use Brainpool curves instead of NIST",
+                        action='store_true', default=False)
+    parser.add_argument("-m", "--in-memory", help="Use ephermal in-memory session storage (for concurrent runs)",
                         action='store_true', default=False)
     args = parser.parse_args()
 
