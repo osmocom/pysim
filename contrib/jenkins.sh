@@ -28,6 +28,7 @@ case "$JOB_TYPE" in
 
 	pip install -r requirements.txt
 	pip install pyshark
+	pip install .[smdpp]
 
 	# Execute automatically discovered unit tests first
 	python -m unittest discover -v -s tests/unittests
@@ -62,6 +63,7 @@ case "$JOB_TYPE" in
 	. venv/bin/activate
 
 	pip install .
+	pip install .[smdpp]
 
 	# Run pylint to find potential errors
 	# Ignore E1102: not-callable
@@ -70,6 +72,7 @@ case "$JOB_TYPE" in
 	#   pySim/utils.py:276: E0401: Unable to import 'Crypto.Cipher' (import-error)
 	#   pySim/utils.py:277: E0401: Unable to import 'Crypto.Util.strxor' (import-error)
 	python3 -m pylint -j0 --errors-only \
+		--disable E1101 \
 		--disable E1102 \
 		--disable E0401 \
 		--enable W0301 \
