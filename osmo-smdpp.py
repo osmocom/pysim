@@ -721,7 +721,8 @@ class SmDppHttpServer:
                 'download_attempts': 0,
                 'cc_attempts': 0,
                 'associated_eid': None,
-                'expiration': None
+                'expiration': None,
+                'profile_path': 'TS48v4_SAIP2.3_BERTLV'  # Use existing profile for testing
             }
         }
 
@@ -1375,7 +1376,14 @@ class SmDppHttpServer:
                 raise ApiError('8.2.7', '3.8', 'Confirmation Code is refused')
 
         # Perform actual protection + binding of profile package (or return  pre-bound one)
-        with open(os.path.join(self.upp_dir, ss.matchingId)+'.der', 'rb') as f:
+        upp_fname = ss.matchingId
+        if self.test_mode:
+            try:
+                profile_info = self.activation_code_profiles[ss.matchingId]
+                upp_fname = profile_info.get('profile_path', ss.matchingId)
+            except:
+                pass
+        with open(os.path.join(self.upp_dir, upp_fname)+'.der', 'rb') as f:
             upp = UnprotectedProfilePackage.from_der(f.read(), metadata=ss.profileMetadata)
             # HACK: Use empty PPP as we're still debuggin the configureISDP step, and we want to avoid
             # cluttering the log with stuff happening after the failure
