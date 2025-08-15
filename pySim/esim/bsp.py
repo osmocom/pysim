@@ -282,7 +282,7 @@ class BspInstance:
     def mac_only_one(self, tag: int, plaintext: bytes) -> bytes:
         """MAC a single plaintext TLV. Returns the protected ciphertext."""
         assert tag <= 255
-        assert len(plaintext) < self.max_payload_size
+        assert len(plaintext) <= self.max_payload_size
         maced = self.m_algo.auth(tag, plaintext)
         # The data block counter for ICV calculation is incremented also for each segment with C-MAC only.
         self.c_algo.block_nr += 1
