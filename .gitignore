@@ -7,7 +7,7 @@
 /.local
 /build
 /pySim.egg-info
-/smdpp-data/sm-dp-sessions
+/smdpp-data/sm-dp-sessions*
 dist
 tags
 smdpp-data/certs/DPtls/CERT_S_SM_DP_TLS_NIST.pem
