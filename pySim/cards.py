@@ -112,6 +112,8 @@ class UiccCardBase(SimCardBase):
     def probe(self) -> bool:
         # EF.DIR is a mandatory EF on all ICCIDs; however it *may* also exist on a TS 51.011 SIM
         ef_dir = EF_DIR()
+        # select MF first
+        self.file_exists("3f00")
         return self.file_exists(ef_dir.fid)
 
     def read_aids(self) -> List[Hexstr]:

@@ -60,6 +60,9 @@ class RuntimeState:
         self.card.set_apdu_parameter(
             cla=self.profile.cla, sel_ctrl=self.profile.sel_ctrl)
 
+        # make sure MF is selected before probing for Addons
+        self.lchan[0].select('MF')
+
         for addon_cls in self.profile.addons:
             addon = addon_cls()
             if addon.probe(self.card):
