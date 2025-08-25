@@ -15,6 +15,7 @@ from osmocom.tlv import bertlv_encode_tag, bertlv_encode_len
 
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
 # Copyright (C) 2021 Harald Welte <laforge@osmocom.org>
+# Copyright (C) 2009-2022   Ludovic Rousseau
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -583,6 +584,134 @@ def parse_command_apdu(apdu: bytes) -> int:
                              % (b2h(apdu), lc, lc, len(apdu[5:])))
     else:
         raise ValueError('invalid APDU (%s), too short!' % b2h(apdu))
+
+
+# ATR handling code under GPL from parseATR: https://github.com/LudovicRousseau/pyscard-contrib
+def normalizeATR(atr):
+    """Transform an ATR in list of integers.
+    valid input formats are
+    "3B A7 00 40 18 80 65 A2 08 01 01 52"
+    "3B:A7:00:40:18:80:65:A2:08:01:01:52"
+
+    Args:
+        atr: string
+    Returns:
+        list of bytes
+
+    >>> normalize("3B:A7:00:40:18:80:65:A2:08:01:01:52")
+    [59, 167, 0, 64, 24, 128, 101, 162, 8, 1, 1, 82]
+    """
+    atr = atr.replace(":", "")
+    atr = atr.replace(" ", "")
+
+    res = []
+    while len(atr) >= 2:
+        byte, atr = atr[:2], atr[2:]
+        res.append(byte)
+    if len(atr) > 0:
+        raise ValueError("warning: odd string, remainder: %r" % atr)
+
+    atr = [int(x, 16) for x in res]
+    return atr
+
+
+# ATR handling code under GPL from parseATR: https://github.com/LudovicRousseau/pyscard-contrib
+def decomposeATR(atr_txt):
+    """Decompose the ATR in elementary fields
+
+        Args:
+            atr_txt: ATR as a hex bytes string
+        Returns:
+            dictionary of field and values
+
+        >>> decomposeATR("3B A7 00 40 18 80 65 A2 08 01 01 52")
+    { 'T0': {'value': 167},
+      'TB': {1: {'value': 0}},
+      'TC': {2: {'value': 24}},
+      'TD': {1: {'value': 64}},
+      'TS': {'value': 59},
+      'atr': [59, 167, 0, 64, 24, 128, 101, 162, 8, 1, 1, 82],
+      'hb': {'value': [128, 101, 162, 8, 1, 1, 82]},
+      'hbn': 7}
+    """
+    ATR_PROTOCOL_TYPE_T0 = 0
+    atr_txt = normalizeATR(atr_txt)
+    atr = {}
+
+    # the ATR itself as a list of integers
+    atr["atr"] = atr_txt
+
+    # store TS and T0
+    atr["TS"] = {"value": atr_txt[0]}
+    TDi = atr_txt[1]
+    atr["T0"] = {"value": TDi}
+    hb_length = TDi & 15
+    pointer = 1
+    # protocol number
+    pn = 1
+
+    # store number of historical bytes
+    atr["hbn"] = TDi & 0xF
+
+    while pointer < len(atr_txt):
+        # Check TAi is present
+        if (TDi | 0xEF) == 0xFF:
+            pointer += 1
+            if "TA" not in atr:
+                atr["TA"] = {}
+            atr["TA"][pn] = {"value": atr_txt[pointer]}
+
+        # Check TBi is present
+        if (TDi | 0xDF) == 0xFF:
+            pointer += 1
+            if "TB" not in atr:
+                atr["TB"] = {}
+            atr["TB"][pn] = {"value": atr_txt[pointer]}
+
+        # Check TCi is present
+        if (TDi | 0xBF) == 0xFF:
+            pointer += 1
+            if "TC" not in atr:
+                atr["TC"] = {}
+            atr["TC"][pn] = {"value": atr_txt[pointer]}
+
+        # Check TDi is present
+        if (TDi | 0x7F) == 0xFF:
+            pointer += 1
+            if "TD" not in atr:
+                atr["TD"] = {}
+            TDi = atr_txt[pointer]
+            atr["TD"][pn] = {"value": TDi}
+            if (TDi & 0x0F) != ATR_PROTOCOL_TYPE_T0:
+                atr["TCK"] = True
+            pn += 1
+        else:
+            break
+
+    # Store historical bytes
+    atr["hb"] = {"value": atr_txt[pointer + 1 : pointer + 1 + hb_length]}
+
+    # Store TCK
+    last = pointer + 1 + hb_length
+    if "TCK" in atr:
+        try:
+            atr["TCK"] = {"value": atr_txt[last]}
+        except IndexError:
+            atr["TCK"] = {"value": -1}
+        last += 1
+
+    if len(atr_txt) > last:
+        atr["extra"] = atr_txt[last:]
+
+    if len(atr["hb"]["value"]) < hb_length:
+        missing = hb_length - len(atr["hb"]["value"])
+        if missing > 1:
+            (t1, t2) = ("s", "are")
+        else:
+            (t1, t2) = ("", "is")
+        atr["warning"] = "ATR is truncated: %d byte%s %s missing" % (missing, t1, t2)
+
+    return atr
 
 
 class DataObject(abc.ABC):

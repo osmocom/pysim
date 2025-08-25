@@ -39,7 +39,7 @@ from osmocom.utils import h2b, b2h, is_hex, auto_int, auto_uint8, auto_uint16, i
 from osmocom.tlv import bertlv_parse_one
 from osmocom.construct import filter_dict, parse_construct, build_construct
 
-from pySim.utils import sw_match
+from pySim.utils import sw_match, decomposeATR
 from pySim.jsonpath import js_path_modify
 from pySim.commands import SimCardCommands
 from pySim.exceptions import SwMatchError
@@ -1543,6 +1543,13 @@ class CardModel(abc.ABC):
         card_atr = scc.get_atr()
         for atr in cls._atrs:
             if atr == card_atr:
+                print("Detected CardModel:", cls.__name__)
+                return True
+        # if nothing found try to just compare the Historical Bytes of the ATR
+        card_atr_hb = decomposeATR(card_atr)['hb']
+        for atr in cls._atrs:
+            atr_hb = decomposeATR(atr)['hb']
+            if atr_hb == card_atr_hb:
                 print("Detected CardModel:", cls.__name__)
                 return True
         return False
