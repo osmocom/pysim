@@ -21,6 +21,14 @@ project = 'osmopysim-usermanual'
 copyright = '2009-2023 by Sylvain Munaut, Harald Welte, Philipp Maier, Supreeth Herle, Merlin Chlosta'
 author = 'Sylvain Munaut, Harald Welte, Philipp Maier, Supreeth Herle, Merlin Chlosta'
 
+# PDF: Avoid that the authors list exceeds the page by inserting '\and'
+# manually as line break (https://github.com/sphinx-doc/sphinx/issues/6875)
+latex_elements = {
+    "maketitle":
+        r"""\author{Sylvain Munaut, Harald Welte, Philipp Maier, \and Supreeth Herle, Merlin Chlosta}
+\sphinxmaketitle
+"""
+}
 
 # -- General configuration ---------------------------------------------------
 
