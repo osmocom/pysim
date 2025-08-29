@@ -463,7 +463,7 @@ class SmDppHttpServer:
             'AC_NOT_RELEASED': {
                 'matchingId': 'AC_NOT_RELEASED',
                 'confirmationCode': '87654321',
-                'iccid': '8900000000000000002F',
+                'iccid': '89000000000000000020',
                 'profileName': 'Not Released Profile',
                 'state': 'not_released',
                 'download_attempts': 0,
@@ -474,7 +474,7 @@ class SmDppHttpServer:
             'AC_WITH_CC': {
                 'matchingId': 'AC_WITH_CC',
                 'confirmationCode': '11223344',
-                'iccid': '8900000000000000003F',
+                'iccid': '89000000000000000038',
                 'profileName': 'Profile Requiring CC',
                 'state': 'released',
                 'download_attempts': 0,
@@ -485,7 +485,7 @@ class SmDppHttpServer:
             'AC_NO_CC': {
                 'matchingId': 'AC_NO_CC',
                 'confirmationCode': None,  # No confirmation code required
-                'iccid': '8900000000000000004F',
+                'iccid': '89000000000000000046',
                 'profileName': 'Profile Without CC',
                 'state': 'released',
                 'download_attempts': 0,
@@ -497,7 +497,7 @@ class SmDppHttpServer:
             'AC_NO_ELIGIBLE': {
                 'matchingId': 'AC_NO_ELIGIBLE',
                 'confirmationCode': None,
-                'iccid': '8900000000000000009F',
+                'iccid': '89000000000000000095',
                 'profileName': 'Profile with No Eligible Device',
                 'state': 'released',
                 'download_attempts': 0,
@@ -512,7 +512,7 @@ class SmDppHttpServer:
             'AC_EXPIRED': {
                 'matchingId': 'AC_EXPIRED',
                 'confirmationCode': None,
-                'iccid': '8900000000000000010F',
+                'iccid': '89000000000000000103',
                 'profileName': 'Expired Download Order',
                 'state': 'released',
                 'download_attempts': 0,
@@ -523,7 +523,7 @@ class SmDppHttpServer:
             'AC_MAX_RETRIES': {
                 'matchingId': 'AC_MAX_RETRIES',
                 'confirmationCode': None,
-                'iccid': '8900000000000000011F',
+                'iccid': '89000000000000000111',
                 'profileName': 'Max Retries Exceeded',
                 'state': 'released',
                 'download_attempts': 5,  # Already exceeded max attempts
@@ -534,7 +534,7 @@ class SmDppHttpServer:
             'AC_RESTRICTED_EID': {
                 'matchingId': 'AC_RESTRICTED_EID',
                 'confirmationCode': None,
-                'iccid': '8900000000000000012F',
+                'iccid': '89000000000000000129',
                 'profileName': 'Profile Restricted to Different EID',
                 'state': 'released',
                 'download_attempts': 0,
@@ -545,7 +545,7 @@ class SmDppHttpServer:
             'AC_OTHER_EID': {
                 'matchingId': 'AC_OTHER_EID',
                 'confirmationCode': None,
-                'iccid': '8900000000000000013F',
+                'iccid': '89000000000000000137',
                 'profileName': 'Profile for Other EID',
                 'state': 'released',
                 'download_attempts': 0,
@@ -556,7 +556,7 @@ class SmDppHttpServer:
             'CC_REQUIRED_TEST': {
                 'matchingId': 'CC_REQUIRED_TEST',
                 'confirmationCode': '12345678',  # Requires confirmation code
-                'iccid': '8900000000000000019F',
+                'iccid': '89000000000000000194',
                 'profileName': 'CC Required Test Profile',
                 'state': 'released',
                 'download_attempts': 0,
@@ -572,7 +572,7 @@ class SmDppHttpServer:
             'EVENT_001': {
                 'matchingId': 'EVENT_001',
                 'confirmationCode': '55667788',
-                'iccid': '8900000000000000005F',
+                'iccid': '89000000000000000053',
                 'profileName': 'Event-based Profile 1',
                 'state': 'released',
                 'download_attempts': 0,
@@ -583,7 +583,7 @@ class SmDppHttpServer:
             'EVENT_RESTRICTED': {
                 'matchingId': 'EVENT_RESTRICTED',
                 'confirmationCode': None,
-                'iccid': '8900000000000000015F',
+                'iccid': '89000000000000000152',
                 'profileName': 'SM-DS Event Restricted to Different EID',
                 'state': 'released',
                 'download_attempts': 0,
@@ -608,7 +608,7 @@ class SmDppHttpServer:
         self.default_profiles = {
             '89049032123451234512345678901235': {  # EID1 from test specs
                 'confirmationCode': None,
-                'iccid': '8900000000000000020F',
+                'iccid': '89000000000000000202',
                 'profileName': 'Default Profile for EID1',
                 'state': 'released',
                 'download_attempts': 0,
@@ -619,11 +619,11 @@ class SmDppHttpServer:
 
         # Initialize ES2+ profile inventory for test mode
         test_profiles = [
-            ('8900000000000000001', 'Test', 'S_MNO'),  # ICCID_OP_PROF1
-            ('8900000000000000002', 'Test', 'S_MNO'),  # ICCID_OP_PROF2
-            ('8900000000000000003', 'Test', 'S_MNO'),  # Additional test profiles
-            ('8900000000000000004', 'Test', 'S_MNO'),
-            ('8900000000000000005', 'Test', 'S_MNO'),
+            ('89000000000000001010', 'Test', 'S_MNO'),  # ICCID_OP_PROF1
+            ('89000000000000001028', 'Test', 'S_MNO'),  # ICCID_OP_PROF2
+            ('89000000000000001036', 'Test', 'S_MNO'),  # Additional test profiles
+            ('89000000000000001044', 'Test', 'S_MNO'),
+            ('89000000000000001051', 'Test', 'S_MNO'),
         ]
 
         for iccid, profile_type, owner in test_profiles:
