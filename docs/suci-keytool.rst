@@ -17,7 +17,7 @@ In any case, in order to operate a SUCI-enabled 5G SA network, you will have to
 #. deploy the public key on your USIMs
 #. deploy the private key on your 5GC, specifically the UDM function
 
-pysim contains (int its `contrib` directory) a small utility program that can make it easy to generate
+pysim contains (in its `contrib` directory) a small utility program that can make it easy to generate
 such keys: `suci-keytool.py`
 
 Generating keys
