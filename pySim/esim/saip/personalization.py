@@ -1245,7 +1245,7 @@ class UppAudit(dict):
 
             for key in pe.keys:
                 audit_key = f'SdKey_KVN{key.key_version_number:02x}_ID{key.key_identifier:02x}'
-                audit_val = f'{key.key_components!r} {key.key_usage_qualifier!r}'
+                audit_val = f'{key.key_components=!r} {key.key_usage_qualifier=!r}'
                 upp_audit[audit_key] = audit_val
         return upp_audit
 
