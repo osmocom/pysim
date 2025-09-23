@@ -84,7 +84,7 @@ def tcp_connected_callback(p: protocol.Protocol):
     logger.error("%s: connected!" % p)
 
 class ProactChannel:
-    """Representation of a single proective channel."""
+    """Representation of a single protective channel."""
     def __init__(self, channels: 'ProactChannels', chan_nr: int):
         self.channels = channels
         self.chan_nr = chan_nr

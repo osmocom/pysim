@@ -586,7 +586,7 @@ def read_params_csv(opts, imsi=None, iccid=None):
         else:
             row['mnc'] = row.get('mnc', mnc_from_imsi(row.get('imsi'), False))
 
-	# NOTE: We might concider to specify a new CSV field "mnclen" in our
+	# NOTE: We might consider to specify a new CSV field "mnclen" in our
 	# CSV files for a better automatization. However, this only makes sense
 	# when the tools and databases we export our files from will also add
 	# such a field.

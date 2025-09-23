@@ -68,7 +68,7 @@ parser_dl.add_argument('--confirmation-code',
 # notification
 parser_ntf = subparsers.add_parser('notification', help='ES9+ (other) notification')
 parser_ntf.add_argument('operation', choices=['enable','disable','delete'],
-                        help='Profile Management Opreation whoise occurrence shall be notififed')
+                        help='Profile Management Operation whoise occurrence shall be notififed')
 parser_ntf.add_argument('--sequence-nr', type=int, required=True,
                         help='eUICC global notification sequence number')
 parser_ntf.add_argument('--notification-address', help='notificationAddress, if different from URL')

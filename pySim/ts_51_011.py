@@ -1007,7 +1007,7 @@ class EF_ICCID(TransparentEF):
     def _encode_hex(self, abstract, **kwargs):
         return enc_iccid(abstract['iccid'])
 
-# TS 102 221 Section 13.3 / TS 31.101 Secction 13 / TS 51.011 Section 10.1.2
+# TS 102 221 Section 13.3 / TS 31.101 Section 13 / TS 51.011 Section 10.1.2
 class EF_PL(TransRecEF):
     _test_de_encode = [
         ( '6465', "de" ),

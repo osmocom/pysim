@@ -317,7 +317,7 @@ class ADF_ARAM(CardADF):
         store_ref_ar_do_parse = argparse.ArgumentParser()
         # REF-DO
         store_ref_ar_do_parse.add_argument(
-            '--device-app-id', required=True, help='Identifies the specific device application that the rule appplies to. Hash of Certificate of Application Provider, or UUID. (20/32 hex bytes)')
+            '--device-app-id', required=True, help='Identifies the specific device application that the rule applies to. Hash of Certificate of Application Provider, or UUID. (20/32 hex bytes)')
         aid_grp = store_ref_ar_do_parse.add_mutually_exclusive_group()
         aid_grp.add_argument(
             '--aid', help='Identifies the specific SE application for which rules are to be stored. Can be a partial AID, containing for example only the RID. (5-16 or 0 hex bytes)')
@@ -399,7 +399,7 @@ class ADF_ARAM(CardADF):
 sw_aram = {
     'ARA-M': {
         '6381': 'Rule successfully stored but an access rule already exists',
-        '6382': 'Rule successfully stored bu contained at least one unknown (discarded) BER-TLV',
+        '6382': 'Rule successfully stored but contained at least one unknown (discarded) BER-TLV',
         '6581': 'Memory Problem',
         '6700': 'Wrong Length in Lc',
         '6981': 'DO is not supported by the ARA-M/ARA-C',

@@ -27,5 +27,5 @@ PYTHONPATH=$PYSIMPATH python3 $PYSIMPATH/contrib/saip-tool.py $OUTPATH add-app-i
 # Display the contents of the resulting application PE:
 PYTHONPATH=$PYSIMPATH python3 $PYSIMPATH/contrib/saip-tool.py $OUTPATH info --apps
 
-# For an explaination of --uicc-toolkit-app-spec-pars, see:
+# For an explanation of --uicc-toolkit-app-spec-pars, see:
 # ETSI TS 102 226, section 8.2.1.3.2.2.1

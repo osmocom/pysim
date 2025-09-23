@@ -119,7 +119,7 @@ class EF_AC_GBAUAPI(LinFixedEF):
     """The use of this EF is eescribed in 3GPP TS 31.130"""
     class AppletNafAccessControl(BER_TLV_IE, tag=0x80):
         # the use of Int8ub as length field in Prefixed is strictly speaking incorrect, as it is a BER-TLV
-        # length field whihc will consume two bytes from length > 127 bytes.  However, AIDs and NAF IDs can
+        # length field which will consume two bytes from length > 127 bytes.  However, AIDs and NAF IDs can
         # safely be assumed shorter than that
         _construct = Struct('aid'/Prefixed(Int8ub, GreedyBytes),
                             'naf_id'/Prefixed(Int8ub, GreedyBytes))

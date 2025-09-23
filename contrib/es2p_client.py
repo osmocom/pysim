@@ -24,7 +24,7 @@ ICCID_HELP='The ICCID of the eSIM that shall be made available'
 MATCHID_HELP='MatchingID that shall be used by profile download'
 
 parser = argparse.ArgumentParser(description="""
-Utility to manuall issue requests against the ES2+ API of an SM-DP+ according to GSMA SGP.22.""")
+Utility to manually issue requests against the ES2+ API of an SM-DP+ according to GSMA SGP.22.""")
 parser.add_argument('--url', required=True, help='Base URL of ES2+ API endpoint')
 parser.add_argument('--id', required=True, help='Entity identifier passed to SM-DP+')
 parser.add_argument('--client-cert', help='X.509 client certificate used to authenticate to server')
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     data = {}
     for k, v in vars(opts).items():
         if k in ['url', 'id', 'client_cert', 'server_ca_cert', 'command']:
-            # remove keys from dict that shold not end up in JSON...
+            # remove keys from dict that should not end up in JSON...
             continue
         if v is not None:
             data[k] = v

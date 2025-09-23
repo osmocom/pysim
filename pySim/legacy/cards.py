@@ -495,7 +495,7 @@ class IsimCard(UiccCardBase):
 
 class MagicSimBase(abc.ABC, SimCard):
     """
-    Theses cards uses several record based EFs to store the provider infos,
+    These cards uses several record based EFs to store the provider infos,
     each possible provider uses a specific record number in each EF. The
     indexes used are ( where N is the number of providers supported ) :
      - [2 .. N+1] for the operator name
@@ -644,7 +644,7 @@ class MagicSim(MagicSimBase):
 
 class FakeMagicSim(SimCard):
     """
-    Theses cards have a record based EF 3f00/000c that contains the provider
+    These cards have a record based EF 3f00/000c that contains the provider
     information. See the program method for its format. The records go from
     1 to N.
     """

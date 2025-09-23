@@ -21,9 +21,9 @@ osmo-smdpp currently
 
 * [by default] uses test certificates copied from GSMA SGP.26 into `./smdpp-data/certs`, assuming that your
   osmo-smdpp would be running at the host name `testsmdpplus1.example.com`. You can of course replace those
-  certificates with your own, whether SGP.26 derived or part of a *private root CA* setup with mathcing eUICCs.
+  certificates with your own, whether SGP.26 derived or part of a *private root CA* setup with matching eUICCs.
 * doesn't understand profile state. Any profile can always be downloaded any number of times, irrespective
-  of the EID or whether it was donwloaded before.  This is actually very useful for R&D and testing, as it
+  of the EID or whether it was downloaded before.  This is actually very useful for R&D and testing, as it
   doesn't require you to generate new profiles all the time.  This logic of course is unsuitable for
   production usage.
 * doesn't perform any personalization, so the IMSI/ICCID etc. are always identical (the ones that are stored in

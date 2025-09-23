@@ -116,7 +116,7 @@ class param:
         pass
 
 class Es2PlusApiFunction(JsonHttpApiFunction):
-    """Base classs for representing an ES2+ API Function."""
+    """Base class for representing an ES2+ API Function."""
     pass
 
 # ES2+ DownloadOrder function (SGP.22 section 5.3.1)

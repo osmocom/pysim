@@ -200,7 +200,7 @@ class LinkBase(abc.ABC):
             # It *was* successful after all -- the extra pieces FETCH handled
             # need not concern the caller.
             rv = (rv[0], '9000')
-            # proactive sim as per TS 102 221 Setion 7.4.2
+            # proactive sim as per TS 102 221 Section 7.4.2
             # TODO: Check SW manually to avoid recursing on the stack (provided this piece of code stays in this place)
             fetch_rv = self.send_apdu_checksw('80120000' + last_sw[2:], sw)
             # Setting this in case we later decide not to send a terminal
@@ -228,7 +228,7 @@ class LinkBase(abc.ABC):
             # Structure as per TS 102 223 V4.4.0 Section 6.8
 
             # Testing hint: The value of tail does not influence the behavior
-            # of an SJA2 that sent ans SMS, so this is implemented only
+            # of an SJA2 that sent an SMS, so this is implemented only
             # following TS 102 223, and not fully tested.
             ti_list_bin = [x.to_tlv() for x in ti_list]
             tail = b''.join(ti_list_bin)

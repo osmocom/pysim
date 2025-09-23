@@ -159,7 +159,7 @@ class ApiError(Exception):
         return f'{self.status}("{self.subject_code}","{self.reason_code}","{self.subject_id}","{self.message}")'
 
 class JsonHttpApiFunction(abc.ABC):
-    """Base classs for representing an HTTP[s] API Function."""
+    """Base class for representing an HTTP[s] API Function."""
      # the below class variables are expected to be overridden in derived classes
 
     path = None

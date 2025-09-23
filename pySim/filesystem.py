@@ -86,7 +86,7 @@ class CardFile:
         self.service = service
         self.shell_commands = []  # type: List[CommandSet]
 
-        # Note: the basic properties (fid, name, ect.) are verified when
+        # Note: the basic properties (fid, name, etc.) are verified when
         # the file is attached to a parent file. See method add_file() in
         # class Card DF
 
@@ -266,7 +266,7 @@ class CardFile:
     def get_profile(self):
         """Get the profile associated with this file. If this file does not have any
         profile assigned, try to find a file above (usually the MF) in the filesystem
-        hirarchy that has a profile assigned
+        hierarchy that has a profile assigned
         """
 
         # If we have a profile set, return it
@@ -679,7 +679,7 @@ class TransparentEF(CardEF):
         Args:
             fid : File Identifier (4 hex digits)
             sfid : Short File Identifier (2 hex digits, optional)
-            name : Brief name of the file, lik EF_ICCID
+            name : Brief name of the file, like EF_ICCID
             desc : Description of the file
             parent : Parent CardFile object within filesystem hierarchy
             size : tuple of (minimum_size, recommended_size)
@@ -982,11 +982,11 @@ class LinFixedEF(CardEF):
         Args:
             fid : File Identifier (4 hex digits)
             sfid : Short File Identifier (2 hex digits, optional)
-            name : Brief name of the file, lik EF_ICCID
+            name : Brief name of the file, like EF_ICCID
             desc : Description of the file
             parent : Parent CardFile object within filesystem hierarchy
             rec_len : Tuple of (minimum_length, recommended_length)
-            leftpad: On write, data must be padded from the left to fit pysical record length
+            leftpad: On write, data must be padded from the left to fit physical record length
         """
         super().__init__(fid=fid, sfid=sfid, name=name, desc=desc, parent=parent, **kwargs)
         self.rec_len = rec_len
@@ -1422,7 +1422,7 @@ class BerTlvEF(CardEF):
         Args:
             fid : File Identifier (4 hex digits)
             sfid : Short File Identifier (2 hex digits, optional)
-            name : Brief name of the file, lik EF_ICCID
+            name : Brief name of the file, like EF_ICCID
             desc : Description of the file
             parent : Parent CardFile object within filesystem hierarchy
             size : tuple of (minimum_size, recommended_size)
@@ -1455,7 +1455,7 @@ class BerTlvEF(CardEF):
             export_str += "delete_all\n"
             for t in tags:
                 result = lchan.retrieve_data(t)
-                (tag, l, val, remainer) = bertlv_parse_one(h2b(result[0]))
+                (tag, l, val, remainder) = bertlv_parse_one(h2b(result[0]))
                 export_str += ("set_data 0x%02x %s\n" % (t, b2h(val)))
         return export_str.strip()
 
@@ -1495,7 +1495,7 @@ class CardApplication:
         self.name = name
         self.adf = adf
         self.sw = sw or {}
-        # back-reference from ADF to Applicaiton
+        # back-reference from ADF to Application
         if self.adf:
             self.aid = aid or self.adf.aid
             self.adf.application = self
@@ -1572,7 +1572,7 @@ class Path:
             p = p.split('/')
         elif len(p) and isinstance(p[0], int):
             p = ['%04x' % x for x in p]
-        # make sure internal representation alwas is uppercase only
+        # make sure internal representation always is uppercase only
         self.list = [x.upper() for x in p]
 
     def __str__(self) -> str:

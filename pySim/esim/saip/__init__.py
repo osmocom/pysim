@@ -334,7 +334,7 @@ class File:
                     self.fill_pattern = pefi['fillPattern']
                     self.fill_pattern_repeat = False
             elif fdb_dec['file_type'] == 'df':
-                # only set it, if an earlier call to from_template() didn't alrady set it, as
+                # only set it, if an earlier call to from_template() didn't already set it, as
                 # the template can differentiate between MF, DF and ADF (unlike FDB)
                 if not self.file_type:
                     self.file_type = 'DF'
@@ -427,7 +427,7 @@ class File:
 
 class ProfileElement:
     """Generic Class representing a Profile Element (PE) within a SAIP Profile. This may be used directly,
-    but ist more likely sub-classed with a specific class for the specific profile element type, like e.g
+    but it's more likely sub-classed with a specific class for the specific profile element type, like e.g
     ProfileElementHeader, ProfileElementMF, ...
     """
     FILE_BEARING = ['mf', 'cd', 'telecom', 'usim', 'opt-usim', 'isim', 'opt-isim', 'phonebook', 'gsm-access',
@@ -440,7 +440,7 @@ class ProfileElement:
         'genericFileManagement':    'gfm-header',
         'akaParameter':             'aka-header',
         'cdmaParameter':            'cdma-header',
-        # note how they couldn't even consistently captialize the 'header' suffix :(
+        # note how they couldn't even consistently capitalize the 'header' suffix :(
         'application':              'app-Header',
         'pukCodes':                 'puk-Header',
         'pinCodes':                 'pin-Header',
@@ -628,7 +628,7 @@ class FsProfileElement(ProfileElement):
                     # this is a template that belongs into the [A]DF of another template
                     # 1) find the PE for the referenced template
                     parent_pe = self.pe_sequence.get_closest_prev_pe_for_templateID(self, template.parent.oid)
-                    # 2) resolve te [A]DF that forms the base of that parent PE
+                    # 2) resolve the [A]DF that forms the base of that parent PE
                     pe_df = parent_pe.files[template.parent.base_df().pe_name].node
                     self.pe_sequence.cur_df = pe_df
                 self.pe_sequence.cur_df = self.pe_sequence.cur_df.add_file(file)
@@ -649,7 +649,7 @@ class FsProfileElement(ProfileElement):
                 self.add_file(file)
 
     def create_file(self, pename: str) -> File:
-        """Programatically create a file by its PE-Name."""
+        """Programmatically create a file by its PE-Name."""
         template = templates.ProfileTemplateRegistry.get_by_oid(self.templateID)
         file = File(pename, None, template.files_by_pename.get(pename, None))
         self.add_file(file)
@@ -1409,7 +1409,7 @@ class ProfileElementHeader(ProfileElement):
                  iccid: Optional[Hexstr] = '0'*20, profile_type: Optional[str] = None,
                  **kwargs):
         """You would usually initialize an instance either with a "decoded" argument (as read from
-        a DER-encoded SAIP file via asn1tools), or [some of] the othe arguments in case you're
+        a DER-encoded SAIP file via asn1tools), or [some of] the other arguments in case you're
         constructing a Profile Header from scratch.
 
         Args:
@@ -1562,7 +1562,7 @@ class ProfileElementSequence:
 
     def _rebuild_pes_by_naa(self) -> None:
         """rebuild the self.pes_by_naa dict {naa: [ [pe, pe, pe], [pe, pe] ]} form,
-        which basically means for every NAA there's a lsit of instances, and each consists
+        which basically means for every NAA there's a list of instances, and each consists
         of a list of a list of PEs."""
         self.pres_by_naa = {}
         petype_not_naa_related = ['securityDomain', 'rfm', 'application', 'end']
@@ -1690,7 +1690,7 @@ class ProfileElementSequence:
             i += 1
 
     def get_index_by_pe(self, pe: ProfileElement) -> int:
-        """Return a list with the indicies of all instances of PEs of petype."""
+        """Return a list with the indices of all instances of PEs of petype."""
         ret = []
         i = 0
         for cur in self.pe_list:
@@ -1711,7 +1711,7 @@ class ProfileElementSequence:
         self.insert_at_index(idx+1, pe_new)
 
     def get_index_by_type(self, petype: str) -> List[int]:
-        """Return a list with the indicies of all instances of PEs of petype."""
+        """Return a list with the indices of all instances of PEs of petype."""
         ret = []
         i = 0
         for pe in self.pe_list:
@@ -1736,7 +1736,7 @@ class ProfileElementSequence:
         for service in naa.mandatory_services:
             if service in hdr.decoded['eUICC-Mandatory-services']:
                 del hdr.decoded['eUICC-Mandatory-services'][service]
-        # remove any associaed mandatory filesystem templates
+        # remove any associated mandatory filesystem templates
         for template in naa.templates:
             if template in hdr.decoded['eUICC-Mandatory-GFSTEList']:
                 hdr.decoded['eUICC-Mandatory-GFSTEList'] = [x for x in hdr.decoded['eUICC-Mandatory-GFSTEList'] if not template.prefix_match(x)]

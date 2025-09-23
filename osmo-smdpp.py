@@ -651,7 +651,7 @@ class SmDppHttpServer:
             # there's currently no other option in the ctxParams1 choice, so this cannot happen
             raise ApiError('1.3.1', '2.2', 'ctxParams1 missing mandatory ctxParamsForCommonAuthentication')
 
-        # FIXME: we actually want to perform the profile binding herr, and read the profile metadat from the profile
+        # FIXME: we actually want to perform the profile binding herr, and read the profile metadata from the profile
 
         # Put together profileMetadata + _bin
         ss.profileMetadata = ProfileMetadata(iccid_bin=h2b(swap_nibbles(iccid_str)), spn="OsmocomSPN", profile_name=matchingId)
@@ -738,14 +738,14 @@ class SmDppHttpServer:
         #  Perform actual protection + binding of profile package (or return  pre-bound one)
         with open(os.path.join(self.upp_dir, ss.matchingId)+'.der', 'rb') as f:
             upp = UnprotectedProfilePackage.from_der(f.read(), metadata=ss.profileMetadata)
-            # HACK: Use empty PPP as we're still debuggin the configureISDP step, and we want to avoid
+            # HACK: Use empty PPP as we're still debugging the configureISDP step, and we want to avoid
             # cluttering the log with stuff happening after the failure
             #upp = UnprotectedProfilePackage.from_der(b'', metadata=ss.profileMetadata)
         if False:
             # Use random keys
             bpp = BoundProfilePackage.from_upp(upp)
         else:
-            # Use sesssion keys
+            # Use session keys
             ppp = ProtectedProfilePackage.from_upp(upp, BspInstance(b'\x00'*16, b'\x11'*16, b'\x22'*16))
             bpp = BoundProfilePackage.from_ppp(ppp)
 

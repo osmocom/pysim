@@ -110,7 +110,7 @@ class CardProfile:
     @abc.abstractmethod
     def _try_match_card(cls, scc: SimCardCommands) -> None:
         """Try to see if the specific profile matches the card. This method is a
-        placeholder that is overloaded by specific dirived classes. The method
+        placeholder that is overloaded by specific derived classes. The method
         actively probes the card to make sure the profile class matches the
         physical card. This usually also means that the card is reset during
         the process, so this method must not be called at random times. It may

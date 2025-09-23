@@ -627,7 +627,7 @@ class ADF_SD(CardADF):
                     kcv_bin = compute_kcv(opts.key_type[i], h2b(opts.key_data[i])) or b''
                     kcv = b2h(kcv_bin)
                 if self._cmd.lchan.scc.scp:
-                    # encrypte key data with DEK of current SCP
+                    # encrypted key data with DEK of current SCP
                     kcb = b2h(self._cmd.lchan.scc.scp.encrypt_key(h2b(opts.key_data[i])))
                 else:
                     # (for example) during personalization, DEK might not be required)
@@ -755,7 +755,7 @@ class ADF_SD(CardADF):
 
         inst_load_parser = argparse.ArgumentParser()
         inst_load_parser.add_argument('--load-file-aid', type=is_hexstr, required=True,
-                                      help='AID of the loded file')
+                                      help='AID of the loaded file')
         inst_load_parser.add_argument('--security-domain-aid', type=is_hexstr, default='',
                                       help='AID of the Security Domain into which the file shalle be added')
         inst_load_parser.add_argument('--load-file-hash', type=is_hexstr, default='',
@@ -845,7 +845,7 @@ class ADF_SD(CardADF):
             # TODO:tune chunk_len based on the overhead of the used SCP?
             # build TLV according to GPC_SPE_034 section 11.6.2.3 / Table 11-58 for unencrypted case
             remainder = b'\xC4' + bertlv_encode_len(len(contents)) + contents
-            # transfer this in vaious chunks to the card
+            # transfer this in various chunks to the card
             total_size = len(remainder)
             block_nr = 0
             while len(remainder):

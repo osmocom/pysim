@@ -97,7 +97,7 @@ class CapFile():
                 raise ValueError("invalid cap file, %s missing!" % required_components[component])
 
     def get_loadfile(self) -> bytes:
-        """Get the executeable loadfile as hexstring"""
+        """Get the executable loadfile as hexstring"""
         # Concatenate all cap file components in the specified order
         # see also: Java Card Platform Virtual Machine Specification, v3.2, section 6.3
         loadfile = self.__component['Header']

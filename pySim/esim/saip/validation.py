@@ -68,7 +68,7 @@ class CheckBasicStructure(ProfileConstraintChecker):
 
     def check_optional_ordering(self, pes: ProfileElementSequence):
         """Check the ordering of optional PEs following the respective mandatory ones."""
-        # ordering and required depenencies
+        # ordering and required dependencies
         self._is_after_if_exists(pes,'opt-usim', 'usim')
         self._is_after_if_exists(pes,'opt-isim', 'isim')
         self._is_after_if_exists(pes,'gsm-access', 'usim')
