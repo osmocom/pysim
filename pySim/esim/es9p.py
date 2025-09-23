@@ -1,4 +1,4 @@
-"""GSMA eSIM RSP ES9+ interface according ot SGP.22 v2.5"""
+"""GSMA eSIM RSP ES9+ interface according to SGP.22 v2.5"""
 
 # (C) 2024 by Harald Welte <laforge@osmocom.org>
 #

@@ -296,7 +296,7 @@ def dec_addr_tlv(hexstr):
 
         elif addr_type == 0x01:  # IPv4
             # Skip address tye byte i.e. first byte in value list
-            # Skip the unused byte in Octect 4 after address type byte as per 3GPP TS 31.102
+            # Skip the unused byte in Octet 4 after address type byte as per 3GPP TS 31.102
             ipv4 = tlv[2][2:]
             content = '.'.join(str(x) for x in ipv4)
             return (content, '01')

@@ -265,7 +265,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
     def do_apdu(self, opts):
         """Send a raw APDU to the card, and print SW + Response.
         CAUTION: this command bypasses the logical channel handling of pySim-shell and card state changes are not
-        tracked. Dpending on the raw APDU sent, pySim-shell may not continue to work as expected if you e.g. select
+        tracked. Depending on the raw APDU sent, pySim-shell may not continue to work as expected if you e.g. select
         a different file."""
 
         # When sending raw APDUs we access the scc object through _scc member of the card object. It should also be
@@ -336,7 +336,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
 
     def _process_card(self, first, script_path):
 
-        # Early phase of card initialzation (this part may fail with an exception)
+        # Early phase of card initialization (this part may fail with an exception)
         try:
             rs, card = init_card(self.sl)
             rc = self.equip(card, rs)
@@ -377,7 +377,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
 
     bulk_script_parser = argparse.ArgumentParser()
     bulk_script_parser.add_argument('SCRIPT_PATH', help="path to the script file")
-    bulk_script_parser.add_argument('--halt_on_error', help='stop card handling if an exeption occurs',
+    bulk_script_parser.add_argument('--halt_on_error', help='stop card handling if an exception occurs',
                                     action='store_true')
     bulk_script_parser.add_argument('--tries', type=int, default=2,
                                     help='how many tries before trying the next card')
@@ -731,7 +731,7 @@ class PySimCommands(CommandSet):
                     body = {}
                     for t in tags:
                         result = self._cmd.lchan.retrieve_data(t)
-                        (tag, l, val, remainer) = bertlv_parse_one(h2b(result[0]))
+                        (tag, l, val, remainder) = bertlv_parse_one(h2b(result[0]))
                         body[t] = b2h(val)
                 else:
                     raise RuntimeError('Unsupported structure "%s" of file "%s"' % (structure, filename))

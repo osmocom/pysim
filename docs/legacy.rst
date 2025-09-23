@@ -49,7 +49,7 @@ Two modes are possible:
     Ki and OPc will be generated during each programming cycle. This means fresh keys are generated, even when the
     ``--num`` remains unchanged.
 
-    The parameter ``--num`` specifies a card individual number. This number will be manged into the random seed so that
+    The parameter ``--num`` specifies a card individual number. This number will be managed into the random seed so that
     it serves as an identifier for a particular set of randomly generated parameters.
 
     In the example above the parameters ``--mcc``, and ``--mnc`` are specified as well, since they identify the GSM
@@ -77,7 +77,7 @@ the parameter ``--type``. The following card types are supported:
 
 Specifying the card reader:
 
-It is most common to use ``pySim-prog`` together whith a PCSC reader. The PCSC reader number is specified via the
+It is most common to use ``pySim-prog`` together with a PCSC reader. The PCSC reader number is specified via the
 ``--pcsc-device`` or ``-p`` option. However, other reader types (such as serial readers and modems) are supported. Use
 the ``--help`` option of ``pySim-prog`` for more information.
 

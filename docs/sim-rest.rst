@@ -75,7 +75,7 @@ The response body is a JSON document, either
    #. key freshness failure
    #. unspecified card error
 
-Example (succcess):
+Example (success):
 ::
 
         {

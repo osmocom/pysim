@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# A more useful verion of the 'unber' tool provided with asn1c:
+# A more useful version of the 'unber' tool provided with asn1c:
 # Give a hierarchical decode of BER/DER-encoded ASN.1 TLVs
 
 import sys

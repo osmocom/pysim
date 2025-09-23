@@ -208,7 +208,7 @@ EF_5G_PROSE_ST_map = {
     5: '5G ProSe configuration data for usage information reporting',
 }
 
-# Mapping between USIM Enbled Service Number and its description
+# Mapping between USIM Enabled Service Number and its description
 EF_EST_map = {
     1: 'Fixed Dialling Numbers (FDN)',
     2: 'Barred Dialling Numbers (BDN)',

@@ -163,7 +163,7 @@ def card_key_provider_register(provider: CardKeyProvider, provider_list=card_key
             provider_list : override the list of providers from the global default
     """
     if not isinstance(provider, CardKeyProvider):
-        raise ValueError("provider is not a card data provier")
+        raise ValueError("provider is not a card data provider")
     provider_list.append(provider)
 
 
@@ -181,7 +181,7 @@ def card_key_provider_get(fields, key: str, value: str, provider_list=card_key_p
     for p in provider_list:
         if not isinstance(p, CardKeyProvider):
             raise ValueError(
-                "provider list contains element which is not a card data provier")
+                "provider list contains element which is not a card data provider")
         result = p.get(fields, key, value)
         if result:
             return result
@@ -202,7 +202,7 @@ def card_key_provider_get_field(field: str, key: str, value: str, provider_list=
     for p in provider_list:
         if not isinstance(p, CardKeyProvider):
             raise ValueError(
-                "provider list contains element which is not a card data provier")
+                "provider list contains element which is not a card data provider")
         result = p.get_field(field, key, value)
         if result:
             return result

@@ -151,7 +151,7 @@ global_group.add_argument('--no-suppress-select', action='store_false', dest='su
 global_group.add_argument('--no-suppress-status', action='store_false', dest='suppress_status',
                           help="""
     Don't suppress displaying STATUS APDUs. We normally suppress them as they don't provide any
-    information that was not already received in resposne to the most recent SEELCT.""")
+    information that was not already received in response to the most recent SEELCT.""")
 global_group.add_argument('--show-raw-apdu', action='store_true', dest='show_raw_apdu',
                           help="""Show the raw APDU in addition to its parsed form.""")
 
@@ -188,7 +188,7 @@ parser_rspro_pyshark_live.add_argument('-i', '--interface', required=True,
 parser_tcaloader_log = subparsers.add_parser('tca-loader-log', help="""
     Read APDUs from a TCA Loader log file.""")
 parser_tcaloader_log.add_argument('-f', '--log-file', required=True,
-                                  help='Name of te log file to be read')
+                                  help='Name of the log file to be read')
 
 if __name__ == '__main__':
 

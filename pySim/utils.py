@@ -331,7 +331,7 @@ def derive_mnc(digit1: int, digit2: int, digit3: int = 0x0f) -> int:
     mnc = 0
 
     # 3-rd digit is optional for the MNC. If present
-    # the algorythm is the same as for the MCC.
+    # the algorithm is the same as for the MCC.
     if digit3 != 0x0f:
         return derive_mcc(digit1, digit2, digit3)
 
@@ -411,7 +411,7 @@ def get_addr_type(addr):
 
     fqdn_flag = True
     for i in addr_list:
-        # Only Alpha-numeric characters and hyphen - RFC 1035
+        # Only Alphanumeric characters and hyphen - RFC 1035
         import re
         if not re.match("^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)?$", i):
             fqdn_flag = False
@@ -477,7 +477,7 @@ def expand_hex(hexstring, length):
     """Expand a given hexstring to a specified length by replacing "." or ".."
        with a filler that is derived from the neighboring nibbles respective
        bytes. Usually this will be the nibble respective byte before "." or
-       "..", execpt when the string begins with "." or "..", then the nibble
+       "..", except when the string begins with "." or "..", then the nibble
        respective byte after "." or ".." is used.". In case the string cannot
        be expanded for some reason, the input string is returned unmodified.
 
@@ -717,7 +717,7 @@ def decomposeATR(atr_txt):
 class DataObject(abc.ABC):
     """A DataObject (DO) in the sense of ISO 7816-4.  Contrary to 'normal' TLVs where one
     simply has any number of different TLVs that may occur in any order at any point, ISO 7816
-    has the habit of specifying TLV data but with very spcific ordering, or specific choices of
+    has the habit of specifying TLV data but with very specific ordering, or specific choices of
     tags at specific points in a stream.  This class tries to represent this."""
 
     def __init__(self, name: str, desc: Optional[str] = None, tag: Optional[int] = None):
@@ -839,7 +839,7 @@ class TL0_DataObject(DataObject):
 
 
 class DataObjectCollection:
-    """A DataObjectCollection consits of multiple Data Objects identified by their tags.
+    """A DataObjectCollection consists of multiple Data Objects identified by their tags.
     A given encoded DO may contain any of them in any order, and may contain multiple instances
     of each DO."""
 

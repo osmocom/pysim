@@ -285,7 +285,7 @@ class SimCardCommands:
         return self.send_apdu_checksw(self.cla_byte + "a40304")
 
     def select_adf(self, aid: Hexstr) -> ResTuple:
-        """Execute SELECT a given Applicaiton ADF.
+        """Execute SELECT a given Application ADF.
 
         Args:
                 aid : application identifier as hex string
@@ -577,7 +577,7 @@ class SimCardCommands:
 
         Args:
                 rand : 16 byte random data as hex string (RAND)
-                autn : 8 byte Autentication Token (AUTN)
+                autn : 8 byte Authentication Token (AUTN)
                 context : 16 byte random data ('3g' or 'gsm')
         """
         # 3GPP TS 31.102 Section 7.1.2.1

@@ -56,7 +56,7 @@ parser_rpe.add_argument('--output-file', required=True, help='Output file name')
 parser_rpe.add_argument('--identification', default=[], type=int, action='append', help='Remove PEs matching specified identification')
 parser_rpe.add_argument('--type', default=[], action='append', help='Remove PEs matching specified type')
 
-parser_rn = subparsers.add_parser('remove-naa', help='Remove speciifed NAAs from PE-Sequence')
+parser_rn = subparsers.add_parser('remove-naa', help='Remove specified NAAs from PE-Sequence')
 parser_rn.add_argument('--output-file', required=True, help='Output file name')
 parser_rn.add_argument('--naa-type', required=True, choices=NAAs.keys(), help='Network Access Application type to remove')
 # TODO: add an --naa-index or the like, so only one given instance can be removed

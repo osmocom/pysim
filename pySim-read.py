@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #
-# Utility to display some informations about a SIM card
+# Utility to display some information about a SIM card
 #
 #
 # Copyright (C) 2009  Sylvain Munaut <tnt@246tNt.com>

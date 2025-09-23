@@ -316,19 +316,19 @@ class FileList(COMPR_TLV_IE, tag=0x92):
     _construct = Struct('number_of_files'/Int8ub,
                         'files'/GreedyRange(FileId))
 
-# TS 102 223 Secton 8.19
+# TS 102 223 Section 8.19
 class LocationInformation(COMPR_TLV_IE, tag=0x93):
     pass
 
-# TS 102 223 Secton 8.20
+# TS 102 223 Section 8.20
 class IMEI(COMPR_TLV_IE, tag=0x94):
     _construct = BcdAdapter(GreedyBytes)
 
-# TS 102 223 Secton 8.21
+# TS 102 223 Section 8.21
 class HelpRequest(COMPR_TLV_IE, tag=0x95):
     pass
 
-# TS 102 223 Secton 8.22
+# TS 102 223 Section 8.22
 class NetworkMeasurementResults(COMPR_TLV_IE, tag=0x96):
     _construct = BcdAdapter(GreedyBytes)
 

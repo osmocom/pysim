@@ -150,7 +150,7 @@ class RuntimeState:
         # select MF to reset internal state and to verify card really works
         self.lchan[0].select('MF', cmd_app)
         self.lchan[0].selected_adf = None
-        # store ATR as part of our card identies dict
+        # store ATR as part of our card identities dict
         self.identity['ATR'] = atr
         return atr
 
@@ -324,7 +324,7 @@ class RuntimeLchan:
             # If we succeed, we know that the file exists on the card and we may
             # proceed with creating a new CardEF object in the local file model at
             # run time. In case the file does not exist on the card, we just abort.
-            # The state on the card (selected file/application) wont't be changed,
+            # The state on the card (selected file/application) won't be changed,
             # so we do not have to update any state in that case.
             (data, _sw) = self.scc.select_file(fid)
         except SwMatchError as swm:

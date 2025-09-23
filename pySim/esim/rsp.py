@@ -90,7 +90,7 @@ class RspSessionState:
             # FIXME: how to add the public key from smdp_otpk to an instance of EllipticCurvePrivateKey?
             del state['_smdp_otsk']
             del state['_smdp_ot_curve']
-        # automatically recover all the remainig state
+        # automatically recover all the remaining state
         self.__dict__.update(state)
 
 

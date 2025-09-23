@@ -32,7 +32,7 @@ class SecureChannel(abc.ABC):
         pass
 
     def send_apdu_wrapper(self, send_fn: callable, pdu: Hexstr, *args, **kwargs) -> ResTuple:
-        """Wrapper function to wrap command APDU and unwrap repsonse APDU around send_apdu callable."""
+        """Wrapper function to wrap command APDU and unwrap response APDU around send_apdu callable."""
         pdu_wrapped = b2h(self.wrap_cmd_apdu(h2b(pdu)))
         res, sw = send_fn(pdu_wrapped, *args, **kwargs)
         res_unwrapped = b2h(self.unwrap_rsp_apdu(h2b(sw), h2b(res)))

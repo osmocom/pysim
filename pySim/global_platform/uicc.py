@@ -104,4 +104,4 @@ class UiccSdInstallParams(TLV_IE_Collection, nested=[UiccScp, AcceptExtradAppsAn
 #   KID 0x02: SK.CASD.AUT (PK) and KS.CASD.AUT (Non-PK)
 #   KID 0x03: SK.CASD.CT (P) and KS.CASD.CT (Non-PK)
 # KVN 0x75 KID 0x01: 16-byte DES key for  Ciphered Load File Data Block
-# KVN 0xFF reserved for ISD with SCP02 without SCP80 s upport
+# KVN 0xFF reserved for ISD with SCP02 without SCP80 s support
