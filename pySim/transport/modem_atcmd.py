@@ -75,8 +75,12 @@ class ModemATCommandLink(LinkBaseTpdu):
         rsp = b''
         its = 1
         t_start = time.time()
+        timeout = t_start + 3.0
         while True:
-            rsp = rsp + self._sl.read(self._sl.in_waiting)
+            while self._sl.inWaiting() or time.time() - timeout < 0.0:
+                if self._sl.inWaiting() > 0:
+                    rsp = rsp + self._sl.read(self._sl.inWaiting())
+                    timeout = time.time() + 3.0
             lines = rsp.split(b'\r\n')
             if len(lines) >= 2:
                 res = lines[-2]
