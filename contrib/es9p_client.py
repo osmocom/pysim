@@ -123,8 +123,8 @@ class Es9pClient:
             'profileManagementOperation': PMO(self.opts.operation).to_bitstring(),
             'notificationAddress': self.opts.notification_address or urlparse(self.opts.url).netloc,
         }
-        if opts.iccid:
-            ntf_metadata['iccid'] = h2b(swap_nibbles(opts.iccid))
+        if self.opts.iccid:
+            ntf_metadata['iccid'] = h2b(swap_nibbles(self.opts.iccid))
 
         if self.opts.operation == 'download':
             pird = {
