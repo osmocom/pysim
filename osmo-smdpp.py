@@ -629,6 +629,7 @@ class SmDppHttpServer:
         # If ctxParams1 contains a ctxParamsForCommonAuthentication data object, the SM-DP+ Shall [...]
         # TODO: We really do a very simplistic job here, this needs to be properly implemented later,
         # considering all the various cases, profile state, etc.
+        iccid_str = None
         if euiccSigned1['ctxParams1'][0] == 'ctxParamsForCommonAuthentication':
             cpca = euiccSigned1['ctxParams1'][1]
             matchingId = cpca.get('matchingId', None)

@@ -1,3 +1,6 @@
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.pylint.main]
+ignored-classes = ["twisted.internet.reactor"]
