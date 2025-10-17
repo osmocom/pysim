@@ -22,19 +22,24 @@ from typing import List, Optional
 import json
 import traceback
 import re
-
 import cmd2
 from packaging import version
 from cmd2 import style
+
+import logging
+from pySim.log import PySimLogger
+
 # cmd2 >= 2.3.0 has deprecated the bg/fg in favor of Bg/Fg :(
 if version.parse(cmd2.__version__) < version.parse("2.3.0"):
     from cmd2 import fg, bg # pylint: disable=no-name-in-module
     RED = fg.red
+    YELLOW = fg.yellow
     LIGHT_RED = fg.bright_red
     LIGHT_GREEN = fg.bright_green
 else:
     from cmd2 import Fg, Bg # pylint: disable=no-name-in-module
     RED = Fg.RED
+    YELLOW = Fg.YELLOW
     LIGHT_RED = Fg.LIGHT_RED
     LIGHT_GREEN = Fg.LIGHT_GREEN
 from cmd2 import CommandSet, with_default_category, with_argparser
@@ -67,6 +72,7 @@ from pySim.card_key_provider import CardKeyProviderCsv, card_key_provider_regist
 
 from pySim.app import init_card
 
+log = PySimLogger.get("main")
 
 class Cmd2Compat(cmd2.Cmd):
     """Backwards-compatibility wrapper around cmd2.Cmd to support older and newer
@@ -92,15 +98,19 @@ class PysimApp(Cmd2Compat):
 (C) 2021-2023 by Harald Welte, sysmocom - s.f.m.c. GmbH and contributors
 Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/shell.html """
 
-    def __init__(self, card, rs, sl, ch, script=None):
+    def __init__(self, verbose, card, rs, sl, ch, script=None):
         if version.parse(cmd2.__version__) < version.parse("2.0.0"):
             kwargs = {'use_ipython': True}
         else:
             kwargs = {'include_ipy': True}
 
+        self.verbose = verbose
+        self._onchange_verbose('verbose', False, self.verbose);
+
         # pylint: disable=unexpected-keyword-arg
         super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
                          auto_load_commands=False, startup_script=script, **kwargs)
+        PySimLogger.setup(self.poutput, {logging.WARN: YELLOW})
         self.intro = style(self.BANNER, fg=RED)
         self.default_category = 'pySim-shell built-in commands'
         self.card = None
@@ -126,6 +136,9 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         self.add_settable(Settable2Compat('apdu_strict', bool,
                                           'Enforce APDU responses according to ISO/IEC 7816-3, table 12', self,
                                           onchange_cb=self._onchange_apdu_strict))
+        self.add_settable(Settable2Compat('verbose', bool,
+                                          'Enable/disable verbose logging', self,
+                                          onchange_cb=self._onchange_verbose))
         self.equip(card, rs)
 
     def equip(self, card, rs):
@@ -209,6 +222,13 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
                 self.card._scc._tp.apdu_strict = True
             else:
                 self.card._scc._tp.apdu_strict = False
+
+    def _onchange_verbose(self, param_name, old, new):
+        PySimLogger.set_verbose(new)
+        if new == True:
+            PySimLogger.set_level(logging.DEBUG)
+        else:
+            PySimLogger.set_level()
 
     class Cmd2ApduTracer(ApduTracer):
         def __init__(self, cmd2_app):
@@ -1081,6 +1101,8 @@ global_group.add_argument("--noprompt", help="Run in non interactive mode",
                           action='store_true', default=False)
 global_group.add_argument("--skip-card-init", help="Skip all card/profile initialization",
                           action='store_true', default=False)
+global_group.add_argument("--verbose", help="Enable verbose logging",
+                          action='store_true', default=False)
 
 adm_group = global_group.add_mutually_exclusive_group()
 adm_group.add_argument('-a', '--pin-adm', metavar='PIN_ADM1', dest='pin_adm', default=None,
@@ -1095,11 +1117,15 @@ option_parser.add_argument("command", nargs='?',
 option_parser.add_argument('command_args', nargs=argparse.REMAINDER,
                            help="Optional Arguments for command")
 
-
 if __name__ == '__main__':
-
     startup_errors = False
     opts = option_parser.parse_args()
+
+    # Ensure that we are able to print formatted warnings from the beginning.
+    PySimLogger.setup(print, {logging.WARN: YELLOW})
+    if (opts.verbose):
+        PySimLogger.set_verbose(True)
+        PySimLogger.set_level(logging.DEBUG)
 
     # Register csv-file as card data provider, either from specified CSV
     # or from CSV file in home directory
@@ -1127,7 +1153,7 @@ if __name__ == '__main__':
     # able to tolerate and recover from that.
     try:
         rs, card = init_card(sl, opts.skip_card_init)
-        app = PysimApp(card, rs, sl, ch)
+        app = PysimApp(opts.verbose, card, rs, sl, ch)
     except:
         startup_errors = True
         print("Card initialization (%s) failed with an exception:" % str(sl))
@@ -1139,7 +1165,7 @@ if __name__ == '__main__':
             print(" it should also be noted that some readers may behave strangely when no card")
             print(" is inserted.)")
             print("")
-        app = PysimApp(None, None, sl, ch)
+        app = PysimApp(opts.verbose, None, None, sl, ch)
 
     # If the user supplies an ADM PIN at via commandline args authenticate
     # immediately so that the user does not have to use the shell commands

@@ -2,7 +2,7 @@ Detected UICC Add-on "SIM"
 Detected UICC Add-on "GSM-R"
 Detected UICC Add-on "RUIM"
 Can't read AIDs from SIM -- 'list' object has no attribute 'lower'
-warning: EF.DIR seems to be empty!
+EF.DIR seems to be empty!
  ADF.ECASD: a0000005591010ffffffff8900000200
  ADF.ISD-R: a0000005591010ffffffff8900000100
  ISIM: a0000000871004
