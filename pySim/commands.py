@@ -141,7 +141,7 @@ class SimCardCommands:
         Returns:
                 Tuple of (decoded_data, sw)
         """
-        cmd = cmd_constr.build(cmd_data) if cmd_data else ''
+        cmd = cmd_constr.build(cmd_data) if cmd_data else b''
         lc = i2h([len(cmd)]) if cmd_data else ''
         le = '00' if resp_constr else ''
         pdu = ''.join([cla, ins, p1, p2, lc, b2h(cmd), le])
