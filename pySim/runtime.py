@@ -514,6 +514,47 @@ class RuntimeLchan:
         dec_data = self.selected_file.decode_hex(data)
         return (dec_data, sw)
 
+    def __get_writeable_size(self):
+        """ Determine the writable size (file or record) using the cached FCP parameters of the currently selected
+            file. Return None in case the writeable size cannot be determined (no FCP available, FCP lacks size
+            information).
+        """
+        fcp = self.selected_file_fcp
+        if not fcp:
+            return None
+
+        structure = fcp.get('file_descriptor', {}).get('file_descriptor_byte', {}).get('structure')
+        if not structure:
+            return None
+
+        if structure == 'transparent':
+            return fcp.get('file_size')
+        elif structure == 'linear_fixed':
+            return fcp.get('file_descriptor', {}).get('record_len')
+        else:
+            return None
+
+    def __check_writeable_size(self, data_len):
+        """ Guard against unsuccessful writes caused by attempts to write data that exceeds the file limits. """
+
+        writeable_size = self.__get_writeable_size()
+        if not writeable_size:
+            return
+
+        if isinstance(self.selected_file, TransparentEF):
+            writeable_name = "file"
+        elif isinstance(self.selected_file, LinFixedEF):
+            writeable_name = "record"
+        else:
+            writeable_name = "object"
+
+        if data_len > writeable_size:
+            raise TypeError("Data length (%u) exceeds %s size (%u) by %u bytes" %
+                            (data_len, writeable_name, writeable_size, data_len - writeable_size))
+        elif data_len < writeable_size:
+            log.warn("Data length (%u) less than %s size (%u), leaving %u unwritten bytes at the end of the %s" %
+                     (data_len, writeable_name, writeable_size, writeable_size - data_len, writeable_name))
+
     def update_binary(self, data_hex: str, offset: int = 0):
         """Update transparent EF binary data.
 
@@ -524,6 +565,7 @@ class RuntimeLchan:
         if not isinstance(self.selected_file, TransparentEF):
             raise TypeError("Only works with TransparentEF, but %s is %s" % (self.selected_file,
                                                                              self.selected_file.__class__.__mro__))
+        self.__check_writeable_size(len(data_hex) // 2 + offset)
         return self.scc.update_binary(self.selected_file.fid, data_hex, offset, conserve=self.rs.conserve_write)
 
     def update_binary_dec(self, data: dict):
@@ -571,6 +613,7 @@ class RuntimeLchan:
         if not isinstance(self.selected_file, LinFixedEF):
             raise TypeError("Only works with Linear Fixed EF, but %s is %s" % (self.selected_file,
                                                                                self.selected_file.__class__.__mro__))
+        self.__check_writeable_size(len(data_hex) // 2)
         return self.scc.update_record(self.selected_file.fid, rec_nr, data_hex,
 					       conserve=self.rs.conserve_write,
 					       leftpad=self.selected_file.leftpad)
