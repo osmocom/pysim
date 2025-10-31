@@ -861,10 +861,10 @@ class SmDppHttpServer:
 
 def main(argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument("-H", "--host", help="Host/IP to bind HTTP to", default="localhost")
-    parser.add_argument("-p", "--port", help="TCP port to bind HTTP to", default=8000)
+    parser.add_argument("-H", "--host", help="Host/IP to bind HTTP(S) to", default="localhost")
+    parser.add_argument("-p", "--port", help="TCP port to bind HTTP(S) to", default=443)
     parser.add_argument("-c", "--certdir", help=f"cert subdir relative to {DATA_DIR}", default="certs")
-    parser.add_argument("-s", "--nossl", help="do NOT use ssl", action='store_true', default=False)
+    parser.add_argument("-s", "--nossl", help="disable built in SSL/TLS support", action='store_true', default=False)
     parser.add_argument("-v", "--verbose", help="dump more raw info", action='store_true', default=False)
     parser.add_argument("-b", "--brainpool", help="Use Brainpool curves instead of NIST",
                         action='store_true', default=False)
