@@ -40,16 +40,21 @@ osmo-smdpp currently
 Running osmo-smdpp
 ------------------
 
-osmo-smdpp does not have built-in TLS support as the used *twisted* framework appears to have
-problems when using the example elliptic curve certificates (both NIST and Brainpool) from GSMA.
+osmo-smdpp comes with built-in TLS support which is enabled by default. However, it is always possible to
+disable the built-in TLS support if needed.
 
-So in order to use it, you have to put it behind a TLS reverse proxy, which terminates the ES9+
-HTTPS from the LPA, and then forwards it as plain HTTP to osmo-smdpp.
+In order to use osmo-smdpp without the built-in TLS support, it has to be put behind a TLS reverse proxy,
+which terminates the ES9+ HTTPS traffic from the LPA, and then forwards it as plain HTTP to osmo-smdpp.
+
+NOTE: The built in TLS support in osmo-smdpp makes use of the python *twisted* framework. Older versions
+of this framework appear to have problems when using the example elliptic curve certificates (both NIST and
+Brainpool) from GSMA.
+
 
 nginx as TLS proxy
 ~~~~~~~~~~~~~~~~~~
 
-If you use `nginx` as web server, you can use the following configuration snippet::
+If you chose to use `nginx` as TLS reverse proxy, you can use the following configuration snippet::
 
   upstream smdpp {
           server localhost:8000;
@@ -92,32 +97,43 @@ The `smdpp-data/upp` directory contains the UPP (Unprotected Profile Package) us
 commandline options
 ~~~~~~~~~~~~~~~~~~~
 
-Typically, you just run it without any arguments, and it will bind its plain-HTTP ES9+ interface to
-`localhost` TCP port 8000.
+Typically, you just run osmo-smdpp without any arguments, and it will bind its built-in HTTPS ES9+ interface to
+`localhost` TCP port 443. In this case an external TLS reverse proxy is not needed.
 
 osmo-smdpp currently doesn't have any configuration file.
 
 There are command line options for binding:
 
-Bind the HTTP ES9+ to a port other than 8000::
+Bind the HTTPS ES9+ to a port other than 443::
 
-  ./osmo-smdpp.py -p 8001
+  ./osmo-smdpp.py -p 8443
+
+Disable the built-in TLS support and bind the plain-HTTP ES9+ to a port 8000::
+
+  ./osmo-smdpp.py -p 8000 --nossl
 
 Bind the HTTP ES9+ to a different local interface::
 
-  ./osmo-smdpp.py -H 127.0.0.1
+  ./osmo-smdpp.py -H 127.0.0.2
 
 DNS setup for your LPA
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The LPA must resolve `testsmdpplus1.example.com` to the IP address of your TLS proxy.
 
-It must also accept the TLS certificates used by your TLS proxy.
+It must also accept the TLS certificates used by your TLS proxy. In case osmo-smdpp is used with built-in TLS support,
+it will use the certificates provided in smdpp-data.
+
+NOTE: The HTTPS ES9+ interface cannot be addressed by the LPA directly via its IP address. The reason for this is that
+the included SGP.26 (DPtls) test certificates explicitly restrict the hostname to `testsmdpplus1.example.com` in the
+`X509v3 Subject Alternative Name` extension. Using a bare IP address as hostname may cause the certificate to be
+rejected by the LPA.
+
 
 Supported eUICC
 ~~~~~~~~~~~~~~~
 
-If you run osmo-smdpp with the included SGP.26 certificates, you must use an eUICC with matching SGP.26
+If you run osmo-smdpp with the included SGP.26 (DPauth, DPpb) certificates, you must use an eUICC with matching SGP.26
 certificates, i.e. the EUM certificate must be signed by a SGP.26 test root CA and the eUICC certificate
 in turn must be signed by that SGP.26 EUM certificate.
 
