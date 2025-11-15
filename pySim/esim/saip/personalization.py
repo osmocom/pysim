@@ -1226,21 +1226,34 @@ class UppAudit(dict):
     """
 
     @classmethod
-    def from_der(cls, der: bytes, params: List, additional_sd_keys=True):
-        '''return a dict of parameter name and set of parameter values found in a DER encoded profile.
-        Read all parameters listed in params. This calls only classmethods, so each entry in params can either be a class or
-        an instance of a class, of a (non-abstract) ConfigurableParameter subclass. For example, params = [Imsi, ] is
-        equivalent to params = [Imsi(), ].
+    def from_der(cls, der: bytes, params: List, additional_sd_keys=False, der_size=False):
+        '''return a dict of parameter name and set of selected parameter values found in a DER encoded profile. Note:
+        some ConfigurableParameter implementations return more than one key-value pair, for example, Imsi returns
+        both 'IMSI' and 'IMSI-ACC' parameters.
 
-        For additional_sd_keys=True, audit also all Security Domain KVN that there are *no* ConfigurableParameter
+        e.g.
+            UppAudit.from_der(my_der, [Imsi, ])
+            --> {'IMSI': '001010000000023', 'IMSI-ACC': '5'}
+
+        (where 'IMSI' == Imsi.name)
+
+        Read all parameters listed in params. params is a list of either ConfigurableParameter classes or
+        ConfigurableParameter class instances. This calls only classmethods, so each entry in params can either be the
+        class itself, or a class-instance of, a (non-abstract) ConfigurableParameter subclass.
+        For example, params = [Imsi, ] is equivalent to params = [Imsi(), ].
+
+        For additional_sd_keys=True, output also all Security Domain KVN that there are *no* ConfigurableParameter
         subclasses for. For example, SCP80 has reserved kvn 0x01..0x0f, but we offer only Scp80Kvn01, Scp80Kvn02,
-        Scp80Kvn03. So we would not show kvn 0x03..0x0f in an audit. additional_sd_keys=True includes audits of all SD
+        Scp80Kvn03. So we would not show kvn 0x04..0x0f in an audit. additional_sd_keys=True includes audits of all SD
         key KVN there may be in the UPP. This helps to spot SD keys that may already be present in a UPP template, with
         unexpected / unusual kvn.
+
+        For der_size=True, also include a {'der_size':12345} entry.
         '''
         upp_audit = cls()
 
-        upp_audit['der_size'] = set((len(der), ))
+        if der_size:
+            upp_audit['der_size'] = set((len(der), ))
 
         pes = ProfileElementSequence.from_der(der)
         for param in params:
