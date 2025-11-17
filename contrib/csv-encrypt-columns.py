@@ -24,20 +24,12 @@ import argparse
 from Cryptodome.Cipher import AES
 from osmocom.utils import h2b, b2h, Hexstr
 
-from pySim.card_key_provider import CardKeyProviderCsv
+from pySim.card_key_provider import CardKeyFieldCryptor
 
-def dict_keys_to_upper(d: dict) -> dict:
-    return {k.upper():v for k,v in d.items()}
-
-class CsvColumnEncryptor:
+class CsvColumnEncryptor(CardKeyFieldCryptor):
     def __init__(self, filename: str, transport_keys: dict):
         self.filename = filename
-        self.transport_keys = dict_keys_to_upper(transport_keys)
-
-    def encrypt_col(self, colname:str, value: str) -> Hexstr:
-        key = self.transport_keys[colname]
-        cipher = AES.new(h2b(key), AES.MODE_CBC, CardKeyProviderCsv.IV)
-        return b2h(cipher.encrypt(h2b(value)))
+        self.crypt = CardKeyFieldCryptor(transport_keys)
 
     def encrypt(self) -> None:
         with open(self.filename, 'r') as infile:
@@ -49,9 +41,8 @@ class CsvColumnEncryptor:
                 cw.writeheader()
 
                 for row in cr:
-                    for key_colname in self.transport_keys:
-                        if key_colname in row:
-                            row[key_colname] = self.encrypt_col(key_colname, row[key_colname])
+                    for fieldname in cr.fieldnames:
+                            row[fieldname] = self.crypt.encrypt_field(fieldname, row[fieldname])
                     cw.writerow(row)
 
 if __name__ == "__main__":
@@ -70,10 +61,6 @@ if __name__ == "__main__":
     if len(csv_column_keys) == 0:
         print("You must specify at least one key!")
         sys.exit(1)
-
-    csv_column_keys = CardKeyProviderCsv.process_transport_keys(csv_column_keys)
-    for name, key in csv_column_keys.items():
-        print("Encrypting column %s using AES key %s" % (name, key))
 
     cce = CsvColumnEncryptor(opts.CSVFILE, csv_column_keys)
     cce.encrypt()

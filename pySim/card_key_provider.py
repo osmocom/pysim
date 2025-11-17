@@ -10,7 +10,7 @@ the need of manually entering the related card-individual data on every
 operation with pySim-shell.
 """
 
-# (C) 2021-2024 by Sysmocom s.f.m.c. GmbH
+# (C) 2021-2025 by Sysmocom s.f.m.c. GmbH
 # All Rights Reserved
 #
 # Author: Philipp Maier, Harald Welte
@@ -31,22 +31,103 @@ operation with pySim-shell.
 from typing import List, Dict, Optional
 from Cryptodome.Cipher import AES
 from osmocom.utils import h2b, b2h
+from pySim.log import PySimLogger
 
 import abc
 import csv
+import logging
+
+log = PySimLogger.get("CARDKEY")
 
 card_key_providers = []  # type: List['CardKeyProvider']
 
-# well-known groups of columns relate to a given functionality.  This avoids having
-# to specify the same transport key N number of times, if the same key is used for multiple
-# fields of one group, like KIC+KID+KID of one SD.
-CRYPT_GROUPS = {
-    'UICC_SCP02': ['UICC_SCP02_KIC1', 'UICC_SCP02_KID1', 'UICC_SCP02_KIK1'],
-    'UICC_SCP03': ['UICC_SCP03_KIC1', 'UICC_SCP03_KID1', 'UICC_SCP03_KIK1'],
-    'SCP03_ISDR': ['SCP03_ENC_ISDR', 'SCP03_MAC_ISDR', 'SCP03_DEK_ISDR'],
-    'SCP03_ISDA': ['SCP03_ENC_ISDR', 'SCP03_MAC_ISDA', 'SCP03_DEK_ISDA'],
-    'SCP03_ECASD': ['SCP03_ENC_ECASD', 'SCP03_MAC_ECASD', 'SCP03_DEK_ECASD'],
+class CardKeyFieldCryptor:
+    """
+    A Card key field encryption class that may be used by Card key provider implementations to add support for
+    a column-based encryption to protect sensitive material (cryptographic key material, ADM keys, etc.).
+    The sensitive material is encrypted using a "key-encryption key", occasionally also known as "transport key"
+    before it is stored into a file or database (see also GSMA FS.28). The "transport key" is then used to decrypt
+    the key material on demand.
+    """
+
+    # well-known groups of columns relate to a given functionality.  This avoids having
+    # to specify the same transport key N number of times, if the same key is used for multiple
+    # fields of one group, like KIC+KID+KID of one SD.
+    __CRYPT_GROUPS = {
+            'UICC_SCP02': ['UICC_SCP02_KIC1', 'UICC_SCP02_KID1', 'UICC_SCP02_KIK1'],
+            'UICC_SCP03': ['UICC_SCP03_KIC1', 'UICC_SCP03_KID1', 'UICC_SCP03_KIK1'],
+            'SCP03_ISDR': ['SCP03_ENC_ISDR', 'SCP03_MAC_ISDR', 'SCP03_DEK_ISDR'],
+            'SCP03_ISDA': ['SCP03_ENC_ISDR', 'SCP03_MAC_ISDA', 'SCP03_DEK_ISDA'],
+            'SCP03_ECASD': ['SCP03_ENC_ECASD', 'SCP03_MAC_ECASD', 'SCP03_DEK_ECASD'],
     }
+
+    __IV = b'\x23' * 16
+
+    @staticmethod
+    def __dict_keys_to_upper(d: dict) -> dict:
+            return {k.upper():v for k,v in d.items()}
+
+    @staticmethod
+    def __process_transport_keys(transport_keys: dict, crypt_groups: dict):
+        """Apply a single transport key to multiple fields/columns, if the name is a group."""
+        new_dict = {}
+        for name, key in transport_keys.items():
+            if name in crypt_groups:
+                for field in crypt_groups[name]:
+                    new_dict[field] = key
+            else:
+                new_dict[name] = key
+        return new_dict
+
+    def __init__(self, transport_keys: dict):
+        """
+        Create new field encryptor/decryptor object and set transport keys, usually one for each column. In some cases
+        it is also possible to use a single key for multiple columns (see also __CRYPT_GROUPS)
+
+        Args:
+                transport_keys : a dict indexed by field name, whose values are hex-encoded AES keys for the
+                                 respective field (column) of the CSV. This is done so that different fields
+                                 (columns) can use different transport keys, which is strongly recommended by
+                                 GSMA FS.28
+        """
+        self.transport_keys = self.__process_transport_keys(self.__dict_keys_to_upper(transport_keys),
+                                                            self.__CRYPT_GROUPS)
+        for name, key in self.transport_keys.items():
+                log.debug("Encrypting/decrypting field %s using AES key %s" % (name, key))
+
+    def decrypt_field(self, field_name: str, encrypted_val: str) -> str:
+        """
+        Decrypt a single field. The decryption is only applied if we have a transport key is known under the provided
+        field name, otherwise the field is treated as plaintext and passed through as it is.
+
+        Args:
+                field_name : name of the field to decrypt (used to identify which key to use)
+                encrypted_val : encrypted field value
+
+        Returns:
+                plaintext field value
+        """
+        if not field_name.upper() in self.transport_keys:
+            return encrypted_val
+        cipher = AES.new(h2b(self.transport_keys[field_name.upper()]), AES.MODE_CBC, self.__IV)
+        return b2h(cipher.decrypt(h2b(encrypted_val)))
+
+    def encrypt_field(self, field_name: str, plaintext_val: str) -> str:
+        """
+        Encrypt a single field. The encryption is only applied if we have a transport key is known under the provided
+        field name, otherwise the field is treated as non sensitive and passed through as it is.
+
+        Args:
+                field_name : name of the field to decrypt (used to identify which key to use)
+                encrypted_val : encrypted field value
+
+        Returns:
+                plaintext field value
+        """
+        if not field_name.upper() in self.transport_keys:
+            return plaintext_val
+        cipher = AES.new(h2b(self.transport_keys[field_name.upper()]), AES.MODE_CBC, self.__IV)
+        return b2h(cipher.encrypt(h2b(plaintext_val)))
 
 class CardKeyProvider(abc.ABC):
     """Base class, not containing any concrete implementation."""
@@ -89,13 +170,9 @@ class CardKeyProvider(abc.ABC):
                 dictionary of {field, value} strings for each requested field from 'fields'
         """
 
-
 class CardKeyProviderCsv(CardKeyProvider):
-    """Card key provider implementation that allows to query against a specified CSV file.
-    Supports column-based encryption as it is generally a bad idea to store cryptographic key material in
-    plaintext.  Instead, the key material should be encrypted by a "key-encryption key", occasionally also
-    known as "transport key" (see GSMA FS.28)."""
-    IV = b'\x23' * 16
+    """Card key provider implementation that allows to query against a specified CSV file."""
+
     csv_file = None
     filename = None
 
@@ -103,35 +180,13 @@ class CardKeyProviderCsv(CardKeyProvider):
         """
         Args:
                 filename : file name (path) of CSV file containing card-individual key/data
-                transport_keys : a dict indexed by field name, whose values are hex-encoded AES keys for the
-                                 respective field (column) of the CSV.  This is done so that different fields
-                                 (columns) can use different transport keys, which is strongly recommended by
-                                 GSMA FS.28
+                transport_keys : (see class CardKeyFieldCryptor)
         """
         self.csv_file = open(filename, 'r')
         if not self.csv_file:
             raise RuntimeError("Could not open CSV file '%s'" % filename)
         self.filename = filename
-        self.transport_keys = self.process_transport_keys(transport_keys)
-
-    @staticmethod
-    def process_transport_keys(transport_keys: dict):
-        """Apply a single transport key to multiple fields/columns, if the name is a group."""
-        new_dict = {}
-        for name, key in transport_keys.items():
-            if name in CRYPT_GROUPS:
-                for field in CRYPT_GROUPS[name]:
-                    new_dict[field] = key
-            else:
-                new_dict[name] = key
-        return new_dict
-
-    def _decrypt_field(self, field_name: str, encrypted_val: str) -> str:
-        """decrypt a single field, if we have a transport key for the field of that name."""
-        if not field_name in self.transport_keys:
-            return encrypted_val
-        cipher = AES.new(h2b(self.transport_keys[field_name]), AES.MODE_CBC, self.IV)
-        return b2h(cipher.decrypt(h2b(encrypted_val)))
+        self.crypt = CardKeyFieldCryptor(transport_keys)
 
     def get(self, fields: List[str], key: str, value: str) -> Dict[str, str]:
         super()._verify_get_data(fields, key, value)
@@ -147,7 +202,7 @@ class CardKeyProviderCsv(CardKeyProvider):
             if row[key] == value:
                 for f in fields:
                     if f in row:
-                        rc.update({f: self._decrypt_field(f, row[f])})
+                        rc.update({f: self.crypt.decrypt_field(f, row[f])})
                     else:
                         raise RuntimeError("CSV-File '%s' lacks column '%s'" % (self.filename, f))
         return rc

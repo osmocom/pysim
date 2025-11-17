@@ -4,7 +4,7 @@ import unittest
 import os
 from pySim.card_key_provider import *
 
-class TestCardKeyProvider(unittest.TestCase):
+class TestCardKeyProviderCsv(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         column_keys = {"KI" : "000424252525535532532A0B0C0D0E0F",
@@ -75,6 +75,69 @@ class TestCardKeyProvider(unittest.TestCase):
         for t in test_data:
             result = card_key_provider_get_field("KIC1", "ICCID", t.get('ICCID'))
             self.assertEqual(result, t.get('EXPECTED'))
+
+class TestCardKeyFieldCryptor(unittest.TestCase):
+
+    def __init__(self, *args, **kwargs):
+        transport_keys = {"KI" : "000424252525535532532A0B0C0D0E0F",
+                          "OPC" : "000102030405065545645645645D0E0F",
+                          "KIC1" : "06410203546406456456450B0C0D0E0F",
+                          "UICC_SCP03" : "00040267840507667609045645645E0F"}
+        self.crypt = CardKeyFieldCryptor(transport_keys)
+        super().__init__(*args, **kwargs)
+
+    def test_encrypt_field(self):
+        test_data = [{'EXPECTED' : "0b1e1e56cd62645aeb4c2d72a7c98f27",
+                      'PLAINTEXT_VAL' : "000102030405060708090a0b0c0d0e0f", 'FIELDNAME' : "OPC"},
+                     {'EXPECTED' : "000102030405060708090a0b0c0d0e0f",
+                      'PLAINTEXT_VAL' : "000102030405060708090a0b0c0d0e0f", 'FIELDNAME' : "NOCRYPT"},
+                     {'EXPECTED' : "00248276d2734f108f9761e2f98e2a9d",
+                      'PLAINTEXT_VAL' : "000102030405060708090a0b0c0d0e0f", 'FIELDNAME' : "UICC_SCP03_KIC1"},
+                     {'EXPECTED' : "00248276d2734f108f9761e2f98e2a9d",
+                      'PLAINTEXT_VAL' : "000102030405060708090a0b0c0d0e0f", 'FIELDNAME' : "UICC_SCP03_KID1"},
+                     {'EXPECTED' : "00248276d2734f108f9761e2f98e2a9d",
+                      'PLAINTEXT_VAL' : "000102030405060708090a0b0c0d0e0f", 'FIELDNAME' : "UICC_SCP03_KIK1"},
+                     {'EXPECTED' : "0b1e1e56cd62645aeb4c2d72a7c98f27",
+                      'PLAINTEXT_VAL' : "000102030405060708090a0b0c0d0e0f", 'FIELDNAME' : "opc"},
+                     {'EXPECTED' : "000102030405060708090a0b0c0d0e0f",
+                      'PLAINTEXT_VAL' : "000102030405060708090a0b0c0d0e0f", 'FIELDNAME' : "nocrypt"},
+                     {'EXPECTED' : "00248276d2734f108f9761e2f98e2a9d",
+                      'PLAINTEXT_VAL' : "000102030405060708090a0b0c0d0e0f", 'FIELDNAME' : "uicc_scp03_kic1"},
+                     {'EXPECTED' : "00248276d2734f108f9761e2f98e2a9d",
+                      'PLAINTEXT_VAL' : "000102030405060708090a0b0c0d0e0f", 'FIELDNAME' : "uicc_scp03_kid1"},
+                     {'EXPECTED' : "00248276d2734f108f9761e2f98e2a9d",
+                      'PLAINTEXT_VAL' : "000102030405060708090a0b0c0d0e0f", 'FIELDNAME' : "uicc_scp03_kik1"}]
+
+        for t in test_data:
+            result = self.crypt.encrypt_field(t.get('FIELDNAME'), t.get('PLAINTEXT_VAL'))
+            self.assertEqual(result, t.get('EXPECTED'))
+
+    def test_decrypt_field(self):
+        test_data = [{'EXPECTED' : "000102030405060708090a0b0c0d0e0f",
+                      'ENCRYPTED_VAL' : "0b1e1e56cd62645aeb4c2d72a7c98f27", 'FIELDNAME' : "OPC"},
+                     {'EXPECTED' : "000102030405060708090a0b0c0d0e0f",
+                      'ENCRYPTED_VAL' : "000102030405060708090a0b0c0d0e0f", 'FIELDNAME' : "NOCRYPT"},
+                     {'EXPECTED' : "000102030405060708090a0b0c0d0e0f",
+                      'ENCRYPTED_VAL' : "00248276d2734f108f9761e2f98e2a9d", 'FIELDNAME' : "UICC_SCP03_KIC1"},
+                     {'EXPECTED' : "000102030405060708090a0b0c0d0e0f",
+                      'ENCRYPTED_VAL' : "00248276d2734f108f9761e2f98e2a9d", 'FIELDNAME' : "UICC_SCP03_KID1"},
+                     {'EXPECTED' : "000102030405060708090a0b0c0d0e0f",
+                      'ENCRYPTED_VAL' : "00248276d2734f108f9761e2f98e2a9d", 'FIELDNAME' : "UICC_SCP03_KIK1"},
+                     {'EXPECTED' : "000102030405060708090a0b0c0d0e0f",
+                      'ENCRYPTED_VAL' : "0b1e1e56cd62645aeb4c2d72a7c98f27", 'FIELDNAME' : "opc"},
+                     {'EXPECTED' : "000102030405060708090a0b0c0d0e0f",
+                      'ENCRYPTED_VAL' : "000102030405060708090a0b0c0d0e0f", 'FIELDNAME' : "nocrypt"},
+                     {'EXPECTED' : "000102030405060708090a0b0c0d0e0f",
+                      'ENCRYPTED_VAL' : "00248276d2734f108f9761e2f98e2a9d", 'FIELDNAME' : "uicc_scp03_kic1"},
+                     {'EXPECTED' : "000102030405060708090a0b0c0d0e0f",
+                      'ENCRYPTED_VAL' : "00248276d2734f108f9761e2f98e2a9d", 'FIELDNAME' : "uicc_scp03_kid1"},
+                     {'EXPECTED' : "000102030405060708090a0b0c0d0e0f",
+                      'ENCRYPTED_VAL' : "00248276d2734f108f9761e2f98e2a9d", 'FIELDNAME' : "uicc_scp03_kik1"}]
+
+        for t in test_data:
+            result = self.crypt.decrypt_field(t.get('FIELDNAME'), t.get('ENCRYPTED_VAL'))
+            self.assertEqual(result, t.get('EXPECTED'))
+
 
 if __name__ == "__main__":
 	unittest.main()
