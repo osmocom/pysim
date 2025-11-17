@@ -1250,6 +1250,8 @@ class UppAudit(dict):
 
         For der_size=True, also include a {'der_size':12345} entry.
         '''
+
+        # make an instance of this class
         upp_audit = cls()
 
         if der_size:
@@ -1257,10 +1259,6 @@ class UppAudit(dict):
 
         pes = ProfileElementSequence.from_der(der)
         for param in params:
-            key = param.get_name()
-            if key in upp_audit:
-                raise ValueError(f'UPP audit: there seem to be two conflicting parameters with the name {key!r}: '
-                                 + ', '.join(f"{param.get_name()}={param.__name__}" for param in params))
             try:
                 for valdict in param.get_values_from_pes(pes):
                     upp_audit.add_values(valdict)
@@ -1282,18 +1280,16 @@ class UppAudit(dict):
                 upp_audit[audit_key] = audit_val
         return upp_audit
 
-    def get_single_val(self, param, validate=True, allow_absent=False, absent_val=None):
+    def get_single_val(self, key, validate=True, allow_absent=False, absent_val=None):
         """
-        Return the audit's value for the given ConfigurableParameter class.
+        Return the audit's value for the given audit key (like 'IMSI' or 'IMSI-ACC').
         Any kind of value may occur multiple times in a profile. When all of these agree to the same unambiguous value,
         return that value. When they do not agree, raise a ValueError.
         """
-        cp = None
-        if ConfigurableParameter.is_super_of(param):
-            cp = param
-            key = param.name
-        else:
-            key = param
+        # key should be a string, but if someone passes a ConfigurableParameter, just use its default name
+        if ConfigurableParameter.is_super_of(key):
+            key = key.get_name()
+
         assert isinstance(key, str)
         v = self.get(key)
         if v is None and allow_absent:
@@ -1303,10 +1299,6 @@ class UppAudit(dict):
         if len(v) != 1:
             raise ValueError(f'expected a single value for {key}, got {v!r}')
         v = tuple(v)[0]
-        if validate and cp:
-            # run value by the ConfigurableParameter's validation.
-            # (do not use the returned value, because the returned value is encoded for a PES)
-            cp.validate_val(v)
         return v
 
     @staticmethod
@@ -1421,14 +1413,19 @@ class BatchAudit(list):
 
         return batch_audit
 
-    def to_csv_rows(self, headers=True):
+    def to_csv_rows(self, headers=True, sort_key=None):
         '''generator that yields all audits' values as rows, useful feed to a csv.writer.'''
-        params = tuple(sorted(self.params, key=lambda param: param.get_name()))
+        columns = set()
+        for audit in self:
+            columns.update(audit.keys())
+
+        columns = tuple(sorted(columns, key=sort_key))
+
         if headers:
-            yield (p.get_name() for p in params)
+            yield columns
 
         for audit in self:
-            yield (audit.get_single_val(p, allow_absent=True, absent_val="") for p in params)
+            yield (audit.get_single_val(col, allow_absent=True, absent_val="") for col in columns)
 
 def bytes_to_hexstr(b:bytes, sep=''):
     return sep.join(f'{x:02x}' for x in b)
