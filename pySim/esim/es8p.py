@@ -76,10 +76,11 @@ def gen_replace_session_keys(ppk_enc: bytes, ppk_cmac: bytes, initial_mcv: bytes
 class ProfileMetadata:
     """Representation of Profile metadata. Right now only the mandatory bits are
     supported, but in general this should follow the StoreMetadataRequest of SGP.22 5.5.3"""
-    def __init__(self, iccid_bin: bytes, spn: str, profile_name: str):
+    def __init__(self, iccid_bin: bytes, spn: str, profile_name: str, profile_class = 'operational'):
         self.iccid_bin = iccid_bin
         self.spn = spn
         self.profile_name = profile_name
+        self.profile_class = profile_class
         self.icon = None
         self.icon_type = None
         self.notifications = []
@@ -105,6 +106,14 @@ class ProfileMetadata:
             'serviceProviderName': self.spn,
             'profileName': self.profile_name,
         }
+        if self.profile_class == 'test':
+            smr['profileClass'] = 0
+        elif self.profile_class == 'provisioning':
+            smr['profileClass'] = 1
+        elif self.profile_class == 'operational':
+            smr['profileClass'] = 2
+        else:
+            raise ValueError('Unsupported Profile Class %s' % self.profile_class)
         if self.icon:
             smr['icon'] = self.icon
             smr['iconType'] = self.icon_type
