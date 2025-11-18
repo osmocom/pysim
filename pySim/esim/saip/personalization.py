@@ -558,7 +558,8 @@ class Imsi(DecimalParam):
 
 
 class SdKey(BinaryParam):
-    """Configurable Security Domain (SD) Key.  Value is presented as bytes."""
+    """Configurable Security Domain (SD) Key.  Value is presented as bytes.
+       Non-abstract implementations are generated in sd_keys.py"""
     # these will be set by subclasses
     key_type = None
     kvn = None
@@ -602,350 +603,145 @@ class SdKey(BinaryParam):
             if kc:
                 yield { cls.name: b2h(kc) }
 
-# Offer these Security Domain Keys:
-#
-# security domain | reserved KVN range
-# ----------------------------
-# SCP80 | 0x01 .. 0x0f
-# SCP81 | 0x81 .. 0x8f
-# SCP02 | 0x20 .. 0x2f, 0xff
-# SCP03 | 0x30 .. 0x3f
-#
-# The KVN allows adding multiple security domains of the same type.
-#
-# Also, for each security domain, there are three keys: ENC, MAC and DEK, indicated by key_id.
-# key | alternate name | key_id | key_usage_qual
-#-----------------------------------------------
-# ENC | KIC            | 0x01   | 0x18
-# MAC | KID            | 0x02   | 0x14
-# DEK | KIK            | 0x03   | 0x48
-#
-# For each, offer a couple of separate SdKey subclasses, only partially covering the reserved KVN range. For KVN, again
-# a separate subclass for eack key_id for ENC, MAC and DEK.
-#
-# All of these are AES keys.
-#
-# For example, for SCP80 we have:
-# SdKeyAes
-#   SdKeyScp80Kvn01
-#     SdKeyScp80Kvn01Enc
-#     SdKeyScp80Kvn01Mac
-#     SdKeyScp80Kvn01Dek
-#   SdKeyScp80Kvn02
-#     SdKeyScp80Kvn02Enc
-#     SdKeyScp80Kvn02Mac
-#     SdKeyScp80Kvn02Dek
-#   SdKeyScp80Kvn03
-#     SdKeyScp80Kvn03Enc
-#     SdKeyScp80Kvn03Mac
-#     SdKeyScp80Kvn03Dek
-#
-# (Only the leaf nodes with ...Enc/Mac/Dek are returned by
-# ConfigurableParameter.get_all_implementations(allow_abstract=False))
 
-class SdKeyAes(SdKey):
-    key_type = KeyType.aes
-    allow_len = (16,24,32)
-    default_value = '00*32'
+    NO_OP = (('', {}))
 
-class SdKeyDes(SdKey):
-    key_type = KeyType.des
-    allow_len = (16)
-    default_value = '00*16'
+    LEN_128 = (16,)
+    LEN_128_192_256 = (16, 24, 32)
+    LEN_128_256 = (16, 32)
 
-class SdKeyScp80Aes(SdKeyAes):
-    name = 'SCP80-AES'
-    reserved_kvn = tuple(range(0x01, 0x0f + 1))
+    DES =    ('DES', dict(key_type=KeyType.des, allow_len=LEN_128) )
+    AES =    ('AES', dict(key_type=KeyType.aes, allow_len=LEN_128_192_256) )
 
-class SdKeyScp80Des(SdKeyDes):
-    name = 'SCP80-DES'
-    reserved_kvn = SdKeyScp80Aes.reserved_kvn
+    ENC =    ('ENC', dict(key_id=0x01, key_usage_qual=0x18) )
+    MAC =    ('MAC', dict(key_id=0x02, key_usage_qual=0x14) )
+    DEK =    ('DEK', dict(key_id=0x03, key_usage_qual=0x48) )
 
-class SdKeyScp80AesKvn01(SdKeyScp80Aes):
-    name = 'SCP80-01-AES'
-    kvn = 0x01
-class SdKeyScp80AesKvn01Enc(SdKeyScp80AesKvn01):
-    is_abstract = False
-    name = SdKeyScp80AesKvn01.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp80AesKvn01Mac(SdKeyScp80AesKvn01):
-    is_abstract = False
-    name = SdKeyScp80AesKvn01.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp80AesKvn01Dek(SdKeyScp80AesKvn01):
-    is_abstract = False
-    name = SdKeyScp80AesKvn01.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
+    TLSPSK_PSK = ('TLSPSK', dict(key_type=KeyType.tls_psk, key_id=0x01, key_usage_qual=0x3c, allow_len=LEN_128_192_256) )
+    TLSPSK_DEK = ('DEK',    dict(key_type=KeyType.des, key_id=0x02, key_usage_qual=0x48, allow_len=LEN_128) )
 
-class SdKeyScp80DesKvn01(SdKeyScp80Des):
-    name = 'SCP80-01-DES'
-    kvn = 0x01
-class SdKeyScp80DesKvn01Enc(SdKeyScp80DesKvn01):
-    is_abstract = False
-    name = SdKeyScp80DesKvn01.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp80DesKvn01Mac(SdKeyScp80DesKvn01):
-    is_abstract = False
-    name = SdKeyScp80DesKvn01.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp80DesKvn01Dek(SdKeyScp80DesKvn01):
-    is_abstract = False
-    name = SdKeyScp80DesKvn01.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
+    # THIS IS THE LIST that controls which SdKeyXxx subclasses exist:
+    SD_KEY_DEFS = (
+        # name    KVN                     x variants            x variants
+        ('SCP02', (0x20, 0x21, 0x22, 0xff), (AES, ),              (ENC, MAC, DEK) ),
+        ('SCP03', (0x30, 0x31, 0x32),       (AES, ),              (ENC, MAC, DEK) ),
+        ('SCP80', (0x01, 0x02, 0x03),       (DES, AES),           (ENC, MAC, DEK) ),
+        ('SCP81', (0x40, 0x41, 0x42),       (TLSPSK_PSK, TLSPSK_DEK, ), ),
+    )
 
-class SdKeyScp80Kvn02(SdKeyScp80Aes):
-    name = 'SCP80-02-AES'
-    kvn = 0x02
-class SdKeyScp80Kvn02Enc(SdKeyScp80Kvn02):
-    is_abstract = False
-    name = SdKeyScp80Kvn02.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp80Kvn02Mac(SdKeyScp80Kvn02):
-    is_abstract = False
-    name = SdKeyScp80Kvn02.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp80Kvn02Dek(SdKeyScp80Kvn02):
-    is_abstract = False
-    name = SdKeyScp80Kvn02.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
+    @classmethod
+    def generate_sd_key_classes(cls, sd_key_defs=SD_KEY_DEFS):
+        '''This generates python classes to be exported in this module, as subclasses of class SdKey.
 
-class SdKeyScp80Kvn03(SdKeyScp80Aes):
-    name = 'SCP80-03-AES'
-    kvn = 0x03
-class SdKeyScp80Kvn03Enc(SdKeyScp80Kvn03):
-    is_abstract = False
-    name = SdKeyScp80Kvn03.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp80Kvn03Mac(SdKeyScp80Kvn03):
-    is_abstract = False
-    name = SdKeyScp80Kvn03.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp80Kvn03Dek(SdKeyScp80Kvn03):
-    is_abstract = False
-    name = SdKeyScp80Kvn03.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
+        We create SdKey subclasses dynamically from a list.
+        You can list all of them via:
+          from pySim.esim.saip.personalization import SdKey
+          SdKey.get_all_implementations()
+        or
+          print('\n'.join(sorted(f'{x.__name__}\t{x.name}' for x in SdKey.get_all_implementations())))
 
-# "omitting" SdKeyScp80Kvn04 ... Kvn0f
+        at time of writing this comment, this prints:
 
-class SdKeyScp81(SdKeyAes):
-    name = 'SCP81'
-    reserved_kvn = tuple(range(0x81, 0x8f + 1))
-
-class SdKeyScp81Kvn81(SdKeyScp81):
-    name = 'SCP81-81-AES'
-    kvn = 0x81
-class SdKeyScp81Kvn81Enc(SdKeyScp81Kvn81):
-    is_abstract = False
-    name = SdKeyScp81Kvn81.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp81Kvn81Mac(SdKeyScp81Kvn81):
-    is_abstract = False
-    name = SdKeyScp81Kvn81.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp81Kvn81Dek(SdKeyScp81Kvn81):
-    is_abstract = False
-    name = SdKeyScp81Kvn81.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
-
-class SdKeyScp81Kvn82(SdKeyScp81):
-    name = 'SCP81-82-AES'
-    kvn = 0x82
-class SdKeyScp81Kvn82Enc(SdKeyScp81Kvn82):
-    is_abstract = False
-    name = SdKeyScp81Kvn82.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp81Kvn82Mac(SdKeyScp81Kvn82):
-    is_abstract = False
-    name = SdKeyScp81Kvn82.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp81Kvn82Dek(SdKeyScp81Kvn82):
-    is_abstract = False
-    name = SdKeyScp81Kvn82.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
-
-class SdKeyScp81Kvn83(SdKeyScp81):
-    name = 'SCP81-83-AES'
-    kvn = 0x83
-class SdKeyScp81Kvn83Enc(SdKeyScp81Kvn83):
-    is_abstract = False
-    name = SdKeyScp81Kvn83.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp81Kvn83Mac(SdKeyScp81Kvn83):
-    is_abstract = False
-    name = SdKeyScp81Kvn83.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp81Kvn83Dek(SdKeyScp81Kvn83):
-    is_abstract = False
-    name = SdKeyScp81Kvn83.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
-
-# "omitting" SdKeyScp81Kvn84 ... Kvn8f
-
-class SdKeyScp02(SdKeyAes):
-    name = 'SCP02'
-    reserved_kvn = tuple(range(0x20, 0x2f + 1)) + (0xff, )
-class SdKeyScp02Kvn20(SdKeyScp02):
-    name = 'SCP02-20-AES'
-    kvn = 0x20
-class SdKeyScp02Kvn20Enc(SdKeyScp02Kvn20):
-    is_abstract = False
-    name = SdKeyScp02Kvn20.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp02Kvn20Mac(SdKeyScp02Kvn20):
-    is_abstract = False
-    name = SdKeyScp02Kvn20.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp02Kvn20Dek(SdKeyScp02Kvn20):
-    is_abstract = False
-    name = SdKeyScp02Kvn20.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
-
-class SdKeyScp02Kvn21(SdKeyScp02):
-    name = 'SCP02-21-AES'
-    kvn = 0x21
-class SdKeyScp02Kvn21Enc(SdKeyScp02Kvn21):
-    is_abstract = False
-    name = SdKeyScp02Kvn21.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp02Kvn21Mac(SdKeyScp02Kvn21):
-    is_abstract = False
-    name = SdKeyScp02Kvn21.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp02Kvn21Dek(SdKeyScp02Kvn21):
-    is_abstract = False
-    name = SdKeyScp02Kvn21.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
-
-class SdKeyScp02Kvn22(SdKeyScp02):
-    name = 'SCP02-22-AES'
-    kvn = 0x22
-class SdKeyScp02Kvn22Enc(SdKeyScp02Kvn22):
-    is_abstract = False
-    name = SdKeyScp02Kvn22.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp02Kvn22Mac(SdKeyScp02Kvn22):
-    is_abstract = False
-    name = SdKeyScp02Kvn22.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp02Kvn22Dek(SdKeyScp02Kvn22):
-    is_abstract = False
-    name = SdKeyScp02Kvn22.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
-
-# "omitting" SdKeyScp02Kvn23 ... Kvn2f
-
-class SdKeyScp02Kvnff(SdKeyScp02):
-    name = 'SCP02-ff-AES'
-    kvn = 0xff
-class SdKeyScp02KvnffEnc(SdKeyScp02Kvnff):
-    is_abstract = False
-    name = SdKeyScp02Kvnff.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp02KvnffMac(SdKeyScp02Kvnff):
-    is_abstract = False
-    name = SdKeyScp02Kvnff.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp02KvnffDek(SdKeyScp02Kvnff):
-    is_abstract = False
-    name = SdKeyScp02Kvnff.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
+        SdKeyScp02Kvn20AesDek SCP02-KVN20-AES-DEK
+        SdKeyScp02Kvn20AesEnc SCP02-KVN20-AES-ENC
+        SdKeyScp02Kvn20AesMac SCP02-KVN20-AES-MAC
+        SdKeyScp02Kvn21AesDek SCP02-KVN21-AES-DEK
+        SdKeyScp02Kvn21AesEnc SCP02-KVN21-AES-ENC
+        SdKeyScp02Kvn21AesMac SCP02-KVN21-AES-MAC
+        SdKeyScp02Kvn22AesDek SCP02-KVN22-AES-DEK
+        SdKeyScp02Kvn22AesEnc SCP02-KVN22-AES-ENC
+        SdKeyScp02Kvn22AesMac SCP02-KVN22-AES-MAC
+        SdKeyScp02KvnffAesDek SCP02-KVNff-AES-DEK
+        SdKeyScp02KvnffAesEnc SCP02-KVNff-AES-ENC
+        SdKeyScp02KvnffAesMac SCP02-KVNff-AES-MAC
+        SdKeyScp03Kvn30AesDek SCP03-KVN30-AES-DEK
+        SdKeyScp03Kvn30AesEnc SCP03-KVN30-AES-ENC
+        SdKeyScp03Kvn30AesMac SCP03-KVN30-AES-MAC
+        SdKeyScp03Kvn31AesDek SCP03-KVN31-AES-DEK
+        SdKeyScp03Kvn31AesEnc SCP03-KVN31-AES-ENC
+        SdKeyScp03Kvn31AesMac SCP03-KVN31-AES-MAC
+        SdKeyScp03Kvn32AesDek SCP03-KVN32-AES-DEK
+        SdKeyScp03Kvn32AesEnc SCP03-KVN32-AES-ENC
+        SdKeyScp03Kvn32AesMac SCP03-KVN32-AES-MAC
+        SdKeyScp80Kvn01AesDek SCP80-KVN01-AES-DEK
+        SdKeyScp80Kvn01AesEnc SCP80-KVN01-AES-ENC
+        SdKeyScp80Kvn01AesMac SCP80-KVN01-AES-MAC
+        SdKeyScp80Kvn01DesDek SCP80-KVN01-DES-DEK
+        SdKeyScp80Kvn01DesEnc SCP80-KVN01-DES-ENC
+        SdKeyScp80Kvn01DesMac SCP80-KVN01-DES-MAC
+        SdKeyScp80Kvn02AesDek SCP80-KVN02-AES-DEK
+        SdKeyScp80Kvn02AesEnc SCP80-KVN02-AES-ENC
+        SdKeyScp80Kvn02AesMac SCP80-KVN02-AES-MAC
+        SdKeyScp80Kvn02DesDek SCP80-KVN02-DES-DEK
+        SdKeyScp80Kvn02DesEnc SCP80-KVN02-DES-ENC
+        SdKeyScp80Kvn02DesMac SCP80-KVN02-DES-MAC
+        SdKeyScp80Kvn03AesDek SCP80-KVN03-AES-DEK
+        SdKeyScp80Kvn03AesEnc SCP80-KVN03-AES-ENC
+        SdKeyScp80Kvn03AesMac SCP80-KVN03-AES-MAC
+        SdKeyScp80Kvn03DesDek SCP80-KVN03-DES-DEK
+        SdKeyScp80Kvn03DesEnc SCP80-KVN03-DES-ENC
+        SdKeyScp80Kvn03DesMac SCP80-KVN03-DES-MAC
+        SdKeyScp81Kvn40Dek    SCP81-KVN40-DEK
+        SdKeyScp81Kvn40Tlspsk SCP81-KVN40-TLSPSK
+        SdKeyScp81Kvn41Dek    SCP81-KVN41-DEK
+        SdKeyScp81Kvn41Tlspsk SCP81-KVN41-TLSPSK
+        SdKeyScp81Kvn42Dek    SCP81-KVN42-DEK
+        SdKeyScp81Kvn42Tlspsk SCP81-KVN42-TLSPSK
+        '''
 
 
-class SdKeyScp03(SdKeyAes):
-    name = 'SCP03'
-    reserved_kvn = tuple(range(0x30, 0x3f + 1))
+        def camel(s):
+            return s[:1].upper() + s[1:].lower()
 
-class SdKeyScp03Kvn30(SdKeyScp03):
-    name = 'SCP03-30-AES'
-    kvn = 0x30
-class SdKeyScp03Kvn30Enc(SdKeyScp03Kvn30):
-    is_abstract = False
-    name = SdKeyScp03Kvn30.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp03Kvn30Mac(SdKeyScp03Kvn30):
-    is_abstract = False
-    name = SdKeyScp03Kvn30.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp03Kvn30Dek(SdKeyScp03Kvn30):
-    is_abstract = False
-    name = SdKeyScp03Kvn30.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
+        def do_variants(name, kvn, remaining_variants, labels=[], attrs={}):
+            'recurse to unfold as many variants as there may be'
+            if remaining_variants:
+                # not a leaf node, collect more labels and attrs
+                variants = remaining_variants[0]
+                remaining_variants = remaining_variants[1:]
 
-class SdKeyScp03Kvn31(SdKeyScp03):
-    name = 'SCP03-31-AES'
-    kvn = 0x31
-class SdKeyScp03Kvn31Enc(SdKeyScp03Kvn31):
-    is_abstract = False
-    name = SdKeyScp03Kvn31.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp03Kvn31Mac(SdKeyScp03Kvn31):
-    is_abstract = False
-    name = SdKeyScp03Kvn31.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp03Kvn31Dek(SdKeyScp03Kvn31):
-    is_abstract = False
-    name = SdKeyScp03Kvn31.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
+                for label, valdict in variants:
+                    # pass copies to recursion
+                    inner_labels = list(labels)
+                    inner_attrs = dict(attrs)
 
-class SdKeyScp03Kvn32(SdKeyScp03):
-    name = 'SCP03-32-AES'
-    kvn = 0x32
-class SdKeyScp03Kvn32Enc(SdKeyScp03Kvn32):
-    is_abstract = False
-    name = SdKeyScp03Kvn32.name + '-ENC'
-    key_id = 0x01
-    key_usage_qual = 0x18
-class SdKeyScp03Kvn32Mac(SdKeyScp03Kvn32):
-    is_abstract = False
-    name = SdKeyScp03Kvn32.name + '-MAC'
-    key_id = 0x02
-    key_usage_qual = 0x14
-class SdKeyScp03Kvn32Dek(SdKeyScp03Kvn32):
-    is_abstract = False
-    name = SdKeyScp03Kvn32.name + '-DEK'
-    key_id = 0x03
-    key_usage_qual = 0x48
+                    inner_labels.append(label)
+                    inner_attrs.update(valdict)
+                    do_variants(name, kvn, remaining_variants,
+                                labels=inner_labels,
+                                attrs=inner_attrs)
+                return
 
-# "omitting" SdKeyScp03Kvn33 ... Kvn3f
+            # leaf node. create a new class with all the accumulated vals
+            parts = [name, f'{kvn:02x}',] + labels
+            cls_label = '-'.join(p for p in parts if p)
+
+            parts = ['Sd', 'Key', name, f'Kvn{kvn:02x}'] + labels
+            clsname = ''.join(camel(p) for p in parts)
+
+            max_key_len = attrs.get('allow_len')[-1]
+
+            attrs.update({
+                'name' : cls_label,
+                'is_abstract': False,
+                'kvn': kvn,
+                'default_value': f'00*{max_key_len}',
+                })
+
+            # below line is like
+            # class SdKeyScpNNKvnXXYyyZzz(SdKey):
+            #     <set attrs>
+            globals()[clsname] = type(clsname, (cls,), attrs)
+
+
+        for items in sd_key_defs:
+            name, kvns = items[:2]
+            variants = items[2:]
+            for kvn in kvns:
+                do_variants(name, kvn, variants)
+
+# this creates all of the classes named like SdKeyScp02Kvn20AesDek to be published in this python module:
+SdKey.generate_sd_key_classes()
 
 def obtain_all_pe_from_pelist(l: List[ProfileElement], wanted_type: str) -> ProfileElement:
     return (pe for pe in l if pe.type == wanted_type)
