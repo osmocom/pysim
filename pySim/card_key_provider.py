@@ -139,8 +139,7 @@ class CardKeyProviderCsv(CardKeyProvider):
         self.csv_file.seek(0)
         cr = csv.DictReader(self.csv_file)
         if not cr:
-            raise RuntimeError(
-                "Could not open DictReader for CSV-File '%s'" % self.filename)
+            raise RuntimeError("Could not open DictReader for CSV-File '%s'" % self.filename)
         cr.fieldnames = [field.upper() for field in cr.fieldnames]
 
         rc = {}
@@ -150,8 +149,7 @@ class CardKeyProviderCsv(CardKeyProvider):
                     if f in row:
                         rc.update({f: self._decrypt_field(f, row[f])})
                     else:
-                        raise RuntimeError("CSV-File '%s' lacks column '%s'" %
-                                           (self.filename, f))
+                        raise RuntimeError("CSV-File '%s' lacks column '%s'" % (self.filename, f))
         return rc
 
 
