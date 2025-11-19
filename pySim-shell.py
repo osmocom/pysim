@@ -1127,10 +1127,6 @@ argparse_add_reader_args(option_parser)
 global_group = option_parser.add_argument_group('General Options')
 global_group.add_argument('--script', metavar='PATH', default=None,
                           help='script with pySim-shell commands to be executed automatically at start-up')
-global_group.add_argument('--csv', metavar='FILE',
-                          default=None, help='Read card data from CSV file')
-global_group.add_argument('--csv-column-key', metavar='FIELD:AES_KEY_HEX', default=[], action='append',
-                          help='per-CSV-column AES transport key')
 global_group.add_argument("--card_handler", dest="card_handler_config", metavar="FILE",
                           help="Use automatic card handling machine")
 global_group.add_argument("--noprompt", help="Run in non interactive mode",
@@ -1139,6 +1135,15 @@ global_group.add_argument("--skip-card-init", help="Skip all card/profile initia
                           action='store_true', default=False)
 global_group.add_argument("--verbose", help="Enable verbose logging",
                           action='store_true', default=False)
+
+card_key_group = option_parser.add_argument_group('Card Key Provider Options')
+card_key_group.add_argument('--csv', metavar='FILE',
+                            default=str(Path.home()) + "/.osmocom/pysim/card_data.csv",
+                            help='Read card data from CSV file')
+card_key_group.add_argument('--csv-column-key', metavar='FIELD:AES_KEY_HEX', default=[], action='append',
+                            help=argparse.SUPPRESS, dest='column_key')
+card_key_group.add_argument('--column-key', metavar='FIELD:AES_KEY_HEX', default=[], action='append',
+                            help='per-column AES transport key', dest='column_key')
 
 adm_group = global_group.add_mutually_exclusive_group()
 adm_group.add_argument('-a', '--pin-adm', metavar='PIN_ADM1', dest='pin_adm', default=None,
@@ -1168,15 +1173,12 @@ if __name__ == '__main__':
 
     # Register csv-file as card data provider, either from specified CSV
     # or from CSV file in home directory
-    csv_column_keys = {}
-    for par in opts.csv_column_key:
+    column_keys = {}
+    for par in opts.column_key:
         name, key = par.split(':')
-        csv_column_keys[name] = key
-    csv_default = str(Path.home()) + "/.osmocom/pysim/card_data.csv"
-    if opts.csv:
-        card_key_provider_register(CardKeyProviderCsv(opts.csv, csv_column_keys))
-    if os.path.isfile(csv_default):
-        card_key_provider_register(CardKeyProviderCsv(csv_default, csv_column_keys))
+        column_keys[name] = key
+    if os.path.isfile(opts.csv):
+        card_key_provider_register(CardKeyProviderCsv(opts.csv, column_keys))
 
     # Init card reader driver
     sl = init_reader(opts, proactive_handler = Proact())
