@@ -176,16 +176,16 @@ class CardKeyProviderCsv(CardKeyProvider):
     csv_file = None
     filename = None
 
-    def __init__(self, filename: str, transport_keys: dict):
+    def __init__(self, csv_filename: str, transport_keys: dict):
         """
         Args:
-                filename : file name (path) of CSV file containing card-individual key/data
+                csv_filename : file name (path) of CSV file containing card-individual key/data
                 transport_keys : (see class CardKeyFieldCryptor)
         """
-        self.csv_file = open(filename, 'r')
+        self.csv_file = open(csv_filename, 'r')
         if not self.csv_file:
-            raise RuntimeError("Could not open CSV file '%s'" % filename)
-        self.filename = filename
+            raise RuntimeError("Could not open CSV file '%s'" % csv_filename)
+        self.csv_filename = csv_filename
         self.crypt = CardKeyFieldCryptor(transport_keys)
 
     def get(self, fields: List[str], key: str, value: str) -> Dict[str, str]:
@@ -194,7 +194,7 @@ class CardKeyProviderCsv(CardKeyProvider):
         self.csv_file.seek(0)
         cr = csv.DictReader(self.csv_file)
         if not cr:
-            raise RuntimeError("Could not open DictReader for CSV-File '%s'" % self.filename)
+            raise RuntimeError("Could not open DictReader for CSV-File '%s'" % self.csv_filename)
         cr.fieldnames = [field.upper() for field in cr.fieldnames]
 
         rc = {}
@@ -204,7 +204,7 @@ class CardKeyProviderCsv(CardKeyProvider):
                     if f in row:
                         rc.update({f: self.crypt.decrypt_field(f, row[f])})
                     else:
-                        raise RuntimeError("CSV-File '%s' lacks column '%s'" % (self.filename, f))
+                        raise RuntimeError("CSV-File '%s' lacks column '%s'" % (self.csv_filename, f))
         return rc
 
 
