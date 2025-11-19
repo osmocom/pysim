@@ -231,6 +231,8 @@ def card_key_provider_get(fields, key: str, value: str, provider_list=card_key_p
     Returns:
             dictionary of {field, value} strings for each requested field from 'fields'
     """
+    key = key.upper()
+    fields = [f.upper() for f in fields]
     for p in provider_list:
         if not isinstance(p, CardKeyProvider):
             raise ValueError(
@@ -252,6 +254,8 @@ def card_key_provider_get_field(field: str, key: str, value: str, provider_list=
     Returns:
             dictionary of {field, value} strings for the requested field
     """
+    key = key.upper()
+    field = field.upper()
     for p in provider_list:
         if not isinstance(p, CardKeyProvider):
             raise ValueError(

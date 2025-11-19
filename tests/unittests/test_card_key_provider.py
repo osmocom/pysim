@@ -66,6 +66,11 @@ class TestCardKeyProviderCsv(unittest.TestCase):
                                             "KIC2","KIC3","KID1","KID2","KID3","KIK1","KIK2","KIK3","OPC"],
                                            "ICCID", t.get('ICCID'))
             self.assertEqual(result, t.get('EXPECTED'))
+            result = card_key_provider_get(["PIN1","puk1","PIN2","PUK2","KI","adm1","ADM2","KIC1",
+                                            "KIC2","kic3","KID1","KID2","KID3","kik1","KIK2","KIK3","OPC"],
+                                           "iccid", t.get('ICCID'))
+            self.assertEqual(result, t.get('EXPECTED'))
+
 
     def test_card_key_provider_get_field(self):
         test_data = [{'EXPECTED' : "3eb8567fa0b4b1e63bcab13bff5f2702", 'ICCID' :"8988211000000000001"},
@@ -75,6 +80,10 @@ class TestCardKeyProviderCsv(unittest.TestCase):
         for t in test_data:
             result = card_key_provider_get_field("KIC1", "ICCID", t.get('ICCID'))
             self.assertEqual(result, t.get('EXPECTED'))
+        for t in test_data:
+            result = card_key_provider_get_field("kic1", "iccid", t.get('ICCID'))
+            self.assertEqual(result, t.get('EXPECTED'))
+
 
 class TestCardKeyFieldCryptor(unittest.TestCase):
 
