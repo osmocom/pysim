@@ -173,9 +173,6 @@ class CardKeyProvider(abc.ABC):
 class CardKeyProviderCsv(CardKeyProvider):
     """Card key provider implementation that allows to query against a specified CSV file."""
 
-    csv_file = None
-    filename = None
-
     def __init__(self, csv_filename: str, transport_keys: dict):
         """
         Args:
