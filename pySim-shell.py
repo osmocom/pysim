@@ -69,7 +69,8 @@ from pySim.ts_102_222 import Ts102222Commands
 from pySim.gsm_r import DF_EIRENE
 from pySim.cat import ProactiveCommand
 
-from pySim.card_key_provider import CardKeyProviderCsv, card_key_provider_register, card_key_provider_get_field
+from pySim.card_key_provider import CardKeyProviderCsv
+from pySim.card_key_provider import card_key_provider_register, card_key_provider_get_field, card_key_provider_get
 
 from pySim.app import init_card
 
@@ -497,6 +498,23 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
     def do_echo(self, opts):
         """Echo (print) a string on the console"""
         self.poutput(' '.join(opts.STRING))
+
+    query_card_key_parser = argparse.ArgumentParser()
+    query_card_key_parser.add_argument('FIELDS', help="fields to query", type=str, nargs='+')
+    query_card_key_parser.add_argument('--key', help='lookup key (typically \'ICCID\' or \'EID\')',
+                                       type=str, required=True)
+    query_card_key_parser.add_argument('--value', help='lookup key match value (e.g \'8988211000000123456\')',
+                                       type=str, required=True)
+    @cmd2.with_argparser(query_card_key_parser)
+    @cmd2.with_category(CUSTOM_CATEGORY)
+    def do_query_card_key(self, opts):
+        """Manually query the Card Key Provider"""
+        result = card_key_provider_get(opts.FIELDS, opts.key, opts.value)
+        self.poutput("Result:")
+        if result == {}:
+            self.poutput(" (none)")
+        for k in result.keys():
+            self.poutput(" %s: %s" % (str(k), str(result.get(k))))
 
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_version(self, opts):
