@@ -69,7 +69,7 @@ from pySim.ts_102_222 import Ts102222Commands
 from pySim.gsm_r import DF_EIRENE
 from pySim.cat import ProactiveCommand
 
-from pySim.card_key_provider import CardKeyProviderCsv
+from pySim.card_key_provider import CardKeyProviderCsv, CardKeyProviderPgsql
 from pySim.card_key_provider import card_key_provider_register, card_key_provider_get_field, card_key_provider_get
 
 from pySim.app import init_card
@@ -1149,6 +1149,9 @@ card_key_group = option_parser.add_argument_group('Card Key Provider Options')
 card_key_group.add_argument('--csv', metavar='FILE',
                             default="~/.osmocom/pysim/card_data.csv",
                             help='Read card data from CSV file')
+card_key_group.add_argument('--pgsql', metavar='FILE',
+                            default="~/.osmocom/pysim/card_data_pgsql.cfg",
+                            help='Read card data from PostgreSQL database (config file)')
 card_key_group.add_argument('--csv-column-key', metavar='FIELD:AES_KEY_HEX', default=[], action='append',
                             help=argparse.SUPPRESS, dest='column_key')
 card_key_group.add_argument('--column-key', metavar='FIELD:AES_KEY_HEX', default=[], action='append',
@@ -1188,6 +1191,8 @@ if __name__ == '__main__':
         column_keys[name] = key
     if os.path.isfile(os.path.expanduser(opts.csv)):
         card_key_provider_register(CardKeyProviderCsv(os.path.expanduser(opts.csv), column_keys))
+    if os.path.isfile(os.path.expanduser(opts.pgsql)):
+        card_key_provider_register(CardKeyProviderPgsql(os.path.expanduser(opts.pgsql), column_keys))
 
     # Init card reader driver
     sl = init_reader(opts, proactive_handler = Proact())

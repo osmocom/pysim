@@ -55,6 +55,9 @@ setup(
             "service-identity",
             "pyopenssl",
             "requests",
+        ],
+        "CardKeyProviderPgsql": [
+            "psycopg2-binary",
         ]
     },
 )
