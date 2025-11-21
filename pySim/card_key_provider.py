@@ -132,26 +132,6 @@ class CardKeyFieldCryptor:
 class CardKeyProvider(abc.ABC):
     """Base class, not containing any concrete implementation."""
 
-    VALID_KEY_FIELD_NAMES = ['ICCID', 'EID', 'IMSI' ]
-
-    # check input parameters, but do nothing concrete yet
-    def _verify_get_data(self, fields: List[str] = [], key: str = 'ICCID', value: str = "") -> Dict[str, str]:
-        """Verify multiple fields for identified card.
-
-        Args:
-                fields : list of valid field names such as 'ADM1', 'PIN1', ... which are to be obtained
-                key : look-up key to identify card data, such as 'ICCID'
-                value : value for look-up key to identify card data
-        Returns:
-                dictionary of {field, value} strings for each requested field from 'fields'
-        """
-
-        if key not in self.VALID_KEY_FIELD_NAMES:
-            raise ValueError("Key field name '%s' is not a valid field name, valid field names are: %s" %
-                             (key, str(self.VALID_KEY_FIELD_NAMES)))
-
-        return {}
-
     def get_field(self, field: str, key: str = 'ICCID', value: str = "") -> Optional[str]:
         """get a single field from CSV file using a specified key/value pair"""
         fields = [field]
@@ -186,8 +166,6 @@ class CardKeyProviderCsv(CardKeyProvider):
         self.crypt = CardKeyFieldCryptor(transport_keys)
 
     def get(self, fields: List[str], key: str, value: str) -> Dict[str, str]:
-        super()._verify_get_data(fields, key, value)
-
         self.csv_file.seek(0)
         cr = csv.DictReader(self.csv_file)
         if not cr:
