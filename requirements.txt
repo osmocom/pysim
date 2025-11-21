@@ -15,3 +15,4 @@ git+https://github.com/osmocom/asn1tools
 packaging
 git+https://github.com/hologram-io/smpp.pdu
 smpp.twisted3 @ git+https://github.com/jookies/smpp.twisted
+psycopg2-binary

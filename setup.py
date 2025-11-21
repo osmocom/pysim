@@ -34,6 +34,7 @@ setup(
         "smpp.pdu @ git+https://github.com/hologram-io/smpp.pdu",
         "asn1tools",
         "smpp.twisted3 @ git+https://github.com/jookies/smpp.twisted",
+        "psycopg2-binary"
     ],
     scripts=[
         'pySim-prog.py',

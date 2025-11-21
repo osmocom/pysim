@@ -100,6 +100,7 @@ Please install the following dependencies:
  - pyyaml >= 5.1
  - smpp.pdu (from `github.com/hologram-io/smpp.pdu`)
  - termcolor
+ - psycopg2-binary
 
 Example for Debian:
 ```sh
