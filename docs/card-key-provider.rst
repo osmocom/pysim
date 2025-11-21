@@ -1,4 +1,4 @@
-Retrieving card-individual keys via CardKeyProvider
+﻿Retrieving card-individual keys via CardKeyProvider
 ===================================================
 
 When working with a batch of cards, or more than one card in general, it
@@ -20,9 +20,11 @@ example develop your own CardKeyProvider that queries some kind of
 database for the key material, or that uses a key derivation function to
 derive card-specific key material from a global master key.
 
-The only actual CardKeyProvider implementation included in pySim is the
-`CardKeyProviderCsv` which retrieves the key material from a
-[potentially encrypted] CSV file.
+pySim already includes two CardKeyProvider implementations. One to retrive
+key material from a CSV file (`CardKeyProviderCsv`) and a second one that allows
+to retrieve the key material from a PostgreSQL database (`CardKeyProviderCsv`).
+Both implementations equally implement a clumn encryption scheme that allows
+to protect sensitive columns using a *transport key*
 
 
 The CardKeyProviderCsv
@@ -39,6 +41,170 @@ You can specify the CSV file to use via the `--csv` command-line option
 of pySim-shell.  If you do not specify a CSV file, pySim will attempt to
 open a CSV file from the default location at
 `~/.osmocom/pysim/card_data.csv`, and use that, if it exists.
+
+While the `CardKeyProviderCsv` is suitable to manage small amounts of key
+material locally. However, if your card inventory is very large and the key
+material must be made available on multiple sites, the `CardKeyProviderPgsql`
+is the better option.
+
+
+The CardKeyProviderPqsql
+------------------------
+
+With the `CardKeyProviderPsql` you can use a PostgreSQL database as storage
+medium. The implementation comes with a CSV importer tool that consumes the
+same CSV files you would normally use with the `CardKeyProviderCsv`, so you
+can just use your existing CSV files and import them into the database.
+
+
+Setting up the database
+^^^^^^^^^^^^^^^^^^^^^^^
+
+From the perspective of the database, the `CardKeyProviderPsql` has only
+minimal requirements. You do not have to create any tables in advance. All thet
+is required is an empty database and at least one user that may create, alter
+and insert into tables. However, for increased reliability and as a protection
+against potential data loss, the `CardKeyProviderPsql` allows for a hierarchical
+model with three users:
+
+* admin
+This should be the owner of the database. It is intended to be used for
+administrative tasks like adding new tables or adding new columns to existing
+tables. This user should not be used to insert new data into tables or to access
+data from within pySim-shell using the `CardKeyProviderPsql`
+
+* importer
+This user is used when feeding new data into an existing table. It should only
+be able to insert new rows into existing tables. It should not be used for
+administrative tasks or to access data from within pySim-shell using the
+`CardKeyProviderPsql`
+
+* reader
+To access data from within pySim shell using the `CardKeyProviderPsql` the
+reader user is the correct one to use. This user should have no write access
+to the database or any of the tables.
+
+
+Creating a config file
+^^^^^^^^^^^^^^^^^^^^^^
+
+The default location for the config file is `~/.osmocom/pysim/card_data_pqsql.cfg`
+The file uses `yaml` syntax and should look like the example below:
+
+::
+   host: "127.0.0.1"
+   db_name: "my_database"
+   table_names:
+   - "uicc_keys"
+   - "euicc_keys"
+   user_reader: "my_reader_user"
+   pass_reader: "my_reader_password"
+   user_admin: "my_admin_user"
+   pass_admin: "my_admin_password"
+   user_importer: "my_importer_user"
+   pass_importer: "my_importer_password"
+
+This file is used by pySim-shell and by the importer tool. Both expect the file
+in the aforementioned location. In case you want to store the file in a
+different location you may use the `--pgsql` switch to provide a custom config
+file path.
+
+NOTE: In case you do not want to disclose the admin and the importer
+credentials to pySim-shell you may remove those lines. pySim-shell will only
+require the fields `user_reader` and `pass_reader`.
+
+Using the Importer
+^^^^^^^^^^^^^^^^^^
+
+Before data can be imported, you must first create a database table. Tables
+are created with the provided importer tool, which can be found under
+`contrib/csv-to-pgsql`. This tool is used to create the database table and
+read the data from the provided CSV file into the database.
+
+As mentioned before, all CSV file formats that work with `CardKeyProviderCsv`
+ma be used. To demonstrate how the import process works, let's assume you want
+to import a CSV file format that looks like this. Let's also assume that you
+didn't get the Global Plattform keys from your card vendor for this batch
+of UICC cards.
+
+::
+   "id","imsi","iccid","acc","pin1","puk1","pin2","puk2","ki","opc","adm1"
+   "card1","999700000000001","8900000000000000001","0001","1111","11111111","0101","01010101","11111111111111111111111111111111","11111111111111111111111111111111","11111111"
+   "card2","999700000000002","8900000000000000002","0002","2222","22222222","0202","02020202","22222222222222222222222222222222","22222222222222222222222222222222","22222222"
+   "card3","999700000000003","8900000000000000003","0003","3333","22222222","0303","03030303","33333333333333333333333333333333","33333333333333333333333333333333","33333333"
+
+Since this is your first import, the database still lacks the table. To
+instruct the importer to create a new table for you you may use the
+`--create-table` option. You also have to pick an appropriate name for the
+table. Any name may be chosen as long as it contains the string `uicc_keys`
+or `euicc_keys` in case the tabel shall be used to store eUICC related data
+instead of UICC related data.
+
+The creation of the table is an administrative task and can only be done with
+the `admin` user. The `admin` user is selected using the `--admin` switch.
+
+::
+   $ PYTHONPATH=../ ./csv-to-pgsql.py --csv ./csv-to-pgsql_example_01.csv --table-name uicc_keys --create-table --admin
+   INFO: CSV file: ./csv-to-pgsql_example_01.csv
+   INFO: CSV file columns: ['ID', 'IMSI', 'ICCID', 'ACC', 'PIN1', 'PUK1', 'PIN2', 'PUK2', 'KI', 'OPC', 'ADM1']
+   INFO: Using config file: /home/user/.osmocom/pysim/card_data_pqsql.cfg
+   INFO: Database name: my_database
+   INFO: Database user: my_admin_user
+   INFO: Database table: 'uicc_keys'
+   INFO: New Database table created: uicc_keys
+   INFO: Database table columns: ['ICCID', 'IMSI']
+   INFO: Adding missing columns: ['PIN2', 'PIN1', 'ID', 'PUK2', 'ACC', 'OPC', 'KI', 'PUK1', 'ADM1']
+   INFO: Changes to table uicc_keys committed!
+
+has created a new table with the name `uicc_keys`. The table is now ready to
+be filled with data.
+
+::
+   $ PYTHONPATH=../ ./csv-to-pgsql.py --csv ./csv-to-pgsql_example_01.csv --table-name uicc_keys
+   INFO: CSV file: ./csv-to-pgsql_example_01.csv
+   INFO: CSV file columns: ['ID', 'IMSI', 'ICCID', 'ACC', 'PIN1', 'PUK1', 'PIN2', 'PUK2', 'KI', 'OPC', 'ADM1']
+   INFO: Using config file: /home/user/.osmocom/pysim/card_data_pqsql.cfg
+   INFO: Database name: my_database
+   INFO: Database user: my_importer_user
+   INFO: Database table: 'uicc_keys'
+   INFO: Database table columns: ['ICCID', 'IMSI', 'PIN2', 'PIN1', 'ID', 'PUK2', 'ACC', 'OPC', 'KI', 'PUK1', 'ADM1']
+   INFO: CSV file import done, 3 rows imported
+   INFO: Changes to table uicc_keys committed!
+
+A quick `SELECT * FROM uicc_keys;` at the PostgreSQL console should now display
+the contents of the CSV file you have fed into the importer.
+
+Let's now assume that with your next batch of UICC cards your vendor includes
+the global platform keys so your CSV format changes. It may now look like this:
+
+::
+   "id","imsi","iccid","acc","pin1","puk1","pin2","puk2","ki","opc","adm1","kic1","kid1","kik1"
+   "card4","999700000000004","8900000000000000004","0004","4444","44444444","0404","04040404","44444444444444444444444444444444","44444444444444444444444444444444","44444444","44444444444444444444444444444444","44444444444444444444444444444444","44444444444444444444444444444444"
+   "card5","999700000000005","8900000000000000005","0005","4444","55555555","0505","05050505","55555555555555555555555555555555","55555555555555555555555555555555","55555555","55555555555555555555555555555555","55555555555555555555555555555555","55555555555555555555555555555555"
+   "card6","999700000000006","8900000000000000006","0006","4444","66666666","0606","06060606","66666666666666666666666666666666","66666666666666666666666666666666","66666666","66666666666666666666666666666666","66666666666666666666666666666666","66666666666666666666666666666666"
+
+When importing an data from an updated CSV format the database table also has
+to be updated. This is done using the `--update-columns` switch. Like when
+creating new tables, this operation also requires admin privileges, so tha
+`--admin` switch is required as well. When the new table columns are added, the
+import may be continued like the first one:
+
+::
+   $ PYTHONPATH=../ ./csv-to-pgsql.py --csv ./csv-to-pgsql_example_02.csv --table-name uicc_keys
+   INFO: CSV file: ./csv-to-pgsql_example_02.csv
+   INFO: CSV file columns: ['ID', 'IMSI', 'ICCID', 'ACC', 'PIN1', 'PUK1', 'PIN2', 'PUK2', 'KI', 'OPC', 'ADM1', 'KIC1', 'KID1', 'KIK1']
+   INFO: Using config file: /home/user/.osmocom/pysim/card_data_pqsql.cfg
+   INFO: Database name: my_database
+   INFO: Database user: my_importer_user
+   INFO: Database table: 'uicc_keys'
+   INFO: Database table columns: ['ICCID', 'IMSI', 'PIN2', 'PIN1', 'ID', 'PUK2', 'ACC', 'OPC', 'KI', 'PUK1', 'ADM1', 'KIC1', 'KIK1', 'KID1']
+   INFO: CSV file import done, 3 rows imported
+   INFO: Changes to table uicc_keys committed!
+
+On the PostgreSQL console a `SELECT * FROM uicc_keys;` should now show the
+imported data with the added columns. All important data should now also be
+available from within pySim-shell via the `CardKeyProviderCsv`.
+
 
 Column-Level CSV encryption
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
