@@ -200,7 +200,7 @@ def card_key_provider_register(provider: CardKeyProvider, provider_list=card_key
     provider_list.append(provider)
 
 
-def card_key_provider_get(fields, key: str, value: str, provider_list=card_key_providers) -> Dict[str, str]:
+def card_key_provider_get(fields: list[str], key: str, value: str, provider_list=card_key_providers) -> Dict[str, str]:
     """Query all registered card data providers for card-individual [key] data.
 
     Args:
