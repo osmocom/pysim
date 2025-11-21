@@ -126,14 +126,25 @@ class RandomSourceMixin:
 class RandomDigitSource(DecimalRangeSource, RandomSourceMixin):
     """return a different sequence of random decimal digits each"""
     name = "random decimal digits"
+    used_keys = set()
 
     def get_next(self, csv_row:dict=None):
-        val = self.random_impl.randint(*self.val_first_last)
+        # try to generate random digits that are always different from previously produced random bytes
+        attempts = 10
+        while True:
+            val = self.random_impl.randint(*self.val_first_last)
+            if val in RandomDigitSource.used_keys:
+                attempts -= 1
+                if attempts:
+                    continue
+            RandomDigitSource.used_keys.add(val)
+            break
         return self.val_to_digit(val)
 
 class RandomHexDigitSource(InputExpandingParamSource, RandomSourceMixin):
     """return a different sequence of random hexadecimal digits each"""
     name = "random hexadecimal digits"
+    used_keys = set()
 
     def __init__(self, num_digits):
         """see from_str()"""
@@ -146,7 +157,17 @@ class RandomHexDigitSource(InputExpandingParamSource, RandomSourceMixin):
         self.num_digits = num_digits
 
     def get_next(self, csv_row:dict=None):
-        val = self.random_impl.randbytes(self.num_digits // 2)
+        # try to generate random bytes that are always different from previously produced random bytes
+        attempts = 10
+        while True:
+            val = self.random_impl.randbytes(self.num_digits // 2)
+            if val in RandomHexDigitSource.used_keys:
+                attempts -= 1
+                if attempts:
+                    continue
+            RandomHexDigitSource.used_keys.add(val)
+            break
+
         return b2h(val)
 
     @classmethod
