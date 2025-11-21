@@ -132,23 +132,23 @@ class CardKeyFieldCryptor:
 class CardKeyProvider(abc.ABC):
     """Base class, not containing any concrete implementation."""
 
-    def get_field(self, field: str, key: str = 'ICCID', value: str = "") -> Optional[str]:
-        """get a single field from CSV file using a specified key/value pair"""
-        fields = [field]
-        result = self.get(fields, key, value)
-        return result.get(field)
-
     @abc.abstractmethod
     def get(self, fields: List[str], key: str, value: str) -> Dict[str, str]:
-        """Get multiple card-individual fields for identified card.
+        """
+        Get multiple card-individual fields for identified card. This method should not fail with an exception in
+        case the entry, columns or even the key column itsself is not found.
 
         Args:
                 fields : list of valid field names such as 'ADM1', 'PIN1', ... which are to be obtained
                 key : look-up key to identify card data, such as 'ICCID'
                 value : value for look-up key to identify card data
         Returns:
-                dictionary of {field, value} strings for each requested field from 'fields'
+                dictionary of {field : value, ...} strings for each requested field from 'fields'. In case nothing is
+                fond None shall be returned.
         """
+
+    def __str__(self):
+        return type(self).__name__
 
 class CardKeyProviderCsv(CardKeyProvider):
     """Card key provider implementation that allows to query against a specified CSV file."""
@@ -172,15 +172,20 @@ class CardKeyProviderCsv(CardKeyProvider):
             raise RuntimeError("Could not open DictReader for CSV-File '%s'" % self.csv_filename)
         cr.fieldnames = [field.upper() for field in cr.fieldnames]
 
-        rc = {}
+        if key not in cr.fieldnames:
+            return None
+        return_dict = {}
         for row in cr:
             if row[key] == value:
                 for f in fields:
                     if f in row:
-                        rc.update({f: self.crypt.decrypt_field(f, row[f])})
+                        return_dict.update({f: self.crypt.decrypt_field(f, row[f])})
                     else:
                         raise RuntimeError("CSV-File '%s' lacks column '%s'" % (self.csv_filename, f))
-        return rc
+        if return_dict == {}:
+            return None
+        return return_dict
+
 
 
 def card_key_provider_register(provider: CardKeyProvider, provider_list=card_key_providers):
@@ -210,15 +215,17 @@ def card_key_provider_get(fields, key: str, value: str, provider_list=card_key_p
     fields = [f.upper() for f in fields]
     for p in provider_list:
         if not isinstance(p, CardKeyProvider):
-            raise ValueError(
-                "provider list contains element which is not a card data provider")
+            raise ValueError("Provider list contains element which is not a card data provider")
+        log.debug("Searching for card key data (key=%s, value=%s, provider=%s)" % (key, value, str(p)))
         result = p.get(fields, key, value)
         if result:
+            log.debug("Found card data: %s" % (str(result)))
             return result
-    return {}
+
+    raise ValueError("Unable to find card key data (key=%s, value=%s, fields=%s)" % (key, value, str(fields)))
 
 
-def card_key_provider_get_field(field: str, key: str, value: str, provider_list=card_key_providers) -> Optional[str]:
+def card_key_provider_get_field(field: str, key: str, value: str, provider_list=card_key_providers) -> str:
     """Query all registered card data providers for a single field.
 
     Args:
@@ -229,13 +236,7 @@ def card_key_provider_get_field(field: str, key: str, value: str, provider_list=
     Returns:
             dictionary of {field, value} strings for the requested field
     """
-    key = key.upper()
-    field = field.upper()
-    for p in provider_list:
-        if not isinstance(p, CardKeyProvider):
-            raise ValueError(
-                "provider list contains element which is not a card data provider")
-        result = p.get_field(field, key, value)
-        if result:
-            return result
-    return None
+
+    fields = [field]
+    result = card_key_provider_get(fields, key, value, card_key_providers)
+    return result.get(field.upper())
