@@ -229,7 +229,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         if new == True:
             PySimLogger.set_level(logging.DEBUG)
         else:
-            PySimLogger.set_level()
+            PySimLogger.set_level(logging.INFO)
 
     class Cmd2ApduTracer(ApduTracer):
         def __init__(self, cmd2_app):
@@ -1144,6 +1144,9 @@ if __name__ == '__main__':
     if (opts.verbose):
         PySimLogger.set_verbose(True)
         PySimLogger.set_level(logging.DEBUG)
+    else:
+        PySimLogger.set_verbose(False)
+        PySimLogger.set_level(logging.INFO)
 
     # Register csv-file as card data provider, either from specified CSV
     # or from CSV file in home directory
