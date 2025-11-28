@@ -985,9 +985,9 @@ class SecurityDomainKey:
         self.key_components = key_components
 
     def __repr__(self) -> str:
-        return 'SdKey(KVN=0x%02x, ID=0x%02x, Usage=%s, Comp=%s)' % (self.key_version_number,
+        return 'SdKey(KVN=0x%02x, ID=0x%02x, Usage=0x%x, Comp=%s)' % (self.key_version_number,
                                                                     self.key_identifier,
-                                                                    self.key_usage_qualifier,
+                                                                    build_construct(KeyUsageQualifier, self.key_usage_qualifier)[0],
                                                                     repr(self.key_components))
 
     @classmethod
