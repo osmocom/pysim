@@ -329,7 +329,7 @@ def do_info(pes: ProfileElementSequence, opts):
         print("Security domain Instance AID: %s" % b2h(sd.decoded['instance']['instanceAID']))
         # FIXME: 'applicationSpecificParametersC9' parsing to figure out enabled SCP
         for key in sd.keys:
-            print("\tKVN=0x%02x, KID=0x%02x, %s" % (key.key_version_number, key.key_identifier, key.key_components))
+            print("\t%s" % repr(key))
 
     # RFM
     print()
