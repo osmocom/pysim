@@ -618,12 +618,20 @@ class SdKeyAes(SdKey):
     allow_len = (16,24,32)
     default_value = '00*32'
 
+class SdKeyDes(SdKey):
+    key_type = KeyType.des
+    allow_len = (16)
+    default_value = '00*16'
 
-class SdKeyScp80(SdKeyAes):
-    name = 'SCP80'
+class SdKeyScp80Aes(SdKeyAes):
+    name = 'SCP80-AES'
     reserved_kvn = tuple(range(0x01, 0x0f + 1))
 
-class SdKeyScp80AesKvn01(SdKeyScp80):
+class SdKeyScp80Des(SdKeyDes):
+    name = 'SCP80-DES'
+    reserved_kvn = SdKeyScp80Aes.reserved_kvn
+
+class SdKeyScp80AesKvn01(SdKeyScp80Aes):
     name = 'SCP80-KVN01-AES'
     kvn = 0x01
 class SdKeyScp80AesKvn01Enc(SdKeyScp80AesKvn01):
@@ -642,10 +650,9 @@ class SdKeyScp80AesKvn01Dek(SdKeyScp80AesKvn01):
     key_id = 0x03
     key_usage_qual = 0x48
 
-class SdKeyScp80DesKvn01(SdKeyScp80):
+class SdKeyScp80DesKvn01(SdKeyScp80Des):
     name = 'SCP80-KVN01-DES'
     kvn = 0x01
-    key_type = KeyType.des
 class SdKeyScp80DesKvn01Enc(SdKeyScp80DesKvn01):
     is_abstract = False
     name = SdKeyScp80DesKvn01.name + '-ENC'
@@ -662,7 +669,7 @@ class SdKeyScp80DesKvn01Dek(SdKeyScp80DesKvn01):
     key_id = 0x03
     key_usage_qual = 0x48
 
-class SdKeyScp80Kvn02(SdKeyScp80):
+class SdKeyScp80Kvn02(SdKeyScp80Aes):
     name = 'SCP80-KVN02-AES'
     kvn = 0x02
 class SdKeyScp80Kvn02Enc(SdKeyScp80Kvn02):
@@ -681,7 +688,7 @@ class SdKeyScp80Kvn02Dek(SdKeyScp80Kvn02):
     key_id = 0x03
     key_usage_qual = 0x48
 
-class SdKeyScp80Kvn03(SdKeyScp80):
+class SdKeyScp80Kvn03(SdKeyScp80Aes):
     name = 'SCP80-KVN03-AES'
     kvn = 0x03
 class SdKeyScp80Kvn03Enc(SdKeyScp80Kvn03):
