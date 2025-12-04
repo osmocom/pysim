@@ -389,7 +389,10 @@ class EF_SUCI_Calc_Info(TransparentEF):
         # remaining data holds Home Network Public Key Data Object
         hpkl = EF_SUCI_Calc_Info.HnetPubkeyList()
         hpkl.from_tlv(in_bytes[pos:])
-        hnet_pubkey_list = self._compact_pubkey_list(hpkl.to_dict()['hnet_pubkey_list'])
+
+        hnet_pubkey_list = []
+        if hpkl.to_dict()['hnet_pubkey_list']:
+            hnet_pubkey_list = self._compact_pubkey_list(hpkl.to_dict()['hnet_pubkey_list'])
 
         return {
             'prot_scheme_id_list': prot_scheme_id_list,
