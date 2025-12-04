@@ -750,7 +750,7 @@ class EF_ARR(LinFixedEF):
         @cmd2.with_argparser(LinFixedEF.ShellCommands.read_rec_dec_parser)
         def do_read_arr_record(self, opts):
             """Read one EF.ARR record in flattened, human-friendly form."""
-            (data, _sw) = self._cmd.lchan.read_record_dec(opts.record_nr)
+            (data, _sw) = self._cmd.lchan.read_record_dec(opts.RECORD_NR)
             data = self._cmd.lchan.selected_file.flatten(data)
             self._cmd.poutput_json(data, opts.oneline)
 
