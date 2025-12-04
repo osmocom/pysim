@@ -477,11 +477,15 @@ class RuntimeLchan:
 
     def get_file_for_filename(self, name: str):
         """Get the related CardFile object for a specified filename."""
+        if is_hex(name):
+            name = name.lower()
         sels = self.selected_file.get_selectables()
         return sels[name]
 
     def activate_file(self, name: str):
         """Request ACTIVATE FILE of specified file."""
+        if is_hex(name):
+            name = name.lower()
         sels = self.selected_file.get_selectables()
         f = sels[name]
         data, sw = self.scc.activate_file(f.fid)
