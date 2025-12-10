@@ -21,7 +21,7 @@ setup(
         "pyscard",
         "pyserial",
         "pytlv",
-        "cmd2 >= 1.5.0",
+        "cmd2 >= 1.5.0, < 3.0",
         "jsonpath-ng",
         "construct >= 2.10.70",
         "bidict",
