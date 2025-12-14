@@ -183,7 +183,7 @@ class File:
         self.file_type = template.file_type
         self.fid = template.fid
         self.sfi = template.sfi
-        self.arr = template.arr.to_bytes(1)
+        self.arr = template.arr.to_bytes(1, 'big')
         if hasattr(template, 'rec_len'):
             self.rec_len = template.rec_len
         else:
@@ -227,7 +227,7 @@ class File:
             fileDescriptor['shortEFID'] = bytes([self.sfi])
         if self.df_name:
             fileDescriptor['dfName'] = self.df_name
-        if self.arr and self.arr != self.template.arr.to_bytes(1):
+        if self.arr and self.arr != self.template.arr.to_bytes(1, 'big'):
             fileDescriptor['securityAttributesReferenced'] = self.arr
         if self.file_type in ['LF', 'CY']:
             fdb_dec['file_type'] = 'working_ef'
@@ -264,7 +264,7 @@ class File:
         if self.read_and_update_when_deact:
             spfi |= 0x40 # TS 102 222 Table 5
         if spfi != 0x00:
-            pefi['specialFileInformation'] = spfi.to_bytes(1)
+            pefi['specialFileInformation'] = spfi.to_bytes(1, 'big')
         if self.fill_pattern:
             if not self.fill_pattern_repeat:
                 pefi['fillPattern'] = self.fill_pattern
