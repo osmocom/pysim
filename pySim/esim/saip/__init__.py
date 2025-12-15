@@ -386,11 +386,21 @@ class File:
         stream = io.BytesIO()
         # Providing file content within "fillFileContent" / "fillFileOffset" shall have the same effect as
         # creating a file with a fill/repeat pattern and thereafter updating the content via Update.
+        # Step 0: determine file size
+        file_size = self._file_size
+        for k, v in l:
+            if k != 'fileDescriptor':
+                continue
+
+            file_desc = v
+            if 'efFileSize' in file_desc:
+                file_size = self._decode_file_size(file_desc['efFileSize'])
+
         # Step 1: Fill with pattern from Fcp or Template
         if self.fill_pattern:
             stream.write(self.expand_fill_pattern())
         elif self.template and self.template.default_val:
-            stream.write(self.template.expand_default_value_pattern(self.file_size))
+            stream.write(self.template.expand_default_value_pattern(file_size))
         stream.seek(0)
         # then process the fillFileContent/fillFileOffset
         for k, v in l:
