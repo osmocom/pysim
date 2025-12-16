@@ -673,7 +673,7 @@ class FilesUsimDf5GS(ProfileTemplate):
         FileTemplate(0x4f06, 'EF.UAC_AIC',           'TR', None,    4,   2, 0x06, None, True, ass_serv=[126]),
         FileTemplate(0x4f07, 'EF.SUCI_Calc_Info',    'TR', None, None,   2, 0x07, 'FF...FF', False, ass_serv=[124]),
         FileTemplate(0x4f08, 'EF.OPL5G',             'LF', None,   10,  10, 0x08, 'FF...FF', False, ['nb_rec'], ass_serv=[129]),
-        FileTemplate(0x4f09, 'EF.SUPI_NAI',          'TR', None, None,   2, 0x09, None, True, ['size'], ass_serv=[130]),
+        FileTemplate(0x4f09, 'EF.SUPI_NAI',          'TR', None, None,   2, 0x09, None, True, ['size'], ass_serv=[130], pe_name='ef-supinai'),
         FileTemplate(0x4f0a, 'EF.Routing_Indicator', 'TR', None,    4,   2, 0x0a, 'F0FFFFFF', False, ass_serv=[124]),
     ]
 
