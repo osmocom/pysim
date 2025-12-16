@@ -267,11 +267,11 @@ class EF_SMSP(LinFixedEF):
                 raise ValueError
         def _encode(self, obj, context, path):
             if obj <= 12*60:
-                return obj/5 - 1
+                return obj // 5 - 1
             elif obj <= 24*60:
                 return 143 + ((obj - (12 * 60)) // 30)
             elif obj <= 30 * 24 * 60:
-                return 166 + (obj / (24 * 60))
+                return 166 + (obj // (24 * 60))
             elif obj <= 63 * 7 * 24 * 60:
                 return 192 + (obj // (7 * 24 * 60))
             else:
