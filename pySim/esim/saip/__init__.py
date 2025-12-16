@@ -144,6 +144,9 @@ class File:
     def file_size(self) -> Optional[int]:
         """Return the size of the file in bytes."""
         if self.file_type in ['LF', 'CY']:
+            if self._file_size and self.nb_rec is None and self.rec_len:
+                self.nb_rec = self._file_size // self.rec_len
+
             return self.nb_rec * self.rec_len
         elif self.file_type in ['TR', 'BT']:
             return self._file_size
