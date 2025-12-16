@@ -818,7 +818,7 @@ class FilesIsimOptional(ProfileTemplate):
     base_path = Path('ADF.ISIM')
     extends = FilesIsimMandatory
     files = [
-        FileTemplate(0x6f09, 'EF.P-CSCF',      'LF',    1, None,   2, None, None, True, ['size'], ass_serv=[1,5]),
+        FileTemplate(0x6f09, 'EF.P-CSCF',      'LF',    1, None,   2, None, None, True, ['size'], ass_serv=[1,5], pe_name='ef-pcscf'),
         FileTemplate(0x6f3c, 'EF.SMS',         'LF',   10,  176,   5, None, '00FF...FF', False, ass_serv=[6,8]),
         FileTemplate(0x6f42, 'EF.SMSP',        'LF',    1,   38,   5, None, 'FF...FF', False, ass_serv=[8]),
         FileTemplate(0x6f43, 'EF.SMSS',        'TR', None,    2,   5, None, 'FFFF', False, ass_serv=[6,8]),
