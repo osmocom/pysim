@@ -322,3 +322,37 @@ class AlgorithmID(AlgoConfig, key='algorithmID'):
         if self.input_value not in [1, 2, 3]:
             raise ValueError('Invalid algorithmID %s' % (self.input_value))
         self.value = self.input_value
+class MilenageRotationConstants(AlgoConfig, key='rotationConstants'):
+    """rotation constants r1,r2,r3,r4,r5 of Milenage, Range 0..127. See 3GPP TS 35.206 Sections 2.3 + 5.3.
+    Provided as octet-string concatenation of all 5 constants.  Expects a bytes-like object of length 5, with
+    each byte in the range of 0..127.  The default value by 3GPP is '4000204060' (hex notation)"""
+    def validate(self):
+        super().validate()
+        if len(self.input_value) != 5:
+            raise ValueError('Length of value must be 5 octets')
+        for r in self.input_value:
+            if r > 127:
+                raise ValueError('r values must be between 0 and 127')
+class MilenageXoringConstants(AlgoConfig, key='xoringConstants'):
+    """XOR-ing constants c1,c2,c3,c4,c5 of Milenage, 128bit each. See 3GPP TS 35.206 Sections 2.3 + 5.3.
+    Provided as octet-string concatenation of all 5 constants. The default value by 3GPP is the concetenation
+    of:
+     00000000000000000000000000000000
+     00000000000000000000000000000001
+     00000000000000000000000000000002
+     00000000000000000000000000000004
+     00000000000000000000000000000008
+    """
+    def validate(self):
+        super().validate()
+        if len(self.input_value) != 80:
+            raise ValueError('Length of value must be 80 octets')
+class TuakNumberOfKeccak(AlgoConfig, key='numberOfKeccak'):
+    """Number of iterations of Keccak-f[1600] permuitation as recomended by Section 7.2 of 3GPP TS 35.231.
+    The default value by 3GPP is 1."""
+    def validate(self):
+        if not isinstance(self.input_value, int):
+            raise ValueError('Value must be an integer')
+        if self.input_value < 1 or self.input_value > 255:
+            raise ValueError('Value must be an integer between 1 and 255')
+        self.value = self.input_value
