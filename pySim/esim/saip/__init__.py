@@ -144,6 +144,9 @@ class File:
     def file_size(self) -> Optional[int]:
         """Return the size of the file in bytes."""
         if self.file_type in ['LF', 'CY']:
+            if self._file_size and self.nb_rec is None and self.rec_len:
+                self.nb_rec = self._file_size // self.rec_len
+
             return self.nb_rec * self.rec_len
         elif self.file_type in ['TR', 'BT']:
             return self._file_size
@@ -291,6 +294,13 @@ class File:
         dfName = fileDescriptor.get('dfName', None)
         if dfName:
             self.df_name = dfName
+        dfName = fileDescriptor.get('dfName', None)
+        if dfName:
+            self.df_name = dfName
+        efFileSize = fileDescriptor.get('efFileSize', None)
+        if efFileSize:
+            self._file_size = self._decode_file_size(efFileSize)
+
         pefi = fileDescriptor.get('proprietaryEFInfo', {})
         securityAttributesReferenced = fileDescriptor.get('securityAttributesReferenced', None)
         if securityAttributesReferenced:
@@ -300,13 +310,11 @@ class File:
             fdb_dec = fd_dec['file_descriptor_byte']
             self.shareable = fdb_dec['shareable']
             if fdb_dec['file_type'] == 'working_ef':
-                efFileSize = fileDescriptor.get('efFileSize', None)
                 if fd_dec['num_of_rec']:
                     self.nb_rec = fd_dec['num_of_rec']
                 if fd_dec['record_len']:
                     self.rec_len = fd_dec['record_len']
                 if efFileSize:
-                    self._file_size = self._decode_file_size(efFileSize)
                     if self.rec_len and self.nb_rec == None:
                         # compute the number of records from file size and record length
                         self.nb_rec = self._file_size // self.rec_len
@@ -352,6 +360,9 @@ class File:
         fd = self.get_tuplelist_item(l, 'fileDescriptor')
         if not fd and not self._template_derived:
             raise ValueError("%s: No fileDescriptor found in tuple, and none set by template before" % self)
+        if self.name == "EF.SUCI_Calc_Info":
+            breakpoint()
+        #breakpoint()
         if fd:
             self.from_fileDescriptor(dict(fd))
         # BODY
@@ -387,20 +398,20 @@ class File:
         # Providing file content within "fillFileContent" / "fillFileOffset" shall have the same effect as
         # creating a file with a fill/repeat pattern and thereafter updating the content via Update.
         # Step 0: determine file size
-        file_size = self._file_size
-        for k, v in l:
-            if k != 'fileDescriptor':
-                continue
+        #file_size = self._file_size
+        #for k, v in l:
+        #    if k != 'fileDescriptor':
+        #        continue
 
-            file_desc = v
-            if 'efFileSize' in file_desc:
-                file_size = self._decode_file_size(file_desc['efFileSize'])
+        #    file_desc = v
+        #    if 'efFileSize' in file_desc:
+        #        file_size = self._decode_file_size(file_desc['efFileSize'])
 
         # Step 1: Fill with pattern from Fcp or Template
         if self.fill_pattern:
             stream.write(self.expand_fill_pattern())
         elif self.template and self.template.default_val:
-            stream.write(self.template.expand_default_value_pattern(file_size))
+            stream.write(self.template.expand_default_value_pattern(self.file_size))
         stream.seek(0)
         # then process the fillFileContent/fillFileOffset
         for k, v in l:
