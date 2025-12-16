@@ -96,7 +96,7 @@ class LinFixed_Test(unittest.TestCase):
                         inst = c()
                         encoded, rec_num, decoded = self._parse_t(t)
                         logging.debug("Testing encode of %s", name)
-                        re_enc = inst.encode_record_hex(decoded, rec_num)
+                        re_enc = inst.encode_record_hex(decoded, rec_num, len(encoded)//2)
                         self.assertEqual(encoded.upper(), re_enc.upper())
 
     def test_de_encode_record(self):
@@ -122,7 +122,7 @@ class LinFixed_Test(unittest.TestCase):
                         self.assertEqual(decoded, re_dec)
                         # re-encode the decoded data
                         logging.debug("Testing re-encode of %s", name)
-                        re_enc = inst.encode_record_hex(re_dec, rec_num)
+                        re_enc = inst.encode_record_hex(re_dec, rec_num, len(encoded)//2)
                         self.assertEqual(encoded.upper(), re_enc.upper())
                     if hasattr(c, '_test_no_pad') and c._test_no_pad:
                         continue
@@ -196,7 +196,7 @@ class TransRecEF_Test(unittest.TestCase):
                         self.assertEqual(decoded, re_dec)
                         # re-encode the decoded data
                         logging.debug("Testing re-encode of %s", name)
-                        re_enc = inst.encode_record_hex(re_dec)
+                        re_enc = inst.encode_record_hex(re_dec, len(encoded)//2)
                         self.assertEqual(encoded.upper(), re_enc.upper())
                     # there's no point in testing padded input, as TransRecEF have a fixed record
                     # size and we cannot ever receive more input data than that size.
@@ -256,7 +256,7 @@ class TransparentEF_Test(unittest.TestCase):
                         encoded = t[0]
                         decoded = t[1]
                         logging.debug("Testing encode of %s", name)
-                        re_enc = inst.encode_hex(decoded)
+                        re_enc = inst.encode_hex(decoded, len(encoded)//2)
                         self.assertEqual(encoded, re_enc)
 
     def test_de_encode_file(self):
@@ -280,7 +280,7 @@ class TransparentEF_Test(unittest.TestCase):
                         self.assertEqual(decoded, re_dec)
                         logging.debug("Testing re-encode of %s", name)
                         re_dec = inst.decode_hex(encoded)
-                        re_enc = inst.encode_hex(re_dec)
+                        re_enc = inst.encode_hex(re_dec, len(encoded)//2)
                         self.assertEqual(encoded.upper(), re_enc.upper())
                     if hasattr(c, '_test_no_pad') and c._test_no_pad:
                         continue
