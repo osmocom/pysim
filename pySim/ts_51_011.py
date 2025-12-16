@@ -243,7 +243,7 @@ class EF_SMSP(LinFixedEF):
     _test_decode = [
         ( '454e6574776f726b73fffffffffffffff1ffffffffffffffffffffffffffffffffffffffffffffffff0000a7',
           { "alpha_id": "ENetworks", "parameter_indicators": { "tp_dest_addr": False, "tp_sc_addr": True,
-                                                               "tp_pid": True, "tp_dcs": True, "tp_vp": True },
+                                                               "tp_pid": True, "tp_dcs": True, "tp_vp": False },
             "tp_dest_addr": { "length": 255, "ton_npi": { "ext": True, "type_of_number": "reserved_for_extension",
                                                           "numbering_plan_id": "reserved_for_extension" },
                               "call_number": "" },
@@ -281,8 +281,13 @@ class EF_SMSP(LinFixedEF):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(28, None), **kwargs)
         ScAddr = Struct('length'/Int8ub, 'ton_npi'/TonNpi, 'call_number'/BcdAdapter(Rpad(Bytes(10))))
         self._construct = Struct('alpha_id'/COptional(GsmOrUcs2Adapter(Rpad(Bytes(this._.total_len-28)))),
-                                 'parameter_indicators'/InvertAdapter(FlagsEnum(Byte, tp_dest_addr=1, tp_sc_addr=2,
-                                                                                tp_pid=3, tp_dcs=4, tp_vp=5)),
+                                 'parameter_indicators'/InvertAdapter(BitStruct(
+                                                                        Const(7, BitsInteger(3)),
+                                                                        'tp_vp'/Flag,
+                                                                        'tp_dcs'/Flag,
+                                                                        'tp_pid'/Flag,
+                                                                        'tp_sc_addr'/Flag,
+                                                                        'tp_dest_addr'/Flag)),
                                  'tp_dest_addr'/ScAddr,
                                  'tp_sc_addr'/ScAddr,
 
