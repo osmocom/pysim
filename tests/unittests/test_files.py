@@ -256,8 +256,8 @@ class TransparentEF_Test(unittest.TestCase):
                         encoded = t[0]
                         decoded = t[1]
                         logging.debug("Testing encode of %s", name)
-                        re_dec = inst.decode_hex(encoded)
-                        self.assertEqual(decoded, re_dec)
+                        re_enc = inst.encode_hex(decoded)
+                        self.assertEqual(encoded, re_enc)
 
     def test_de_encode_file(self):
         """Test the decoder and encoder for a transparent EF.  Performs first a decoder
