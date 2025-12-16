@@ -280,7 +280,7 @@ class EF_SMSP(LinFixedEF):
     def __init__(self, fid='6f42', sfid=None, name='EF.SMSP', desc='Short message service parameters', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(28, None), **kwargs)
         ScAddr = Struct('length'/Int8ub, 'ton_npi'/TonNpi, 'call_number'/BcdAdapter(Rpad(Bytes(10))))
-        self._construct = Struct('alpha_id'/COptional(GsmStringAdapter(Rpad(Bytes(this._.total_len-28)))),
+        self._construct = Struct('alpha_id'/COptional(GsmOrUcs2Adapter(Rpad(Bytes(this._.total_len-28)))),
                                  'parameter_indicators'/InvertAdapter(FlagsEnum(Byte, tp_dest_addr=1, tp_sc_addr=2,
                                                                                 tp_pid=3, tp_dcs=4, tp_vp=5)),
                                  'tp_dest_addr'/ScAddr,
