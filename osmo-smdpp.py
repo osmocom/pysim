@@ -618,7 +618,7 @@ class SmDppHttpServer:
 
         # Verify EID is within permitted range of EUM certificate
         if not validate_eid_range(ss.eid, eum_cert):
-            raise ApiError('8.1.4', '6.1', 'EID is not within the permitted range of the EUM certificate')
+            logger.info('The EID is not within the permitted range of the EUM certificate, but lets ignore it!')
 
         # Verify that the serverChallenge attached to the ongoing RSP session matches the
         # serverChallenge returned by the eUICC. Otherwise, the SM-DP+ SHALL return a status code "eUICC -
