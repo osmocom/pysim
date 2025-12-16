@@ -239,8 +239,17 @@ class EF_MSISDN(LinFixedEF):
 
 # TS 51.011 Section 10.5.6
 class EF_SMSP(LinFixedEF):
-    # FIXME: re-encode fails / missing alpha_id at start of output
-    _test_decode = [
+    _test_de_encode = [
+        ( '534d5343ffffffffffffffffffffffffe1ffffffffffffffffffffffff0891945197109099f9ffffff0000a9',
+          { "alpha_id": "SMSC", "parameter_indicators": { "tp_dest_addr": False, "tp_sc_addr": True,
+                                                          "tp_pid": True, "tp_dcs": True, "tp_vp": True },
+            "tp_dest_addr": { "length": 255, "ton_npi": { "ext": True, "type_of_number": "reserved_for_extension",
+                                                          "numbering_plan_id": "reserved_for_extension" },
+                              "call_number": "" },
+            "tp_sc_addr": { "length": 8, "ton_npi": { "ext": True, "type_of_number": "international",
+                                                      "numbering_plan_id": "isdn_e164" },
+                            "call_number": "4915790109999f" },
+            "tp_pid": b"\x00", "tp_dcs": b"\x00", "tp_vp_minutes": 4320 } ),
         ( '454e6574776f726b73fffffffffffffff1ffffffffffffffffffffffffffffffffffffffffffffffff0000a7',
           { "alpha_id": "ENetworks", "parameter_indicators": { "tp_dest_addr": False, "tp_sc_addr": True,
                                                                "tp_pid": True, "tp_dcs": True, "tp_vp": False },
