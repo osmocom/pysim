@@ -340,7 +340,7 @@ class MilenageXoringConstants(AlgoConfig, key='xoringConstants'):
             raise('Length of value must be 80 octets')
         super().validate()
 class TuakNumberOfKeccak(AlgoConfig, key='numberOfKeccak'):
-    """Number of iterations of Keccak-f[1600] permuitation as recomended by Section 7.2 of 3GPP TS 35.231"""
+    """Number of iterations of Keccak-f[1600] permutation as recomended by Section 7.2 of 3GPP TS 35.231"""
     def validate(self):
         if not isinstance(self.input_value, int):
             raise ValueError('Value must be an integer')
