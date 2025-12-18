@@ -108,7 +108,10 @@ class PySimLogger:
                 formatted_message = logging.Formatter.format(PySimLogger.__formatter, record)
             color = PySimLogger.colors.get(record.levelno)
             if color:
-                PySimLogger.print_callback(style(formatted_message, fg = color))
+                if type(color) is str:
+                    PySimLogger.print_callback(color + formatted_message + "\033[0m")
+                else:
+                    PySimLogger.print_callback(style(formatted_message, fg = color))
             else:
                 PySimLogger.print_callback(formatted_message)
 
