@@ -84,5 +84,5 @@ class PysharkGsmtapPcap(_PysharkGsmtap):
         Args:
             pcap_filename: File name of the pcap file to be opened
         """
-        pyshark_inst = pyshark.FileCapture(pcap_filename, display_filter='gsm_sim', use_json=True, keep_packets=False)
+        pyshark_inst = pyshark.FileCapture(pcap_filename, display_filter='gsm_sim || iso7816.atr', use_json=True, keep_packets=False)
         super().__init__(pyshark_inst)
