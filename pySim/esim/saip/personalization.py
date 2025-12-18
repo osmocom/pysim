@@ -391,7 +391,7 @@ class MilenageXoringConstants(AlgoConfig, key='xoringConstants'):
         if len(self.input_value) != 80:
             raise ValueError('Length of value must be 80 octets')
 class TuakNumberOfKeccak(AlgoConfig, key='numberOfKeccak'):
-    """Number of iterations of Keccak-f[1600] permuitation as recomended by Section 7.2 of 3GPP TS 35.231.
+    """Number of iterations of Keccak-f[1600] permutation as recomended by Section 7.2 of 3GPP TS 35.231.
     The default value by 3GPP is 1."""
     def validate(self):
         if not isinstance(self.input_value, int):
