@@ -40,6 +40,7 @@ from osmocom.utils import *
 from osmocom.construct import *
 
 from pySim.utils import dec_iccid, enc_iccid, dec_imsi, enc_imsi, dec_plmn, enc_plmn, dec_xplmn_w_act
+from pySim.utils import bytes_for_nibbles
 from pySim.profile import CardProfile, CardProfileAddon
 from pySim.filesystem import *
 from pySim.ts_31_102_telecom import DF_PHONEBOOK, DF_MULTIMEDIA, DF_MCS, DF_V2X
@@ -286,9 +287,18 @@ class EF_SMSP(LinFixedEF):
             else:
                 raise ValueError
 
+    @staticmethod
+    def sc_addr_len(ctx):
+        """Compute the length field for an address field (like TP-DestAddr or TP-ScAddr)."""
+        if not hasattr(ctx, 'call_number') or len(ctx.call_number) == 0:
+            return 0xff
+        else:
+            return bytes_for_nibbles(len(ctx.call_number)) + 1
+
     def __init__(self, fid='6f42', sfid=None, name='EF.SMSP', desc='Short message service parameters', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(28, None), **kwargs)
-        ScAddr = Struct('length'/Int8ub, 'ton_npi'/TonNpi, 'call_number'/BcdAdapter(Rpad(Bytes(10))))
+        ScAddr = Struct('length'/Rebuild(Int8ub, lambda ctx: EF_SMSP.sc_addr_len(ctx)),
+                        'ton_npi'/TonNpi, 'call_number'/BcdAdapter(Rpad(Bytes(10))))
         self._construct = Struct('alpha_id'/COptional(GsmOrUcs2Adapter(Rpad(Bytes(this._.total_len-28)))),
                                  'parameter_indicators'/InvertAdapter(BitStruct(
                                                                         Const(7, BitsInteger(3)),
