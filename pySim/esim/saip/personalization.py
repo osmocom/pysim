@@ -22,6 +22,7 @@ from typing import List, Tuple
 from osmocom.tlv import camel_to_snake
 from pySim.utils import enc_iccid, enc_imsi, h2b, rpad, sanitize_iccid
 from pySim.esim.saip import ProfileElement, ProfileElementSequence
+from pySim.ts_51_011 import EF_SMSP
 
 def remove_unwanted_tuples_from_list(l: List[Tuple], unwanted_keys: List[str]) -> List[Tuple]:
     """In a list of tuples, remove all tuples whose first part equals 'unwanted_key'."""
@@ -104,6 +105,48 @@ class Imsi(ConfigurableParameter):
             file_replace_content(pe.decoded['ef-acc'], acc.to_bytes(2, 'big'))
         # TODO: DF.GSM_ACCESS if not linked?
 
+class SmspTpScAddr(ConfigurableParameter):
+    """Configurable SMSC (SMS Service Centre) TP-SC-ADDR. Expects to be a phone number in national or
+    international format (designated by a leading +). Automatically sets the NPI to E.164 and the TON based on
+    presence or absence of leading +"""
+
+    def validate(self):
+        addr_str = str(self.input_value)
+        if addr_str[0] == '+':
+            digits = addr_str[1:]
+            international = True
+        else:
+            digits = addr_str
+            international = False
+        if len(digits) > 20:
+            raise ValueError('TP-SC-ADDR must not exceed 20 digits')
+        if not digits.isdecimal():
+            raise ValueError('TP-SC-ADDR must only contain decimal digits')
+        self.value = (international, digits)
+
+    def apply(self, pes: ProfileElementSequence):
+        international, digits = self.value
+        for pe in pes.get_pes_for_type('usim'):
+            # obtain the File instance from the ProfileElementUSIM
+            f_smsp = pe.files['ef-smsp']
+            #print("SMSP (orig): %s" % f_smsp.body)
+            # instantiate the pySim.ts_51_011.EF_SMSP class for decode/encode
+            ef_smsp = EF_SMSP()
+            # decode the existing file body
+            ef_smsp_dec = ef_smsp.decode_record_bin(f_smsp.body, 1)
+            # patch the actual number
+            ef_smsp_dec['tp_sc_addr']['call_number'] = digits
+            # patch the NPI to isdn_e164
+            ef_smsp_dec['tp_sc_addr']['ton_npi']['numbering_plan_id'] = 'isdn_e164'
+            # patch the TON to international or unknown depending on +
+            ef_smsp_dec['tp_sc_addr']['ton_npi']['type_of_number'] = 'international' if international else 'unknown'
+            # ensure the parameter_indicators.tp_sc_addr is True
+            ef_smsp_dec['parameter_indicators']['tp_sc_addr'] = True
+            # re-encode into the File body
+            f_smsp.body = ef_smsp.encode_record_bin(ef_smsp_dec, 1)
+            #print("SMSP  (new): %s" % f_smsp.body)
+            # re-generate the pe.decoded member from the File instance
+            pe.file2pe(f_smsp)
 
 class SdKey(ConfigurableParameter, metaclass=ClassVarMeta):
     """Configurable Security Domain (SD) Key.  Value is presented as bytes."""
