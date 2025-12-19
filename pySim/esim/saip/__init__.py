@@ -1789,7 +1789,7 @@ class ProfileElementSequence:
             return None
 
     @staticmethod
-    def peclass_for_path(path: Path) -> Optional[ProfileElement]:
+    def peclass_for_path(path: Path) -> Tuple[Optional[ProfileElement], Optional[templates.FileTemplate]]:
         """Return the ProfileElement class that can contain a file with given path."""
         naa = ProfileElementSequence.naa_for_path(path)
         if naa:
@@ -1822,7 +1822,7 @@ class ProfileElementSequence:
                 return ProfileElementTelecom, ft
         return ProfileElementGFM, None
 
-    def pe_for_path(self, path: Path) -> Optional[ProfileElement]:
+    def pe_for_path(self, path: Path) -> Tuple[Optional[ProfileElement], Optional[templates.FileTemplate]]:
         """Return the ProfileElement instance that can contain a file with matching path. This will
         either be an existing PE within the sequence, or it will be a newly-allocated PE that is
         inserted into the sequence."""
