@@ -25,7 +25,7 @@ setup(
         "jsonpath-ng",
         "construct >= 2.10.70",
         "bidict",
-        "pyosmocom >= 0.0.9",
+        "pyosmocom >= 0.0.12",
         "pyyaml >= 5.1",
         "termcolor",
         "colorlog",

@@ -249,7 +249,7 @@ class EF_SMSP(LinFixedEF):
                               "call_number": "" },
             "tp_sc_addr": { "length": 8, "ton_npi": { "ext": True, "type_of_number": "international",
                                                       "numbering_plan_id": "isdn_e164" },
-                            "call_number": "4915790109999f" },
+                            "call_number": "4915790109999" },
             "tp_pid": b"\x00", "tp_dcs": b"\x00", "tp_vp_minutes": 4320 } ),
         ( '454e6574776f726b73fffffffffffffff1ffffffffffffffffffffffffffffffffffffffffffffffff0000a7',
           { "alpha_id": "ENetworks", "parameter_indicators": { "tp_dest_addr": False, "tp_sc_addr": True,
@@ -298,7 +298,7 @@ class EF_SMSP(LinFixedEF):
     def __init__(self, fid='6f42', sfid=None, name='EF.SMSP', desc='Short message service parameters', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(28, None), **kwargs)
         ScAddr = Struct('length'/Rebuild(Int8ub, lambda ctx: EF_SMSP.sc_addr_len(ctx)),
-                        'ton_npi'/TonNpi, 'call_number'/BcdAdapter(Rpad(Bytes(10))))
+                        'ton_npi'/TonNpi, 'call_number'/PaddedBcdAdapter(Rpad(Bytes(10))))
         self._construct = Struct('alpha_id'/COptional(GsmOrUcs2Adapter(Rpad(Bytes(this._.total_len-28)))),
                                  'parameter_indicators'/InvertAdapter(BitStruct(
                                                                         Const(7, BitsInteger(3)),
