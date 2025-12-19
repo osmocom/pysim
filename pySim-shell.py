@@ -519,8 +519,17 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_version(self, opts):
         """Print the pySim software version."""
-        import pkg_resources
-        self.poutput(pkg_resources.get_distribution('pySim'))
+        from importlib.metadata import version as vsn
+        self.poutput("pyosmocom " + vsn('pyosmocom'))
+        import os
+        cwd = os.path.dirname(os.path.realpath(__file__))
+        if os.path.isdir(os.path.join(cwd, ".git")):
+            import subprocess
+            url = subprocess.check_output(['git', 'config', '--get', 'remote.origin.url']).decode('ascii').strip()
+            version = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=cwd).decode('ascii').strip()
+            self.poutput(os.path.basename(url) + " " + version)
+        else:
+            self.poutput("pySim " + vsn('pySim'))
 
 @with_default_category('pySim Commands')
 class PySimCommands(CommandSet):
