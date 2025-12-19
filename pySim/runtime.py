@@ -116,7 +116,7 @@ class RuntimeState:
             for a in aids_unknown:
                 log.info(" unknown: %s (EF.DIR)" % a)
         else:
-            log.warn("EF.DIR seems to be empty!")
+            log.warning("EF.DIR seems to be empty!")
 
         # Some card applications may not be registered in EF.DIR, we will actively
         # probe for those applications
@@ -557,8 +557,8 @@ class RuntimeLchan:
             raise TypeError("Data length (%u) exceeds %s size (%u) by %u bytes" %
                             (data_len, writeable_name, writeable_size, data_len - writeable_size))
         elif data_len < writeable_size:
-            log.warn("Data length (%u) less than %s size (%u), leaving %u unwritten bytes at the end of the %s" %
-                     (data_len, writeable_name, writeable_size, writeable_size - data_len, writeable_name))
+            log.warning("Data length (%u) less than %s size (%u), leaving %u unwritten bytes at the end of the %s" %
+                        (data_len, writeable_name, writeable_size, writeable_size - data_len, writeable_name))
 
     def update_binary(self, data_hex: str, offset: int = 0):
         """Update transparent EF binary data.
