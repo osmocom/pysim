@@ -486,17 +486,17 @@ class EF_UST(EF_UServiceTable):
 # TS 31.103 Section 4.2.7 - *not* the same as DF.GSM/EF.ECC!
 class EF_ECC(LinFixedEF):
     _test_de_encode = [
-        ( '19f1ff01', { "call_code": "911f",
+        ( '19f1ff01', { "call_code": "911",
                         "service_category": { "police": True, "ambulance": False, "fire_brigade": False,
                                               "marine_guard": False, "mountain_rescue": False,
                                               "manual_ecall": False, "automatic_ecall": False } } ),
-        ( '19f3ff02', { "call_code": "913f",
+        ( '19f3ff02', { "call_code": "913",
                         "service_category": { "police": False, "ambulance": True, "fire_brigade": False,
                                               "marine_guard": False, "mountain_rescue": False,
                                               "manual_ecall": False, "automatic_ecall": False } } ),
     ]
     _test_no_pad = True
-    cc_construct = BcdAdapter(Rpad(Bytes(3)))
+    cc_construct = PaddedBcdAdapter(Rpad(Bytes(3)))
     category_construct = FlagsEnum(Byte, police=1, ambulance=2, fire_brigade=3, marine_guard=4,
                                    mountain_rescue=5, manual_ecall=6, automatic_ecall=7)
     alpha_construct = GsmOrUcs2Adapter(Rpad(GreedyBytes))
