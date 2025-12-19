@@ -1888,7 +1888,10 @@ class ProfileElementSequence:
 
 
 class FsNode:
-    """A node in the filesystem hierarchy."""
+    """A node in the filesystem hierarchy. Each node can have a parent node and any number of children.
+    Each node is identified uniquely within the parent by its numeric FID and its optional human-readable
+    name.  Each node usually is associated with an instance of the File class for the actual content of
+    the file.  FsNode is the base class used by more  specific nodes, such as FsNode{EF,DF,ADF,MF}."""
     def __init__(self, fid: int, parent: Optional['FsNode'], file: Optional[File] = None,
                  name: Optional[str] = None):
         self.fid = fid
