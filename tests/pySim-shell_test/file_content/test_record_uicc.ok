@@ -19,7 +19,7 @@
             "type_of_number": "reserved_for_extension",
             "numbering_plan_id": "reserved_for_extension"
         },
-        "dialing_nr": "123456",
+        "dialing_nr": "1234567",
         "cap_conf_id": 42,
         "ext4_record_id": 23
     },
@@ -67,7 +67,7 @@
             "type_of_number": "reserved_for_extension",
             "numbering_plan_id": "reserved_for_extension"
         },
-        "dialing_nr": "123456",
+        "dialing_nr": "1234567",
         "cap_conf_id": 42,
         "ext4_record_id": 23
     },
@@ -127,7 +127,7 @@
             "type_of_number": "reserved_for_extension",
             "numbering_plan_id": "reserved_for_extension"
         },
-        "dialing_nr": "123456",
+        "dialing_nr": "1234567",
         "cap_conf_id": 42,
         "ext4_record_id": 23
     }
@@ -140,7 +140,7 @@
         "type_of_number": "reserved_for_extension",
         "numbering_plan_id": "reserved_for_extension"
     },
-    "dialing_nr": "123456",
+    "dialing_nr": "1234567",
     "cap_conf_id": 42,
     "ext4_record_id": 23
 }

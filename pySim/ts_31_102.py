@@ -596,7 +596,7 @@ class EF_ICI(CyclicEF):
         self._construct = Struct('alpha_id'/Bytes(this._.total_len-28),
                                  'len_of_bcd_contents'/Int8ub,
                                  'ton_npi'/Int8ub,
-                                 'call_number'/BcdAdapter(Bytes(10)),
+                                 'call_number'/PaddedBcdAdapter(Rpad(Bytes(10))),
                                  'cap_cfg2_record_id'/Int8ub,
                                  'ext5_record_id'/Int8ub,
                                  'date_and_time'/BcdAdapter(Bytes(7)),
@@ -612,7 +612,7 @@ class EF_OCI(CyclicEF):
         self._construct = Struct('alpha_id'/Bytes(this._.total_len-27),
                                  'len_of_bcd_contents'/Int8ub,
                                  'ton_npi'/Int8ub,
-                                 'call_number'/BcdAdapter(Bytes(10)),
+                                 'call_number'/PaddedBcdAdapter(Rpad(Bytes(10))),
                                  'cap_cfg2_record_id'/Int8ub,
                                  'ext5_record_id'/Int8ub,
                                  'date_and_time'/BcdAdapter(Bytes(7)),
@@ -1118,7 +1118,7 @@ class EF_Routing_Indicator(TransparentEF):
         # responsibility of home network operator but BCD coding shall be used. If a network
         # operator decides to assign less than 4 digits to Routing Indicator, the remaining digits
         # shall be coded as "1111" to fill the 4 digits coding of Routing Indicator
-        self._construct = Struct('routing_indicator'/Rpad(BcdAdapter(Bytes(2)), 'f', 2),
+        self._construct = Struct('routing_indicator'/PaddedBcdAdapter(Rpad(Bytes(2))),
                                  'rfu'/Bytes(2))
 
 # TS 31.102 Section 4.4.11.13 (Rel 16)

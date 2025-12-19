@@ -152,7 +152,7 @@ class EF_ADN(LinFixedEF):
         self._construct = Struct('alpha_id'/COptional(GsmOrUcs2Adapter(Rpad(Bytes(this._.total_len-14)))),
                                  'len_of_bcd'/Int8ub,
                                  'ton_npi'/TonNpi,
-                                 'dialing_nr'/ExtendedBcdAdapter(BcdAdapter(Rpad(Bytes(10)))),
+                                 'dialing_nr'/ExtendedBcdAdapter(PaddedBcdAdapter(Rpad(Bytes(10)))),
                                  'cap_conf_id'/Int8ub,
                                  ext_name/Int8ub)
 
@@ -193,11 +193,11 @@ class EF_MSISDN(LinFixedEF):
         ( 'ffffffffffffffffffffffffffffffffffffffff04b12143f5ffffffffffffffffff',
             {"alpha_id": "", "len_of_bcd": 4, "ton_npi": {"ext": True, "type_of_number": "network_specific",
                                                           "numbering_plan_id": "isdn_e164"},
-             "dialing_nr": "12345f"}),
+             "dialing_nr": "12345"}),
         ( '456967656e65205275666e756d6d6572ffffffff0891947172199181f3ffffffffff',
             {"alpha_id": "Eigene Rufnummer", "len_of_bcd": 8, "ton_npi": {"ext": True, "type_of_number": "international",
                                                                           "numbering_plan_id": "isdn_e164"},
-             "dialing_nr": "4917279119183f"}),
+             "dialing_nr": "4917279119183"}),
     ]
 
     # Ensure deprecated representations still work
@@ -215,7 +215,7 @@ class EF_MSISDN(LinFixedEF):
         self._construct = Struct('alpha_id'/COptional(GsmOrUcs2Adapter(Rpad(Bytes(this._.total_len-14)))),
                                  'len_of_bcd'/Int8ub,
                                  'ton_npi'/TonNpi,
-                                 'dialing_nr'/ExtendedBcdAdapter(BcdAdapter(Rpad(Bytes(10)))),
+                                 'dialing_nr'/ExtendedBcdAdapter(PaddedBcdAdapter(Rpad(Bytes(10)))),
                                   Padding(2, pattern=b'\xff'))
 
     # Maintain compatibility with deprecated representations
@@ -661,12 +661,12 @@ class EF_AD(TransparentEF):
 # TS 51.011 Section 10.3.20 / 10.3.22
 class EF_VGCS(TransRecEF):
     _test_de_encode = [
-            ( "92f9ffff", "299fffff" ),
+            ( "92f9ffff", "299" ),
         ]
     def __init__(self, fid='6fb1', sfid=None, name='EF.VGCS', size=(4, 200), rec_len=4,
                  desc='Voice Group Call Service', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
-        self._construct = BcdAdapter(Bytes(4))
+        self._construct = PaddedBcdAdapter(Rpad(Bytes(4)))
 
 # TS 51.011 Section 10.3.21 / 10.3.23
 class EF_VGCSS(TransparentEF):
