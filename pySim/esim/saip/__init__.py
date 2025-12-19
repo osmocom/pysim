@@ -633,8 +633,15 @@ class FsProfileElement(ProfileElement):
                     self.pe_sequence.cur_df = pe_df
                 self.pe_sequence.cur_df = self.pe_sequence.cur_df.add_file(file)
 
+    def file2pe(self, file: File):
+        """Update the "decoded" member for the given file with the contents from the given File instance.
+        We expect that the File instance is part of self.files"""
+        if self.files[file.pe_name] != file:
+            raise ValueError("The file you passed is not part of this ProfileElement")
+        self.decoded[file.pe_name] = file.to_tuples()
+
     def files2pe(self):
-        """Update the "decoded" member with the contents of the "files" member."""
+        """Update the "decoded" member for each file with the contents of the "files" member."""
         for k, f in self.files.items():
             self.decoded[k] = f.to_tuples()
 
