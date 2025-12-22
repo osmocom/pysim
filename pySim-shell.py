@@ -1138,7 +1138,7 @@ global_group.add_argument("--verbose", help="Enable verbose logging",
 
 card_key_group = option_parser.add_argument_group('Card Key Provider Options')
 card_key_group.add_argument('--csv', metavar='FILE',
-                            default=str(Path.home()) + "/.osmocom/pysim/card_data.csv",
+                            default="~/.osmocom/pysim/card_data.csv",
                             help='Read card data from CSV file')
 card_key_group.add_argument('--csv-column-key', metavar='FIELD:AES_KEY_HEX', default=[], action='append',
                             help=argparse.SUPPRESS, dest='column_key')
@@ -1177,8 +1177,8 @@ if __name__ == '__main__':
     for par in opts.column_key:
         name, key = par.split(':')
         column_keys[name] = key
-    if os.path.isfile(opts.csv):
-        card_key_provider_register(CardKeyProviderCsv(opts.csv, column_keys))
+    if os.path.isfile(os.path.expanduser(opts.csv)):
+        card_key_provider_register(CardKeyProviderCsv(os.path.expanduser(opts.csv), column_keys))
 
     # Init card reader driver
     sl = init_reader(opts, proactive_handler = Proact())
