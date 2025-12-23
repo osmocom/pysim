@@ -1164,7 +1164,7 @@ if __name__ == '__main__':
 
     # Ensure that we are able to print formatted warnings from the beginning.
     PySimLogger.setup(print, {logging.WARN: YELLOW})
-    if (opts.verbose):
+    if opts.verbose:
         PySimLogger.set_verbose(True)
         PySimLogger.set_level(logging.DEBUG)
     else:
