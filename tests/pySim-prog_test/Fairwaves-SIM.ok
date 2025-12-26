@@ -6,6 +6,7 @@ IMSI: 001010000000111
 GID1: ffffffffffffffff
 GID2: ffffffffffffffff
 SMSP: e1ffffffffffffffffffffffff0581005155f5ffffffffffff000000ffffffffffffffffffffffffffff
+SMSC: 0015555
 SPN: Fairwaves
 Show in HPLMN: False
 Hide in OPLMN: False

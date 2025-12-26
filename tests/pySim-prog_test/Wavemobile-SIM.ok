@@ -6,6 +6,7 @@ IMSI: 001010000000102
 GID1: Can't read file -- SW match failed! Expected 9000 and got 6a82.
 GID2: Can't read file -- SW match failed! Expected 9000 and got 6a82.
 SMSP: e1ffffffffffffffffffffffff0581005155f5ffffffffffff000000ffffffffffffffffffffffffffff
+SMSC: 0015555
 SPN: wavemobile
 Show in HPLMN: False
 Hide in OPLMN: False

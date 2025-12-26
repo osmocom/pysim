@@ -44,6 +44,7 @@ from pySim.exceptions import SwMatchError
 from pySim.legacy.cards import card_detect, SimCard, UsimCard, IsimCard
 from pySim.utils import dec_imsi, dec_iccid
 from pySim.legacy.utils import format_xplmn_w_act, dec_st, dec_msisdn
+from pySim.ts_51_011 import EF_SMSP
 
 option_parser = argparse.ArgumentParser(description='Legacy tool for reading some parts of a SIM card',
                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -141,6 +142,15 @@ if __name__ == '__main__':
     (res, sw) = card.read_record('SMSP', 1)
     if sw == '9000':
         print("SMSP: %s" % (res,))
+        ef_smsp = EF_SMSP()
+        smsc_a = ef_smsp.decode_record_bin(h2b(res), 1).get('tp_sc_addr', {})
+        smsc_n = smsc_a.get('call_number', None)
+        if smsc_a.get('ton_npi', {}).get('type_of_number', None) == 'international' and smsc_n is not None:
+            smsc = '+' + smsc_n
+        else:
+            smsc = smsc_n
+        if smsc is not None:
+            print("SMSC: %s" % (smsc,))
     else:
         print("SMSP: Can't read, response code = %s" % (sw,))
 

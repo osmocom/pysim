@@ -6,6 +6,7 @@ IMSI: 001010000000102
 GID1: Can't read file -- SW match failed! Expected 9000 and got 9404.
 GID2: Can't read file -- SW match failed! Expected 9000 and got 9404.
 SMSP: ffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff000000
+SMSC: 0015555
 SPN: Not available
 Show in HPLMN: False
 Hide in OPLMN: False
