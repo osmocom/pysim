@@ -1585,7 +1585,12 @@ class GialerSim(UsimCard):
             'ki': self.update_ki,
             'opc': self.update_opc,
             'fplmn': self.update_fplmn,
+            'name': self.update_spn_wrapper,
         }
+
+    def update_spn_wrapper(self, name):
+        """Wrapper to call update_spn with default display settings"""
+        return self.update_spn(name, show_in_hplmn=False, hide_in_oplmn=False)
 
     @classmethod
     def autodetect(cls, scc):
