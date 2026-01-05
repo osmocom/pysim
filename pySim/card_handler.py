@@ -7,7 +7,7 @@ there are also automatic card feeders.
 """
 
 #
-# (C) 2019 by Sysmocom s.f.m.c. GmbH
+# (C) 2019 by sysmocom - s.f.m.c. GmbH
 # All Rights Reserved
 #
 # This program is free software: you can redistribute it and/or modify

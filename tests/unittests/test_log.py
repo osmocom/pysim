@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# (C) 2025 by Sysmocom s.f.m.c. GmbH
+# (C) 2025 by sysmocom - s.f.m.c. GmbH
 # All Rights Reserved
 #
 # Author: Philipp Maier <pmaier@sysmocom.de>

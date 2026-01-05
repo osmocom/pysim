@@ -10,7 +10,7 @@ the need of manually entering the related card-individual data on every
 operation with pySim-shell.
 """
 
-# (C) 2021-2025 by Sysmocom s.f.m.c. GmbH
+# (C) 2021-2025 by sysmocom - s.f.m.c. GmbH
 # All Rights Reserved
 #
 # Author: Philipp Maier, Harald Welte

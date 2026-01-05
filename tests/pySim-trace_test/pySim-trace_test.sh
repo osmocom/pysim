@@ -2,7 +2,7 @@
 
 # Utility to verify the functionality of pySim-trace.py
 #
-# (C) 2023 by Sysmocom s.f.m.c. GmbH
+# (C) 2023 by sysmocom - s.f.m.c. GmbH
 # All Rights Reserved
 #
 # Author: Philipp Maier
