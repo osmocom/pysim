@@ -79,6 +79,30 @@ class DecTestCase(unittest.TestCase):
 	def testDecMNCfromPLMN_unused_str(self):
 		self.assertEqual(utils.dec_mnc_from_plmn_str("00f0ff"), "")
 
+	def testEncImsi(self):
+		#Type IMSI, odd number of identity digits
+		self.assertEqual(utils.enc_imsi("228062800000208"), "082982608200002080")
+		self.assertEqual(utils.enc_imsi("001010000123456"), "080910100000214365")
+		self.assertEqual(utils.enc_imsi("0010100001234"), "0709101000002143ff")
+
+		#Type IMSI, even number of identity digits
+		self.assertEqual(utils.enc_imsi("22806280000028"), "0821826082000020f8")
+		self.assertEqual(utils.enc_imsi("00101000012345"), "0801101000002143f5")
+		self.assertEqual(utils.enc_imsi("001010000123"), "07011010000021f3ff")
+
+	def testDecImsi(self):
+		#Type IMSI, odd number of identity digits
+		self.assertEqual(utils.dec_imsi("082982608200002080"), "228062800000208")
+		self.assertEqual(utils.dec_imsi("080910100000214365"), "001010000123456")
+		self.assertEqual(utils.dec_imsi("0709101000002143ff"), "0010100001234")
+		self.assertEqual(utils.dec_imsi("0709101000002143"), "0010100001234")
+
+		#Type IMSI, even number of identity digits
+		self.assertEqual(utils.dec_imsi("0821826082000020f8"), "22806280000028")
+		self.assertEqual(utils.dec_imsi("0801101000002143f5"), "00101000012345")
+		self.assertEqual(utils.dec_imsi("07011010000021f3ff"), "001010000123")
+		self.assertEqual(utils.dec_imsi("07011010000021f3"), "001010000123")
+
 	def test_enc_plmn(self):
 		with self.subTest("2-digit MCC"):
 			self.assertEqual(utils.enc_plmn("001", "01F"), "00F110")
