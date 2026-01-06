@@ -1,4 +1,5 @@
 # coding=utf-8
+
 """Representation of the runtime state of an application like pySim-shell.
 """
 
