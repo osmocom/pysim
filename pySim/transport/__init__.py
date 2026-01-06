@@ -3,18 +3,6 @@
 """ pySim: PCSC reader transport link base
 """
 
-import os
-import abc
-import argparse
-from typing import Optional, Tuple
-from construct import Construct
-from osmocom.utils import b2h, h2b, i2h, Hexstr
-
-from pySim.exceptions import *
-from pySim.utils import SwHexstr, SwMatchstr, ResTuple, sw_match, parse_command_apdu
-from pySim.cat import ProactiveCommand, CommandDetails, DeviceIdentities, Result
-
-#
 # Copyright (C) 2009-2010  Sylvain Munaut <tnt@246tNt.com>
 # Copyright (C) 2021-2023 Harald Welte <laforge@osmocom.org>
 #
@@ -30,8 +18,17 @@ from pySim.cat import ProactiveCommand, CommandDetails, DeviceIdentities, Result
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 
+import os
+import abc
+import argparse
+from typing import Optional, Tuple
+from construct import Construct
+from osmocom.utils import b2h, h2b, i2h, Hexstr
+
+from pySim.exceptions import *
+from pySim.utils import SwHexstr, SwMatchstr, ResTuple, sw_match, parse_command_apdu
+from pySim.cat import ProactiveCommand, CommandDetails, DeviceIdentities, Result
 
 class ApduTracer:
     def trace_command(self, cmd):
