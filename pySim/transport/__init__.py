@@ -29,6 +29,9 @@ from osmocom.utils import b2h, h2b, i2h, Hexstr
 from pySim.exceptions import *
 from pySim.utils import SwHexstr, SwMatchstr, ResTuple, sw_match, parse_command_apdu
 from pySim.cat import ProactiveCommand, CommandDetails, DeviceIdentities, Result
+from pySim.log import PySimLogger
+
+log = PySimLogger.get(__name__)
 
 class ApduTracer:
     def trace_command(self, cmd):
@@ -43,11 +46,11 @@ class ApduTracer:
 class StdoutApduTracer(ApduTracer):
     """Minimalistic APDU tracer, printing commands to stdout."""
     def trace_response(self, cmd, sw, resp):
-        print("-> %s %s" % (cmd[:10], cmd[10:]))
-        print("<- %s: %s" % (sw, resp))
+        log.info("-> %s %s", cmd[:10], cmd[10:])
+        log.info("<- %s: %s", sw, resp)
 
     def trace_reset(self):
-        print("-- RESET")
+        log.info("-- RESET")
 
 class ProactiveHandler(abc.ABC):
     """Abstract base class representing the interface of some code that handles
@@ -174,7 +177,7 @@ class LinkBase(abc.ABC):
             if self.apdu_strict:
                 raise ValueError(exeption_str)
             else:
-                print('Warning: %s' % exeption_str)
+                log.warning(exeption_str)
 
         return (data, sw)
 
@@ -208,7 +211,7 @@ class LinkBase(abc.ABC):
             # parse the proactive command
             pcmd = ProactiveCommand()
             parsed = pcmd.from_tlv(h2b(fetch_rv[0]))
-            print("FETCH: %s (%s)" % (fetch_rv[0], type(parsed).__name__))
+            log.info("FETCH: %s (%s)", fetch_rv[0], type(parsed).__name__)
             if self.proactive_handler:
                 # Extension point: If this does return a list of TLV objects,
                 # they could be appended after the Result; if the first is a
@@ -358,13 +361,13 @@ def init_reader(opts, **kwargs) -> LinkBase:
         from pySim.transport.modem_atcmd import ModemATCommandLink
         sl = ModemATCommandLink(opts, **kwargs)
     else:  # Serial reader is default
-        print("No reader/driver specified; falling back to default (Serial reader)")
+        log.warning("No reader/driver specified; falling back to default (Serial reader)")
         from pySim.transport.serial import SerialSimLink
         sl = SerialSimLink(opts, **kwargs)
 
     if os.environ.get('PYSIM_INTEGRATION_TEST') == "1":
-        print("Using %s reader interface" % (sl.name))
+        log.info("Using %s reader interface" % (sl.name))
     else:
-        print("Using reader %s" % sl)
+        log.info("Using reader %s" % sl)
 
     return sl
