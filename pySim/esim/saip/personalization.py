@@ -775,7 +775,7 @@ class SdKey(BinaryParam):
                 return
 
             # leaf node. create a new class with all the accumulated vals
-            parts = [name, f'{kvn:02x}',] + labels
+            parts = [name, f'KVN{kvn:02x}',] + labels
             cls_label = '-'.join(p for p in parts if p)
 
             parts = ['Sd', 'Key', name, f'Kvn{kvn:02x}'] + labels
