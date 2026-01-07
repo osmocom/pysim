@@ -640,12 +640,14 @@ class SmspTpScAddr(ConfigurableParameter):
             yield (international, digits)
 
 
-class SdKey(BinaryParam, metaclass=ClassVarMeta):
-    """Configurable Security Domain (SD) Key.  Value is presented as bytes."""
+class SdKey(BinaryParam):
+    """Configurable Security Domain (SD) Key.  Value is presented as bytes.
+       Non-abstract implementations are generated in SdKey.generate_sd_key_classes"""
     # these will be set by subclasses
     key_type = None
-    key_id = None
     kvn = None
+    reserved_kvn = tuple() # tuple of all reserved kvn for a given SCPxx
+    key_id = None
     key_usage_qual = None
 
     @classmethod
@@ -663,7 +665,7 @@ class SdKey(BinaryParam, metaclass=ClassVarMeta):
                 key = SecurityDomainKey(
                         key_version_number=cls.kvn,
                         key_id=cls.key_id,
-                        key_usage_qualifier=KeyUsageQualifier.build(cls.key_usage_qual),
+                        key_usage_qualifier=cls.key_usage_qual,
                         key_components=set_components,
                         )
                 pe.add_key(key)
@@ -684,60 +686,155 @@ class SdKey(BinaryParam, metaclass=ClassVarMeta):
             if kc:
                 yield { cls.name: b2h(kc) }
 
-class SdKeyScp80_01(SdKey, kvn=0x01, key_type=0x88, permitted_len=[16,24,32]): # AES key type
-    pass
-class SdKeyScp80_01Kic(SdKeyScp80_01, key_id=0x01, key_usage_qual=0x18): # FIXME: ordering?
-    pass
-class SdKeyScp80_01Kid(SdKeyScp80_01, key_id=0x02, key_usage_qual=0x14):
-    pass
-class SdKeyScp80_01Kik(SdKeyScp80_01, key_id=0x03, key_usage_qual=0x48):
-    pass
 
-class SdKeyScp81_01(SdKey, kvn=0x81): # FIXME
-    pass
-class SdKeyScp81_01Psk(SdKeyScp81_01, key_id=0x01, key_type=0x85, key_usage_qual=0x3C):
-    pass
-class SdKeyScp81_01Dek(SdKeyScp81_01, key_id=0x02, key_type=0x88, key_usage_qual=0x48):
-    pass
+    NO_OP = (('', {}))
 
-class SdKeyScp02_20(SdKey, kvn=0x20, key_type=0x88, permitted_len=[16,24,32]): # AES key type
-    pass
-class SdKeyScp02_20Enc(SdKeyScp02_20, key_id=0x01, key_usage_qual=0x18):
-    pass
-class SdKeyScp02_20Mac(SdKeyScp02_20, key_id=0x02, key_usage_qual=0x14):
-    pass
-class SdKeyScp02_20Dek(SdKeyScp02_20, key_id=0x03, key_usage_qual=0x48):
-    pass
+    LEN_128 = (16,)
+    LEN_128_192_256 = (16, 24, 32)
+    LEN_128_256 = (16, 32)
 
-class SdKeyScp03_30(SdKey, kvn=0x30, key_type=0x88, permitted_len=[16,24,32]): # AES key type
-    pass
-class SdKeyScp03_30Enc(SdKeyScp03_30, key_id=0x01, key_usage_qual=0x18):
-    pass
-class SdKeyScp03_30Mac(SdKeyScp03_30, key_id=0x02, key_usage_qual=0x14):
-    pass
-class SdKeyScp03_30Dek(SdKeyScp03_30, key_id=0x03, key_usage_qual=0x48):
-    pass
+    DES =    ('DES', dict(key_type=KeyType.des, allow_len=LEN_128) )
+    AES =    ('AES', dict(key_type=KeyType.aes, allow_len=LEN_128_192_256) )
 
-class SdKeyScp03_31(SdKey, kvn=0x31, key_type=0x88, permitted_len=[16,24,32]): # AES key type
-    pass
-class SdKeyScp03_31Enc(SdKeyScp03_31, key_id=0x01, key_usage_qual=0x18):
-    pass
-class SdKeyScp03_31Mac(SdKeyScp03_31, key_id=0x02, key_usage_qual=0x14):
-    pass
-class SdKeyScp03_31Dek(SdKeyScp03_31, key_id=0x03, key_usage_qual=0x48):
-    pass
+    ENC =    ('ENC', dict(key_id=0x01, key_usage_qual=0x18) )
+    MAC =    ('MAC', dict(key_id=0x02, key_usage_qual=0x14) )
+    DEK =    ('DEK', dict(key_id=0x03, key_usage_qual=0x48) )
 
-class SdKeyScp03_32(SdKey, kvn=0x32, key_type=0x88, permitted_len=[16,24,32]): # AES key type
-    pass
-class SdKeyScp03_32Enc(SdKeyScp03_32, key_id=0x01, key_usage_qual=0x18):
-    pass
-class SdKeyScp03_32Mac(SdKeyScp03_32, key_id=0x02, key_usage_qual=0x14):
-    pass
-class SdKeyScp03_32Dek(SdKeyScp03_32, key_id=0x03, key_usage_qual=0x48):
-    pass
+    TLSPSK_PSK = ('TLSPSK', dict(key_type=KeyType.tls_psk, key_id=0x01, key_usage_qual=0x3c, allow_len=LEN_128_192_256) )
+    TLSPSK_DEK = ('DEK',    dict(key_type=KeyType.des, key_id=0x02, key_usage_qual=0x48, allow_len=LEN_128) )
+
+    # THIS IS THE LIST that controls which SdKeyXxx subclasses exist:
+    SD_KEY_DEFS = (
+        # name    KVN                     x variants            x variants
+        ('SCP02', (0x20, 0x21, 0x22, 0xff), (AES, ),              (ENC, MAC, DEK) ),
+        ('SCP03', (0x30, 0x31, 0x32),       (AES, ),              (ENC, MAC, DEK) ),
+        ('SCP80', (0x01, 0x02, 0x03),       (DES, AES),           (ENC, MAC, DEK) ),
+        ('SCP81', (0x40, 0x41, 0x42),       (TLSPSK_PSK, TLSPSK_DEK, ), ),
+    )
+
+    all_implementations = None
+
+    @classmethod
+    def generate_sd_key_classes(cls, sd_key_defs=SD_KEY_DEFS):
+        '''This generates python classes to be exported in this module, as subclasses of class SdKey.
+
+        We create SdKey subclasses dynamically from a list.
+        You can list all of them via:
+          from pySim.esim.saip.personalization import SdKey
+          SdKey.all_implementations
+        or
+          print('\n'.join(sorted(f'{x.__name__}\t{x.name}' for x in SdKey.all_implementations)))
+
+        at time of writing this comment, this prints:
+
+        SdKeyScp02Kvn20AesDek SCP02-KVN20-AES-DEK
+        SdKeyScp02Kvn20AesEnc SCP02-KVN20-AES-ENC
+        SdKeyScp02Kvn20AesMac SCP02-KVN20-AES-MAC
+        SdKeyScp02Kvn21AesDek SCP02-KVN21-AES-DEK
+        SdKeyScp02Kvn21AesEnc SCP02-KVN21-AES-ENC
+        SdKeyScp02Kvn21AesMac SCP02-KVN21-AES-MAC
+        SdKeyScp02Kvn22AesDek SCP02-KVN22-AES-DEK
+        SdKeyScp02Kvn22AesEnc SCP02-KVN22-AES-ENC
+        SdKeyScp02Kvn22AesMac SCP02-KVN22-AES-MAC
+        SdKeyScp02KvnffAesDek SCP02-KVNff-AES-DEK
+        SdKeyScp02KvnffAesEnc SCP02-KVNff-AES-ENC
+        SdKeyScp02KvnffAesMac SCP02-KVNff-AES-MAC
+        SdKeyScp03Kvn30AesDek SCP03-KVN30-AES-DEK
+        SdKeyScp03Kvn30AesEnc SCP03-KVN30-AES-ENC
+        SdKeyScp03Kvn30AesMac SCP03-KVN30-AES-MAC
+        SdKeyScp03Kvn31AesDek SCP03-KVN31-AES-DEK
+        SdKeyScp03Kvn31AesEnc SCP03-KVN31-AES-ENC
+        SdKeyScp03Kvn31AesMac SCP03-KVN31-AES-MAC
+        SdKeyScp03Kvn32AesDek SCP03-KVN32-AES-DEK
+        SdKeyScp03Kvn32AesEnc SCP03-KVN32-AES-ENC
+        SdKeyScp03Kvn32AesMac SCP03-KVN32-AES-MAC
+        SdKeyScp80Kvn01AesDek SCP80-KVN01-AES-DEK
+        SdKeyScp80Kvn01AesEnc SCP80-KVN01-AES-ENC
+        SdKeyScp80Kvn01AesMac SCP80-KVN01-AES-MAC
+        SdKeyScp80Kvn01DesDek SCP80-KVN01-DES-DEK
+        SdKeyScp80Kvn01DesEnc SCP80-KVN01-DES-ENC
+        SdKeyScp80Kvn01DesMac SCP80-KVN01-DES-MAC
+        SdKeyScp80Kvn02AesDek SCP80-KVN02-AES-DEK
+        SdKeyScp80Kvn02AesEnc SCP80-KVN02-AES-ENC
+        SdKeyScp80Kvn02AesMac SCP80-KVN02-AES-MAC
+        SdKeyScp80Kvn02DesDek SCP80-KVN02-DES-DEK
+        SdKeyScp80Kvn02DesEnc SCP80-KVN02-DES-ENC
+        SdKeyScp80Kvn02DesMac SCP80-KVN02-DES-MAC
+        SdKeyScp80Kvn03AesDek SCP80-KVN03-AES-DEK
+        SdKeyScp80Kvn03AesEnc SCP80-KVN03-AES-ENC
+        SdKeyScp80Kvn03AesMac SCP80-KVN03-AES-MAC
+        SdKeyScp80Kvn03DesDek SCP80-KVN03-DES-DEK
+        SdKeyScp80Kvn03DesEnc SCP80-KVN03-DES-ENC
+        SdKeyScp80Kvn03DesMac SCP80-KVN03-DES-MAC
+        SdKeyScp81Kvn40Dek    SCP81-KVN40-DEK
+        SdKeyScp81Kvn40Tlspsk SCP81-KVN40-TLSPSK
+        SdKeyScp81Kvn41Dek    SCP81-KVN41-DEK
+        SdKeyScp81Kvn41Tlspsk SCP81-KVN41-TLSPSK
+        SdKeyScp81Kvn42Dek    SCP81-KVN42-DEK
+        SdKeyScp81Kvn42Tlspsk SCP81-KVN42-TLSPSK
+        '''
+
+        SdKey.all_implementations = []
+
+        def camel(s):
+            return s[:1].upper() + s[1:].lower()
+
+        def do_variants(name, kvn, remaining_variants, labels=[], attrs={}):
+            'recurse to unfold as many variants as there may be'
+            if remaining_variants:
+                # not a leaf node, collect more labels and attrs
+                variants = remaining_variants[0]
+                remaining_variants = remaining_variants[1:]
+
+                for label, valdict in variants:
+                    # pass copies to recursion
+                    inner_labels = list(labels)
+                    inner_attrs = dict(attrs)
+
+                    inner_labels.append(label)
+                    inner_attrs.update(valdict)
+                    do_variants(name, kvn, remaining_variants,
+                                labels=inner_labels,
+                                attrs=inner_attrs)
+                return
+
+            # leaf node. create a new class with all the accumulated vals
+            parts = [name, f'KVN{kvn:02x}',] + labels
+            cls_label = '-'.join(p for p in parts if p)
+
+            parts = ['Sd', 'Key', name, f'Kvn{kvn:02x}'] + labels
+            clsname = ''.join(camel(p) for p in parts)
+
+            max_key_len = attrs.get('allow_len')[-1]
+
+            attrs.update({
+                'name' : cls_label,
+                'kvn': kvn,
+                'example_input': f'00*{max_key_len}',
+                })
+
+            # below line is like
+            # class SdKeyScpNNKvnXXYyyZzz(SdKey):
+            #     <set attrs>
+            cls_def = type(clsname, (cls,), attrs)
+
+            # for some unknown reason, subclassing from abc.ABC makes cls_def.__module__ == 'abc',
+            # but we don't want 'abc.SdKeyScp03Kvn32AesEnc'.
+            # Make sure it is 'pySim.esim.saip.personalization.SdKeyScp03Kvn32AesEnc'
+            cls_def.__module__ = __name__
+
+            globals()[clsname] = cls_def
+            SdKey.all_implementations.append(cls_def)
 
 
+        for items in sd_key_defs:
+            name, kvns = items[:2]
+            variants = items[2:]
+            for kvn in kvns:
+                do_variants(name, kvn, variants)
 
+# this creates all of the classes named like SdKeyScp02Kvn20AesDek to be published in this python module:
+SdKey.generate_sd_key_classes()
 
 def obtain_all_pe_from_pelist(l: List[ProfileElement], wanted_type: str) -> ProfileElement:
     return (pe for pe in l if pe.type == wanted_type)

@@ -21,7 +21,7 @@ import copy
 from osmocom.utils import h2b, b2h
 
 from pySim.esim.saip import *
-from pySim.esim.saip.personalization import *
+from pySim.esim.saip import personalization
 from pprint import pprint as pp
 
 
@@ -55,13 +55,55 @@ class SaipTest(unittest.TestCase):
     def test_personalization(self):
         """Test some of the personalization operations."""
         pes = copy.deepcopy(self.pes)
-        params = [Puk1('01234567'), Puk2(98765432), Pin1('1111'), Pin2(2222), Adm1('11111111'),
-                  K(h2b('000102030405060708090a0b0c0d0e0f')), Opc(h2b('101112131415161718191a1b1c1d1e1f'))]
+        params = [personalization.Puk1('01234567'),
+                  personalization.Puk2(98765432),
+                  personalization.Pin1('1111'),
+                  personalization.Pin2(2222),
+                  personalization.Adm1('11111111'),
+                  personalization.K(h2b('000102030405060708090a0b0c0d0e0f')),
+                  personalization.Opc(h2b('101112131415161718191a1b1c1d1e1f'))]
         for p in params:
             p.validate()
             p.apply(pes)
         # TODO: we don't actually test the results here, but we just verify there is no exception
         pes.to_der()
+
+    def test_personalization2(self):
+        """Test some of the personalization operations."""
+        cls = personalization.SdKeyScp80Kvn01DesEnc
+        pes = ProfileElementSequence.from_der(self.per_input)
+        prev_val = tuple(cls.get_values_from_pes(pes))
+        print(f'{prev_val=}')
+        self.assertTrue(prev_val)
+
+        set_val = '42342342342342342342342342342342'
+        param = cls(set_val)
+        param.validate()
+        param.apply(pes)
+
+        get_val1 = tuple(cls.get_values_from_pes(pes))
+        print(f'{get_val1=} {set_val=}')
+        self.assertEqual(get_val1, ({cls.name: set_val},))
+
+        get_val1b = tuple(cls.get_values_from_pes(pes))
+        print(f'{get_val1b=} {set_val=}')
+        self.assertEqual(get_val1b, ({cls.name: set_val},))
+
+        der = pes.to_der()
+
+        get_val1c = tuple(cls.get_values_from_pes(pes))
+        print(f'{get_val1c=} {set_val=}')
+        self.assertEqual(get_val1c, ({cls.name: set_val},))
+
+        # assertTrue to not dump the entire der.
+        # Expecting the modified DER to be different. If this assertion fails, then no change has happened in the output
+        # DER and the ConfigurableParameter subclass is buggy.
+        self.assertTrue(der != self.per_input)
+
+        pes2 = ProfileElementSequence.from_der(der)
+        get_val2 = tuple(cls.get_values_from_pes(pes2))
+        print(f'{get_val2=} {set_val=}')
+        self.assertEqual(get_val2, ({cls.name: set_val},))
 
     def test_constructor_encode(self):
         """Test that DER-encoding of PE created by "empty" constructor works without raising exception."""
