@@ -204,7 +204,86 @@ class ConfigurableParameterTest(unittest.TestCase):
                       expect_val='01020304050607080910111213141516'),
             ]
 
-        # SdKey classes don't make sense yet, will come in Ic92ddea6e1fad8167ea75baf78ffc3eb419838c4
+        for sdkey_cls in (
+            # thin out the number of tests, as a compromise between completeness and test runtime
+            p13n.SdKeyScp02Kvn20AesDek,
+           #p13n.SdKeyScp02Kvn20AesEnc,
+           #p13n.SdKeyScp02Kvn20AesMac,
+           #p13n.SdKeyScp02Kvn21AesDek,
+            p13n.SdKeyScp02Kvn21AesEnc,
+           #p13n.SdKeyScp02Kvn21AesMac,
+           #p13n.SdKeyScp02Kvn22AesDek,
+           #p13n.SdKeyScp02Kvn22AesEnc,
+            p13n.SdKeyScp02Kvn22AesMac,
+           #p13n.SdKeyScp02KvnffAesDek,
+           #p13n.SdKeyScp02KvnffAesEnc,
+           #p13n.SdKeyScp02KvnffAesMac,
+            p13n.SdKeyScp03Kvn30AesDek,
+           #p13n.SdKeyScp03Kvn30AesEnc,
+           #p13n.SdKeyScp03Kvn30AesMac,
+           #p13n.SdKeyScp03Kvn31AesDek,
+            p13n.SdKeyScp03Kvn31AesEnc,
+           #p13n.SdKeyScp03Kvn31AesMac,
+           #p13n.SdKeyScp03Kvn32AesDek,
+           #p13n.SdKeyScp03Kvn32AesEnc,
+            p13n.SdKeyScp03Kvn32AesMac,
+           #p13n.SdKeyScp80Kvn01AesDek,
+           #p13n.SdKeyScp80Kvn01AesEnc,
+           #p13n.SdKeyScp80Kvn01AesMac,
+            p13n.SdKeyScp80Kvn01DesDek,
+           #p13n.SdKeyScp80Kvn01DesEnc,
+           #p13n.SdKeyScp80Kvn01DesMac,
+           #p13n.SdKeyScp80Kvn02AesDek,
+            p13n.SdKeyScp80Kvn02AesEnc,
+           #p13n.SdKeyScp80Kvn02AesMac,
+           #p13n.SdKeyScp80Kvn02DesDek,
+           #p13n.SdKeyScp80Kvn02DesEnc,
+            p13n.SdKeyScp80Kvn02DesMac,
+           #p13n.SdKeyScp80Kvn03AesDek,
+           #p13n.SdKeyScp80Kvn03AesEnc,
+           #p13n.SdKeyScp80Kvn03AesMac,
+            p13n.SdKeyScp80Kvn03DesDek,
+           #p13n.SdKeyScp80Kvn03DesEnc,
+           #p13n.SdKeyScp80Kvn03DesMac,
+            p13n.SdKeyScp81Kvn40Dek   ,
+           #p13n.SdKeyScp81Kvn40Tlspsk,
+           #p13n.SdKeyScp81Kvn41Dek   ,
+            p13n.SdKeyScp81Kvn41Tlspsk,
+           #p13n.SdKeyScp81Kvn42Dek   ,
+           #p13n.SdKeyScp81Kvn42Tlspsk,
+            ):
+
+            for key_len in sdkey_cls.allow_len:
+                val = '0102030405060708091011121314151617181920212223242526272829303132'
+                expect_clean_val = (b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16'
+                                    b'\x17\x18\x19\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x30\x31\x32')
+                expect_val = '0102030405060708091011121314151617181920212223242526272829303132'
+
+                val = val[:key_len*2]
+                expect_clean_val = expect_clean_val[:key_len]
+                expect_val = val
+
+                param_tests.append(Paramtest(param_cls=sdkey_cls, val=val, expect_clean_val=expect_clean_val, expect_val=expect_val))
+
+                # test bytes input
+                val = expect_clean_val
+                param_tests.append(Paramtest(param_cls=sdkey_cls, val=val, expect_clean_val=expect_clean_val, expect_val=expect_val))
+
+                # test bytearray input
+                val = bytearray(expect_clean_val)
+                param_tests.append(Paramtest(param_cls=sdkey_cls, val=val, expect_clean_val=expect_clean_val, expect_val=expect_val))
+
+                # test BytesIO input
+                val = io.BytesIO(expect_clean_val)
+                param_tests.append(Paramtest(param_cls=sdkey_cls, val=val, expect_clean_val=expect_clean_val, expect_val=expect_val))
+
+                if key_len == 16:
+                    # test huge integer input.
+                    # needs to start with nonzero.. stupid
+                    val = 11020304050607080910111213141516
+                    expect_clean_val = (b'\x11\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16')
+                    expect_val = '11020304050607080910111213141516'
+                    param_tests.append(Paramtest(param_cls=sdkey_cls, val=val, expect_clean_val=expect_clean_val, expect_val=expect_val))
 
         outputs = []
 
