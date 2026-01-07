@@ -4,3 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.pylint.main]
 ignored-classes = ["twisted.internet.reactor"]
+
+[tool.pylint.TYPECHECK]
+# SdKey subclasses are generated dynamically via SdKey.generate_sd_key_classes()
+generated-members = ["SdKey[A-Za-z0-9]+"]
