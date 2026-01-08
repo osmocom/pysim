@@ -547,6 +547,7 @@ class SmspTpScAddr(ConfigurableParameter):
     """Configurable SMSC (SMS Service Centre) TP-SC-ADDR. Expects to be a phone number in national or
     international format (designated by a leading +). Automatically sets the NPI to E.164 and the TON based on
     presence or absence of leading +."""
+    #FIXME validation
 
     name = 'SMSP-TP-SC-ADDR'
 
