@@ -340,10 +340,11 @@ class Imsi(DecimalParam):
 class SmspTpScAddr(ConfigurableParameter):
     """Configurable SMSC (SMS Service Centre) TP-SC-ADDR. Expects to be a phone number in national or
     international format (designated by a leading +). Automatically sets the NPI to E.164 and the TON based on
-    presence or absence of leading +"""
+    presence or absence of leading +."""
 
-    def validate(self):
-        addr_str = str(self.input_value)
+    @classmethod
+    def validate_val(cls, val):
+        addr_str = str(val)
         if addr_str[0] == '+':
             digits = addr_str[1:]
             international = True
@@ -354,10 +355,14 @@ class SmspTpScAddr(ConfigurableParameter):
             raise ValueError('TP-SC-ADDR must not exceed 20 digits')
         if not digits.isdecimal():
             raise ValueError('TP-SC-ADDR must only contain decimal digits')
-        self.value = (international, digits)
+        return (international, digits)
 
-    def apply(self, pes: ProfileElementSequence):
-        international, digits = self.value
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        """val must be a tuple (international[bool], digits[str]).
+        For example, an input of "+1234" corresponds to (True, "1234");
+        An input of "1234" corresponds to (False, "1234")."""
+        international, digits = val
         for pe in pes.get_pes_for_type('usim'):
             # obtain the File instance from the ProfileElementUSIM
             f_smsp = pe.files['ef-smsp']
