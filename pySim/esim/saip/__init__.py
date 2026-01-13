@@ -1751,8 +1751,7 @@ class ProfileElementSequence:
                 del hdr.decoded['eUICC-Mandatory-services'][service]
         # remove any associated mandatory filesystem templates
         for template in naa.templates:
-            if template in hdr.decoded['eUICC-Mandatory-GFSTEList']:
-                hdr.decoded['eUICC-Mandatory-GFSTEList'] = [x for x in hdr.decoded['eUICC-Mandatory-GFSTEList'] if not template.prefix_match(x)]
+            hdr.decoded['eUICC-Mandatory-GFSTEList'] = [x for x in hdr.decoded['eUICC-Mandatory-GFSTEList'] if not template.prefix_match(x)]
         # determine the ADF names (AIDs) of all NAA ADFs
         naa_adf_names = []
         if naa.pe_types[0] in self.pe_by_type:
