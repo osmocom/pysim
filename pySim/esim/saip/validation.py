@@ -103,6 +103,26 @@ class CheckBasicStructure(ProfileConstraintChecker):
         if 'profile-a-p256' in m_svcs and not ('usim' in m_svcs or 'isim' in m_svcs):
             raise ProfileError('profile-a-p256 mandatory, but no usim or isim')
 
+    def check_mandatory_services_aka(self, pes: ProfileElementSequence):
+        """Ensure that no unnecessary authentication related services are marked as mandatory but not
+        actually used within the profile"""
+        m_svcs = pes.get_pe_for_type('header').decoded['eUICC-Mandatory-services']
+        # list of tuples (algo_id, key_len_in_octets) for all the akaParameters in the PE Sequence
+        algo_id_klen = [(x.decoded['algoConfiguration'][1]['algorithmID'],
+                         len(x.decoded['algoConfiguration'][1]['key'])) for x in pes.get_pes_for_type('akaParameter')]
+        # just a plain list of algorithm IDs in akaParameters
+        algorithm_ids = [x[0] for x in algo_id_klen]
+        if 'milenage' in m_svcs and not 1 in algorithm_ids:
+            raise ProfileError('milenage mandatory, but no related algorithm_id in akaParameter')
+        if 'tuak128' in m_svcs and not (2, 128/8) in algo_id_klen:
+            raise ProfileError('tuak128 mandatory, but no related algorithm_id in akaParameter')
+        if 'cave' in m_svcs and not pes.get_pe_for_type('cdmaParameter'):
+            raise ProfileError('cave mandatory, but no related cdmaParameter')
+        if 'tuak256' in m_svcs and (2, 256/8) in algo_id_klen:
+            raise ProfileError('tuak256 mandatory, but no related algorithm_id in akaParameter')
+        if 'usim-test-algorithm' in m_svcs and not 3 in algorithm_ids:
+            raise ProfileError('usim-test-algorithm mandatory, but no related algorithm_id in akaParameter')
+
     def check_identification_unique(self, pes: ProfileElementSequence):
         """Ensure that each PE has a unique identification value."""
         id_list = [pe.header['identification'] for pe in pes.pe_list if pe.header]
