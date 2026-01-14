@@ -1032,6 +1032,7 @@ class ProfileElementSD(ProfileElement):
     def __init__(self, decoded: Optional[dict] = None, **kwargs):
         super().__init__(decoded, **kwargs)
         if decoded:
+            self._post_decode()
             return
         # provide some reasonable defaults for a MNO-SD
         self.decoded['instance'] = {
