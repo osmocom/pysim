@@ -29,6 +29,7 @@ from pySim.utils import enc_iccid, dec_iccid, enc_imsi, dec_imsi, h2b, b2h, rpad
 from pySim.esim.saip import param_source
 from pySim.esim.saip import ProfileElement, ProfileElementSD, ProfileElementSequence
 from pySim.esim.saip import SecurityDomainKey, SecurityDomainKeyComponent
+from pySim.esim.saip import validation
 from pySim.global_platform import KeyUsageQualifier, KeyType
 
 def unrpad(s: hexstr, c='f') -> hexstr:
@@ -1221,6 +1222,12 @@ class BatchPersonalization:
                        ) as e:
                     raise ValueError(f'{p.param.name} fed by {p.src.name}: {e}'
                                      f' (input_value={p.param.input_value!r} value={p.param.value!r})') from e
+
+            try:
+                c = validation.CheckBasicStructure()
+                c.check(pes)
+            except validation.ProfileError as e:
+                raise ValueError(f'generated profile index {i} does not pass basic structural checks: {e}') from e
 
             yield pes
 
