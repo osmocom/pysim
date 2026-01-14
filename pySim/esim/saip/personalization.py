@@ -1215,11 +1215,7 @@ class BatchPersonalization:
                     assert input_value is not None
                     value = p.param.__class__.validate_val(input_value)
                     p.param.__class__.apply_val(pes, value)
-                except (
-                        TypeError,
-                        ValueError,
-                        KeyError,
-                       ) as e:
+                except Exception as e:
                     raise ValueError(f'{p.param.name} fed by {p.src.name}: {e}'
                                      f' (input_value={p.param.input_value!r} value={p.param.value!r})') from e
 
