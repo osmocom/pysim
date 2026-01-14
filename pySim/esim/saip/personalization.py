@@ -1224,6 +1224,11 @@ class BatchPersonalization:
                                      f' (input_value={p.param.input_value!r} value={p.param.value!r})') from e
 
             try:
+                pes.rebuild_mandatory_services()
+            except Exception as e:
+                raise ValueError(f'profile index {i}: failed to rebuild mandatory services: {e}') from e
+
+            try:
                 c = validation.CheckBasicStructure()
                 c.check(pes)
             except validation.ProfileError as e:
