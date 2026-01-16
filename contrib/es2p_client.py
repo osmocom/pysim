@@ -54,6 +54,10 @@ parser_co.add_argument('--finalProfileStatusIndicator', required=True, choices=[
 parser_rp = subparsers.add_parser('release-profile', help='ES2+ ReleaseProfile function')
 parser_rp.add_argument('--iccid', required=True, help=ICCID_HELP)
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+
 if __name__ == '__main__':
     opts = parser.parse_args()
     #print(opts)
@@ -82,3 +86,7 @@ if __name__ == '__main__':
         res = peer.call_cancelOrder(data)
     elif opts.command == 'release-profile':
         res = peer.call_releaseProfile(data)
+
+    print("==")
+    print("response")
+    print(res)

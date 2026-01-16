@@ -44,7 +44,7 @@ class PySimLogger:
     """
 
     LOG_FMTSTR = "%(levelname)s: %(message)s"
-    LOG_FMTSTR_VERBOSE = "%(module)s.%(lineno)d -- %(name)s - " + LOG_FMTSTR
+    LOG_FMTSTR_VERBOSE = "%(asctime)s %(module)s.%(lineno)d -- %(name)s - " + LOG_FMTSTR
     __formatter = logging.Formatter(LOG_FMTSTR)
     __formatter_verbose = logging.Formatter(LOG_FMTSTR_VERBOSE)
 
@@ -57,6 +57,7 @@ class PySimLogger:
     # The logging default is non-verbose logging on logging level DEBUG. This is a safe default that works for
     # applications that ignore the presence of the PySimLogger class.
     verbose = False
+    logging.basicConfig(level=logging.DEBUG)
     logging.root.setLevel(logging.DEBUG)
 
     def __init__(self):

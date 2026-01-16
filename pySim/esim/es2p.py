@@ -16,6 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import requests
+from klein import Klein
+from twisted.internet import defer, protocol, ssl, task, endpoints, reactor
+from twisted.internet.posixbase import PosixReactorBase
+from pathlib import Path
+from twisted.web.server import Site, Request
+
 import logging
 from datetime import datetime
 import time
@@ -123,10 +129,12 @@ class Es2PlusApiFunction(JsonHttpApiFunction):
 class DownloadOrder(Es2PlusApiFunction):
     path = '/gsma/rsp2/es2plus/downloadOrder'
     input_params = {
+        'header': JsonRequestHeader,
         'eid': param.Eid,
         'iccid': param.Iccid,
         'profileType': param.ProfileType
       }
+    input_mandatory = ['header']
     output_params = {
         'header': JsonResponseHeader,
         'iccid': param.Iccid,
@@ -137,6 +145,7 @@ class DownloadOrder(Es2PlusApiFunction):
 class ConfirmOrder(Es2PlusApiFunction):
     path = '/gsma/rsp2/es2plus/confirmOrder'
     input_params = {
+        'header': JsonRequestHeader,
         'iccid': param.Iccid,
         'eid': param.Eid,
         'matchingId': param.MatchingId,
@@ -144,7 +153,7 @@ class ConfirmOrder(Es2PlusApiFunction):
         'smdsAddress': param.SmdsAddress,
         'releaseFlag': param.ReleaseFlag,
       }
-    input_mandatory = ['iccid', 'releaseFlag']
+    input_mandatory = ['header', 'iccid', 'releaseFlag']
     output_params = {
         'header': JsonResponseHeader,
         'eid': param.Eid,
@@ -157,12 +166,13 @@ class ConfirmOrder(Es2PlusApiFunction):
 class CancelOrder(Es2PlusApiFunction):
     path = '/gsma/rsp2/es2plus/cancelOrder'
     input_params = {
+        'header': JsonRequestHeader,
         'iccid': param.Iccid,
         'eid': param.Eid,
         'matchingId': param.MatchingId,
         'finalProfileStatusIndicator': param.FinalProfileStatusIndicator,
       }
-    input_mandatory = ['finalProfileStatusIndicator', 'iccid']
+    input_mandatory = ['header', 'finalProfileStatusIndicator', 'iccid']
     output_params = {
         'header': JsonResponseHeader,
       }
@@ -172,9 +182,10 @@ class CancelOrder(Es2PlusApiFunction):
 class ReleaseProfile(Es2PlusApiFunction):
     path = '/gsma/rsp2/es2plus/releaseProfile'
     input_params = {
+        'header': JsonRequestHeader,
         'iccid': param.Iccid,
       }
-    input_mandatory = ['iccid']
+    input_mandatory = ['header', 'iccid']
     output_params = {
         'header': JsonResponseHeader,
       }
@@ -184,6 +195,7 @@ class ReleaseProfile(Es2PlusApiFunction):
 class HandleDownloadProgressInfo(Es2PlusApiFunction):
     path = '/gsma/rsp2/es2plus/handleDownloadProgressInfo'
     input_params = {
+        'header': JsonRequestHeader,
         'eid': param.Eid,
         'iccid': param.Iccid,
         'profileType': param.ProfileType,
@@ -192,9 +204,8 @@ class HandleDownloadProgressInfo(Es2PlusApiFunction):
         'notificationPointStatus': param.NotificationPointStatus,
         'resultData': param.ResultData,
     }
-    input_mandatory = ['iccid', 'profileType', 'timestamp', 'notificationPointId', 'notificationPointStatus']
+    input_mandatory = ['header', 'iccid', 'profileType', 'timestamp', 'notificationPointId', 'notificationPointStatus']
     expected_http_status = 204
-
 
 class Es2pApiClient:
     """Main class representing a full ES2+ API client. Has one method for each API function."""
@@ -206,17 +217,16 @@ class Es2pApiClient:
         if client_cert:
             self.session.cert = client_cert
 
-        self.downloadOrder = DownloadOrder(url_prefix, func_req_id, self.session)
-        self.confirmOrder = ConfirmOrder(url_prefix, func_req_id, self.session)
-        self.cancelOrder = CancelOrder(url_prefix, func_req_id, self.session)
-        self.releaseProfile = ReleaseProfile(url_prefix, func_req_id, self.session)
-        self.handleDownloadProgressInfo = HandleDownloadProgressInfo(url_prefix, func_req_id, self.session)
+        self.downloadOrder = JsonHttpApiClient(DownloadOrder(), url_prefix, func_req_id, self.session)
+        self.confirmOrder = JsonHttpApiClient(ConfirmOrder(), url_prefix, func_req_id, self.session)
+        self.cancelOrder = JsonHttpApiClient(CancelOrder(), url_prefix, func_req_id, self.session)
+        self.releaseProfile = JsonHttpApiClient(ReleaseProfile(), url_prefix, func_req_id, self.session)
+        self.handleDownloadProgressInfo = JsonHttpApiClient(HandleDownloadProgressInfo(), url_prefix, func_req_id, self.session)
 
     def _gen_func_id(self) -> str:
         """Generate the next function call id."""
         self.func_id += 1
         return 'FCI-%u-%u' % (time.time(), self.func_id)
-
 
     def call_downloadOrder(self, data: dict) -> dict:
         """Perform ES2+ DownloadOrder function (SGP.22 section 5.3.1)."""
@@ -237,3 +247,97 @@ class Es2pApiClient:
     def call_handleDownloadProgressInfo(self, data: dict) -> dict:
         """Perform ES2+ HandleDownloadProgressInfo function (SGP.22 section 5.3.5)."""
         return self.handleDownloadProgressInfo.call(data, self._gen_func_id())
+
+class Es2pApiServerHandler():
+    """ES2+ API Server handler class. The API user is expected to override the contained methods as needed."""
+
+    def call_downloadOrder(self, data: dict) -> (dict, str):
+        """Perform ES2+ DownloadOrder function (SGP.22 section 5.3.1)."""
+        return {}, 'Failed'
+
+    def call_confirmOrder(self, data: dict) -> (dict, str):
+        """Perform ES2+ ConfirmOrder function (SGP.22 section 5.3.2)."""
+        return {}, 'Failed'
+
+    def call_cancelOrder(self, data: dict) -> (dict, str):
+        """Perform ES2+ CancelOrder function (SGP.22 section 5.3.3)."""
+        return {}, 'Failed'
+
+    def call_releaseProfile(self, data: dict) -> (dict, str):
+        """Perform ES2+ CancelOrder function (SGP.22 section 5.3.4)."""
+        return {}, 'Failed'
+
+    def call_handleDownloadProgressInfo(self, data: dict) -> (dict, str):
+        """Perform ES2+ HandleDownloadProgressInfo function (SGP.22 section 5.3.5)."""
+        return {}, 'Failed'
+
+class Es2pApiServer:
+    """Main class representing a full ES2+ API server. Has one method for each API function."""
+    app = Klein()
+
+    def __init__(self, port: int, interface: str, handler: Es2pApiServerHandler,
+                 server_cert: str = None, client_cert_verify: str = None):
+        logger.debug("HTTP SRV: starting ES2+ API server on %s:%s" % (interface, port))
+
+        self.port = port
+        self.interface = interface
+        self.handler = handler
+        if server_cert:
+            self.server_cert = ssl.PrivateCertificate.loadPEM(Path(server_cert).read_text())
+        else:
+            self.server_cert = None
+        if client_cert_verify:
+            self.client_cert_verify = ssl.Certificate.loadPEM(Path(client_cert_verify).read_text())
+        else:
+            self.client_cert_verify = None
+
+        self.downloadOrder = JsonHttpApiServer(DownloadOrder())
+        self.confirmOrder = JsonHttpApiServer(ConfirmOrder())
+        self.cancelOrder = JsonHttpApiServer(CancelOrder())
+        self.releaseProfile = JsonHttpApiServer(ReleaseProfile())
+        self.handleDownloadProgressInfo = JsonHttpApiServer(HandleDownloadProgressInfo())
+
+        task.react(self.reactor)
+
+    def reactor(self, reactor: PosixReactorBase):
+        logger.debug("HTTP SRV: listen on %s:%s" % (self.interface, self.port))
+        if self.server_cert:
+            if self.client_cert_verify:
+                reactor.listenSSL(self.port, Site(self.app.resource()), self.server_cert.options(self.client_cert_verify),
+                                  interface=self.interface)
+            else:
+                reactor.listenSSL(self.port, Site(self.app.resource()), self.server_cert.options(),
+                                  interface=self.interface)
+        else:
+            reactor.listenTCP(self.port, Site(self.app.resource()), interface=self.interface)
+        return defer.Deferred()
+
+    @app.route(DownloadOrder.path)
+    def call_downloadOrder(self, request: Request) -> dict:
+        """Perform ES2+ DownloadOrder function (SGP.22 section 5.3.1)."""
+        data, fe_status = self.handler.call_downloadOrder(self.downloadOrder.request(request))
+        return self.downloadOrder.response(data, fe_status, request)
+
+    @app.route(ConfirmOrder.path)
+    def call_confirmOrder(self, request: Request) -> dict:
+        """Perform ES2+ ConfirmOrder function (SGP.22 section 5.3.2)."""
+        data, fe_status = self.handler.call_confirmOrder(self.confirmOrder.request(request))
+        return self.confirmOrder.response(data, fe_status, request)
+
+    @app.route(CancelOrder.path)
+    def call_cancelOrder(self, request: Request) -> dict:
+        """Perform ES2+ CancelOrder function (SGP.22 section 5.3.3)."""
+        data, fe_status = self.handler.call_cancelOrder(self.cancelOrder.request(request))
+        return self.cancelOrder.response(data, fe_status, request)
+
+    @app.route(ReleaseProfile.path)
+    def call_releaseProfile(self, request: Request) -> dict:
+        """Perform ES2+ CancelOrder function (SGP.22 section 5.3.4)."""
+        data, fe_status = self.handler.call_releaseProfile(self.releaseProfile.request(request))
+        return self.releaseProfile.response(data, fe_status, request)
+
+    @app.route(HandleDownloadProgressInfo.path)
+    def call_handleDownloadProgressInfo(self, request: Request) -> dict:
+        """Perform ES2+ HandleDownloadProgressInfo function (SGP.22 section 5.3.5)."""
+        data, fe_status = self.handler.call_handleDownloadProgressInfo(self.handleDownloadProgressInfo.request(request))
+        return self.handleDownloadProgressInfo.response(data, fe_status, request)
