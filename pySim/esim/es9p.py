@@ -155,11 +155,11 @@ class Es9pApiClient:
         if server_cert_verify:
             self.session.verify = server_cert_verify
 
-        self.initiateAuthentication = InitiateAuthentication(url_prefix, '', self.session)
-        self.authenticateClient = AuthenticateClient(url_prefix, '', self.session)
-        self.getBoundProfilePackage = GetBoundProfilePackage(url_prefix, '', self.session)
-        self.handleNotification = HandleNotification(url_prefix, '', self.session)
-        self.cancelSession = CancelSession(url_prefix, '', self.session)
+        self.initiateAuthentication = JsonHttpApiClient(InitiateAuthentication(), url_prefix, '', self.session)
+        self.authenticateClient = JsonHttpApiClient(AuthenticateClient(), url_prefix, '', self.session)
+        self.getBoundProfilePackage = JsonHttpApiClient(GetBoundProfilePackage(), url_prefix, '', self.session)
+        self.handleNotification = JsonHttpApiClient(HandleNotification(), url_prefix, '', self.session)
+        self.cancelSession = JsonHttpApiClient(CancelSession(), url_prefix, '', self.session)
 
     def call_initiateAuthentication(self, data: dict) -> dict:
         return self.initiateAuthentication.call(data)
