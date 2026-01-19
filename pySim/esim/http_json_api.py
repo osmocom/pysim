@@ -149,7 +149,8 @@ class ApiError(Exception):
             'message': None,
         }
         actual_sec = func_ex_status.get('statusCodeData', None)
-        sec.update(actual_sec)
+        if actual_sec:
+            sec.update(actual_sec)
         self.subject_code = sec['subjectCode']
         self.reason_code = sec['reasonCode']
         self.subject_id = sec['subjectIdentifier']
