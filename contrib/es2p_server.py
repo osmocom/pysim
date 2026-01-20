@@ -31,8 +31,9 @@ from pySim.esim.es2p import param, Es2pApiServerMno, Es2pApiServerHandlerMno
 from osmocom.utils import b2h
 from datetime import datetime
 from analyze_simaResponse import split_sima_response
+from pathlib import Path
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(Path(__file__).stem)
 
 parser = argparse.ArgumentParser(description="""
 Utility to receive and log requests against the ES2+ API of an SM-DP+ according to GSMA SGP.22.""")

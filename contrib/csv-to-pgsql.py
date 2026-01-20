@@ -12,7 +12,7 @@ from pathlib import Path
 from pySim.log import PySimLogger
 from packaging import version
 
-log = PySimLogger.get("CSV2PGQSL")
+log = PySimLogger.get(Path(__file__).stem)
 
 class CardKeyDatabase:
     def __init__(self, config_filename: str, table_name: str, create_table: bool = False, admin: bool = False):
@@ -35,7 +35,6 @@ class CardKeyDatabase:
                 raise ValueError("user for role '%s' not set up in config file." % role)
             return user.get('name'), user.get('pass')
 
-        log = PySimLogger.get("PGSQL")
         self.table = table_name.lower()
         self.cols = None
 

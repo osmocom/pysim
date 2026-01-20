@@ -25,7 +25,7 @@ import io
 import sys
 from inspect import currentframe, getframeinfo
 
-log = PySimLogger.get("TEST")
+log = PySimLogger.get(__name__)
 
 TEST_MSG_DEBUG = "this is a debug message"
 TEST_MSG_INFO = "this is an info message"
@@ -82,15 +82,15 @@ class PySimLogger_Test(unittest.TestCase):
         PySimLogger.setup(self._test_print_callback)
         PySimLogger.set_verbose(True)
         frame = currentframe()
-        expected_message = __name__ + "." + str(getframeinfo(frame).lineno + 1) + " -- TEST - DEBUG: " + TEST_MSG_DEBUG
+        expected_message = __name__ + "." + str(getframeinfo(frame).lineno + 1) + " -- DEBUG: " + TEST_MSG_DEBUG
         log.debug(TEST_MSG_DEBUG)
-        expected_message = __name__ + "." + str(getframeinfo(frame).lineno + 1) + " -- TEST - INFO: " + TEST_MSG_INFO
+        expected_message = __name__ + "." + str(getframeinfo(frame).lineno + 1) + " -- INFO: " + TEST_MSG_INFO
         log.info(TEST_MSG_INFO)
-        expected_message = __name__ + "." + str(getframeinfo(frame).lineno + 1) + " -- TEST - WARNING: " + TEST_MSG_WARNING
+        expected_message = __name__ + "." + str(getframeinfo(frame).lineno + 1) + " -- WARNING: " + TEST_MSG_WARNING
         log.warning(TEST_MSG_WARNING)
-        expected_message = __name__ + "." + str(getframeinfo(frame).lineno + 1) + " -- TEST - ERROR: " + TEST_MSG_ERROR
+        expected_message = __name__ + "." + str(getframeinfo(frame).lineno + 1) + " -- ERROR: " + TEST_MSG_ERROR
         log.error(TEST_MSG_ERROR)
-        expected_message = __name__ + "." + str(getframeinfo(frame).lineno + 1) + " -- TEST - CRITICAL: " + TEST_MSG_CRITICAL
+        expected_message = __name__ + "." + str(getframeinfo(frame).lineno + 1) + " -- CRITICAL: " + TEST_MSG_CRITICAL
         log.critical(TEST_MSG_CRITICAL)
 
     def test_04_level(self):

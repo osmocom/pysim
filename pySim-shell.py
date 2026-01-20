@@ -74,7 +74,7 @@ from pySim.card_key_provider import card_key_provider_register, card_key_provide
 
 from pySim.app import init_card
 
-log = PySimLogger.get("main")
+log = PySimLogger.get(Path(__file__).stem)
 
 class Cmd2Compat(cmd2.Cmd):
     """Backwards-compatibility wrapper around cmd2.Cmd to support older and newer

@@ -26,7 +26,7 @@ from pySim.exceptions import *
 from pySim.filesystem import *
 from pySim.log import PySimLogger
 
-log = PySimLogger.get("RUNTIME")
+log = PySimLogger.get(__name__)
 
 def lchan_nr_from_cla(cla: int) -> int:
     """Resolve the logical channel number from the CLA byte."""

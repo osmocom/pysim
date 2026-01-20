@@ -38,7 +38,7 @@ import csv
 import logging
 import yaml
 
-log = PySimLogger.get("CARDKEY")
+log = PySimLogger.get(__name__)
 
 card_key_providers = []  # type: List['CardKeyProvider']
 

@@ -44,7 +44,7 @@ class PySimLogger:
     """
 
     LOG_FMTSTR = "%(levelname)s: %(message)s"
-    LOG_FMTSTR_VERBOSE = "%(module)s.%(lineno)d -- %(name)s - " + LOG_FMTSTR
+    LOG_FMTSTR_VERBOSE = "%(module)s.%(lineno)d -- " + LOG_FMTSTR
     __formatter = logging.Formatter(LOG_FMTSTR)
     __formatter_verbose = logging.Formatter(LOG_FMTSTR_VERBOSE)
 
