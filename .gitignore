@@ -1,5 +1,5 @@
 *.pyc
-.*.swp
+.*.sw?
 
 /docs/_*
 /docs/generated
