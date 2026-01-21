@@ -611,9 +611,15 @@ class SmspTpScAddr(ConfigurableParameter):
     @classmethod
     def get_values_from_pes(cls, pes: ProfileElementSequence):
         for pe in pes.get_pes_for_type('usim'):
-            f_smsp = pe.files['ef-smsp']
-            ef_smsp = EF_SMSP()
-            ef_smsp_dec = ef_smsp.decode_record_bin(f_smsp.body, 1)
+            f_smsp = pe.files.get('ef-smsp', None)
+            if f_smsp is None:
+                continue
+
+            try:
+                ef_smsp = EF_SMSP()
+                ef_smsp_dec = ef_smsp.decode_record_bin(f_smsp.body, 1)
+            except IndexError:
+                continue
 
             tp_sc_addr = ef_smsp_dec.get('tp_sc_addr', None)
             if not tp_sc_addr:
