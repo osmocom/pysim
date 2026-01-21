@@ -947,17 +947,22 @@ class EF_CFIS(LinFixedEF):
 
 # TS 51.011 Section 4.2.58
 class EF_PNN(LinFixedEF):
-    # TODO: 430a82d432bbbc7eb75de432450a82d432bbbc7eb75de432ffffffff
-    # TODO: 430a82c596b34cbfbfe5eb39ffffffffffffffffffffffffffffffffffff
+    _test_de_encode = [
+        ('430a82d432bbbc7eb75de432450a82d432bbbc7eb75de432',
+         [{'full_name_for_network': 'Telekom.de'}, {'short_name_for_network': 'Telekom.de'}]),
+        ('430a82c596b34cbfbfe5eb39',
+         [{'full_name_for_network': 'E-Networks'}]),
+        ('430584c330bc0c',
+         [{'full_name_for_network': 'Cape'}]),
+    ]
+
     class FullNameForNetwork(BER_TLV_IE, tag=0x43):
         # TS 24.008 10.5.3.5a
-        # TODO: proper decode
-        _construct = GreedyBytes
+        _construct = NetworkNameAdapter(GreedyBytes)
 
     class ShortNameForNetwork(BER_TLV_IE, tag=0x45):
         # TS 24.008 10.5.3.5a
-        # TODO: proper decode
-        _construct = GreedyBytes
+        _construct = NetworkNameAdapter(GreedyBytes)
 
     class NetworkNameCollection(TLV_IE_Collection, nested=[FullNameForNetwork, ShortNameForNetwork]):
         pass
