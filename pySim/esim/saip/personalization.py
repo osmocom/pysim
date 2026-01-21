@@ -393,9 +393,9 @@ class Iccid(DecimalParam):
         yield iccid
 
         for pe in pes.get_pes_for_type('mf'):
-            iccid_pe = pe.decoded.get('ef-iccid', None)
-            if iccid_pe:
-                yield dec_iccid(b2h(file_tuples_content_as_bytes(iccid_pe)))
+            iccid_f = pe.files.get('ef-iccid', None)
+            if iccid_f is not None:
+                yield dec_iccid(b2h(iccid_f.body))
 
 class Imsi(DecimalParam):
     """Configurable IMSI. Expects value to be a string of digits. Automatically sets the ACC to
@@ -420,9 +420,10 @@ class Imsi(DecimalParam):
     @classmethod
     def get_values_from_pes(cls, pes: ProfileElementSequence):
         for pe in pes.get_pes_for_type('usim'):
-            imsi_pe = pe.decoded.get('ef-imsi', None)
-            if imsi_pe:
-                yield dec_imsi(b2h(file_tuples_content_as_bytes(imsi_pe)))
+            imsi_f = pe.files.get('ef-imsi', None)
+            acc_f = pe.files.get('ef-acc', None)
+            if imsi_f:
+                yield dec_imsi(b2h(imsi_f.body))
 
 class SmspTpScAddr(ConfigurableParameter):
     """Configurable SMSC (SMS Service Centre) TP-SC-ADDR. Expects to be a phone number in national or
