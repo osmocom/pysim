@@ -53,7 +53,6 @@ class ClassVarMeta(abc.ABCMeta):
         x = super().__new__(metacls, name, bases, namespace)
         for k, v in kwargs.items():
             setattr(x, k, v)
-        setattr(x, 'name', camel_to_snake(name))
         return x
 
 def file_tuples_content_as_bytes(l: List[Tuple]) -> Optional[bytes]:
