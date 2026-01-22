@@ -53,7 +53,7 @@ from pySim.cards import UiccCardBase
 from pySim.exceptions import *
 from pySim.cat import ProactiveCommand, SendShortMessage, SMS_TPDU, SMSPPDownload, BearerDescription
 from pySim.cat import DeviceIdentities, Address, OtherAddress, UiccTransportLevel, BufferSize
-from pySim.cat import ChannelStatus, ChannelData, ChannelDataLength
+from pySim.cat import ChannelStatus, ChannelData, ChannelDataLength, EventDownload, EventList
 from pySim.utils import b2h, h2b
 
 logger = logging.getLogger(__name__)
@@ -71,24 +71,46 @@ class MyApduTracer(ApduTracer):
         print("-> %s %s" % (cmd[:10], cmd[10:]))
         print("<- %s: %s" % (sw, resp))
 
-class TcpProtocol(protocol.Protocol):
-    def dataReceived(self, data):
-        pass
-
-    def connectionLost(self, reason):
-        pass
-
-
 def tcp_connected_callback(p: protocol.Protocol):
     """called by twisted TCP client."""
     logger.error("%s: connected!" % p)
+    for data in p.pending_tx:
+        p.transport.write(data)
 
-class ProactChannel:
-    """Representation of a single protective channel."""
+class ProactChannel(protocol.Protocol):
+    """Representation of a single proective channel."""
     def __init__(self, channels: 'ProactChannels', chan_nr: int):
         self.channels = channels
         self.chan_nr = chan_nr
         self.ep = None
+        self.pending_tx = []
+        self.pending_rx = bytearray()
+
+    def write(self, data: bytes):
+        if self.connected:
+            self.transport.write(data)
+        else:
+            self.pending_tx.append(data)
+
+    def dataReceived(self, data: bytes):
+        logger.error(f"Got data (len={len(data)}): {data}")
+        self.pending_rx.extend(data)
+        # Send ENVELOPE with EventDownload Data available
+        event_list_ie = EventList(decoded=[ EventList.Event.data_available])
+        channel_status_ie = ChannelStatus(decoded='8100')
+        channel_data_len_ie = ChannelDataLength(decoded=min(255,len(self.pending_rx)))
+        dev_ids = DeviceIdentities(decoded={'source_dev_id': 'network', 'dest_dev_id': 'uicc'})
+        event_dl = EventDownload(children=[event_list_ie, dev_ids, channel_status_ie, channel_data_len_ie])
+        # 3) send to the card
+        envelope_hex = b2h(event_dl.to_tlv())
+        logger.info("ENVELOPE Event: %s" % envelope_hex)
+        global g_ms
+        (data, sw) = g_ms.scc.envelope(envelope_hex)
+        logger.info("SW %s: %s" % (sw, data))
+        # FIXME: Handle result?!
+
+    def connectionLost(self, reason):
+        logger.error("connection lost: %s" % reason)
 
     def close(self):
         """Close the channel."""
@@ -174,14 +196,13 @@ class Proact(ProactiveHandler):
             raise ValueError('Unsupported protocol_type')
         if other_addr_ie.decoded.get('type_of_address', None) != 'ipv4':
             raise ValueError('Unsupported type_of_address')
-        ipv4_bytes = h2b(other_addr_ie.decoded['address'])
+        ipv4_bytes = other_addr_ie.decoded['address']
         ipv4_str = '%u.%u.%u.%u' % (ipv4_bytes[0], ipv4_bytes[1], ipv4_bytes[2], ipv4_bytes[3])
         port_nr = transp_lvl_ie.decoded['port_number']
-        print("%s:%u" % (ipv4_str, port_nr))
+        logger.error("OpenChannel opening with %s:%u" % (ipv4_str, port_nr))
         channel = self.channels.channel_create()
         channel.ep = endpoints.TCP4ClientEndpoint(reactor, ipv4_str, port_nr)
-        channel.prot = TcpProtocol()
-        d = endpoints.connectProtocol(channel.ep, channel.prot)
+        d = endpoints.connectProtocol(channel.ep, channel)
         # FIXME: why is this never called despite the client showing the inbound connection?
         d.addCallback(tcp_connected_callback)
 
@@ -213,6 +234,17 @@ class Proact(ProactiveHandler):
         #                  ]}
         logger.info("ReceiveData")
         logger.info(pcmd)
+        dev_id_ie = Proact._find_first_element_of_type(pcmd.children, DeviceIdentities)
+        chan_data_len_ie = Proact._find_first_element_of_type(pcmd.children, ChannelDataLength)
+        len_requested = chan_data_len_ie.decoded
+        chan_str = dev_id_ie.decoded['dest_dev_id']
+        chan_nr = 1 # FIXME
+        chan = self.channels.channels.get(chan_nr, None)
+
+        requested = chan.pending_rx[:len_requested]
+        chan.pending_rx = chan.pending_rx[len_requested:]
+        resp = self.prepare_response(pcmd) + [ChannelData(decoded=requested), ChannelDataLength(decoded=min(255, len(chan.pending_rx)))]
+
         # Terminal Response example: [
         #  {'command_details': {'command_number': 1,
         #                       'type_of_command': 'receive_data',
@@ -222,7 +254,8 @@ class Proact(ProactiveHandler):
         #  {'channel_data': '16030100040e000000'},
         #  {'channel_data_length': 0}
         # ]
-        return self.prepare_response(pcmd) + []
+        resp = self.prepare_response(pcmd) + [ChannelData(decoded=requested), ChannelDataLength(decoded=min(255, len(chan.pending_rx)))]
+        return resp
 
     def handle_SendData(self, pcmd: ProactiveCommand):
         """Send/write data received from the SIM to the socket."""
@@ -240,7 +273,10 @@ class Proact(ProactiveHandler):
         chan_str = dev_id_ie.decoded['dest_dev_id']
         chan_nr = 1 # FIXME
         chan = self.channels.channels.get(chan_nr, None)
-        # FIXME chan.prot.transport.write(h2b(chan_data_ie.decoded))
+        # FIXME
+        logger.error(f"Chan data received: {chan_data_ie.decoded}")
+        chan.write(chan_data_ie.decoded)
+        #chan.write(h2b(chan_data_ie.decoded))
         # Terminal Response example: [
         #  {'command_details': {'command_number': 1,
         #                       'type_of_command': 'send_data',
@@ -425,4 +461,3 @@ if __name__ == '__main__':
     g_ms = MyServer(opts.smpp_bind_port, opts.smpp_bind_ip, opts.smpp_system_id, opts.smpp_password)
     g_ms.connect_to_card(tp)
     reactor.run()
-
