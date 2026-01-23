@@ -776,30 +776,6 @@ class SdKey(BinaryParam):
 
         SdKey.all_implementations = []
 
-        transitional_name_mapping = {
-            'SCP02-KVN20-AES-DEK': 'SCP02-20-AES-DEK',
-            'SCP02-KVN20-AES-ENC': 'SCP02-20-AES-ENC',
-            'SCP02-KVN20-AES-MAC': 'SCP02-20-AES-MAC',
-            'SCP02-KVN21-AES-DEK': 'SCP02-21-AES-DEK',
-            'SCP02-KVN21-AES-ENC': 'SCP02-21-AES-ENC',
-            'SCP02-KVN21-AES-MAC': 'SCP02-21-AES-MAC',
-            'SCP02-KVN22-AES-DEK': 'SCP02-22-AES-DEK',
-            'SCP02-KVN22-AES-ENC': 'SCP02-22-AES-ENC',
-            'SCP02-KVN22-AES-MAC': 'SCP02-22-AES-MAC',
-            'SCP02-KVNff-AES-DEK': 'SCP02-ff-AES-DEK',
-            'SCP02-KVNff-AES-ENC': 'SCP02-ff-AES-ENC',
-            'SCP02-KVNff-AES-MAC': 'SCP02-ff-AES-MAC',
-            'SCP03-KVN30-AES-DEK': 'SCP03-30-AES-DEK',
-            'SCP03-KVN30-AES-ENC': 'SCP03-30-AES-ENC',
-            'SCP03-KVN30-AES-MAC': 'SCP03-30-AES-MAC',
-            'SCP03-KVN31-AES-DEK': 'SCP03-31-AES-DEK',
-            'SCP03-KVN31-AES-ENC': 'SCP03-31-AES-ENC',
-            'SCP03-KVN31-AES-MAC': 'SCP03-31-AES-MAC',
-            'SCP03-KVN32-AES-DEK': 'SCP03-32-AES-DEK',
-            'SCP03-KVN32-AES-ENC': 'SCP03-32-AES-ENC',
-            'SCP03-KVN32-AES-MAC': 'SCP03-32-AES-MAC',
-        }
-
         def camel(s):
             return s[:1].upper() + s[1:].lower()
 
@@ -830,8 +806,6 @@ class SdKey(BinaryParam):
             clsname = ''.join(camel(p) for p in parts)
 
             max_key_len = attrs.get('allow_len')[-1]
-
-            cls_label = transitional_name_mapping.get(cls_label, cls_label)
 
             attrs.update({
                 'name' : cls_label,
