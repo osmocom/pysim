@@ -202,6 +202,71 @@ class ConfigurableParameterTest(unittest.TestCase):
                       val=io.BytesIO(b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16'),
                       expect_clean_val=b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16',
                       expect_val='01020304050607080910111213141516'),
+
+            Paramtest(param_cls=p13n.SmspTpScAddr,
+                      val='+1234567',
+                      expect_clean_val=(True, '1234567'),
+                      expect_val='+1234567'),
+            Paramtest(param_cls=p13n.SmspTpScAddr,
+                      val=1234567,
+                      expect_clean_val=(False, '1234567'),
+                      expect_val='1234567'),
+
+            Paramtest(param_cls=p13n.TuakNumberOfKeccak,
+                      val='123',
+                      expect_clean_val=123,
+                      expect_val='123'),
+            Paramtest(param_cls=p13n.TuakNumberOfKeccak,
+                      val=123,
+                      expect_clean_val=123,
+                      expect_val='123'),
+
+            Paramtest(param_cls=p13n.MilenageRotationConstants,
+                      val='0a 0b 0c 01 02',
+                      expect_clean_val=b'\x0a\x0b\x0c\x01\x02',
+                      expect_val='0a0b0c0102'),
+            Paramtest(param_cls=p13n.MilenageRotationConstants,
+                      val=b'\x0a\x0b\x0c\x01\x02',
+                      expect_clean_val=b'\x0a\x0b\x0c\x01\x02',
+                      expect_val='0a0b0c0102'),
+            Paramtest(param_cls=p13n.MilenageRotationConstants,
+                      val=bytearray(b'\x0a\x0b\x0c\x01\x02'),
+                      expect_clean_val=b'\x0a\x0b\x0c\x01\x02',
+                      expect_val='0a0b0c0102'),
+
+            Paramtest(param_cls=p13n.MilenageXoringConstants,
+                      val='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                          ' bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+                          ' cccccccccccccccccccccccccccccccc'
+                          ' 11111111111111111111111111111111'
+                          ' 22222222222222222222222222222222',
+                      expect_clean_val=b'\xaa' * 16
+                                       + b'\xbb' * 16
+                                       + b'\xcc' * 16
+                                       + b'\x11' * 16
+                                       + b'\x22' * 16,
+                      expect_val='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                                 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+                                 'cccccccccccccccccccccccccccccccc'
+                                 '11111111111111111111111111111111'
+                                 '22222222222222222222222222222222'),
+            Paramtest(param_cls=p13n.MilenageXoringConstants,
+                      val=b'\xaa' * 16
+                          + b'\xbb' * 16
+                          + b'\xcc' * 16
+                          + b'\x11' * 16
+                          + b'\x22' * 16,
+                      expect_clean_val=b'\xaa' * 16
+                                       + b'\xbb' * 16
+                                       + b'\xcc' * 16
+                                       + b'\x11' * 16
+                                       + b'\x22' * 16,
+                      expect_val='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                                 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+                                 'cccccccccccccccccccccccccccccccc'
+                                 '11111111111111111111111111111111'
+                                 '22222222222222222222222222222222'),
+
             ]
 
         for sdkey_cls in (
