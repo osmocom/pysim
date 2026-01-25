@@ -207,19 +207,25 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
         elif isinstance(val, io.BytesIO):
             val = val.getvalue()
 
+        if hasattr(val, '__len__'):
+            val_len = len(val)
+        else:
+            # e.g. int length
+            val_len = len(str(val))
+
         if cls.allow_len is not None:
             l = cls.allow_len
             # cls.allow_len could be one int, or a tuple of ints. Wrap a single int also in a tuple.
             if not isinstance(l, (tuple, list)):
                 l = (l,)
-            if len(val) not in l:
-                raise ValueError(f'length must be one of {cls.allow_len}, not {len(val)}: {val!r}')
+            if val_len not in l:
+                raise ValueError(f'length must be one of {cls.allow_len}, not {val_len}: {val!r}')
         if cls.min_len is not None:
-            if len(val) < cls.min_len:
-                raise ValueError(f'length must be at least {cls.min_len}, not {len(val)}: {val!r}')
+            if val_len < cls.min_len:
+                raise ValueError(f'length must be at least {cls.min_len}, not {val_len}: {val!r}')
         if cls.max_len is not None:
-            if len(val) > cls.max_len:
-                raise ValueError(f'length must be at most {cls.max_len}, not {len(val)}: {val!r}')
+            if val_len > cls.max_len:
+                raise ValueError(f'length must be at most {cls.max_len}, not {val_len}: {val!r}')
         return val
 
     @classmethod
