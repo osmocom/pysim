@@ -566,6 +566,7 @@ class SmspTpScAddr(ConfigurableParameter):
     strip_chars = ' \t\r\n'
     max_len = 21 # '+' and 20 digits
     min_len = 1
+    example_input = '+49301234567'
 
     @staticmethod
     def str_to_tuple(addr_str):
