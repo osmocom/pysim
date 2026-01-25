@@ -570,21 +570,39 @@ class SmspTpScAddr(ConfigurableParameter):
     example_input = '+49301234567'
     default_source = param_source.ConstantSource
 
-    @classmethod
-    def validate_val(cls, val):
-        val = super().validate_val(val)
-        addr_str = str(val)
+    @staticmethod
+    def str_to_tuple(addr_str):
         if addr_str[0] == '+':
             digits = addr_str[1:]
             international = True
         else:
             digits = addr_str
             international = False
+        return (international, digits)
+
+    @staticmethod
+    def tuple_to_str(addr_tuple):
+        international, digits = addr_tuple
+        if international:
+            ret = '+'
+        else:
+            ret = ''
+        ret += digits
+        return ret
+
+    @classmethod
+    def validate_val(cls, val):
+        val = super().validate_val(val)
+
+        addr_tuple = cls.str_to_tuple(str(val))
+
+        international, digits = addr_tuple
         if len(digits) > 20:
             raise ValueError(f'TP-SC-ADDR must not exceed 20 digits: {digits!r}')
         if not digits.isdecimal():
             raise ValueError(f'TP-SC-ADDR must only contain decimal digits: {digits!r}')
-        return (international, digits)
+
+        return addr_tuple
 
     @classmethod
     def apply_val(cls, pes: ProfileElementSequence, val):
@@ -643,7 +661,7 @@ class SmspTpScAddr(ConfigurableParameter):
                 continue
             international = (international == 'international')
 
-            yield (international, digits)
+            yield { cls.name: cls.tuple_to_str((international, digits)) }
 
 
 class SdKey(BinaryParam):
