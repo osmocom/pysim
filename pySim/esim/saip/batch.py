@@ -164,7 +164,7 @@ class UppAudit(dict):
             try:
                 for valdict in param.get_values_from_pes(pes):
                     upp_audit.add_values(valdict)
-            except (TypeError, ValueError) as e:
+            except Exception as e:
                 raise ValueError(f'Error during audit for parameter {param}: {e}') from e
 
         if not additional_sd_keys:
