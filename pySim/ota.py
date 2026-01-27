@@ -57,12 +57,13 @@ CompactRemoteResp = Struct('number_of_commands'/Int8ub,
                            'last_response_data'/HexAdapter(GreedyBytes))
 
 RC_CC_DS = Enum(BitsInteger(2), no_rc_cc_ds=0, rc=1, cc=2, ds=3)
+CNTR_REQ = Enum(BitsInteger(2), no_counter=0, counter_no_replay_or_seq=1, counter_must_be_higher=2, counter_must_be_lower=3)
+POR_REQ = Enum(BitsInteger(2), no_por=0, por_required=1, por_only_when_error=2)
 
 # TS 102 225 Section 5.1.1 + TS 31.115 Section 4.2
 SPI = BitStruct(  # first octet
     Padding(3),
-    'counter'/Enum(BitsInteger(2), no_counter=0, counter_no_replay_or_seq=1,
-                   counter_must_be_higher=2, counter_must_be_lower=3),
+    'counter'/CNTR_REQ,
     'ciphering'/Flag,
     'rc_cc_ds'/RC_CC_DS,
     # second octet
@@ -70,8 +71,7 @@ SPI = BitStruct(  # first octet
     'por_in_submit'/Flag,
     'por_shall_be_ciphered'/Flag,
     'por_rc_cc_ds'/RC_CC_DS,
-    'por'/Enum(BitsInteger(2), no_por=0,
-               por_required=1, por_only_when_error=2)
+    'por'/POR_REQ
 )
 
 # TS 102 225 Section 5.1.2
