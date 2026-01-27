@@ -55,6 +55,7 @@ setup(
             "service-identity",
             "pyopenssl",
             "requests",
+            "smpplib",
         ],
         "CardKeyProviderPgsql": [
             "psycopg2-binary",

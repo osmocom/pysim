@@ -42,6 +42,9 @@ case "$JOB_TYPE" in
 
 	# Run pySim-shell integration tests (requires physical cards)
 	python3 -m unittest discover -v -s ./tests/pySim-shell_test/
+
+	# Run pySim-smpp2sim test
+	tests/pySim-smpp2sim_test/pySim-smpp2sim_test.sh
 	;;
 "distcheck")
 	virtualenv -p python3 venv --system-site-packages
