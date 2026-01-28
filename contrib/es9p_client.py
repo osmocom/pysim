@@ -126,7 +126,7 @@ class Es9pClient:
         if self.opts.iccid:
             ntf_metadata['iccid'] = h2b(swap_nibbles(self.opts.iccid))
 
-        if self.opts.operation == 'download':
+        if self.opts.operation == 'install':
             pird = {
                 'transactionId': h2b(self.opts.transaction_id),
                 'notificationMetadata': ntf_metadata,
