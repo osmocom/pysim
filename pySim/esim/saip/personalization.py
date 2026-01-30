@@ -730,7 +730,7 @@ class SdKey(BinaryParam):
     DEK =    ('DEK', dict(key_id=0x03, key_usage_qual=0x48) )
 
     TLSPSK_PSK = ('TLSPSK', dict(key_type=KeyType.tls_psk, key_id=0x01, key_usage_qual=0x3c, allow_len=LEN_128_192_256) )
-    TLSPSK_DEK = ('DEK',    dict(key_type=KeyType.des, key_id=0x02, key_usage_qual=0x48, allow_len=LEN_128) )
+    TLSPSK_DEK = ('DEK',    dict(key_id=0x02, key_usage_qual=0xc4) )
 
     # THIS IS THE LIST that controls which SdKeyXxx subclasses exist:
     SD_KEY_DEFS = (
@@ -738,7 +738,11 @@ class SdKey(BinaryParam):
         ('SCP02', (0x20, 0x21, 0x22, 0xff), (AES, ),              (ENC, MAC, DEK) ),
         ('SCP03', (0x30, 0x31, 0x32),       (AES, ),              (ENC, MAC, DEK) ),
         ('SCP80', (0x01, 0x02, 0x03),       (DES, AES),           (ENC, MAC, DEK) ),
-        ('SCP81', (0x40, 0x41, 0x42),       (TLSPSK_PSK, TLSPSK_DEK, ), ),
+
+        # key_id=1
+        ('SCP81', (0x40, 0x41, 0x42),       (TLSPSK_PSK, ),                       ),
+        # key_id=2
+        ('SCP81', (0x40, 0x41, 0x42),       (DES, AES),           (TLSPSK_DEK, )  ),
     )
 
     all_implementations = None
