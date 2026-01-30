@@ -54,6 +54,8 @@ def compile_asn1_subdir(subdir_name:str, codec='der'):
     __ver = sys.version_info
     if (__ver.major, __ver.minor) >= (3, 9):
         for i in resources.files('pySim.esim').joinpath('asn1').joinpath(subdir_name).iterdir():
+            if not i.name.endswith('.asn'):
+                continue
             asn_txt += i.read_text()
             asn_txt += "\n"
     #else:
