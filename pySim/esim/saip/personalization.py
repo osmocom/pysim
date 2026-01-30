@@ -694,6 +694,11 @@ class SdKey(BinaryParam):
                         )
                 pe.add_key(key)
             else:
+                # A key of this KVN and ID already exists in the profile.
+
+                # Keep the key_usage_qualifier as it was in the profile, so skip this here:
+                # key.key_usage_qualifier = cls.key_usage_qual
+
                 key.key_components = set_components
 
     @classmethod
