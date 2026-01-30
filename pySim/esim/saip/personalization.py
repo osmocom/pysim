@@ -693,6 +693,7 @@ class SdKey(BinaryParam):
                         )
                 pe.add_key(key)
             else:
+                #key.key_usage_qualifier = cls.key_usage_qual
                 key.key_components = set_components
 
     @classmethod
