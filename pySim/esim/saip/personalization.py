@@ -646,19 +646,11 @@ class SmspTpScAddr(ConfigurableParameter):
                 continue
 
             tp_sc_addr = ef_smsp_dec.get('tp_sc_addr', None)
-            if not tp_sc_addr:
-                continue
 
             digits = tp_sc_addr.get('call_number', None)
-            if not digits:
-                continue
 
             ton_npi = tp_sc_addr.get('ton_npi', None)
-            if not ton_npi:
-                continue
             international = ton_npi.get('type_of_number', None)
-            if international is None:
-                continue
             international = (international == 'international')
 
             yield { cls.name: cls.tuple_to_str((international, digits)) }
