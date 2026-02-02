@@ -35,6 +35,7 @@ class ParamSource:
 
     # This name should be short but descriptive, useful for a user interface, like 'random decimal digits'.
     name = "none"
+    numeric_base = None # or 10 or 16
 
     @classmethod
     def from_str(cls, s:str):
@@ -84,6 +85,8 @@ class InputExpandingParamSource(ParamSource):
 
 class DecimalRangeSource(InputExpandingParamSource):
     """abstract: decimal numbers with a value range"""
+
+    numeric_base = 10
 
     def __init__(self, num_digits, first_value, last_value):
         """
@@ -144,6 +147,7 @@ class RandomDigitSource(DecimalRangeSource, RandomSourceMixin):
 class RandomHexDigitSource(InputExpandingParamSource, RandomSourceMixin):
     """return a different sequence of random hexadecimal digits each"""
     name = "random hexadecimal digits"
+    numeric_base = 16
     used_keys = set()
 
     def __init__(self, num_digits):
