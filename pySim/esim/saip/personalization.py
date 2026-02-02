@@ -88,6 +88,7 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
     min_len: minimum length of an input str; min_len = 4
     max_len: maximum length of an input str; max_len = 8
     allow_len: permit only specific lengths; allow_len = (8, 16, 32)
+    numeric_base: indicate hex / decimal, if any; numeric_base = None; numeric_base = 10; numeric_base = 16
 
     Subclasses may change the meaning of these by overriding validate_val(), for example that the length counts
     resulting bytes instead of a hexstring length. Most subclasses will be covered by the default validate_val().
@@ -143,6 +144,7 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
     allow_len = None # a list of specific lengths
     example_input = None
     default_source = None # a param_source.ParamSource subclass
+    numeric_base = None # or 10 or 16
 
     def __init__(self, input_value=None):
         self.input_value = input_value # the raw input value as given by caller
@@ -318,6 +320,7 @@ class DecimalParam(ConfigurableParameter):
     """
     allow_types = (str, int)
     allow_chars = '0123456789'
+    numeric_base = 10
 
     @classmethod
     def validate_val(cls, val):
@@ -362,6 +365,7 @@ class DecimalHexParam(DecimalParam):
 class IntegerParam(ConfigurableParameter):
     allow_types = (str, int)
     allow_chars = '0123456789'
+    numeric_base = 10
 
     # two integers, if the resulting int should be range limited
     min_val = None
@@ -394,6 +398,7 @@ class BinaryParam(ConfigurableParameter):
     allow_types = (str, io.BytesIO, bytes, bytearray, int)
     allow_chars = '0123456789abcdefABCDEF'
     strip_chars = ' \t\r\n'
+    numeric_base = 16
     default_source = param_source.RandomHexDigitSource
 
     @classmethod
@@ -565,6 +570,7 @@ class SmspTpScAddr(ConfigurableParameter):
     name = 'SMSP-TP-SC-ADDR'
     allow_chars = '+0123456789'
     strip_chars = ' \t\r\n'
+    numeric_base = 10
     max_len = 21 # '+' and 20 digits
     min_len = 1
     example_input = '+49301234567'
