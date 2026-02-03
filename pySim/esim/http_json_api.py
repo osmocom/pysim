@@ -293,6 +293,13 @@ class JsonHttpApiFunction(abc.ABC):
 class JsonHttpApiClient():
     def __init__(self, api_func: JsonHttpApiFunction, url_prefix: str, func_req_id: Optional[str],
                  session: requests.Session):
+        """
+        Args:
+                api_func : API function definition (JsonHttpApiFunction)
+                url_prefix : prefix to be put in front of the API function path (see JsonHttpApiFunction)
+                func_req_id : function requestor id to use for requests
+                session : session object (requests)
+        """
         self.api_func = api_func
         self.url_prefix = url_prefix
         self.func_req_id = func_req_id
