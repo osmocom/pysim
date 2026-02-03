@@ -19,6 +19,7 @@ import abc
 import requests
 import logging
 import json
+from re import match
 from typing import Optional
 import base64
 from twisted.web.server import Request
@@ -210,18 +211,65 @@ class JsonHttpApiFunction(abc.ABC):
     # additional custom HTTP headers (server responses)
     extra_http_res_headers = {}
 
+    def __new__(cls, *args, role = None, **kwargs):
+        """
+        Args:
+                args: (see JsonHttpApiClient and JsonHttpApiServer)
+                role: role ('server' or 'client') in which the JsonHttpApiFunction should be created.
+                kwargs: (see JsonHttpApiClient and JsonHttpApiServer)
+        """
+
+        # Create a dictionary with the class attributes of this class (the properties listed above and the encode_
+        # decode_ methods below). The dictionary will not include any dunder/magic methods
+        cls_attr = { attr_name: getattr(cls, attr_name) for attr_name in dir(cls) if not match("__.*__", attr_name) }
+
+        # Normal instantiation as JsonHttpApiFunction:
+        if len(args) == 0:
+            return type(cls.__name__, (abc.ABC,), cls_attr)()
+
+        # Instantiation as as JsonHttpApiFunction with a JsonHttpApiClient or JsonHttpApiServer base
+        role = kwargs.get('role', 'legacy_client')
+        if role == 'legacy_client':
+            # Deprecated: With the advent of the server role (JsonHttpApiServer) the API had to be changed. To maintain
+            # compatibility with existing code (out-of-tree) the original behaviour and API interface and behaviour had
+            # to be preserved. Already existing JsonHttpApiFunction definitions will still work and the related objects
+            # may still be created on the original way: my_api_func = MyApiFunc(url_prefix, func_req_id, self.session)
+            logger.warning('implicit role (falling back to legacy JsonHttpApiClient) is deprecated, please specify role explcitly')
+            result = type(cls.__name__, (JsonHttpApiClient,), cls_attr)(None, *args, **kwargs)
+            result.api_func = result
+            result.legacy = True
+            return result
+        elif role == 'client':
+            # Create a JsonHttpApiFunction in client role
+            # Example: my_api_func = MyApiFunc(url_prefix, func_req_id, self.session, role='client')
+            result = type(cls.__name__, (JsonHttpApiClient,), cls_attr)(None, *args, **kwargs)
+            result.api_func = result
+            return result
+        elif role == 'server':
+            # Create a JsonHttpApiFunction in server role
+            # Example: my_api_func = MyApiFunc(url_prefix, func_req_id, self.session, role='server')
+            result = type(cls.__name__, (JsonHttpApiServer,), cls_attr)(None, *args, **kwargs)
+            result.api_func = result
+            return result
+        else:
+            raise ValueError('Invalid role \'%s\' specified' % role)
+
     def encode_client(self, data: dict) -> dict:
         """Validate an encode input dict into JSON-serializable dict for request body."""
         output = {}
-
         for p in self.input_mandatory:
             if not p in data:
                 raise ValueError('Mandatory input parameter %s missing' % p)
         for p, v in data.items():
             p_class = self.input_params.get(p)
             if not p_class:
-                logger.warning('Unexpected/unsupported input parameter %s=%s', p, v)
-                output[p] = v
+                # pySim/esim/http_json_api.py:269:47: E1101: Instance of 'JsonHttpApiFunction' has no 'legacy' member (no-member)
+                # pylint: disable=no-member
+                if hasattr(self, 'legacy') and self.legacy:
+                    output[p] = JsonRequestHeader.encode(v)
+                else:
+                    logger.warning('Unexpected/unsupported input parameter %s=%s', p, v)
+                    output[p] = v
             else:
                 output[p] = p_class.encode(v)
         return output
