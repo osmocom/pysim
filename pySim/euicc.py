@@ -226,9 +226,28 @@ class Icon(BER_TLV_IE, tag=0x94):
     _construct = GreedyBytes
 class ProfileClass(BER_TLV_IE, tag=0x95):
     _construct = Enum(Int8ub, test=0, provisioning=1, operational=2)
+class ProfilePolicyRules(BER_TLV_IE, tag=0x99):
+    _construct = GreedyBytes
+class NotificationConfigurationInfo(BER_TLV_IE, tag=0xb6):
+    _construct = GreedyBytes
+
+# ProfileOwner
+class ProfileOwnerPLMN(BER_TLV_IE, tag=0x80):
+    _construct = PlmnAdapter(Bytes(3))
+class ProfileOwnerGID1(BER_TLV_IE, tag=0x81):
+    _construct = GreedyBytes
+class ProfileOwnerGID2(BER_TLV_IE, tag=0x82):
+    _construct = GreedyBytes
+class ProfileOwner(BER_TLV_IE, tag=0xb7, nested=[ProfileOwnerPLMN, ProfileOwnerGID1, ProfileOwnerGID2]):
+    _construct = GreedyBytes
+
+class SMDPPProprietaryData(BER_TLV_IE, tag=0xb8):
+    _construct = GreedyBytes
+
 class ProfileInfo(BER_TLV_IE, tag=0xe3, nested=[Iccid, IsdpAid, ProfileState, ProfileNickname,
                                                 ServiceProviderName, ProfileName, IconType, Icon,
-                                                ProfileClass]): # FIXME: more IEs
+                                                ProfileClass, ProfilePolicyRules, NotificationConfigurationInfo,
+                                                ProfileOwner, SMDPPProprietaryData]):
     pass
 class ProfileInfoSeq(BER_TLV_IE, tag=0xa0, nested=[ProfileInfo]):
     pass
