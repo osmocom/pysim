@@ -2200,9 +2200,9 @@ update_record 6 fe0112ffb53e96e5ff99731d51ad7beafd0e23ffffffffffffffffffffffffff
 update_record 7 fe02101da012f436d06824ecdd15050419ff9affffffffffffffffffffffffffffffff
 update_record 8 fe02116929a373388ac904aff57ff57f6b3431ffffffffffffffffffffffffffffffff
 update_record 9 fe0212a99245a5dc814e2f4c1aa908e9946e03ffffffffffffffffffffffffffffffff
-update_record 10 fe0310521312c05a9aea93d70d44405172a580ffffffffffffffffffffffffffffffff
-update_record 11 fe0311a9e45c72d45abde7db74261ee0c11b1bffffffffffffffffffffffffffffffff
-update_record 12 fe0312867ba36b5873d60ea8b2cdcf3c0ddddaffffffffffffffffffffffffffffffff
+update_record 10 fe03601111111111111111111111111111111111111111111111111111111111111111
+update_record 11 fe03612222222222222222222222222222222222222222222222222222222222222222
+update_record 12 fe03623333333333333333333333333333333333333333333333333333333333333333
 #
 ################################################################################
 # MF/DF.SYSTEM/EF.SIM_AUTH_COUNTER                                             #
