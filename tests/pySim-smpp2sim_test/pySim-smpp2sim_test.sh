@@ -44,12 +44,11 @@ function dump_logs {
 function send_test_request {
     echo ""
     echo "Sending request to SMPP server:"
-    TAR=$1
-    C_APDU=$2
-    R_APDU_EXPECTED=$3
+    C_APDU=$1
+    R_APDU_EXPECTED=$2
 
     echo "Sending: $C_APDU"
-    COMMANDLINE="$PYSIM_SMPPOTATOOL --verbose --port $PYSIM_SMPP2SIM_PORT --kic $KIC --kid $KID --tar $TAR --apdu $C_APDU"
+    COMMANDLINE="$PYSIM_SMPPOTATOOL --verbose --port $PYSIM_SMPP2SIM_PORT --kic $KIC --kid $KID --kic_idx $KEY_INDEX --kid_idx $KEY_INDEX --algo-crypt $ALGO_CRYPT --algo-auth $ALGO_AUTH --tar $TAR --apdu $C_APDU"
     echo "Commandline: $COMMANDLINE"
     R_APDU=`$COMMANDLINE 2> $PYSIM_SMPPOTATOOL_LOG`
     if [ $? -ne 0 ]; then
@@ -68,7 +67,6 @@ function send_test_request {
 	exit 1
     fi
     echo "Response matches the expected response -- success!"
-    echo ""
 }
 
 function start_smpp_server {
@@ -100,6 +98,15 @@ function start_smpp_server {
 	sleep 1
     done
     echo "SMPP server reachable (port=$PYSIM_SMPP2SIM_PORT)"
+}
+
+function stop_smpp_server {
+    # Stop the SMPP server
+    echo ""
+    echo "Stopping SMPP server:"
+    kill $PYSIM_SMPP2SIM_PID
+    echo "SMPP server stopped (PID=$PYSIM_SMPP2SIM_PID)"
+    trap EXIT
 }
 
 function find_card_by_iccid {
@@ -135,22 +142,19 @@ export PYTHONPATH=./
 echo "pySim-smpp2sim_test - a test program to test pySim-smpp2sim.py"
 echo "=============================================================="
 
-# TODO: At the moment we can only have one card and one testcase. This is
-# sufficient for now. We can extend this later as needed.
+TESTCASE_DIR=`dirname $0`
+for TEST_CONFIG_FILE in $TESTCASE_DIR/testcase_*.cfg ; do
+    echo ""
+    echo "running testcase: $TEST_CONFIG_FILE"
+    . $TEST_CONFIG_FILE
+    find_card_by_iccid $ICCID
+    PCSC_READER=$?
+    start_smpp_server $PCSC_READER
+    send_test_request $APDU "$EXPECTED_RESPONSE"
+    stop_smpp_server
+    echo ""
+    echo "testcase ok"
+    echo "--------------------------------------------------------------"
+done
 
-# Read test parameters from config from file
-TEST_CONFIG_FILE=${0%.*}.cfg
-echo "using config file: $TEST_CONFIG_FILE"
-if ! [ -e "$TEST_CONFIG_FILE" ]; then
-   echo "test configuration file does not exist! -- abort"
-   exit 1
-fi
-. $TEST_CONFIG_FILE
-
-# Execute testcase
-find_card_by_iccid $ICCID
-start_smpp_server $?
-send_test_request $TAR $APDU "$EXPECTED_RESPONSE"
-
-
-
+echo "done."
