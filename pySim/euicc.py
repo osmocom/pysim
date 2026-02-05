@@ -444,9 +444,28 @@ class CardApplicationISDR(pySim.global_platform.CardApplicationSD):
             d = rn.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['notification_sent_resp']))
 
-        def do_get_profiles_info(self, _opts):
+        get_profiles_info_parser = argparse.ArgumentParser()
+        get_profiles_info_parser.add_argument('--all', action='store_true', help='Retrieve all known tags of a profile')
+
+        @cmd2.with_argparser(get_profiles_info_parser)
+        def do_get_profiles_info(self, opts):
             """Perform an ES10c GetProfilesInfo function."""
-            pi = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, ProfileInfoListReq(), ProfileInfoListResp)
+            if opts.all:
+                tags = [nest.tag for nest in ProfileInfo.nested_collection_cls().nested]
+                u8tags = []
+                # TODO: rework TagList to support 2 byte tags to not filter it into u8 tags
+                for tag in tags:
+                    if tag <= 255:
+                        u8tags.append(tag)
+                    elif tag <= 65535:
+                        u8tags.append(tag >> 8)
+                        u8tags.append(tag & 0xff)
+                    # Ignoring 3 byte tags
+                req = ProfileInfoListReq(children=[TagList(decoded=u8tags)])
+            else:
+                req = ProfileInfoListReq()
+
+            pi = CardApplicationISDR.store_data_tlv(self._cmd.lchan.scc, req, ProfileInfoListResp)
             d = pi.to_dict()
             self._cmd.poutput_json(flatten_dict_lists(d['profile_info_list_resp']))
 
