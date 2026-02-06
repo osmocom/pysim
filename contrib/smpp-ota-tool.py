@@ -194,12 +194,12 @@ if __name__ == '__main__':
     option_parser.add_argument('--tar', required=True, type=is_hexstr, help='Toolkit Application Reference')
     option_parser.add_argument("--cntr_req", choices=CNTR_REQ.decmapping.values(), default='no_counter',
                                help="Counter requirement")
-    option_parser.add_argument('--ciphering', default=True, type=bool, help='Enable ciphering')
+    option_parser.add_argument('--no-ciphering', action='store_true', default=False, help='Disable ciphering')
     option_parser.add_argument("--rc-cc-ds", choices=RC_CC_DS.decmapping.values(), default='cc',
                                help="message check (rc=redundency check, cc=crypt. checksum, ds=digital signature)")
-    option_parser.add_argument('--por-in-submit', default=False, type=bool,
+    option_parser.add_argument('--por-in-submit', action='store_true', default=False,
                                help='require PoR to be sent via SMS-SUBMIT')
-    option_parser.add_argument('--por-shall-be-ciphered', default=True, type=bool, help='require encrypted PoR')
+    option_parser.add_argument('--por-no-ciphering', action='store_true', default=False, help='Disable ciphering (PoR)')
     option_parser.add_argument("--por-rc-cc-ds", choices=RC_CC_DS.decmapping.values(), default='cc',
                                help="PoR check (rc=redundency check, cc=crypt. checksum, ds=digital signature)")
     option_parser.add_argument("--por_req", choices=POR_REQ.decmapping.values(), default='por_required',
@@ -226,10 +226,10 @@ if __name__ == '__main__':
                            kid=h2b(opts.kid),
                            cntr=opts.cntr)
     spi = {'counter' : opts.cntr_req,
-           'ciphering' : opts.ciphering,
+           'ciphering' : not opts.no_ciphering,
            'rc_cc_ds': opts.rc_cc_ds,
-           'por_shall_be_ciphered':opts.por_shall_be_ciphered,
            'por_in_submit': opts.por_in_submit,
+           'por_shall_be_ciphered': not opts.por_no_ciphering,
            'por_rc_cc_ds': opts.por_rc_cc_ds,
            'por': opts.por_req}
     apdu = h2b("".join(opts.apdu))
