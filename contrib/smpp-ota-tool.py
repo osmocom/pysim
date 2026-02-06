@@ -224,8 +224,8 @@ if __name__ == '__main__':
     spi = {'counter' : opts.cntr_req,
            'ciphering' : opts.ciphering,
            'rc_cc_ds': opts.rc_cc_ds,
-           'por_in_submit':opts.por_in_submit,
            'por_shall_be_ciphered':opts.por_shall_be_ciphered,
+           'por_in_submit': opts.por_in_submit,
            'por_rc_cc_ds': opts.por_rc_cc_ds,
            'por': opts.por_req}
     apdu = h2b("".join(opts.apdu))
