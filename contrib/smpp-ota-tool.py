@@ -141,7 +141,7 @@ class SmppHandler:
                 tuple containing the last response data and the last status word as byte strings
         """
 
-        logger.info("C-APDU sending: %s..." % b2h(apdu))
+        logger.info("C-APDU sending: %s...", b2h(apdu))
 
         # translate to Secured OTA RFM
         secured = self.ota_dialect.encode_cmd(self.ota_keyset, self.tar, self.spi, apdu=apdu)
