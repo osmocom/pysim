@@ -204,9 +204,9 @@ if __name__ == '__main__':
                                help="PoR check (rc=redundency check, cc=crypt. checksum, ds=digital signature)")
     option_parser.add_argument("--por_req", choices=POR_REQ.decmapping.values(), default='por_required',
                                help="Proof of Receipt requirements")
-    option_parser.add_argument('--src-addr', default='12', type=str, help='TODO')
-    option_parser.add_argument('--dest-addr', default='23', type=str, help='TODO')
-    option_parser.add_argument('--timeout', default=10, type=int, help='TODO')
+    option_parser.add_argument('--src-addr', default='12', type=str, help='SMS source address (MSISDN)')
+    option_parser.add_argument('--dest-addr', default='23', type=str, help='SMS destination address (MSISDN)')
+    option_parser.add_argument('--timeout', default=10, type=int, help='Maximum response waiting time')
     option_parser.add_argument('-a', '--apdu', action='append', required=True, type=is_hexstr, help='C-APDU to send')
     opts = option_parser.parse_args()
 
