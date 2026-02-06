@@ -218,7 +218,7 @@ if __name__ == '__main__':
                            kic_idx=opts.kic_idx,
                            kic=h2b(opts.kic),
                            algo_auth=opts.algo_auth,
-                           kid_idx=opts.kic_idx,
+                           kid_idx=opts.kid_idx,
                            kid=h2b(opts.kid),
                            cntr=opts.cntr)
     spi = {'counter' : opts.cntr_req,
