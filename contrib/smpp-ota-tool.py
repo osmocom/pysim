@@ -214,6 +214,10 @@ if __name__ == '__main__':
                         format='%(asctime)s %(levelname)s %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
 
+    if opts.kic_idx != opts.kid_idx:
+        logger.warning("KIC index (%s) and KID index (%s) are differnet (security violation, card should reject message)",
+                       opts.kic_idx, opts.kid_idx)
+
     ota_keyset = OtaKeyset(algo_crypt=opts.algo_crypt,
                            kic_idx=opts.kic_idx,
                            kic=h2b(opts.kic),
