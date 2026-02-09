@@ -2004,7 +2004,7 @@ class FsNode:
         return x
 
     def walk(self, fn, **kwargs):
-        """call 'fn(self, **kwargs) for the File."""
+        """call 'fn(self, ``**kwargs``) for the File."""
         return [fn(self, **kwargs)]
 
 class FsNodeEF(FsNode):
@@ -2094,7 +2094,7 @@ class FsNodeDF(FsNode):
         return cur
 
     def walk(self, fn, **kwargs):
-        """call 'fn(self, **kwargs) for the DF and recursively for all children."""
+        """call 'fn(self, ``**kwargs``) for the DF and recursively for all children."""
         ret = super().walk(fn, **kwargs)
         for c in self.children.values():
             ret += c.walk(fn, **kwargs)
