@@ -69,40 +69,41 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
 
     Usage examples, by example of Iccid:
 
-    1) use a ConfigurableParameter instance, with .input_value and .value state:
+    1) use a ConfigurableParameter instance, with .input_value and .value state::
 
-      iccid = Iccid()
-      try:
-        iccid.input_value = '123456789012345678'
-        iccid.validate()
-      except ValueError:
-        print(f"failed to validate {iccid.name} == {iccid.input_value}")
+          iccid = Iccid()
+          try:
+            iccid.input_value = '123456789012345678'
+            iccid.validate()
+          except ValueError:
+            print(f"failed to validate {iccid.name} == {iccid.input_value}")
 
-      pes = ProfileElementSequence.from_der(der_data_from_file)
-      try:
-        iccid.apply(pes)
-      except ValueError:
-        print(f"failed to apply {iccid.name} := {iccid.input_value}")
+          pes = ProfileElementSequence.from_der(der_data_from_file)
+          try:
+            iccid.apply(pes)
+          except ValueError:
+            print(f"failed to apply {iccid.name} := {iccid.input_value}")
 
-      changed_der = pes.to_der()
+          changed_der = pes.to_der()
 
-    2) use a ConfigurableParameter class, without state:
+    2) use a ConfigurableParameter class, without state::
 
-      cls = Iccid
-      input_val = '123456789012345678'
+          cls = Iccid
+          input_val = '123456789012345678'
 
-      try:
-        clean_val = cls.validate_val(input_val)
-      except ValueError:
-        print(f"failed to validate {cls.get_name()} = {input_val}")
+          try:
+            clean_val = cls.validate_val(input_val)
+          except ValueError:
+            print(f"failed to validate {cls.get_name()} = {input_val}")
 
-      pes = ProfileElementSequence.from_der(der_data_from_file)
-      try:
-        cls.apply_val(pes, clean_val)
-      except ValueError:
-        print(f"failed to apply {cls.get_name()} = {input_val}")
+          pes = ProfileElementSequence.from_der(der_data_from_file)
+          try:
+            cls.apply_val(pes, clean_val)
+          except ValueError:
+            print(f"failed to apply {cls.get_name()} = {input_val}")
 
-      changed_der = pes.to_der()
+          changed_der = pes.to_der()
+
     """
 
     # A subclass can set an explicit string as name (like name = "PIN1").
