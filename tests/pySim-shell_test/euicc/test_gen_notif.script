@@ -3,6 +3,11 @@ set echo true
 
 select ADF.ISD-R
 
+# Ensure that the test-profile is actually enabled. (In case te test-profile
+# was disabled, a notification may be generated. The testcase should tolerate
+# that)
+enable_profile --iccid 89000123456789012341
+
 # Generate two (additional) notifications by quickly enabeling the test profile
 enable_profile --iccid 8949449999999990031f
 enable_profile --iccid 89000123456789012341

@@ -1,5 +1,10 @@
 set debug true
 set echo true
 
+# The output of get_profiles_info will also include the "profile_state", which
+# can be either "enabled" or "disabled". Ensure that the correct profile is
+# enabled.
+enable_profile --iccid 89000123456789012341
+
 select ADF.ISD-R
 get_profiles_info > get_profiles_info.tmp

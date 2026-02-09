@@ -3,6 +3,9 @@ set echo true
 
 select ADF.ISD-R
 
+# Ensure that the test-profile we intend to test with is actually enabled
+enable_profile --iccid 89000123456789012341
+
 # by ICCID (pre-installed test profile on sysmoEUICC1-C2T)
 disable_profile --iccid 89000123456789012341 > enable_disable_profile.tmp
 enable_profile --iccid 89000123456789012341 >> enable_disable_profile.tmp
