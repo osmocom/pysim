@@ -166,7 +166,7 @@ class ModemATCommandLink(LinkBaseTpdu):
 
         # Make sure that the response has format: b'+CSIM: %d,\"%s\"'
         try:
-            result = re.match(b'\+CSIM: (\d+),\"([0-9A-F]+)\"', rsp)
+            result = re.match(rb'\+CSIM: (\d+),\"([0-9A-F]+)\"', rsp)
             (_rsp_tpdu_len, rsp_tpdu) = result.groups()
         except Exception as exc:
             raise ReaderError('Failed to parse response from modem: %s' % rsp) from exc
