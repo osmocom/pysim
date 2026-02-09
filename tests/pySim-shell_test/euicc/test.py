@@ -23,7 +23,7 @@ import os
 import json
 from utils import *
 
-# This testcase requires a sysmoEUICC1-C2T with the test prfile TS48V1-B-UNIQUE (ICCID 8949449999999990031f)
+# This testcase requires a sysmoEUICC1-C2T with the test prfile TS48V1-B-UNIQUE (ICCID 8949449999999990031)
 # installed, and in disabled state. Also the profile must be installed in such a way that notifications are
 # generated when the profile is disabled or enabled (ProfileMetadata)
 
