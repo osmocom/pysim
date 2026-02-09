@@ -56,7 +56,7 @@ class test_case(UnittestUtils):
         self.runPySimShell(cardname, "test_enable_disable_profile.script")
         self.assertEqualFiles("enable_disable_profile.tmp")
 
-    def test_enable_disable_profile(self):
+    def test_set_nickname(self):
         cardname = 'sysmoEUICC1-C2T'
 
         self.runPySimShell(cardname, "test_set_nickname.script")
