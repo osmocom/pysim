@@ -19,7 +19,6 @@ import abc
 import requests
 import logging
 import json
-from re import match
 from typing import Optional
 import base64
 from twisted.web.server import Request
@@ -211,7 +210,7 @@ class JsonHttpApiFunction(abc.ABC):
     # additional custom HTTP headers (server responses)
     extra_http_res_headers = {}
 
-    def __new__(cls, *args, role = None, **kwargs):
+    def __new__(cls, *args, role = 'legacy_client', **kwargs):
         """
         Args:
                 args: (see JsonHttpApiClient and JsonHttpApiServer)
@@ -221,14 +220,13 @@ class JsonHttpApiFunction(abc.ABC):
 
         # Create a dictionary with the class attributes of this class (the properties listed above and the encode_
         # decode_ methods below). The dictionary will not include any dunder/magic methods
-        cls_attr = { attr_name: getattr(cls, attr_name) for attr_name in dir(cls) if not match("__.*__", attr_name) }
+        cls_attr = {attr_name: getattr(cls, attr_name) for attr_name in dir(cls) if not attr_name.startswith('__')}
 
         # Normal instantiation as JsonHttpApiFunction:
-        if len(args) == 0:
+        if len(args) == 0 and len(kwargs) == 0:
             return type(cls.__name__, (abc.ABC,), cls_attr)()
 
         # Instantiation as as JsonHttpApiFunction with a JsonHttpApiClient or JsonHttpApiServer base
-        role = kwargs.get('role', 'legacy_client')
         if role == 'legacy_client':
             # Deprecated: With the advent of the server role (JsonHttpApiServer) the API had to be changed. To maintain
             # compatibility with existing code (out-of-tree) the original behaviour and API interface and behaviour had
