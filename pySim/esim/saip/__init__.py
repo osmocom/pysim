@@ -151,6 +151,8 @@ class File:
         self.df_name = None
         self.fill_pattern = None
         self.fill_pattern_repeat = False
+        self.pstdo = None # pinStatusTemplateDO, mandatory for DF/ADF
+        self.lcsi = None # optional life cycle status indicator
         # apply some defaults from profile
         if self.template:
             self.from_template(self.template)
@@ -278,6 +280,8 @@ class File:
         elif self.file_type in ['MF', 'DF', 'ADF']:
             fdb_dec['file_type'] = 'df'
             fdb_dec['structure'] = 'no_info_given'
+            # pinStatusTemplateDO is mandatory for DF/ADF
+            fileDescriptor['pinStatusTemplateDO'] = self.pstdo
         # build file descriptor based on above input data
         fd_dict = {}
         if len(fdb_dec):
@@ -304,6 +308,8 @@ class File:
             # desired fill or repeat pattern in the "proprietaryEFInfo" element for the EF in Profiles
             # downloaded to a V2.2 or earlier eUICC.
             fileDescriptor['proprietaryEFInfo'] = pefi
+        if self.lcsi:
+            fileDescriptor['lcsi'] = self.lcsi
         logger.debug("%s: to_fileDescriptor(%s)" % (self, fileDescriptor))
         return fileDescriptor
 
@@ -323,6 +329,8 @@ class File:
         if efFileSize:
             self._file_size = self._decode_file_size(efFileSize)
 
+        self.pstdo = fileDescriptor.get('pinStatusTemplateDO', None)
+        self.lcsi = fileDescriptor.get('lcsi', None)
         pefi = fileDescriptor.get('proprietaryEFInfo', {})
         securityAttributesReferenced = fileDescriptor.get('securityAttributesReferenced', None)
         if securityAttributesReferenced:
