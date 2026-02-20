@@ -383,14 +383,18 @@ class JsonHttpApiClient():
         # SGP.22, section 6.5.1)
         if response.status_code != self.api_func.expected_http_status:
             raise HttpStatusError(response)
-        if response.content and not response.headers.get('Content-Type').startswith(req_headers['Content-Type']):
-            raise HttpHeaderError(response)
         if not response.headers.get('X-Admin-Protocol', 'gsma/rsp/v2.unknown').startswith('gsma/rsp/v2.'):
             raise HttpHeaderError(response)
 
         # Decode response and return the result back to the caller
         if response.content:
-            output = self.api_func.decode_client(response.json())
+            if response.headers.get('Content-Type').startswith('application/json'):
+                output = self.api_func.decode_client(response.json())
+            elif response.headers.get('Content-Type').startswith('text/plain;charset=UTF-8'):
+                output = { 'data': response.content.decode('utf-8') }
+            else:
+                raise HttpHeaderError(f'unimplemented response Content-Type: {response.headers=!r}')
+
             # In case the response contains a header, check it to make sure that the API call was executed successfully
             # (the presence of the header field is checked by the decode_client method)
             if 'header' in output:
