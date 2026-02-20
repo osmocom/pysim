@@ -256,5 +256,10 @@ class JsonHttpApiFunction(abc.ABC):
             raise HttpHeaderError(response)
 
         if response.content:
-            return self.decode(response.json())
+            if response.headers.get('Content-Type').startswith('application/json'):
+                return self.decode(response.json())
+            elif response.headers.get('Content-Type').startswith('text/plain;charset=UTF-8'):
+                return { 'data': response.content.decode('utf-8') }
+            raise HttpHeaderError(f'unimplemented response Content-Type: {response.headers=!r}')
+
         return None
