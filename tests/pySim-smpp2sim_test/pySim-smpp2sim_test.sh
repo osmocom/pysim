@@ -49,7 +49,7 @@ function send_test_request {
     R_APDU_EXPECTED=$2
 
     echo "Sending: $C_APDU"
-    COMMANDLINE="$PYSIM_SMPPOTATOOL --verbose --port $PYSIM_SMPP2SIM_PORT --kic $KIC --kid $KID --kic_idx $KEY_INDEX --kid_idx $KEY_INDEX --algo-crypt $ALGO_CRYPT --algo-auth $ALGO_AUTH --tar $TAR --apdu $C_APDU"
+    COMMANDLINE="$PYSIM_SMPPOTATOOL --verbose --port $PYSIM_SMPP2SIM_PORT --kic $KIC --kid $KID --kic-idx $KEY_INDEX --kid-idx $KEY_INDEX --algo-crypt $ALGO_CRYPT --algo-auth $ALGO_AUTH --tar $TAR --apdu $C_APDU"
     echo "Commandline: $COMMANDLINE"
     R_APDU=`$COMMANDLINE 2> $PYSIM_SMPPOTATOOL_LOG`
     if [ $? -ne 0 ]; then
