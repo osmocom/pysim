@@ -30,6 +30,48 @@ from pathlib import Path
 
 logger = logging.getLogger(Path(__file__).stem)
 
+option_parser = argparse.ArgumentParser(description='Tool to send OTA SMS RFM/RAM messages via SMPP',
+                                        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+option_parser.add_argument("--host", help="Host/IP of the SMPP server", default="localhost")
+option_parser.add_argument("--port", help="TCP port of the SMPP server", default=2775, type=int)
+option_parser.add_argument("--system-id", help="System ID to use to bind to the SMPP server", default="test")
+option_parser.add_argument("--password", help="Password to use to bind to the SMPP server", default="test")
+option_parser.add_argument("--verbose", help="Enable verbose logging", action='store_true', default=False)
+algo_crypt_choices = []
+algo_crypt_classes = OtaAlgoCrypt.__subclasses__()
+for cls in algo_crypt_classes:
+    algo_crypt_choices.append(cls.enum_name)
+option_parser.add_argument("--algo-crypt", choices=algo_crypt_choices, default='triple_des_cbc2',
+                           help="OTA crypt algorithm")
+algo_auth_choices = []
+algo_auth_classes = OtaAlgoAuth.__subclasses__()
+for cls in algo_auth_classes:
+    algo_auth_choices.append(cls.enum_name)
+option_parser.add_argument("--algo-auth", choices=algo_auth_choices, default='triple_des_cbc2',
+                           help="OTA auth algorithm")
+option_parser.add_argument('--kic', required=True, type=is_hexstr, help='OTA key (KIC)')
+option_parser.add_argument('--kic-idx', default=1, type=int, help='OTA key index (KIC)')
+option_parser.add_argument('--kid', required=True, type=is_hexstr, help='OTA key (KID)')
+option_parser.add_argument('--kid-idx', default=1, type=int, help='OTA key index (KID)')
+option_parser.add_argument('--cntr', default=0, type=int, help='replay protection counter')
+option_parser.add_argument('--tar', required=True, type=is_hexstr, help='Toolkit Application Reference')
+option_parser.add_argument("--cntr-req", choices=CNTR_REQ.decmapping.values(), default='no_counter',
+                           help="Counter requirement")
+option_parser.add_argument('--no-ciphering', action='store_true', default=False, help='Disable ciphering')
+option_parser.add_argument("--rc-cc-ds", choices=RC_CC_DS.decmapping.values(), default='cc',
+                           help="message check (rc=redundency check, cc=crypt. checksum, ds=digital signature)")
+option_parser.add_argument('--por-in-submit', action='store_true', default=False,
+                           help='require PoR to be sent via SMS-SUBMIT')
+option_parser.add_argument('--por-no-ciphering', action='store_true', default=False, help='Disable ciphering (PoR)')
+option_parser.add_argument("--por-rc-cc-ds", choices=RC_CC_DS.decmapping.values(), default='cc',
+                           help="PoR check (rc=redundency check, cc=crypt. checksum, ds=digital signature)")
+option_parser.add_argument("--por-req", choices=POR_REQ.decmapping.values(), default='por_required',
+                           help="Proof of Receipt requirements")
+option_parser.add_argument('--src-addr', default='12', type=str, help='SMS source address (MSISDN)')
+option_parser.add_argument('--dest-addr', default='23', type=str, help='SMS destination address (MSISDN)')
+option_parser.add_argument('--timeout', default=10, type=int, help='Maximum response waiting time')
+option_parser.add_argument('-a', '--apdu', action='append', required=True, type=is_hexstr, help='C-APDU to send')
+
 class SmppHandler:
     client = None
 
@@ -167,47 +209,6 @@ class SmppHandler:
         return h2b(resp), h2b(sw)
 
 if __name__ == '__main__':
-    option_parser = argparse.ArgumentParser(description='Tool to send OTA SMS RFM/RAM messages via SMPP',
-                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    option_parser.add_argument("--host", help="Host/IP of the SMPP server", default="localhost")
-    option_parser.add_argument("--port", help="TCP port of the SMPP server", default=2775, type=int)
-    option_parser.add_argument("--system-id", help="System ID to use to bind to the SMPP server", default="test")
-    option_parser.add_argument("--password", help="Password to use to bind to the SMPP server", default="test")
-    option_parser.add_argument("--verbose", help="Enable verbose logging", action='store_true', default=False)
-    algo_crypt_choices = []
-    algo_crypt_classes = OtaAlgoCrypt.__subclasses__()
-    for cls in algo_crypt_classes:
-        algo_crypt_choices.append(cls.enum_name)
-    option_parser.add_argument("--algo-crypt", choices=algo_crypt_choices, default='triple_des_cbc2',
-                               help="OTA crypt algorithm")
-    algo_auth_choices = []
-    algo_auth_classes = OtaAlgoAuth.__subclasses__()
-    for cls in algo_auth_classes:
-        algo_auth_choices.append(cls.enum_name)
-    option_parser.add_argument("--algo-auth", choices=algo_auth_choices, default='triple_des_cbc2',
-                               help="OTA auth algorithm")
-    option_parser.add_argument('--kic', required=True, type=is_hexstr, help='OTA key (KIC)')
-    option_parser.add_argument('--kic-idx', default=1, type=int, help='OTA key index (KIC)')
-    option_parser.add_argument('--kid', required=True, type=is_hexstr, help='OTA key (KID)')
-    option_parser.add_argument('--kid-idx', default=1, type=int, help='OTA key index (KID)')
-    option_parser.add_argument('--cntr', default=0, type=int, help='replay protection counter')
-    option_parser.add_argument('--tar', required=True, type=is_hexstr, help='Toolkit Application Reference')
-    option_parser.add_argument("--cntr-req", choices=CNTR_REQ.decmapping.values(), default='no_counter',
-                               help="Counter requirement")
-    option_parser.add_argument('--no-ciphering', action='store_true', default=False, help='Disable ciphering')
-    option_parser.add_argument("--rc-cc-ds", choices=RC_CC_DS.decmapping.values(), default='cc',
-                               help="message check (rc=redundency check, cc=crypt. checksum, ds=digital signature)")
-    option_parser.add_argument('--por-in-submit', action='store_true', default=False,
-                               help='require PoR to be sent via SMS-SUBMIT')
-    option_parser.add_argument('--por-no-ciphering', action='store_true', default=False, help='Disable ciphering (PoR)')
-    option_parser.add_argument("--por-rc-cc-ds", choices=RC_CC_DS.decmapping.values(), default='cc',
-                               help="PoR check (rc=redundency check, cc=crypt. checksum, ds=digital signature)")
-    option_parser.add_argument("--por-req", choices=POR_REQ.decmapping.values(), default='por_required',
-                               help="Proof of Receipt requirements")
-    option_parser.add_argument('--src-addr', default='12', type=str, help='SMS source address (MSISDN)')
-    option_parser.add_argument('--dest-addr', default='23', type=str, help='SMS destination address (MSISDN)')
-    option_parser.add_argument('--timeout', default=10, type=int, help='Maximum response waiting time')
-    option_parser.add_argument('-a', '--apdu', action='append', required=True, type=is_hexstr, help='C-APDU to send')
     opts = option_parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if opts.verbose else logging.INFO,
