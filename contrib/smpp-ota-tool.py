@@ -187,12 +187,12 @@ if __name__ == '__main__':
     option_parser.add_argument("--algo-auth", choices=algo_auth_choices, default='triple_des_cbc2',
                                help="OTA auth algorithm")
     option_parser.add_argument('--kic', required=True, type=is_hexstr, help='OTA key (KIC)')
-    option_parser.add_argument('--kic_idx', default=1, type=int, help='OTA key index (KIC)')
+    option_parser.add_argument('--kic-idx', default=1, type=int, help='OTA key index (KIC)')
     option_parser.add_argument('--kid', required=True, type=is_hexstr, help='OTA key (KID)')
-    option_parser.add_argument('--kid_idx', default=1, type=int, help='OTA key index (KID)')
+    option_parser.add_argument('--kid-idx', default=1, type=int, help='OTA key index (KID)')
     option_parser.add_argument('--cntr', default=0, type=int, help='replay protection counter')
     option_parser.add_argument('--tar', required=True, type=is_hexstr, help='Toolkit Application Reference')
-    option_parser.add_argument("--cntr_req", choices=CNTR_REQ.decmapping.values(), default='no_counter',
+    option_parser.add_argument("--cntr-req", choices=CNTR_REQ.decmapping.values(), default='no_counter',
                                help="Counter requirement")
     option_parser.add_argument('--no-ciphering', action='store_true', default=False, help='Disable ciphering')
     option_parser.add_argument("--rc-cc-ds", choices=RC_CC_DS.decmapping.values(), default='cc',
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     option_parser.add_argument('--por-no-ciphering', action='store_true', default=False, help='Disable ciphering (PoR)')
     option_parser.add_argument("--por-rc-cc-ds", choices=RC_CC_DS.decmapping.values(), default='cc',
                                help="PoR check (rc=redundency check, cc=crypt. checksum, ds=digital signature)")
-    option_parser.add_argument("--por_req", choices=POR_REQ.decmapping.values(), default='por_required',
+    option_parser.add_argument("--por-req", choices=POR_REQ.decmapping.values(), default='por_required',
                                help="Proof of Receipt requirements")
     option_parser.add_argument('--src-addr', default='12', type=str, help='SMS source address (MSISDN)')
     option_parser.add_argument('--dest-addr', default='23', type=str, help='SMS destination address (MSISDN)')
