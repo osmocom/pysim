@@ -55,3 +55,5 @@ And once your external program is sending SMS to the simulated SMSC, it will log
   SMSPPDownload(DeviceIdentities({'source_dev_id': 'network', 'dest_dev_id': 'uicc'}),Address({'ton_npi': 0, 'call_number': '0123456'}),SMS_TPDU({'tpdu': '400290217ff6227052000000002d02700000281516191212b0000127fa28a5bac69d3c5e9df2c7155dfdde449c826b236215566530787b30e8be5d'}))
   INFO     root: ENVELOPE: d147820283818604001032548b3b400290217ff6227052000000002d02700000281516191212b0000127fa28a5bac69d3c5e9df2c7155dfdde449c826b236215566530787b30e8be5d
   INFO     root: SW 9000: 027100002412b000019a551bb7c28183652de0ace6170d0e563c5e949a3ba56747fe4c1dbbef16642c
+
+.. note:: for sending OTA SMS messages :ref:`smpp-ota-tool` may be used.
