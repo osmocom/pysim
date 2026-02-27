@@ -167,7 +167,7 @@ class SmppHandler:
         return h2b(resp), h2b(sw)
 
 if __name__ == '__main__':
-    option_parser = argparse.ArgumentParser(description='CSV importer for pySim-shell\'s PostgreSQL Card Key Provider',
+    option_parser = argparse.ArgumentParser(description='Tool to send OTA SMS RFM/RAM messages via SMPP',
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     option_parser.add_argument("--host", help="Host/IP of the SMPP server", default="localhost")
     option_parser.add_argument("--port", help="TCP port of the SMPP server", default=2775, type=int)
