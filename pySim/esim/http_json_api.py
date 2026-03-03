@@ -339,7 +339,7 @@ class JsonHttpApiClient():
             raise HttpStatusError(response)
 
         resp_content_type = response.headers.get('Content-Type')
-        if response.content and not resp_content_type.startswith(req_headers['Content-Type']):
+        if not resp_content_type.startswith(req_headers['Content-Type']):
             raise HttpHeaderError(response)
 
         if not response.headers.get('X-Admin-Protocol', 'gsma/rsp/v2.unknown').startswith('gsma/rsp/v2.'):
