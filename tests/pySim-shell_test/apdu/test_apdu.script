@@ -7,9 +7,23 @@ set apdu_strict true
 # No command data field, No response data field present
 apdu 00700001 --expect-sw 9000 --expect-response-regex '^$'
 
+# Case #1: (verify pin)
+# This command returns the number of remaining authentication attempts in the
+# form of a status that has the form 63cX, where X is the number of remaining
+# attempts. Such a status word can be easily confused with the response to a
+# case #4 APDU. This test checks if the transport layer correctly distinguishes
+# the between APDU case #1 and APDU case #4.
+apdu 0020000A --expect-sw 63c? --expect-response-regex '^$'
+
 # Case #2: (status)
 # No command data field, Response data field present
 apdu 80F2000000 --expect-sw 9000 --expect-response-regex '^[a-fA-F0-9]+$'
+
+# Case #2: (verify pin)
+# (see also above). This test checks if the transport layer is also able to
+# distinguish correctly between APDU case #2 (with zero length response) and
+# APDU case #4.
+apdu 0020000A00 --expect-sw 63c? --expect-response-regex '^$'
 
 # Case #3: (terminal capability)
 # Command data field present, No response data field
