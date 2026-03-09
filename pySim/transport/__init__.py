@@ -301,24 +301,54 @@ class LinkBaseTpdu(LinkBase):
 
         prev_tpdu = tpdu
         data, sw = self.send_tpdu(tpdu)
+        log.debug("T0: case #%u TPDU: %s => %s %s", case, tpdu, data or "(no data)", sw or "(no status word)")
+        if sw is None:
+            raise ValueError("no status word received")
 
-        # When we have sent the first APDU, the SW may indicate that there are response bytes
-        # available. There are two SWs commonly used for this 9fxx (sim) and 61xx (usim), where
-        # xx is the number of response bytes available.
-        # See also:
-        if sw is not None:
-            while (sw[0:2] in ['9f', '61', '62', '63']):
-                # SW1=9F: 3GPP TS 51.011 9.4.1, Responses to commands which are correctly executed
-                # SW1=61: ISO/IEC 7816-4, Table 5 — General meaning of the interindustry values of SW1-SW2
-                # SW1=62: ETSI TS 102 221 7.3.1.1.4 Clause 4b): 62xx, 63xx, 9xxx != 9000
-                tpdu_gr = tpdu[0:2] + 'c00000' + sw[2:4]
+        # After sending the APDU/TPDU the UICC/eUICC or SIM may response with a status word that indicates that further
+        # TPDUs have to be sent in order to complete the task.
+        if case == 4 or self.apdu_strict == False:
+            # In case the APDU is a case #4 APDU, the UICC/eUICC/SIM may indicate that there is response data
+            # available which has to be retrieved using a GET RESPONSE command TPDU.
+            #
+            # ETSI TS 102 221, section 7.3.1.1.4 is very cleare about the fact that the GET RESPONSE mechanism
+            # shall only apply on case #4 APDUs but unfortunately it is impossible to distinguish between case #3
+            # and case #4 when the APDU format is not strictly followed. In order to be able to detect case #4
+            # correctly the Le byte (usually 0x00) must be present, is often forgotten. To avoid problems with
+            # legacy scripts that use raw APDU strings, we will still loosely apply GET RESPONSE based on what
+            # the status word indicates. Unless the user explicitly enables the strict mode (set apdu_strict true)
+            while True:
+                if sw in ['9000', '9100']:
+                    # A status word of 9000 (or 9100 in case there is pending data from a proactive SIM command)
+                    # indicates that either no response data was returnd or all response data has been retrieved
+                    # successfully. We may discontinue the processing at this point.
+                    break;
+                if sw[0:2] in ['61', '9f']:
+                    # A status word of 61xx or 9fxx indicates that there is (still) response data available. We
+                    # send a GET RESPONSE command with the length value indicated in the second byte of the status
+                    # word. (see also ETSI TS 102 221, section 7.3.1.1.4, clause 4a and 3GPP TS 51.011 9.4.1 and
+                    # ISO/IEC 7816-4, Table 5)
+                    le_gr = sw[2:4]
+                elif sw[0:2] in ['62', '63']:
+                    # There are corner cases (status word is 62xx or 63xx) where the UICC/eUICC/SIM asks us
+                    # to send a dummy GET RESPONSE command. We send a GET RESPONSE command with a length of 0.
+                    # (see also ETSI TS 102 221, section 7.3.1.1.4, clause 4b and ETSI TS 151 011, section 9.4.1)
+                    le_gr = '00'
+                else:
+                    # A status word other then the ones covered by the above logic may indicate an error. In this
+                    # case we will discontinue the processing as well.
+                    # (see also ETSI TS 102 221, section 7.3.1.1.4, clause 4c)
+                    break
+                tpdu_gr = tpdu[0:2] + 'c00000' + le_gr
                 prev_tpdu = tpdu_gr
-                d, sw = self.send_tpdu(tpdu_gr)
-                data += d
-            if sw[0:2] == '6c':
-                # SW1=6C: ETSI TS 102 221 Table 7.1: Procedure byte coding
-                tpdu_gr = prev_tpdu[0:8] + sw[2:4]
-                data, sw = self.send_tpdu(tpdu_gr)
+                data_gr, sw = self.send_tpdu(tpdu_gr)
+                log.debug("T0: GET RESPONSE TPDU: %s => %s %s", tpdu_gr, data_gr or "(no data)", sw or "(no status word)")
+                data += data_gr
+        if sw[0:2] == '6c':
+            # SW1=6C: ETSI TS 102 221 Table 7.1: Procedure byte coding
+            tpdu_gr = prev_tpdu[0:8] + sw[2:4]
+            data, sw = self.send_tpdu(tpdu_gr)
+            log.debug("T0: repated case #%u TPDU: %s => %s %s", case, tpdu_gr, data or "(no data)", sw or "(no status word)")
 
         return data, sw
 
