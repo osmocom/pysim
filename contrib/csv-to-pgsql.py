@@ -285,10 +285,7 @@ if __name__ == '__main__':
     option_parser.add_argument("--admin", action='store_true', help="perform action as admin", default=False)
     opts = option_parser.parse_args()
 
-    PySimLogger.setup(print, {logging.WARN: "\033[33m"})
-    if (opts.verbose):
-        PySimLogger.set_verbose(True)
-        PySimLogger.set_level(logging.DEBUG)
+    PySimLogger.setup(print, {logging.WARN: "\033[33m"}, opts.verbose)
 
     # Open CSV file
     cr = open_csv(opts)
