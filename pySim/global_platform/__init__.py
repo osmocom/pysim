@@ -859,22 +859,28 @@ class ADF_SD(CardADF):
                 _rsp_hex, _sw = self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
             self._cmd.poutput("Loaded a total of %u bytes in %u blocks. Don't forget install_for_install (and make selectable) now!" % (total_size, block_nr))
 
-        install_cap_parser = argparse.ArgumentParser()
+        install_cap_parser = argparse.ArgumentParser(usage='%(prog)s FILE [--install-parameters | --install-parameters-*]')
         install_cap_parser.add_argument('cap_file', type=str, metavar='FILE',
                                         help='JAVA-CARD CAP file to install')
-        install_cap_parser_inst_prm_g = install_cap_parser.add_mutually_exclusive_group()
-        install_cap_parser_inst_prm_g.add_argument('--install-parameters', type=is_hexstr, default=None,
-                                                   help='install Parameters (GPC_SPE_034, section 11.5.2.3.7, table 11-49)')
-        install_cap_parser_inst_prm_g_grp = install_cap_parser_inst_prm_g.add_argument_group()
-        install_cap_parser_inst_prm_g_grp.add_argument('--install-parameters-volatile-memory-quota',
-                                                       type=int, default=None,
-                                                       help='volatile memory quota (GPC_SPE_034, section 11.5.2.3.7, table 11-49)')
-        install_cap_parser_inst_prm_g_grp.add_argument('--install-parameters-non-volatile-memory-quota',
-                                                       type=int, default=None,
-                                                       help='non volatile memory quota (GPC_SPE_034, section 11.5.2.3.7, table 11-49)')
-        install_cap_parser_inst_prm_g_grp.add_argument('--install-parameters-stk',
-                                                       type=is_hexstr, default=None,
-                                                       help='Load Parameters (ETSI TS 102 226, section 8.2.1.3.2.1)')
+        # Ideally, the parser should enforce that:
+        #  * either the `--install-parameters` is given alone,
+        #  * or distinct `--install-parameters-*` are optionally given instead.
+        # We tried to achieve this using mutually exclusive groups (add_mutually_exclusive_group).
+        # However, group nesting was never supported, often failed to work correctly, and was unintentionally
+        # exposed through inheritance.  It has been deprecated since version 3.11, removed in version 3.14.
+        # Hence, we have to implement the enforcement manually.
+        install_cap_parser_inst_prm_grp = install_cap_parser.add_argument_group('Install Parameters')
+        install_cap_parser_inst_prm_grp.add_argument('--install-parameters', type=is_hexstr, default=None,
+                                                     help='install Parameters (GPC_SPE_034, section 11.5.2.3.7, table 11-49)')
+        install_cap_parser_inst_prm_grp.add_argument('--install-parameters-volatile-memory-quota',
+                                                     type=int, default=None,
+                                                     help='volatile memory quota (GPC_SPE_034, section 11.5.2.3.7, table 11-49)')
+        install_cap_parser_inst_prm_grp.add_argument('--install-parameters-non-volatile-memory-quota',
+                                                     type=int, default=None,
+                                                     help='non volatile memory quota (GPC_SPE_034, section 11.5.2.3.7, table 11-49)')
+        install_cap_parser_inst_prm_grp.add_argument('--install-parameters-stk',
+                                                     type=is_hexstr, default=None,
+                                                     help='Load Parameters (ETSI TS 102 226, section 8.2.1.3.2.1)')
 
         @cmd2.with_argparser(install_cap_parser)
         def do_install_cap(self, opts):
@@ -888,9 +894,17 @@ class ADF_SD(CardADF):
             load_file_aid = cap.get_loadfile_aid()
             module_aid = cap.get_applet_aid()
             application_aid = module_aid
-            if opts.install_parameters:
+            if opts.install_parameters is not None:
+                # `--install-parameters` and `--install-parameters-*` are mutually exclusive
+                # make sure that none of `--install-parameters-*` is given; abort otherwise
+                if any(p is not None for p in [opts.install_parameters_non_volatile_memory_quota,
+                                               opts.install_parameters_volatile_memory_quota,
+                                               opts.install_parameters_stk]):
+                    self.install_cap_parser.error('arguments --install-parameters-* are '
+                                                  'not allowed with --install-parameters')
                 install_parameters = opts.install_parameters;
             else:
+                # `--install-parameters-*` are all optional
                 install_parameters = gen_install_parameters(opts.install_parameters_non_volatile_memory_quota,
                                                             opts.install_parameters_volatile_memory_quota,
                                                             opts.install_parameters_stk)
