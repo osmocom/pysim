@@ -128,7 +128,7 @@ class EF_AD(TransparentEF):
         cell_test = 0x04
 
     def __init__(self, fid='6f43', sfid=None, name='EF.AD',
-                 desc='Service Provider Name', size=(3, None), **kwargs):
+                 desc='Administrative Data', size=(3, None), **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct(
             # Byte 1: Display Condition
