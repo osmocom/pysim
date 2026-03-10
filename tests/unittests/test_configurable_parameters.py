@@ -267,6 +267,16 @@ class ConfigurableParameterTest(unittest.TestCase):
                                  '11111111111111111111111111111111'
                                  '22222222222222222222222222222222'),
 
+
+            Paramtest(param_cls=p13n.MncLen,
+                      val='2',
+                      expect_clean_val=2,
+                      expect_val='2'),
+            Paramtest(param_cls=p13n.MncLen,
+                      val=3,
+                      expect_clean_val=3,
+                      expect_val='3'),
+
             ]
 
         for sdkey_cls in (

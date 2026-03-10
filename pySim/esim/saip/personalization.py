@@ -22,9 +22,11 @@ import re
 import pprint
 from typing import List, Tuple, Generator, Optional
 
+from construct.core import StreamError
 from osmocom.tlv import camel_to_snake
 from osmocom.utils import hexstr
 from pySim.utils import enc_iccid, dec_iccid, enc_imsi, dec_imsi, h2b, b2h, rpad, sanitize_iccid
+from pySim.ts_31_102 import EF_AD
 from pySim.ts_51_011 import EF_SMSP
 from pySim.esim.saip import param_source
 from pySim.esim.saip import ProfileElement, ProfileElementSD, ProfileElementSequence
@@ -644,6 +646,70 @@ class SmspTpScAddr(ConfigurableParameter):
             international = (international == 'international')
 
             yield { cls.name: cls.tuple_to_str((international, digits)) }
+
+
+class MncLen(ConfigurableParameter):
+    """MNC length. Must be either 2 or 3. Sets only the MNC length field in EF-AD (Administrative Data)."""
+    name = 'MNC-LEN'
+    allow_chars = '23'
+    strip_chars = ' \t\r\n'
+    numeric_base = 10
+    max_len = 1
+    min_len = 1
+    example_input = '2'
+    default_source = param_source.ConstantSource
+
+    @classmethod
+    def validate_val(cls, val):
+        val = super().validate_val(val)
+        val = int(val)
+        if val not in (2, 3):
+            raise ValueError(f"MNC-LEN must be either 2 or 3, not {val!r}")
+        return val
+
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        """val must be an int: either 2 or 3"""
+        for pe in pes.get_pes_for_type('usim'):
+            if not hasattr(pe, 'files'):
+                continue
+            # decode existing values
+            f_ad = pe.files['ef-ad']
+            if not f_ad.body:
+                continue
+            try:
+                ef_ad = EF_AD()
+                ef_ad_dec = ef_ad.decode_bin(f_ad.body)
+            except StreamError:
+                continue
+            if 'mnc_len' not in ef_ad_dec:
+                continue
+            # change mnc_len
+            ef_ad_dec['mnc_len'] = val
+            # re-encode into the File body
+            f_ad.body = ef_ad.encode_bin(ef_ad_dec)
+            pe.file2pe(f_ad)
+
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        for pe in pes.get_pes_for_type('usim'):
+            if not hasattr(pe, 'files'):
+                continue
+            f_ad = pe.files.get('ef-ad', None)
+            if f_ad is None:
+                continue
+
+            try:
+                ef_ad = EF_AD()
+                ef_ad_dec = ef_ad.decode_bin(f_ad.body)
+            except StreamError:
+                continue
+
+            mnc_len = ef_ad_dec.get('mnc_len', None)
+            if mnc_len is None:
+                continue
+
+            yield { cls.name: str(mnc_len) }
 
 
 class SdKey(BinaryParam):
