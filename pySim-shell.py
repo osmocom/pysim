@@ -108,7 +108,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
 
         self.verbose = verbose
         PySimLogger.setup(self.poutput, {logging.WARN: YELLOW})
-        self._onchange_verbose('verbose', False, self.verbose);
+        self._onchange_verbose('verbose', False, self.verbose)
 
         # pylint: disable=unexpected-keyword-arg
         super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
