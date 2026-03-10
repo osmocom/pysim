@@ -63,7 +63,7 @@ class PySimLogger:
         raise RuntimeError('static class, do not instantiate')
 
     @staticmethod
-    def setup(print_callback = None, colors:dict = {}):
+    def setup(print_callback = None, colors:dict = {}, verbose_debug:bool = False):
         """
         Set a print callback function and color scheme. This function call is optional. In case this method is not
         called, default settings apply.
@@ -72,9 +72,19 @@ class PySimLogger:
                              have the following format: print_callback(message:str)
             colors : An optional dict through which certain log levels can be assigned a color.
                      (e.g. {logging.WARN: YELLOW})
+            verbose_debug: Enable verbose logging and set the loglevel DEBUG when set to true. Otherwise the
+                           non-verbose logging is used and the loglevel is set to INFO. This setting can be changed
+                           using the set_verbose and set_level methods at any time.
         """
         PySimLogger.print_callback = print_callback
         PySimLogger.colors = colors
+
+        if (verbose_debug):
+            PySimLogger.set_verbose(True)
+            PySimLogger.set_level(logging.DEBUG)
+        else:
+            PySimLogger.set_verbose(False)
+            PySimLogger.set_level(logging.INFO)
 
     @staticmethod
     def set_verbose(verbose:bool = False):

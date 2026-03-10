@@ -107,12 +107,12 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
             kwargs = {'include_ipy': True}
 
         self.verbose = verbose
+        PySimLogger.setup(self.poutput, {logging.WARN: YELLOW})
         self._onchange_verbose('verbose', False, self.verbose);
 
         # pylint: disable=unexpected-keyword-arg
         super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
                          auto_load_commands=False, startup_script=script, **kwargs)
-        PySimLogger.setup(self.poutput, {logging.WARN: YELLOW})
         self.intro = style(self.BANNER, fg=RED)
         self.default_category = 'pySim-shell built-in commands'
         self.card = None
@@ -1176,13 +1176,7 @@ if __name__ == '__main__':
     opts = option_parser.parse_args()
 
     # Ensure that we are able to print formatted warnings from the beginning.
-    PySimLogger.setup(print, {logging.WARN: YELLOW})
-    if opts.verbose:
-        PySimLogger.set_verbose(True)
-        PySimLogger.set_level(logging.DEBUG)
-    else:
-        PySimLogger.set_verbose(False)
-        PySimLogger.set_level(logging.INFO)
+    PySimLogger.setup(print, {logging.WARN: YELLOW}, opts.verbose)
 
     # Register csv-file as card data provider, either from specified CSV
     # or from CSV file in home directory
