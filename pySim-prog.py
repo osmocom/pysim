@@ -44,6 +44,11 @@ from pySim.legacy.ts_51_011 import EF
 from pySim.card_handler import *
 from pySim.utils import *
 
+from pathlib import Path
+import logging
+from pySim.log import PySimLogger
+
+log = PySimLogger.get(Path(__file__).stem)
 
 def parse_options():
 
@@ -185,6 +190,7 @@ def parse_options():
                       default=False, action="store_true")
     parser.add_argument("--card_handler", dest="card_handler_config", metavar="FILE",
                       help="Use automatic card handling machine")
+    parser.add_argument("--verbose", help="Enable verbose logging", action='store_true', default=False)
 
     options = parser.parse_args()
 
@@ -769,6 +775,9 @@ if __name__ == '__main__':
 
     # Parse options
     opts = parse_options()
+
+    # Setup logger
+    PySimLogger.setup(print, {logging.WARN: "\033[33m"}, opts.verbose)
 
     # Init card reader driver
     sl = init_reader(opts)
