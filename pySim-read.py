@@ -45,10 +45,16 @@ from pySim.utils import dec_imsi, dec_iccid
 from pySim.legacy.utils import format_xplmn_w_act, dec_st, dec_msisdn
 from pySim.ts_51_011 import EF_SMSP
 
+from pathlib import Path
+import logging
+from pySim.log import PySimLogger
+
+log = PySimLogger.get(Path(__file__).stem)
+
 option_parser = argparse.ArgumentParser(description='Legacy tool for reading some parts of a SIM card',
                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+option_parser.add_argument("--verbose", help="Enable verbose logging", action='store_true', default=False)
 argparse_add_reader_args(option_parser)
-
 
 def select_app(adf: str, card: SimCard):
     """Select application by its AID"""
@@ -73,6 +79,9 @@ if __name__ == '__main__':
 
     # Parse options
     opts = option_parser.parse_args()
+
+    # Setup logger
+    PySimLogger.setup(print, {logging.WARN: "\033[33m"}, opts.verbose)
 
     # Init card reader driver
     sl = init_reader(opts)
