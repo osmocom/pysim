@@ -618,7 +618,7 @@ class SmspTpScAddr(ConfigurableParameter):
             # ensure the parameter_indicators.tp_sc_addr is True
             ef_smsp_dec['parameter_indicators']['tp_sc_addr'] = True
             # re-encode into the File body
-            f_smsp.body = ef_smsp.encode_record_bin(ef_smsp_dec, 1)
+            f_smsp.body = ef_smsp.encode_record_bin(ef_smsp_dec, 1, 52)
             #print("SMSP  (new): %s" % f_smsp.body)
             # re-generate the pe.decoded member from the File instance
             pe.file2pe(f_smsp)
