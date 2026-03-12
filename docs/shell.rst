@@ -68,7 +68,7 @@ Usage Examples
 
    suci-tutorial
    cap-tutorial
-
+   put_key-tutorial
 
 Advanced Topics
 ---------------
