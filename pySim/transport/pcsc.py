@@ -84,21 +84,25 @@ class PcscSimLink(LinkBaseTpdu):
             # is disconnected
             self.disconnect()
 
-            # Make card connection and select a suitable communication protocol
-            self._con.connect()
-            supported_protocols = self._con.getProtocol();
-            self.disconnect()
-            if (supported_protocols & CardConnection.T0_protocol):
-                protocol =  CardConnection.T0_protocol
-                self.set_tpdu_format(0)
-            elif (supported_protocols & CardConnection.T1_protocol):
-                protocol = CardConnection.T1_protocol
-                self.set_tpdu_format(1)
-            else:
-                raise ReaderError('Unsupported card protocol')
-            self._con.connect(protocol)
-        except CardConnectionException as exc:
-            raise ProtocolError() from exc
+            # Explicitly try T=0 first, then fall back to T=1.
+            # We avoid relying on the OS driver's auto-negotiation
+            # because some drivers (notably macOS CryptoTokenKit/CCID)
+            # incorrectly negotiate T=1 for T=0-only cards.
+            # The previous approach of calling connect() without a
+            # protocol argument and then checking getProtocol() was
+            # also flawed: getProtocol() returns the negotiated protocol,
+            # not a bitmask of supported protocols, so the subsequent
+            # T=0/T=1 priority check was ineffective.
+            for protocol, tpdu_fmt in [(CardConnection.T0_protocol, 0),
+                                       (CardConnection.T1_protocol, 1)]:
+                try:
+                    self._con.connect(protocol)
+                    self.set_tpdu_format(tpdu_fmt)
+                    return
+                except CardConnectionException:
+                    self.disconnect()
+                    continue
+            raise ReaderError('Card does not support T=0 or T=1 protocol')
         except NoCardException as exc:
             raise NoCardError() from exc
 
