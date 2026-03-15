@@ -72,10 +72,10 @@ class ApduArDO(BER_TLV_IE, tag=0xd0):
             if do[0] == 0x01:
                 self.decoded = {'generic_access_rule': 'always'}
                 return self.decoded
-            return ValueError('Invalid 1-byte generic APDU access rule')
+            raise ValueError('Invalid 1-byte generic APDU access rule')
         else:
             if len(do) % 8:
-                return ValueError('Invalid non-modulo-8 length of APDU filter: %d' % len(do))
+                raise ValueError('Invalid non-modulo-8 length of APDU filter: %d' % len(do))
             self.decoded = {'apdu_filter': []}
             offset = 0
             while offset < len(do):
@@ -90,19 +90,19 @@ class ApduArDO(BER_TLV_IE, tag=0xd0):
                 return b'\x00'
             if self.decoded['generic_access_rule'] == 'always':
                 return b'\x01'
-            return ValueError('Invalid 1-byte generic APDU access rule')
+            raise ValueError('Invalid 1-byte generic APDU access rule')
         else:
             if not 'apdu_filter' in self.decoded:
-                return ValueError('Invalid APDU AR DO')
+                raise ValueError('Invalid APDU AR DO')
             filters = self.decoded['apdu_filter']
             res = b''
             for f in filters:
                 if not 'header' in f or not 'mask' in f:
-                    return ValueError('APDU filter must contain header and mask')
+                    raise ValueError('APDU filter must contain header and mask')
                 header_b = h2b(f['header'])
                 mask_b = h2b(f['mask'])
                 if len(header_b) != 4 or len(mask_b) != 4:
-                    return ValueError('APDU filter header and mask must each be 4 bytes')
+                    raise ValueError('APDU filter header and mask must each be 4 bytes')
                 res += header_b + mask_b
             return res
 
@@ -269,7 +269,7 @@ class ADF_ARAM(CardADF):
             cmd_do_enc = cmd_do.to_ie()
             cmd_do_len = len(cmd_do_enc)
             if cmd_do_len > 255:
-                return ValueError('DO > 255 bytes not supported yet')
+                raise ValueError('DO > 255 bytes not supported yet')
         else:
             cmd_do_enc = b''
             cmd_do_len = 0
@@ -361,7 +361,7 @@ class ADF_ARAM(CardADF):
                 ar_do_content += [{'apdu_ar_do': {'generic_access_rule': 'always'}}]
             elif opts.apdu_filter:
                 if len(opts.apdu_filter) % 16:
-                    return ValueError('Invalid non-modulo-16 length of APDU filter: %d' % len(do))
+                    raise ValueError('Invalid non-modulo-16 length of APDU filter: %d' % len(do))
                 offset = 0
                 apdu_filter = []
                 while offset < len(opts.apdu_filter):
