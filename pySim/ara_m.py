@@ -361,7 +361,7 @@ class ADF_ARAM(CardADF):
                 ar_do_content += [{'apdu_ar_do': {'generic_access_rule': 'always'}}]
             elif opts.apdu_filter:
                 if len(opts.apdu_filter) % 16:
-                    raise ValueError('Invalid non-modulo-16 length of APDU filter: %d' % len(do))
+                    raise ValueError(f'Invalid non-modulo-16 length of APDU filter: {len(opts.apdu_filter)}')
                 offset = 0
                 apdu_filter = []
                 while offset < len(opts.apdu_filter):
