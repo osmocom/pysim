@@ -276,7 +276,7 @@ class ListOfSupportedOptions(BER_TLV_IE, tag=0x81):
 class SupportedKeysForScp03(BER_TLV_IE, tag=0x82):
     _construct = FlagsEnum(Byte, aes128=0x01, aes192=0x02, aes256=0x04)
 class SupportedTlsCipherSuitesForScp81(BER_TLV_IE, tag=0x83):
-    _consuruct = GreedyRange(Int16ub)
+    _construct = GreedyRange(Int16ub)
 class ScpInformation(BER_TLV_IE, tag=0xa0, nested=[ScpType, ListOfSupportedOptions, SupportedKeysForScp03,
                                                    SupportedTlsCipherSuitesForScp81]):
     pass
