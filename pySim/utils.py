@@ -910,7 +910,8 @@ class DataObjectCollection:
     def encode(self, decoded) -> bytes:
         res = bytearray()
         for i in decoded:
-            obj = self.members_by_name(i[0])
+            name = i[0]
+            obj = self.members_by_name[name]
             res.append(obj.to_tlv())
         return res
 
