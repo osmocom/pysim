@@ -139,7 +139,6 @@ def enc_plmn(mcc: Hexstr, mnc: Hexstr) -> Hexstr:
 
 def dec_plmn(threehexbytes: Hexstr) -> dict:
     res = {'mcc': "0", 'mnc': "0"}
-    dec_mcc_from_plmn_str(threehexbytes)
     res['mcc'] = dec_mcc_from_plmn_str(threehexbytes)
     res['mnc'] = dec_mnc_from_plmn_str(threehexbytes)
     return res
