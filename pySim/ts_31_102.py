@@ -1058,7 +1058,7 @@ class EF_OCSGL(LinFixedEF):
 # TS 31.102 Section 4.4.11.2 (Rel 15)
 class EF_5GS3GPPLOCI(TransparentEF):
     def __init__(self, fid='4f01', sfid=0x01, name='EF.5GS3GPPLOCI', size=(20, 20),
-                 desc='5S 3GP location information', **kwargs):
+                 desc='5GS 3GPP location information', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         upd_status_constr = Enum(
             Byte, updated=0, not_updated=1, roaming_not_allowed=2)
