@@ -221,12 +221,12 @@ class OtaAlgoCrypt(OtaAlgo, abc.ABC):
         for subc in cls.__subclasses__():
             if subc.enum_name == otak.algo_crypt:
                 return subc(otak)
-        raise ValueError('No implementation for crypt algorithm %s' % otak.algo_auth)
+        raise ValueError('No implementation for crypt algorithm %s' % otak.algo_crypt)
 
 class OtaAlgoAuth(OtaAlgo, abc.ABC):
     def __init__(self, otak: OtaKeyset):
         if self.enum_name != otak.algo_auth:
-            raise ValueError('Cannot use algorithm %s with key for %s' % (self.enum_name, otak.algo_crypt))
+            raise ValueError('Cannot use algorithm %s with key for %s' % (self.enum_name, otak.algo_auth))
         super().__init__(otak)
 
     def sign(self, data:bytes) -> bytes:
