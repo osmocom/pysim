@@ -1326,7 +1326,7 @@ class EF_5G_PROSE_UIR(TransparentEF):
         pass
     class FiveGDdnmfCtfAddrForUploading(BER_TLV_IE, tag=0x97):
         pass
-    class ProSeConfigDataForUeToNetworkRelayUE(BER_TLV_IE, tag=0xa0,
+    class ProSeConfigDataForUsageInfoReporting(BER_TLV_IE, tag=0xa0,
                                                nested=[EF_5G_PROSE_DD.ValidityTimer,
                                                        CollectionPeriod, ReportingWindow,
                                                        ReportingIndicators,
@@ -1336,7 +1336,7 @@ class EF_5G_PROSE_UIR(TransparentEF):
                  desc='5G ProSe configuration data for usage information reporting', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
         # contains TLV structure despite being TransparentEF, not BER-TLV ?!?
-        self._tlv = EF_5G_PROSE_UIR.ProSeConfigDataForUeToNetworkRelayUE
+        self._tlv = EF_5G_PROSE_UIR.ProSeConfigDataForUsageInfoReporting
 
 # TS 31.102 Section 4.4.13.8 (Rel 18)
 class EF_5G_PROSE_U2URU(TransparentEF):
