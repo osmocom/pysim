@@ -562,14 +562,14 @@ class ADF_SD(CardADF):
 
         @cmd2.with_argparser(store_data_parser)
         def do_store_data(self, opts):
-            """Perform the GlobalPlatform GET DATA command in order to store some card-specific data.
-            See GlobalPlatform CardSpecification v2.3Section 11.11 for details."""
+            """Perform the GlobalPlatform STORE DATA command in order to store some card-specific data.
+            See GlobalPlatform CardSpecification v2.3 Section 11.11 for details."""
             response_permitted = opts.response == 'may_be_returned'
             self.store_data(h2b(opts.DATA), opts.data_structure, opts.encryption, response_permitted)
 
         def store_data(self, data: bytes, structure:str = 'none', encryption:str = 'none', response_permitted: bool = False) -> bytes:
-            """Perform the GlobalPlatform GET DATA command in order to store some card-specific data.
-            See GlobalPlatform CardSpecification v2.3Section 11.11 for details."""
+            """Perform the GlobalPlatform STORE DATA command in order to store some card-specific data.
+            See GlobalPlatform CardSpecification v2.3 Section 11.11 for details."""
             max_cmd_len = self._cmd.lchan.scc.max_cmd_len
             # Table 11-89 of GP Card Specification v2.3
             remainder = data
