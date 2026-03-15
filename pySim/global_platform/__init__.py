@@ -585,7 +585,7 @@ class ADF_SD(CardADF):
                 data, _sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(chunk) + "00")
                 block_nr += 1
                 response += data
-            return data
+            return h2b(response)
 
         put_key_parser = argparse.ArgumentParser()
         put_key_parser.add_argument('--old-key-version-nr', type=auto_uint8, default=0, help='Old Key Version Number')
