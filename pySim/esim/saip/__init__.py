@@ -441,7 +441,7 @@ class File:
             elif k == 'fillFileContent':
                 stream.write(v)
             else:
-                return ValueError("Unknown key '%s' in tuple list" % k)
+                raise ValueError("Unknown key '%s' in tuple list" % k)
         return stream.getvalue()
 
     def file_content_to_tuples(self, optimize:bool = False) -> List[Tuple]:
