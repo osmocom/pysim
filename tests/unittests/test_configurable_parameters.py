@@ -310,11 +310,14 @@ class ConfigurableParameterTest(unittest.TestCase):
             p13n.SdKeyScp80Kvn03DesDek,
            #p13n.SdKeyScp80Kvn03DesEnc,
            #p13n.SdKeyScp80Kvn03DesMac,
-            p13n.SdKeyScp81Kvn40Dek   ,
+           #p13n.SdKeyScp81Kvn40AesDek,
+            p13n.SdKeyScp81Kvn40DesDek,
            #p13n.SdKeyScp81Kvn40Tlspsk,
-           #p13n.SdKeyScp81Kvn41Dek   ,
+           #p13n.SdKeyScp81Kvn41AesDek,
+           #p13n.SdKeyScp81Kvn41DesDek,
             p13n.SdKeyScp81Kvn41Tlspsk,
-           #p13n.SdKeyScp81Kvn42Dek   ,
+           #p13n.SdKeyScp81Kvn42AesDek,
+           #p13n.SdKeyScp81Kvn42DesDek,
            #p13n.SdKeyScp81Kvn42Tlspsk,
             ):
 
