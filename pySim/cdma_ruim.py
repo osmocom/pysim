@@ -131,7 +131,7 @@ class EF_AD(TransparentEF):
                  desc='Administrative Data', size=(3, None), **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, **kwargs)
         self._construct = Struct(
-            # Byte 1: Display Condition
+            # Byte 1: MS operation mode
             'ms_operation_mode'/Enum(Byte, self.OP_MODE),
             # Bytes 2-3: Additional information
             'additional_info'/Bytes(2),
