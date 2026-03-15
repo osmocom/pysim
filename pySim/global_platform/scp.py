@@ -438,7 +438,7 @@ class Scp03SessionKeys:
         """Obtain the ICV value computed as described in 6.2.6.
         This method has two modes:
             * is_response=False for computing the ICV for C-ENC. Will pre-increment the counter.
-            * is_response=False for computing the ICV for R-DEC."""
+            * is_response=True for computing the ICV for R-DEC."""
         if not is_response:
             self.block_nr += 1
         # The binary value of this number SHALL be left padded with zeroes to form a full block.
