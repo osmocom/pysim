@@ -169,8 +169,14 @@ class SMS_TPDU(abc.ABC):
 
 class SMS_DELIVER(SMS_TPDU):
     """Representation of a SMS-DELIVER T-PDU. This is the Network to MS/UE (downlink) direction."""
-    flags_construct = BitStruct('tp_rp'/Flag, 'tp_udhi'/Flag, 'tp_rp'/Flag, 'tp_sri'/Flag,
-                                Padding(1), 'tp_mms'/Flag, 'tp_mti'/BitsInteger(2))
+    flags_construct = BitStruct('tp_rp'/Flag,
+                                'tp_udhi'/Flag,
+                                'tp_sri'/Flag,
+                                Padding(1),
+                                'tp_lp'/Flag,
+                                'tp_mms'/Flag,
+                                'tp_mti'/BitsInteger(2))
+
     def __init__(self, **kwargs):
         kwargs['tp_mti'] = 0
         super().__init__(**kwargs)
