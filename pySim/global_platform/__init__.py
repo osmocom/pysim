@@ -319,7 +319,7 @@ class CurrentSecurityLevel(BER_TLV_IE, tag=0xd3):
 # GlobalPlatform v2.3.1 Section 11.3.3.1.3
 class ApplicationAID(BER_TLV_IE, tag=0x4f):
     _construct = GreedyBytes
-class ApplicationTemplate(BER_TLV_IE, tag=0x61, ntested=[ApplicationAID]):
+class ApplicationTemplate(BER_TLV_IE, tag=0x61, nested=[ApplicationAID]):
     pass
 class ListOfApplications(BER_TLV_IE, tag=0x2f00, nested=[ApplicationTemplate]):
     pass
