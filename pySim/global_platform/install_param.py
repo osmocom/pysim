@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from typing import Optional
+
 from osmocom.construct import *
 from osmocom.utils import *
 from osmocom.tlv import *
@@ -46,7 +48,9 @@ class InstallParams(TLV_IE_Collection, nested=[AppSpecificParams, SystemSpecific
     # GPD_SPE_013, table 11-49
     pass
 
-def gen_install_parameters(non_volatile_memory_quota:int, volatile_memory_quota:int, stk_parameter:str):
+def gen_install_parameters(non_volatile_memory_quota: Optional[int] = None,
+                           volatile_memory_quota: Optional[int] = None,
+                           stk_parameter: Optional[str] = None):
 
     # GPD_SPE_013, table 11-49
 
@@ -54,19 +58,17 @@ def gen_install_parameters(non_volatile_memory_quota:int, volatile_memory_quota:
     install_params = InstallParams()
     install_params_dict = [{'app_specific_params': None}]
 
-    #Conditional
-    if non_volatile_memory_quota and volatile_memory_quota and stk_parameter:
-        system_specific_params = []
-        #Optional
-        if non_volatile_memory_quota:
-            system_specific_params += [{'non_volatile_memory_quota': non_volatile_memory_quota}]
-        #Optional
-        if volatile_memory_quota:
-            system_specific_params += [{'volatile_memory_quota': volatile_memory_quota}]
-        #Optional
-        if stk_parameter:
-            system_specific_params += [{'stk_parameter': stk_parameter}]
-        install_params_dict += [{'system_specific_params': system_specific_params}]
+    # Collect system specific parameters (optional)
+    system_specific_params = []
+    if non_volatile_memory_quota is not None:
+        system_specific_params.append({'non_volatile_memory_quota': non_volatile_memory_quota})
+    if volatile_memory_quota is not None:
+        system_specific_params.append({'volatile_memory_quota': volatile_memory_quota})
+    if stk_parameter is not None:
+        system_specific_params.append({'stk_parameter': stk_parameter})
+    # Add system specific parameters to the install parameters, if any
+    if system_specific_params:
+        install_params_dict.append({'system_specific_params': system_specific_params})
 
     install_params.from_dict(install_params_dict)
     return b2h(install_params.to_bytes())

@@ -295,7 +295,7 @@ class Install_param_Test(unittest.TestCase):
         load_parameters = gen_install_parameters(256, 256, '010001001505000000000000000000000000')
         self.assertEqual(load_parameters, 'c900ef1cc8020100c7020100ca12010001001505000000000000000000000000')
 
-        load_parameters = gen_install_parameters(None, None, '')
+        load_parameters = gen_install_parameters()
         self.assertEqual(load_parameters, 'c900')
 
 if __name__ == "__main__":
