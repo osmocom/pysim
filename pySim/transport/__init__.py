@@ -90,7 +90,7 @@ class LinkBase(abc.ABC):
         self.sw_interpreter = sw_interpreter
         self.apdu_tracer = apdu_tracer
         self.proactive_handler = proactive_handler
-        self.apdu_strict = False
+        self.apdu_strict = True
 
     @abc.abstractmethod
     def __str__(self) -> str:

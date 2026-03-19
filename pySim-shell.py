@@ -136,8 +136,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         self.add_settable(Settable2Compat('apdu_trace', bool, 'Trace and display APDUs exchanged with card', self,
                                           onchange_cb=self._onchange_apdu_trace))
         self.add_settable(Settable2Compat('apdu_strict', bool,
-                                          'Enforce APDU responses according to ISO/IEC 7816-3, table 12', self,
-                                          onchange_cb=self._onchange_apdu_strict))
+                                          'Strictly apply APDU format according to ISO/IEC 7816-3, table 12', self))
         self.add_settable(Settable2Compat('verbose', bool,
                                           'Enable/disable verbose logging', self,
                                           onchange_cb=self._onchange_verbose))
@@ -218,13 +217,6 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
             else:
                 self.card._scc._tp.apdu_tracer = None
 
-    def _onchange_apdu_strict(self, param_name, old, new):
-        if self.card:
-            if new == True:
-                self.card._scc._tp.apdu_strict = True
-            else:
-                self.card._scc._tp.apdu_strict = False
-
     def _onchange_verbose(self, param_name, old, new):
         PySimLogger.set_verbose(new)
         if new == True:
@@ -281,7 +273,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
     apdu_cmd_parser.add_argument('--expect-sw', help='expect a specified status word', type=str, default=None)
     apdu_cmd_parser.add_argument('--expect-response-regex', help='match response against regex', type=str, default=None)
     apdu_cmd_parser.add_argument('--raw', help='Bypass the logical channel (and secure channel)', action='store_true')
-    apdu_cmd_parser.add_argument('APDU', type=is_hexstr, help='APDU as hex string')
+    apdu_cmd_parser.add_argument('APDU', type=is_hexstr, help='APDU as hex string (see also: ISO/IEC 7816-3, section 12.1')
 
     @cmd2.with_argparser(apdu_cmd_parser)
     def do_apdu(self, opts):
@@ -290,14 +282,23 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         tracked. Depending on the raw APDU sent, pySim-shell may not continue to work as expected if you e.g. select
         a different file."""
 
+        if not hasattr(self, 'apdu_strict_warning_displayed') and self.apdu_strict is False:
+            self.poutput("Warning: The default for the setable parameter `apdu_strict` will be changed from")
+            self.poutput("         `False` to `True` in future pySim-shell releases. In case you are using")
+            self.poutput("         the `apdu` command from a script that still mixes APDUs with TPDUs, consider")
+            self.poutput("         fixing or adding a `set apdu_strict false` line at the beginning.")
+            self.apdu_strict_warning_displayed = True;
+
         # When sending raw APDUs we access the scc object through _scc member of the card object. It should also be
         # noted that the apdu command plays an exceptional role since it is the only card accessing command that
         # can be executed without the presence of a runtime state (self.rs) object. However, this also means that
         # self.lchan is also not present (see method equip).
+        self.card._scc._tp.apdu_strict = self.apdu_strict
         if opts.raw or self.lchan is None:
             data, sw = self.card._scc.send_apdu(opts.APDU, apply_lchan = False)
         else:
             data, sw = self.lchan.scc.send_apdu(opts.APDU, apply_lchan = False)
+        self.card._scc._tp.apdu_strict = True
         if data:
             self.poutput("SW: %s, RESP: %s" % (sw, data))
         else:
