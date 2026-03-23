@@ -309,7 +309,6 @@ class EF_SMSP(LinFixedEF):
                                                                         'tp_dest_addr'/Flag)),
                                  'tp_dest_addr'/ScAddr,
                                  'tp_sc_addr'/ScAddr,
-
                                  'tp_pid'/Bytes(1),
                                  'tp_dcs'/Bytes(1),
                                  'tp_vp_minutes'/EF_SMSP.ValidityPeriodAdapter(Byte))
