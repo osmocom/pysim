@@ -80,8 +80,7 @@ class PcscSimLink(LinkBaseTpdu):
 
     def connect(self):
         try:
-            # To avoid leakage of resources, make sure the reader
-            # is disconnected
+            # To avoid leakage of resources, make sure the reader is disconnected
             self.disconnect()
 
             # Make card connection and select a suitable communication protocol
