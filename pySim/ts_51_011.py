@@ -271,6 +271,16 @@ class EF_SMSP(LinFixedEF):
                                                         "numbering_plan_id": "isdn_e164" },
                             "call_number": "49301234567" },
             "tp_pid": b"\xff", "tp_dcs": b"\xff", "tp_vp_minutes": 635040 } ),
+        ( 'fffffffffffffffffffffffffffffffffffffffffffffffffc0b919403214365f7ffffffff07919403214365f7ffffffffffffff',
+          { "alpha_id": "", "parameter_indicators": { "tp_dest_addr": True, "tp_sc_addr": True,
+                                                               "tp_pid": False, "tp_dcs": False, "tp_vp": False },
+            "tp_dest_addr": { "length": 11, "ton_npi": { "ext": True, "type_of_number": "international",
+                                                          "numbering_plan_id": "isdn_e164" },
+                              "call_number": "49301234567" },
+            "tp_sc_addr": { "length": 7, "ton_npi": { "ext": True, "type_of_number": "international",
+                                                        "numbering_plan_id": "isdn_e164" },
+                            "call_number": "49301234567" },
+            "tp_pid": b"\xff", "tp_dcs": b"\xff", "tp_vp_minutes": 635040 } ),
     ]
     _test_no_pad = True
     class ValidityPeriodAdapter(Adapter):
@@ -299,15 +309,27 @@ class EF_SMSP(LinFixedEF):
 
     @staticmethod
     def sc_addr_len(ctx):
-        """Compute the length field for an address field (like TP-DestAddr or TP-ScAddr)."""
+        """Compute the length field for an address field (see also: 3GPP TS 24.011, section 8.2.5.2)."""
         if not hasattr(ctx, 'call_number') or len(ctx.call_number) == 0:
             return 0xff
         else:
+            # octets required for the call_number + one octet for ton_npi
             return bytes_for_nibbles(len(ctx.call_number)) + 1
+
+    @staticmethod
+    def dest_addr_len(ctx):
+        """Compute the length field for an address field (see also: 3GPP TS 23.040, section 9.1.2.5)."""
+        if not hasattr(ctx, 'call_number') or len(ctx.call_number) == 0:
+            return 0xff
+        else:
+            # number of call_number digits
+            return len(ctx.call_number)
 
     def __init__(self, fid='6f42', sfid=None, name='EF.SMSP', desc='Short message service parameters', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, rec_len=(28, None), **kwargs)
         ScAddr = Struct('length'/Rebuild(Int8ub, lambda ctx: EF_SMSP.sc_addr_len(ctx)),
+                        'ton_npi'/TonNpi, 'call_number'/PaddedBcdAdapter(Rpad(Bytes(10))))
+        DestAddr = Struct('length'/Rebuild(Int8ub, lambda ctx: EF_SMSP.dest_addr_len(ctx)),
                         'ton_npi'/TonNpi, 'call_number'/PaddedBcdAdapter(Rpad(Bytes(10))))
         self._construct = Struct('alpha_id'/COptional(GsmOrUcs2Adapter(Rpad(Bytes(this._.total_len-28)))),
                                  'parameter_indicators'/InvertAdapter(BitStruct(
@@ -317,7 +339,7 @@ class EF_SMSP(LinFixedEF):
                                                                         'tp_pid'/Flag,
                                                                         'tp_sc_addr'/Flag,
                                                                         'tp_dest_addr'/Flag)),
-                                 'tp_dest_addr'/ScAddr,
+                                 'tp_dest_addr'/DestAddr,
                                  'tp_sc_addr'/ScAddr,
                                  'tp_pid'/Bytes(1),
                                  'tp_dcs'/Bytes(1),
