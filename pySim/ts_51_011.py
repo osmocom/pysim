@@ -261,6 +261,16 @@ class EF_SMSP(LinFixedEF):
                                                         "numbering_plan_id": "reserved_for_extension" },
                             "call_number": "" },
             "tp_pid": b"\x00", "tp_dcs": b"\x00", "tp_vp_minutes": 1440 } ),
+        ( 'fffffffffffffffffffffffffffffffffffffffffffffffffdffffffffffffffffffffffff07919403214365f7ffffffffffffff',
+          { "alpha_id": "", "parameter_indicators": { "tp_dest_addr": False, "tp_sc_addr": True,
+                                                               "tp_pid": False, "tp_dcs": False, "tp_vp": False },
+            "tp_dest_addr": { "length": 255, "ton_npi": { "ext": True, "type_of_number": "reserved_for_extension",
+                                                          "numbering_plan_id": "reserved_for_extension" },
+                              "call_number": "" },
+            "tp_sc_addr": { "length": 7, "ton_npi": { "ext": True, "type_of_number": "international",
+                                                        "numbering_plan_id": "isdn_e164" },
+                            "call_number": "49301234567" },
+            "tp_pid": b"\xff", "tp_dcs": b"\xff", "tp_vp_minutes": 635040 } ),
     ]
     _test_no_pad = True
     class ValidityPeriodAdapter(Adapter):
