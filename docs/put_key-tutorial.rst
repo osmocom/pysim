@@ -404,7 +404,7 @@ used with which Secure Channel Protocol.
 +-----------+-------------------------------------------------------+
 | 113       | Receipt key (DES)                                     |
 +-----------+-------------------------------------------------------+
-| 115       | DAP verifiation key (RS public or DES)                |
+| 115       | DAP verification key (RS public or DES)               |
 +-----------+-------------------------------------------------------+
 | 116       | reserved for CASD                                     |
 +-----------+-------------------------------------------------------+
@@ -493,7 +493,7 @@ keys in the `--key-data` arguments. It is also important that each `--key-data` 
 argument that sets the algorithm correctly (`des` in this case).
 
 Finally we have to target the keyset we want to rotate by its KVN. The `--old-key-version-nr` argument is set to 112
-as this is identifies the keyset we want to rotate. The `--key-version-nr` is also set to 112 as we do not want to the
+as this identifies the keyset we want to rotate. The `--key-version-nr` is also set to 112 as we do not want
 KVN to be changed in this example. Changing the KVN while rotating a keyset is possible. In case the KVN has to change
 for some reason, the new KVN must be selected carefully to keep the key usable with the associated Secure Channel
 Protocol.
@@ -538,7 +538,7 @@ Adding a keyset
 
 In the following we will discuss how to add an entirely new keyset. The procedure is almost identical with the key
 rotation procedure we have already discussed and it is assumed that all details about the key rotation are understood.
-In this section we will go into more detail and and illustrate how to provision new 3DES, `AES128` and `AES256` keysets.
+In this section we will go into more detail and illustrate how to provision new 3DES, `AES128` and `AES256` keysets.
 
 It is important to keep in mind that storage space on smartcard is a precious resource. In many cases the amount of
 keysets that a Security Domain can store is limited. In some situations you may be forced to sacrifice one of your
