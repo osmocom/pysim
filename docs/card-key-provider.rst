@@ -305,16 +305,16 @@ the requested data.
 
 
 ADM PIN
-~~~~~~~
+^^^^^^^
 
 The `verify_adm` command will attempt to look up the `ADM1` column
 indexed by the ICCID of the SIM/UICC.
 
 
 SCP02 / SCP03
-~~~~~~~~~~~~~
+^^^^^^^^^^^^^
 
-SCP02 and SCP03 each use key triplets consisting if ENC, MAC and DEK
+SCP02 and SCP03 each use key triplets consisting of ENC, MAC and DEK
 keys.  For more details, see the applicable GlobalPlatform
 specifications.
 
