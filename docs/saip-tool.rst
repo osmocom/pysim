@@ -67,7 +67,7 @@ Inspecting applications
 
 To inspect the application PE contents of an existing profile package, sub-command `info` with parameter '--apps' can
 be used. This command lists out all application and their parameters in detail. This allows an application developer
-to check if the applet insertaion was carried out as expected.
+to check if the applet insertion was carried out as expected.
 
 Example: Listing applications and their parameters
 ::
