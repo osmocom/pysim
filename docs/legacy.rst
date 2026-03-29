@@ -205,7 +205,7 @@ Specifically, pySim-read will dump the following:
 
 * DF.GSM
 
- * EF,IMSI
+ * EF.IMSI
  * EF.GID1
  * EF.GID2
  * EF.SMSP
