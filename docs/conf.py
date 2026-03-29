@@ -64,3 +64,20 @@ html_theme = 'alabaster'
 html_static_path = ['_static']
 
 autoclass_content = 'both'
+
+# Workaround for duplicate label warnings:
+# https://github.com/sphinx-doc/sphinx-argparse/issues/14
+#
+# sphinxarg.ext generates generic sub-headings ("Named arguments",
+# "Positional arguments", "Sub-commands", "General options", ...) for every
+# argparse command/tool.  These repeat across many files and trigger tons
+# of autosectionlabel duplicate-label warnings - suppress them.
+autosectionlabel_maxdepth = 3
+suppress_warnings = [
+    'autosectionlabel.saip-tool',
+    'autosectionlabel.shell',
+    'autosectionlabel.smpp2sim',
+    'autosectionlabel.smpp-ota-tool',
+    'autosectionlabel.suci-keytool',
+    'autosectionlabel.trace',
+]
