@@ -602,8 +602,8 @@ This allows for easy interactive modification of records.
 If this command fails before the editor is spawned, it means that the current record contents is not decodable,
 and you should use the :ref:`update_record_decoded` or :ref:`update_record` command.
 
-If this command fails after making your modificatiosn in the editor, it means that the new file contents is not
-encodable; please check your input and/or us the raw :ref:`update_record` comamdn.
+If this command fails after making your modifications in the editor, it means that the new file contents is not
+encodable; please check your input and/or use the raw :ref:`update_record` command.
 
 
 decode_hex
@@ -708,8 +708,8 @@ This allows for easy interactive modification of file contents.
 If this command fails before the editor is spawned, it means that the current file contents is not decodable,
 and you should use the :ref:`update_binary_decoded` or :ref:`update_binary` command.
 
-If this command fails after making your modificatiosn in the editor, it means that the new file contents is not
-encodable; please check your input and/or us the raw :ref:`update_binary` comamdn.
+If this command fails after making your modifications in the editor, it means that the new file contents is not
+encodable; please check your input and/or use the raw :ref:`update_binary` command.
 
 
 decode_hex
