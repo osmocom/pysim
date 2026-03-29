@@ -13,6 +13,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('.'))   # for local extensions (pysim_fs_sphinx, ...)
 
 
 # -- Project information -----------------------------------------------------
@@ -39,7 +40,8 @@ extensions = [
         "sphinx.ext.autodoc",
         "sphinxarg.ext",
         "sphinx.ext.autosectionlabel",
-        "sphinx.ext.napoleon"
+        "sphinx.ext.napoleon",
+        "pysim_fs_sphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -78,6 +80,7 @@ autodoc_mock_imports = ['klein', 'twisted']
 # of autosectionlabel duplicate-label warnings - suppress them.
 autosectionlabel_maxdepth = 3
 suppress_warnings = [
+    'autosectionlabel.filesystem',
     'autosectionlabel.saip-tool',
     'autosectionlabel.shell',
     'autosectionlabel.smpp2sim',

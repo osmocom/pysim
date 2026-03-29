@@ -39,6 +39,7 @@ pySim consists of several parts:
    :caption: Contents:
 
    shell
+   filesystem
    trace
    legacy
    smpp2sim

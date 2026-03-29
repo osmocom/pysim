@@ -3,6 +3,7 @@
 
 /docs/_*
 /docs/generated
+/docs/filesystem.rst
 /.cache
 /.local
 /build
