@@ -30,6 +30,7 @@ import tempfile
 import json
 import abc
 import inspect
+import os
 
 import cmd2
 from cmd2 import CommandSet, with_default_category
@@ -567,7 +568,7 @@ class JsonEditor:
         self._cmd = cmd
         self._orig_json = orig_json
         self._ef = ef
-        self._tmpdir = None
+        self._file = None
 
     @staticmethod
     def _strip_comments(text: str) -> str:
@@ -606,18 +607,21 @@ class JsonEditor:
                 text_file.write(f'// {line}\n')
 
     def __enter__(self) -> object:
-        """Write JSON + examples to a temp file, run the editor, return parsed result."""
-        self._tmpdir = tempfile.TemporaryDirectory(prefix='pysim_')
-        filename = '%s/file' % self._tmpdir.name
-        with open(filename, 'w') as text_file:
-            json.dump(self._orig_json, text_file, indent=4, cls=JsonEncoder)
-            self._append_examples_as_comments(text_file)
-        self._cmd.run_editor(filename)
-        with open(filename, 'r') as text_file:
+        """Write JSON + examples to a temp file, run the editor, return parsed result.
+
+        The temp file is kept on JSONDecodeError so the user can correct and
+        re-open it manually.  It is removed by __exit__() on success."""
+        self._file = tempfile.NamedTemporaryFile(prefix='pysim_', suffix='.json',
+                                                 mode='w', delete=False)
+        json.dump(self._orig_json, self._file, indent=4, cls=JsonEncoder)
+        self._append_examples_as_comments(self._file)
+        self._file.close()
+        self._cmd.run_editor(self._file.name)
+        with open(self._file.name, 'r') as text_file:
             return json.loads(self._strip_comments(text_file.read()))
 
     def __exit__(self, *args):
-        self._tmpdir.cleanup()
+        os.unlink(self._file.name)
 
 
 class CardEF(CardFile):
