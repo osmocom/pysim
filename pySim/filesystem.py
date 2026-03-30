@@ -552,6 +552,74 @@ class CardADF(CardDF):
         return lchan.selected_file.application.export(as_json, lchan)
 
 
+class JsonEditor:
+    """Context manager for editing a JSON-encoded EF value in an external editor.
+
+    Writes the current JSON value (plus encode/decode examples as //-comments)
+    to a temporary file, opens the user's editor, then reads the result back
+    (stripping comment lines) and returns it as the context variable::
+
+        with JsonEditor(self._cmd, orig_json, ef) as edited_json:
+            if edited_json != orig_json:
+                ...write back...
+    """
+    def __init__(self, cmd, orig_json, ef):
+        self._cmd = cmd
+        self._orig_json = orig_json
+        self._ef = ef
+        self._tmpdir = None
+
+    @staticmethod
+    def _strip_comments(text: str) -> str:
+        """Strip //-comment lines from text before JSON parsing."""
+        # TODO: also strip inline comments?
+        return '\n'.join(line for line in text.splitlines() if not line.lstrip().startswith('//'))
+
+    def _append_examples_as_comments(self, text_file) -> None:
+        """Append encode/decode test vectors as //-comment lines to an open file.
+        The examples are taken from _test_de_encode and _test_decode class
+        attributes (same source as the auto-generated filesystem documentation).
+        The comment block is intentionally ignored on read-back by _strip_comments."""
+        vectors = []
+        for attr in ('_test_de_encode', '_test_decode'):
+            v = getattr(type(self._ef), attr, None)
+            if v:
+                vectors.extend(v)
+        if not vectors:
+            return
+        ef = self._ef
+        parts = [ef.fully_qualified_path_str()]
+        if ef.fid:
+            parts.append(f'({ef.fid.upper()})')
+        if ef.desc:
+            parts.append(f'- {ef.desc}')
+        text_file.write(f'\n\n// {" ".join(parts)}\n')
+        text_file.write('// Examples (ignored on save):\n')
+        for t in vectors:
+            if len(t) >= 3:
+                encoded, record_nr, decoded = t[0], t[1], t[2]
+                text_file.write(f'// record {record_nr}: {encoded}\n')
+            else:
+                encoded, decoded = t[0], t[1]
+                text_file.write(f'// file: {encoded}\n')
+            for line in json.dumps(decoded, indent=4, cls=JsonEncoder).splitlines():
+                text_file.write(f'// {line}\n')
+
+    def __enter__(self) -> object:
+        """Write JSON + examples to a temp file, run the editor, return parsed result."""
+        self._tmpdir = tempfile.TemporaryDirectory(prefix='pysim_')
+        filename = '%s/file' % self._tmpdir.name
+        with open(filename, 'w') as text_file:
+            json.dump(self._orig_json, text_file, indent=4, cls=JsonEncoder)
+            self._append_examples_as_comments(text_file)
+        self._cmd.run_editor(filename)
+        with open(filename, 'r') as text_file:
+            return json.loads(self._strip_comments(text_file.read()))
+
+    def __exit__(self, *args):
+        self._tmpdir.cleanup()
+
+
 class CardEF(CardFile):
     """EF (Entry File) in the smart card filesystem"""
 
@@ -657,15 +725,8 @@ class TransparentEF(CardEF):
         def do_edit_binary_decoded(self, _opts):
             """Edit the JSON representation of the EF contents in an editor."""
             (orig_json, _sw) = self._cmd.lchan.read_binary_dec()
-            with tempfile.TemporaryDirectory(prefix='pysim_') as dirname:
-                filename = '%s/file' % dirname
-                # write existing data as JSON to file
-                with open(filename, 'w') as text_file:
-                    json.dump(orig_json, text_file, indent=4, cls=JsonEncoder)
-                # run a text editor
-                self._cmd.run_editor(filename)
-                with open(filename, 'r') as text_file:
-                    edited_json = json.load(text_file)
+            ef = self._cmd.lchan.selected_file
+            with JsonEditor(self._cmd, orig_json, ef) as edited_json:
                 if edited_json == orig_json:
                     self._cmd.poutput("Data not modified, skipping write")
                 else:
@@ -959,15 +1020,8 @@ class LinFixedEF(CardEF):
         def do_edit_record_decoded(self, opts):
             """Edit the JSON representation of one record in an editor."""
             (orig_json, _sw) = self._cmd.lchan.read_record_dec(opts.RECORD_NR)
-            with tempfile.TemporaryDirectory(prefix='pysim_') as dirname:
-                filename = '%s/file' % dirname
-                # write existing data as JSON to file
-                with open(filename, 'w') as text_file:
-                    json.dump(orig_json, text_file, indent=4, cls=JsonEncoder)
-                # run a text editor
-                self._cmd.run_editor(filename)
-                with open(filename, 'r') as text_file:
-                    edited_json = json.load(text_file)
+            ef = self._cmd.lchan.selected_file
+            with JsonEditor(self._cmd, orig_json, ef) as edited_json:
                 if edited_json == orig_json:
                     self._cmd.poutput("Data not modified, skipping write")
                 else:
