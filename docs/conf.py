@@ -65,6 +65,10 @@ html_static_path = ['_static']
 
 autoclass_content = 'both'
 
+# Mock optional server-side deps of es2p and http_json_api/es9p,
+# so that autodoc can import and document those modules.
+autodoc_mock_imports = ['klein', 'twisted']
+
 # Workaround for duplicate label warnings:
 # https://github.com/sphinx-doc/sphinx-argparse/issues/14
 #
