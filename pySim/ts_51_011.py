@@ -420,7 +420,7 @@ class DF_TELECOM(CardDF):
 # TS 51.011 Section 10.3.1
 class EF_LP(TransRecEF):
     _test_de_encode = [
-            ( "24", "24"),
+            ( "24", ["24"] ),
         ]
     def __init__(self, fid='6f05', sfid=None, name='EF.LP', size=(1, None), rec_len=1,
                  desc='Language Preference'):
@@ -477,8 +477,8 @@ class EF_IMSI(TransparentEF):
 # TS 51.011 Section 10.3.4
 class EF_PLMNsel(TransRecEF):
     _test_de_encode = [
-            ( "22F860",  { "mcc": "228", "mnc": "06" } ),
-            ( "330420",  { "mcc": "334", "mnc": "020" } ),
+            ( "22F860",  [{ "mcc": "228", "mnc": "06" }] ),
+            ( "330420",  [{ "mcc": "334", "mnc": "020" }] ),
         ]
     def __init__(self, fid='6f30', sfid=None, name='EF.PLMNsel', desc='PLMN selector',
                  size=(24, None), rec_len=3, **kwargs):
@@ -692,7 +692,7 @@ class EF_AD(TransparentEF):
 # TS 51.011 Section 10.3.20 / 10.3.22
 class EF_VGCS(TransRecEF):
     _test_de_encode = [
-            ( "92f9ffff", "299" ),
+            ( "92f9ffff", ["299"] ),
         ]
     def __init__(self, fid='6fb1', sfid=None, name='EF.VGCS', size=(4, 200), rec_len=4,
                  desc='Voice Group Call Service', **kwargs):
@@ -828,9 +828,9 @@ class EF_LOCIGPRS(TransparentEF):
 # TS 51.011 Section 10.3.35..37
 class EF_xPLMNwAcT(TransRecEF):
     _test_de_encode = [
-        ( '62F2104000', { "mcc": "262", "mnc": "01", "act": [ "E-UTRAN NB-S1", "E-UTRAN WB-S1" ] } ),
-        ( '62F2108000', { "mcc": "262", "mnc": "01", "act": [ "UTRAN" ] } ),
-        ( '62F220488C', { "mcc": "262", "mnc": "02", "act": ['E-UTRAN NB-S1', 'E-UTRAN WB-S1', 'EC-GSM-IoT', 'GSM', 'NG-RAN'] } ),
+        ( '62F2104000', [{ "mcc": "262", "mnc": "01", "act": [ "E-UTRAN NB-S1", "E-UTRAN WB-S1" ] }] ),
+        ( '62F2108000', [{ "mcc": "262", "mnc": "01", "act": [ "UTRAN" ] }] ),
+        ( '62F220488C', [{ "mcc": "262", "mnc": "02", "act": ['E-UTRAN NB-S1', 'E-UTRAN WB-S1', 'EC-GSM-IoT', 'GSM', 'NG-RAN'] }] ),
     ]
     def __init__(self, fid='1234', sfid=None, name=None, desc=None, size=(40, None), rec_len=5, **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, size=size, rec_len=rec_len, **kwargs)
@@ -1065,9 +1065,9 @@ class EF_ICCID(TransparentEF):
 # TS 102 221 Section 13.3 / TS 31.101 Section 13 / TS 51.011 Section 10.1.2
 class EF_PL(TransRecEF):
     _test_de_encode = [
-        ( '6465', "de" ),
-        ( '656e', "en" ),
-        ( 'ffff', None ),
+        ( '6465', ["de"] ),
+        ( '656e', ["en"] ),
+        ( 'ffff', [None] ),
     ]
 
     def __init__(self, fid='2f05', sfid=0x05, name='EF.PL', desc='Preferred Languages'):

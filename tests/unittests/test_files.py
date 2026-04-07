@@ -176,12 +176,11 @@ class TransRecEF_Test(unittest.TestCase):
 
 
     def test_de_encode_record(self):
-        """Test the decoder and encoder for a transparent record-oriented EF.  Performs first a decoder
-        test, and then re-encodes the decoded data, comparing the re-encoded data with the
-        initial input data.
+        """Test the decoder and encoder for a transparent record-oriented EF at the whole-file
+        level.  Performs first a decode test, then re-encodes and compares with the input.
 
         Requires the given TransRecEF subclass to have a '_test_de_encode' attribute,
-        containing a list of tuples. Each tuple has to be a 2-tuple (hexstring, decoded_dict).
+        containing a list of 2-tuples (hexstring, decoded_list).
         """
         for c in self.classes:
             name = get_qualified_name(c)
@@ -192,14 +191,12 @@ class TransRecEF_Test(unittest.TestCase):
                         encoded = t[0]
                         decoded = t[1]
                         logging.debug("Testing decode of %s", name)
-                        re_dec = inst.decode_record_hex(encoded)
+                        re_dec = inst.decode_hex(encoded)
                         self.assertEqual(decoded, re_dec)
                         # re-encode the decoded data
                         logging.debug("Testing re-encode of %s", name)
-                        re_enc = inst.encode_record_hex(re_dec, len(encoded)//2)
+                        re_enc = inst.encode_hex(re_dec, len(encoded)//2)
                         self.assertEqual(encoded.upper(), re_enc.upper())
-                    # there's no point in testing padded input, as TransRecEF have a fixed record
-                    # size and we cannot ever receive more input data than that size.
 
 
 class TransparentEF_Test(unittest.TestCase):
