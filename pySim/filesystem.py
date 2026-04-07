@@ -609,16 +609,24 @@ class JsonEditor:
     def __enter__(self) -> object:
         """Write JSON + examples to a temp file, run the editor, return parsed result.
 
-        The temp file is kept on JSONDecodeError so the user can correct and
-        re-open it manually.  It is removed by __exit__() on success."""
+        On JSONDecodeError the user is offered the option to re-open the file
+        and fix the mistake interactively.  The temp file is removed by __exit__()
+        on success, or when the user declines to retry."""
         self._file = tempfile.NamedTemporaryFile(prefix='pysim_', suffix='.json',
                                                  mode='w', delete=False)
         json.dump(self._orig_json, self._file, indent=4, cls=JsonEncoder)
         self._append_examples_as_comments(self._file)
         self._file.close()
-        self._cmd.run_editor(self._file.name)
-        with open(self._file.name, 'r') as text_file:
-            return json.loads(self._strip_comments(text_file.read()))
+        while True:
+            self._cmd.run_editor(self._file.name)
+            try:
+                with open(self._file.name, 'r') as f:
+                    return json.loads(self._strip_comments(f.read()))
+            except json.JSONDecodeError as e:
+                self._cmd.perror(f'Invalid JSON: {e}')
+                answer = self._cmd.read_input('Re-open file for editing? [y]es/[n]o: ')
+                if answer not in ('y', 'yes'):
+                    return self._orig_json
 
     def __exit__(self, *args):
         os.unlink(self._file.name)
