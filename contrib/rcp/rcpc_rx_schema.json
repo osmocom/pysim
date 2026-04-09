@@ -1,0 +1,69 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "RCP Client RX",
+    "type": "object",
+    "properties": {
+	"rcpc_hello": {
+	    "type": "object",
+	    "properties": {
+		"suitable_for": {
+		    "type": "object",
+		    "properties": {
+			"atr": {
+			    "type": "string",
+			    "pattern": "^[0-9,A-F]{0,66}$"
+			}
+		    },
+		    "additionalProperties": false
+		}
+	    },
+	    "additionalProperties": false
+	},
+	"rcpc_command": {
+	    "type": "object",
+	    "properties": {
+		"cmd": {
+		    "type": "string",
+		    "pattern": "^[0-9,A-Z,a-z,_]{0,40}$"
+		},
+		"cmd_argv": {
+		    "type": "array",
+		    "items": {
+			"type": "string",
+			"pattern": "^.{0,512}$"
+		    },
+		    "maxItems": 255
+		}
+	    },
+	    "additionalProperties": false
+	},
+	"rcpc_result": {
+	    "type": "object",
+	    "properties": {
+		"r_apdu": {
+		    "type": "object",
+		    "properties": {
+			"data": {
+			    "type": "string",
+			    "pattern": "^[0-9,A-F]{0,512}$"
+			},
+			"sw": {
+			    "type": "string",
+			    "pattern": "^[0-9,A-F]{0,4}$"
+			}
+		    },
+		    "additionalProperties": false
+		},
+		"atr": {
+		    "type": "string",
+		    "pattern": "^[0-9,A-F]{0,66}$"
+		},
+		"empty": {
+		    "type": "null"
+		}
+	    },
+	    "additionalProperties": false
+	}
+    },
+    "additionalProperties": false
+}

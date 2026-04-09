@@ -1,0 +1,89 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "RCP Client TX",
+    "type": "object",
+    "properties": {
+	"rcpc_welcome": {
+	    "type": "object",
+	    "properties": {
+		"module_descr": {
+		    "type": "array",
+		    "items": {
+			"type": "object",
+			"properties": {
+			    "name": {
+				"type": "string"
+			    },
+			    "cmd_descr": {
+				"type": "array",
+				"items": {
+				    "type": "object",
+				    "properties": {
+					"name": {
+					    "type": "string"
+					},
+					"help": {
+					    "type": "string"
+					},
+					"args": {
+					    "type": "array",
+					    "items": {
+						"name": {
+						    "type": "string"
+						},
+						"spec": {
+						    "type": "object",
+						    "properties": {
+							"required" : {
+							    "type": "boolean"
+							},
+							"help": {
+							    "type": "string"
+							},
+							"action": {
+							    "type": "string"
+							},
+							"pytype": {
+							    "type": "string"
+							},
+							"default" : {
+							    "type": ["string", "integer"]
+							}
+						    },
+						    "additionalProperties": false
+						}
+					    }
+					}
+				    },
+				    "additionalProperties": false
+				}
+			    }
+			},
+			"additionalProperties": false
+		    }
+		}
+	    },
+	    "additionalProperties": false
+	},
+	"rcpc_instr": {
+	    "type": "object",
+	    "properties": {
+		"print": {
+		    "type": "string"
+		},
+		"reset": {
+		    "type": "null"
+		},
+		"c_apdu": {
+		    "type": "string",
+		    "pattern": "^[0-9,A-F]{0,512}$"
+		}
+	    },
+	    "additionalProperties": false
+	},
+	"rcpc_goodbye": {
+	    "type": "integer"
+	}
+    },
+    "additionalProperties": false
+}
