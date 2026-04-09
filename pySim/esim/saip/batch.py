@@ -20,12 +20,19 @@
 
 import copy
 import pprint
+import logging
+import traceback
+import inspect
 from typing import List, Generator
 from pySim.esim.saip.personalization import ConfigurableParameter
 from pySim.esim.saip import param_source
 from pySim.esim.saip import ProfileElementSequence, ProfileElementSD
 from pySim.global_platform import KeyUsageQualifier
 from osmocom.utils import b2h
+
+logger = logging.getLogger(__name__)
+def _func_():
+    return inspect.currentframe().f_back.f_code.co_name
 
 class BatchPersonalization:
     """Produce a series of eSIM profiles from predefined parameters.
@@ -115,7 +122,9 @@ class BatchPersonalization:
                     value = p.param.__class__.validate_val(input_value)
                     p.param.__class__.apply_val(pes, value)
                 except Exception as e:
-                    raise ValueError(f'{p.param.name} fed by {p.src.name}: {e}') from e
+                    print(traceback.format_exc())
+                    logger.error('during %s: %r', _func_(), e)
+                    raise ValueError(f'{p.param.name} fed by {p.src.name}: {e!r}') from e
 
             yield pes
 
