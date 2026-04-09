@@ -673,8 +673,10 @@ class MncLen(ConfigurableParameter):
         for pe in pes.get_pes_for_type('usim'):
             if not hasattr(pe, 'files'):
                 continue
+            f_ad = pe.files.get('ef-ad')
+            if not f_ad:
+                continue
             # decode existing values
-            f_ad = pe.files['ef-ad']
             if not f_ad.body:
                 continue
             try:
