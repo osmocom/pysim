@@ -20,12 +20,19 @@
 
 import copy
 import pprint
+import logging
+import traceback
+import inspect
 from typing import Generator, Union
 from pySim.esim.saip.personalization import ConfigurableParameter
 from pySim.esim.saip import param_source
 from pySim.esim.saip import ProfileElementSequence, ProfileElementSD
 from pySim.global_platform import KeyUsageQualifier
 from osmocom.utils import b2h
+
+logger = logging.getLogger(__name__)
+def _func_():
+    return inspect.currentframe().f_back.f_code.co_name
 
 # a list of ConfigurableParameter classes and/or ConfigurableParameter class instances
 ParamList = list[Union[type[ConfigurableParameter], ConfigurableParameter]]
@@ -121,6 +128,8 @@ class BatchPersonalization:
                     value = p.param_cls.validate_val(input_value)
                     p.param_cls.apply_val(pes, value)
                 except Exception as e:
+                    print(traceback.format_exc())
+                    logger.error('during %s: %r', _func_(), e)
                     raise ValueError(f'{p.param_cls.get_name()} fed by {p.src.name}: {e}') from e
 
             pes.rebuild_mandatory_services()
