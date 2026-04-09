@@ -19,7 +19,7 @@ import abc
 import requests
 import logging
 import json
-from typing import Optional, Tuple
+from typing import Optional
 import base64
 from twisted.web.server import Request
 
@@ -180,7 +180,7 @@ class JsonHttpApiFunction(abc.ABC):
     # receives from the a requesting client. The same applies vice versa to class variables that have an "output_"
     # prefix.
 
-    # path of the API function (e.g. '/gsma/rsp2/es2plus/confirmOrder', see also method rewrite_url).
+    # path of the API function (e.g. '/gsma/rsp2/es2plus/confirmOrder')
     path = None
 
     # dictionary of input parameters. key is parameter name, value is ApiParam class
@@ -336,22 +336,6 @@ class JsonHttpApiFunction(abc.ABC):
                 output[p] = p_class.decode(v)
         return output
 
-    def rewrite_url(self, data: dict, url: str) -> Tuple[dict, str]:
-        """
-        Rewrite a static URL using information passed in the data dict. This method may be overloaded by a derived
-        class to allow fully dynamic URLs. The input parameters required for the URL rewriting may be passed using
-        data parameter. In case those parameters are additional parameters that are not intended to be passed to
-        the encode_client method later, they must be removed explcitly.
-
-        Args:
-                data: (see JsonHttpApiClient and JsonHttpApiServer)
-                url: statically generated URL string (see comment in JsonHttpApiClient)
-        """
-
-        # This implementation is a placeholder in which we do not perform any URL rewriting. We just pass through data
-        # and url unmodified.
-        return data, url
-
 class JsonHttpApiClient():
     def __init__(self, api_func: JsonHttpApiFunction, url_prefix: str, func_req_id: Optional[str],
                  session: requests.Session):
@@ -368,16 +352,8 @@ class JsonHttpApiClient():
         self.session = session
 
     def call(self, data: dict, func_call_id: Optional[str] = None, timeout=10) -> Optional[dict]:
-        """
-        Make an API call to the HTTP API endpoint represented by this object. Input data is passed in `data` as
-        json-serializable fields. `data` may also contain additional parameters required for URL rewriting (see
-        rewrite_url in class JsonHttpApiFunction). Output data is returned as json-deserialized dict.
-
-        Args:
-                data: Input data required to perform the request.
-                func_call_id: Function Call Identifier, if present a header field is generated automatically.
-                timeout: Maximum amount of time to wait for the request to complete.
-        """
+        """Make an API call to the HTTP API endpoint represented by this object. Input data is passed in `data` as
+        json-serializable dict. Output data is returned as json-deserialized dict."""
 
         # In case a function caller ID is supplied, use it together with the stored function requestor ID to generate
         # and prepend the header field according to SGP.22, section 6.5.1.1 and 6.5.1.3. (the presence of the header
@@ -385,11 +361,6 @@ class JsonHttpApiClient():
         if func_call_id:
             data = {'header' : {'functionRequesterIdentifier': self.func_req_id,
                                 'functionCallIdentifier': func_call_id}} | data
-
-        # The URL used for the HTTP request (see below) normally consists of the initially given url_prefix
-        # concatenated with the path defined by the JsonHttpApiFunction definition. This static URL path may be
-        # rewritten by rewrite_url method defined in the JsonHttpApiFunction.
-        data, url = self.api_func.rewrite_url(data, self.url_prefix + self.api_func.path)
 
         # Encode the message (the presence of mandatory fields is checked during encoding)
         encoded = json.dumps(self.api_func.encode_client(data))
@@ -402,6 +373,7 @@ class JsonHttpApiClient():
         req_headers.update(self.api_func.extra_http_req_headers)
 
         # Perform HTTP request
+        url = self.url_prefix + self.api_func.path
         logger.debug("HTTP REQ %s - hdr: %s '%s'" % (url, req_headers, encoded))
         response = self.session.request(self.api_func.http_method, url, data=encoded, headers=req_headers, timeout=timeout)
         logger.debug("HTTP RSP-STS: [%u] hdr: %s" % (response.status_code, response.headers))
