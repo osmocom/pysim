@@ -14,6 +14,8 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('.'))   # for local extensions (pysim_fs_sphinx, ...)
+sys.path.insert(0, os.path.abspath('../contrib/rcp'))  # for argparse
+sys.path.insert(0, os.path.abspath('../contrib/rcp/usage_example'))  # for argparse
 
 
 # -- Project information -----------------------------------------------------
@@ -42,6 +44,7 @@ extensions = [
         "sphinx.ext.autosectionlabel",
         "sphinx.ext.napoleon",
         "pysim_fs_sphinx",
+        "sphinx.ext.graphviz",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

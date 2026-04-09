@@ -50,6 +50,7 @@ pySim consists of several parts:
    suci-keytool
    saip-tool
    smpp-ota-tool
+   rcpf
 
 
 Indices and tables
