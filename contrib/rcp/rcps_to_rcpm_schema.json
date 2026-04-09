@@ -1,0 +1,25 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "RCP Server to RCP Module",
+    "type": "object",
+    "properties": {
+	"rcpm_version": {
+	    "type": "object",
+	    "properties": {
+		"protocol": {
+		    "type": "string"
+		}
+	    },
+	    "required": [ "protocol" ],
+	    "additionalProperties": false
+	},
+	"rcpm_welcome": {
+	    "type": "null"
+	}
+    },
+    "oneOf": [
+	{ "required": [ "rcpm_version" ] },
+	{ "required": [ "rcpm_welcome" ] }
+    ],
+    "additionalProperties": false
+}

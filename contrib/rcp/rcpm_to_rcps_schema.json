@@ -1,0 +1,127 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "RCP Module to RCP Server",
+    "type": "object",
+    "properties": {
+	"rcpm_version": {
+	    "type": "object",
+	    "properties": {
+		"protocol": {
+		    "type": "string"
+		}
+	    },
+	    "required": [ "protocol" ],
+	    "additionalProperties": false
+	},
+	"rcpm_hello": {
+	    "type": "object",
+	    "properties": {
+		"name": {
+		    "type": "string"
+		},
+		"cmd_descr": {
+		    "type": "array",
+		    "items": {
+			"type": "object",
+			"properties": {
+			    "name": {
+				"type": "string"
+			    },
+			    "help": {
+				"type": "string"
+			    },
+			    "args": {
+				"type": "array",
+				"items": {
+				    "type": "object",
+				    "properties": {
+					"name": {
+					    "type": "string"
+					},
+					"spec": {
+					    "type": "object",
+					    "properties": {
+						"required" : {
+						    "type": "boolean"
+						},
+						"help": {
+						    "type": "string"
+						},
+						"action": {
+						    "type": "string"
+						},
+						"pytype": {
+						    "type": "string"
+						},
+						"default" : {
+						    "type": ["string", "integer"]
+						}
+					    },
+					    "required": [ "help" ],
+					    "additionalProperties": false
+					}
+				    },
+				    "required": [ "name", "spec" ],
+				    "additionalProperties": false
+				}
+			    },
+			    "get_keys": {
+				"type": "object",
+				"properties": {
+				    "uicc" : {
+					"type": "array",
+					"items": {
+					    "type": "string"
+					}
+				    },
+				    "euicc" : {
+					"type": "array",
+					"items": {
+					    "type": "string"
+					}
+				    }
+				},
+				"oneOf": [
+				    { "required": [ "uicc" ] },
+				    { "required": [ "euicc" ] }
+				],
+				"additionalProperties": false
+			    }
+			},
+			"required": [ "name",  "help", "args" ],
+			"additionalProperties": false
+		    }
+		},
+		"suitable_for": {
+		    "type": "array",
+		    "items": {
+			"type": "object",
+			"properties": {
+			    "atr": {
+				"type": "string",
+				"pattern": "^[0-9,A-F]{0,66}$"
+			    }
+			},
+			"oneOf": [
+			    { "required": [ "atr" ] }
+			],
+			"additionalProperties": false
+		    }
+		},
+		"addr": {
+		    "type": "string"
+		},
+		"port": {
+		    "type": "integer"
+		}
+	    },
+	    "required": [ "name",  "cmd_descr", "suitable_for", "addr", "port" ],
+	    "additionalProperties": false
+	}
+    },
+    "oneOf": [
+	{ "required": [ "rcpm_hello" ] },
+	{ "required": [ "rcpm_version" ] }
+    ],
+    "additionalProperties": false
+}

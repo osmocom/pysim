@@ -1,0 +1,106 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "RCP Server to RCP Module Command Server",
+    "type": "object",
+    "properties": {
+    	"rcps_command": {
+	    "type": "object",
+	    "properties": {
+		"cmd": {
+		    "type": "string",
+		    "pattern": "^[0-9,A-Z,a-z,_]{0,40}$"
+		},
+		"cmd_argv": {
+		    "type": "array",
+		    "items": {
+			"type": "string",
+			"pattern": "^.{0,512}$"
+		    },
+		    "maxItems": 255
+		},
+		"keys" : {
+		    "type": "object",
+		    "properties": {
+			"uicc" : {
+			    "type": "array",
+			    "items": {
+				"type": "object",
+				"properties": {
+				    "key": {
+					"type": "string"
+				    },
+				    "value": {
+					"type": "string"
+				    }
+				},
+				"required": [ "key", "value" ],
+				"additionalProperties": false
+			    }
+			},
+			"euicc" : {
+			    "type": "array",
+			    "items": {
+				"type": "object",
+				"properties": {
+				    "key": {
+					"type": "string"
+				    },
+				    "value": {
+					"type": "string"
+				    }
+				},
+				"required": [ "key", "value" ],
+				"additionalProperties": false
+			    }
+			}
+		    },
+		    "oneOf": [
+			{ "required": [ "uicc" ] },
+			{ "required": [ "euicc" ] }
+		    ],
+		    "additionalProperties": false
+		}
+	    },
+	    "required": [ "cmd", "cmd_argv" ],
+	    "additionalProperties": false
+	},
+	"rcps_result": {
+	    "type": "object",
+	    "properties": {
+		"r_apdu": {
+		    "type": "object",
+		    "properties": {
+			"data": {
+			    "type": "string",
+			    "pattern": "^[0-9,A-F]{0,512}$"
+			},
+			"sw": {
+			    "type": "string",
+			    "pattern": "^[0-9,A-F]{0,4}$"
+			}
+		    },
+		    "required": [ "data", "sw" ],
+		    "additionalProperties": false
+		},
+		"atr": {
+		    "type": "string",
+		    "pattern": "^[0-9,A-F]{0,66}$"
+		},
+		"empty": {
+		    "type": "null"
+		}
+	    },
+	    "oneOf": [
+		{ "required": [ "r_apdu" ] },
+		{ "required": [ "atr" ] },
+		{ "required": [ "empty" ] }
+	    ],
+	    "additionalProperties": false
+	}
+    },
+    "oneOf": [
+	{ "required": [ "rcps_command" ] },
+	{ "required": [ "rcps_result" ] }
+    ],
+    "additionalProperties": false
+}

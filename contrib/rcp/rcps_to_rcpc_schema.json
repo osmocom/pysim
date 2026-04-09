@@ -1,0 +1,125 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "RCP Server to RCP Client",
+    "type": "object",
+    "properties": {
+	"rcpc_version": {
+	    "type": "object",
+	    "properties": {
+		"software": {
+		    "type": "string"
+		},
+		"protocol": {
+		    "type": "string"
+		},
+		"info": {
+		    "type": "string"
+		}
+	    },
+	    "required": [ "software",  "protocol" ],
+	    "additionalProperties": false
+	},
+	"rcpc_welcome": {
+	    "type": "object",
+	    "properties": {
+		"module_descr": {
+		    "type": "array",
+		    "items": {
+			"type": "object",
+			"properties": {
+			    "name": {
+				"type": "string"
+			    },
+			    "cmd_descr": {
+				"type": "array",
+				"items": {
+				    "type": "object",
+				    "properties": {
+					"name": {
+					    "type": "string"
+					},
+					"help": {
+					    "type": "string"
+					},
+					"args": {
+					    "type": "array",
+					    "items": {
+						"type": "object",
+						"properties": {
+						    "name": {
+							"type": "string"
+						    },
+						    "spec": {
+							"type": "object",
+							"properties": {
+							    "required" : {
+								"type": "boolean"
+							    },
+							    "help": {
+								"type": "string"
+							    },
+							    "action": {
+								"type": "string"
+							    },
+							    "pytype": {
+								"type": "string"
+							    },
+							    "default" : {
+								"type": ["string", "integer"]
+							    }
+							},
+							"required": [ "help" ],
+							"additionalProperties": false
+						    }
+						},
+						"required": [ "name", "spec" ],
+						"additionalProperties": false
+					    }
+					}
+				    },
+				    "required": [ "name",  "help", "args" ],
+				    "additionalProperties": false
+				}
+			    }
+			},
+			"required": [ "name",  "cmd_descr" ],
+			"additionalProperties": false
+		    }
+		}
+	    },
+	    "required": [ "module_descr" ],
+	    "additionalProperties": false
+	},
+	"rcpc_instr": {
+	    "type": "object",
+	    "properties": {
+		"print": {
+		    "type": "string"
+		},
+		"reset": {
+		    "type": "null"
+		},
+		"c_apdu": {
+		    "type": "string",
+		    "pattern": "^[0-9,A-F]{0,512}$"
+		}
+	    },
+	    "oneOf": [
+		{ "required": [ "print" ] },
+		{ "required": [ "reset" ] },
+		{ "required": [ "c_apdu" ] }
+	    ],
+	    "additionalProperties": false
+	},
+	"rcpc_goodbye": {
+	    "type": "integer"
+	}
+    },
+    "oneOf": [
+	{ "required": [ "rcpc_version" ] },
+	{ "required": [ "rcpc_welcome" ] },
+	{ "required": [ "rcpc_instr" ] },
+	{ "required": [ "rcpc_goodbye" ] }
+    ],
+    "additionalProperties": false
+}

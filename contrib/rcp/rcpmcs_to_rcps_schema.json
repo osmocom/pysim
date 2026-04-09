@@ -1,0 +1,36 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "RCP Module Command Server to RCP Server",
+    "type": "object",
+    "properties": {
+	"rcps_instr": {
+	    "type": "object",
+	    "properties": {
+		"print": {
+		    "type": "string"
+		},
+		"reset": {
+		    "type": "null"
+		},
+		"c_apdu": {
+		    "type": "string",
+		    "pattern": "^[0-9,A-F]{0,512}$"
+		}
+	    },
+	    "oneOf": [
+		{ "required": [ "print" ] },
+		{ "required": [ "reset" ] },
+		{ "required": [ "c_apdu" ] }
+	    ],
+	    "additionalProperties": false
+	},
+	"rcps_goodbye": {
+	    "type": "integer"
+	}
+    },
+    "oneOf": [
+	{ "required": [ "rcps_instr" ] },
+	{ "required": [ "rcps_goodbye" ] }
+    ],
+    "additionalProperties": false
+}
