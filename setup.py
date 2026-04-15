@@ -26,7 +26,7 @@ setup(
         "construct >= 2.10.70",
         "bidict",
         "pyosmocom >= 0.0.12",
-        "pyyaml >= 5.1",
+        "pyyaml >= 5.4",
         "termcolor",
         "colorlog",
         "pycryptodomex",

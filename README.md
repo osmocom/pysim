@@ -97,7 +97,7 @@ Please install the following dependencies:
  - pyscard
  - pyserial
  - pytlv
- - pyyaml >= 5.1
+ - pyyaml >= 5.4
  - smpp.pdu (from `github.com/hologram-io/smpp.pdu`)
  - termcolor
 
