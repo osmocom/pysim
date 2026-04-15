@@ -640,7 +640,7 @@ class SmDppHttpServer:
                 # look up profile based on matchingID.  We simply check if a given file exists for now..
                 path = os.path.join(self.upp_dir, matchingId) + '.der'
                 # prevent directory traversal attack
-                if os.path.commonprefix((os.path.realpath(path),self.upp_dir)) != self.upp_dir:
+                if os.path.commonpath((os.path.realpath(path),self.upp_dir)) != self.upp_dir:
                     raise ApiError('8.2.6', '3.8', 'Refused')
                 if not os.path.isfile(path) or not os.access(path, os.R_OK):
                     raise ApiError('8.2.6', '3.8', 'Refused')
