@@ -302,6 +302,8 @@ class LinkBaseTpdu(LinkBase):
         prev_tpdu = tpdu
         data, sw = self.send_tpdu(tpdu)
         log.debug("T0: case #%u TPDU: %s => %s %s", case, tpdu, data or "(no data)", sw or "(no status word)")
+        if sw is None:
+            raise ValueError("no status word received")
 
         # After sending the APDU/TPDU the UICC/eUICC or SIM may response with a status word that indicates that further
         # TPDUs have to be sent in order to complete the task.
