@@ -27,7 +27,6 @@
 import hashlib
 import argparse
 import os
-import random
 import re
 import sys
 import traceback
@@ -436,7 +435,7 @@ def gen_parameters(opts):
         if not re.match('^[0-9a-fA-F]{32}$', ki):
             raise ValueError('Ki needs to be 128 bits, in hex format')
     else:
-        ki = ''.join(['%02x' % random.randrange(0, 256) for i in range(16)])
+        ki = os.urandom(16).hex()
 
     # OPC (random)
     if opts.opc is not None:
@@ -447,7 +446,7 @@ def gen_parameters(opts):
     elif opts.op is not None:
         opc = derive_milenage_opc(ki, opts.op)
     else:
-        opc = ''.join(['%02x' % random.randrange(0, 256) for i in range(16)])
+        opc = os.urandom(16).hex()
 
     pin_adm = sanitize_pin_adm(opts.pin_adm, opts.pin_adm_hex)
 
