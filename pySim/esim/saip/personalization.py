@@ -618,10 +618,28 @@ class SmspTpScAddr(ConfigurableParameter):
             ef_smsp_dec['tp_sc_addr']['ton_npi']['type_of_number'] = 'international' if international else 'unknown'
             # ensure the parameter_indicators.tp_sc_addr is True
             ef_smsp_dec['parameter_indicators']['tp_sc_addr'] = True
-            # re-encode into the File body
-            f_smsp.body = ef_smsp.encode_record_bin(ef_smsp_dec, 1)
+
+            # alpha_id padding: to make room for a human readable SMSC name that can be provisioned to the profile later
+            # on, alpha_id needs to be empty but padded 0xff to some length.
+            # - alpha_id is optional, setting alpha_id = '' ensures the IE is present.
+            # - the length of the file is 28+Y where Y is the length of the alpha_id -- here the intended length of our padding
+            #   (see 3GPP TS 31.102 4.2.27 EF.SMSP). So if we want a maximum length of alpha_id = 14, we set the total
+            #   file size to 28+14 = 42.
+            # - this file size has to go in two places: encode_record_bin() needs to know the length to encode the right
+            #   length of fillFileContent.
+            # - the f_smsp needs to show the right file size in the PES, as in
+            #      'ef-smsp': [('fileDescriptor', {'efFileSize': '2a', ...
+            #   (where 2a == 42)
+            # - To generate the right amount of fillFileContent, pass total_len=42 to encode_record_bin().
+            # - To show the right size in the PES, set f_smsp.rec_len = 42
+            ef_smsp_dec['alpha_id'] = ''
+            f_smsp.rec_len = 42
+
+            # re-encode into the File body.
+            #
             #print("SMSP  (new): %s" % f_smsp.body)
             # re-generate the pe.decoded member from the File instance
+            f_smsp.body = ef_smsp.encode_record_bin(ef_smsp_dec, 1, total_len=f_smsp.rec_len)
             pe.file2pe(f_smsp)
 
     @classmethod
