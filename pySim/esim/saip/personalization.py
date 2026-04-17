@@ -618,6 +618,7 @@ class SmspTpScAddr(ConfigurableParameter):
             ef_smsp_dec['tp_sc_addr']['ton_npi']['type_of_number'] = 'international' if international else 'unknown'
             # ensure the parameter_indicators.tp_sc_addr is True
             ef_smsp_dec['parameter_indicators']['tp_sc_addr'] = True
+            ef_smsp_dec['alpha_id'] = ''
             # re-encode into the File body
             f_smsp.body = ef_smsp.encode_record_bin(ef_smsp_dec, 1)
             #print("SMSP  (new): %s" % f_smsp.body)
