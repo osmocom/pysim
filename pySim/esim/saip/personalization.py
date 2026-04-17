@@ -633,13 +633,14 @@ class SmspTpScAddr(ConfigurableParameter):
             # - To generate the right amount of fillFileContent, pass total_len=42 to encode_record_bin().
             # - To show the right size in the PES, set f_smsp.rec_len = 42
             ef_smsp_dec['alpha_id'] = ''
-            f_smsp.rec_len = 42
+
+            # we can set this to choose a fixed length:
+            #f_smsp.rec_len = 42
+            # but leave rec_len unchanged to keep the same length as was found in the eSIM template.
 
             # re-encode into the File body.
-            #
-            #print("SMSP  (new): %s" % f_smsp.body)
-            # re-generate the pe.decoded member from the File instance
             f_smsp.body = ef_smsp.encode_record_bin(ef_smsp_dec, 1, total_len=f_smsp.rec_len)
+            # re-generate the pe.decoded member from the File instance
             pe.file2pe(f_smsp)
 
     @classmethod
