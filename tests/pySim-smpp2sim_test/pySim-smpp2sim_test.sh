@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Utility to verify the functionality of pySim-trace.py
+# Utility to verify the functionality of pySim-smpp2sim.py
 #
 # (C) 2026 by sysmocom - s.f.m.c. GmbH
 # All Rights Reserved
