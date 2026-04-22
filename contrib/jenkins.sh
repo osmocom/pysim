@@ -10,6 +10,11 @@
 
 export PYTHONUNBUFFERED=1
 
+setup_venv() {
+	virtualenv -p python3 venv --system-site-packages
+	. venv/bin/activate
+}
+
 if [ ! -d "./tests/" ] ; then
 	echo "###############################################"
 	echo "Please call from pySim-prog top directory"
@@ -23,8 +28,7 @@ fi
 
 case "$JOB_TYPE" in
 "test")
-	virtualenv -p python3 venv --system-site-packages
-	. venv/bin/activate
+	setup_venv
 
 	pip install -r requirements.txt
 	pip install pyshark
@@ -36,8 +40,7 @@ case "$JOB_TYPE" in
 	tests/pySim-trace_test/pySim-trace_test.sh
 	;;
 "card-test") # tests requiring physical cards
-	virtualenv -p python3 venv --system-site-packages
-	. venv/bin/activate
+	setup_venv
 
 	pip install -r requirements.txt
 
@@ -53,8 +56,7 @@ case "$JOB_TYPE" in
 	tests/pySim-smpp2sim_test/pySim-smpp2sim_test.sh
 	;;
 "distcheck")
-	virtualenv -p python3 venv --system-site-packages
-	. venv/bin/activate
+	setup_venv
 
 	pip install .
 	pip install pyshark
@@ -67,8 +69,7 @@ case "$JOB_TYPE" in
 	# Print pylint version
 	pip3 freeze | grep pylint
 
-	virtualenv -p python3 venv --system-site-packages
-	. venv/bin/activate
+	setup_venv
 
 	pip install .
 
@@ -86,8 +87,7 @@ case "$JOB_TYPE" in
 		contrib/*.py
 	;;
 "docs")
-	virtualenv -p python3 venv --system-site-packages
-	. venv/bin/activate
+	setup_venv
 
 	pip install -r requirements.txt
 
