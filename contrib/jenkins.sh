@@ -32,15 +32,21 @@ case "$JOB_TYPE" in
 	# Execute automatically discovered unit tests first
 	python -m unittest discover -v -s tests/unittests
 
-	# Run pySim-prog integration tests (requires physical cards)
-	cd tests/pySim-prog_test/
-        ./pySim-prog_test.sh
-	cd ../../
-
 	# Run pySim-trace test
 	tests/pySim-trace_test/pySim-trace_test.sh
+	;;
+"card-test") # tests requiring physical cards
+	virtualenv -p python3 venv --system-site-packages
+	. venv/bin/activate
 
-	# Run pySim-shell integration tests (requires physical cards)
+	pip install -r requirements.txt
+
+	# Run pySim-prog integration tests
+	cd tests/pySim-prog_test/
+	./pySim-prog_test.sh
+	cd ../../
+
+	# Run pySim-shell integration tests
 	python3 -m unittest discover -v -s ./tests/pySim-shell_test/
 
 	# Run pySim-smpp2sim test
