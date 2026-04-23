@@ -152,7 +152,8 @@ class SimCard(SimCardBase):
         return sw
 
     def update_smsp(self, smsp):
-        data, sw = self._scc.update_record(EF['SMSP'], 1, rpad(smsp, 84))
+        print("using update_smsp")
+        data, sw = self._scc.update_record(EF['SMSP'], 1, smsp, leftpad=True)
         return sw
 
     def update_ad(self, mnc=None, opmode=None, ofm=None, path=EF['AD']):

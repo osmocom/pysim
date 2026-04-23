@@ -5,7 +5,7 @@ ICCID: 89445310150011013678
 IMSI: 001010000000102
 GID1: Can't read file -- SW match failed! Expected 9000 and got 6a82.
 GID2: Can't read file -- SW match failed! Expected 9000 and got 6a82.
-SMSP: e1ffffffffffffffffffffffff0581005155f5ffffffffffff000000ffffffffffffffffffffffffffff
+SMSP: ffffffffffffffffffffffffffffe1ffffffffffffffffffffffff0581005155f5ffffffffffff000000
 SMSC: 0015555
 SPN: wavemobile
 Show in HPLMN: False
