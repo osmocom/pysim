@@ -251,6 +251,16 @@ class EF_SMSP(LinFixedEF):
                                                       "numbering_plan_id": "isdn_e164" },
                             "call_number": "4915790109999" },
             "tp_pid": b"\x00", "tp_dcs": b"\x00", "tp_vp_minutes": 4320 } ),
+        ( 'e1ffffffffffffffffffffffff0891945197109099f9ffffff0000a9',
+          { "alpha_id": "", "parameter_indicators": { "tp_dest_addr": False, "tp_sc_addr": True,
+                                                          "tp_pid": True, "tp_dcs": True, "tp_vp": True },
+            "tp_dest_addr": { "length": 255, "ton_npi": { "ext": True, "type_of_number": "reserved_for_extension",
+                                                          "numbering_plan_id": "reserved_for_extension" },
+                              "call_number": "" },
+            "tp_sc_addr": { "length": 8, "ton_npi": { "ext": True, "type_of_number": "international",
+                                                      "numbering_plan_id": "isdn_e164" },
+                            "call_number": "4915790109999" },
+            "tp_pid": b"\x00", "tp_dcs": b"\x00", "tp_vp_minutes": 4320 } ),
         ( '454e6574776f726b73fffffffffffffff1ffffffffffffffffffffffffffffffffffffffffffffffff0000a7',
           { "alpha_id": "ENetworks", "parameter_indicators": { "tp_dest_addr": False, "tp_sc_addr": True,
                                                                "tp_pid": True, "tp_dcs": True, "tp_vp": False },
@@ -331,7 +341,8 @@ class EF_SMSP(LinFixedEF):
                         'ton_npi'/TonNpi, 'call_number'/PaddedBcdAdapter(Rpad(Bytes(10))))
         DestAddr = Struct('length'/Rebuild(Int8ub, lambda ctx: EF_SMSP.dest_addr_len(ctx)),
                         'ton_npi'/TonNpi, 'call_number'/PaddedBcdAdapter(Rpad(Bytes(10))))
-        self._construct = Struct('alpha_id'/COptional(GsmOrUcs2Adapter(Rpad(Bytes(this._.total_len-28)))),
+        # (see comment below)
+        self._construct = Struct('alpha_id'/GsmOrUcs2Adapter(Rpad(Bytes(this._.total_len-28))),
                                  'parameter_indicators'/InvertAdapter(BitStruct(
                                                                         Const(7, BitsInteger(3)),
                                                                         'tp_vp'/Flag,
@@ -344,6 +355,25 @@ class EF_SMSP(LinFixedEF):
                                  'tp_pid'/Bytes(1),
                                  'tp_dcs'/Bytes(1),
                                  'tp_vp_minutes'/EF_SMSP.ValidityPeriodAdapter(Byte))
+
+    # Ensure 'alpha_id' is always present
+    def encode_record_hex(self, abstract_data: dict, record_nr: int, total_len: int = None) -> str:
+        # Problem: TS 51.011 Section 10.5.6 describes the 'alpha_id' field as optional. However, this is only true
+        # at the time when the record length of the file is set up in the file system. A card manufacturer may decide
+        # to remove the field by setting the record length to 28. Likewise, the card manaufacturer may also decide to
+        # set the field to a distinct length by setting the record length to a value greater than 28 (e.g. 14 bytes
+        # 'alpha_id' + 28 bytes). Due to the fixed nature of the record length, this eventually means that in practice
+        # 'alpha_id' is a mandatory field with a fixed length.
+        #
+        # Due to the problematic specification of 'alpha_id' as a pseudo-optional field at the beginning of a
+        # fixed-size memory, the construct definition in self._construct has been incorrectly implemented and the field
+        # has been marked as COptional. We may correct the problem by removing COptional. But to maintain compatibility,
+        # we then have to ensure that in case the field is not provided (None), it is set to an empty string ('').
+        #
+        # See also ts_31_102.py, class EF_OCI for a correct example.
+        if abstract_data['alpha_id'] is None:
+            abstract_data['alpha_id'] = ''
+        return super().encode_record_hex(abstract_data, record_nr, total_len)
 
 # TS 51.011 Section 10.5.7
 class EF_SMSS(TransparentEF):
