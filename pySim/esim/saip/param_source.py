@@ -130,15 +130,23 @@ class RandomDigitSource(DecimalRangeSource, RandomSourceMixin):
     """return a different sequence of random decimal digits each"""
     name = "random decimal digits"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.used_keys = set()
+
     def get_next(self, csv_row:dict=None):
-        val = self.random_impl.randint(self.first_value, self.last_value)
+        # try to generate random digits that are always different from previously produced random digits
+        for _ in range(10):
+            val = self.random_impl.randint(self.first_value, self.last_value)
+            if val not in self.used_keys:
+                break
+        self.used_keys.add(val)
         return self.val_to_digit(val)
 
 class RandomHexDigitSource(InputExpandingParamSource, RandomSourceMixin):
     """return a different sequence of random hexadecimal digits each"""
     name = "random hexadecimal digits"
     numeric_base = 16
-
     def __init__(self, input_str:str):
         super().__init__(input_str)
         input_str = self.input_str
@@ -150,9 +158,16 @@ class RandomHexDigitSource(InputExpandingParamSource, RandomSourceMixin):
         if (num_digits & 1) != 0:
             raise ValueError(f"hexadecimal value should have even number of digits, not {num_digits}")
         self.num_digits = num_digits
+        self.used_keys = set()
 
     def get_next(self, csv_row:dict=None):
-        val = self.random_impl.randbytes(self.num_digits // 2)
+        # try to generate random bytes that are always different from previously produced random bytes
+        for _ in range(10):
+            val = self.random_impl.randbytes(self.num_digits // 2)
+            if val not in self.used_keys:
+                break
+        self.used_keys.add(val)
+
         return b2h(val)
 
 class IncDigitSource(DecimalRangeSource):
