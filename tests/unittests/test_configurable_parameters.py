@@ -21,6 +21,7 @@ import io
 import sys
 import unittest
 import io
+import json
 from importlib import resources
 from osmocom.utils import hexstr
 from pySim.esim.saip import ProfileElementSequence
@@ -60,11 +61,14 @@ class ConfigurableParameterTest(unittest.TestCase):
                )
 
         class Paramtest:
-            def __init__(self, param_cls, val, expect_val, expect_clean_val=None, iff_present=False):
+            iff_present_default = False
+            def __init__(self, param_cls, val, expect_val, expect_clean_val=None, iff_present=None):
                 self.param_cls = param_cls
                 self.val = val
                 self.expect_clean_val = expect_clean_val
                 self.expect_val = expect_val
+                if iff_present is None:
+                    iff_present = Paramtest.iff_present_default
                 self.iff_present = iff_present
 
         param_tests = [
@@ -277,8 +281,56 @@ class ConfigurableParameterTest(unittest.TestCase):
                       val=3,
                       expect_clean_val=3,
                       expect_val='3'),
+        ]
 
-            ]
+        Paramtest.iff_present_default = True
+
+        sucici = {
+             "prot_scheme_id_list": [
+                 {"priority": 0, "identifier": 2, "key_index": 1},
+                 {"priority": 1, "identifier": 1, "key_index": 2},
+                 ],
+             "hnet_pubkey_list": [
+                 {"hnet_pubkey_identifier": 27,
+                  "hnet_pubkey": "0472da71976234ce833a6907425867b82e074d44ef907dfb4b3e21c1c2256ebcd15a7ded52fcbb097a4ed250e036c7b9c8c7004c4eedc4f068cd7bf8d3f900e3b4"},
+                 {"hnet_pubkey_identifier": 30,
+                  "hnet_pubkey": "5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650"},
+                  ],
+        }
+
+        param_tests.extend([
+            Paramtest(param_cls=p13n.SuciActive, val='SUCI-on',
+                      expect_clean_val=True,
+                      expect_val={'5G-SUCI-active': 'SUCI-on'}),
+            Paramtest(param_cls=p13n.SuciActive, val='SUCI-off',
+                      expect_clean_val=False,
+                      expect_val={'5G-SUCI-active': 'SUCI-off'}),
+
+            Paramtest(param_cls=p13n.SuciInUsim, val='SUCI-in-UE',
+                      expect_clean_val=False,
+                      expect_val={'5G-SUCI-in-USIM': 'SUCI-in-UE'}),
+            Paramtest(param_cls=p13n.SuciInUsim, val='SUCI-in-USIM',
+                      expect_clean_val=True,
+                      expect_val={'5G-SUCI-in-USIM': 'SUCI-in-USIM'}),
+
+            Paramtest(param_cls=p13n.SuciRi, val='123',
+                      expect_clean_val='123',
+                      expect_val={'5G-SUCI-RI': '123'}),
+            Paramtest(param_cls=p13n.SuciRi, val='0',
+                      expect_clean_val='0',
+                      expect_val={'5G-SUCI-RI': '0'}),
+            Paramtest(param_cls=p13n.SuciRi, val='9999',
+                      expect_clean_val='9999',
+                      expect_val={'5G-SUCI-RI': '9999'}),
+
+            Paramtest(param_cls=p13n.SuciCalcInfo,
+                      val=json.dumps(sucici),
+                      expect_clean_val=sucici,
+                      expect_val={'5G-SUCI-CalcInfo': json.dumps(sucici)}),
+
+        ])
+
+        Paramtest.iff_present_default = False
 
         for sdkey_cls in (
             # thin out the number of tests, as a compromise between completeness and test runtime
