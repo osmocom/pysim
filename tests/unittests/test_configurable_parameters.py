@@ -393,6 +393,10 @@ class ConfigurableParameterTest(unittest.TestCase):
                     # on my laptop, deepcopy is about 30% slower than decoding the DER from scratch:
                     # pes = copy.deepcopy(orig_pes)
                     pes = ProfileElementSequence.from_der(der)
+
+                    found = list((t.param_cls.get_value_from_pes(pes) or {}).values())
+                    testlog.append(f"previous value: {found}")
+
                     try:
                         param.apply(pes)
                     except ValueError as e:
