@@ -60,11 +60,12 @@ class ConfigurableParameterTest(unittest.TestCase):
                )
 
         class Paramtest:
-            def __init__(self, param_cls, val, expect_val, expect_clean_val=None):
+            def __init__(self, param_cls, val, expect_val, expect_clean_val=None, iff_present=False):
                 self.param_cls = param_cls
                 self.val = val
                 self.expect_clean_val = expect_clean_val
                 self.expect_val = expect_val
+                self.iff_present = iff_present
 
         param_tests = [
             Paramtest(param_cls=p13n.Imsi, val='123456',
@@ -396,6 +397,13 @@ class ConfigurableParameterTest(unittest.TestCase):
 
                     found = list((t.param_cls.get_value_from_pes(pes) or {}).values())
                     testlog.append(f"previous value: {found}")
+
+                    if t.iff_present and not found:
+                        testlog.append("skipping, param not in template.")
+                        output = "\nskip: " + "\n  ".join(testlog)
+                        outputs.append(output)
+                        print(output)
+                        continue
 
                     try:
                         param.apply(pes)
