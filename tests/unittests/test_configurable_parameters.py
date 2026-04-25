@@ -373,7 +373,8 @@ class ConfigurableParameterTest(unittest.TestCase):
 
                 for t in param_tests:
                     test_idx += 1
-                    logloc = f'{upp_fname} {t.param_cls.__name__}(val={valtypestr(t.val)})'
+                    testlog = []
+                    testlog.append(f'{upp_fname} {t.param_cls.__name__}(val={valtypestr(t.val)})')
 
                     param = None
                     try:
@@ -381,12 +382,12 @@ class ConfigurableParameterTest(unittest.TestCase):
                         param.input_value = t.val
                         param.validate()
                     except ValueError as e:
-                        raise ValueError(f'{logloc}: {e}') from e
+                        raise ValueError(f'{" ".join(testlog)}: {e}') from e
 
                     clean_val = param.value
-                    logloc = f'{logloc} clean_val={valtypestr(clean_val)}'
+                    testlog.append(f'clean_val={valtypestr(clean_val)}')
                     if t.expect_clean_val is not None and t.expect_clean_val != clean_val:
-                        raise ValueError(f'{logloc}: expected'
+                        raise ValueError(f'{" ".join(testlog)}: expected'
                                          f' expect_clean_val={valtypestr(t.expect_clean_val)}')
 
                     # on my laptop, deepcopy is about 30% slower than decoding the DER from scratch:
@@ -395,7 +396,7 @@ class ConfigurableParameterTest(unittest.TestCase):
                     try:
                         param.apply(pes)
                     except ValueError as e:
-                        raise ValueError(f'{logloc} apply_val(clean_val): {e}') from e
+                        raise ValueError(f'{" ".join(testlog)} apply_val(clean_val): {e}') from e
 
                     changed_der = pes.to_der()
 
@@ -413,22 +414,18 @@ class ConfigurableParameterTest(unittest.TestCase):
                     else:
                         read_back_val_type = f'{type(read_back_val).__name__}'
 
-                    logloc = (f'{logloc} read_back_val={valtypestr(read_back_val)}')
+                    testlog.append(f'read_back_val={valtypestr(read_back_val)}')
 
                     if isinstance(read_back_val, dict) and not t.param_cls.get_name() in read_back_val.keys():
-                        raise ValueError(f'{logloc}: expected to find name {t.param_cls.get_name()!r} in read_back_val')
+                        raise ValueError(f'{" ".join(testlog)}: expected to find name {t.param_cls.get_name()!r} in read_back_val')
 
                     expect_val = t.expect_val
                     if not isinstance(expect_val, dict):
                         expect_val = { t.param_cls.get_name(): expect_val }
                     if read_back_val != expect_val:
-                        raise ValueError(f'{logloc}: expected {expect_val=!r}:{type(t.expect_val).__name__}')
+                        raise ValueError(f'{" ".join(testlog)}: expected {expect_val=!r}:{type(t.expect_val).__name__}')
 
-                    ok = logloc.replace(' clean_val', '\n\tclean_val'
-                              ).replace(' read_back_val', '\n\tread_back_val'
-                              ).replace('=', '=\t'
-                              )
-                    output = f'\nok: {ok}'
+                    output = "\nok: " + "\n  ".join(testlog)
                     outputs.append(output)
                     print(output)
 
