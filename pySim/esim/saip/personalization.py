@@ -292,7 +292,9 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
            May be overridden by subclasses.
            This default implementation returns the maximum allowed value length -- a good fit for most subclasses.
            '''
-        return cls.get_len_range()[1] or 16
+        l = cls.get_len_range()[1] or 16
+        l = min(10*80, l)
+        return l
 
     @classmethod
     def is_super_of(cls, other_class):
