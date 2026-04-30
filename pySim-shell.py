@@ -69,8 +69,8 @@ from pySim.ts_102_222 import Ts102222Commands
 from pySim.gsm_r import DF_EIRENE
 from pySim.cat import ProactiveCommand
 
-from pySim.card_key_provider import CardKeyProviderCsv, CardKeyProviderPgsql
-from pySim.card_key_provider import card_key_provider_register, card_key_provider_get_field, card_key_provider_get
+from pySim.card_key_provider import argparse_add_card_key_provider_args, init_card_key_provider
+from pySim.card_key_provider import card_key_provider_get_field, card_key_provider_get
 
 from pySim.app import init_card
 
@@ -1143,18 +1143,6 @@ global_group.add_argument("--skip-card-init", help="Skip all card/profile initia
 global_group.add_argument("--verbose", help="Enable verbose logging",
                           action='store_true', default=False)
 
-card_key_group = option_parser.add_argument_group('Card Key Provider Options')
-card_key_group.add_argument('--csv', metavar='FILE',
-                            default="~/.osmocom/pysim/card_data.csv",
-                            help='Read card data from CSV file')
-card_key_group.add_argument('--pgsql', metavar='FILE',
-                            default="~/.osmocom/pysim/card_data_pgsql.cfg",
-                            help='Read card data from PostgreSQL database (config file)')
-card_key_group.add_argument('--csv-column-key', metavar='FIELD:AES_KEY_HEX', default=[], action='append',
-                            help=argparse.SUPPRESS, dest='column_key')
-card_key_group.add_argument('--column-key', metavar='FIELD:AES_KEY_HEX', default=[], action='append',
-                            help='per-column AES transport key', dest='column_key')
-
 adm_group = global_group.add_mutually_exclusive_group()
 adm_group.add_argument('-a', '--pin-adm', metavar='PIN_ADM1', dest='pin_adm', default=None,
                        help='ADM PIN used for provisioning (overwrites default)')
@@ -1167,6 +1155,7 @@ option_parser.add_argument("command", nargs='?',
                            help="A pySim-shell command that would optionally be executed at startup")
 option_parser.add_argument('command_args', nargs=argparse.REMAINDER,
                            help="Optional Arguments for command")
+argparse_add_card_key_provider_args(option_parser)
 
 if __name__ == '__main__':
     startup_errors = False
@@ -1175,16 +1164,8 @@ if __name__ == '__main__':
     # Ensure that we are able to print formatted warnings from the beginning.
     PySimLogger.setup(print, {logging.WARN: YELLOW}, opts.verbose)
 
-    # Register csv-file as card data provider, either from specified CSV
-    # or from CSV file in home directory
-    column_keys = {}
-    for par in opts.column_key:
-        name, key = par.split(':')
-        column_keys[name] = key
-    if os.path.isfile(os.path.expanduser(opts.csv)):
-        card_key_provider_register(CardKeyProviderCsv(os.path.expanduser(opts.csv), column_keys))
-    if os.path.isfile(os.path.expanduser(opts.pgsql)):
-        card_key_provider_register(CardKeyProviderPgsql(os.path.expanduser(opts.pgsql), column_keys))
+    # Init card key provider for automatic card key retrieval
+    init_card_key_provider(opts)
 
     # Init card reader driver
     sl = init_reader(opts, proactive_handler = Proact())

@@ -33,10 +33,12 @@ from Cryptodome.Cipher import AES
 from osmocom.utils import h2b, b2h
 from pySim.log import PySimLogger
 
+import os
 import abc
 import csv
 import logging
 import yaml
+import argparse
 
 log = PySimLogger.get(__name__)
 
@@ -148,6 +150,15 @@ class CardKeyProvider(abc.ABC):
                 fond None shall be returned.
         """
 
+    @staticmethod
+    def argparse_add_args(arg_parser: argparse.ArgumentParser):
+        """
+        Add the commandline arguments relevant for this card key provider.
+
+        Args:
+                arg_parser : argument parser group
+        """
+
     def __str__(self):
         return type(self).__name__
 
@@ -187,6 +198,12 @@ class CardKeyProviderCsv(CardKeyProvider):
         if return_dict == {}:
             return None
         return return_dict
+
+    @staticmethod
+    def argparse_add_args(arg_parser: argparse.ArgumentParser):
+        arg_parser.add_argument('--csv', metavar='FILE',
+                                default="~/.osmocom/pysim/card_data.csv",
+                                help='Read card data from CSV file')
 
 class CardKeyProviderPgsql(CardKeyProvider):
     """Card key provider implementation that allows to query against a specified PostgreSQL database table."""
@@ -252,6 +269,11 @@ class CardKeyProviderPgsql(CardKeyProvider):
             result[k] = self.crypt.decrypt_field(k, result.get(k))
         return result
 
+    @staticmethod
+    def argparse_add_args(arg_parser: argparse.ArgumentParser):
+        arg_parser.add_argument('--pgsql', metavar='FILE',
+                                default="~/.osmocom/pysim/card_data_pgsql.cfg",
+                                help='Read card data from PostgreSQL database (config file)')
 
 def card_key_provider_register(provider: CardKeyProvider, provider_list=card_key_providers):
     """Register a new card key provider.
@@ -303,3 +325,25 @@ def card_key_provider_get_field(field: str, key: str, value: str, provider_list=
     fields = [field]
     result = card_key_provider_get(fields, key, value, card_key_providers)
     return result.get(field.upper())
+
+def argparse_add_card_key_provider_args(arg_parser: argparse.ArgumentParser):
+    """Add card key provider commandline options to the given argument parser"""
+    card_key_group = arg_parser.add_argument_group('Card Key Provider Options')
+    CardKeyProviderCsv.argparse_add_args(card_key_group)
+    CardKeyProviderPgsql.argparse_add_args(card_key_group)
+    card_key_group.add_argument('--column-key', metavar='FIELD:AES_KEY_HEX', default=[], action='append',
+                                help='per-column AES transport key', dest='column_key')
+    # Depprecated argument, replaced by --column-key (see above)
+    card_key_group.add_argument('--csv-column-key', metavar='FIELD:AES_KEY_HEX', default=[], action='append',
+                                help=argparse.SUPPRESS, dest='column_key')
+
+def init_card_key_provider(opts: argparse.Namespace):
+    """Initialize card key provider depending on the user provided commandline options"""
+    column_keys = {}
+    for par in opts.column_key:
+        name, key = par.split(':')
+        column_keys[name] = key
+    if os.path.isfile(os.path.expanduser(opts.csv)):
+        card_key_provider_register(CardKeyProviderCsv(os.path.expanduser(opts.csv), column_keys))
+    if os.path.isfile(os.path.expanduser(opts.pgsql)):
+        card_key_provider_register(CardKeyProviderPgsql(os.path.expanduser(opts.pgsql), column_keys))
