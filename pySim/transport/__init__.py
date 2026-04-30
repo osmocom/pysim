@@ -373,7 +373,6 @@ def argparse_add_reader_args(arg_parser: argparse.ArgumentParser):
 
     return arg_parser
 
-
 def init_reader(opts, **kwargs) -> LinkBase:
     """
     Init card reader driver

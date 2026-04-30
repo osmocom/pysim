@@ -264,7 +264,6 @@ def card_key_provider_register(provider: CardKeyProvider, provider_list=card_key
         raise ValueError("provider is not a card data provider")
     provider_list.append(provider)
 
-
 def card_key_provider_get(fields: list[str], key: str, value: str, provider_list=card_key_providers) -> Dict[str, str]:
     """Query all registered card data providers for card-individual [key] data.
 
@@ -288,7 +287,6 @@ def card_key_provider_get(fields: list[str], key: str, value: str, provider_list
             return result
 
     raise ValueError("Unable to find card key data (key=%s, value=%s, fields=%s)" % (key, value, str(fields)))
-
 
 def card_key_provider_get_field(field: str, key: str, value: str, provider_list=card_key_providers) -> str:
     """Query all registered card data providers for a single field.

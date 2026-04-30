@@ -1121,14 +1121,11 @@ class Iso7816Commands(CommandSet):
         fcp_dec = self._cmd.lchan.status()
         self._cmd.poutput_json(fcp_dec)
 
-
 class Proact(ProactiveHandler):
     def receive_fetch(self, pcmd: ProactiveCommand):
         # print its parsed representation
         print(pcmd.decoded)
         # TODO: implement the basics, such as SMS Sending, ...
-
-
 
 option_parser = argparse.ArgumentParser(description='interactive SIM card shell',
                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
