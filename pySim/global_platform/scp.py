@@ -27,9 +27,9 @@ from osmocom.utils import b2h
 from osmocom.tlv import bertlv_parse_len, bertlv_encode_len
 from pySim.utils import parse_command_apdu
 from pySim.secure_channel import SecureChannel
+from pySim.log import PySimLogger
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+log = PySimLogger.get(__name__)
 
 def scp02_key_derivation(constant: bytes, counter: int, base_key: bytes) -> bytes:
     assert len(constant) == 2
@@ -75,7 +75,7 @@ class Scp02SessionKeys:
             h = e.encrypt(strxor(h, bytes(padded_data[8*i:8*(i+1)])))
         h = d.decrypt(h)
         h = e.encrypt(h)
-        logger.debug("mac_1des(%s,icv=%s) -> %s", b2h(data), b2h(icv), b2h(h))
+        log.debug("mac_1des(%s,icv=%s) -> %s", b2h(data), b2h(icv), b2h(h))
         if self.des_icv_enc:
             self.icv = self.des_icv_enc.encrypt(h)
         else:
@@ -89,7 +89,7 @@ class Scp02SessionKeys:
         h = b'\x00' * 8
         for i in range(q):
             h = e.encrypt(strxor(h, bytes(padded_data[8*i:8*(i+1)])))
-        logger.debug("mac_3des(%s) -> %s", b2h(data), b2h(h))
+        log.debug("mac_3des(%s) -> %s", b2h(data), b2h(h))
         return h
 
     def __init__(self, counter: int, card_keys: 'GpCardKeyset', icv_encrypt=True):
@@ -276,10 +276,10 @@ class SCP02(SCP):
         return cipher.decrypt(ciphertext)
 
     def _compute_cryptograms(self, card_challenge: bytes, host_challenge: bytes):
-        logger.debug("host_challenge(%s), card_challenge(%s)", b2h(host_challenge), b2h(card_challenge))
+        log.debug("host_challenge(%s), card_challenge(%s)", b2h(host_challenge), b2h(card_challenge))
         self.host_cryptogram = self.sk.calc_mac_3des(self.sk.counter.to_bytes(2, 'big') + card_challenge + host_challenge)
         self.card_cryptogram = self.sk.calc_mac_3des(self.host_challenge + self.sk.counter.to_bytes(2, 'big') + card_challenge)
-        logger.debug("host_cryptogram(%s), card_cryptogram(%s)", b2h(self.host_cryptogram), b2h(self.card_cryptogram))
+        log.debug("host_cryptogram(%s), card_cryptogram(%s)", b2h(self.host_cryptogram), b2h(self.card_cryptogram))
 
     def gen_init_update_apdu(self, host_challenge: bytes = b'\x00'*8) -> bytes:
         """Generate INITIALIZE UPDATE APDU."""
@@ -291,7 +291,7 @@ class SCP02(SCP):
         resp = self.constr_iur.parse(resp_bin)
         self.card_challenge = resp['card_challenge']
         self.sk = Scp02SessionKeys(resp['seq_counter'], self.card_keys)
-        logger.debug(self.sk)
+        log.debug(self.sk)
         self._compute_cryptograms(self.card_challenge, self.host_challenge)
         if self.card_cryptogram != resp['card_cryptogram']:
             raise ValueError("card cryptogram doesn't match")
@@ -311,7 +311,7 @@ class SCP02(SCP):
 
     def _wrap_cmd_apdu(self, apdu: bytes, *args, **kwargs) -> bytes:
         """Wrap Command APDU for SCP02: calculate MAC and encrypt."""
-        logger.debug("wrap_cmd_apdu(%s)", b2h(apdu))
+        log.debug("wrap_cmd_apdu(%s)", b2h(apdu))
 
         if not self.do_cmac:
             return apdu
@@ -378,7 +378,7 @@ def scp03_key_derivation(constant: bytes, context: bytes, base_key: bytes, l: Op
     if l is None:
         l = len(base_key) * 8
 
-    logger.debug("scp03_kdf(constant=%s, context=%s, base_key=%s, l=%u)", b2h(constant), b2h(context), b2h(base_key), l)
+    log.debug("scp03_kdf(constant=%s, context=%s, base_key=%s, l=%u)", b2h(constant), b2h(context), b2h(base_key), l)
     output_len = l // 8
     # SCP03 Section 4.1.5 defines a different parameter order than NIST SP 800-108, so we cannot use the
     # existing Cryptodome.Protocol.KDF.SP800_108_Counter function :(
@@ -451,7 +451,7 @@ class Scp03SessionKeys:
         # This block SHALL be encrypted with S-ENC to produce the ICV for command encryption.
         cipher = AES.new(self.s_enc, AES.MODE_CBC, iv)
         icv = cipher.encrypt(data)
-        logger.debug("_get_icv(data=%s, is_resp=%s) -> icv=%s", b2h(data), is_response, b2h(icv))
+        log.debug("_get_icv(data=%s, is_resp=%s) -> icv=%s", b2h(data), is_response, b2h(icv))
         return icv
 
     # TODO: Resolve duplication with pySim.esim.bsp.BspAlgoCryptAES128 which provides pad80-wrapping
@@ -489,12 +489,12 @@ class SCP03(SCP):
         return cipher.decrypt(ciphertext)
 
     def _compute_cryptograms(self):
-        logger.debug("host_challenge(%s), card_challenge(%s)", b2h(self.host_challenge), b2h(self.card_challenge))
+        log.debug("host_challenge(%s), card_challenge(%s)", b2h(self.host_challenge), b2h(self.card_challenge))
         # Card + Host Authentication Cryptogram: Section 6.2.2.2 + 6.2.2.3
         context = self.host_challenge + self.card_challenge
         self.card_cryptogram = scp03_key_derivation(self.sk.DERIV_CONST_AUTH_CGRAM_CARD, context, self.sk.s_mac, l=self.s_mode*8)
         self.host_cryptogram = scp03_key_derivation(self.sk.DERIV_CONST_AUTH_CGRAM_HOST, context, self.sk.s_mac, l=self.s_mode*8)
-        logger.debug("host_cryptogram(%s), card_cryptogram(%s)", b2h(self.host_cryptogram), b2h(self.card_cryptogram))
+        log.debug("host_cryptogram(%s), card_cryptogram(%s)", b2h(self.host_cryptogram), b2h(self.card_cryptogram))
 
     def gen_init_update_apdu(self, host_challenge: Optional[bytes] = None) -> bytes:
         """Generate INITIALIZE UPDATE APDU."""
@@ -514,7 +514,7 @@ class SCP03(SCP):
         self.i_param = resp['i_param']
         # derive session keys and compute cryptograms
         self.sk = Scp03SessionKeys(self.card_keys, self.host_challenge, self.card_challenge)
-        logger.debug(self.sk)
+        log.debug(self.sk)
         self._compute_cryptograms()
         # verify computed cryptogram matches received cryptogram
         if self.card_cryptogram != resp['card_cryptogram']:
@@ -529,7 +529,7 @@ class SCP03(SCP):
 
     def _wrap_cmd_apdu(self, apdu: bytes, skip_cenc: bool = False) -> bytes:
         """Wrap Command APDU for SCP03: calculate MAC and encrypt."""
-        logger.debug("wrap_cmd_apdu(%s)", b2h(apdu))
+        log.debug("wrap_cmd_apdu(%s)", b2h(apdu))
 
         if not self.do_cmac:
             return apdu
@@ -584,7 +584,7 @@ class SCP03(SCP):
         # status word: in this case only the status word shall be returned in the response. All status words
         # except '9000' and warning status words (i.e. '62xx' and '63xx') shall be interpreted as error status
         # words.
-        logger.debug("unwrap_rsp_apdu(sw=%s, rsp_apdu=%s)", sw, rsp_apdu)
+        log.debug("unwrap_rsp_apdu(sw=%s, rsp_apdu=%s)", sw, rsp_apdu)
         if not self.do_rmac:
             assert not self.do_renc
             return rsp_apdu
@@ -600,9 +600,9 @@ class SCP03(SCP):
         if self.do_renc:
             # decrypt response data
             decrypted = self.sk._decrypt(response_data)
-            logger.debug("decrypted: %s", b2h(decrypted))
+            log.debug("decrypted: %s", b2h(decrypted))
             # remove padding
             response_data = unpad80(decrypted)
-            logger.debug("response_data: %s", b2h(response_data))
+            log.debug("response_data: %s", b2h(response_data))
 
         return response_data
