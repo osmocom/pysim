@@ -26,6 +26,9 @@ from pySim.cdma_ruim import CardProfileRUIM
 from pySim.ts_102_221 import CardProfileUICC
 from pySim.utils import all_subclasses
 from pySim.exceptions import SwMatchError
+from pySim.log import PySimLogger
+
+log = PySimLogger.get(__name__)
 
 # we need to import this module so that the SysmocomSJA2 sub-class of
 # CardModel is created, which will add the ATR-based matching and
@@ -54,7 +57,7 @@ def init_card(sl: LinkBase, skip_card_init: bool = False) -> Tuple[RuntimeState,
 
     # Wait up to three seconds for a card in reader and try to detect
     # the card type.
-    print("Waiting for card...")
+    log.info("Waiting for card...")
     sl.wait_for_card(3)
 
     # The user may opt to skip all card initialization. In this case only the
@@ -66,7 +69,7 @@ def init_card(sl: LinkBase, skip_card_init: bool = False) -> Tuple[RuntimeState,
     generic_card = False
     card = card_detect(scc)
     if card is None:
-        print("Warning: Could not detect card type - assuming a generic card type...")
+        log.warning("Could not detect card type - assuming a generic card type...")
         card = SimCardBase(scc)
         generic_card = True
 
@@ -76,7 +79,7 @@ def init_card(sl: LinkBase, skip_card_init: bool = False) -> Tuple[RuntimeState,
         # just means that pySim was unable to recognize the card profile. This
         # may happen in particular with unprovisioned cards that do not have
         # any files on them yet.
-        print("Unsupported card type!")
+        log.warning("Unsupported card type!")
         return None, card
 
     # ETSI TS 102 221, Table 9.3 specifies a default for the PIN key
@@ -87,7 +90,7 @@ def init_card(sl: LinkBase, skip_card_init: bool = False) -> Tuple[RuntimeState,
     if generic_card and isinstance(profile, CardProfileUICC):
         card._adm_chv_num = 0x0A
 
-    print("Info: Card is of type: %s" % str(profile))
+    log.info("Card is of type: %s", str(profile))
 
     # FIXME: this shouldn't really be here but somewhere else/more generic.
     # We cannot do it within pySim/profile.py as that would create circular
