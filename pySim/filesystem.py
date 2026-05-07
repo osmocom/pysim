@@ -44,6 +44,7 @@ from pySim.utils import sw_match, decomposeATR
 from pySim.jsonpath import js_path_modify
 from pySim.commands import SimCardCommands
 from pySim.exceptions import SwMatchError
+from pySim.log import PySimLogger
 
 # int: a single service is associated with this file
 # list: any of the listed services requires this file
@@ -51,6 +52,8 @@ from pySim.exceptions import SwMatchError
 CardFileService = Union[int, List[int], Tuple[int, ...]]
 
 Size = Tuple[int, Optional[int]]
+
+log = PySimLogger.get(__name__)
 
 class CardFile:
     """Base class for all objects in the smart card filesystem.
@@ -1609,14 +1612,14 @@ class CardModel(abc.ABC):
         card_atr = scc.get_atr()
         for atr in cls._atrs:
             if atr == card_atr:
-                print("Detected CardModel:", cls.__name__)
+                log.info("Detected CardModel: %s", cls.__name__)
                 return True
         # if nothing found try to just compare the Historical Bytes of the ATR
         card_atr_hb = decomposeATR(card_atr)['hb']
         for atr in cls._atrs:
             atr_hb = decomposeATR(atr)['hb']
             if atr_hb == card_atr_hb:
-                print("Detected CardModel:", cls.__name__)
+                log.info("Detected CardModel: %s", cls.__name__)
                 return True
         return False
 
