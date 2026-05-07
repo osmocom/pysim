@@ -140,6 +140,23 @@ class CardKeyFieldCryptor:
         arg_parser.add_argument('--csv-column-key', metavar='FIELD:AES_KEY_HEX', default=[], action='append',
                                 help=argparse.SUPPRESS, dest='column_key')
 
+    @staticmethod
+    def transport_keys_from_opts(opts: argparse.Namespace) -> dict:
+        """
+        Transport keys are passed via the commandline using the '--column-key' option. Each column requires a
+        dedicated transport key. This method can be used to extract the column keys parameters from the commandline
+        options into a dict that can be directly passed to the construtor with the transport_keys argument.
+
+        Args:
+                opts: parsed commandline options (Namespace)
+        """
+
+        transport_keys = {}
+        for par in opts.column_key:
+            name, key = par.split(':')
+            transport_keys[name] = key
+        return transport_keys
+
 class CardKeyProvider(abc.ABC):
     """Base class, not containing any concrete implementation."""
 
@@ -345,11 +362,8 @@ def card_key_provider_argparse_add_args(arg_parser: argparse.ArgumentParser):
 
 def card_key_provider_init(opts: argparse.Namespace):
     """Initialize card key provider depending on the user provided commandline options"""
-    column_keys = {}
-    for par in opts.column_key:
-        name, key = par.split(':')
-        column_keys[name] = key
-    card_key_field_cryptor = CardKeyFieldCryptor(column_keys)
+    transport_keys = CardKeyFieldCryptor.transport_keys_from_opts(opts)
+    card_key_field_cryptor = CardKeyFieldCryptor(transport_keys)
     if os.path.isfile(os.path.expanduser(opts.csv)):
         card_key_provider_register(CardKeyProviderCsv(os.path.expanduser(opts.csv), card_key_field_cryptor))
     if os.path.isfile(os.path.expanduser(opts.pgsql)):
