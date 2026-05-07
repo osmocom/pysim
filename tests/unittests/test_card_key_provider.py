@@ -20,7 +20,8 @@ class TestCardKeyProviderCsv(unittest.TestCase):
                        "KIK3" : "00010204040506070809488B0C0D0E0F"}
 
         csv_file_path = os.path.dirname(os.path.abspath(__file__)) + "/test_card_key_provider.csv"
-        card_key_provider_register(CardKeyProviderCsv(csv_file_path, column_keys))
+        card_key_field_cryptor = CardKeyFieldCryptor(column_keys)
+        card_key_provider_register(CardKeyProviderCsv(csv_file_path, card_key_field_cryptor))
         super().__init__(*args, **kwargs)
 
     def test_card_key_provider_get(self):

@@ -173,18 +173,18 @@ class CardKeyProvider(abc.ABC):
 class CardKeyProviderCsv(CardKeyProvider):
     """Card key provider implementation that allows to query against a specified CSV file."""
 
-    def __init__(self, csv_filename: str, transport_keys: dict):
+    def __init__(self, csv_filename: str, field_cryptor: CardKeyFieldCryptor):
         """
         Args:
                 csv_filename : file name (path) of CSV file containing card-individual key/data
-                transport_keys : (see class CardKeyFieldCryptor)
+                field_cryptor : (see class CardKeyFieldCryptor)
         """
         log.info("Using CSV file as card key data source: %s" % csv_filename)
         self.csv_file = open(csv_filename, 'r')
         if not self.csv_file:
             raise RuntimeError("Could not open CSV file '%s'" % csv_filename)
         self.csv_filename = csv_filename
-        self.crypt = CardKeyFieldCryptor(transport_keys)
+        self.crypt = field_cryptor
 
     def get(self, fields: List[str], key: str, value: str) -> Dict[str, str]:
         self.csv_file.seek(0)
@@ -216,11 +216,11 @@ class CardKeyProviderCsv(CardKeyProvider):
 class CardKeyProviderPgsql(CardKeyProvider):
     """Card key provider implementation that allows to query against a specified PostgreSQL database table."""
 
-    def __init__(self, config_filename: str, transport_keys: dict):
+    def __init__(self, config_filename: str, field_cryptor: CardKeyFieldCryptor):
         """
         Args:
                 config_filename : file name (path) of CSV file containing card-individual key/data
-                transport_keys : (see class CardKeyFieldCryptor)
+                field_cryptor : (see class CardKeyFieldCryptor)
         """
         import psycopg2
         log.info("Using SQL database as card key data source: %s" % config_filename)
@@ -237,7 +237,7 @@ class CardKeyProviderPgsql(CardKeyProvider):
                                          host=config.get('host'))
             self.tables = config.get('table_names')
             log.info("Card key database tables: %s" % str(self.tables))
-            self.crypt = CardKeyFieldCryptor(transport_keys)
+            self.crypt = field_cryptor
 
     def get(self, fields: List[str], key: str, value: str) -> Dict[str, str]:
         import psycopg2
@@ -349,7 +349,8 @@ def card_key_provider_init(opts: argparse.Namespace):
     for par in opts.column_key:
         name, key = par.split(':')
         column_keys[name] = key
+    card_key_field_cryptor = CardKeyFieldCryptor(column_keys)
     if os.path.isfile(os.path.expanduser(opts.csv)):
-        card_key_provider_register(CardKeyProviderCsv(os.path.expanduser(opts.csv), column_keys))
+        card_key_provider_register(CardKeyProviderCsv(os.path.expanduser(opts.csv), card_key_field_cryptor))
     if os.path.isfile(os.path.expanduser(opts.pgsql)):
-        card_key_provider_register(CardKeyProviderPgsql(os.path.expanduser(opts.pgsql), column_keys))
+        card_key_provider_register(CardKeyProviderPgsql(os.path.expanduser(opts.pgsql), card_key_field_cryptor))
