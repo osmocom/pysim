@@ -325,11 +325,14 @@ class BatchAudit(list):
 
         return batch_audit
 
-    def to_csv_rows(self, headers=True, sort_key=None):
+    def to_csv_rows(self, headers=True, sort_key=None, column_blacklist=None):
         '''generator that yields all audits' values as rows, useful feed to a csv.writer.'''
         columns = set()
         for audit in self:
             columns.update(audit.keys())
+
+        if column_blacklist:
+            columns.difference_update(set(column_blacklist))
 
         columns = tuple(sorted(columns, key=sort_key))
 
