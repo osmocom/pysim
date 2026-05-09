@@ -669,24 +669,12 @@ class SmspTpScAddr(ConfigurableParameter):
             yield { cls.name: cls.tuple_to_str((international, digits)) }
 
 
-class MncLen(ConfigurableParameter):
+class MncLen(EnumParam):
     """MNC length. Must be either 2 or 3. Sets only the MNC length field in EF-AD (Administrative Data)."""
     name = 'MNC-LEN'
-    allow_chars = '23'
-    strip_chars = ' \t\r\n'
-    numeric_base = 10
-    max_len = 1
-    min_len = 1
-    example_input = '2'
+    value_map = { '2': 2, '3': 3 }
     default_source = param_source.ConstantSource
-
-    @classmethod
-    def validate_val(cls, val):
-        val = super().validate_val(val)
-        val = int(val)
-        if val not in (2, 3):
-            raise ValueError(f"MNC-LEN must be either 2 or 3, not {val!r}")
-        return val
+    example_input = '2'
 
     @classmethod
     def apply_val(cls, pes: ProfileElementSequence, val):
@@ -732,7 +720,7 @@ class MncLen(ConfigurableParameter):
             if mnc_len is None:
                 continue
 
-            yield { cls.name: str(mnc_len) }
+            yield { cls.name: cls.map_val_to_name(int(mnc_len)) }
 
 
 class SdKey(BinaryParam):
