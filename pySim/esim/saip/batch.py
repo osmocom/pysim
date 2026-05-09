@@ -268,6 +268,34 @@ class BatchAudit(list):
 
     Usage example:
 
+        MY_COLUMN_ORDER = (
+            'ICCID',
+            'IMSI',
+            'K',
+            'OPc',
+            'PIN1',
+            'PIN2',
+            'PUK1',
+            'PUK2',
+            'ADM1',
+            'ADM2',
+            )
+
+        MY_COLUMN_BLACKLIST = (
+            'MNC-LEN',
+            '5G-SUCI-CalcInfo',
+            '5G-SUCI-active',
+            '5G-SUCI-in-USIM',
+            )
+
+        def my_sort_key(column):
+            try:
+                i = MY_COLUMN_ORDER.index(column)
+            except ValueError:
+                # place unlisted items last
+                i = len(MY_COLUMN_ORDER)
+            return (i, column)
+
         ba = BatchAudit(params=(personalization.Iccid, ))
         for upp_der in upps:
             ba.add_audit(upp_der)
@@ -275,7 +303,7 @@ class BatchAudit(list):
 
         with open('output.csv', 'wb') as csv_data:
             csv_str = io.TextIOWrapper(csv_data, 'utf-8', newline='')
-            csv.writer(csv_str).writerows( ba.to_csv_rows() )
+            csv.writer(csv_str).writerows( ba.to_csv_rows(sort_key=my_sort_key, column_blacklist=MY_COLUMN_BLACKLIST) )
             csv_str.flush()
 
     BatchAudit itself is a list, callers may use the standard python list API to access the UppAudit instances.
@@ -324,11 +352,26 @@ class BatchAudit(list):
 
         return batch_audit
 
-    def to_csv_rows(self, headers=True, sort_key=None):
-        """generator that yields all audits' values as rows, useful feed to a csv.writer."""
+    def to_csv_rows(self, headers=True, sort_key=None, column_blacklist=None):
+        """generator that yields all audits' values as rows, useful feed to a csv.writer.
+
+           headers: when True, add a first row listing the parameter names, as column headers.
+
+           sort_key: key function to determine the ordering of columns, so that it can be used with
+           sorted(key=sort_key). sort_key(column_name) should return a comparable value. column_name is a str as
+           returned by a ConfigurableParameter.get_name() implementation.
+           For a usage example, see the doc for class BatchAudit.
+
+           column_blacklist: parameters to exclude from the CSV export. Pass an iterable of str, each str reflecting a
+           column name as returned by a ConfigurableParameter.get_name() implementation.
+           column_blacklist looks just like MY_COLUMN_ORDER in the usage example found in the doc for class BatchAudit.
+           """
         columns = set()
         for audit in self:
             columns.update(audit.keys())
+
+        if column_blacklist:
+            columns.difference_update(set(column_blacklist))
 
         columns = tuple(sorted(columns, key=sort_key))
 
