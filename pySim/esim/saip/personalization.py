@@ -1184,3 +1184,4 @@ class TuakNumberOfKeccak(IntegerParam, AlgoConfig):
     max_val = 255
     example_input = '1'
     default_source = param_source.ConstantSource
+    numeric_base = None  # indicate that this won't need random number sources
