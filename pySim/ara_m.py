@@ -334,10 +334,10 @@ class ADF_ARAM(CardADF):
         apdu_grp.add_argument(
             '--apdu-filter', help='APDU filter: multiple groups of 8 hex bytes (4 byte CLA/INS/P1/P2 followed by 4 byte mask)')
         nfc_grp = store_ref_ar_do_parse.add_mutually_exclusive_group()
-        nfc_grp.add_argument('--nfc-always', action='store_true',
-                             help='NFC event access is allowed')
         nfc_grp.add_argument('--nfc-never', action='store_true',
                              help='NFC event access is not allowed')
+        nfc_grp.add_argument('--nfc-always', action='store_true',
+                             help='NFC event access is allowed')
         store_ref_ar_do_parse.add_argument(
             '--android-permissions', help='Android UICC Carrier Privilege Permissions (8 hex bytes)')
 
