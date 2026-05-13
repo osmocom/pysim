@@ -300,6 +300,51 @@ class ADF_ARAM(CardADF):
                                'major': v_major, 'minor': v_minor, 'patch': v_patch}}])
         return ADF_ARAM.xceive_apdu_tlv(scc, '80cadf21', cmd_do, ResponseAramConfigDO)
 
+    @staticmethod
+    def store_ref_ar_do(scc, aid:Hexstr, aid_empty:bool, device_app_id:Hexstr, pkg_ref:str,
+                        apdu_filter:Hexstr, apdu_never:bool, apdu_always:bool,
+                        nfc_always:bool, nfc_never:bool, android_permissions:Hexstr):
+        # REF
+        ref_do_content = []
+        if aid is not None:
+            ref_do_content += [{'aid_ref_do': aid}]
+        elif aid_empty:
+            ref_do_content += [{'aid_ref_empty_do': None}]
+        ref_do_content += [{'dev_app_id_ref_do': device_app_id}]
+        if pkg_ref:
+            ref_do_content += [{'pkg_ref_do': {'package_name_string': pkg_ref}}]
+        # AR
+        ar_do_content = []
+        if apdu_never:
+            ar_do_content += [{'apdu_ar_do': {'generic_access_rule': 'never'}}]
+        elif apdu_always:
+            ar_do_content += [{'apdu_ar_do': {'generic_access_rule': 'always'}}]
+        elif apdu_filter:
+            if len(apdu_filter) % 16:
+                raise ValueError(f'Invalid non-modulo-16 length of APDU filter: {len(apdu_filter)}')
+            offset = 0
+            apdu_filter_list = []
+            while offset < len(apdu_filter):
+                apdu_filter_list += [{'header': apdu_filter[offset:offset+8],
+                                      'mask': apdu_filter[offset+8:offset+16]}]
+                offset += 16 # Move offset to the beginning of the next apdu_filter object
+            ar_do_content += [{'apdu_ar_do': {'apdu_filter': apdu_filter_list}}]
+        if nfc_never:
+            ar_do_content += [{'nfc_ar_do': {'nfc_event_access_rule': 'never'}}]
+        elif nfc_always:
+            ar_do_content += [{'nfc_ar_do': {'nfc_event_access_rule': 'always'}}]
+        if android_permissions:
+            ar_do_content += [{'perm_ar_do': {'permissions': android_permissions}}]
+        d = [{'ref_ar_do': [{'ref_do': ref_do_content}, {'ar_do': ar_do_content}]}]
+        csrado = CommandStoreRefArDO()
+        csrado.from_val_dict(d)
+        return ADF_ARAM.store_data(scc, csrado)
+
+    @staticmethod
+    def aram_delete_all(scc):
+        deldo = CommandDelete()
+        return ADF_ARAM.store_data(scc, deldo)
+
     @with_default_category('Application-Specific Commands')
     class AddlShellCommands(CommandSet):
         def do_aram_get_all(self, _opts):
@@ -344,48 +389,15 @@ class ADF_ARAM(CardADF):
         @cmd2.with_argparser(store_ref_ar_do_parse)
         def do_aram_store_ref_ar_do(self, opts):
             """Perform STORE DATA [Command-Store-REF-AR-DO] to store a (new) access rule."""
-            # REF
-            ref_do_content = []
-            if opts.aid is not None:
-                ref_do_content += [{'aid_ref_do': opts.aid}]
-            elif opts.aid_empty:
-                ref_do_content += [{'aid_ref_empty_do': None}]
-            ref_do_content += [{'dev_app_id_ref_do': opts.device_app_id}]
-            if opts.pkg_ref:
-                ref_do_content += [{'pkg_ref_do': {'package_name_string': opts.pkg_ref}}]
-            # AR
-            ar_do_content = []
-            if opts.apdu_never:
-                ar_do_content += [{'apdu_ar_do': {'generic_access_rule': 'never'}}]
-            elif opts.apdu_always:
-                ar_do_content += [{'apdu_ar_do': {'generic_access_rule': 'always'}}]
-            elif opts.apdu_filter:
-                if len(opts.apdu_filter) % 16:
-                    raise ValueError(f'Invalid non-modulo-16 length of APDU filter: {len(opts.apdu_filter)}')
-                offset = 0
-                apdu_filter = []
-                while offset < len(opts.apdu_filter):
-                    apdu_filter += [{'header': opts.apdu_filter[offset:offset+8],
-                                     'mask': opts.apdu_filter[offset+8:offset+16]}]
-                    offset += 16 # Move offset to the beginning of the next apdu_filter object
-                ar_do_content += [{'apdu_ar_do': {'apdu_filter': apdu_filter}}]
-            if opts.nfc_always:
-                ar_do_content += [{'nfc_ar_do': {'nfc_event_access_rule': 'always'}}]
-            elif opts.nfc_never:
-                ar_do_content += [{'nfc_ar_do': {'nfc_event_access_rule': 'never'}}]
-            if opts.android_permissions:
-                ar_do_content += [{'perm_ar_do': {'permissions': opts.android_permissions}}]
-            d = [{'ref_ar_do': [{'ref_do': ref_do_content}, {'ar_do': ar_do_content}]}]
-            csrado = CommandStoreRefArDO()
-            csrado.from_val_dict(d)
-            res_do = ADF_ARAM.store_data(self._cmd.lchan.scc, csrado)
+            res_do = ADF_ARAM.store_ref_ar_do(self._cmd.lchan.scc, opts.aid, opts.aid_empty, opts.device_app_id,
+                                              opts.pkg_ref, opts.apdu_filter, opts.apdu_never, opts.apdu_always,
+                                              opts.nfc_always, opts.nfc_never, opts.android_permissions)
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
 
         def do_aram_delete_all(self, _opts):
             """Perform STORE DATA [Command-Delete[all]] to delete all access rules."""
-            deldo = CommandDelete()
-            res_do = ADF_ARAM.store_data(self._cmd.lchan.scc, deldo)
+            res_do = ADF_ARAM.aram_delete_all(self._cmd.lchan.scc)
             if res_do:
                 self._cmd.poutput_json(res_do.to_dict())
 
@@ -393,7 +405,6 @@ class ADF_ARAM(CardADF):
             """Lock STORE DATA command to prevent unauthorized changes
             (Proprietary feature that is specific to sysmocom's fork of Bertrand Martel’s ARA-M implementation.)"""
             self._cmd.lchan.scc.send_apdu_checksw('80e2900001A1', '9000')
-
 
 # SEAC v1.1 Section 4.1.2.2 + 5.1.2.2
 sw_aram = {
