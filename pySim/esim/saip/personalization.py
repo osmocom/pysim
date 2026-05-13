@@ -1337,7 +1337,15 @@ class SuciCalcInfoParameter(ConfigurableParameter):
             if not f_sucici:
                 continue
             ef_sucici = EF_SUCI_Calc_Info()
-            f_sucici.body = ef_sucici.encode_bin(val)
+            body = ef_sucici.encode_bin(val)
+
+            # 0xff pad up to the existing file size, so that the underlying template doesn't come through
+            is_size = f_sucici.file_size
+            pad_n = is_size - len(body)
+            if pad_n > 0:
+                body = body + b'\xff' * pad_n
+
+            f_sucici.body = body
             pe.file2pe(f_sucici)
 
     @classmethod
