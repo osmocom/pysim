@@ -1157,7 +1157,7 @@ class MilenageRotationConstants(BinaryParam, AlgoConfig):
 
 class MilenageXoringConstants(BinaryParam, AlgoConfig):
     """XOR-ing constants c1,c2,c3,c4,c5 of Milenage, 128bit each. See 3GPP TS 35.206 Sections 2.3 + 5.3.
-    Provided as octet-string concatenation of all 5 constants. The default value by 3GPP is the concetenation
+    Provided as octet-string concatenation of all 5 constants. The default value by 3GPP is the concatenation
     of::
 
      00000000000000000000000000000000
