@@ -1303,13 +1303,25 @@ class CardProfileSIM(CardProfile):
                 record_len = resp_bin[14]
                 ret['file_descriptor']['record_len'] = record_len
                 ret['file_descriptor']['num_of_rec'] = ret['file_size'] // record_len
-            ret['access_conditions'] = b2h(resp_bin[8:10])
-            if resp_bin[11] & 0x01 == 0:
+            ret['access_conditions'] = b2h(resp_bin[8:11])
+            # Life cycle status
+            lcs = resp_bin[11]
+            if lcs & 0xF0:
+                ret['life_cycle_status_int'] = 'proprietary'
+            elif lcs == 0x00:
+                ret['life_cycle_status_int'] = 'no_information_given'
+            elif lcs == 0x01:
+                ret['life_cycle_status_int'] = 'creation_state'
+            elif lcs == 0x03:
+                ret['life_cycle_status_int'] = 'initialization_state'
+            elif lcs in (0x05, 0x07):
                 ret['life_cycle_status_int'] = 'operational_activated'
-            elif resp_bin[11] & 0x04:
+            elif lcs in (0x04, 0x06):
                 ret['life_cycle_status_int'] = 'operational_deactivated'
+            elif 0x0C <= lcs <= 0x0F:
+                ret['life_cycle_status_int'] = 'termination_state'
             else:
-                ret['life_cycle_status_int'] = 'terminated'
+                ret['life_cycle_status_int'] = 'rfu'
         return ret
 
     @classmethod
