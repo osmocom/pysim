@@ -1263,9 +1263,11 @@ class CardProfileSIM(CardProfile):
 
     @staticmethod
     def decode_select_response(resp_hex: str) -> object:
-        # we try to build something that resembles a dict resulting from the TLV decoder
-        # of TS 102.221 (FcpTemplate), so that higher-level code only has to deal with one
-        # format of SELECT response
+        """
+        Decode the select response to a dict representation, similar to the one of TS 102.221 (see ts_102_221.py,
+        class FcpTemplate), so that higher-level code only has to deal with one respresentation. See also
+        3GPP TS 51.011, section 9.2.1
+        """
         resp_bin = h2b(resp_hex)
         struct_of_file_map = {
             0: 'transparent',
