@@ -1306,12 +1306,23 @@ class CardProfileSIM(CardProfile):
                 ret['file_descriptor']['record_len'] = record_len
                 ret['file_descriptor']['num_of_rec'] = ret['file_size'] // record_len
             ret['access_conditions'] = b2h(resp_bin[8:11])
-            if resp_bin[11] & 0x01 == 0:
+
+            # Life cycle status integer, see also ETSI TS 102 221, table 11.7b
+            lcsi = resp_bin[11]
+            if lcsi == 0x00:
+                ret['life_cycle_status_int'] = 'no_information'
+            elif lcsi == 0x01:
+                ret['life_cycle_status_int'] = 'creation'
+            elif lcsi == 0x03:
+                ret['life_cycle_status_int'] = 'initialization'
+            elif lcsi & 0xFD == 0x05:
                 ret['life_cycle_status_int'] = 'operational_activated'
-            elif resp_bin[11] & 0x04:
+            elif lcsi & 0xFD == 0x04:
                 ret['life_cycle_status_int'] = 'operational_deactivated'
+            elif lcsi & 0xFC == 0x0C:
+                ret['life_cycle_status_int'] = 'termination'
             else:
-                ret['life_cycle_status_int'] = 'terminated'
+                ret['life_cycle_status_int'] = lcsi
         return ret
 
     @classmethod
