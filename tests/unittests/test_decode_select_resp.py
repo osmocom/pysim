@@ -47,10 +47,10 @@ class TestDecodeSelectResponse_CardProfile(unittest.TestCase):
              "decoded" : {'file_descriptor': {'file_descriptor_byte': {'file_type': 'df'}}, 'proprietary_info': {'available_memory': 0}, 'file_id': '7f10', 'file_characteristics': '81', 'num_direct_child_df': 0, 'num_direct_child_ef': 13, 'num_chv_unblock_adm_codes': 4}},
             # EF.MSISDN
             {"resp_hex" : "000000346f40040011ffff0102011a",
-             "decoded" : {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'linear_fixed'}, 'record_len': 26, 'num_of_rec': 2}, 'proprietary_info': {}, 'file_id': '6f40', 'file_size': 52, 'access_conditions': '11ff', 'life_cycle_status_int': 'terminated'}},
+             "decoded" : {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'linear_fixed'}, 'record_len': 26, 'num_of_rec': 2}, 'proprietary_info': {}, 'file_id': '6f40', 'file_size': 52, 'access_conditions': '11ffff', 'life_cycle_status_int': 'terminated'}},
             # EF.ICCID
             {"resp_hex" : "0000000a2fe204000cffff01020000",
-             "decoded" : {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '2fe2', 'file_size': 10, 'access_conditions': '0cff', 'life_cycle_status_int': 'terminated'}},
+             "decoded" : {'file_descriptor': {'file_descriptor_byte': {'file_type': 'working_ef', 'structure': 'transparent'}}, 'proprietary_info': {}, 'file_id': '2fe2', 'file_size': 10, 'access_conditions': '0cffff', 'life_cycle_status_int': 'terminated'}},
         ]
         self.decode_select_response(CardProfileSIM, testcases)
 

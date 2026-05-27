@@ -1305,7 +1305,7 @@ class CardProfileSIM(CardProfile):
                 record_len = resp_bin[14]
                 ret['file_descriptor']['record_len'] = record_len
                 ret['file_descriptor']['num_of_rec'] = ret['file_size'] // record_len
-            ret['access_conditions'] = b2h(resp_bin[8:10])
+            ret['access_conditions'] = b2h(resp_bin[8:11])
             if resp_bin[11] & 0x01 == 0:
                 ret['life_cycle_status_int'] = 'operational_activated'
             elif resp_bin[11] & 0x04:
