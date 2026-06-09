@@ -24,7 +24,6 @@
 #
 
 import logging
-from cmd2 import style
 
 class _PySimLogHandler(logging.Handler):
     def __init__(self, log_callback):
@@ -121,6 +120,7 @@ class PySimLogger:
                 if isinstance(color, str):
                     PySimLogger.print_callback(color + formatted_message + "\033[0m")
                 else:
+                    from cmd2 import style
                     PySimLogger.print_callback(style(formatted_message, fg = color))
             else:
                 PySimLogger.print_callback(formatted_message)
