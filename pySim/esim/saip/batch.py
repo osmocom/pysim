@@ -126,6 +126,8 @@ class BatchPersonalization:
                     logger.error('during %s: %r', _func_(), e)
                     raise ValueError(f'{p.param.name} fed by {p.src.name}: {e!r}') from e
 
+            pes.rebuild_mandatory_services()
+
             yield pes
 
 
