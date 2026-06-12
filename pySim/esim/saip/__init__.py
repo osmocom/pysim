@@ -34,7 +34,7 @@ from pySim import ts_102_222
 from pySim.utils import dec_imsi
 from pySim.ts_102_221 import FileDescriptor
 from pySim.filesystem import CardADF, Path
-from pySim.ts_31_102 import ADF_USIM
+from pySim.ts_31_102 import ADF_USIM, EF_UST, EF_SUCI_Calc_Info
 from pySim.ts_31_103 import ADF_ISIM
 from pySim.esim import compile_asn1_subdir
 from pySim.esim.saip import templates
@@ -1729,7 +1729,55 @@ class ProfileElementSequence:
         if 'BT' in ftype_list:
             svc_set.add('ber-tlv')
         # FIXME:dfLinked files (scan all files, check for non-empty Fcp.linkPath presence of DFs)
-        # TODO: 5G related bits (derive from EF.UST or file presence?)
+
+        # 5G:
+        # - When SUCI is:
+        #   - enabled (EF.UST 124 = true)
+        #   AND
+        #   - calculated in the USIM (EF.UST 125 = true),
+        #   then eUICC-Mandatory-services needs 'get-identity'.
+        # - 'get-identity' implies that the eUICC must support ONE OF profile-A OR profile-B.
+        #   So, when SUCI-CalcInfo for USIM in DF.SAIP contains both key types,
+        #   then no profile-A or B services need to be requested explicitly.
+        # - When the SUCI-CalcInfo for USIM (DF.SAIP) contains ONLY a key of profile-A ("identifier": 1),
+        #   then eUICC-Mandatory-services needs 'profile-a-x25519'.
+        # - Same: ONLY profile-B ("identifier": 2) needs 'profile-b-p256'.
+        # - (When SUCI is calculated in the UE, then the eUICC does not need to provide any of these services.)
+        suci_in_usim_enabled = False
+        try:
+            f_ust = self.get_pe_for_type("usim").files["ef-ust"]
+            ust = EF_UST().decode_bin(f_ust.body)
+            suci_in_usim_enabled = ust[124]['activated'] and ust[125]['activated']
+        except (KeyError, AttributeError):
+            pass
+        if suci_in_usim_enabled:
+            svc_set.add('get-identity')
+            # now check for profile-a and profile-b
+            suci_calcinfo_has_profile_a = False
+            suci_calcinfo_has_profile_b = False
+            try:
+                f_sucici = self.get_pe_for_type("df-saip").files["ef-suci-calc-info-usim"]
+                sucici = EF_SUCI_Calc_Info().decode_bin(f_sucici.body) or {}
+                for prot_scheme in sucici['prot_scheme_id_list']:
+                    if not isinstance(prot_scheme, dict):
+                        continue
+                    ps_id = prot_scheme["identifier"]
+                    if ps_id == 1:
+                        suci_calcinfo_has_profile_a = True
+                    elif ps_id == 2:
+                        suci_calcinfo_has_profile_b = True
+            except (KeyError, AttributeError):
+                pass
+            if suci_calcinfo_has_profile_a and suci_calcinfo_has_profile_b:
+                # 'get-identity' implies that the eUICC supports one of the above. Do not require a specific one.
+                pass
+            elif suci_calcinfo_has_profile_a:
+                # The profile has only a profile-A key, so require that
+                svc_set.add('profile-a-x25519')
+            elif suci_calcinfo_has_profile_b:
+                # The profile has only a profile-B key, so require that
+                svc_set.add('profile-b-p256')
+
         hdr_pe = self.get_pe_for_type('header')
         # patch in the 'manual' services from the existing list:
         for old_svc in hdr_pe.decoded['eUICC-Mandatory-services'].keys():
