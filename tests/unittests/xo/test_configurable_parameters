@@ -214,6 +214,36 @@ ok: TS48v5_SAIP2.1B_NoBERTLV.der MncLen(val=3:int)
   previous value: ['2']
   read_back_val={'MNC-LEN': '3'}:{str}
 
+ok: TS48v5_SAIP2.1B_NoBERTLV.der EuiccMandatoryServiceGetIdentity(val='mandatory':str)
+  clean_val=True:bool
+  previous value: ['optional']
+  read_back_val={'5G-eUICC-get-identity': 'mandatory'}:{str}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der EuiccMandatoryServiceGetIdentity(val='optional':str)
+  clean_val=False:bool
+  previous value: ['optional']
+  read_back_val={'5G-eUICC-get-identity': 'optional'}:{str}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der EuiccMandatoryServiceProfileA(val='mandatory':str)
+  clean_val=True:bool
+  previous value: ['optional']
+  read_back_val={'5G-eUICC-profile-a-x25519': 'mandatory'}:{str}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der EuiccMandatoryServiceProfileA(val='optional':str)
+  clean_val=False:bool
+  previous value: ['optional']
+  read_back_val={'5G-eUICC-profile-a-x25519': 'optional'}:{str}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der EuiccMandatoryServiceProfileB(val='mandatory':str)
+  clean_val=True:bool
+  previous value: ['optional']
+  read_back_val={'5G-eUICC-profile-b-p256': 'mandatory'}:{str}
+
+ok: TS48v5_SAIP2.1B_NoBERTLV.der EuiccMandatoryServiceProfileB(val='optional':str)
+  clean_val=False:bool
+  previous value: ['optional']
+  read_back_val={'5G-eUICC-profile-b-p256': 'optional'}:{str}
+
 ok: TS48v5_SAIP2.1B_NoBERTLV.der SuciActive(val='SUCI-on':str)
   clean_val=True:bool
   previous value: ['SUCI-on']
@@ -1133,6 +1163,36 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der MncLen(val=3:int)
   clean_val=3:int
   previous value: ['2']
   read_back_val={'MNC-LEN': '3'}:{str}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der EuiccMandatoryServiceGetIdentity(val='mandatory':str)
+  clean_val=True:bool
+  previous value: ['mandatory']
+  read_back_val={'5G-eUICC-get-identity': 'mandatory'}:{str}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der EuiccMandatoryServiceGetIdentity(val='optional':str)
+  clean_val=False:bool
+  previous value: ['mandatory']
+  read_back_val={'5G-eUICC-get-identity': 'optional'}:{str}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der EuiccMandatoryServiceProfileA(val='mandatory':str)
+  clean_val=True:bool
+  previous value: ['mandatory']
+  read_back_val={'5G-eUICC-profile-a-x25519': 'mandatory'}:{str}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der EuiccMandatoryServiceProfileA(val='optional':str)
+  clean_val=False:bool
+  previous value: ['mandatory']
+  read_back_val={'5G-eUICC-profile-a-x25519': 'optional'}:{str}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der EuiccMandatoryServiceProfileB(val='mandatory':str)
+  clean_val=True:bool
+  previous value: ['mandatory']
+  read_back_val={'5G-eUICC-profile-b-p256': 'mandatory'}:{str}
+
+ok: TS48v5_SAIP2.3_NoBERTLV.der EuiccMandatoryServiceProfileB(val='optional':str)
+  clean_val=False:bool
+  previous value: ['mandatory']
+  read_back_val={'5G-eUICC-profile-b-p256': 'optional'}:{str}
 
 ok: TS48v5_SAIP2.3_NoBERTLV.der SuciActive(val='SUCI-on':str)
   clean_val=True:bool

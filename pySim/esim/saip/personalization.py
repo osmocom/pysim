@@ -30,6 +30,7 @@ from pySim.ts_31_102 import EF_AD, EF_UST, EF_Routing_Indicator, EF_SUCI_Calc_In
 from pySim.ts_51_011 import EF_SMSP
 from pySim.esim.saip import param_source
 from pySim.esim.saip import ProfileElement, ProfileElementSD, ProfileElementSequence
+from pySim.esim.saip import ProfileElementHeader
 from pySim.esim.saip import SecurityDomainKey, SecurityDomainKeyComponent
 from pySim.global_platform import KeyUsageQualifier, KeyType
 
@@ -1386,3 +1387,48 @@ class SuciCalcInfoUsim(SuciCalcInfoParameter):
     """SUCI Calculation Information as in section 4.4.11.8 of 3GPP TS 31.102, readable only by USIM (DF-SAIP)"""
     name = '5G-SUCI-CalcInfo-USIM'
     suci_calc_info_pe = SuciCalcInfoParameter.PE_IN_USIM
+
+class EuiccMandatoryServiceParam(EnumParam):
+    """superclass for managing items of the ProfileHeader / eUICC-Mandatory-services ServicesList"""
+    service_name = None
+    value_map = { 'mandatory': True, 'optional': False }
+    default_source = param_source.ConstantSource
+    example_input = sorted(value_map.keys())[0]
+
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        for pe in pes.get_pes_for_type('header'):
+            assert isinstance(pe, ProfileElementHeader)
+            if val:
+                pe.mandatory_service_add(cls.service_name)
+            else:
+                # explicitly check to avoid exception when then service is already not present
+                if pe.mandatory_service_present(cls.service_name):
+                    pe.mandatory_service_remove(cls.service_name)
+
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        for pe in pes.get_pes_for_type('header'):
+            assert isinstance(pe, ProfileElementHeader)
+            val = bool(pe.mandatory_service_present(cls.service_name))
+            yield { cls.name: cls.map_val_to_name(val) }
+
+class EuiccMandatoryServiceGetIdentity(EuiccMandatoryServiceParam):
+    """eUICC Mandatory Services: get-identity. The eUICC must be capable of providing a 5G identity using SUCI-CalcInfo
+    located in the USIM's DF-SAIP, see parameter 5G-SUCI-CalcInfo-USIM."""
+    name = '5G-eUICC-get-identity'
+    service_name = 'get-identity'
+
+class EuiccMandatoryServiceProfileA(EuiccMandatoryServiceParam):
+    """eUICC Mandatory Services: profile-a-x25519. The eUICC must be able to estblish a 5G identity using an X25519 key,
+    as provided in a profile-A ("identifier": 1) key in SUCI-CalcInfo located in the USIM's DF-SAIP, see parameter
+    5G-SUCI-CalcInfo-USIM."""
+    name = '5G-eUICC-profile-a-x25519'
+    service_name = 'profile-a-x25519'
+
+class EuiccMandatoryServiceProfileB(EuiccMandatoryServiceParam):
+    """eUICC Mandatory Services: profile-b-p256. The eUICC must be able to estblish a 5G identity using a P256 key, as
+    provided in a profile-B ("identifier": 2) key in SUCI-CalcInfo located in the USIM's DF-SAIP, see parameter
+    5G-SUCI-CalcInfo-USIM."""
+    name = '5G-eUICC-profile-b-p256'
+    service_name = 'profile-b-p256'

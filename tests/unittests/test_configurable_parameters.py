@@ -279,6 +279,33 @@ class ConfigurableParameterTest(unittest.TestCase):
                       val=3,
                       expect_clean_val=3,
                       expect_val='3'),
+
+            Paramtest(param_cls=p13n.EuiccMandatoryServiceGetIdentity,
+                      val='mandatory',
+                      expect_clean_val=True,
+                      expect_val='mandatory'),
+            Paramtest(param_cls=p13n.EuiccMandatoryServiceGetIdentity,
+                      val='optional',
+                      expect_clean_val=False,
+                      expect_val='optional'),
+
+            Paramtest(param_cls=p13n.EuiccMandatoryServiceProfileA,
+                      val='mandatory',
+                      expect_clean_val=True,
+                      expect_val='mandatory'),
+            Paramtest(param_cls=p13n.EuiccMandatoryServiceProfileA,
+                      val='optional',
+                      expect_clean_val=False,
+                      expect_val='optional'),
+
+            Paramtest(param_cls=p13n.EuiccMandatoryServiceProfileB,
+                      val='mandatory',
+                      expect_clean_val=True,
+                      expect_val='mandatory'),
+            Paramtest(param_cls=p13n.EuiccMandatoryServiceProfileB,
+                      val='optional',
+                      expect_clean_val=False,
+                      expect_val='optional'),
         ]
 
         Paramtest.iff_present_default = True
