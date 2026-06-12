@@ -1517,8 +1517,11 @@ class ProfileElementHeader(ProfileElement):
     def mandatory_service_add(self, service_name):
         self.decoded['eUICC-Mandatory-services'][service_name] = None
 
+    def mandatory_service_present(self, service_name):
+        return service_name in self.decoded['eUICC-Mandatory-services'].keys()
+
     def mandatory_service_remove(self, service_name):
-        if service_name in self.decoded['eUICC-Mandatory-services'].keys():
+        if self.mandatory_service_present(service_name):
             del self.decoded['eUICC-Mandatory-services'][service_name]
         else:
             raise ValueError("service not in eUICC-Mandatory-services list, cannot remove")
