@@ -1780,9 +1780,13 @@ class ProfileElementSequence:
 
         hdr_pe = self.get_pe_for_type('header')
         # patch in the 'manual' services from the existing list:
+        old_svc_set = set()
         for old_svc in hdr_pe.decoded['eUICC-Mandatory-services'].keys():
             if old_svc in manual_services:
-                svc_set.add(old_svc)
+                old_svc_set.add(old_svc)
+        logger.debug(f"{svc_set=}  +  {old_svc_set=}")
+        svc_set = svc_set.union(old_svc_set)
+        logger.debug(f"{svc_set=}")
         hdr_pe.decoded['eUICC-Mandatory-services'] = {x: None for x in svc_set}
 
     def rebuild_mandatory_gfstelist(self):
