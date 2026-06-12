@@ -123,6 +123,8 @@ class BatchPersonalization:
                 except Exception as e:
                     raise ValueError(f'{p.param_cls.get_name()} fed by {p.src.name}: {e}') from e
 
+            pes.rebuild_mandatory_services()
+
             yield pes
 
 
