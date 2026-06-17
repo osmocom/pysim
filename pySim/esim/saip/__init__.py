@@ -673,7 +673,15 @@ class FsProfileElement(ProfileElement):
         logger.debug("%s.add_file: %s" % (self.__class__.__name__, repr(file)))
         template = templates.ProfileTemplateRegistry.get_by_oid(self.templateID)
         if file.pe_name in self.files:
-            raise KeyError('Cannot add file: %s already exists' % file.pename)
+            existing = self.files[file.pe_name]
+            if getattr(existing, '_implicit_template_path', False) and existing.node:
+                file.node = existing.node
+                file.node.file = file
+                self.files[file.pe_name] = file
+                if self.pe_sequence and isinstance(file.node, FsNodeDF):
+                    self.pe_sequence.cur_df = file.node
+                return
+            raise KeyError('Cannot add file: %s already exists' % file.pe_name)
         self.files[file.pe_name] = file
         if self.pe_sequence:
             if file.pe_name == 'mf': #file.fid == 0x3f00:
@@ -688,7 +696,26 @@ class FsProfileElement(ProfileElement):
                     pe_df = self.files[template.base_df().pe_name].node
                     if file.template:
                         for d in file.template.ppath: # TODO: revert list?
-                            pe_df = pe_df[d]
+                            try:
+                                pe_df = pe_df[d]
+                                continue
+                            except KeyError:
+                                path_template = None
+                                for candidate in template.files:
+                                    if candidate.fid == d and candidate.file_type in ['MF', 'DF', 'ADF']:
+                                        path_template = candidate
+                                        break
+                                if path_template is None:
+                                    raise
+                                path_file = self.files.get(path_template.pe_name)
+                                if path_file is None:
+                                    path_file = File(path_template.pe_name, None, path_template)
+                                    path_file._implicit_template_path = True
+                                    self.files[path_template.pe_name] = path_file
+                                if path_file.node:
+                                    pe_df = path_file.node
+                                else:
+                                    pe_df = pe_df.add_file(path_file)
                     self.pe_sequence.cur_df = pe_df
                 elif template.parent:
                     # this is a template that belongs into the [A]DF of another template
