@@ -271,7 +271,7 @@ for i in range(0x50, 0x58):
 for i in range(0x58, 0x60):
     df_pb_files.append(FileTemplate(0x4f00+i, 'EF.ADN', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi'], ppath=[0x5f3a]))
 for i in range(0x60, 0x68):
-    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.ADN', 'LF', None,    2,  5, None, '00...00', False, ['nb_rec','sfi'], ppath=[0x5f3a]))
+    df_pb_files.append(FileTemplate(0x4f00+i, 'EF.PBC', 'LF', None,    2,  5, None, '00...00', False, ['size','sfi'], ppath=[0x5f3a]))
 for i in range(0x68, 0x70):
     df_pb_files.append(FileTemplate(0x4f00+i, 'EF.ANR', 'LF', None, None,  5, None, 'FF...FF', False, ['nb_rec','size','sfi'], ppath=[0x5f3a]))
 for i in range(0x70, 0x78):
