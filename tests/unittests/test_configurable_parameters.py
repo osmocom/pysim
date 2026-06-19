@@ -54,6 +54,7 @@ class ConfigurableParameterTest(unittest.TestCase):
     def test_parameters(self):
 
         upp_fnames = (
+                'SAIP2.1_gfmsuci.der',
                 'TS48v5_SAIP2.1B_NoBERTLV.der',
                 'TS48v5_SAIP2.3_NoBERTLV.der',
                )
