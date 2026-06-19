@@ -359,6 +359,21 @@ class ConfigurableParameterTest(unittest.TestCase):
                       expect_clean_val=sucici,
                       expect_val={'5G-SUCI-CalcInfo-USIM': json.dumps(sucici)}),
 
+            Paramtest(param_cls=p13n.GfmSuciRi, val='123',
+                      expect_clean_val='123',
+                      expect_val={'GFM-5G-SUCI-RI': '123'}),
+            Paramtest(param_cls=p13n.GfmSuciRi, val='0',
+                      expect_clean_val='0',
+                      expect_val={'GFM-5G-SUCI-RI': '0'}),
+            Paramtest(param_cls=p13n.GfmSuciRi, val='9999',
+                      expect_clean_val='9999',
+                      expect_val={'GFM-5G-SUCI-RI': '9999'}),
+
+            Paramtest(param_cls=p13n.GfmSuciCalcInfoUe,
+                      val=json.dumps(sucici),
+                      expect_clean_val=sucici,
+                      expect_val={'GFM-5G-SUCI-CalcInfo-UE': json.dumps(sucici)}),
+
         ])
 
         Paramtest.iff_present_default = False

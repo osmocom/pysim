@@ -26,13 +26,18 @@ from construct.core import StreamError
 from osmocom.tlv import camel_to_snake
 from osmocom.utils import hexstr
 from pySim.utils import enc_iccid, dec_iccid, enc_imsi, dec_imsi, h2b, b2h, rpad, sanitize_iccid
-from pySim.ts_31_102 import EF_AD, EF_UST, EF_Routing_Indicator, EF_SUCI_Calc_Info
+from pySim.ts_31_102 import EF_AD, EF_UST, EF_Routing_Indicator, EF_SUCI_Calc_Info, DF_USIM_5GS
 from pySim.ts_51_011 import EF_SMSP
 from pySim.esim.saip import param_source
 from pySim.esim.saip import ProfileElement, ProfileElementSD, ProfileElementSequence
 from pySim.esim.saip import ProfileElementHeader
 from pySim.esim.saip import SecurityDomainKey, SecurityDomainKeyComponent
 from pySim.global_platform import KeyUsageQualifier, KeyType
+
+# optimization: instantiate class instance to get the fid only once.
+file_path_df_5gs = bytes.fromhex(DF_USIM_5GS().fid)
+fid_ri = bytes.fromhex(EF_Routing_Indicator().fid)
+fid_sucici = bytes.fromhex(EF_SUCI_Calc_Info().fid)
 
 def unrpad(s: hexstr, c='f') -> hexstr:
     return hexstr(s.rstrip(c))
@@ -1353,6 +1358,21 @@ class SuciCalcInfoParameter(ConfigurableParameter):
     def apply_val(cls, pes: ProfileElementSequence, val):
         cls._apply_suci(pes, val, *cls.suci_calc_info_pe)
 
+    @staticmethod
+    def normalize_sucici(sucici:dict):
+        """Normalize the CalcInfo dict so it can be json encoded:
+           convert bytes to hex strings."""
+        if not sucici:
+            sucici = {}
+
+        for hnet_pubkey in sucici.get('hnet_pubkey_list', ()):
+            val = hnet_pubkey['hnet_pubkey']
+            if isinstance(val, bytes):
+                val = b2h(val)
+                hnet_pubkey['hnet_pubkey'] = val
+
+        return sucici
+
     @classmethod
     def _get_suci(cls, pes: ProfileElementSequence, pe_type="df-5gs", pe_file="ef-suci-calc-info"):
         for pe in pes.get_pes_for_type(pe_type):
@@ -1362,15 +1382,8 @@ class SuciCalcInfoParameter(ConfigurableParameter):
             ef_sucici = EF_SUCI_Calc_Info()
             sucici = ef_sucici.decode_bin(f_sucici.body)
 
-            if not sucici:
-                sucici = {}
-
             # normalize to string (bytes cannot go into json)
-            for hnet_pubkey in sucici.get('hnet_pubkey_list', ()):
-                val = hnet_pubkey['hnet_pubkey']
-                if isinstance(val, bytes):
-                    val = b2h(val)
-                    hnet_pubkey['hnet_pubkey'] = val
+            sucici = cls.normalize_sucici(sucici)
 
             yield { cls.name: json.dumps(sucici) }
 
@@ -1387,6 +1400,153 @@ class SuciCalcInfoUsim(SuciCalcInfoParameter):
     """SUCI Calculation Information as in section 4.4.11.8 of 3GPP TS 31.102, readable only by USIM (DF-SAIP)"""
     name = '5G-SUCI-CalcInfo-USIM'
     suci_calc_info_pe = SuciCalcInfoParameter.PE_IN_USIM
+
+def gfm_find(pes: ProfileElementSequence, file_path:bytes, ef_fid:bytes):
+    """look through genericFileManagement PE and return the fmc list with start and end indexes as
+       (fmc_list, first_idx, after_last_idx)
+       so that fmc_list[first_idx:after_last_idx] is the slice of file management commands relevant to the given
+       file_path/ef_fid.
+    """
+    for pe in pes.get_pes_for_type('genericFileManagement'):
+        path_match = False
+        creating_fid = False
+
+        for fmc in pe.decoded['fileManagementCMD']:
+            first = None
+            last = None
+
+            for idx in range(len(fmc)):
+                cmd, arg = fmc[idx]
+
+                if cmd == 'filePath':
+                    path_match = (arg == file_path)
+                    if not path_match:
+                        creating_fid = False
+                elif path_match and cmd == 'createFCP':
+                    creating_fid = (arg.get('fileID') == ef_fid)
+                if creating_fid:
+                    if first is None:
+                        first = idx
+                        last = idx
+                    first = min(first, idx)
+                    last = max(last, idx)
+
+            if first is not None:
+                yield fmc, first, last + 1
+
+# genericFileManagement 5G params
+
+def pes_get_adf_fid(pes:ProfileElementSequence, naa_name="usim", adf_name="adf-usim"):
+    adf = pes.get_pe_for_type(naa_name)
+    return adf.decoded[adf_name][0][1]['fileID']
+
+def mk_adf_df_path(pes, naa:str, adf:str, file_path:bytes) -> bytes:
+    adf_file_id = pes_get_adf_fid(pes, naa, adf)
+    return b''.join((adf_file_id, file_path))
+
+def gfm_get_file_content(pes: ProfileElementSequence, naa:str, adf:str, file_path:bytes, ef_fid:bytes) -> bytes:
+    '''find a given file in the genericFileManagement section, and return the bytes from the first fillFileContent
+       item.
+       TODO: implement File.from_gfm() and return the full resulting bytes?
+    '''
+    adf_df_path = mk_adf_df_path(pes, naa, adf, file_path)
+
+    data = []
+    for fmc, first_idx, after_last_idx in gfm_find(pes, adf_df_path, ef_fid):
+        assert fmc[first_idx][0] == 'createFCP'
+        assert after_last_idx > first_idx
+
+        idx = first_idx + 1
+        while idx < after_last_idx:
+            if fmc[idx][0] == 'fillFileContent':
+                data.append(fmc[idx][1])
+            idx += 1
+
+    return data
+
+def gfm_set_file_content(pes: ProfileElementSequence, naa:str, adf:str, file_path:bytes, ef_fid:bytes, file_content:bytes) -> int:
+    adf_df_path = mk_adf_df_path(pes, naa, adf, file_path)
+
+    found = 0
+    for fmc, first_idx, after_last_idx in gfm_find(pes, adf_df_path, ef_fid):
+        assert fmc[first_idx][0] == 'createFCP'
+        assert after_last_idx > first_idx
+
+        new_fmc = [
+                fmc[first_idx],
+                ('fillFileContent', file_content),
+            ]
+        new_fmc[0][1]['efFileSize'] = bytes((len(file_content), ))
+
+        fmc[first_idx:after_last_idx] = new_fmc
+
+        found += 1
+    return found
+
+class GfmSuciRi(SuciRi):
+    """SUCI Routing Indicator as in section 4.4.11.11 of 3GPP TS 31.102,
+       applied via General File Management. Intended for SAIP 2.1 profiles."""
+    name = 'GFM-5G-SUCI-RI'
+
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        ri = {
+            "routing_indicator": str(val),
+            "rfu": "ffff"
+        }
+        ef_ri = EF_Routing_Indicator()
+        found = gfm_set_file_content(pes, 'usim', 'adf-usim', file_path_df_5gs, fid_ri,
+                                     ef_ri.encode_bin(ri))
+        if not found:
+            raise ValueError(f"No target file found, Cannot apply {cls.name} = {ri}")
+
+        data = gfm_get_file_content(pes, 'usim', 'adf-usim', file_path_df_5gs, fid_ri)
+        val = ef_ri.decode_bin(b''.join(data))
+
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        data = gfm_get_file_content(pes, 'usim', 'adf-usim', file_path_df_5gs, fid_ri)
+        if not data:
+            return
+
+        data = b''.join(data)
+        if not data:
+            return
+
+        ef_ri = EF_Routing_Indicator()
+        ri = ef_ri.decode_bin(data)
+        yield { cls.name: ri.get(cls.KEY_RI) }
+
+class GfmSuciCalcInfoUe(SuciCalcInfoUe):
+    """SUCI Calculation Information as in section 4.4.11.8 of 3GPP TS 31.102, readable by UE (DF-5GS),
+       applied via General File Management. Intended for SAIP 2.1 profiles."""
+    name = 'GFM-5G-SUCI-CalcInfo-UE'
+
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        if not isinstance(val, dict):
+            raise ValueError("val should be a dict, after 'val = SuciCalcInfoParameter.validate_val(val)'")
+
+        ef_sucici = EF_SUCI_Calc_Info()
+        body = ef_sucici.encode_bin(val)
+        gfm_set_file_content(pes, 'usim', 'adf-usim', file_path_df_5gs, fid_sucici,
+                             body)
+
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        data = gfm_get_file_content(pes, 'usim', 'adf-usim', file_path_df_5gs, fid_sucici)
+        if not data:
+            return
+
+        data = b''.join(data)
+        if not data:
+            return
+
+        ef_sucici = EF_SUCI_Calc_Info()
+        sucici = ef_sucici.decode_bin(data)
+        sucici = cls.normalize_sucici(sucici)
+        yield { cls.name: json.dumps(sucici) }
+
 
 class EuiccMandatoryServiceParam(EnumParam):
     """superclass for managing items of the ProfileHeader / eUICC-Mandatory-services ServicesList"""

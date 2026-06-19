@@ -289,6 +289,26 @@ skip: SAIP2.1_gfmsuci.der SuciCalcInfoUsim(val='{"prot_scheme_id_list": [{"prior
   previous value: []
   skipping, param not in template.
 
+ok: SAIP2.1_gfmsuci.der GfmSuciRi(val='123':str)
+  clean_val='123':str
+  previous value: ['0']
+  read_back_val={'GFM-5G-SUCI-RI': '123'}:{hexstr}
+
+ok: SAIP2.1_gfmsuci.der GfmSuciRi(val='0':str)
+  clean_val='0':str
+  previous value: ['0']
+  read_back_val={'GFM-5G-SUCI-RI': '0'}:{hexstr}
+
+ok: SAIP2.1_gfmsuci.der GfmSuciRi(val='9999':str)
+  clean_val='9999':str
+  previous value: ['0']
+  read_back_val={'GFM-5G-SUCI-RI': '9999'}:{hexstr}
+
+ok: SAIP2.1_gfmsuci.der GfmSuciCalcInfoUe(val='{"prot_scheme_id_list": [{"priority": 0, "identifier": 2, "key_index": 1}, {"priority": 1, "identifier": 1, "key_index": 2}], "hnet_pubkey_list": [{"hnet_pubkey_identifier": 27, "hnet_pubkey": "0472da71976234ce833a6907425867b82e074d44ef907dfb4b3e21c1c2256ebcd15a7ded52fcbb097a4ed250e036c7b9c8c7004c4eedc4f068cd7bf8d3f900e3b4"}, {"hnet_pubkey_identifier": 30, "hnet_pubkey": "5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650"}]}':str)
+  clean_val={'prot_scheme_id_list': [{'priority': 0, 'identifier': 2, 'key_index': 1}, {'priority': 1, 'identifier': 1, 'key_index': 2}], 'hnet_pubkey_list': [{'hnet_pubkey_identifier': 27, 'hnet_pubkey': '0472da71976234ce833a6907425867b82e074d44ef907dfb4b3e21c1c2256ebcd15a7ded52fcbb097a4ed250e036c7b9c8c7004c4eedc4f068cd7bf8d3f900e3b4'}, {'hnet_pubkey_identifier': 30, 'hnet_pubkey': '5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650'}]}:{list, list}
+  previous value: ['{}']
+  read_back_val={'GFM-5G-SUCI-CalcInfo-UE': '{"prot_scheme_id_list": [{"priority": 0, "identifier": 2, "key_index": 1}, {"priority": 1, "identifier": 1, "key_index": 2}], "hnet_pubkey_list": [{"hnet_pubkey_identifier": 27, "hnet_pubkey": "0472da71976234ce833a6907425867b82e074d44ef907dfb4b3e21c1c2256ebcd15a7ded52fcbb097a4ed250e036c7b9c8c7004c4eedc4f068cd7bf8d3f900e3b4"}, {"hnet_pubkey_identifier": 30, "hnet_pubkey": "5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650"}]}'}:{str}
+
 ok: SAIP2.1_gfmsuci.der SdKeyScp02Kvn20AesDek(val='01020304050607080910111213141516':str)
   clean_val=b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
   previous value: []
@@ -1235,6 +1255,26 @@ skip: TS48v5_SAIP2.1B_NoBERTLV.der SuciCalcInfoUe(val='{"prot_scheme_id_list": [
   skipping, param not in template.
 
 skip: TS48v5_SAIP2.1B_NoBERTLV.der SuciCalcInfoUsim(val='{"prot_scheme_id_list": [{"priority": 0, "identifier": 2, "key_index": 1}, {"priority": 1, "identifier": 1, "key_index": 2}], "hnet_pubkey_list": [{"hnet_pubkey_identifier": 27, "hnet_pubkey": "0472da71976234ce833a6907425867b82e074d44ef907dfb4b3e21c1c2256ebcd15a7ded52fcbb097a4ed250e036c7b9c8c7004c4eedc4f068cd7bf8d3f900e3b4"}, {"hnet_pubkey_identifier": 30, "hnet_pubkey": "5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650"}]}':str)
+  clean_val={'prot_scheme_id_list': [{'priority': 0, 'identifier': 2, 'key_index': 1}, {'priority': 1, 'identifier': 1, 'key_index': 2}], 'hnet_pubkey_list': [{'hnet_pubkey_identifier': 27, 'hnet_pubkey': '0472da71976234ce833a6907425867b82e074d44ef907dfb4b3e21c1c2256ebcd15a7ded52fcbb097a4ed250e036c7b9c8c7004c4eedc4f068cd7bf8d3f900e3b4'}, {'hnet_pubkey_identifier': 30, 'hnet_pubkey': '5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650'}]}:{list, list}
+  previous value: []
+  skipping, param not in template.
+
+skip: TS48v5_SAIP2.1B_NoBERTLV.der GfmSuciRi(val='123':str)
+  clean_val='123':str
+  previous value: []
+  skipping, param not in template.
+
+skip: TS48v5_SAIP2.1B_NoBERTLV.der GfmSuciRi(val='0':str)
+  clean_val='0':str
+  previous value: []
+  skipping, param not in template.
+
+skip: TS48v5_SAIP2.1B_NoBERTLV.der GfmSuciRi(val='9999':str)
+  clean_val='9999':str
+  previous value: []
+  skipping, param not in template.
+
+skip: TS48v5_SAIP2.1B_NoBERTLV.der GfmSuciCalcInfoUe(val='{"prot_scheme_id_list": [{"priority": 0, "identifier": 2, "key_index": 1}, {"priority": 1, "identifier": 1, "key_index": 2}], "hnet_pubkey_list": [{"hnet_pubkey_identifier": 27, "hnet_pubkey": "0472da71976234ce833a6907425867b82e074d44ef907dfb4b3e21c1c2256ebcd15a7ded52fcbb097a4ed250e036c7b9c8c7004c4eedc4f068cd7bf8d3f900e3b4"}, {"hnet_pubkey_identifier": 30, "hnet_pubkey": "5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650"}]}':str)
   clean_val={'prot_scheme_id_list': [{'priority': 0, 'identifier': 2, 'key_index': 1}, {'priority': 1, 'identifier': 1, 'key_index': 2}], 'hnet_pubkey_list': [{'hnet_pubkey_identifier': 27, 'hnet_pubkey': '0472da71976234ce833a6907425867b82e074d44ef907dfb4b3e21c1c2256ebcd15a7ded52fcbb097a4ed250e036c7b9c8c7004c4eedc4f068cd7bf8d3f900e3b4'}, {'hnet_pubkey_identifier': 30, 'hnet_pubkey': '5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650'}]}:{list, list}
   previous value: []
   skipping, param not in template.
@@ -2188,6 +2228,26 @@ ok: TS48v5_SAIP2.3_NoBERTLV.der SuciCalcInfoUsim(val='{"prot_scheme_id_list": [{
   clean_val={'prot_scheme_id_list': [{'priority': 0, 'identifier': 2, 'key_index': 1}, {'priority': 1, 'identifier': 1, 'key_index': 2}], 'hnet_pubkey_list': [{'hnet_pubkey_identifier': 27, 'hnet_pubkey': '0472da71976234ce833a6907425867b82e074d44ef907dfb4b3e21c1c2256ebcd15a7ded52fcbb097a4ed250e036c7b9c8c7004c4eedc4f068cd7bf8d3f900e3b4'}, {'hnet_pubkey_identifier': 30, 'hnet_pubkey': '5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650'}]}:{list, list}
   previous value: ['{"prot_scheme_id_list": [{"priority": 0, "identifier": 0, "key_index": 0}], "hnet_pubkey_list": []}']
   read_back_val={'5G-SUCI-CalcInfo-USIM': '{"prot_scheme_id_list": [{"priority": 0, "identifier": 2, "key_index": 1}, {"priority": 1, "identifier": 1, "key_index": 2}], "hnet_pubkey_list": [{"hnet_pubkey_identifier": 27, "hnet_pubkey": "0472da71976234ce833a6907425867b82e074d44ef907dfb4b3e21c1c2256ebcd15a7ded52fcbb097a4ed250e036c7b9c8c7004c4eedc4f068cd7bf8d3f900e3b4"}, {"hnet_pubkey_identifier": 30, "hnet_pubkey": "5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650"}]}'}:{str}
+
+skip: TS48v5_SAIP2.3_NoBERTLV.der GfmSuciRi(val='123':str)
+  clean_val='123':str
+  previous value: []
+  skipping, param not in template.
+
+skip: TS48v5_SAIP2.3_NoBERTLV.der GfmSuciRi(val='0':str)
+  clean_val='0':str
+  previous value: []
+  skipping, param not in template.
+
+skip: TS48v5_SAIP2.3_NoBERTLV.der GfmSuciRi(val='9999':str)
+  clean_val='9999':str
+  previous value: []
+  skipping, param not in template.
+
+skip: TS48v5_SAIP2.3_NoBERTLV.der GfmSuciCalcInfoUe(val='{"prot_scheme_id_list": [{"priority": 0, "identifier": 2, "key_index": 1}, {"priority": 1, "identifier": 1, "key_index": 2}], "hnet_pubkey_list": [{"hnet_pubkey_identifier": 27, "hnet_pubkey": "0472da71976234ce833a6907425867b82e074d44ef907dfb4b3e21c1c2256ebcd15a7ded52fcbb097a4ed250e036c7b9c8c7004c4eedc4f068cd7bf8d3f900e3b4"}, {"hnet_pubkey_identifier": 30, "hnet_pubkey": "5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650"}]}':str)
+  clean_val={'prot_scheme_id_list': [{'priority': 0, 'identifier': 2, 'key_index': 1}, {'priority': 1, 'identifier': 1, 'key_index': 2}], 'hnet_pubkey_list': [{'hnet_pubkey_identifier': 27, 'hnet_pubkey': '0472da71976234ce833a6907425867b82e074d44ef907dfb4b3e21c1c2256ebcd15a7ded52fcbb097a4ed250e036c7b9c8c7004c4eedc4f068cd7bf8d3f900e3b4'}, {'hnet_pubkey_identifier': 30, 'hnet_pubkey': '5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650'}]}:{list, list}
+  previous value: []
+  skipping, param not in template.
 
 ok: TS48v5_SAIP2.3_NoBERTLV.der SdKeyScp02Kvn20AesDek(val='01020304050607080910111213141516':str)
   clean_val=b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
