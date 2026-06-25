@@ -24,16 +24,25 @@ import traceback
 import re
 import cmd2
 from packaging import version
-from cmd2 import style, Fg, Bg
-
 import logging
 from pySim.log import PySimLogger
 from osmocom.utils import auto_uint8
 
-RED = Fg.RED
-YELLOW = Fg.YELLOW
-LIGHT_RED = Fg.LIGHT_RED
-LIGHT_GREEN = Fg.LIGHT_GREEN
+# cmd2 >= 3.0 replaced Fg + style() with Color + stylize()
+if version.parse(cmd2.__version__) >= version.parse("3.0.0"):
+    from cmd2 import Color, stylize # pylint: disable=no-name-in-module
+    RED = Color.RED
+    YELLOW = Color.YELLOW
+    LIGHT_RED = Color.BRIGHT_RED
+    LIGHT_GREEN = Color.BRIGHT_GREEN
+    def style(text, fg=None, bg=None, bold=False): # pylint: disable=function-redefined
+        return stylize(text, fg) if fg else text
+else:
+    from cmd2 import style, Fg # pylint: disable=no-name-in-module
+    RED = Fg.RED
+    YELLOW = Fg.YELLOW
+    LIGHT_RED = Fg.LIGHT_RED
+    LIGHT_GREEN = Fg.LIGHT_GREEN
 from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 

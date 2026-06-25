@@ -24,7 +24,15 @@
 #
 
 import logging
-from cmd2 import style
+import cmd2
+from packaging import version
+
+if version.parse(cmd2.__version__) >= version.parse("3.0.0"):
+    from cmd2 import stylize as _stylize # pylint: disable=no-name-in-module
+    def _style(text, fg=None): # pylint: disable=function-redefined
+        return _stylize(text, fg) if fg else text
+else: # cmd2>=2.6.2
+    from cmd2 import style as _style # type: ignore[no-redef]
 
 class _PySimLogHandler(logging.Handler):
     def __init__(self, log_callback):
@@ -121,7 +129,7 @@ class PySimLogger:
                 if isinstance(color, str):
                     PySimLogger.print_callback(color + formatted_message + "\033[0m")
                 else:
-                    PySimLogger.print_callback(style(formatted_message, fg = color))
+                    PySimLogger.print_callback(_style(formatted_message, fg = color))
             else:
                 PySimLogger.print_callback(formatted_message)
 
