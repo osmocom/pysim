@@ -24,25 +24,16 @@ import traceback
 import re
 import cmd2
 from packaging import version
-from cmd2 import style
+from cmd2 import style, Fg, Bg
 
 import logging
 from pySim.log import PySimLogger
 from osmocom.utils import auto_uint8
 
-# cmd2 >= 2.3.0 has deprecated the bg/fg in favor of Bg/Fg :(
-if version.parse(cmd2.__version__) < version.parse("2.3.0"):
-    from cmd2 import fg, bg # pylint: disable=no-name-in-module
-    RED = fg.red
-    YELLOW = fg.yellow
-    LIGHT_RED = fg.bright_red
-    LIGHT_GREEN = fg.bright_green
-else:
-    from cmd2 import Fg, Bg # pylint: disable=no-name-in-module
-    RED = Fg.RED
-    YELLOW = Fg.YELLOW
-    LIGHT_RED = Fg.LIGHT_RED
-    LIGHT_GREEN = Fg.LIGHT_GREEN
+RED = Fg.RED
+YELLOW = Fg.YELLOW
+LIGHT_RED = Fg.LIGHT_RED
+LIGHT_GREEN = Fg.LIGHT_GREEN
 from cmd2 import CommandSet, with_default_category, with_argparser
 import argparse
 
@@ -76,43 +67,19 @@ from pySim.app import init_card
 
 log = PySimLogger.get(Path(__file__).stem)
 
-class Cmd2Compat(cmd2.Cmd):
-    """Backwards-compatibility wrapper around cmd2.Cmd to support older and newer
-    releases. See https://github.com/python-cmd2/cmd2/blob/master/CHANGELOG.md"""
-    def run_editor(self, file_path: Optional[str] = None) -> None:
-        if version.parse(cmd2.__version__) < version.parse("2.0.0"):
-            return self._run_editor(file_path) # pylint: disable=no-member
-        else:
-            return super().run_editor(file_path) # pylint: disable=no-member
-
-class Settable2Compat(cmd2.Settable):
-    """Backwards-compatibility wrapper around cmd2.Settable to support older and newer
-    releases. See https://github.com/python-cmd2/cmd2/blob/master/CHANGELOG.md"""
-    def __init__(self, name, val_type, description, settable_object, **kwargs):
-        if version.parse(cmd2.__version__) < version.parse("2.0.0"):
-            super().__init__(name, val_type, description, **kwargs) # pylint: disable=no-value-for-parameter
-        else:
-            super().__init__(name, val_type, description, settable_object, **kwargs) # pylint: disable=too-many-function-args
-
-class PysimApp(Cmd2Compat):
+class PysimApp(cmd2.Cmd):
     CUSTOM_CATEGORY = 'pySim Commands'
     BANNER = """Welcome to pySim-shell!
 (C) 2021-2023 by Harald Welte, sysmocom - s.f.m.c. GmbH and contributors
 Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/shell.html """
 
     def __init__(self, verbose, card, rs, sl, ch, script=None):
-        if version.parse(cmd2.__version__) < version.parse("2.0.0"):
-            kwargs = {'use_ipython': True}
-        else:
-            kwargs = {'include_ipy': True}
-
         self.verbose = verbose
         PySimLogger.setup(self.poutput, {logging.WARN: YELLOW})
         self._onchange_verbose('verbose', False, self.verbose)
 
-        # pylint: disable=unexpected-keyword-arg
         super().__init__(persistent_history_file='~/.pysim_shell_history', allow_cli_args=False,
-                         auto_load_commands=False, startup_script=script, **kwargs)
+                         auto_load_commands=False, startup_script=script, include_ipy=True)
         self.intro = style(self.BANNER, fg=RED)
         self.default_category = 'pySim-shell built-in commands'
         self.card = None
@@ -128,18 +95,24 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         self.apdu_trace = False
         self.apdu_strict = False
 
-        self.add_settable(Settable2Compat('numeric_path', bool, 'Print File IDs instead of names', self,
-                                          onchange_cb=self._onchange_numeric_path))
-        self.add_settable(Settable2Compat('conserve_write', bool, 'Read and compare before write', self,
-                                          onchange_cb=self._onchange_conserve_write))
-        self.add_settable(Settable2Compat('json_pretty_print', bool, 'Pretty-Print JSON output', self))
-        self.add_settable(Settable2Compat('apdu_trace', bool, 'Trace and display APDUs exchanged with card', self,
-                                          onchange_cb=self._onchange_apdu_trace))
-        self.add_settable(Settable2Compat('apdu_strict', bool,
-                                          'Strictly apply APDU format according to ISO/IEC 7816-3, table 12', self))
-        self.add_settable(Settable2Compat('verbose', bool,
-                                          'Enable/disable verbose logging', self,
-                                          onchange_cb=self._onchange_verbose))
+        self.add_settable(cmd2.Settable('numeric_path', bool,
+                                        'Print File IDs instead of names',
+                                        self, onchange_cb=self._onchange_numeric_path))
+        self.add_settable(cmd2.Settable('conserve_write', bool,
+                                        'Read and compare before write',
+                                        self, onchange_cb=self._onchange_conserve_write))
+        self.add_settable(cmd2.Settable('json_pretty_print', bool,
+                                        'Pretty-Print JSON output',
+                                        self))
+        self.add_settable(cmd2.Settable('apdu_trace', bool,
+                                        'Trace and display APDUs exchanged with card',
+                                        self, onchange_cb=self._onchange_apdu_trace))
+        self.add_settable(cmd2.Settable('apdu_strict', bool,
+                                        'Strictly apply APDU format according to ISO/IEC 7816-3, table 12',
+                                        self))
+        self.add_settable(cmd2.Settable('verbose', bool,
+                                        'Enable/disable verbose logging',
+                                        self, onchange_cb=self._onchange_verbose))
         self.equip(card, rs)
 
     def equip(self, card, rs):
