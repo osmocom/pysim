@@ -418,69 +418,71 @@ class BinaryParam(ConfigurableParameter):
 
 
 class EnumParam(ConfigurableParameter):
-    """ConfigurableParameter for named integer enumeration values.
+    """ConfigurableParameter for named value enumerations.
 
-    Subclasses must define a nested enum.IntEnum named 'Values' listing all valid names and their
-    integer codes.  apply_val() and get_values_from_pes() are not implemented here and this must
-    be inherited from another mixin."""
-
-    class Values(enum.IntEnum):
-        pass  # subclasses override this
-
-    @classmethod
-    def validate_val(cls, val) -> int:
-        if isinstance(val, int):
-            try:
-                return int(cls.Values(val))
-            except ValueError:
-                pass
-        elif isinstance(val, str):
-            member = cls.map_name_to_val(val, strict=False)
-            if member is not None:
-                return member
-
-        valid = ', '.join(m.name for m in cls.Values)
-        raise ValueError(f"{cls.get_name()}: invalid argument: {val!r}. Valid arguments are: {valid}")
+    Subclasses define an own value_map, and implement their own apply_val() and get_values_from_pes().
+    """
+    value_map = {
+            # For example:
+            #'Meaningful label for value 23': 0x23,
+            # Where 0x23 is a valid value to use for apply_val(), of any valid type.
+        }
+    _value_map_reverse = None
 
     @classmethod
-    def map_name_to_val(cls, name: str, strict=True) -> int:
-        """Return the integer value for a given enum member name. Performs an exact match first,
-        then falls back to fuzzy matching (case-insensitive, punctuation-insensitive)."""
-        try:
-            return int(cls.Values[name])
-        except KeyError:
-            pass
+    def validate_val(cls, val):
+        orig_val = val
+        enum_val = None
+        if isinstance(val, str):
+            enum_name = val
+            enum_val = cls.map_name_to_val(enum_name)
 
-        clean = cls.clean_name_str(name)
-        for member in cls.Values:
-            if cls.clean_name_str(member.name) == clean:
-                return int(member)
+        # if the str is not one of the known value_map.keys(), is it maybe one of value_map.keys()?
+        if enum_val is None and val in cls.value_map.values():
+            enum_val = val
+
+        if enum_val not in cls.value_map.values():
+            raise ValueError(f"{cls.get_name()}: invalid argument: {orig_val!r}. Valid arguments are:"
+                             f" {', '.join(cls.value_map.keys())}")
+
+        return enum_val
+
+    @classmethod
+    def map_name_to_val(cls, name:str, strict=True):
+        val = cls.value_map.get(name)
+        if val is not None:
+            return val
+
+        clean_name = cls.clean_name_str(name)
+        for k, v in cls.value_map.items():
+            if clean_name == cls.clean_name_str(k):
+                return v
 
         if strict:
-            valid = ', '.join(m.name for m in cls.Values)
-            raise ValueError(f"{cls.get_name()}: {name!r} is not a known value. Known values are: {valid}")
+            raise ValueError(f"Problem in {cls.get_name()}: {name!r} is not a known value."
+                    f" Known values are: {cls.value_map.keys()!r}")
         return None
 
     @classmethod
     def map_val_to_name(cls, val, strict=False) -> str:
-        """Return the enum member name for a given integer value."""
-        try:
-            return cls.Values(val).name
-        except ValueError:
-            if strict:
-                raise ValueError(f"{cls.get_name()}: {val!r} ({type(val).__name__}) is not a known value.")
-            return None
+        if cls._value_map_reverse is None:
+            cls._value_map_reverse = dict((v, k) for k, v in cls.value_map.items())
+
+        name = cls._value_map_reverse.get(val)
+        if name:
+            return name
+        if strict:
+            raise ValueError(f"Problem in {cls.get_name()}: {val!r} ({type(val)}) is not a known value."
+                    f" Known values are: {cls.value_map.values()!r}")
+        return None
 
     @classmethod
-    def name_normalize(cls, name: str) -> str:
-        """Map a (possibly fuzzy) name to its canonical enum member name."""
-        return cls.Values(cls.map_name_to_val(name)).name
+    def name_normalize(cls, name:str) -> str:
+        return cls.map_val_to_name(cls.map_name_to_val(name))
 
     @classmethod
-    def clean_name_str(cls, val: str) -> str:
-        """Strip punctuation and case for fuzzy name comparison.
-        Treats hyphens and underscores as equivalent (both removed)."""
-        return re.sub('[^0-9A-Za-z]', '', val).lower()
+    def clean_name_str(cls, val):
+        return re.sub('[^0-9A-Za-z-_]', '', val).lower()
 
 
 class Iccid(DecimalParam):
@@ -1031,17 +1033,17 @@ class AlgorithmID(EnumParam, AlgoConfig):
     """use validate_val() from EnumParam, and apply_val() from AlgoConfig.
     In get_values_from_pes(), return enum value names, not raw values."""
     name = "Algorithm"
+    # as in pySim/esim/asn1/saip/PE_Definitions-3.3.1.asn
+    value_map = {
+            "Milenage" : 1,
+            "TUAK" : 2,
+            "usim-test" : 3,
+        }
     algo_config_key = 'algorithmID'
     example_input = "Milenage"
     default_source = param_source.ConstantSource
 
-    # as in pySim/esim/asn1/saip/PE_Definitions-3.3.1.asn
-    class Values(enum.IntEnum):
-        Milenage  = 1
-        TUAK      = 2
-        usim_test = 3  # input 'usim-test' also accepted via fuzzy matching
-
-    # EnumParam.validate_val() returns the int values from Values
+    # EnumParam.validate_val() returns the int values from value_map
 
     @classmethod
     def get_values_from_pes(cls, pes: ProfileElementSequence):
