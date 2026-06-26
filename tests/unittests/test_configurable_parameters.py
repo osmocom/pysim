@@ -148,7 +148,7 @@ class ConfigurableParameterTest(unittest.TestCase):
             Paramtest(param_cls=p13n.AlgorithmID,
                       val='usim-test',
                       expect_clean_val=3,
-                      expect_val='usim_test'),
+                      expect_val='usim-test'),
 
             Paramtest(param_cls=p13n.AlgorithmID,
                       val=1,
@@ -161,7 +161,7 @@ class ConfigurableParameterTest(unittest.TestCase):
             Paramtest(param_cls=p13n.AlgorithmID,
                       val=3,
                       expect_clean_val=3,
-                      expect_val='usim_test'),
+                      expect_val='usim-test'),
 
             Paramtest(param_cls=p13n.K,
                       val='01020304050607080910111213141516',
@@ -558,7 +558,7 @@ class TestEnumParam(unittest.TestCase):
     def test_validate_by_name_exact(self):
         self.assertEqual(p13n.AlgorithmID.validate_val('Milenage'), 1)
         self.assertEqual(p13n.AlgorithmID.validate_val('TUAK'), 2)
-        self.assertEqual(p13n.AlgorithmID.validate_val('usim_test'), 3)
+        self.assertEqual(p13n.AlgorithmID.validate_val('usim-test'), 3)
 
     def test_validate_by_int(self):
         self.assertEqual(p13n.AlgorithmID.validate_val(1), 1)
@@ -571,7 +571,7 @@ class TestEnumParam(unittest.TestCase):
         self.assertEqual(p13n.AlgorithmID.validate_val('tuak'), 2)
 
     def test_validate_fuzzy_hyphen_underscore(self):
-        # 'usim-test' has a hyphen; enum member is 'usim_test' — must fuzzy-match
+        # 'usim-test' has a hyphen; enum member is 'usim-test' — must fuzzy-match
         self.assertEqual(p13n.AlgorithmID.validate_val('usim-test'), 3)
 
     def test_validate_invalid_name(self):
@@ -608,7 +608,7 @@ class TestEnumParam(unittest.TestCase):
     def test_map_val_known(self):
         self.assertEqual(p13n.AlgorithmID.map_val_to_name(1), 'Milenage')
         self.assertEqual(p13n.AlgorithmID.map_val_to_name(2), 'TUAK')
-        self.assertEqual(p13n.AlgorithmID.map_val_to_name(3), 'usim_test')
+        self.assertEqual(p13n.AlgorithmID.map_val_to_name(3), 'usim-test')
 
     def test_map_val_unknown_nonstrict(self):
         self.assertIsNone(p13n.AlgorithmID.map_val_to_name(99))
@@ -622,7 +622,9 @@ class TestEnumParam(unittest.TestCase):
     def test_name_normalize(self):
         self.assertEqual(p13n.AlgorithmID.name_normalize('Milenage'), 'Milenage')
         self.assertEqual(p13n.AlgorithmID.name_normalize('milenage'), 'Milenage')
-        self.assertEqual(p13n.AlgorithmID.name_normalize('usim-test'), 'usim_test')
+        self.assertEqual(p13n.AlgorithmID.name_normalize('usimtest'), 'usim-test')
+        self.assertEqual(p13n.AlgorithmID.name_normalize('usim_test'), 'usim-test')
+        self.assertEqual(p13n.AlgorithmID.name_normalize('USIM Test'), 'usim-test')
 
     # --- clean_name_str ---
 

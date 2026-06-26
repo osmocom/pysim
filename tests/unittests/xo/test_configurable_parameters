@@ -77,7 +77,7 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der AlgorithmID(val=	'TUAK':str)
 
 ok: TS48v5_SAIP2.1A_NoBERTLV.der AlgorithmID(val=	'usim-test':str)
 	clean_val=	3:int
-	read_back_val=	{'Algorithm': 'usim_test'}:{str}
+	read_back_val=	{'Algorithm': 'usim-test'}:{str}
 
 ok: TS48v5_SAIP2.1A_NoBERTLV.der AlgorithmID(val=	1:int)
 	clean_val=	1:int
@@ -89,7 +89,7 @@ ok: TS48v5_SAIP2.1A_NoBERTLV.der AlgorithmID(val=	2:int)
 
 ok: TS48v5_SAIP2.1A_NoBERTLV.der AlgorithmID(val=	3:int)
 	clean_val=	3:int
-	read_back_val=	{'Algorithm': 'usim_test'}:{str}
+	read_back_val=	{'Algorithm': 'usim-test'}:{str}
 
 ok: TS48v5_SAIP2.1A_NoBERTLV.der K(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
@@ -777,7 +777,7 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der AlgorithmID(val=	'TUAK':str)
 
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der AlgorithmID(val=	'usim-test':str)
 	clean_val=	3:int
-	read_back_val=	{'Algorithm': 'usim_test'}:{str}
+	read_back_val=	{'Algorithm': 'usim-test'}:{str}
 
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der AlgorithmID(val=	1:int)
 	clean_val=	1:int
@@ -789,7 +789,7 @@ ok: TS48v5_SAIP2.3_BERTLV_SUCI.der AlgorithmID(val=	2:int)
 
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der AlgorithmID(val=	3:int)
 	clean_val=	3:int
-	read_back_val=	{'Algorithm': 'usim_test'}:{str}
+	read_back_val=	{'Algorithm': 'usim-test'}:{str}
 
 ok: TS48v5_SAIP2.3_BERTLV_SUCI.der K(val=	'01020304050607080910111213141516':str)
 	clean_val=	b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x10\x11\x12\x13\x14\x15\x16':bytes
