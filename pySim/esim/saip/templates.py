@@ -231,7 +231,7 @@ class FilesAtMF(ProfileTemplate):
     files = [
         FileTemplate(0x3f00, 'MF',           'MF', None, None,  14, None, None, None, params=['pinStatusTemplateDO']),
         FileTemplate(0x2f05, 'EF.PL',        'TR', None,    2,   1, 0x05, 'FF...FF', None),
-        FileTemplate(0x2f02, 'EF.ICCID',     'TR', None,   10,  11, None, None, True),
+        FileTemplate(0x2fe2, 'EF.ICCID',     'TR', None,   10,  11, None, None, True),
         FileTemplate(0x2f00, 'EF.DIR',       'LF', None, None,  10, 0x1e, None, True, params=['nb_rec', 'size']),
         FileTemplate(0x2f06, 'EF.ARR',       'LF', None, None,  10, None, None, True, params=['nb_rec', 'size']),
         FileTemplate(0x2f08, 'EF.UMPC',      'TR', None,    5,  10, 0x08, None, False),
