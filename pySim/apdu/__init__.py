@@ -134,11 +134,12 @@ class Apdu(Tpdu):
         if callable(method):
             return method()
         # default case: only 9000 is success
-        if self.sw == b'\x90\x00':
-            return True
-        # This is not really a generic positive APDU SW but specific to UICC/SIM
-        if self.sw[0] == 0x91:
-            return True
+        if self.sw:
+            if self.sw == b'\x90\x00':
+                return True
+            # This is not really a generic positive APDU SW but specific to UICC/SIM
+            if self.sw[0] == 0x91:
+                return True
         return False
 
 
@@ -423,7 +424,7 @@ class TpduFilter(ApduHandler):
 
     def input_tpdu(self, tpdu:Tpdu):
         # handle SW=61xx / 6Cxx
-        if tpdu.sw[0] == 0x61 or tpdu.sw[0] == 0x6C:
+        if tpdu.sw and (tpdu.sw[0] == 0x61 or tpdu.sw[0] == 0x6C):
             self.state = 'WAIT_GET_RESPONSE'
             # handle successive 61/6c responses by stupid phone/modem OS
             if tpdu.ins != 0xC0:
