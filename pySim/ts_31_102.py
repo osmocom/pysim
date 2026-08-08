@@ -285,6 +285,14 @@ class EF_SUCI_Calc_Info(TransparentEF):
                                 {"hnet_pubkey_identifier": 11, "hnet_pubkey":
                                  h2b("d1bc365f4997d17ce4374e72181431cbfeba9e1b98d7618f79d48561b144672a")}]} ),
     ]
+    _test_decode = [
+        ( 'A000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
+          {"prot_scheme_id_list": [],
+           "hnet_pubkey_list": []} ),
+        ( 'A000A100FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
+          {"prot_scheme_id_list": [],
+           "hnet_pubkey_list": []} ),
+    ]
     # 3GPP TS 31.102 Section 4.4.11.8
     class ProtSchemeIdList(BER_TLV_IE, tag=0xa0):
         # FIXME: 3GPP TS 24.501 Protection Scheme Identifier
@@ -389,7 +397,7 @@ class EF_SUCI_Calc_Info(TransparentEF):
         # remaining data holds Home Network Public Key Data Object
         hpkl = EF_SUCI_Calc_Info.HnetPubkeyList()
         hpkl.from_tlv(in_bytes[pos:])
-        hnet_pubkey_list = self._compact_pubkey_list(hpkl.to_dict()['hnet_pubkey_list'])
+        hnet_pubkey_list = self._compact_pubkey_list(hpkl.to_dict()['hnet_pubkey_list'] or [])
 
         return {
             'prot_scheme_id_list': prot_scheme_id_list,
