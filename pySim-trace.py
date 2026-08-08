@@ -117,7 +117,7 @@ class Tracer:
             try:
                 apdu = self.source.read()
                 apdu_counter = apdu_counter + 1
-            except StopIteration:
+            except (StopIteration, KeyboardInterrupt):
                 print("%i APDUs parsed, stop iteration." % apdu_counter)
                 return 0
 
