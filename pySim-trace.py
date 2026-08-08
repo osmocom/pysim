@@ -120,6 +120,9 @@ class Tracer:
             except (StopIteration, KeyboardInterrupt):
                 print("%i APDUs parsed, stop iteration." % apdu_counter)
                 return 0
+            except Exception as exp:
+                print(f"Failed to parse APDU {exp}")
+                continue
 
             if isinstance(apdu, CardReset):
                 self.rs.reset()
