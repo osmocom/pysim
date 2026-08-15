@@ -336,6 +336,8 @@ class TerminalCapability(BER_TLV_IE, tag=0xa9, nested=[TerminalPowerSupply, Exte
 
 # ETSI TS 102 221 Section 9.2.7 + ISO7816-4 9.3.3/9.3.4
 class _AM_DO_DF(DataObject):
+    """ISO7816-4:2005 5.4.3.1 Table 16"""
+
     def __init__(self):
         super().__init__('access_mode', 'Access Mode', tag=0x80)
 
@@ -382,7 +384,7 @@ class _AM_DO_DF(DataObject):
 
 
 class _AM_DO_EF(DataObject):
-    """ISO7816-4 9.3.2 Table 18 + 9.3.3.1 Table 31"""
+    """ISO7816-4:2005 5.4.3.1 Table 17"""
 
     def __init__(self):
         super().__init__('access_mode', 'Access Mode', tag=0x80)
@@ -430,7 +432,7 @@ class _AM_DO_EF(DataObject):
 
 
 class _AM_DO_CHDR(DataObject):
-    """Command Header Access Mode DO according to ISO 7816-4 Table 32."""
+    """Command Header Access Mode DO according to ISO 7816-4:2005 5.4.3.2 Table 22."""
 
     def __init__(self, tag):
         super().__init__('command_header', 'Command Header Description', tag=tag)
@@ -544,8 +546,9 @@ class CRT_DO(DataObject):
         pin = pin_names.inverse[self.decoded]
         return b'\x83\x01' + pin.to_bytes(1, 'big') + b'\x95\x01\x08'
 
-# ISO7816-4 9.3.3 Table 33
 class SecCondByte_DO(DataObject):
+    """ISO7816-4:2005 5.4.3.1 Table 20"""
+
     def __init__(self, tag=0x9d):
         super().__init__('security_condition_byte', tag=tag)
 
