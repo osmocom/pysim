@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 from bidict import bidict
+import copy
 
 from construct import Select, Const, Bit, Struct, Int16ub, FlagsEnum, GreedyString, ValidationError
 from construct import Optional as COptional, Computed
@@ -732,36 +733,57 @@ class EF_ARR(LinFixedEF):
                 raise ValueError
         return by_mode
 
+    @staticmethod
+    def __get_do_sequence(decode_for_df : bool = False):
+        if decode_for_df:
+            return DataObjectSequence('arr', sequence=[AM_DO_DF, SC_DO])
+        else:
+            return DataObjectSequence('arr', sequence=[AM_DO_EF, SC_DO])
+
     def _decode_record_bin(self, raw_bin_data, **kwargs):
-        # we can only guess if we should decode for EF or DF here :(
-        arr_seq = DataObjectSequence('arr', sequence=[AM_DO_EF, SC_DO])
+        # we can only guess if we should decode for EF or DF here, but our caller may
+        # be able to pass us a hint:
+        arr_seq = self.__get_do_sequence(kwargs.get('decode_for_df', False))
         dec = arr_seq.decode_multi(raw_bin_data)
         # we cannot pass the result through flatten() here, as we don't have a related
         # 'un-flattening' decoder, and hence would be unable to encode :(
         return dec[0]
 
     def _encode_record_bin(self, in_json, **kwargs):
-        # we can only guess if we should decode for EF or DF here :(
-        arr_seq = DataObjectSequence('arr', sequence=[AM_DO_EF, SC_DO])
+        # we can only guess if we should decode for EF or DF here, but our caller may
+        # be able to pass us a hint:
+        arr_seq = self.__get_do_sequence(kwargs.get('encode_for_df', False))
         return arr_seq.encode_multi(in_json)
 
     @with_default_category('File-Specific Commands')
     class AddlShellCommands(CommandSet):
-        @cmd2.with_argparser(LinFixedEF.ShellCommands.read_rec_dec_parser)
+        read_arr_argparser = copy.deepcopy(LinFixedEF.ShellCommands.read_rec_dec_parser)
+        read_arr_argparser.add_argument('--decode-for-df', action='store_true',
+                                        help='Decode EF.ARR record as if used by a DF (default: EF)')
+
+        @cmd2.with_argparser(read_arr_argparser)
         def do_read_arr_record(self, opts):
             """Read one EF.ARR record in flattened, human-friendly form."""
-            (data, _sw) = self._cmd.lchan.read_record_dec(opts.RECORD_NR)
+            (hexdata, _sw) = self._cmd.lchan.read_record(opts.RECORD_NR)
+            data = self._cmd.lchan.selected_file._decode_record_bin(h2b(hexdata),
+                                                                    decode_for_df = opts.decode_for_df)
             data = self._cmd.lchan.selected_file.flatten(data)
             self._cmd.poutput_json(data, opts.oneline)
 
-        @cmd2.with_argparser(LinFixedEF.ShellCommands.read_recs_dec_parser)
+        read_arrs_argparser = copy.deepcopy(LinFixedEF.ShellCommands.read_recs_dec_parser)
+        read_arrs_argparser.add_argument('--decode-for-df', action='store_true',
+                                        help='Decode EF.ARR records as if used by a DF (default: EF)')
+
+        @cmd2.with_argparser(read_arrs_argparser)
         def do_read_arr_records(self, opts):
             """Read + decode all EF.ARR records in flattened, human-friendly form."""
             num_of_rec = self._cmd.lchan.selected_file_num_of_rec()
             # collect all results in list so they are rendered as JSON list when printing
             data_list = []
             for recnr in range(1, 1 + num_of_rec):
-                (data, _sw) = self._cmd.lchan.read_record_dec(recnr)
+                (hexdata, _sw) = self._cmd.lchan.read_record(recnr)
+                data = self._cmd.lchan.selected_file._decode_record_bin(h2b(hexdata),
+                                                                        decode_for_df = opts.decode_for_df)
                 data = self._cmd.lchan.selected_file.flatten(data)
                 data_list.append(data)
             self._cmd.poutput_json(data_list, opts.oneline)
