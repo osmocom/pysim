@@ -187,7 +187,80 @@ StoreMetadataRequest ::= [37] SEQUENCE { -- Tag 'BF25'
     profileClass [21] ProfileClass OPTIONAL, -- Tag '95' (default if absent: 'operational')
     notificationConfigurationInfo [22] SEQUENCE OF NotificationConfigurationInformation OPTIONAL,
     profileOwner [23] OperatorID OPTIONAL, -- Tag 'B7'
-    profilePolicyRules [25] PprIds OPTIONAL -- Tag '99'
+    profilePolicyRules [25] PprIds OPTIONAL, -- Tag '99'
+    serviceSpecificDataStoredInEuicc [34] VendorSpecificExtension OPTIONAL, -- #SupportedFromV2.4.0# Tag 'BF22'
+    serviceSpecificDataNotStoredInEuicc [35] VendorSpecificExtension OPTIONAL, -- #SupportedFromV2.4.0# Tag 'BF23'
+    rpmConfiguration [26] RpmConfiguration OPTIONAL, -- #SupportedForRpmV3.0.0# Tag 'BA'
+    hriServerAddress [27] UTF8String OPTIONAL, -- #SupportedFromV3.0.0# Tag '9B'
+    serviceProviderMessage [30] LocalisedTextMessage OPTIONAL, -- #SupportedFromV3.0.0# Tag 'BE'
+    lprConfiguration [28] LprConfiguration OPTIONAL, -- #SupportedForLpaProxyV3.0.0# Tag 'BC'
+    enterpriseConfiguration [29] EnterpriseConfiguration OPTIONAL, -- #SupportedForEnterpriseV3.0.0# Tag 'BD'
+    serviceDescription [31] ServiceDescription OPTIONAL, -- #SupportedFromV3.0.0# Tag '9F1F'
+    deviceChangeConfiguration [32] DeviceChangeConfiguration OPTIONAL, -- #SupportedForDcV3.0.0# Tag 'BF20'
+    estimatedProfileSize [33] INTEGER OPTIONAL -- #SupportedFromV3.0.0# Tag '9F21'
+}
+
+-- SGP.22 v3.1 Annex H metadata types referenced by StoreMetadataRequest.
+
+VendorSpecificExtension ::= SEQUENCE OF SEQUENCE { -- #SupportedFromV2.4.0#
+    vendorOid [0] OBJECT IDENTIFIER, -- OPENTYPE.&typeId in the published module
+    vendorSpecificData [1] ANY -- OPENTYPE.&Type in the published module
+}
+
+RpmType ::= BIT STRING {
+    enable(0), disable(1), delete(2), listProfileInfo(3), contactPcmp(4)
+}
+
+RpmConfiguration ::= SEQUENCE { -- #SupportedForRpmV3.0.0#
+    managingDpList [0] SEQUENCE OF SEQUENCE {
+        managingDpOid [0] OBJECT IDENTIFIER,
+        rpmType [1] RpmType OPTIONAL,
+        tagList [APPLICATION 28] OCTET STRING OPTIONAL
+    },
+    pollingAddress [1] UTF8String OPTIONAL, -- Tag '81'
+    allowedCiPKId [2] SubjectKeyIdentifier OPTIONAL,
+    profileOwnerOid [3] OBJECT IDENTIFIER
+}
+
+LocalisedTextMessage ::= SEQUENCE { -- #SupportedFromV3.0.0#
+    languageTag UTF8String DEFAULT "en", -- RFC 5646 language tag
+    message UTF8String
+}
+
+LprConfiguration ::= SEQUENCE { -- #SupportedForLpaProxyV3.0.0#
+    pcmpAddress [0] UTF8String,
+    dpiEnable [1] UTF8String OPTIONAL,
+    triggerLprOnEnableProfile [2] NULL OPTIONAL
+}
+
+EnterpriseConfiguration ::= SEQUENCE { -- #SupportedForEnterpriseV3.0.0#
+    enterpriseOid [0] OBJECT IDENTIFIER,
+    enterpriseName [1] UTF8String (SIZE(0..64)),
+    enterpriseRules [2] SEQUENCE {
+        enterpriseRuleBits [0] BIT STRING {
+            referenceEnterpriseRule (0),
+            priorityEnterpriseProfile (1),
+            onlyEnterpriseProfilesCanBeInstalled (2)
+        },
+        numberOfNonEnterpriseProfiles [1] INTEGER
+    } OPTIONAL
+}
+
+ServiceDescription ::= BIT STRING { -- #SupportedFromV3.0.0#
+    voice (0), data (1)
+}
+
+DeviceChangeConfiguration ::= CHOICE { -- #SupportedForDcV3.0.0#
+    requestToDp [0] SEQUENCE {
+        smdpAddressForDc UTF8String,
+        allowedCiPKId SubjectKeyIdentifier OPTIONAL,
+        eidRequired NULL OPTIONAL,
+        tacRequired NULL OPTIONAL
+    },
+    usingStoredAc [1] SEQUENCE {
+        activationCodeForDc UTF8String (SIZE(0..255)),
+        deleteOldProfile NULL OPTIONAL
+    }
 }
  
 NotificationEvent ::= BIT STRING {
