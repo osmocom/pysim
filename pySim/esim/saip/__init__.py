@@ -121,6 +121,27 @@ NAAs = {
     NaaIsim.name: NaaIsim,
 }
 
+ERASED_STATE_BYTE = b'\xff'
+
+
+class ErasedStateBytesIO(io.BytesIO):
+    """BytesIO whose implicit growth carries the erased state instead of NUL.
+
+    Writing at a position past the end of a BytesIO pads the gap with NUL. In a
+    TCA profile file that gap is a region the Profile Package deliberately skipped,
+    which on the eUICC keeps the content the file was created with -- 'FF' when it
+    was created without a fill/repeat pattern.
+    """
+    def write(self, b):
+        position = self.tell()
+        end = self.getbuffer().nbytes
+        if position > end:
+            self.seek(end)
+            super().write(ERASED_STATE_BYTE * (position - end))
+            self.seek(position)
+        return super().write(b)
+
+
 class File:
     """Internal representation of a file in a profile filesystem.
 
@@ -421,7 +442,15 @@ class File:
 
     def file_content_from_tuples(self, l: List[Tuple]) -> Optional[bytes]:
         """linearize a list of fillFileContent / fillFileOffset tuples into a stream of bytes."""
-        stream = io.BytesIO()
+        # A gap that 'fillFileOffset' skips past everything written so far is not content:
+        # TCA SAIP V3.4.1 section 8.3.5 makes the offset a pointer move that writes nothing, and
+        # section 8.3.3 gives the tuple list the effect of "creating a file with a fill/repeat
+        # pattern, or non-pattern content and thereafter updating the content via Update". A file
+        # created without a pattern is erased, so those bytes read back as 'FF' (section 9.10:
+        # the default EF-ARR image is "padded with 'FF...FF'"). A plain BytesIO grows with NUL,
+        # which file_content_to_tuples() -- baselining on b'\xff' * len(self.body) when no template
+        # applies -- then re-encodes as explicit fillFileContent zeros.
+        stream = ErasedStateBytesIO()
         # Providing file content within "fillFileContent" / "fillFileOffset" shall have the same effect as
         # creating a file with a fill/repeat pattern and thereafter updating the content via Update.
         # Step 1: Fill with pattern from Fcp or Template
