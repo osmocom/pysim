@@ -437,8 +437,20 @@ class File:
         return ret
 
     def expand_fill_pattern(self) -> bytes:
-        """Expand the fill/repeat pattern as per TS 102 222 Section 6.3.2.2.2"""
-        return ts_102_222.expand_pattern(self.fill_pattern, self.fill_pattern_repeat, self.file_size)
+        """Expand the fill/repeat pattern as per TS 102 222 Section 6.3.2.2.2
+
+        TS 102 222 defines both patterns record-wise for a record oriented EF: tag 'C1'
+        initialises "the first W-1 bytes of each record", and tag 'C2' repeats within a record and
+        truncates "at the end of each record". Expanding once across file_size instead puts the
+        leading bytes of the pattern only in the first record, which for EF.EXT* or EF.SMS means
+        every later record claims a record type or status of 'FF'.
+        """
+        if self.file_type in ['LF', 'CY'] and self.rec_len and self.nb_rec:
+            record = ts_102_222.expand_pattern(self.fill_pattern, self.fill_pattern_repeat,
+                                               self.rec_len)[:self.rec_len]
+            return record * self.nb_rec
+        return ts_102_222.expand_pattern(self.fill_pattern, self.fill_pattern_repeat,
+                                         self.file_size)[:self.file_size]
 
     def file_content_from_tuples(self, l: List[Tuple]) -> Optional[bytes]:
         """linearize a list of fillFileContent / fillFileOffset tuples into a stream of bytes."""
