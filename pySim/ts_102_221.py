@@ -236,21 +236,28 @@ class ShortFileIdentifier(BER_TLV_IE, tag=0x88):
 class LifeCycleStatusInteger(BER_TLV_IE, tag=0x8A):
     _test_de_encode = [
         ( '8a0105', 'operational_activated' ),
+        ( '8a010c', 'termination' ),
     ]
     def _from_bytes(self, do: bytes):
         lcsi = int.from_bytes(do, 'big')
-        if lcsi == 0x00:
+        # TS 102 221 table 11.7b: a value with any bit set in b8..b5 is
+        # proprietary, and none of the states below apply to it.
+        if lcsi & 0xf0:
+            ret = lcsi
+        elif lcsi == 0x00:
             ret = 'no_information'
         elif lcsi == 0x01:
             ret = 'creation'
         elif lcsi == 0x03:
             ret = 'initialization'
+        elif lcsi & 0x0c == 0x0c:
+            # b4 b3 = 1 1 is the termination state. It has to be tested
+            # before the operational states, whose patterns leave b4 free.
+            ret = 'termination'
         elif lcsi & 0x05 == 0x05:
             ret = 'operational_activated'
         elif lcsi & 0x05 == 0x04:
             ret = 'operational_deactivated'
-        elif lcsi & 0xc0 == 0xc0:
-            ret = 'termination'
         else:
             ret = lcsi
         self.decoded = ret
