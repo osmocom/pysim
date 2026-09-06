@@ -42,7 +42,7 @@ case "$JOB_TYPE" in
 "card-test") # tests requiring physical cards
 	setup_venv
 
-	pip install -r requirements.txt
+	pip install .
 
 	# Run pySim-prog integration tests
 	cd tests/pySim-prog_test/
@@ -53,6 +53,8 @@ case "$JOB_TYPE" in
 	python3 -m unittest discover -v -s ./tests/pySim-shell_test/
 
 	# Run pySim-smpp2sim test
+	pip install .[smpp2sim]
+	pip install smpplib
 	tests/pySim-smpp2sim_test/pySim-smpp2sim_test.sh
 	;;
 "distcheck")
