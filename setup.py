@@ -33,7 +33,6 @@ setup(
         "packaging",
         "smpp.pdu @ git+https://github.com/hologram-io/smpp.pdu",
         "asn1tools",
-        "smpp.twisted3 @ git+https://github.com/jookies/smpp.twisted",
     ],
     scripts=[
         'pySim-prog.py',
@@ -56,6 +55,9 @@ setup(
             "pyopenssl",
             "requests",
             "smpplib",
+        ],
+        "smpp2sim": [
+            "smpp.twisted3 @ git+https://github.com/jookies/smpp.twisted",
         ],
         "CardKeyProviderPgsql": [
             "psycopg2-binary",
