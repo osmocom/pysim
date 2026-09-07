@@ -215,11 +215,20 @@ class SCP(SecureChannel, abc.ABC):
     def gen_ext_auth_apdu(self, security_level: int = 0x01) -> bytes:
         pass
 
+    def pad_to_blocksize(self, data: bytes) -> bytes:
+        """Right pad the data with zero bytes to a multiple of the DEK cipher block size."""
+        if len(data) % self.sk.blocksize:
+            # not '+=' which would mutate the callers bytearray in place..
+            data = data + b'\x00' * (self.sk.blocksize - len(data) % self.sk.blocksize)
+        return data
+
     def encrypt_key(self, key: bytes) -> bytes:
         """Encrypt a key with the DEK."""
-        num_pad = len(key) % self.sk.blocksize
-        if num_pad:
-            return bertlv_encode_len(len(key)) + self.dek_encrypt(key + b'\x00'*num_pad)
+        if len(key) % self.sk.blocksize:
+            # The kcv is right padded before encryption and the kcb
+            # is formatted as described in Table 11-70: preceded by the actual length of the
+            # clear text kcv.
+            return bertlv_encode_len(len(key)) + self.dek_encrypt(self.pad_to_blocksize(key))
         return self.dek_encrypt(key)
 
     def decrypt_key(self, encrypted_key:bytes) -> bytes:
@@ -232,9 +241,8 @@ class SCP(SecureChannel, abc.ABC):
             # Block provides the actual length of the key component value, which allows recovering the
             # clear-text key component value after decryption of the encrypted key component value and removal
             # of padding bytes.
-            decrypted = self.dek_decrypt(encrypted_key)
-            key_len, remainder = bertlv_parse_len(decrypted)
-            return remainder[:key_len]
+            key_len, remainder = bertlv_parse_len(encrypted_key)
+            return self.dek_decrypt(remainder)[:key_len]
         else:
             # If the length of the Key Component Block is a multiple of the block size of the encryption
             # algorithm (i.e.  8 bytes for DES, 16 bytes for AES), then it shall be assumed that no padding

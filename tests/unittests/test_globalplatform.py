@@ -283,6 +283,41 @@ class SCP03_Test_AES256_33(SCP03_Test, unittest.TestCase):
 # FIXME: test auth with random (0x60) vs pseudo-random (0x70) challenge
 
 
+class KeyComponentBlock_Test(unittest.TestCase):
+    """Tests for the kcb of GP CardSpec v2.3
+    - Table 11-70 kcv that required padding, preceded by its clear-text length
+    - Table 11-71 no padding required"""
+
+    def setUp(self):
+        # SCP02 (3DES DEK, 8 byte blocks), same vectors as SCP02_Test
+        self.scp02 = SCP02(card_keys=ck_3des_70)
+        self.scp02.gen_init_update_apdu(host_challenge=h2b('40A62C37FA6304F8'))
+        self.scp02.parse_init_update_resp(h2b('00000000000000000000700200016B4524ABEE7CF32EA3838BC148F3'))
+        self.scp02.gen_ext_auth_apdu()
+        # SCP03 (AES DEK, 16 byte blocks), same vectors as SCP03_Test_AES128_11
+        self.scp03 = SCP03(card_keys=KEYSET_AES128)
+        self.scp03.gen_init_update_apdu(h2b('b13e5f938fc108c4'))
+        self.scp03.parse_init_update_resp(h2b('000000000000000000003003703eb51047495b249f66c484c1d2ef1948000002'))
+        self.scp03.gen_ext_auth_apdu(0x11)
+
+    def test_encrypt_decrypt_key(self):
+        for scp in (self.scp02, self.scp03):
+            bs = scp.sk.blocksize
+            for keylen in range(1, 3 * bs + 1):
+                with self.subTest(scp=type(scp).__name__, keylen=keylen):
+                    key = bytes(range(keylen))
+                    kcb = scp.encrypt_key(key)
+                    if keylen % bs:
+                        # Table 11-70: <length of clear key component> || <encrypted padded value>
+                        self.assertEqual(kcb[0], keylen)
+                        self.assertEqual((len(kcb) - 1) % bs, 0)
+                        self.assertEqual(len(kcb) - 1, keylen + (bs - keylen % bs))
+                    else:
+                        # Table 11-71: only the encrypted key component value
+                        self.assertEqual(len(kcb), keylen)
+                    self.assertEqual(scp.decrypt_key(kcb), key)
+
+
 class SCP03_KCV_Test(unittest.TestCase):
     def test_kcv(self):
         self.assertEqual(compute_kcv('aes', KEYSET_AES128.enc), h2b('C35280'))
