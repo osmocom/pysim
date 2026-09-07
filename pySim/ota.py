@@ -18,10 +18,12 @@
 import zlib
 import abc
 import struct
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List, Union
 from construct import Enum, Int8ub, Int16ub, Struct, BitsInteger, BitStruct
 from construct import Flag, Padding, Switch, this, PrefixedArray, GreedyRange
+from construct import Const, Prefixed, Select, Construct, SizeofError, stream_read, stream_write
 from osmocom.construct import *
+from osmocom.tlv import bertlv_encode_len
 from osmocom.utils import b2h
 
 from pySim.sms import UserDataHeader
@@ -55,6 +57,172 @@ ResponseStatus = Enum(Int8ub, por_ok=0, rc_cc_ds_failed=1, cntr_low=2, cntr_high
 CompactRemoteResp = Struct('number_of_commands'/Int8ub,
                            'last_status_word'/HexAdapter(Bytes(2)),
                            'last_response_data'/HexAdapter(GreedyBytes))
+
+######################################################################
+# Expanded Remote Application data format, ETSI TS 102 226 V19.0.0 (2025-11) Section 5.2
+#   5.2.1   Expanded Remote command structure
+#   5.2.1.1 C-APDU TLV
+#   5.2.1.2 Immediate Action TLV
+#   5.2.1.3 Error Action TLV
+#   5.2.1.4 Script Chaining TLV
+#   5.2.2   Expanded Remote response structure (tables 5.10 .. 5.16)
+#
+# BER-TLV tag values from ETSI TS 101 220 V19.0.0 tables 7.18, 7.19, 7.20
+# C-APDU / R-APDU ETSI TS 102 223 Section 8.35 + 8.36
+# inside these the CR flag of the tag is 0 (TS 101 220 tables 7.19/7.20),
+# so tag bytes are 22 and 23 and not A2/A3.
+#
+# This layer sits above the TS 102 225 security layer.
+######################################################################
+
+class BerTlvLength(Construct):
+    """A definite-length BER-TLV length field used by the "expanded remote
+    application data format" from ISO/IEC 8825-1 referenced by TS 102 226 5.2
+
+    - short form (0..127 -> single octet)
+    - long form (128.. -> 0x8N followed by N length octets)
+    Indefinite length coding (first octet 0x80, TS 102 226 tables 5.2a/5.10a)
+    is omitted here because it is only recommended for HTTPS/CoAP transport, not SMS."""
+    def _parse(self, stream, context, path):
+        first = stream_read(stream, 1, path)[0]
+        if first < 0x80:
+            return first
+        num_octets = first & 0x7f
+        if num_octets == 0:
+            raise NotImplementedError('indefinite coding is not supported')
+        return int.from_bytes(stream_read(stream, num_octets, path), 'big')
+
+    def _build(self, obj, stream, context, path):
+        encoded = bertlv_encode_len(obj)
+        stream_write(stream, encoded, len(encoded), path)
+        return obj
+
+    def _sizeof(self, context, path):
+        raise SizeofError('BER-TLV length has a variable size?!')
+
+BerTlvLen = BerTlvLength()
+
+class _RApduValueAdapter(Adapter):
+    """Split/join value of R-APDU COMPREHENSION-TLV TS 102 223 8.36
+      [R-APDU data (x-2 bytes)] SW1 SW2."""
+    def _decode(self, obj, context, path):
+        raw = bytes(obj)
+        return Container(response_data=b2h(raw[:-2]), status_word=b2h(raw[-2:]))
+
+    def _encode(self, obj, context, path):
+        return h2b(obj['response_data']) + h2b(obj['status_word'])
+
+#### Command Scripting template TS 102 226 table 5.2, TS 101 220 tables 7.18/7.19
+
+# TS 102 223 8.35
+ExpandedC_APDU = Struct('_tag'/Const(b'\x22'),
+                        'c_apdu'/Prefixed(BerTlvLen, HexAdapter(GreedyBytes)))
+
+ExpandedCmd = Struct('_tag'/Const(b'\xaa'),
+                     'commands'/Prefixed(BerTlvLen, GreedyRange(ExpandedC_APDU)))
+
+#### Response Scripting template TS 102 226 tables 5.10-5.16, TS 101 220 table 7.20
+
+# TS 102 223 8.36
+ExpandedR_APDU = Struct('_tag'/Const(b'\x23'),
+                        'r_apdu'/Prefixed(BerTlvLen, _RApduValueAdapter(GreedyBytes)))
+
+# TS 102 226 table 5.11
+# Value is an integer per ISO/IEC 8825-1, likely just one octet.
+ExpandedNumExecuted = Struct('_tag'/Const(b'\x80'),
+                             'number_of_commands'/Prefixed(BerTlvLen, GreedyInteger()))
+
+# TS 102 226 table 5.12
+ExpandedBadFormat = Struct('_tag'/Const(b'\x90'),
+                           'bad_format'/Prefixed(BerTlvLen,
+                               Enum(Int8ub, unknown_tag=1, wrong_length=2, length_not_found=3)))
+
+# TS 102 226 table 5.14
+ExpandedImmediateActionResp = Struct('_tag'/Const(b'\x81'),
+                                     'immediate_action_response'/Prefixed(BerTlvLen,
+                                         Enum(Int8ub, suspension_error=1)))
+
+# TS 102 226 table 5.16
+ExpandedScriptChainingResp = Struct('_tag'/Const(b'\x83'),
+                                    'script_chaining_response'/Prefixed(BerTlvLen,
+                                        Enum(Int8ub, no_previous_script=1,
+                                             not_supported=2, unable_to_process=3)))
+
+# - starts with the "Number of executed command TLV objects" (table 5.10/5.13/5.15)
+# - followed by a sequence of R-APDU TLVs
+# - and/or one of the error # response TLVs
+ExpandedRemoteResp = Struct('_tag'/Const(b'\xab'),
+                            'body'/Prefixed(BerTlvLen, Struct(
+                                'num_executed'/ExpandedNumExecuted,
+                                'responses'/GreedyRange(Select(ExpandedR_APDU,
+                                                               ExpandedBadFormat,
+                                                               ExpandedImmediateActionResp,
+                                                               ExpandedScriptChainingResp)))))
+
+
+def encode_expanded_cmd(apdus: Union[bytes, List[bytes]]) -> bytes:
+    """builds the Command Scripting template, TS 102 226 5.2.1, definite length coding
+
+    Args:
+        apdus: single C-APDU bytes or list of C-APDUs bytes. Each
+               C-APDU is wrapped into a C-APDU TLV- This function does not add
+               or modify Le.
+    Returns:
+        encoded Command Scripting template (AA...) as bytes
+    """
+    if isinstance(apdus, (bytes, bytearray)):
+        apdus = [apdus]
+    return ExpandedCmd.build({'commands': [{'c_apdu': b2h(a)} for a in apdus]})
+
+
+def decode_expanded_resp(data: bytes) -> Container:
+    """Decode a Response Scripting template, TS 102 226 5.2.2 definite length
+    coding
+
+    returned Container has:
+        number_of_commands   -- "number of executed command TLV objects" table 5.11
+        commands             -- list of Containers, one per R-APDU TLV, each
+                                with 'response_data' and 'status_word' hexstr
+        last_response_data   -- response_data of the last R-APDU or ''
+        last_status_word     -- status_word of the last R-APDU or None
+        truncated            -- True if any R-APDU has SW 62F1.
+                                5.2.1.1 states card sets that status when it had to truncate
+                                C-APDU response data, and "this shall terminate the
+                                processing of the command list".
+                                so the response is short AND the remaining commands never ran.
+        bad_format           -- error type of a trailing Bad format TLV if present
+        immediate_action_response -- Immediate Action Response TLV, if there was a suspension error
+        script_chaining_response  -- Script Chaining Response TLV, if there was a chaining error
+
+    The 'last_response_data'/'last_status_word'/'number_of_commands' keys are compatible with
+    CompactRemoteResp so existing callers keep working."""
+    if isinstance(data, str):
+        data = h2b(data)
+    parsed = ExpandedRemoteResp.parse(data)
+    commands = []
+    bad_format = None
+    immediate_action_response = None
+    script_chaining_response = None
+    for item in parsed['body']['responses']:
+        if 'r_apdu' in item:
+            commands.append(Container(response_data=item['r_apdu']['response_data'],
+                                      status_word=item['r_apdu']['status_word']))
+        elif 'bad_format' in item:
+            bad_format = item['bad_format']
+        elif 'immediate_action_response' in item:
+            immediate_action_response = item['immediate_action_response']
+        elif 'script_chaining_response' in item:
+            script_chaining_response = item['script_chaining_response']
+    # TS 102 226 5.2.1.1: 62F1 means response of a C-APDU was truncated, processing terminated
+    truncated = any(c['status_word'].lower() == '62f1' for c in commands)
+    return Container(number_of_commands=parsed['body']['num_executed']['number_of_commands'],
+                     commands=commands,
+                     last_response_data=commands[-1]['response_data'] if commands else '',
+                     last_status_word=commands[-1]['status_word'] if commands else None,
+                     truncated=truncated,
+                     bad_format=bad_format,
+                     immediate_action_response=immediate_action_response,
+                     script_chaining_response=script_chaining_response)
 
 RC_CC_DS = Enum(BitsInteger(2), no_rc_cc_ds=0, rc=1, cc=2, ds=3)
 CNTR_REQ = Enum(BitsInteger(2), no_counter=0, counter_no_replay_or_seq=1, counter_must_be_higher=2, counter_must_be_lower=3)
@@ -149,13 +317,23 @@ class OtaDialect(abc.ABC):
         raise ValueError("Invalid rc_cc_ds: %s" % spi['rc_cc_ds'])
 
     @abc.abstractmethod
-    def encode_cmd(self, otak: OtaKeyset, tar: bytes, spi: dict, apdu: bytes) -> bytes:
+    def encode_cmd(self, otak: OtaKeyset, tar: bytes, spi: dict,
+                   apdu: Union[bytes, List[bytes]], remote_format: str = 'compact') -> bytes:
+        """Encode a command for a format.
+
+        remote_format:
+        'compact' TS 102 226 5.1, DEFAULT assumes apdus are opaque already-concatenated command strings
+        'expanded' TS 102 226 5.2 wraps a single C-APDU or list of C-APDUs in a Command Scripting template."""
         pass
 
     @abc.abstractmethod
-    def decode_resp(self, otak: OtaKeyset, spi: dict, apdu: bytes) -> (object, Optional["CompactRemoteResp"]):
-        """Decode a response into a response packet and, if indicted (by a
-        response status of `"por_ok"`) a decoded response.
+    def decode_resp(self, otak: OtaKeyset, spi: dict, apdu: bytes,
+                    remote_format: str = 'compact') -> (object, Optional[object]):
+        """Decode response into response packet + a decoded response if por_ok.
+
+        remote_format:
+        'compact' -> DEFAULT TS 102 226 5.1.2 CompactRemoteResp2
+        'expanded' -> container returned by decode_expanded_resp(), TS 102 226 5.2.2
 
         The response packet's common characteristics are not fully determined,
         and (so far) completely proprietary per dialect."""
@@ -335,7 +513,16 @@ class OtaDialectSms(OtaDialect):
                                'secured_data'/GreedyBytes)
     hdr_construct = Struct('chl'/Int8ub, 'spi'/SPI, 'kic'/KIC, 'kid'/KID_CC, 'tar'/Bytes(3))
 
-    def encode_cmd(self, otak: OtaKeyset, tar: bytes, spi: dict, apdu: bytes) -> bytes:
+    def encode_cmd(self, otak: OtaKeyset, tar: bytes, spi: dict,
+                   apdu: Union[bytes, List[bytes]], remote_format: str = 'compact') -> bytes:
+        # as above:
+        # expanded format is a Command Scripting template wrapping the C-APDU(s)
+        # compact format passes already concatenated command string
+        if remote_format == 'expanded':
+            apdu = encode_expanded_cmd(apdu)
+        elif remote_format != 'compact':
+            raise ValueError("Invalid remote_format: %s" % remote_format)
+
         # length of signature in octets
         len_sig = self._compute_sig_len(spi)
         pad_cnt = 0
@@ -446,7 +633,10 @@ class OtaDialectSms(OtaDialect):
         return hdr_dec['tar'], spi, apdu
 
 
-    def decode_resp(self, otak: OtaKeyset, spi: dict, data: bytes) -> ("OtaDialectSms.SmsResponsePacket", Optional["CompactRemoteResp"]):
+    def decode_resp(self, otak: OtaKeyset, spi: dict, data: bytes,
+                    remote_format: str = 'compact') -> ("OtaDialectSms.SmsResponsePacket", Optional[object]):
+        if remote_format not in ('compact', 'expanded'):
+            raise ValueError("Invalid remote_format: %s ?!" % remote_format)
         if isinstance(data, str):
             data = h2b(data)
         # plain-text POR:   027100000e0ab000110000000000000001612f
@@ -492,9 +682,11 @@ class OtaDialectSms(OtaDialect):
         else:
             raise OtaCheckError('Unknown por_rc_cc_ds: %s' % spi['por_rc_cc_ds'])
 
-        # TODO: ExpandedRemoteResponse according to TS 102 226 5.2.2
         if res.response_status == 'por_ok' and len(res['secured_data']):
-            dec = CompactRemoteResp.parse(res['secured_data'])
+            if remote_format == 'expanded':
+                dec = decode_expanded_resp(res['secured_data'])
+            else:
+                dec = CompactRemoteResp.parse(res['secured_data'])
         else:
             dec = None
         return (res, dec)

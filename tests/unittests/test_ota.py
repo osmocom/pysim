@@ -300,5 +300,214 @@ class SmsOtaTestCase(OtaTestCase):
                 self.assertEqual(d.last_status_word, t['response']['last_status_word'])
                 self.assertEqual(d.last_response_data, t['response']['last_response_data'])
 
+
+######################################################################
+# Expanded Remote Application data format (ETSI TS 102 226 Section 5.2)
+######################################################################
+
+class BerTlvLengthTestCase(unittest.TestCase):
+    """The definite-length BER-TLV length field (ISO/IEC 8825-1) used by the
+    expanded format, incl. the multi-byte (>127) forms (0x81xx / 0x82xxxx)."""
+    def test_roundtrip(self):
+        # (length value, expected encoded bytes)
+        vectors = [
+            (0,     '00'),
+            (1,     '01'),
+            (127,   '7f'),
+            (128,   '8180'),
+            (198,   '81c6'),   # big ~198 byte GET STATUS registry from a sja5
+            (255,   '81ff'),
+            (256,   '820100'),
+            (65535, '82ffff'),
+        ]
+        for length, encoded in vectors:
+            with self.subTest(length=length):
+                built = BerTlvLen.build(length)
+                self.assertEqual(b2h(built), encoded)
+                self.assertEqual(BerTlvLen.parse(built), length)
+
+
+class ExpandedCmdTestCase(unittest.TestCase):
+    """Command Scripting template TS 102 226 5.2.1"""
+
+    def test_single_capdu_golden(self):
+        # GP GET STATUS, Le=00, TS 102 226 5.2.1.1 R-APDU
+        out = encode_expanded_cmd(h2b('80f24002024f0000'))
+        # aa = TS 101 220 table 7.18 Command Scripting template tag
+        # 0a = length 10
+        # 22 = TS 101 220 table 7.19 C-APDU tag
+        # 08 = length
+        # + C-APDU
+        self.assertEqual(b2h(out), 'aa0a220880f24002024f0000')
+
+    def test_multi_capdu_golden(self):
+        out = encode_expanded_cmd([h2b('80f24002024f0000'), h2b('00a40004023f0000')])
+        self.assertEqual(b2h(out), 'aa14220880f24002024f0000220800a40004023f0000')
+
+    def test_multibyte_length_golden(self):
+        # C-APDU: 4 header + 1 Lc + 195 data = 200 bytes.
+        # 200 byte C-APDU forces long form BER lengths:
+        # C-APDU TLV, 200 -> 81c8 + template 203 -> 81cb
+        capdu = h2b('80f24000') + bytes([195]) + bytes(range(195))
+        self.assertEqual(len(capdu), 200)
+        out = encode_expanded_cmd(capdu)
+        # aa 81 cb | 22 81 c8 | <200 byte capdu>
+        self.assertEqual(b2h(out[:6]), 'aa81cb2281c8')
+        self.assertEqual(out[6:], capdu)
+
+    def test_roundtrip(self):
+        for apdus in [[h2b('80f24002024f0000')],
+                      [h2b('00a40004023f00'), h2b('80f24002024f0000')],
+                      [h2b('00'*250)]]:
+            with self.subTest(n=len(apdus)):
+                out = encode_expanded_cmd(apdus)
+                parsed = ExpandedCmd.parse(out)
+                self.assertEqual([h2b(c.c_apdu) for c in parsed.commands], apdus)
+
+
+class ExpandedRespTestCase(unittest.TestCase):
+    """Decoding of the Response Scripting template (TS 102 226 5.2.2)."""
+
+    def test_registry_golden(self):
+        # real card case: GET STATUS returns a ~198 byte registry TLV + SW 9000
+        # R-APDU = 198 data + 2 SW = 200/81c8
+        # 'number of executed' TLV 80 01 01.
+        registry = bytes(range(198))
+        data = ExpandedRemoteResp.build(dict(body=dict(
+                    num_executed=dict(number_of_commands=1),
+                    responses=[dict(r_apdu=dict(response_data=b2h(registry), status_word='9000'))])))
+        # ab | 81 ce | 80 01 01 | 23 81 c8 | <198 data> 90 00
+        self.assertEqual(b2h(data[:9]), 'ab81ce8001012381c8')
+        dec = decode_expanded_resp(data)
+        self.assertEqual(dec.number_of_commands, 1)
+        self.assertEqual(len(dec.commands), 1)
+        self.assertEqual(dec.last_status_word, '9000')
+        self.assertEqual(dec.last_response_data, b2h(registry))
+
+    def test_status_only_golden(self):
+        # last command, no response data, SW 6132
+        data = ExpandedRemoteResp.build(dict(body=dict(
+                    num_executed=dict(number_of_commands=1),
+                    responses=[dict(r_apdu=dict(response_data='', status_word='6132'))])))
+        self.assertEqual(b2h(data), 'ab0780010123026132')
+        dec = decode_expanded_resp(data)
+        self.assertEqual(dec.last_status_word, '6132')
+        self.assertEqual(dec.last_response_data, '')
+
+    def test_multi_command(self):
+        data = ExpandedRemoteResp.build(dict(body=dict(
+                    num_executed=dict(number_of_commands=2),
+                    responses=[dict(r_apdu=dict(response_data='6f21', status_word='9000')),
+                               dict(r_apdu=dict(response_data='', status_word='6a82'))])))
+        dec = decode_expanded_resp(data)
+        self.assertEqual(dec.number_of_commands, 2)
+        self.assertEqual([(c.status_word, c.response_data) for c in dec.commands],
+                         [('9000', '6f21'), ('6a82', '')])
+        # last == final R-APDU, error status included
+        self.assertEqual(dec.last_status_word, '6a82')
+        self.assertEqual(dec.last_response_data, '')
+
+    def test_bad_format(self):
+        # ab | 06 | 80 01 01 | 90 01 01
+        data = h2b('ab06800101900101')
+        dec = decode_expanded_resp(data)
+        self.assertEqual(str(dec.bad_format), 'unknown_tag')
+        self.assertIsNone(dec.last_status_word)
+
+    def test_immediate_action_error(self):
+        # ab | 06 | 80 01 01 | 81 01 01
+        data = h2b('ab06800101810101')
+        dec = decode_expanded_resp(data)
+        self.assertEqual(str(dec.immediate_action_response), 'suspension_error')
+
+    def test_script_chaining_error(self):
+        # ab | 06 | 80 01 01 | 83 01 02
+        data = h2b('ab06800101830102')
+        dec = decode_expanded_resp(data)
+        self.assertEqual(str(dec.script_chaining_response), 'not_supported')
+
+    def test_truncation_is_flagged(self):
+        """TS 102 226 5.2.1.1: SW 62F1 means the C-APDU response data was truncated, and
+        "this shall terminate the processing of the command list"
+         halves are invisible in the R-APDU list, truncated + aborted script must not pass as complete"""
+        # second command truncated -> processing stopped at that point
+        data = ExpandedRemoteResp.build(dict(body=dict(
+                    num_executed=dict(number_of_commands=2),
+                    responses=[dict(r_apdu=dict(response_data='6f21', status_word='9000')),
+                               dict(r_apdu=dict(response_data='aabb', status_word='62f1'))])))
+        dec = decode_expanded_resp(data)
+        self.assertTrue(dec.truncated)
+        self.assertEqual(dec.last_status_word, '62f1')
+
+    def test_untruncated_response_is_not_flagged(self):
+        data = ExpandedRemoteResp.build(dict(body=dict(
+                    num_executed=dict(number_of_commands=1),
+                    responses=[dict(r_apdu=dict(response_data='6f21', status_word='9000'))])))
+        self.assertFalse(decode_expanded_resp(data).truncated)
+        # 62xx that is not 62F1 is warning, not truncation
+        data = ExpandedRemoteResp.build(dict(body=dict(
+                    num_executed=dict(number_of_commands=1),
+                    responses=[dict(r_apdu=dict(response_data='', status_word='6282'))])))
+        self.assertFalse(decode_expanded_resp(data).truncated)
+
+
+class ExpandedSmsPipelineTestCase(unittest.TestCase):
+    """expanded format + TS 102 225 SMS security witj 3DES keyset,
+    to ensure remote_format does not affect the compact path"""
+    def __init__(self, methodName='runTest', **kwargs):
+        super().__init__(methodName, **kwargs)
+        self.od = OtaKeyset(algo_crypt='triple_des_cbc2', kic_idx=3,
+                            kic=h2b('C21DD66ACAC13CB3BC8B331B24AFB57B'),
+                            algo_auth='triple_des_cbc2', kid_idx=3,
+                            kid=h2b('12110C78E678C25408233076AA033615'))
+        self.dialect = OtaDialectSms()
+        self.tar = h2b('000000')
+
+    def test_cmd_expanded_secured_roundtrip(self):
+        spi = SPI_CC_POR_CIPHERED_CC
+        enc = self.dialect.encode_cmd(self.od, self.tar, spi, h2b('80f24002024f0000'),
+                                      remote_format='expanded')
+        # decode_cmd returns opaque 'Command Scripting template'
+        dec_tar, dec_spi, dec_secured = self.dialect.decode_cmd(self.od, enc)
+        self.assertEqual(b2h(dec_tar), b2h(self.tar))
+        self.assertEqual(dec_spi, spi)
+        self.assertEqual(b2h(dec_secured), 'aa0a220880f24002024f0000')
+
+    def test_cmd_expanded_list(self):
+        spi = SPI_CC_POR_CIPHERED_CC
+        enc = self.dialect.encode_cmd(self.od, self.tar, spi,
+                                      [h2b('80f24002024f0000'), h2b('00a40004023f0000')],
+                                      remote_format='expanded')
+        _, _, dec_secured = self.dialect.decode_cmd(self.od, enc)
+        parsed = ExpandedCmd.parse(dec_secured)
+        self.assertEqual([c.c_apdu for c in parsed.commands],
+                         ['80f24002024f0000', '00a40004023f0000'])
+
+    def test_resp_expanded_plaintext(self):
+        # plaintext (u:nciphered + no CC) expanded response SMS
+        # containing a 198 byte GP registry + SW 9000 as above, decode it through decode_resp().
+        spi = SPI_CC_POR_UNCIPHERED_NOCC
+        registry = bytes(range(198))
+        secured = ExpandedRemoteResp.build(dict(body=dict(
+                    num_executed=dict(number_of_commands=1),
+                    responses=[dict(r_apdu=dict(response_data=b2h(registry), status_word='9000'))])))
+        rpl = 1 + 3 + 5 + 1 + 1 + len(secured)   # RHL-STS + secured data
+        resp_body = rpl.to_bytes(2, 'big') + b'\x0a' + self.tar + b'\x00'*5 + b'\x00' + b'\x00' + secured
+        sms = b'\x02\x71\x00' + resp_body
+        r, dec = self.dialect.decode_resp(self.od, spi, sms, remote_format='expanded')
+        self.assertEqual(r.response_status, 'por_ok')
+        self.assertEqual(dec.number_of_commands, 1)
+        self.assertEqual(dec.last_status_word, '9000')
+        self.assertEqual(dec.last_response_data, b2h(registry))
+
+    def test_compact_still_default(self):
+        # no remote_format -> compact default
+        spi = SPI_CC_POR_UNCIPHERED_NOCC
+        r, d = self.dialect.decode_resp(self.od, spi, '027100000e0ab000110000000000000001612f')
+        self.assertEqual(d.number_of_commands, 1)
+        self.assertEqual(d.last_status_word, '612f')
+        self.assertEqual(d.last_response_data, '')
+
+
 if __name__ == "__main__":
 	unittest.main()
