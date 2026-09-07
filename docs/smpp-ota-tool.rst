@@ -170,6 +170,35 @@ ensures that a message can only be sent once.
 .. note:: The replay-protection-counter is implemented as a 5 byte integer value (see also ETSI TS 102 225, Table 3).
 	  When the counter has reached its maximum, it will not overflow nor can it be reset.
 
+Expanded remote application data format
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`smpp-ota-tool` uses the TS 102 226 section 5.1 compact remote application data format by default. This
+format concatenates C-APDUs into one command string and only the result of the LAST executed command is reported back.
+Retrieving the response data therefore requires a GET RESPONSE C-APDU, and only a single GET RESPONSE command may occur per script.
+
+The TS 102 226 section 5.2 expanded remote application data format removes these limitations: Each C-APDU is
+wrapped in its own C-APDU TLV inside a Command Scripting template, and the response is a Response Scripting template that contains one R-APDU TLV with the full response data and status word per executed command. To use it, pass
+``--format expanded``; every ``--apdu`` argument then becomes its own C-APDU TLV.
+
+.. note:: The expanded format does not use GET RESPONSE. To retrieve response data from a case 2 or case 4
+	  command, include an ``Le`` field in the C-APDU. i.e. ``Le='00'`` instructs the card to return all available
+	  response data in the R-APDU, with no 256-byte limit (TS 102 226, section 5.2.1.1). Without the ``Le``
+	  field no response data is returned, except a status word for the last command!.
+
+For example, a GP GET STATUS of all applications (``80F24002024F00``) returns a registry that can be much
+larger than 256 bytes. In the compact format the card would only answer with ``61xx`` procedure bytes. In the expanded
+format, appending ``Le='00'`` (i.e. ``80F24002024F0000``) makes the card return the whole registry in one exchange:
+
+::
+
+   $ PYTHONPATH=./ ./contrib/smpp-ota-tool.py --kic <KIC> --kid <KID> --kid-idx 1 --kic-idx 1 \
+       --algo-crypt triple_des_cbc2 --algo-auth triple_des_cbc2 --tar 000000 --cntr-req no_counter \
+       --format expanded --apdu 80F24002024F0000
+
+The response data (a concatenation of GlobalPlatform registry TLVs) can then be decoded with
+``pySim.global_platform.GpRegistryRelatedData.from_tlv()``.
+
 smpp-ota-tool syntax
 ~~~~~~~~~~~~~~~~~~~~
 

@@ -70,6 +70,8 @@ option_parser.add_argument("--por-req", choices=POR_REQ.decmapping.values(), def
 option_parser.add_argument('--src-addr', default='12', type=str, help='SMS source address (MSISDN)')
 option_parser.add_argument('--dest-addr', default='23', type=str, help='SMS destination address (MSISDN)')
 option_parser.add_argument('--timeout', default=10, type=int, help='Maximum response waiting time')
+option_parser.add_argument('--format', choices=['compact', 'expanded'], default='compact',
+                           help="Remote Application data format: 'compact' or 'expanded'")
 option_parser.add_argument('-a', '--apdu', action='append', required=True, type=is_hexstr, help='C-APDU to send')
 
 class SmppHandler:
@@ -77,7 +79,8 @@ class SmppHandler:
 
     def __init__(self, host: str, port: int,
                  system_id: str, password: str,
-                 ota_keyset: OtaKeyset, spi: dict, tar: bytes):
+                 ota_keyset: OtaKeyset, spi: dict, tar: bytes,
+                 remote_format: str = 'compact'):
         """
         Initialize connection to SMPP server and set static OTA SMS-TPDU ciphering parameters
         Args:
@@ -88,6 +91,7 @@ class SmppHandler:
                 ota_keyset: OTA keyset to be used for SMS-TPDU ciphering
                 spi: Security Parameter Indicator (SPI) to be used for SMS-TPDU ciphering
                 tar: Toolkit Application Reference (TAR) of the targeted card application
+                remote_format: Remote Application data format ('compact' or 'expanded', TS 102 226)
         """
 
         # Create and connect SMPP client
@@ -103,6 +107,7 @@ class SmppHandler:
         self.ota_keyset = ota_keyset
         self.tar = tar
         self.spi = spi
+        self.remote_format = remote_format
 
     def __del__(self):
         if self.client:
@@ -113,14 +118,16 @@ class SmppHandler:
         if pdu.short_message:
             logger.info("SMS-TPDU received: %s", b2h(pdu.short_message))
             try:
-                dec = self.ota_dialect.decode_resp(self.ota_keyset, self.spi, pdu.short_message)
+                dec = self.ota_dialect.decode_resp(self.ota_keyset, self.spi, pdu.short_message,
+                                                   remote_format=self.remote_format)
             except ValueError:
                 # Retry to decoding with ciphering disabled (in case the card has problems to decode the SMS-TDPU
                 # we have sent, the response will contain an unencrypted error message)
                 spi = self.spi.copy()
                 spi['por_shall_be_ciphered'] = False
                 spi['por_rc_cc_ds'] = 'no_rc_cc_ds'
-                dec = self.ota_dialect.decode_resp(self.ota_keyset, spi, pdu.short_message)
+                dec = self.ota_dialect.decode_resp(self.ota_keyset, spi, pdu.short_message,
+                                                   remote_format=self.remote_format)
             logger.info("SMS-TPDU decoded: %s", dec)
             self.response = dec
         return None
@@ -183,10 +190,14 @@ class SmppHandler:
                 tuple containing the last response data and the last status word as byte strings
         """
 
-        logger.info("C-APDU sending: %s...", b2h(apdu))
+        if isinstance(apdu, (list, tuple)):
+            logger.info("C-APDU(s) sending: %s...", [b2h(a) for a in apdu])
+        else:
+            logger.info("C-APDU sending: %s...", b2h(apdu))
 
         # translate to Secured OTA RFM
-        secured = self.ota_dialect.encode_cmd(self.ota_keyset, self.tar, self.spi, apdu=apdu)
+        secured = self.ota_dialect.encode_cmd(self.ota_keyset, self.tar, self.spi, apdu=apdu,
+                                              remote_format=self.remote_format)
         # add user data header
         tpdu = b'\x02\x70\x00' + secured
         # send via SMPP
@@ -200,6 +211,17 @@ class SmppHandler:
                 container_dict = dict(container)
                 resp = container_dict.get('last_response_data')
                 sw = container_dict.get('last_status_word')
+                # expanded format: decoded response carries
+                # per command R-APDU list; log each one.
+                for i, cmd in enumerate(container_dict.get('commands') or []):
+                    logger.info("R-APDU[%u] received: %s %s", i,
+                                cmd['response_data'], cmd['status_word'])
+                if container_dict.get('truncated'):
+                    logger.warning("Response was TRUNCATED (SW 62F1): the card cut the response "
+                                   "data short and did not execute the rest of the script")
+                if container_dict.get('bad_format') is not None:
+                    logger.warning("Response contains a Bad format TLV: %s",
+                                   container_dict['bad_format'])
         if resp is None:
             raise ValueError("Response does not contain any last_response_data, no R-APDU received!")
         if sw is None:
@@ -233,8 +255,14 @@ if __name__ == '__main__':
            'por_shall_be_ciphered': not opts.por_no_ciphering,
            'por_rc_cc_ds': opts.por_rc_cc_ds,
            'por': opts.por_req}
-    apdu = h2b("".join(opts.apdu))
+    if opts.format == 'expanded':
+        # TS 102 226 5.2.1.1: wrap each apdu in its own C-APDU TLV
+        apdu = [h2b(a) for a in opts.apdu]
+    else:
+        # compact: C-APDUs are concatenated as single command string
+        apdu = h2b("".join(opts.apdu))
 
-    smpp_handler = SmppHandler(opts.host, opts.port, opts.system_id, opts.password, ota_keyset, spi, h2b(opts.tar))
+    smpp_handler = SmppHandler(opts.host, opts.port, opts.system_id, opts.password, ota_keyset, spi,
+                               h2b(opts.tar), remote_format=opts.format)
     resp, sw = smpp_handler.transceive_apdu(apdu, opts.src_addr, opts.dest_addr, opts.timeout)
     print("%s %s" % (b2h(resp), b2h(sw)))
