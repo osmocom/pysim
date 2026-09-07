@@ -18,10 +18,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import io
+import hashlib
 from copy import deepcopy
 from typing import Optional, List, Dict, Tuple
 from construct import Optional as COptional
 from construct import Struct, GreedyRange, FlagsEnum, Int16ub, Int24ub, Padding, Bit, Const
+from construct import Construct, stream_read, stream_write
 from Cryptodome.Random import get_random_bytes
 from Cryptodome.Cipher import DES, DES3, AES
 from osmocom.utils import *
@@ -147,6 +149,24 @@ sw_table = {
         '9485': 'Invalid key check value',
     },
 }
+
+class PutKeyLength(Construct):
+    """A length field of a PUT KEY data field, GP CardSpec v2.3.1 11.8.2.3.1
+    - all lengths ASN.1 BER-TLV (ITU-T X.690 Section 8.1.3)
+    - except that the length 128 may also be coded on one byte as '80' for backwards compatibility
+    80 does not introduce the indefinite form here which is unused in GP as far as i know.
+    That legacy form is accepted when parsing, but never generated, which agrees with the spec"""
+    def _parse(self, stream, context, path):
+        first = stream_read(stream, 1, path)[0]
+        if first <= 0x80:
+            return first
+        return int.from_bytes(stream_read(stream, first & 0x7f, path), 'big')
+
+    def _build(self, obj, stream, context, path):
+        data = bertlv_encode_len(obj)
+        stream_write(stream, data, len(data), path)
+        return obj
+
 
 # GlobalPlatform 2.1.1 Section 9.1.6
 KeyType = Enum(Byte,    des=0x80,
@@ -602,8 +622,8 @@ class ADF_SD(CardADF):
             See GlobalPlatform CardSpecification v2.3 Section 11.8 for details.
 
             The KCV (Key Check Values) can either be explicitly specified using `--key-check`, or will
-            otherwise be automatically generated for DES and AES keys.  You can suppress the latter using
-            `--suppress-key-check`.
+            otherwise be automatically generated for DES, AES and TLS-PSK keys.  You can suppress the
+            latter using `--suppress-key-check`.
 
             Example (SCP80 KIC/KID/KIK):
                 put_key --key-version-nr 1 --key-id 0x01    --key-type aes --key-data 000102030405060708090a0b0c0d0e0f
@@ -620,33 +640,73 @@ class ADF_SD(CardADF):
             kdb = []
             for i in range(0, len(opts.key_type)):
                 if opts.key_check and len(opts.key_check) > i:
-                    kcv = opts.key_check[i]
+                    kcv = h2b(opts.key_check[i])
                 elif opts.suppress_key_check:
-                    kcv = ''
+                    kcv = b''
                 else:
-                    kcv_bin = compute_kcv(opts.key_type[i], h2b(opts.key_data[i])) or b''
-                    kcv = b2h(kcv_bin)
-                if self._cmd.lchan.scc.scp:
-                    # encrypted key data with DEK of current SCP
-                    kcb = b2h(self._cmd.lchan.scc.scp.encrypt_key(h2b(opts.key_data[i])))
-                else:
-                    # (for example) during personalization, DEK might not be required)
-                    kcb = opts.key_data[i]
-                kdb.append({'key_type': opts.key_type[i], 'kcb': kcb, 'kcv': kcv})
+                    kcv = compute_kcv(opts.key_type[i], h2b(opts.key_data[i])) or b''
+                kdb.append({'key_type': opts.key_type[i], 'clear_key': h2b(opts.key_data[i]), 'kcv': kcv})
             p2 = opts.key_id
             if len(opts.key_type) > 1:
                 p2 |= 0x80
             self.put_key(opts.old_key_version_nr, opts.key_version_nr, p2, kdb)
 
-        # Table 11-68: Key Data Field - Format 1 (Basic Format)
-        KeyDataBasic = GreedyRange(Struct('key_type'/KeyType,
-                                          'kcb'/Prefixed(Int8ub, GreedyBytes),
-                                          'kcv'/Prefixed(Int8ub, GreedyBytes)))
+        # Table 11-68: Key Data Field - Format 1 (Basic Format).  The key component block length is
+        # BER-TLV coded (Section 11.8.2.3.1), the key check value length is always '00' - '7F'.
+        KeyDataBasic = Struct('key_type'/KeyType,
+                              'kcb'/Prefixed(PutKeyLength(), GreedyBytes),
+                              'kcv'/Prefixed(Int8ub, GreedyBytes))
 
-        def put_key(self, old_kvn:int, kvn: int, kid: int, key_dict: dict) -> bytes:
+        @classmethod
+        def encode_key_data_basic(cls, key_type: str, kcb: bytes, kcv: bytes) -> bytes:
+            """Generic Basic key data field, GP CardSpec v2.3 Table 11-68):
+                tag || L1 || <maybe L2> KCB || <1-byte length> KCV"""
+            return cls.KeyDataBasic.build({'key_type': key_type, 'kcb': kcb, 'kcv': kcv})
+
+        @classmethod
+        def encode_key_data_psk(cls, clear_key: bytes, ciphered_key: bytes, kcv: bytes) -> bytes:
+            """Single PSK TLS '85' key data field per GP Amendment B 1.2, 3.9.1 / Table 3-13:
+                85 | L1 | <L2>  <ciphered PSK key> | <KCV length> | <KCV>
+            - framing is like Basic Format, but the kcb is always GP CardSpec Table 11-70
+            so always with the length of the clear text key value, even without padding!
+            - 'ciphered_key' is DEK(block-padded clear key), no additional length prefix."""
+            kcb = bertlv_encode_len(len(clear_key)) + ciphered_key
+            return cls.encode_key_data_basic('tls_psk', kcb, kcv)
+
+        @classmethod
+        def build_put_key_data(cls, kvn: int, keys: List[dict], scp) -> bytes:
+            """Assemble the PUT KEY data field, mixed PSK + DES DEK is supported:
+            - new KVN followed by one key data field per key.
+            - tls_psk keys per GP Amendment B
+            - other key types generic Basic format
+            Param 'keys' is a dict:
+            - 'key_type' (str)
+            - 'clear_key' (bytes)
+            - 'kcv' (bytes / empty).
+            'scp' may be None (e.g. during personalization, when the DEK may not be required)."""
+            key_data = kvn.to_bytes(1, 'big')
+            for k in keys:
+                clear = k['clear_key']
+                if k['key_type'] == 'tls_psk':
+                    # len always part of the data see CardSpec Table 11-70 vs Table 11-71
+                    if scp:
+                        ciphered = scp.dek_encrypt(scp.pad_to_blocksize(clear))
+                    else:
+                        ciphered = clear
+                    key_data += cls.encode_key_data_psk(clear, ciphered, k['kcv'])
+                else:
+                    if scp:
+                        ciphered = scp.encrypt_key(clear)
+                    else:
+                        # (for example) during personalization, DEK might not be required
+                        ciphered = clear
+                    key_data += cls.encode_key_data_basic(k['key_type'], ciphered, k['kcv'])
+            return key_data
+
+        def put_key(self, old_kvn:int, kvn: int, kid: int, keys: List[dict]) -> bytes:
             """Perform the GlobalPlatform PUT KEY command in order to store a new key on the card.
             See GlobalPlatform CardSpecification v2.3 Section 11.8 for details."""
-            key_data = kvn.to_bytes(1, 'big') + build_construct(ADF_SD.AddlShellCommands.KeyDataBasic, key_dict)
+            key_data = self.build_put_key_data(kvn, keys, self._cmd.lchan.scc.scp)
             hdr = "80D8%02x%02x%02x" % (old_kvn, kid, len(key_data))
             data, _sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(key_data) + "00")
             return data
@@ -1065,10 +1125,16 @@ def compute_kcv_aes(key:bytes) -> bytes:
     cipher = AES.new(key, AES.MODE_ECB)
     return cipher.encrypt(plaintext)
 
+def compute_kcv_psk(key:bytes) -> bytes:
+    # GP Amendment B v1.2, 3.9.1 / Table 3-13
+    # KCV of a PSK TLS key is the 3 highest-order bytes of the SHA-1 digest of the clear key value.
+    return hashlib.sha1(key).digest()
+
 # dict is keyed by the string name of the KeyType enum above in this file
 KCV_CALCULATOR = {
         'aes': compute_kcv_aes,
         'des': compute_kcv_des,
+        'tls_psk': compute_kcv_psk,
     }
 
 def compute_kcv(key_type: str, key: bytes) -> Optional[bytes]:

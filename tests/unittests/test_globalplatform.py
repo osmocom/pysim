@@ -17,7 +17,9 @@
 
 import unittest
 import logging
+import hashlib
 from osmocom.utils import b2h, h2b
+from osmocom.tlv import bertlv_encode_len
 
 from pySim.global_platform import *
 from pySim.global_platform.scp import *
@@ -323,6 +325,156 @@ class SCP03_KCV_Test(unittest.TestCase):
         self.assertEqual(compute_kcv('aes', KEYSET_AES128.enc), h2b('C35280'))
         self.assertEqual(compute_kcv('aes', KEYSET_AES128.mac), h2b('013808'))
         self.assertEqual(compute_kcv('aes', KEYSET_AES128.dek), h2b('840DE5'))
+
+
+class PutKey_PSK_Test(unittest.TestCase):
+    """Tests for the PUT KEY command data field encoding, in particular the PSK TLS ('85') key data
+    field defined by GlobalPlatform Amendment B (Remote Application Management over HTTP) Table 3-13."""
+
+    # the PUT KEY encoder we exercise
+    C = ADF_SD.AddlShellCommands
+
+    # SCP80 TLS-PSK example key from the do_put_key docstring (16 bytes)
+    PSK_CLEAR = h2b('303132333435363738393a3b3c3d3e3f')
+    # its DEK ciphertext + Table 3-13 KCV with SCP02 session set up below
+    PSK_CIPHERED = h2b('15abf1fe16ccc5aa13743394442942cd')
+    PSK_KCV = h2b('06125d')  # = SHA-1(PSK_CLEAR)[:3]
+
+    def setUp(self):
+        # SCP02 with the same vectors as SCP02_Test, so that the whole PUT KEY data field is reproducible.
+        self.scp02 = SCP02(card_keys=ck_3des_70)
+        self.scp02.gen_init_update_apdu(host_challenge=h2b('40A62C37FA6304F8'))
+        self.scp02.parse_init_update_resp(h2b('00000000000000000000700200016B4524ABEE7CF32EA3838BC148F3'))
+        self.scp02.gen_ext_auth_apdu()
+
+    def test_psk_kcv_is_sha1(self):
+        # GP Amendment B Table 3-13: KCV = 3 most significant bytes of SHA-1(clear key)
+        self.assertEqual(compute_kcv('tls_psk', self.PSK_CLEAR), hashlib.sha1(self.PSK_CLEAR).digest()[:3])
+        self.assertEqual(compute_kcv('tls_psk', self.PSK_CLEAR), self.PSK_KCV)
+
+    def test_encode_psk_framing_golden(self):
+        # assert the exact Table 3-13 layout
+        #   85 | L1 | L2 | <ciphered> | 03 | <SHA-1(clear)[:3]>
+        clear = self.PSK_CLEAR
+        ciphered = h2b('aabbccddeeff00112233445566778899')  # arbitrary 16-byte ciphertext
+        kcv = hashlib.sha1(clear).digest()[:3]
+        field = self.C.encode_key_data_psk(clear, ciphered, kcv)
+        #                            85   L1   L2   <---------- ciphered ----------->  03  <-kcv->
+        self.assertEqual(b2h(field),'85' '11' '10' 'aabbccddeeff00112233445566778899' '03' + b2h(kcv))
+        self.assertEqual(b2h(field),'851110aabbccddeeff0011223344556677889903' + '06125d')
+
+    def test_psk_golden_over_scp02(self):
+        # Full PUT KEY data field (KVN 0x40 + single PSK key) enciphered with the SCP02 DEK.
+        keys = [{'key_type': 'tls_psk', 'clear_key': self.PSK_CLEAR,
+                 'kcv': compute_kcv('tls_psk', self.PSK_CLEAR)}]
+        data = self.C.build_put_key_data(0x40, keys, self.scp02)
+        self.assertEqual(b2h(data),
+                         '40' '85' '11' '10' + b2h(self.PSK_CIPHERED) + '03' + b2h(self.PSK_KCV))
+
+    def test_wrong_basic_format_differs(self):
+        # regression test, the generic "Basic format" does NOT match Table 3-13 for a PSK key
+        # rejected by card with with 6a88
+        wrong_basic = self.C.encode_key_data_basic('tls_psk', self.PSK_CIPHERED, b'')
+        right_psk = self.C.encode_key_data_psk(self.PSK_CLEAR, self.PSK_CIPHERED, self.PSK_KCV)
+        self.assertEqual(b2h(wrong_basic), '8510' + b2h(self.PSK_CIPHERED) + '00')
+        self.assertEqual(b2h(right_psk), '8511' '10' + b2h(self.PSK_CIPHERED) + '03' + b2h(self.PSK_KCV))
+        self.assertNotEqual(wrong_basic, right_psk)
+
+    def test_key_component_block_length_is_bertlv(self):
+        # GP CardSpec v2.3.1 Section 11.8.2.3.1: all lengths ofPUT KEY are always BER TLV coded
+        for kcb_len, exp_len_field in [(127, '7f'), (128, '8180'), (129, '8181'), (256, '820100')]:
+            with self.subTest(kcb_len=kcb_len):
+                kcb = bytes(kcb_len)
+                field = self.C.encode_key_data_basic('rsa_modulus_n', kcb, b'')
+                self.assertEqual(b2h(field), 'a2' + exp_len_field + b2h(kcb) + '00')
+                # 85 field of Amendment B Table 3-13 uses the same coding
+                # single byte inner length (clear key < 128) == block kcb_len bytes long
+                psk = self.C.encode_key_data_psk(bytes(120), bytes(kcb_len - 1), b'')
+                self.assertEqual(b2h(psk)[:2 + len(exp_len_field)], '85' + exp_len_field)
+
+    def test_basic_format_unchanged(self):
+        # as before
+        for kt, clear in [('des', h2b('404142434445464748494a4b4c4d4e4f')),
+                          ('aes', h2b('000102030405060708090a0b0c0d0e0f'))]:
+            ciph = self.scp02.encrypt_key(clear)
+            kcv = compute_kcv(kt, clear)
+            via_construct = build_construct(self.C.KeyDataBasic, {'key_type': kt, 'kcb': b2h(ciph), 'kcv': b2h(kcv)})
+            via_helper = self.C.encode_key_data_basic(kt, ciph, kcv)
+            self.assertEqual(via_helper, via_construct)
+
+    def test_psk_padding_no_double_length(self):
+        # A PSK key whose length is not a multiple of the DEK block size (DES: 8) is right-padded before
+        # ciphering. Table 3-13 states the clear key length (L2) in the '85' DO itself, so the ciphered
+        # key field is the bare cryptogram:
+        # - ciphered field == padded ciphertext (no duplicated length prefix),
+        # - clear key == first L2 bytes.
+        for keylen in (18, 20):
+            with self.subTest(keylen=keylen):
+                clear = bytes(range(keylen))
+                padded_len = keylen + (-keylen % 8)
+                field = self.C.build_put_key_data(0x40, [{'key_type': 'tls_psk', 'clear_key': clear,
+                                                          'kcv': compute_kcv('tls_psk', clear)}], self.scp02)[1:]
+                self.assertEqual(field[0], 0x85)
+                l1 = field[1]
+                l2 = field[2]
+                self.assertEqual(l2, keylen)                # single-byte BER length of clear key
+                ciphered = field[3:3 + (l1 - 1)]            # value = L2 (1 byte) || ciphered key
+                self.assertEqual(len(ciphered), padded_len) # padded to the 8-byte DES block size
+                self.assertEqual(l1, 1 + padded_len)        # no duplicated length prefix
+                self.assertEqual(self.scp02.dek_decrypt(ciphered)[:keylen], clear)
+
+    def test_psk_clear_key_is_not_padded_in_place(self):
+        # padding the bytearray in place would make L2 the padded length,
+        # then stored as key material and rejected thanks to the KCV
+        clear = h2b('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d')  # 30, not %8
+        kcv = compute_kcv('tls_psk', clear)
+        field = self.C.build_put_key_data(0x40, [{'key_type': 'tls_psk', 'clear_key': clear,
+                                                  'kcv': kcv}], self.scp02)[1:]
+        self.assertEqual(len(clear), 30)
+        self.assertEqual(field[2], 30)                       # L2 == clear key length, not 32
+        self.assertEqual(self.scp02.dek_decrypt(field[3:3 + field[1] - 1])[:30], clear)
+
+    def test_kcv_suppressed(self):
+        # --suppress-key-check -> KCV length 00 and no KCV bytes
+        field = self.C.build_put_key_data(0x40, [{'key_type': 'tls_psk', 'clear_key': self.PSK_CLEAR,
+                                                  'kcv': b''}], self.scp02)[1:]
+        self.assertEqual(b2h(field), '8511' '10' + b2h(self.PSK_CIPHERED) + '00')
+
+    def test_multikey_psk_plus_des_dek(self):
+        # load a PSK TLS key (KID 1, Amendment B format) together with its DES DEK
+        # (KID 2, Basic format) in one PUT KEY.
+        # Verify the concatenated data field parses back into the two components with proper type formats.
+        dek = h2b('404142434445464748494a4b4c4d4e4f')
+        keys = [{'key_type': 'tls_psk', 'clear_key': self.PSK_CLEAR, 'kcv': compute_kcv('tls_psk', self.PSK_CLEAR)},
+                {'key_type': 'des', 'clear_key': dek, 'kcv': compute_kcv('des', dek)}]
+        data = self.C.build_put_key_data(0x40, keys, self.scp02)
+
+        b = data
+        self.assertEqual(b[0], 0x40)            # KVN
+        b = b[1:]
+        # component 1: PSK TLS (Table 3-13)
+        self.assertEqual(b[0], 0x85)
+        self.assertEqual(b[1], 0x11)            # L1 = 17
+        self.assertEqual(b[2], 0x10)            # L2 = 16 (clear key length)
+        self.assertEqual(b[3:3 + 16], self.PSK_CIPHERED)
+        self.assertEqual(b[3 + 16], 0x03)       # KCV length
+        self.assertEqual(b[3 + 16 + 1:3 + 16 + 1 + 3], self.PSK_KCV)
+        b = b[3 + 16 + 1 + 3:]
+        # component 2: DES DEK (Basic format)
+        self.assertEqual(b[0], 0x80)            # key type des
+        kcb_len = b[1]
+        self.assertEqual(kcb_len, 16)
+        self.assertEqual(b[2:2 + kcb_len], self.scp02.encrypt_key(dek))
+        b = b[2 + kcb_len:]
+        self.assertEqual(b[0], 0x03)            # KCV length
+        self.assertEqual(b[1:1 + 3], compute_kcv('des', dek))
+        self.assertEqual(b[1 + 3:], b'')        # no trailing bytes
+
+    def test_no_scp_leaves_key_clear(self):
+        # During personalization (no SCP) the key is not enciphered, framing still follows Table 3-13.
+        field = self.C.build_put_key_data(0x40, [{'key_type': 'tls_psk', 'clear_key': self.PSK_CLEAR,
+                                                  'kcv': self.PSK_KCV}], None)[1:]
+        self.assertEqual(b2h(field), '8511' '10' + b2h(self.PSK_CLEAR) + '03' + b2h(self.PSK_KCV))
 
 
 class Install_param_Test(unittest.TestCase):
