@@ -37,6 +37,17 @@ expected_message = None
 
 class PySimLogger_Test(unittest.TestCase):
 
+    def setUp(self):
+        # PySimLogger.setup() is global, so a print callback left installed here fires for
+        # every PySimLogger message emitted by any test module that runs later in the same process
+        # ... where it asserts against a stale 'expected_message' and fails a test that has nothing
+        # to do with logging. Great fun!
+        # Restore before each test.
+        saved = (PySimLogger.print_callback, PySimLogger.verbose)
+        def _restore():
+            PySimLogger.print_callback, PySimLogger.verbose = saved
+        self.addCleanup(_restore)
+
     def __test_01_safe_defaults_one(self, callback, message:str):
         # When log messages are sent to an unconfigured PySimLogger class, we expect the unmodified message being
         # logged to stdout, just as if it were printed via a normal print() statement.
