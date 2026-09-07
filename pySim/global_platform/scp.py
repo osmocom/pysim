@@ -182,6 +182,29 @@ class SCP(SecureChannel, abc.ABC):
         """Should we perform R-ENC?"""
         return self.security_level & 0x20
 
+    @property
+    @abc.abstractmethod
+    def mac_len(self) -> int:
+        """Length of the appended C-MAC, to be provided by derived class."""
+
+    @property
+    def overhead(self) -> int:
+        """Worst-case len that wrapping a command APDU adds to its data field at the
+        current sec level is (255 - overhead), C-MAC + C-DECRYPTION encryption padding."""
+        if not self.do_cmac:
+            return 0
+        if not self.do_cenc:
+            return self.mac_len
+        # see Secure Channel Protocol '03' Card Specification v2.3 - Amendment D v1.1.2
+        # which defers to GPCS v2.3 Section B.2 which then defers to
+        # NIST SP 800-38B for encryption and points out that
+        # the padding is, as expected, just the usual padding from NIST SP 800-38A
+        # C-DECRYPTION pads with ('80'+['00'...] at least 1 byte) up to
+        # the cipher block size + C-MAC on top -> largest usable data field
+        # is one byte less than the largest block-size multiple within 255 - mac_len.
+        bs = self.sk.blocksize
+        return 255 - ((255 - self.mac_len) // bs * bs - 1)
+
     def __str__(self) -> str:
         return "%s[%02x]" % (self.__class__.__name__, self.security_level)
 
@@ -268,10 +291,8 @@ class SCP02(SCP):
     # Key Version Number 0x70 is a non-spec special-case of sysmoISIM-SJA2/SJA5 and possibly more sysmocom products
     # Key Version Number 0x01 is a non-spec special-case of sysmoUSIM-SJS1
     kvn_ranges = [[0x01, 0x01], [0x20, 0x2f], [0x70, 0x70]]
-
-    def __init__(self, *args, **kwargs):
-        self.overhead = 8
-        super().__init__(*args, **kwargs)
+    # C-MAC (Single DES + final 3DES, B.1.2.2) is always one full DES block
+    mac_len = 8
 
     def dek_encrypt(self, plaintext:bytes) -> bytes:
         # See also GPC section B.1.1.2, E.4.7, and E.4.1
@@ -346,10 +367,16 @@ class SCP02(SCP):
             # CMAC on modified APDU
             mlc = lc + 8
             clac = cla | CLA_SM
+        if mlc >= 256:
+            raise ValueError('Modified Lc (%u) would exceed maximum when appending 8 bytes of mac' % mlc)
         mac = self.sk.calc_mac_1des(bytes([clac]) + apdu[1:4] + bytes([mlc]) + data)
         if self.do_cenc:
+            padded_data = pad80(data, 8)
+            if len(padded_data) + 8 >= 256:
+                raise ValueError('Modified Lc (%u) would exceed maximum when appending padding and mac' %
+                                 (len(padded_data) + 8))
             k = DES3.new(self.sk.enc, DES.MODE_CBC, b'\x00'*8)
-            data = k.encrypt(pad80(data, 8))
+            data = k.encrypt(padded_data)
             lc = len(data)
 
         lc += 8
@@ -485,8 +512,12 @@ class SCP03(SCP):
 
     def __init__(self, *args, **kwargs):
         self.s_mode = kwargs.pop('s_mode', 8)
-        self.overhead = self.s_mode
         super().__init__(*args, **kwargs)
+
+    @property
+    def mac_len(self) -> int:
+        # C-MAC truncated to 8 in S8 or 16 bytes in S16 mode
+        return self.s_mode
 
     def dek_encrypt(self, plaintext:bytes) -> bytes:
         cipher = AES.new(self.card_keys.dek, AES.MODE_CBC, b'\x00'*16)

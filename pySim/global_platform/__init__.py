@@ -707,6 +707,14 @@ class ADF_SD(CardADF):
             """Perform the GlobalPlatform PUT KEY command in order to store a new key on the card.
             See GlobalPlatform CardSpecification v2.3 Section 11.8 for details."""
             key_data = self.build_put_key_data(kvn, keys, self._cmd.lchan.scc.scp)
+            # Lc of Table 11-64 is a single byte, while LOAD or STORE DATA splits we can't:
+            # 11.8.2.3.3 splits a key at component boundaries -> not helping here
+            max_cmd_len = self._cmd.lchan.scc.max_cmd_len
+            if len(key_data) > max_cmd_len:
+                raise ValueError('key data field of %u bytes exceeds the maximum command length of %u '
+                                 '(limited by the overhead of the current secure channel); use fewer '
+                                 'keys per command, a single key component that large needs STORE DATA' %
+                                 (len(key_data), max_cmd_len))
             hdr = "80D8%02x%02x%02x" % (old_kvn, kid, len(key_data))
             data, _sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(key_data) + "00")
             return data
@@ -886,23 +894,32 @@ class ADF_SD(CardADF):
         load_parser_from_grp.add_argument('--from-hex', type=is_hexstr, help='load from hex string')
         load_parser_from_grp.add_argument('--from-file', type=argparse.FileType('rb', 0), help='load from binary file')
         load_parser_from_grp.add_argument('--from-cap-file', type=argparse.FileType('rb', 0), help='load from JAVA-card CAP file')
+        load_parser.add_argument('--chunk-len', type=auto_uint8, default=None,
+                                 help='Block size for the LOAD command; default: as large as the current secure channel overhead permits, at most 240')
 
         @cmd2.with_argparser(load_parser)
         def do_load(self, opts):
             """Perform a GlobalPlatform LOAD command. (We currently only support loading without DAP and
             without ciphering.)"""
             if opts.from_hex is not None:
-                self.load(h2b(opts.from_hex))
+                self.load(h2b(opts.from_hex), opts.chunk_len)
             elif opts.from_file is not None:
-                self.load(opts.from_file.read())
+                self.load(opts.from_file.read(), opts.chunk_len)
             elif opts.from_cap_file is not None:
                 cap = CapFile(opts.from_cap_file)
-                self.load(cap.get_loadfile())
+                self.load(cap.get_loadfile(), opts.chunk_len)
             else:
                 raise ValueError('load source not specified!')
 
-        def load(self, contents:bytes, chunk_len:int = 240):
-            # TODO:tune chunk_len based on the overhead of the used SCP?
+        def load(self, contents:bytes, chunk_len:Optional[int] = None):
+            # scc.max_cmd_len knows the overhead the currently active SCP
+            # 240 is the old default, keep it for now.
+            max_chunk_len = self._cmd.lchan.scc.max_cmd_len
+            if chunk_len is None:
+                chunk_len = min(240, max_chunk_len)
+            elif not 1 <= chunk_len <= max_chunk_len:
+                raise ValueError('chunk_len must be in range 1..%u (limited by the overhead of the current secure channel)' %
+                                 max_chunk_len)
             # build TLV according to GPC_SPE_034 section 11.6.2.3 / Table 11-58 for unencrypted case
             remainder = b'\xC4' + bertlv_encode_len(len(contents)) + contents
             # transfer this in various chunks to the card
@@ -941,6 +958,8 @@ class ADF_SD(CardADF):
         install_cap_parser_inst_prm_grp.add_argument('--install-parameters-stk',
                                                      type=is_hexstr, default=None,
                                                      help='Load Parameters (ETSI TS 102 226, section 8.2.1.3.2.1)')
+        install_cap_parser.add_argument('--chunk-len', type=auto_uint8, default=None,
+                                        help='Block size for the LOAD command; default: as large as the current secure channel overhead permits, at most 240')
 
         @cmd2.with_argparser(install_cap_parser)
         def do_install_cap(self, opts):
@@ -979,7 +998,7 @@ class ADF_SD(CardADF):
             self._cmd.poutput("step #1: install for load...")
             self.do_install_for_load("--load-file-aid %s --security-domain-aid %s" % (load_file_aid, security_domain_aid))
             self._cmd.poutput("step #2: load...")
-            self.load(load_file)
+            self.load(load_file, opts.chunk_len)
             self._cmd.poutput("step #3: install_for_install (and make selectable)...")
             self.do_install_for_install("--load-file-aid %s --module-aid %s --application-aid %s --install-parameters %s --make-selectable" %
                                         (load_file_aid, module_aid, application_aid, install_parameters))

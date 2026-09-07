@@ -18,6 +18,7 @@
 import unittest
 import logging
 import hashlib
+from types import SimpleNamespace
 from osmocom.utils import b2h, h2b
 from osmocom.tlv import bertlv_encode_len
 
@@ -477,6 +478,58 @@ class PutKey_PSK_Test(unittest.TestCase):
         self.assertEqual(b2h(field), '8511' '10' + b2h(self.PSK_CLEAR) + '03' + b2h(self.PSK_KCV))
 
 
+class PutKey_Length_Test(unittest.TestCase):
+    """Tests for the length of the PUT KEY command APDU.  Lc of GP CardSpec v2.3 Table 11-64 is a
+    single byte, so an oversized key data field cannot be sent."""
+
+    class PutKeyOnly(ADF_SD.AddlShellCommands):
+        """ADF_SD.AddlShellCommands with a canned scc to drive put_key()"""
+        def __init__(self, scp=None, max_cmd_len=255):
+            super().__init__()
+            self.sent = []
+            self.scc = SimpleNamespace(scp=scp, max_cmd_len=max_cmd_len,
+                                       send_apdu_checksw=lambda pdu: (self.sent.append(pdu), ('', '9000'))[1])
+
+        @property
+        def _cmd(self):
+            return SimpleNamespace(lchan=SimpleNamespace(scc=self.scc))
+
+    # KVN, key type, two byte BER length of the key component block, KCV length; KCV suppressed
+    FRAMING = 1 + 1 + 2 + 1
+
+    @staticmethod
+    def key(nbytes: int):
+        return [{'key_type': 'rsa_modulus_n', 'clear_key': bytes(nbytes), 'kcv': b''}]
+
+    def test_lc_matches_data_field(self):
+        # largest key component block that still fits without a secure channel
+        sd = self.PutKeyOnly()
+        sd.put_key(0, 0x40, 1, self.key(255 - self.FRAMING))
+        apdu = sd.sent[0]
+        self.assertEqual(apdu[:8], '80D80001')
+        lc = int(apdu[8:10], 16)
+        self.assertEqual(lc, 255)                       # Lc ...
+        self.assertEqual(len(apdu[10:-2]) // 2, lc)     # ... and it matches the actual data field
+
+    def test_oversized_key_data_raises(self):
+        # real world fat example: RSA-2048 modulus does not fit, led to 3 nibble Lc 106,
+        # which silently shifted and broke the whole APDU by half a byte.
+        sd = self.PutKeyOnly()
+        with self.assertRaises(ValueError) as ctx:
+            sd.put_key(0, 0x40, 1, self.key(256))
+        self.assertIn('262', str(ctx.exception))
+        self.assertIn('255', str(ctx.exception))
+        self.assertEqual(sd.sent, [])                   # nothing was sent to the card
+
+    def test_secure_channel_overhead_lowers_the_limit(self):
+        # scc.max_cmd_len shrinks by the C-MAC + encryption padding of active SCP
+        sd = self.PutKeyOnly(max_cmd_len=239)
+        sd.put_key(0, 0x40, 1, self.key(239 - self.FRAMING))
+        self.assertEqual(int(sd.sent[0][8:10], 16), 239)
+        with self.assertRaises(ValueError):
+            sd.put_key(0, 0x40, 1, self.key(239 - self.FRAMING + 1))
+
+
 class Install_param_Test(unittest.TestCase):
     def test_gen_install_parameters(self):
         load_parameters = gen_install_parameters(256, 256, '010001001505000000000000000000000000')
@@ -484,6 +537,181 @@ class Install_param_Test(unittest.TestCase):
 
         load_parameters = gen_install_parameters()
         self.assertEqual(load_parameters, 'c900')
+
+class SCP_Overhead_Test(unittest.TestCase):
+    """SCP.overhead varies according to the current security level:
+    C-MAC + at level >= 3 the worst-case padding!
+    """
+
+    def _scp02(self, security_level):
+        scp = SCP02(card_keys=ck_3des_70)
+        scp.sk = Scp02SessionKeys(0x0001, ck_3des_70)
+        scp.security_level = security_level
+        return scp
+
+    def _scp03(self, security_level, s_mode=8):
+        scp = SCP03(card_keys=KEYSET_AES128, s_mode=s_mode)
+        scp.sk = Scp03SessionKeys(KEYSET_AES128, b'\x00' * s_mode, b'\x11' * s_mode)
+        scp.security_level = security_level
+        return scp
+
+    def test_scp02(self):
+        self.assertEqual(self._scp02(0x00).overhead, 0)   # no wrapping at all
+        self.assertEqual(self._scp02(0x01).overhead, 8)   # C-MAC
+        self.assertEqual(self._scp02(0x03).overhead, 16)  # C-MAC + C-DEC: pad80 to 8, largest fit 239
+
+    def test_scp03_s8(self):
+        self.assertEqual(self._scp03(0x00).overhead, 0)
+        self.assertEqual(self._scp03(0x01).overhead, 8)
+        self.assertEqual(self._scp03(0x03).overhead, 16)  # pad80 to 16 within 247 -> 240, minus pad byte
+        self.assertEqual(self._scp03(0x33).overhead, 16)  # R-MAC/R-ENC add no *command* overhead
+
+    def test_scp03_s16(self):
+        self.assertEqual(self._scp03(0x01, s_mode=16).overhead, 16)
+        self.assertEqual(self._scp03(0x03, s_mode=16).overhead, 32)  # pad80 to 16 within 239 -> 224, minus pad byte
+
+
+class SCP_Lc_Limit_Test_Base(unittest.TestCase):
+    """Test wrap_cmd_apdu() boundary handling: data of (255 - overhead) must produce Lc <= 255 else ValueError"""
+
+    def _load_apdu(self, data_len):
+        return h2b('80E80000') + bytes([data_len]) + b'\xa5' * data_len
+
+    def _check_boundary(self, scp):
+        fits = 255 - scp.overhead
+        wrapped = scp.wrap_cmd_apdu(self._load_apdu(fits))
+        self.assertLessEqual(wrapped[4], 255)
+        self.assertEqual(len(wrapped), 5 + wrapped[4])  # case #3: header + Lc bytes, no Le
+        with self.assertRaises(ValueError) as ctx:
+            scp.wrap_cmd_apdu(self._load_apdu(fits + 1))
+        self.assertIn('Lc', str(ctx.exception))
+
+
+class SCP02_Lc_Limit_Test(SCP_Lc_Limit_Test_Base):
+    """Same session vectors as SCP02_Auth_Test"""
+
+    def setUp(self):
+        self.scp02 = SCP02(card_keys=ck_3des_70)
+        self.scp02.gen_init_update_apdu(host_challenge=h2b('40A62C37FA6304F8'))
+        self.scp02.parse_init_update_resp(h2b('00000000000000000000700200016B4524ABEE7CF32EA3838BC148F3'))
+        self.scp02.gen_ext_auth_apdu()
+
+    def test_cmac_only(self):
+        self.scp02.security_level = 0x01
+        self._check_boundary(self.scp02)  # 247 fits, 248 raises
+
+    def test_cmac_cdec(self):
+        self.scp02.security_level = 0x03
+        self._check_boundary(self.scp02)  # 239 fits (-> Lc 248), 240 raises (would be 256)
+
+    def test_cmac_cdec_wrapped_lc(self):
+        # my actual failing case: 240 bytes at level 3
+        self.scp02.security_level = 0x03
+        wrapped = self.scp02.wrap_cmd_apdu(self._load_apdu(239))
+        self.assertEqual(wrapped[4], 248)  # 239 -> pad80 -> 240 ciphertext + 8 mac
+
+
+class SCP03_Lc_Limit_Test(SCP_Lc_Limit_Test_Base):
+    """Session keys derived directly"""
+
+    def _scp03(self, security_level, s_mode):
+        scp = SCP03(card_keys=KEYSET_AES128, s_mode=s_mode)
+        scp.sk = Scp03SessionKeys(KEYSET_AES128, b'\x00' * s_mode, b'\x11' * s_mode)
+        scp.security_level = security_level
+        return scp
+
+    def test_s8_cmac_only(self):
+        self._check_boundary(self._scp03(0x01, 8))    # 247 fits, 248 raises
+
+    def test_s8_cmac_cdec(self):
+        self._check_boundary(self._scp03(0x03, 8))    # 239 fits, 240 raises
+
+    def test_s16_cmac_only(self):
+        self._check_boundary(self._scp03(0x01, 16))   # 239 fits, 240 raises
+
+    def test_s16_cmac_cdec(self):
+        self._check_boundary(self._scp03(0x03, 16))   # 223 fits, 224 raises
+
+
+class _FakeSccForLoad:
+    """mock lchan.scc: records LOAD APDUs, optionally wrapping them through a real SCP
+    instance first where the Lc overflow used to blow up"""
+
+    def __init__(self, max_cmd_len=255, scp=None):
+        self.max_cmd_len = max_cmd_len
+        self.scp = scp
+        self.sent = []
+        self.wrapped = []
+
+    def send_apdu_checksw(self, apdu, sw='9000'):
+        self.sent.append(apdu.lower())
+        if self.scp:
+            self.wrapped.append(self.scp.wrap_cmd_apdu(h2b(apdu)))
+        return ('', '9000')
+
+
+class Load_ChunkLen_Test(unittest.TestCase):
+    """ADF_SD.load() chunking: block size must use scc.max_cmd_len"""
+
+    payload = b'\xaa' * 500  # actual real world case LOAD TLV: C4 + 8201f4 + 500 = 504 total
+
+    def _sd(self, scc):
+        cmd = type('_Cmd', (), {'lchan': type('_Lchan', (), {'scc': scc})(),
+                                'poutput': lambda self, *args: None})()
+        # cmd2 CommandSet has a r/o _cmd property -> shadow it
+        _SD = type('_SD', (ADF_SD.AddlShellCommands,), {'_cmd': cmd})
+        return _SD.__new__(_SD)
+
+    def _blocks(self, scc):
+        """Get (p1, p2, lc) from LOAD APDU"""
+        for apdu in scc.sent:
+            self.assertEqual(apdu[0:4], '80e8')
+            yield int(apdu[4:6], 16), int(apdu[6:8], 16), int(apdu[8:10], 16)
+
+    def test_default_no_scp(self):
+        """Without SCP the old 240 byte block size is kept, no idea what else might rely on this number"""
+        scc = _FakeSccForLoad(max_cmd_len=255)
+        self._sd(scc).load(self.payload)
+        blocks = list(self._blocks(scc))
+        self.assertEqual([b[2] for b in blocks], [240, 240, 24])
+        self.assertEqual([b[0] for b in blocks], [0x00, 0x00, 0x80])  # P1: last block flagged
+        self.assertEqual([b[1] for b in blocks], [0, 1, 2])           # P2: block num
+
+    def test_default_scp02_level3(self):
+        """max_cmd_len 239 (SCP02 lvl 3) squeezes the blocks"""
+        scc = _FakeSccForLoad(max_cmd_len=239)
+        self._sd(scc).load(self.payload)
+        self.assertEqual([b[2] for b in list(self._blocks(scc))], [239, 239, 26])
+
+    def test_explicit_chunk_len(self):
+        scc = _FakeSccForLoad(max_cmd_len=255)
+        self._sd(scc).load(self.payload, chunk_len=100)
+        self.assertEqual([b[2] for b in list(self._blocks(scc))], [100] * 5 + [4])
+
+    def test_explicit_chunk_len_too_large(self):
+        scc = _FakeSccForLoad(max_cmd_len=239)
+        with self.assertRaises(ValueError):
+            self._sd(scc).load(self.payload, chunk_len=240)
+        self.assertEqual(scc.sent, [])  # nothing sent!
+
+    def test_explicit_chunk_len_zero(self):
+        scc = _FakeSccForLoad(max_cmd_len=255)
+        with self.assertRaises(ValueError):
+            self._sd(scc).load(self.payload, chunk_len=0)
+
+    def test_end_to_end_scp02_level3(self):
+        """original failure: 286 byte CAP + SCP02 lvl 3"""
+        scp02 = SCP02(card_keys=ck_3des_70)
+        scp02.gen_init_update_apdu(host_challenge=h2b('40A62C37FA6304F8'))
+        scp02.parse_init_update_resp(h2b('00000000000000000000700200016B4524ABEE7CF32EA3838BC148F3'))
+        scp02.gen_ext_auth_apdu()
+        scp02.security_level = 0x03
+        scc = _FakeSccForLoad(max_cmd_len=255 - scp02.overhead, scp=scp02)
+        self._sd(scc).load(b'\x5a' * 286)
+        self.assertEqual(len(scc.sent), 2)  # 289 byte TLV in blocks of 239
+        for wrapped in scc.wrapped:
+            self.assertLessEqual(wrapped[4], 255)
+
 
 if __name__ == "__main__":
 	unittest.main()
