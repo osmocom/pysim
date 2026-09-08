@@ -99,11 +99,11 @@ class NaaUsim(Naa):
     aid = h2b("a0000000871002")
     mandatory_services = ["usim"]
     pe_types = ["usim", "opt-usim", "phonebook", "gsm-access", "eap", "df-5gs", "df-saip",
-                "df-snpn", "df-5gprose"]
+                "df-snpn", "df-5gprose", "iot", "opt-iot"]
     templates = [oid.ADF_USIM_by_default, oid.ADF_USIMopt_not_by_default,
                  oid.DF_PHONEBOOK_ADF_USIM, oid.DF_GSM_ACCESS_ADF_USIM,
                  oid.DF_EAP, oid.DF_5GS, oid.DF_SAIP, oid.DF_SNPN,
-                 oid.DF_5GProSe]
+                 oid.DF_5GProSe, oid.IoT_by_default, oid.IoTopt_not_by_default]
     adf = ADF_USIM()
 
 class NaaIsim(Naa):
@@ -615,11 +615,11 @@ class ProfileElement:
             'pinCodes': ProfileElementPin,
             'pukCodes': ProfileElementPuk,
             'akaParameter': ProfileElementAKA,
-            # TODO: cdmaParameter
+            'cdmaParameter': ProfileElementCDMA,
             'securityDomain': ProfileElementSD,
             'rfm': ProfileElementRFM,
             'application': ProfileElementApplication,
-            # TODO: nonStandard
+            'nonStandard': ProfileElementNonStandard,
             'end': ProfileElementEnd,
             'mf': ProfileElementMF,
             'cd': ProfileElementCD,
@@ -637,6 +637,8 @@ class ProfileElement:
             'df-saip': ProfileElementDfSAIP,
             'df-snpn': ProfileElementDfSNPN,
             'df-5gprose': ProfileElementDf5GProSe,
+            'iot': ProfileElementIoT,
+            'opt-iot': ProfileElementOptIoT,
             }
         if pe_type in class4petype:
             return class4petype[pe_type]
@@ -1458,6 +1460,135 @@ class ProfileElementOptUSIM(FsProfileElement):
         # provide some reasonable defaults for a MNO-SD
         self.decoded['templateID'] = str(oid.ADF_USIMopt_not_by_default_v2)
 
+class ProfileElementCDMA(ProfileElement):
+    """Class representing the ProfileElement for the CDMA parameters (PE-CDMAParameter)."""
+    type = 'cdmaParameter'
+
+class ProfileElementNonStandard(ProfileElement):
+    """Class representing a non-standard, issuer specific ProfileElement (PE-NonStandard)."""
+    type = 'nonStandard'
+
+class ProfileElementIoT(FsProfileElement):
+    """Class representing the ProfileElement for the IoT Minimal Profile mandatory files.  A single PE
+    creates the MF-level files and ADF.USIM (Section 8.3.4.8.1 and 9.10.1 of TCA SAIP V3.4.1)."""
+    type = 'iot'
+
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
+        if decoded:
+            return
+        self.decoded['templateID'] = str(oid.IoT_by_default)
+        for fname in ['mf', 'ef-iccid', 'ef-dir', 'adf-usim', 'ef-imsi', 'ef-ust', 'ef-acc', 'ef-ecc']:
+            self.decoded[fname] = []
+
+    @property
+    def adf_name(self) -> str:
+        return b2h(self.decoded['adf-usim'][0][1]['dfName'])
+
+    @property
+    def imsi(self) -> Optional[str]:
+        template = templates.ProfileTemplateRegistry.get_by_oid(self.templateID)
+        f = File('ef-imsi', self.decoded['ef-imsi'], template.files_by_pename.get('ef-imsi', None))
+        return dec_imsi(b2h(f.body))
+
+    def file_template_for_path(self, path: Path, adf: Optional[str] = None) -> Optional[templates.FileTemplate]:
+        # the template spans the MF and ADF.USIM, so the paths of its files are absolute
+        template = templates.ProfileTemplateRegistry.get_by_oid(self.templateID)
+        for f in template.files:
+            if f.path == path or f.path.relative_to_mf() == path:
+                return f
+
+    def _root_template_mf(self):
+        """'mf' is OPTIONAL in PE-IoT: root the MF of the template so that ADF.USIM has a parent."""
+        template = templates.ProfileTemplateRegistry.get_by_oid(self.templateID)
+        mf = File('mf', None, template.files_by_pename['mf'])
+        if self.pe_sequence.mf:
+            self.files['mf'] = mf
+            mf.node = self.pe_sequence.mf
+            return
+        super().add_file(mf)
+
+    def add_file(self, file: File):
+        if self.pe_sequence and file.pe_name == 'mf' and self.pe_sequence.mf:
+            # the MF was created by a preceding PE-GenericFileManagement (Section 8.1): re-use it
+            if 'mf' in self.files:
+                raise KeyError('Cannot add file: mf already exists')
+            self.files['mf'] = file
+            file.node = self.pe_sequence.mf
+            return
+        if self.pe_sequence and file.pe_name != 'mf' and not 'mf' in self.files:
+            self._root_template_mf()
+        super().add_file(file)
+
+class ProfileElementOptIoT(FsProfileElement):
+    """Class representing the ProfileElement for the IoT Minimal Profile optional files below ADF.USIM,
+    including DF.5GS and DF.SAIP (Section 8.3.4.8.2 and 9.10.2 of TCA SAIP V3.4.1)."""
+    type = 'opt-iot'
+
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
+        if decoded:
+            return
+        self.decoded['templateID'] = str(oid.IoTopt_not_by_default)
+
+    @staticmethod
+    def _relative_path(template: templates.ProfileTemplate, ft: templates.FileTemplate) -> Path:
+        """Path of a template row below ADF.USIM.  Follows the ppath of the row, as the template tree
+        cannot express two sibling DFs (DF.5GS, DF.SAIP) within one template."""
+        names = []
+        for fid in ft.ppath:
+            container = [c for c in template.files if c.fid == fid and c.file_type in ['MF', 'DF', 'ADF']]
+            names.append(container[0].name if container else '%04X' % fid)
+        names.append(ft.name)
+        return Path(names)
+
+    def file_template_for_path(self, path: Path, adf: Optional[str] = None) -> Optional[templates.FileTemplate]:
+        template = templates.ProfileTemplateRegistry.get_by_oid(self.templateID)
+        adf = adf or 'ADF.USIM'
+        for f in template.files:
+            relative = self._relative_path(template, f)
+            if Path([adf]) + relative == path or Path(['MF', adf]) + relative == path:
+                return f
+
+    def _usim_adf_node(self) -> 'FsNodeDF':
+        """Resolve ADF.USIM as created by the preceding PE-IoT (or an ADF 7FF1 below the MF)."""
+        iot_pe = self.pe_sequence.get_closest_prev_pe_for_templateID(self, oid.IoT_by_default)
+        if iot_pe and 'adf-usim' in iot_pe.files and iot_pe.files['adf-usim'].node:
+            return iot_pe.files['adf-usim'].node
+        if self.pe_sequence.mf:
+            try:
+                return self.pe_sequence.mf[0x7ff1]
+            except KeyError:
+                pass
+        if self.pe_sequence.cur_df:
+            return self.pe_sequence.cur_df
+        raise ValueError('PE-OPT-IoT requires ADF.USIM of a preceding PE-IoT (Section 8.3.4.8.2)')
+
+    def add_file(self, file: File):
+        if file.pe_name in self.files:
+            raise KeyError('Cannot add file: %s already exists' % file.pe_name)
+        self.files[file.pe_name] = file
+        if not self.pe_sequence:
+            return
+        template = templates.ProfileTemplateRegistry.get_by_oid(self.templateID)
+        pe_df = self._usim_adf_node()
+        # walk the intermediate DFs (DF.5GS, DF.SAIP); a DF the PE left out is created from its template row
+        for fid in (file.template.ppath if file.template else []):
+            try:
+                pe_df = pe_df[fid]
+                continue
+            except KeyError:
+                pass
+            container = [c for c in template.files if c.fid == fid and c.file_type in ['MF', 'DF', 'ADF']]
+            if not container:
+                raise KeyError('no template DF %04X on the path of %s' % (fid, file))
+            path_file = self.files.get(container[0].pe_name)
+            if not path_file:
+                path_file = File(container[0].pe_name, None, container[0])
+                self.files[container[0].pe_name] = path_file
+            pe_df = path_file.node if path_file.node else pe_df.add_file(path_file)
+        self.pe_sequence.cur_df = pe_df.add_file(file)
+
 class ProfileElementISIM(FsProfileElement):
     """Class representing the ProfileElement for ADF.ISIM Mandatory Files"""
     type = 'isim'
@@ -1735,7 +1866,8 @@ class ProfileElementSequence:
         of a list of a list of PEs."""
         self.pres_by_naa = {}
         petype_not_naa_related = ['securityDomain', 'rfm', 'application', 'end']
-        naa = ['mf', 'usim', 'isim', 'csim']
+        # PE-IoT creates ADF.USIM of an IoT Minimal Profile, so it starts the 'usim' NAA
+        naa = {'mf': 'mf', 'usim': 'usim', 'isim': 'isim', 'csim': 'csim', 'iot': 'usim'}
         cur_naa = None
         cur_naa_list = []
         for pe in self.pe_list:
@@ -1747,7 +1879,7 @@ class ProfileElementSequence:
                     if not cur_naa in self.pes_by_naa:
                         self.pes_by_naa[cur_naa] = []
                     self.pes_by_naa[cur_naa].append(cur_naa_list)
-                cur_naa = pe.type
+                cur_naa = naa[pe.type]
                 cur_naa_list = []
             cur_naa_list.append(pe)
         # append the final one

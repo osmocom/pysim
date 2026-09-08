@@ -795,6 +795,71 @@ class FilesDf5GProSe(ProfileTemplate):
         FileTemplate(0x4f06, 'EF.5G_PROSE_UIR',   'TR', None,   32,   2, 0x06, None,  True, ass_serv=[139,1005]),
     ]
 
+class FilesIotMandatory(ProfileTemplate):
+    """Mandatory Files of the IoT Minimal Profile (MF and ADF.USIM) as per Section 9.10.1 v3.4.1"""
+    created_by_default = True
+    oid = OID.IoT_by_default
+    files = [
+        FileTemplate(0x3f00, 'MF',           'MF', None, None,   7, None, None, False, ['pinStatusTemplateDO']),
+        FileTemplate(0x2f05, 'EF.PL',        'TR', None,    2,   1, 0x05, 'FF...FF', False),
+        FileTemplate(0x2fe2, 'EF.ICCID',     'TR', None,   10,   6, None, None, False),
+        FileTemplate(0x2f00, 'EF.DIR',       'LF',    1, None,   5, 0x1e, None, False, ['size']),
+        FileTemplate(0x2f06, 'EF.ARR',       'LF',    8,   33,   5, None, None, False),
+        FileTemplate(0x2f08, 'EF.UMPC',      'TR', None,    5,   5, 0x08, None, False),
+        FileTemplate(0x7ff1, 'ADF.USIM',    'ADF', None, None,   7, None, None, False, ['aid', 'pinStatusTemplateDO']),
+        FileTemplate(0x6f07, 'EF.IMSI',      'TR', None,    9,   2, 0x07, None, True, ppath=[0x7ff1]),
+        FileTemplate(0x6f06, 'EF.ARR',       'LF', None, None,   5, 0x17, None, False, pe_name='ef-arr-usim', ppath=[0x7ff1]),
+        FileTemplate(0x6f08, 'EF.Keys',      'TR', None,   33,   4, 0x08, '07FF...FF', False, high_update=True, ppath=[0x7ff1]),
+        FileTemplate(0x6f09, 'EF.KeysPS',    'TR', None,   33,   4, 0x09, '07FF...FF', False, high_update=True, pe_name='ef-keysPS', ppath=[0x7ff1]),
+        FileTemplate(0x6f31, 'EF.HPPLMN',    'TR', None,    1,   2, 0x12, '0A', False, ppath=[0x7ff1]),
+        FileTemplate(0x6f38, 'EF.UST',       'TR', None,   17,   2, 0x04, '000000000100...00', False, ppath=[0x7ff1]),
+        FileTemplate(0x6f5b, 'EF.START-HFN', 'TR', None,    6,   4, 0x0f, 'F00000F00000', False, high_update=True, ppath=[0x7ff1]),
+        FileTemplate(0x6f5c, 'EF.THRESHOLD', 'TR', None,    3,   2, 0x10, 'FFFFFF', False, ppath=[0x7ff1]),
+        FileTemplate(0x6f73, 'EF.PSLOCI',    'TR', None,   14,   4, 0x0c, 'FFFFFFFFFFFFFFFFFFFF0000FF01', False, high_update=True, ppath=[0x7ff1]),
+        FileTemplate(0x6f78, 'EF.ACC',       'TR', None,    2,   2, 0x06, None, True, ppath=[0x7ff1]),
+        FileTemplate(0x6f7b, 'EF.FPLMN',     'TR', None,   12,   4, 0x0d, 'FF...FF', False, ppath=[0x7ff1]),
+        FileTemplate(0x6f7e, 'EF.LOCI',      'TR', None,   11,   4, 0x0b, 'FFFFFFFFFFFFFF0000FF01', False, high_update=True, ppath=[0x7ff1]),
+        FileTemplate(0x6fad, 'EF.AD',        'TR', None,    4,   5, 0x03, '00000002', False, ppath=[0x7ff1]),
+        FileTemplate(0x6fb7, 'EF.ECC',       'LF',    1,    4,   5, 0x01, 'FF...FF', False, ppath=[0x7ff1]),
+        FileTemplate(0x6fc4, 'EF.NETPAR',    'TR', None,  128,   4, None, 'FF...FF', False, high_update=True, ppath=[0x7ff1]),
+    ]
+
+class FilesIotOptional(ProfileTemplate):
+    """Optional Files of the IoT Minimal Profile below ADF.USIM as per Section 9.10.2 v3.4.1"""
+    created_by_default = False
+    optional = True
+    oid = OID.IoTopt_not_by_default
+    base_path = Path('ADF.USIM')
+    extends = FilesIotMandatory
+    files = [
+        FileTemplate(0x6f3b, 'EF.FDN',       'LF',   20,   26,   8, None, 'FF...FF', False, ass_serv=[2, 89]),
+        FileTemplate(0x6f3c, 'EF.SMS',       'LF',   10,  176,   4, None, '00FF...FF', False, ass_serv=[10]),
+        FileTemplate(0x6f42, 'EF.SMSP',      'LF',    1,   38,   4, None, 'FF...FF', False, ass_serv=[12]),
+        FileTemplate(0x6f43, 'EF.SMSS',      'TR', None,    2,   4, None, 'FFFF', False, ass_serv=[10]),
+        FileTemplate(0x6f46, 'EF.SPN',       'TR', None,   17,   5, None, None, True, ass_serv=[19]),
+        FileTemplate(0x6f56, 'EF.EST',       'TR', None,    1,   8, 0x05, None, True, ass_serv=[2, 6, 34, 35]),
+        FileTemplate(0x6f61, 'EF.OPLMNwAcT', 'TR', None,   40,   2, 0x11, 'FFFFFF0000', False, ass_serv=[42], repeat=True),
+        FileTemplate(0x6f62, 'EF.HPLMNwAcT', 'TR', None,    5,   2, 0x13, 'FFFFFF0000', False, ass_serv=[43], repeat=True),
+        FileTemplate(0x6fd9, 'EF.EHPLMN',    'TR', None,   15,   2, 0x1d, 'FF...FF', False, ass_serv=[71]),
+        FileTemplate(0x6fe3, 'EF.EPSLOCI',   'TR', None,   18,   4, 0x1e, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000001', False, ass_serv=[85], high_update=True),
+        FileTemplate(0x6fe4, 'EF.EPSNSC',    'LF',    1,   80,   4, 0x18, 'FF...FF', False, ass_serv=[85], high_update=True),
+        FileTemplate(0x5fc0, 'DF.5GS',       'DF', None, None,   7, None, None, False, ['pinStatusTemplateDO'], pe_name='df-df-5gs'),
+        FileTemplate(0x4f01, 'EF.5GS3GPPLOCI',   'TR', None,   20,   4, 0x01, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000001', False, ass_serv=[122], high_update=True, ppath=[0x5fc0]),
+        FileTemplate(0x4f02, 'EF.5GSN3GPPLOCI',  'TR', None,   20,   4, 0x02, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000001', False, ass_serv=[122], high_update=True, ppath=[0x5fc0]),
+        FileTemplate(0x4f03, 'EF.5GS3GPPNSC',    'LF',    2,   62,   4, 0x03, 'FF...FF', False, ass_serv=[122, 136], high_update=True, ppath=[0x5fc0]),
+        FileTemplate(0x4f04, 'EF.5GSN3GPPNSC',   'LF',    2,   62,   4, 0x04, 'FF...FF', False, ass_serv=[122, 136], high_update=True, ppath=[0x5fc0]),
+        FileTemplate(0x4f05, 'EF.5GAUTHKEYS',    'TR', None,  110,   4, 0x05, 'FF...FF', False, ass_serv=[123], high_update=True, ppath=[0x5fc0]),
+        FileTemplate(0x4f06, 'EF.UAC_AIC',       'TR', None,    4,   2, 0x06, None, True, ass_serv=[126], ppath=[0x5fc0]),
+        FileTemplate(0x4f07, 'EF.SUCI_Calc_Info','TR', None,   44,   2, 0x07, 'FF...FF', False, ass_serv=[124], ppath=[0x5fc0]),
+        FileTemplate(0x4f08, 'EF.OPL5G',         'LF',    1,   10,   5, 0x08, 'FF...FF', False, ass_serv=[129], ppath=[0x5fc0]),
+        FileTemplate(0x4f09, 'EF.SUPI_NAI',      'TR', None,   20,   2, 0x09, None, True, ass_serv=[130], pe_name='ef-supi-nai', ppath=[0x5fc0]),
+        FileTemplate(0x4f0a, 'EF.Routing_Indicator', 'TR', None, 4,  2, 0x0a, 'F0FF0000', False, ass_serv=[124], ppath=[0x5fc0]),
+        FileTemplate(0x4f0b, 'EF.URSP',          'BT', None,  200,   2, None, None, False, ass_serv=[132], ppath=[0x5fc0]),
+        FileTemplate(0x4f0c, 'EF.TN3GPPSNN',     'TR', None,    1,   2, 0x0c, '00', False, ass_serv=[135], ppath=[0x5fc0]),
+        FileTemplate(0x5fd0, 'DF.SAIP',      'DF', None, None,   7, None, None, False, ['pinStatusTemplateDO'], pe_name='df-df-saip'),
+        FileTemplate(0x4f01, 'EF.SUCI_Calc_Info_USIM', 'TR', None, 44, 3, None, 'FF...FF', False, ass_serv=[125], pe_name='ef-suci-calc-info-usim', ppath=[0x5fd0]),
+    ]
+
 class FilesIsimMandatory(ProfileTemplate):
     """Mandatory Files at ADF.ISIM as per Section 9.6.1"""
     created_by_default = True
