@@ -366,8 +366,8 @@ class File:
                 if fd_dec['record_len']:
                     self.rec_len = fd_dec['record_len']
                 if efFileSize:
-                    if self.rec_len and self.nb_rec == None:
-                        # compute the number of records from file size and record length
+                    if self.rec_len and not fd_dec['num_of_rec']:
+                        # the profile's size wins over a template count when the descriptor omits it
                         self.nb_rec = self._file_size // self.rec_len
                 if fdb_dec['structure'] == 'linear_fixed':
                     self.file_type = 'LF'
