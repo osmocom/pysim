@@ -830,6 +830,23 @@ class ProfileElementGFM(ProfileElement):
     def add_file(self, file: File, path: Path):
         logger.debug("%s.add_file(path=%s, %s)" % (self.__class__.__name__, path, repr(file)))
         if hasattr(self.pe_sequence, 'mf'):
+            if self.pe_sequence.mf is None and file.fid == 0x3f00 and file.file_type == 'DF':
+                # TCA SAIP §8.1: without a PE-MF, the MF is created as the first file of a
+                # PE-GenericFileManagement; PE-MF is not allowed in an IoT Minimal Profile (§7.5).
+                if file.pe_name in self.files:
+                    raise KeyError('Cannot add file: %s already exists' % file.pe_name)
+                file.node = FsNodeMF(file)
+                self.pe_sequence.mf = file.node
+                self.pe_sequence.cur_df = file.node
+                self.files[file.pe_name] = file
+                return
+            if self.pe_sequence.mf is None:
+                # no MF yet: keep the file reachable by path, as for a PE decoded without a sequence
+                path_str = str(path) if isinstance(path, Path) else self.path_str(path)
+                if path_str in self.files:
+                    raise KeyError('Cannot add file: %s already exists' % path_str)
+                self.files[path_str] = file
+                return
             if isinstance(path, Path):
                 parent = self.pe_sequence.mf.lookup_by_path(Path(path[:-1]))
             else:
@@ -2066,6 +2083,10 @@ class ProfileElementSequence:
         # remove the leading MF, in case it's specified explicitly
         while len(path) and path[0] == 0x3f00:
             path.pop(0)
+        if self.mf is None:
+            # no MF yet (a GFM creating the file system from scratch): nothing to select
+            self.cur_df = None
+            return
         df = self.mf
         for p in path:
             if not p in df.children:
