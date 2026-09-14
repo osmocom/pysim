@@ -1129,10 +1129,13 @@ global_group.add_argument("--verbose", help="Enable verbose logging",
                           action='store_true', default=False)
 
 adm_group = global_group.add_mutually_exclusive_group()
-adm_group.add_argument('-a', '--pin-adm', metavar='PIN_ADM1', dest='pin_adm', default=None,
+adm_group.add_argument('-a', '--pin-adm', metavar='PIN_ADM', dest='pin_adm', default=None,
                        help='ADM PIN used for provisioning (overwrites default)')
-adm_group.add_argument('-A', '--pin-adm-hex', metavar='PIN_ADM1_HEX', dest='pin_adm_hex', default=None,
+adm_group.add_argument('-A', '--pin-adm-hex', metavar='PIN_ADM_HEX', dest='pin_adm_hex', default=None,
                        help='ADM PIN used for provisioning, as hex string (16 characters long)')
+global_group.add_argument('--pin-adm-type',
+                          choices=[x for x in pin_names.values() if x.startswith('ADM')],
+                          help='Override ADM number. Default is card-model-specific, usually 1')
 
 option_parser.add_argument('-e', '--execute-command', action='append', default=[],
                            help='A pySim-shell command that will be executed at startup')
@@ -1182,18 +1185,15 @@ if __name__ == '__main__':
 
     # If the user supplies an ADM PIN at via commandline args authenticate
     # immediately so that the user does not have to use the shell commands
-    pin_adm = sanitize_pin_adm(opts.pin_adm, opts.pin_adm_hex)
-    if pin_adm:
-        if not card:
-            print("Card error, cannot do ADM verification with supplied ADM pin now.")
-        try:
-            card._scc.verify_chv(card._adm_chv_num, h2b(pin_adm))
-        except Exception as e:
-            startup_errors = True
-            print("ADM verification (%s) failed with an exception:" % str(pin_adm))
-            print("---------------------8<---------------------")
-            print(e)
-            print("---------------------8<---------------------")
+    pin_adm_type = ""
+    if opts.pin_adm_type:
+        pin_adm_type = "--adm-type %s" % opts.pin_adm_type
+    if opts.pin_adm:
+        app.onecmd_plus_hooks("verify_adm %s %s" %
+                              (opts.pin_adm, pin_adm_type), add_to_history = False)
+    elif opts.pin_adm_hex:
+        app.onecmd_plus_hooks("verify_adm %s --pin-is-hex %s" %
+                              (opts.pin_adm_hex, pin_adm_type), add_to_history = False)
 
     # Run optional commands
     for c in opts.execute_command:
