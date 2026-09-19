@@ -184,7 +184,11 @@ class ProfileTemplate:
                 else:
                     cur_df.children.append(f)
                     f.parent = cur_df
-            cls.files_by_pename[f.pe_name] = f
+            # SAIP section 9.1: a file listed once per FID of a range shares one
+            # pe_name, and the first instance is created at the start of the
+            # range, so the first row listed is the one a PE without a fileID
+            # refers to.
+            cls.files_by_pename.setdefault(f.pe_name, f)
         ProfileTemplateRegistry.add(cls)
 
     @classmethod
