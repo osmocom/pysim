@@ -713,5 +713,73 @@ class Load_ChunkLen_Test(unittest.TestCase):
             self.assertLessEqual(wrapped[4], 255)
 
 
+class _FakeScc:
+    """mock lchan.scc: replays scripted (data, sw) pairs + records the APDUs sent."""
+
+    def __init__(self, responses):
+        self._responses = list(responses)
+        self.sent = []
+
+    def send_apdu(self, apdu):
+        self.sent.append(apdu.lower())
+        if not self._responses:
+            raise AssertionError('get_status sent unexpected APDU: %s' % apdu)
+        return self._responses.pop(0)
+
+
+class GetStatus_Pagination_Test(unittest.TestCase):
+    """GPC v2.3.1 section 11.4.3.2 table 11-38 GET STATUS pagination test
+
+    Card answers 6310 when further matches are pending; command reissued with
+    P2 bit 1 "next occurrence" set. Tied to T=0 handling pySim/transport, which
+    used to swallow that 6310 and replied with GET RESPONSE, so page 2 was never fetched."""
+
+    ENTRY_1 = 'e3074f05a000000151'
+    ENTRY_2 = 'e3074f05a000000152'
+
+    def _sd(self, responses):
+        scc = _FakeScc(responses)
+        cmd = type('_Cmd', (), {'lchan': type('_Lchan', (), {'scc': scc})()})()
+        # cmd2 strikes again, CommandSet exposes _cmd as a read only property, needs shadowing
+        _SD = type('_SD', (ADF_SD.AddlShellCommands,), {'_cmd': cmd})
+        return _SD.__new__(_SD), scc
+
+    def _aids(self, grd_list):
+        return [b2h(grd.to_dict()['gp_registry_related_data'][0]['application_aid']) for grd in grd_list]
+
+    def test_single_page(self):
+        sd, scc = self._sd([(self.ENTRY_1, '9000')])
+        grd_list = sd.get_status('applications')
+        self.assertEqual(scc.sent, ['80f24002094f005c054f9f70c5cc00'])
+        self.assertEqual(self._aids(grd_list), ['a000000151'])
+
+    def test_two_pages(self):
+        """6310 -> reissue with P2 bit 1 set -> 9000, both pages in result"""
+        sd, scc = self._sd([(self.ENTRY_1, '6310'), (self.ENTRY_2, '9000')])
+        grd_list = sd.get_status('applications')
+        self.assertEqual(scc.sent, ['80f24002094f005c054f9f70c5cc00',
+                                    '80f24003094f005c054f9f70c5cc00'])
+        self.assertEqual(self._aids(grd_list), ['a000000151', 'a000000152'])
+
+    def test_three_pages_keep_p2_next_occurrence(self):
+        sd, scc = self._sd([(self.ENTRY_1, '6310'), (self.ENTRY_2, '6310'), (self.ENTRY_1, '9000')])
+        grd_list = sd.get_status('applications')
+        self.assertEqual([a[6:8] for a in scc.sent], ['02', '03', '03'])
+        self.assertEqual(len(grd_list), 3)
+
+    def test_no_match_returns_empty(self):
+        """6A88 "referenced data not found" is empty result not failure."""
+        sd, _scc = self._sd([('', '6a88')])
+        self.assertEqual(sd.get_status('applications'), [])
+
+    def test_unexpected_sw_is_not_silently_truncated(self):
+        """partial is not complete result"""
+        sd, _scc = self._sd([(self.ENTRY_1, '6310'), ('', '6982')])
+        with self.assertRaises(SwMatchError) as ctx:
+            sd.get_status('applications')
+        self.assertEqual(ctx.exception.sw_actual, '6982')
+
+
+
 if __name__ == "__main__":
 	unittest.main()

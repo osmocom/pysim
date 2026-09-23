@@ -737,22 +737,29 @@ class ADF_SD(CardADF):
             subset_hex = b2h(build_construct(StatusSubset, subset))
             aid = ApplicationAID(decoded=aid_search_qualifier)
             cmd_data = aid.to_tlv() + h2b('5c054f9f70c5cc')
-            p2 = 0x02 # TLV format according to Table 11-36
+            p2 = 0x02 # GPC v2.3.1 11.4.2.2 table 11-34, b2: response data structure per table 11-36
             grd_list = []
             while True:
                 hdr = "80F2%s%02x%02x" % (subset_hex, p2, len(cmd_data))
                 data, sw = self._cmd.lchan.scc.send_apdu(hdr + b2h(cmd_data) + "00")
+                if sw == '6a88':
+                    # "Referenced data not found": nothing (more) matches the requested subset and AID
+                    # search qualifier. That is empty, not error?
+                    return grd_list
+                if sw not in ['9000', '6310']:
+                    # Never return a silently truncated registry
+                    raise SwMatchError(sw, ['9000', '6310'])
                 remainder = h2b(data)
                 while len(remainder):
                     # tlv sequence, each element is one GpRegistryRelatedData()
                     grd = GpRegistryRelatedData()
                     _dec, remainder = grd.from_tlv(remainder)
                     grd_list.append(grd)
-                if sw != '6310':
+                if sw == '9000':
                     return grd_list
-                else:
-                    p2 |= 0x01
-            return grd_list
+                # 6310 = more data available, table 11-38: reissue as get next occurrence(s), b1 of
+                # table 11-34. Keeps b2 unchanged.
+                p2 |= 0x01
 
         set_status_parser = argparse.ArgumentParser()
         set_status_parser.add_argument('scope', choices=list(SetStatusScope.ksymapping.values()),

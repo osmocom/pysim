@@ -333,6 +333,18 @@ class LinkBaseTpdu(LinkBase):
             # correctly the Le byte (usually 0x00) must be present, is often forgotten. To avoid problems with
             # legacy scripts that use raw APDU strings, we will still loosely apply GET RESPONSE based on what
             # the status word indicates. Unless the user explicitly enables the strict mode (set apdu_strict true)
+            #
+            # The dummy GET RESPONSE of clause 4b (see below) is one shot: it turns a warning SW into the 61xx
+            # that announces the response length. It is only ever a valid reaction to the SW returned for the
+            # _command_ TPDU. Once a response has been fetched there is nothing left to announce, so a warning
+            # SW is the final result of the command and has to be passed on to the caller unmodified.
+            #
+            # This matters because the 62xx/63xx range is not exclusive to ETSI TS 102 221.
+            # GPC v2.3.1 section 11.4.3.2 table 11-38 GP GET STATUS (80 F2) answers
+            # 6310 "more data available", meaning "reissue with P2 bit 1 set" as per section 11.4.2.2 table 11-34
+            # rather than "response data is waiting". Trying a random GET RESPONSE at that point
+            # makes the card answer 6982 and tears down the whole SCP session and following commands fail with 6985.
+            dummy_gr_allowed = not data
             while True:
                 if sw in ['9000', '9100']:
                     # A status word of 9000 (or 9100 in case there is pending data from a proactive SIM command)
@@ -345,7 +357,7 @@ class LinkBaseTpdu(LinkBase):
                     # word. (see also ETSI TS 102 221, section 7.3.1.1.4, clause 4a and 3GPP TS 51.011 9.4.1 and
                     # ISO/IEC 7816-4, Table 5)
                     le_gr = sw[2:4]
-                elif sw[0:2] in ['62', '63']:
+                elif sw[0:2] in ['62', '63'] and dummy_gr_allowed:
                     # There are corner cases (status word is 62xx or 63xx) where the UICC/eUICC/SIM asks us
                     # to send a dummy GET RESPONSE command. We send a GET RESPONSE command with a length of 0.
                     # (see also ETSI TS 102 221, section 7.3.1.1.4, clause 4b and ETSI TS 151 011, section 9.4.1)
@@ -360,6 +372,7 @@ class LinkBaseTpdu(LinkBase):
                 data_gr, sw = self.send_tpdu(tpdu_gr)
                 log.debug("T0: GET RESPONSE TPDU: %s => %s %s", tpdu_gr, data_gr or "(no data)", sw or "(no status word)")
                 data += data_gr
+                dummy_gr_allowed = False
         if sw[0:2] == '6c':
             # SW1=6C: ETSI TS 102 221 Table 7.1: Procedure byte coding
             tpdu_gr = prev_tpdu[0:8] + sw[2:4]

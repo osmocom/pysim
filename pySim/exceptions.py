@@ -38,15 +38,16 @@ class SwMatchError(Exception):
     """Raised when an operation specifies an expected SW but the actual SW from
        the card doesn't match."""
 
-    def __init__(self, sw_actual: str, sw_expected: str, rs=None):
+    def __init__(self, sw_actual: str, sw_expected, rs=None):
         """
         Args:
                 sw_actual : the SW we actually received from the card (4 hex digits)
-                sw_expected : the SW we expected to receive from the card (4 hex digits)
+                sw_expected : the SW we expected to receive from the card (4 hex digits),
+                              or a list of acceptable ones
                 rs : interpreter class to convert SW to string
         """
         self.sw_actual = sw_actual
-        self.sw_expected = sw_expected
+        self.sw_expected = '/'.join(sw_expected) if isinstance(sw_expected, (list, tuple)) else sw_expected
         self.rs = rs
 
     @property
