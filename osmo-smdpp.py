@@ -955,7 +955,7 @@ def main(argv):
             with open(cert_pempath, 'wb') as pem_file:
                 pem_file.write(pem_cert)
 
-        SERVER_STRING = f'ssl:{args.port}:privateKey={cert_skpath}:certKey={cert_pempath}:dhParameters={dhparam_path}'
+        SERVER_STRING = f'ssl:{args.port}:privateKey={cert_skpath}:certKey={cert_pempath}:dhParameters={dhparam_path}:interface={args.host}'
         print(SERVER_STRING)
 
         hs.app.run(host=HOSTNAME, port=args.port, endpoint_description=SERVER_STRING)
