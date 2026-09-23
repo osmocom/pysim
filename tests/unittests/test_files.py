@@ -27,6 +27,7 @@ import pySim.ts_31_102
 import pySim.ts_31_103
 import pySim.ts_51_011
 import pySim.sysmocom_sja2
+import pySim.sysmocom_sjs1
 import pySim.gsm_r
 import pySim.cdma_ruim
 

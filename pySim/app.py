@@ -30,10 +30,11 @@ from pySim.log import PySimLogger
 
 log = PySimLogger.get(__name__)
 
-# we need to import this module so that the SysmocomSJA2 sub-class of
-# CardModel is created, which will add the ATR-based matching and
-# calling of SysmocomSJA2.add_files.  See  CardModel.apply_matching_models
+# we need to import these modules so that the SysmocomSJA2 / SysmocomSJS1
+# sub-classes of CardModel are created, which will add the ATR-based matching
+# and calling of their add_files.  See CardModel.apply_matching_models
 import pySim.sysmocom_sja2
+import pySim.sysmocom_sjs1
 
 # we need to import these modules so that the various sub-classes of
 # CardProfile are created, which will be used in init_card() to iterate
