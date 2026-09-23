@@ -525,7 +525,7 @@ class SmDppHttpServer:
         """See ES9+ InitiateAuthentication SGP.22 Section 5.6.1"""
         # Verify that the received address matches its own SM-DP+ address, where the comparison SHALL be
         # case-insensitive. Otherwise, the SM-DP+ SHALL return a status code "SM-DP+ Address - Refused".
-        if content['smdpAddress'] != self.server_hostname:
+        if content['smdpAddress'].lower() != self.server_hostname.lower():
            raise ApiError('8.8.1', '3.8', 'Invalid SM-DP+ Address')
 
         euiccChallenge = b64decode(content['euiccChallenge'])
