@@ -374,26 +374,53 @@ class Proact(ProactiveHandler):
         other_addr_ie = Proact._find_first_element_of_type(pcmd.children, OtherAddress)
         bearer_desc_ie = Proact._find_first_element_of_type(pcmd.children, BearerDescription)
         buffer_size_ie = Proact._find_first_element_of_type(pcmd.children, BufferSize)
-        if transp_lvl_ie.decoded['protocol_type'] != 'tcp_uicc_client_remote':
-            raise ValueError('Unsupported protocol_type')
-        if other_addr_ie.decoded.get('type_of_address', None) != 'ipv4':
-            raise ValueError('Unsupported type_of_address')
+
+        def refuse(additional_information: str, chan_nr: int = 0):
+            """TERMINAL RESPONSE refusing the OPEN CHANNEL
+
+            - always a BIP error, only the cause byte of TS 102 223 8.12.11 differs
+            - chan_nr 0 -> "no channel available" in the Channel status, 8.56
+            - 6.8.18, 6.8.20, 6.8.21 want chan status, Bearer desc and buf size
+              in a successful or unsuccessful response
+            """
+            ies = [ChannelStatus(decoded=self._channel_status(chan_nr, established=False))]
+            ies += [ie for ie in (bearer_desc_ie, buffer_size_ie) if ie is not None]
+            return self._bip_response_head(pcmd, 'bearer_independent_protocol_error',
+                                           additional_information) + ies
+
+        # UICC/terminal interface transport level is Optional, TS 102 223 6.6.27.x. Absent means
+        # the CAT application runs its own network and transport layer, which we do not do.
+        if transp_lvl_ie is None or transp_lvl_ie.decoded['protocol_type'] != 'tcp_uicc_client_remote':
+            logger.warning("OpenChannel: unsupported UICC/terminal interface transport level (%s) "
+                           "-> refusing", transp_lvl_ie.decoded if transp_lvl_ie else '(absent)')
+            return refuse('requested_uicc_if_transp_level_not_available')
+        if other_addr_ie is None or other_addr_ie.decoded.get('type_of_address', None) != 'ipv4':
+            # No cause byte fits a wrong address family. '06' is about the transport level data
+            # object, and 8.12.11 leaves '14' ("IPv4 only allowed") reserved by 3GPP, so '00'.
+            logger.warning("OpenChannel: unsupported data destination address (%s) -> refusing",
+                           other_addr_ie.decoded if other_addr_ie else '(absent)')
+            return refuse('no_specific_cause')
         addr_bytes = h2b(other_addr_ie.decoded['address']) if isinstance(
                 other_addr_ie.decoded['address'], str) else other_addr_ie.decoded['address']
         ipv4_str = '%u.%u.%u.%u' % (addr_bytes[0], addr_bytes[1], addr_bytes[2], addr_bytes[3])
         port_nr = transp_lvl_ie.decoded['port_number']
         logger.info("OpenChannel: connecting to %s:%u", ipv4_str, port_nr)
-        channel = self.channels.channel_create()
+        try:
+            channel = self.channels.channel_create()
+        except ValueError:
+            # TS 102 223 6.4.27.2 and 6.4.27.3: no channel left -> BIP error
+            logger.warning("OpenChannel: all %u channels are in use -> refusing",
+                           len(self.channels.channels))
+            return refuse('no_channel_availabile')
         # yes, blocking connect()
         try:
             channel.connect(ipv4_str, port_nr)
         except OSError as e:
             logger.warning("OpenChannel: connect to %s:%u failed: %s", ipv4_str, port_nr, e)
             self.channels.channel_delete(channel.chan_nr)
-            return self._bip_response_head(pcmd, 'bearer_independent_protocol_error',
-                                           'channel_closed') + [
-                ChannelStatus(decoded=self._channel_status(channel.chan_nr, established=False)),
-                bearer_desc_ie, buffer_size_ie]
+            # TS 102 223 6.4.30 is the only clause naming a cause for a link that could not be
+            # established: BIP error, channel closed. 6.4.27.4 lists no error cases at all.
+            return refuse('channel_closed', channel.chan_nr)
 
         # Terminal Response example: [
         #  {'command_details': {'command_number': 1,

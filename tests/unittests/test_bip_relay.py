@@ -94,6 +94,17 @@ def _open_channel(port, ip='127.0.0.1', cmd_nr=1):
     ])
 
 
+def _open_channel_raw(extra_ies, cmd_nr=1):
+    """OPEN CHANNEL with only the head data"""
+    return _pcmd([
+        CommandDetails(decoded={'command_number': cmd_nr, 'type_of_command': 'open_channel',
+                                'command_qualifier': 3}).to_tlv(),
+        DeviceIdentities(decoded={'source_dev_id': 'uicc', 'dest_dev_id': 'terminal'}).to_tlv(),
+        BearerDescription(decoded={'bearer_type': 'default', 'bearer_parameters': b''}).to_tlv(),
+        BufferSize(decoded=1024).to_tlv(),
+    ] + extra_ies)
+
+
 def _send_data(payload, chan='channel_1', cmd_nr=1):
     return _pcmd([
         CommandDetails(decoded={'command_number': cmd_nr, 'type_of_command': 'send_data',
@@ -255,8 +266,67 @@ class BipRelayRoundTripTest(unittest.TestCase):
         self.assertEqual(_first(til, ChannelDataLength).decoded, 0)
 
 
-if __name__ == "__main__":
-    unittest.main()
+class OpenChannelRefusalTest(unittest.TestCase):
+    """Refusal is a TERMINAL RESPONSE, not an exception, raising takes the whole
+    proactive session down and leaves the card wondering why"""
+
+    ADDR = OtherAddress(decoded={'type_of_address': 'ipv4', 'address': bytes([127, 0, 0, 1])})
+    TCP = UiccTransportLevel(decoded={'protocol_type': 'tcp_uicc_client_remote', 'port_number': 1234})
+
+    def setUp(self):
+        self.proact = Proact()
+        self.addCleanup(self._close_all_channels)
+
+    def _close_all_channels(self):
+        for chan in list(self.proact.channels.channels.values()):
+            try:
+                chan.close()
+            except Exception:
+                pass
+
+    def _assert_refused(self, til, additional_information, chan_nr=0):
+        b''.join(x.to_tlv() for x in til)               # must serialise, the transport posts it
+        res = _first(til, Result).decoded
+        self.assertEqual(res['general_result'], 'bearer_independent_protocol_error')
+        self.assertEqual(res['additional_information'], additional_information)
+        self.assertEqual(_first(til, ChannelStatus).decoded, '%02x00' % chan_nr)   # 8.56
+        self.assertIsNotNone(_first(til, BearerDescription))                       # 6.8.20
+        self.assertIsNotNone(_first(til, BufferSize))                              # 6.8.21
+        self.assertEqual(b2h(_first(til, DeviceIdentities).to_tlv()), '82028281')  # 6.8.2
+
+    def test_transport_level(self):
+        cases = [[self.ADDR.to_tlv()]]                             # absent, 6.6.27.x Optional
+        for proto in ('udp_uicc_client_remote', 'tcp_uicc_server', 'udp_uicc_client_local',
+                      'tcp_uicc_client_local', 'direct_channel'):   # not TCP client remote
+            tl = UiccTransportLevel(decoded={'protocol_type': proto, 'port_number': 1234})
+            cases.append([tl.to_tlv(), self.ADDR.to_tlv()])
+        for extra in cases:
+            with self.subTest(extra=b2h(extra[0])):
+                self._assert_refused(self.proact.handle_OpenChannel(_open_channel_raw(extra)),
+                                     'requested_uicc_if_transp_level_not_available')
+
+    def test_destination_address(self):
+        v6 = OtherAddress(decoded={'type_of_address': 'ipv6', 'address': bytes(16)})
+        for extra in ([self.TCP.to_tlv()],                         # absent
+                      [self.TCP.to_tlv(), v6.to_tlv()]):           # not IPv4
+            with self.subTest(extra=len(extra)):
+                self._assert_refused(self.proact.handle_OpenChannel(_open_channel_raw(extra)),
+                                     'no_specific_cause')
+
+    def test_no_channel_left(self):
+        for _ in range(7):                                         # 6.4.27.2, 6.4.27.3
+            self.proact.channels.channel_create()
+        cmd = _open_channel_raw([self.TCP.to_tlv(), self.ADDR.to_tlv()])
+        self._assert_refused(self.proact.handle_OpenChannel(cmd), 'no_channel_availabile')
+
+    def test_connect_failure(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)      # port nothing listens on
+        s.bind(('127.0.0.1', 0))
+        dead_port = s.getsockname()[1]
+        s.close()
+        til = self.proact.handle_OpenChannel(_open_channel(dead_port))
+        self._assert_refused(til, 'channel_closed', chan_nr=1)      # 6.4.30
+        self.assertEqual(self.proact.channels.channels, {})        # channel given back
 
 
 class BipSinkTest(unittest.TestCase):
