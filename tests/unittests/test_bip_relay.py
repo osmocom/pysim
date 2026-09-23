@@ -28,7 +28,7 @@ from pySim.sms import SMS_SUBMIT, AddressField
 from pySim.cat import (ProactiveCommand, CommandDetails, DeviceIdentities,
                        BearerDescription, BufferSize, UiccTransportLevel,
                        OtherAddress, ChannelData, ChannelDataLength, ChannelStatus,
-                       Result)
+                       Result, LocationInformation)
 
 from pySim.bip import Proact, ProactChannels, terminal_profile
 
@@ -327,6 +327,34 @@ class OpenChannelRefusalTest(unittest.TestCase):
         til = self.proact.handle_OpenChannel(_open_channel(dead_port))
         self._assert_refused(til, 'channel_closed', chan_nr=1)      # 6.4.30
         self.assertEqual(self.proact.channels.channels, {})        # channel given back
+
+
+class ProvideLocalInformationTest(unittest.TestCase):
+    """TS 102 223 6.8.7: only 00 gets a data object; the rest keeps the empty result."""
+
+    def _cmd(self, qualifier):
+        return _pcmd([
+            CommandDetails(decoded={'command_number': 1, 'type_of_command': 'provide_local_info',
+                                    'command_qualifier': qualifier}).to_tlv(),
+            DeviceIdentities(decoded={'source_dev_id': 'uicc', 'dest_dev_id': 'terminal'}).to_tlv()])
+
+    def test_location(self):
+        til = Proact().handle_ProvideLocalInformation(self._cmd(0x00))
+        b''.join(x.to_tlv() for x in til)
+        self.assertEqual(_first(til, Result).decoded['general_result'], 'performed_successfully')
+        self.assertEqual(b2h(_first(til, LocationInformation).to_tlv()), '930762f21000010001')
+        self.assertEqual(b2h(_first(til, DeviceIdentities).to_tlv()), '82028281')   # 6.8.2
+
+    def test_other_qualifiers_get_no_data_object(self):
+        for qualifier in (0x01, 0x03, 0x04, 0x1a):
+            with self.subTest(command_qualifier=qualifier):
+                til = Proact().handle_ProvideLocalInformation(self._cmd(qualifier))
+                b''.join(x.to_tlv() for x in til)
+                self.assertIsNone(_first(til, LocationInformation))
+
+    def test_location_is_configurable(self):
+        til = Proact(location=h2b('26f8100539')).handle_ProvideLocalInformation(self._cmd(0x00))
+        self.assertEqual(b2h(_first(til, LocationInformation).to_tlv()), '930526f8100539')
 
 
 class TerminalProfileTest(unittest.TestCase):

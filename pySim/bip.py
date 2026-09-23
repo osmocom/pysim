@@ -39,9 +39,15 @@ from pySim.sms import SMS_DELIVER, SMS_SUBMIT, AddressField
 from pySim.cat import (ProactiveCommand, SendShortMessage, SMS_TPDU, SMSPPDownload,
                        BearerDescription, DeviceIdentities, Address, OtherAddress,
                        UiccTransportLevel, BufferSize, ChannelStatus, ChannelData,
-                       ChannelDataLength, EventList, EventDownload, Result)
+                       ChannelDataLength, EventList, EventDownload, Result,
+                       CommandDetails, LocationInformation)
 
 logger = logging.getLogger(__name__)
+
+# PROVIDE LOCAL INFORMATION location, GERAN TS 31.111 8.19.1
+# - 3 byte PLMN of TS 24.008 10.5.1.3 -> 262-01
+# - 2 byte LAC and a 2 byte cid.
+DEFAULT_LOCATION = h2b('62f21000010001')
 
 
 def terminal_profile(num_channels: int = 7) -> bytes:
@@ -247,11 +253,28 @@ class Proact(ProactiveHandler):
         sms_sink: callback(pdu), called with the SMPP deliver_sm of a SEND SHORT MESSAGE
             the card issued; pySim-smpp2sim.py hands it to its SMPP server.
             None: the SMS is logged and dropped.
+        location: Location information returned in PROVIDE LOCAL INFORMATION (location).
     """
-    def __init__(self, data_available_sink=None, sms_sink=None):
+    def __init__(self, data_available_sink=None, sms_sink=None, location: bytes = DEFAULT_LOCATION):
         self.data_available_sink = data_available_sink
         self.sms_sink = sms_sink
+        self.location = location
         self.channels = ProactChannels(on_data_available=self._on_channel_data_available)
+
+    def handle_ProvideLocalInformation(self, pcmd: ProactiveCommand):
+        """only location
+
+        TS 102 223 6.8.7 says TERMINAL RESPONSE to PROVIDE LOCAL INFORMATION "shall"
+        contain the data object the command qualifier (6.6.15) asked for. At least answer '00',
+        location information, usually requested.
+
+        answering "terminal currently unable to process - no service", which is a handset
+        out of coverage makes SJA5 believe it and postpones the entire session!
+        it registers a location status event, starts a ten minute timer and waits for coverage."""
+        cmd_det_ie = Proact._find_first_element_of_type(pcmd.children, CommandDetails)
+        if cmd_det_ie is not None and cmd_det_ie.decoded['command_qualifier'] == 0x00:
+            return self.prepare_response(pcmd) + [LocationInformation(decoded=self.location)]
+        return self.prepare_response(pcmd)
 
     def receive_fetch(self, pcmd: ProactiveCommand):
         """Answer anything this handler has no specific handler for.

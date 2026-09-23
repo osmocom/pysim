@@ -318,7 +318,9 @@ class FileList(COMPR_TLV_IE, tag=0x92):
 
 # TS 102 223 Section 8.19
 class LocationInformation(COMPR_TLV_IE, tag=0x93):
-    pass
+    # 8.19: coding is per access technology, and the lengths differ (TS 131.111 8.19.1-.4: GERAN 7,
+    # UTRAN/E-UTRAN 9, NG-RAN 11) with nothing in the IE to say which -> keep the value opaque.
+    _construct = GreedyBytes
 
 class MobileIdentityAdapter(Adapter):
     """TS 124.008 section 10.5.1.4 figure 10.5.4 + table 10.5.4
