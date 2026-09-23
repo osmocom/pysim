@@ -70,10 +70,26 @@ class ProactiveHandler(abc.ABC):
         raise NotImplementedError('No handler method for %s' % pcmd.decoded)
 
     def prepare_response(self, pcmd: ProactiveCommand, general_result: str = 'performed_successfully'):
+        # TERMINAL RESPONSE per ETSI TS 102 223 section 6.8: Command details (6.8.1) echoed from the
+        # command, Device identities (6.8.2) with source and destination swapped, Result (6.8.3).
+        # pcmd can be
+        # - decoded proactive command IE (.children contains CommandDetails/DeviceIdentities)
+        # - ProactiveCommand collection wrapper (empty .children).
+        # Normalise to the children obj, so both work:
+        # - handler that passes its decoded command
+        # - fallback path that passes collection
+        children = list(getattr(pcmd, 'children', None) or [])
+        if not any(isinstance(c, CommandDetails) for c in children):
+            decoded = getattr(pcmd, 'decoded', None)
+            if decoded is not None and decoded is not pcmd:
+                children = list(getattr(decoded, 'children', None) or [])
         # The Command Details are echoed from the command that has been processed.
-        (command_details,) = [c for c in pcmd.children if isinstance(c, CommandDetails)]
+        command_details = next((c for c in children if isinstance(c, CommandDetails)), None)
         # invert the device identities
-        (command_dev_ids,) = [c for c in pcmd.children if isinstance(c, DeviceIdentities)]
+        command_dev_ids = next((c for c in children if isinstance(c, DeviceIdentities)), None)
+        if command_details is None or command_dev_ids is None:
+            raise ValueError('failed to prepare TERMINAL RESPONSE: proactive command has no '
+                             'CommandDetails/DeviceIdentities (%r)' % (pcmd,))
         rsp_dev_ids = DeviceIdentities()
         rsp_dev_ids.from_dict({'device_identities': {
                                     'dest_dev_id': command_dev_ids.decoded['source_dev_id'],

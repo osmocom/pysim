@@ -116,6 +116,14 @@ class Proact(ProactiveHandler):
                                     addr_ie.decoded['ton_npi']['numbering_plan_id'])
         logger.info(submit)
         self.send_sms_via_smpp(submit)
+        # Return a successful TERMINAL RESPONSE.
+        # This is important:
+        # - without it the transport cannot complete the proactive command
+        # - for a multi part OTA response, the card would never be asked to give us
+        # the remaining SMS chunks.
+        # 'pcmd' is a decoded SendShortMessage IE, which contains CommandDetails and
+        # DeviceIdentities that prepare_response() echoes/inverts.
+        return self.prepare_response(pcmd)
 
     def handle_OpenChannel(self, pcmd: ProactiveCommand):
         """Card requests opening a new channel via a UDP/TCP socket."""
