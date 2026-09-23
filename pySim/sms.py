@@ -246,8 +246,8 @@ class AddressField:
     def to_bytes(self) -> bytes:
         """Encode the AddressField into the binary representation as used in T-PDU."""
         num_digits = len(self.digits)
-        if num_digits % 2:
-            self.digits += 'f'
+        # don't store the filler nibble or get_bytes() encodes it as digit and ends up too large
+        digits = self.digits + 'f' if num_digits % 2 else self.digits
         d = {
             'addr_len': num_digits,
             'type_of_addr': {
@@ -255,7 +255,7 @@ class AddressField:
                 'type_of_number': self.ton,
                 'numbering_plan_id': self.npi,
                 },
-            'digits': self.digits,
+            'digits': digits,
             }
         return self._construct.build(d)
 
