@@ -916,12 +916,17 @@ def main(argv):
                         action='store_true', default=False)
     parser.add_argument("-m", "--in-memory", help="Use ephermal in-memory session storage (for concurrent runs)",
                         action='store_true', default=False)
+    parser.add_argument("--smdp-address", default=HOSTNAME,
+                        help="ES9+ SM-DP+ address advertised, defaults to \"%(default)s\". "
+                             "Include the TLS port (e.g. %(default)s:8443) when binding a port other "
+                             "than 443, so it matches the address the LPA connects to. "
+                             "The TLS certificate identity is unaffected.")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING)
 
     common_cert_path = os.path.join(DATA_DIR, args.certdir)
-    hs = SmDppHttpServer(server_hostname=HOSTNAME, ci_certs_path=os.path.join(common_cert_path, 'CertificateIssuer'), common_cert_path=common_cert_path, use_brainpool=args.brainpool)
+    hs = SmDppHttpServer(server_hostname=args.smdp_address, ci_certs_path=os.path.join(common_cert_path, 'CertificateIssuer'), common_cert_path=common_cert_path, use_brainpool=args.brainpool)
     if(args.nossl):
         hs.app.run(args.host, args.port)
     else:
