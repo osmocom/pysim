@@ -729,8 +729,12 @@ class DnsServerAddress(COMPR_TLV_IE, tag=0xC0):
 
 # TS 102 223 Section 8.105
 class SupportedRadioAccessTechnologies(COMPR_TLV_IE, tag=0xB4):
+    # 2 bytes/entry:
+    # - technology of 8.61
+    # - state byte b1 is 0 disabled/1 enabled
+    # - b2-b8 RFU.
     AccessTechTuple = Struct('technology'/AccessTechnology.SingleAccessTech,
-                             'state'/FlagsEnum(Int8ub, enabled=0))
+                             'state'/FlagsEnum(Int8ub, enabled=1))
     _construct = GreedyRange(AccessTechTuple)
 
 # TS 102 223 Section 8.107
