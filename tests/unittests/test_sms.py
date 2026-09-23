@@ -103,3 +103,126 @@ class Test_DELIVER(unittest.TestCase):
         self.assertEqual(d.tp_pid, 0x7f)
         self.assertEqual(d.tp_dcs, 0xf6)
         self.assertEqual(d.tp_udl, 8)
+
+
+class Test_ConcatenatedSmsReassembler(unittest.TestCase):
+    """3GPP TS 23.040 9.2.3.24 reassembly of multi-part SMS.
+
+    An OTA response that exceeds a single SHORT MESSAGE is delivered in several parts using
+    the SEND SHORT MESSAGE proactive command. The receiver must recombine the individual
+    parts into a single part before decoding."""
+
+    OTA_IE = {'iei': 0x71, 'length': 0, 'value': b''}
+
+    @staticmethod
+    def _concat8(ref, tot, seq):
+        return {'iei': 0x00, 'length': 3, 'value': bytes([ref, tot, seq])}
+
+    @staticmethod
+    def _concat16(ref, tot, seq):
+        return {'iei': 0x08, 'length': 4, 'value': ref.to_bytes(2, 'big') + bytes([tot, seq])}
+
+    @staticmethod
+    def _part(ies, frag):
+        return UserDataHeader(ies).to_bytes() + frag
+
+    def test_ground_truth_udh(self):
+        # part 1 UDH observed from sja5: 07 00 03 01 02 01 71 00
+        built = self._part([self._concat8(1, 2, 1), self.OTA_IE], b'')
+        self.assertEqual(b2h(built), '0700030102017100')
+
+    def test_ground_truth_udh_16bit(self):
+        # 9.2.3.24.8: 08 | 08 04 <ref16> <total> <seq> | 71 00
+        built = self._part([self._concat16(0x1234, 2, 1), self.OTA_IE], b'')
+        self.assertEqual(b2h(built), '080804123402017100')
+
+    def test_single_part_passthrough(self):
+        r = ConcatenatedSmsReassembler()
+        single = h2b('027100') + bytes(range(20))
+        self.assertEqual(r.add(single), single)
+
+    def test_two_part(self):
+        # second segment contains only the concat IE, no OTA IE
+        pkt = bytes(range(60))
+        r = ConcatenatedSmsReassembler()
+        self.assertIsNone(r.add(self._part([self._concat8(1, 2, 1), self.OTA_IE], pkt[:35])))
+        out = r.add(self._part([self._concat8(1, 2, 2)], pkt[35:]))
+        self.assertEqual(out, h2b('027100') + pkt)
+
+    def test_out_of_order(self):
+        pkt = bytes(range(60))
+        r = ConcatenatedSmsReassembler()
+        self.assertIsNone(r.add(self._part([self._concat8(5, 2, 2), self.OTA_IE], pkt[35:])))
+        out = r.add(self._part([self._concat8(5, 2, 1), self.OTA_IE], pkt[:35]))
+        self.assertEqual(out, h2b('027100') + pkt)
+
+    def test_three_part_out_of_order(self):
+        pkt = bytes(range(90))
+        r = ConcatenatedSmsReassembler()
+        self.assertIsNone(r.add(self._part([self._concat8(7, 3, 3)], pkt[60:])))
+        self.assertIsNone(r.add(self._part([self._concat8(7, 3, 1), self.OTA_IE], pkt[:30])))
+        out = r.add(self._part([self._concat8(7, 3, 2)], pkt[30:60]))
+        self.assertEqual(out, h2b('027100') + pkt)
+
+    def test_16bit_reference(self):
+        pkt = bytes(range(40))
+        r = ConcatenatedSmsReassembler()
+        self.assertIsNone(r.add(self._part([self._concat16(0x1234, 2, 1), self.OTA_IE], pkt[:20])))
+        out = r.add(self._part([self._concat16(0x1234, 2, 2)], pkt[20:]))
+        self.assertEqual(out, h2b('027100') + pkt)
+
+    def test_interleaved_references(self):
+        # two concurrent concatenation sets at the same time
+        pkt = bytes(range(60))
+        r = ConcatenatedSmsReassembler()
+        self.assertIsNone(r.add(self._part([self._concat8(1, 2, 1), self.OTA_IE], pkt[:35])))
+        self.assertIsNone(r.add(self._part([self._concat8(9, 2, 1), self.OTA_IE], b'\xaa')))
+        self.assertEqual(r.add(self._part([self._concat8(1, 2, 2)], pkt[35:])), h2b('027100') + pkt)
+        self.assertEqual(r.add(self._part([self._concat8(9, 2, 2)], b'\xbb')), h2b('027100') + b'\xaa\xbb')
+
+    def test_reserved_concat_ie_is_ignored(self):
+        # TS 23.040 9.2.3.24.1:
+        # - a total of 0
+        # - or a sequence number that is 0 or > total
+        # means "the receiving entity shall ignore the whole Information Element"
+        # the message is handed back unchanged as a single part msg and not rejected
+        # so the caller can handle the problem
+        r = ConcatenatedSmsReassembler()
+        for tot, seq in [(2, 3),    # seq > total
+                         (2, 0),    # seq == 0
+                         (0, 1)]:   # total == 0
+            with self.subTest(total=tot, seq=seq):
+                part = self._part([self._concat8(1, tot, seq)], b'\x00')
+                self.assertEqual(r.add(part), part)
+        # nothing buffered so later valid set still reassembles properly
+        self.assertEqual(r.sets, {})
+        pkt = bytes(range(40))
+        self.assertIsNone(r.add(self._part([self._concat8(1, 2, 1), self.OTA_IE], pkt[:20])))
+        self.assertEqual(r.add(self._part([self._concat8(1, 2, 2)], pkt[20:])), h2b('027100') + pkt)
+
+    def test_inconsistent_totals_do_not_crash(self):
+        r = ConcatenatedSmsReassembler()
+        self.assertIsNone(r.add(self._part([self._concat8(1, 3, 3)], b'\x33')))
+        self.assertIsNone(r.add(self._part([self._concat8(1, 2, 1)], b'\x11')))
+        self.assertEqual(r.add(self._part([self._concat8(1, 2, 2)], b'\x22')),
+                         h2b('00') + b'\x11\x22')             # complete total=2 set
+        self.assertIn((0x00, 1, 3), r.sets)                   # total=3 set still waits
+
+    def test_incomplete_sets_are_capped(self):
+        r = ConcatenatedSmsReassembler(max_sets=2)
+        for ref in (1, 2, 3):
+            self.assertIsNone(r.add(self._part([self._concat8(ref, 2, 1)], bytes([ref]))))
+        self.assertEqual(sorted(k[1] for k in r.sets), [2, 3])      # oldest evicted
+        self.assertIsNone(r.add(self._part([self._concat8(1, 2, 2)], b'\x11')))
+        self.assertEqual(sorted(k[1] for k in r.sets), [1, 3])
+        self.assertEqual(r.add(self._part([self._concat8(3, 2, 2)], b'\x33')), h2b('00') + b'\x03\x33')
+
+    def test_same_reference_in_both_ie_forms(self):
+        # the refno only unique per IE form (9.2.3.24.1 vs .8) -> two sets
+        r = ConcatenatedSmsReassembler()
+        self.assertIsNone(r.add(self._part([self._concat8(1, 2, 1)], b'\x0a')))
+        self.assertIsNone(r.add(self._part([self._concat16(1, 2, 2)], b'\x1b')))
+        self.assertEqual(r.add(self._part([self._concat16(1, 2, 1)], b'\x0b')),
+                         h2b('00') + b'\x0b\x1b')
+        self.assertEqual(r.add(self._part([self._concat8(1, 2, 2)], b'\x1a')),
+                         h2b('00') + b'\x0a\x1a')

@@ -24,7 +24,8 @@ import smpplib.gsm
 import smpplib.client
 import smpplib.consts
 import time
-from pySim.ota import OtaKeyset, OtaDialectSms, OtaAlgoCrypt, OtaAlgoAuth, CNTR_REQ, RC_CC_DS, POR_REQ
+from pySim.ota import OtaKeyset, OtaDialectSms, OtaAlgoCrypt, OtaAlgoAuth, OtaCheckError, CNTR_REQ, RC_CC_DS, POR_REQ
+from pySim.sms import ConcatenatedSmsReassembler
 from pySim.utils import b2h, h2b, is_hexstr
 from pathlib import Path
 
@@ -108,28 +109,57 @@ class SmppHandler:
         self.tar = tar
         self.spi = spi
         self.remote_format = remote_format
+        self.reassembler = ConcatenatedSmsReassembler()
 
     def __del__(self):
         if self.client:
             self.client.unbind()
             self.client.disconnect()
 
+    def _decode_resp(self, tpud: bytes) -> tuple:
+        """Decode a response SMS-TPDU into (response_packet, decoded).
+
+        Retry to decoding with ciphering disabled (in case the card has problems to decode the SMS-TDPU
+        we have sent, the response will contain an unencrypted error message)
+        """
+        try:
+            return self.ota_dialect.decode_resp(self.ota_keyset, self.spi, tpud,
+                                                remote_format=self.remote_format)
+        except (ValueError, OtaCheckError):
+            spi = self.spi.copy()
+            spi['por_shall_be_ciphered'] = False
+            spi['por_rc_cc_ds'] = 'no_rc_cc_ds'
+            return self.ota_dialect.decode_resp(self.ota_keyset, spi, tpud,
+                                                remote_format=self.remote_format)
+
     def message_received_handler(self, pdu):
-        if pdu.short_message:
-            logger.info("SMS-TPDU received: %s", b2h(pdu.short_message))
-            try:
-                dec = self.ota_dialect.decode_resp(self.ota_keyset, self.spi, pdu.short_message,
-                                                   remote_format=self.remote_format)
-            except ValueError:
-                # Retry to decoding with ciphering disabled (in case the card has problems to decode the SMS-TDPU
-                # we have sent, the response will contain an unencrypted error message)
-                spi = self.spi.copy()
-                spi['por_shall_be_ciphered'] = False
-                spi['por_rc_cc_ds'] = 'no_rc_cc_ds'
-                dec = self.ota_dialect.decode_resp(self.ota_keyset, spi, pdu.short_message,
-                                                   remote_format=self.remote_format)
-            logger.info("SMS-TPDU decoded: %s", dec)
-            self.response = dec
+        if not pdu.short_message:
+            return None
+        logger.info("SMS-TPDU received: %s", b2h(pdu.short_message))
+        tpud = self.reassembler.add(pdu.short_message)
+        if tpud is None:
+            logger.info("SMS-TPDU is part of concat message, waiting for more parts...")
+            return None
+        if tpud != pdu.short_message:
+            logger.info("SMS-TPDU reassembled: %s", b2h(tpud))
+        try:
+            res, decoded = self._decode_resp(tpud)
+        except Exception as e:
+            # for example ENVELOPE POR
+            logger.warning("Ignoring undecodable resp SMS-TPDU (%s: %s)", type(e).__name__, e)
+            return None
+        logger.info("SMS-TPDU decoded: %s", (res, decoded))
+        # large app response as reassembled SEND SHORT MESSAGE, but
+        # the ENVELOPE itself returns a POR without R-APDU.
+        # smpplib poll() drains all pending SMS in one call, so that PoR is processed
+        # right after the real response and would overwrite it,
+        # which leaves transceive_apdu with no last_response_data to return.
+        # Only allow a response that has no application data (decoded == None)
+        # if we do not already have a real one.
+        if decoded is None and self.response is not None and self.response[1] is not None:
+            logger.info("ignoring status response to keep earlier app response")
+            return None
+        self.response = (res, decoded)
         return None
 
     def message_sent_handler(self, pdu):

@@ -19,6 +19,7 @@
 
 import typing
 import abc
+import logging
 from bidict import bidict
 from construct import Int8ub, Byte, Bit, Flag, BitsInteger
 from construct import Struct, Enum, Tell, BitStruct, this, Padding
@@ -27,6 +28,8 @@ from osmocom.construct import BcdAdapter, TonNpi, Bytes, GreedyBytes
 from osmocom.utils import Hexstr, h2b, b2h
 
 from smpp.pdu import pdu_types, operations
+
+logger = logging.getLogger(__name__)
 
 BytesOrHex = typing.Union[Hexstr, bytes]
 
@@ -58,6 +61,109 @@ class UserDataHeader:
 
     def to_bytes(self) -> bytes:
         return self._construct.build({'ies':self.ies, 'data':b''})
+
+
+class ConcatenatedSmsReassembler:
+    """3GPP TS 23.040 section 9.2.3.24 concat multi part reassembly
+
+    A large user-data payload (e.g. a big OTA response packet) is split by the
+    sending entity into several SMS,
+    each carries a
+    - "concat short messages" IE in its UDH that identifies the set (ref num),
+    - total number of parts
+    - this parts seqno.
+    supports both:
+    IEI 0x00, section 9.2.3.24.1 8-bit ref form
+    IEI 0x08, section 9.2.3.24.8 the 16-bit ref form
+
+    Feed each received TP-User-Data (UDH + payload) to add() which
+    returns the reassembled TP-User-Data once all parts of the set have arrived,
+    or None as long as parts are still missing.
+
+    A non-concatenated SMS is returned unchanged,
+    just like one where the concat IE holds a reserved value:
+    TS 23.040 9.2.3.24.1 says
+    - both a total of zero
+    - a sequence number that is zero or greater than the total
+    that "the receiving entity shall ignore the whole IE",
+    we treat the message as a single, non-concatenated one and warn, not
+    as an error, so the caller does not die.
+
+    The reassembled TP-User-Data is built with a UDH that contains
+    the non-concat IEs seen in the parts, for example the the OTA "response packet"
+    indicator IE 0x71, followed by the concatenated payloads in sequence order,
+    so exactly the single-SMS form the sender would have produced for a payload that fits
+    into one SMS.
+    This allows convenient decoding by the normal single part path."""
+
+    # IEI: Concatenated short messages, 8-bit reference number
+    # (see 3GPP TS 23.040 section 9.2.3.24 and section 9.2.3.24.1)
+    CONCAT_8BIT = 0x00
+    # IEI: Concatenated short message, 16-bit reference number
+    # (see 3GPP TS 23.040 section 9.2.3.24 and section 9.2.3.24.8)
+    CONCAT_16BIT = 0x08
+
+    def __init__(self, max_sets: int = 8):
+        # keyed by (iei, ref, total): {'parts': {seq: payload}, 'header_ies'}, insertion ordered
+        self.sets = {}
+        self.max_sets = max_sets    # incomplete sets kept, oldest is dropped beyond that
+
+    @classmethod
+    def _parse_concat_ie(cls, ies) -> typing.Optional[typing.Tuple[int, int, int, int]]:
+        """Return (iei, ref, total, seq) of the concat IE, or None"""
+        for ie in ies:
+            if ie['iei'] == cls.CONCAT_8BIT and ie['length'] == 3:
+                v = ie['value']
+                return cls.CONCAT_8BIT, v[0], v[1], v[2]
+            if ie['iei'] == cls.CONCAT_16BIT and ie['length'] == 4:
+                v = ie['value']
+                return cls.CONCAT_16BIT, int.from_bytes(v[0:2], 'big'), v[2], v[3]
+        return None
+
+    def add(self, tpud: BytesOrHex) -> typing.Optional[bytes]:
+        """Add one TP-User-Data.
+        Returns
+        - the reassembled TP-User-Data if set is complete or sms not multipart,
+        - else None"""
+        if isinstance(tpud, str):
+            tpud = h2b(tpud)
+        udh, payload = UserDataHeader.from_bytes(tpud)
+        concat = self._parse_concat_ie(udh.ies)
+        if concat is None:
+            return tpud
+        iei, ref, total, seq = concat
+        if total < 1 or seq < 1 or seq > total:
+            # TS 23.040 9.2.3.24.1 / 9.2.3.24.8, total zero or seqno zero / > total:
+            # Ignoring the IE means the message has no valid concat IE, which is a single part message.
+            # Better warn and hand it back rather than raise, so we don't kill the callers receive loop/session
+            logger.warning('Ignoring reserved concat IE (ref=%u total=%u seq=%u), treating the '
+                           'message as non-concat', ref, total, seq)
+            return tpud
+        # TS 23.040 9.2.3.24.1 Total is constant in a set, refno only unique per IE form -> both set identity
+        # - full count = seqno 1..total is present
+        # - part disagreeing on the total ends up as set that cannot complete like set with missing parts
+        key = (iei, ref, total)
+        if key not in self.sets and len(self.sets) >= self.max_sets:
+            del self.sets[next(iter(self.sets))]
+        s = self.sets.setdefault(key, {'parts': {}, 'header_ies': []})
+        s['parts'][seq] = payload
+        # - remember the non concat IEs (OTA 0x71 indicator for example)
+        # - keep first seen occurrence of each IEI,
+        # so app IE present only in the first segment is preserved independent of arrival order
+        seen = {ie['iei'] for ie in s['header_ies']}
+        for ie in udh.ies:
+            if ie['iei'] in (self.CONCAT_8BIT, self.CONCAT_16BIT):
+                continue
+            if ie['iei'] not in seen:
+                s['header_ies'].append(ie)
+                seen.add(ie['iei'])
+        if len(s['parts']) < total:
+            return None
+        # all parts present -> reassemble in seq order
+        del self.sets[(iei, ref, total)]
+        body = b''.join(s['parts'][i] for i in range(1, total + 1))
+        header = UserDataHeader(s['header_ies']).to_bytes()
+        return header + body
 
 
 def smpp_dcs_is_8bit(dcs: pdu_types.DataCoding) -> bool:
