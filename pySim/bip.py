@@ -219,6 +219,25 @@ class Proact(ProactiveHandler):
         self.sms_sink = sms_sink
         self.channels = ProactChannels(on_data_available=self._on_channel_data_available)
 
+    def receive_fetch(self, pcmd: ProactiveCommand):
+        """Answer anything this handler has no specific handler for.
+
+        A card coming up will usually issue PROVIDE LOCAL INFORMATION,
+        POLL INTERVAL or TIMER MANAGEMENT before it gets anywhere near a BIP channel
+        because we claim to support every feature flag there is.
+
+        Note that this is not the spec-correct answer. TS 102 223 6.8.7
+        says a successful TERMINAL RESPONSE to PROVIDE LOCAL INFORMATION "shall" carry the
+        requested Local information data object, and 6.8.13/6.8.14 says the same for TIMER
+        MANAGEMENT, this returns empty results for all of them, which works with real cards.
+
+        Always "performed_successfully", never "command_beyond_terminal_capability" because
+        answering that to PROVIDE LOCAL INFORMATION makes a card refuse to open the session.
+        """
+        logger.info("no handler for %s, answering performed_successfully",
+                    type(pcmd.decoded).__name__)
+        return self.prepare_response(pcmd, 'performed_successfully')
+
     @staticmethod
     def _find_first_element_of_type(instlist, cls):
         for i in instlist:
