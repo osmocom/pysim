@@ -136,6 +136,52 @@ from pySim.esim.x509_cert import CertAndPrivkey, CertificateSet, cert_get_subjec
 import logging # noqa: E402
 logger = logging.getLogger(__name__)
 
+
+def _disable_twisted_alpn_if_incompatible():
+    """Twisted <-> pyOpenSSL TLS compatibility guard applied at import.
+
+    Twisted TLSMemoryBIOFactory applies ALPN by setting the 'select' callback
+    on the SSL Context after it has already created a Connection from that
+    Context (_createConnection -> _applyProtocolNegotiation).
+    pyOpenSSL >= 25.0.0 makes a Context immutable once it has been used and
+    raises, which aborts every inbound TLS handshake, client sees unexpected-EOF
+    / decode_error that looks like a cert/cipher problem but is not.
+    pyOpenSSL < 25 does not import against recent cryptography, so downgrading
+    it is not a fix.
+
+    This server only speaks HTTP/1.1 anyway, so ALPN negotiation is not
+    needed.
+    """
+    def _major(v):
+        import re
+        m = re.match(r'\d+', (v or '').strip())
+        return int(m.group()) if m else 0
+
+    try:
+        import OpenSSL
+    except Exception:
+        return  # no pyOpenSSL ???
+    pyossl_ver = getattr(OpenSSL, '__version__', '0')
+    if _major(pyossl_ver) < 25:
+        return  # pre-25 pyOpenSSL allows mutating a used Context
+
+    try:
+        import twisted
+        from twisted.protocols import tls
+    except Exception:
+        return
+    factory = getattr(tls, 'TLSMemoryBIOFactory', None)
+    if factory is None or not hasattr(factory, '_applyProtocolNegotiation'):
+        return  # Twisted already fixed
+
+    factory._applyProtocolNegotiation = lambda self, connection: None
+    logger.warning("Disabled Twisted ALPN negotiation: Twisted %s + "
+                   "pyOpenSSL %s are incompatible for it",
+                   getattr(twisted, '__version__', '?'), pyossl_ver)
+
+
+_disable_twisted_alpn_if_incompatible()
+
 # HACK: make this configurable
 DATA_DIR = './smdpp-data'
 HOSTNAME = 'testsmdpplus1.example.com' # must match certificates!
