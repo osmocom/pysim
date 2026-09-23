@@ -451,6 +451,84 @@ class ExpandedRespTestCase(unittest.TestCase):
         self.assertFalse(decode_expanded_resp(data).truncated)
 
 
+class ExpandedIndefiniteTestCase(unittest.TestCase):
+    """Indef len coding of expanded format TS 102 226 tables
+    5.2a/5.10a; cmd tag AE, resp tag AF.
+    Golden vectors captured from live eUICC over SCP81/HTTPS."""
+
+    def test_cmd_single_golden(self):
+        # RAM GET DATA 80CA00E000 -> AE 80 | 22 05 80ca00e000 | 00 00
+        out = encode_expanded_cmd(h2b('80ca00e000'), length_coding='indefinite')
+        self.assertEqual(b2h(out), 'ae80220580ca00e0000000')
+
+    def test_cmd_multi_golden(self):
+        # RFM: SELECT MF / SELECT EF.ICCID / READ BINARY, each in one C-APDU
+        # TLV, wrapped in indef Command Scripting template
+        out = encode_expanded_cmd([h2b('00a4000c023f00'), h2b('00a4000c022fe2'),
+                                   h2b('00b000000a')], length_coding='indefinite')
+        self.assertEqual(b2h(out),
+                         'ae80220700a4000c023f00220700a4000c022fe2220500b000000a0000')
+
+    def test_cmd_definite_is_default(self):
+        # The default/explicit definite keeps the tag AA
+        self.assertEqual(encode_expanded_cmd(h2b('80ca00e000')),
+                         encode_expanded_cmd(h2b('80ca00e000'), length_coding='definite'))
+        self.assertEqual(b2h(encode_expanded_cmd(h2b('80ca00e000'))), 'aa07220580ca00e000')
+
+    def test_cmd_invalid_length_coding(self):
+        with self.assertRaises(ValueError):
+            encode_expanded_cmd(h2b('80ca00e000'), length_coding='bogus')
+
+    def test_resp_rfm_golden(self):
+        # AF 80 | 23 02 9000 | 23 02 9000 | 23 0c <ICCID> 9000 | 00 00
+        # indef res has no "number of executed" TLV.
+        dec = decode_expanded_resp(h2b(
+            'af80' '23029000' '23029000' '230c988812010000408608149000' '0000'))
+        self.assertEqual(len(dec.commands), 3)
+        self.assertEqual([(c.status_word, c.response_data) for c in dec.commands],
+                         [('9000', ''), ('9000', ''), ('9000', '98881201000040860814')])
+        self.assertEqual(dec.last_status_word, '9000')
+        self.assertEqual(dec.last_response_data, '98881201000040860814')
+        # report the R-APDU count instead
+        self.assertEqual(dec.number_of_commands, 3)
+
+    def test_resp_ram_golden(self):
+        # RAM GET DATA: R-APDU carrying the SD key info TLV + SW.
+        resp = ('af80' '2334e030c00403308810c00402308810c00401308810c00402408810'
+                'c00401408510c00403018810c00402018810c004010188109000' '0000')
+        dec = decode_expanded_resp(h2b(resp))
+        self.assertEqual(len(dec.commands), 1)
+        self.assertEqual(dec.last_status_word, '9000')
+        self.assertEqual(dec.last_response_data,
+                         'e030c00403308810c00402308810c00401308810c00402408810'
+                         'c00401408510c00403018810c00402018810c00401018810')
+
+    def test_resp_truncated_is_rejected(self):
+        # last byte chopped off: the end-of-contents marker is incomplete
+        good = h2b('af80' '23029000' '230c988812010000408608149000' '0000')
+        for cut in (1, 2, 3):
+            with self.subTest(cut=cut):
+                with self.assertRaises(ValueError):
+                    decode_expanded_resp(good[:-cut])
+
+    def test_resp_definite_still_parses(self):
+        # same decoder still handles the definite AB template.
+        dec = decode_expanded_resp(h2b('ab0780010123029000'))
+        self.assertEqual(dec.number_of_commands, 1)
+        self.assertEqual(dec.last_status_word, '9000')
+
+    def test_resp_indefinite_bad_format(self):
+        # AF 80 | 90 01 01 | 00 00 unknown_tag no R-APDU
+        dec = decode_expanded_resp(h2b('af8090010100 00'.replace(' ', '')))
+        self.assertEqual(str(dec.bad_format), 'unknown_tag')
+        self.assertIsNone(dec.last_status_word)
+
+    def test_resp_missing_eoc_raises(self):
+        # AF 80 | 23 02 9000 without end-of-contents.
+        with self.assertRaises(ValueError):
+            decode_expanded_resp(h2b('af8023029000'))
+
+
 class ExpandedSmsPipelineTestCase(unittest.TestCase):
     """expanded format + TS 102 225 SMS security witj 3DES keyset,
     to ensure remote_format does not affect the compact path"""

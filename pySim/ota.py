@@ -19,7 +19,7 @@ import zlib
 import abc
 import struct
 from typing import Optional, Tuple, List, Union
-from construct import Enum, Int8ub, Int16ub, Struct, BitsInteger, BitStruct
+from construct import ConstructError, Enum, Int8ub, Int16ub, Struct, BitsInteger, BitStruct
 from construct import Flag, Padding, Switch, this, PrefixedArray, GreedyRange
 from construct import Const, Prefixed, Select, Construct, SizeofError, stream_read, stream_write
 from osmocom.construct import *
@@ -67,6 +67,8 @@ CompactRemoteResp = Struct('number_of_commands'/Int8ub,
 #   5.2.1.4 Script Chaining TLV
 #   5.2.2   Expanded Remote response structure (tables 5.10 .. 5.16)
 #
+# definite length coding and indefinite length coding are supported.
+#
 # BER-TLV tag values from ETSI TS 101 220 V19.0.0 tables 7.18, 7.19, 7.20
 # C-APDU / R-APDU ETSI TS 102 223 Section 8.35 + 8.36
 # inside these the CR flag of the tag is 0 (TS 101 220 tables 7.19/7.20),
@@ -112,16 +114,31 @@ class _RApduValueAdapter(Adapter):
     def _encode(self, obj, context, path):
         return h2b(obj['response_data']) + h2b(obj['status_word'])
 
-#### Command Scripting template TS 102 226 table 5.2, TS 101 220 tables 7.18/7.19
+#### Command Scripting template TS 102 226 tables 5.2 / 5.2a, TS 101 220 tables 7.18/7.19
+#
+# The two TS 101 220 table 7.18 length codings use different template tags:
+# - definite tag AA
+# - indefinite AE
+# In both codings the inner Command TLVs use definite length coding, only the
+# surrounding template differs.
 
 # TS 102 223 8.35
 ExpandedC_APDU = Struct('_tag'/Const(b'\x22'),
                         'c_apdu'/Prefixed(BerTlvLen, HexAdapter(GreedyBytes)))
 
-ExpandedCmd = Struct('_tag'/Const(b'\xaa'),
-                     'commands'/Prefixed(BerTlvLen, GreedyRange(ExpandedC_APDU)))
+# shared by both length codings.
+ExpandedCmdItems = GreedyRange(ExpandedC_APDU)
 
-#### Response Scripting template TS 102 226 tables 5.10-5.16, TS 101 220 table 7.20
+# TS 102 226 table 5.2: Command Scripting template, definite length coding only
+ExpandedCmd = Struct('_tag'/Const(b'\xaa'),
+                     'commands'/Prefixed(BerTlvLen, ExpandedCmdItems))
+
+# TS 102 226 table 5.2a: indefinite length coding, 'AE 80 <C-APDU TLVs> 00 00'. GreedyRange
+# stops at the first octet that is not a C-APDU tag, which is the end-of-contents marker.
+ExpandedCmdIndef = Struct('_tag'/Const(b'\xae'), '_indef'/Const(b'\x80'),
+                          'commands'/ExpandedCmdItems, '_eoc'/Const(b'\x00\x00'))
+
+#### Response Scripting template TS 102 226 5.2.2, tables 5.10-5.16, TS 101 220 table 7.20
 
 # TS 102 223 8.36
 ExpandedR_APDU = Struct('_tag'/Const(b'\x23'),
@@ -148,39 +165,57 @@ ExpandedScriptChainingResp = Struct('_tag'/Const(b'\x83'),
                                         Enum(Int8ub, no_previous_script=1,
                                              not_supported=2, unable_to_process=3)))
 
+# response TLVs shared by the def and indef Response Scripting templates
+ExpandedRespItems = GreedyRange(Select(ExpandedR_APDU,
+                                       ExpandedBadFormat,
+                                       ExpandedImmediateActionResp,
+                                       ExpandedScriptChainingResp))
+
 # - starts with the "Number of executed command TLV objects" (table 5.10/5.13/5.15)
 # - followed by a sequence of R-APDU TLVs
 # - and/or one of the error # response TLVs
 ExpandedRemoteResp = Struct('_tag'/Const(b'\xab'),
                             'body'/Prefixed(BerTlvLen, Struct(
                                 'num_executed'/ExpandedNumExecuted,
-                                'responses'/GreedyRange(Select(ExpandedR_APDU,
-                                                               ExpandedBadFormat,
-                                                               ExpandedImmediateActionResp,
-                                                               ExpandedScriptChainingResp)))))
+                                'responses'/ExpandedRespItems)))
+
+# TS 102 226 table 5.10a: indefinite length coding, no "number of executed" TLV
+ExpandedRemoteRespIndef = Struct('_tag'/Const(b'\xaf'), '_indef'/Const(b'\x80'),
+                                 'responses'/ExpandedRespItems, '_eoc'/Const(b'\x00\x00'))
 
 
-def encode_expanded_cmd(apdus: Union[bytes, List[bytes]]) -> bytes:
-    """builds the Command Scripting template, TS 102 226 5.2.1, definite length coding
+def encode_expanded_cmd(apdus: Union[bytes, List[bytes]],
+                        length_coding: str = 'definite') -> bytes:
+    """builds the Command Scripting template, TS 102 226 5.2.1
 
     Args:
         apdus: single C-APDU bytes or list of C-APDUs bytes. Each
                C-APDU is wrapped into a C-APDU TLV- This function does not add
                or modify Le.
+        length_coding: 'definite' (the default, tag 'AA', table 5.2) or
+               'indefinite' (tag 'AE', table 5.2a: 'AE 80 <cmd TLVs> 00 00').
+               Inner C-APDU TLVs use definite length coding in both cases.
     Returns:
-        encoded Command Scripting template (AA...) as bytes
+        encoded Command Scripting template as bytes
     """
     if isinstance(apdus, (bytes, bytearray)):
         apdus = [apdus]
-    return ExpandedCmd.build({'commands': [{'c_apdu': b2h(a)} for a in apdus]})
+    commands = [{'c_apdu': b2h(a)} for a in apdus]
+    if length_coding == 'definite':
+        return ExpandedCmd.build({'commands': commands})
+    if length_coding == 'indefinite':
+        return ExpandedCmdIndef.build({'commands': commands})
+    raise ValueError("Invalid length_coding: %r" % length_coding)
 
 
 def decode_expanded_resp(data: bytes) -> Container:
-    """Decode a Response Scripting template, TS 102 226 5.2.2 definite length
+    """Decode a Response Scripting template, TS 102 226 5.2.2 def and indef length
     coding
 
     returned Container has:
         number_of_commands   -- "number of executed command TLV objects" table 5.11
+                                 for definite coding. indefinite coding does not have
+                                 this TLV, so report the number of returned R-APDUs instead.
         commands             -- list of Containers, one per R-APDU TLV, each
                                 with 'response_data' and 'status_word' hexstr
         last_response_data   -- response_data of the last R-APDU or ''
@@ -198,12 +233,22 @@ def decode_expanded_resp(data: bytes) -> Container:
     CompactRemoteResp so existing callers keep working."""
     if isinstance(data, str):
         data = h2b(data)
-    parsed = ExpandedRemoteResp.parse(data)
+    try:
+        if data[:1] == b'\xaf':
+            responses = ExpandedRemoteRespIndef.parse(data)['responses']
+            num_executed = None
+        else:
+            parsed = ExpandedRemoteResp.parse(data)
+            responses = parsed['body']['responses']
+            num_executed = parsed['body']['num_executed']['number_of_commands']
+    except ConstructError as e:
+        raise ValueError('malformed Response Scripting template: %s' % e) from e
+
     commands = []
     bad_format = None
     immediate_action_response = None
     script_chaining_response = None
-    for item in parsed['body']['responses']:
+    for item in responses:
         if 'r_apdu' in item:
             commands.append(Container(response_data=item['r_apdu']['response_data'],
                                       status_word=item['r_apdu']['status_word']))
@@ -215,7 +260,7 @@ def decode_expanded_resp(data: bytes) -> Container:
             script_chaining_response = item['script_chaining_response']
     # TS 102 226 5.2.1.1: 62F1 means response of a C-APDU was truncated, processing terminated
     truncated = any(c['status_word'].lower() == '62f1' for c in commands)
-    return Container(number_of_commands=parsed['body']['num_executed']['number_of_commands'],
+    return Container(number_of_commands=num_executed if num_executed is not None else len(commands),
                      commands=commands,
                      last_response_data=commands[-1]['response_data'] if commands else '',
                      last_status_word=commands[-1]['status_word'] if commands else None,
