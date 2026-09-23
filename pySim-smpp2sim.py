@@ -55,6 +55,7 @@ from pySim.transport import LinkBase, ProactiveHandler, argparse_add_reader_args
 from pySim.commands import SimCardCommands
 from pySim.cards import UiccCardBase
 from pySim.exceptions import *
+from pySim.cat import sms_pp_download_envelope
 from pySim.cat import ProactiveCommand, SendShortMessage, SMS_TPDU, SMSPPDownload, BearerDescription
 from pySim.cat import DeviceIdentities, Address, OtherAddress, UiccTransportLevel, BufferSize
 from pySim.cat import ChannelStatus, ChannelData, ChannelDataLength
@@ -169,10 +170,7 @@ class MyServer:
         tpdu = SMS_DELIVER.from_smpp_submit(pdu)
         logger.info(tpdu)
         # 2) wrap into the CAT ENVELOPE for SMS-PP-Download
-        tpdu_ie = SMS_TPDU(decoded={'tpdu': b2h(tpdu.to_bytes())})
-        addr_ie = Address(decoded={'ton_npi': {'ext':False, 'type_of_number':'unknown', 'numbering_plan_id':'unknown'}, 'call_number': '0123456'})
-        dev_ids = DeviceIdentities(decoded={'source_dev_id': 'network', 'dest_dev_id': 'uicc'})
-        sms_dl = SMSPPDownload(children=[dev_ids, addr_ie, tpdu_ie])
+        sms_dl = sms_pp_download_envelope(tpdu)
         # 3) send to the card
         envelope_hex = b2h(sms_dl.to_tlv())
         logger.info("ENVELOPE: %s" % envelope_hex)

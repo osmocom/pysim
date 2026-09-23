@@ -763,6 +763,22 @@ class SMSPPDownload(BER_TLV_IE, tag=0xD1,
                     nested=[DeviceIdentities, Address, SMS_TPDU]):
     pass
 
+
+def sms_pp_download_envelope(tpdu, call_number: str = '0123456') -> SMSPPDownload:
+    """TS 31.111 Section 7.1.1.2 wrap of a SMS-DELIVER TPDU in the ENVELOPE (SMS-PP Download)
+     call_number :
+     SMSC address to report, defined in TS 31.111 7.1.1.2 as
+    "the RP_Originating_Address of the Service Centre (TS-Service-Centre-Address, 3GPP TS 24.011)"
+    its presence is Conditional, and the note there says the UICC should be fine
+    if its missing, so for remote management its presence should suffice (?).
+    """
+    return SMSPPDownload(children=[
+        DeviceIdentities(decoded={'source_dev_id': 'network', 'dest_dev_id': 'uicc'}),
+        Address(decoded={'ton_npi': {'ext': False, 'type_of_number': 'unknown',
+                                     'numbering_plan_id': 'unknown'},
+                         'call_number': call_number}),
+        SMS_TPDU(decoded={'tpdu': b2h(tpdu.to_bytes())})])
+
 # TS 101 220 Table 7.17 + 31.111 7.1.1.3
 class SMSCBDownload(BER_TLV_IE, tag=0xD2,
                     nested=[DeviceIdentities, CBSPage]):
