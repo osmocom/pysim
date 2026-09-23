@@ -21,6 +21,7 @@ import logging
 from osmocom.utils import b2h, h2b, all_subclasses
 from osmocom.tlv import *
 
+import pySim.cat
 import pySim.iso7816_4
 import pySim.ts_102_221
 import pySim.ts_102_222

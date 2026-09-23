@@ -26,7 +26,66 @@ import unittest
 
 from osmocom.utils import b2h, h2b
 
-from pySim.cat import SupportedRadioAccessTechnologies
+from pySim.cat import IMEI, IMEISV, AccessTechnology, SupportedRadioAccessTechnologies
+
+
+class IMEI_Test(unittest.TestCase):
+    """TS 102 223 8.20: the IMEI IE is 8 bytes, coded as valie part of Mobile Identity IE from 124 008"""
+
+    IMEI_15 = '123456789012345'
+    ENCODED = '94081a32547698103254'
+
+    def test_encode_is_eight_bytes(self):
+        """15 digits in 8 byte: 16 nibbles, one is type/parity framing."""
+        tlv = IMEI(decoded=self.IMEI_15).to_tlv()
+        self.assertEqual(b2h(tlv), self.ENCODED)
+        self.assertEqual(tlv[1], 0x08)               # spec len 8
+        self.assertEqual(len(tlv) - 2, 8)
+
+    def test_first_octet_framing(self):
+        """TS 24.008 table 10.5.4"""
+        octet1 = IMEI(decoded=self.IMEI_15).to_tlv()[2]
+        self.assertEqual(octet1 & 0x07, 2)           # IMEI
+        self.assertEqual((octet1 >> 3) & 0x01, 1)    # odd
+        self.assertEqual(octet1 >> 4, 1)             # digit 1
+
+    def test_decodes_to_the_raw_imei(self):
+        """strip framing nibble"""
+        ie = IMEI()
+        ie.from_tlv(h2b(self.ENCODED))
+        self.assertEqual(ie.decoded, self.IMEI_15)
+
+    def test_even_digit_count_uses_the_end_mark(self):
+        """"end marker, IMEISV case"""
+        ie = IMEI(decoded='1234567890123456')
+        tlv = ie.to_tlv()
+        self.assertEqual(tlv[2] >> 3 & 0x01, 0)      # even
+        self.assertEqual(tlv[-1] >> 4, 0x0f)         # end mark
+        back = IMEI()
+        back.from_tlv(tlv)
+        self.assertEqual(back.decoded, '1234567890123456')
+
+
+class IMEISV_Test(unittest.TestCase):
+    """TS 102 223 8.74, no fixed len, end marker"""
+
+    IMEISV_16 = '1234567890123456'
+    ENCODED = 'e2091332547698103254f6'
+
+    def test_encode(self):
+        self.assertEqual(b2h(IMEISV(decoded=self.IMEISV_16).to_tlv()), self.ENCODED)
+
+    def test_type_of_identity_and_end_mark(self):
+        value = IMEISV(decoded=self.IMEISV_16).to_tlv()[2:]
+        self.assertEqual(value[0] & 0x07, 3)         # IMEISV
+        self.assertEqual((value[0] >> 3) & 0x01, 0)  # even
+        self.assertEqual(value[-1] >> 4, 0x0f)       # end mark
+        self.assertEqual(len(value), 9)
+
+    def test_decode(self):
+        ie = IMEISV()
+        ie.from_tlv(h2b(self.ENCODED))
+        self.assertEqual(ie.decoded, self.IMEISV_16)
 
 
 class SupportedRadioAccessTechnologies_Test(unittest.TestCase):

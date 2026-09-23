@@ -22,7 +22,7 @@ from typing import List
 from bidict import bidict
 from construct import Int8ub, Int16ub, Byte, BitsInteger
 from construct import Struct, Enum, BitStruct, this
-from construct import Switch, GreedyRange, FlagsEnum
+from construct import Switch, GreedyRange, FlagsEnum, Adapter
 from osmocom.tlv import TLV_IE, COMPR_TLV_IE, BER_TLV_IE, TLV_IE_Collection
 from osmocom.construct import PlmnAdapter, BcdAdapter, GsmStringAdapter, TonNpi, GsmString, Bytes, GreedyBytes
 from osmocom.utils import b2h, h2b
@@ -320,9 +320,54 @@ class FileList(COMPR_TLV_IE, tag=0x92):
 class LocationInformation(COMPR_TLV_IE, tag=0x93):
     pass
 
-# TS 102 223 Section 8.20
+class MobileIdentityAdapter(Adapter):
+    """TS 124.008 section 10.5.1.4 figure 10.5.4 + table 10.5.4
+
+    NOT a plain BCD string:
+    - bits 1-3 type of identity + odd/even bit 4
+    - digit 1 in bits 5-8, following octets contain 2 digits, low nibble first
+    - if even length: high nibble of last octet 1111
+    So IMEI IE of 8 bytes is 15 digits + framing nibble."""
+
+    # Table 10.5.4 bits 321
+    TYPE_IMSI = 1
+    TYPE_IMEI = 2
+    TYPE_IMEISV = 3
+
+    def __init__(self, subcon, type_of_identity: int):
+        super().__init__(subcon)
+        self.type_of_identity = type_of_identity
+
+    def _decode(self, obj, context, path):
+        data = bytes(obj)
+        if not data:
+            return ''
+        # TS 24.008 figure 10.5.4: octet 3 holds type of identity (b1-3), odd/even (b4) and
+        # digit 1 in its high nibble, the remaining digits follow BCD swapped from octet 4
+        odd = bool(data[0] & 0x08)          # bit 4: 1 = odd number of digits
+        digits = '%x' % (data[0] >> 4)      # bits 5-8: digit 1
+        for octet in data[1:]:
+            digits += '%x%x' % (octet & 0x0f, octet >> 4)
+        if not odd:
+            digits = digits[:-1]            # drop the 1111 end mark
+        return digits
+
+    def _encode(self, obj, context, path):
+        digits = str(obj)
+        odd = len(digits) % 2
+        first = (int(digits[0], 16) << 4) | (0x08 if odd else 0x00) | self.type_of_identity
+        rest = digits[1:] if odd else digits[1:] + 'f'
+        return bytes([first]) + bytes((int(rest[i+1], 16) << 4) | int(rest[i], 16)
+                                      for i in range(0, len(rest), 2))
+
+# TS 102 223 Section 8.20, len is fixed at 8: "The IMEI is coded [..] as the
+# value part of the Mobile Identity IE as specified in TS 124 008", and the
+# IMEI itself is the 15 digits of TS 123 003.
 class IMEI(COMPR_TLV_IE, tag=0x94):
-    _construct = BcdAdapter(GreedyBytes)
+    _test_de_encode = [
+        ( '94081a32547698103254', '123456789012345' ),
+    ]
+    _construct = MobileIdentityAdapter(GreedyBytes, MobileIdentityAdapter.TYPE_IMEI)
 
 # TS 102 223 Section 8.21
 class HelpRequest(COMPR_TLV_IE, tag=0x95):
@@ -595,6 +640,14 @@ class UtranEutranMeasurementQualifier(COMPR_TLV_IE, tag=0xE9):
                                 eutran_inter_rat_geran=0x07,
                                 eutran_inter_rat_utran=0x08,
                                 eutran_inter_rat_nr=0x09)
+
+# TS 102 223 Section 8.74, length is not fixed, because IMEISV is 16 digits per TS 123.003
+# -> even count needs the '1111' end mark and is 9 bytes long
+class IMEISV(COMPR_TLV_IE, tag=0xE2):
+    _test_de_encode = [
+        ( 'e2091332547698103254f6', '1234567890123456' ),
+    ]
+    _construct = MobileIdentityAdapter(GreedyBytes, MobileIdentityAdapter.TYPE_IMEISV)
 
 # TS 102 223 Section 8.75
 class NetworkSearchMode(COMPR_TLV_IE, tag=0xE5):
