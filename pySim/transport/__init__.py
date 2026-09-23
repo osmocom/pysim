@@ -45,8 +45,10 @@ class ApduTracer:
 
 class StdoutApduTracer(ApduTracer):
     """Minimalistic APDU tracer, printing commands to stdout."""
-    def trace_response(self, cmd, sw, resp):
+    def trace_command(self, cmd):
         log.info("-> %s %s", cmd[:10], cmd[10:])
+
+    def trace_response(self, cmd, sw, resp):
         log.info("<- %s: %s", sw, resp)
 
     def trace_reset(self):

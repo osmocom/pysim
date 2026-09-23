@@ -210,8 +210,10 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         def __init__(self, cmd2_app):
             self.cmd2 = cmd2_app
 
-        def trace_response(self, cmd, sw, resp):
+        def trace_command(self, cmd):
             self.cmd2.poutput("-> %s %s" % (cmd[:10], cmd[10:]))
+
+        def trace_response(self, cmd, sw, resp):
             self.cmd2.poutput("<- %s: %s" % (sw, resp))
 
     def update_prompt(self):
