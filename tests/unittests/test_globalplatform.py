@@ -712,19 +712,53 @@ class Load_ChunkLen_Test(unittest.TestCase):
         for wrapped in scc.wrapped:
             self.assertLessEqual(wrapped[4], 255)
 
+# Real Card Data (GET DATA '66'), as returned by sja5 + euicc
+CARD_DATA_V211 = ('6631732f06072a864886fc6b01600c060a2a864886fc6b0202010163090607'
+                  '2a864886fc6b03640b06092a864886fc6b040215')
+CARD_DATA_V22 = ('663b733906072a864886fc6b01600b06092a864886fc6b020202630906072a86'
+                 '4886fc6b03640b06092a864886fc6b040370640b06092a864886fc6b04810400')
+
 
 class _FakeScc:
     """mock lchan.scc: replays scripted (data, sw) pairs + records the APDUs sent."""
 
-    def __init__(self, responses):
+    def __init__(self, responses, card_data=CARD_DATA_V211):
         self._responses = list(responses)
+        self._card_data = card_data
         self.sent = []
+
+    def get_data(self, cla, tag):
+        if self._card_data is None:
+            raise SwMatchError('6a88', '9000')
+        return self._card_data, '9000'
 
     def send_apdu(self, apdu):
         self.sent.append(apdu.lower())
         if not self._responses:
             raise AssertionError('get_status sent unexpected APDU: %s' % apdu)
         return self._responses.pop(0)
+
+
+class GpVersion_Test(unittest.TestCase):
+    """GP version from Card Recognition Data, which v2.1.1/v2.3.1 section 7.4.1.3
+    require to be present. The OID under tag 60 is {globalPlatform 2 v...}."""
+
+    def test_decode_real_cards(self):
+        self.assertEqual(decode_gp_version(h2b(CARD_DATA_V211)), (2, 1, 1))
+        self.assertEqual(decode_gp_version(h2b(CARD_DATA_V22)), (2, 2))
+
+    def test_unknown_oid_is_none(self):
+        self.assertIsNone(decode_gp_version(h2b('66097307060512345678')))
+
+    def test_tag_lists_follow_the_spec_tables(self):
+        """table 11-36 applications, table 11-37 for load files"""
+        self.assertEqual(b2h(get_status_tag_list('isd')), '5c074f9f70c5cfc4cc')
+        self.assertEqual(b2h(get_status_tag_list('applications')), '5c074f9f70c5cfc4cc')
+        self.assertEqual(b2h(get_status_tag_list('files')), '5c054f9f70cecc')
+        self.assertEqual(b2h(get_status_tag_list('files_and_modules')), '5c064f9f70ce84cc')
+        # C5 never load files, 84 never applications
+        self.assertNotIn('c5', b2h(get_status_tag_list('files')))
+        self.assertNotIn('84', b2h(get_status_tag_list('applications'))[4:])
 
 
 class GetStatus_Pagination_Test(unittest.TestCase):
@@ -737,8 +771,8 @@ class GetStatus_Pagination_Test(unittest.TestCase):
     ENTRY_1 = 'e3074f05a000000151'
     ENTRY_2 = 'e3074f05a000000152'
 
-    def _sd(self, responses):
-        scc = _FakeScc(responses)
+    def _sd(self, responses, card_data=CARD_DATA_V211):
+        scc = _FakeScc(responses, card_data)
         cmd = type('_Cmd', (), {'lchan': type('_Lchan', (), {'scc': scc})()})()
         # cmd2 strikes again, CommandSet exposes _cmd as a read only property, needs shadowing
         _SD = type('_SD', (ADF_SD.AddlShellCommands,), {'_cmd': cmd})
@@ -750,15 +784,15 @@ class GetStatus_Pagination_Test(unittest.TestCase):
     def test_single_page(self):
         sd, scc = self._sd([(self.ENTRY_1, '9000')])
         grd_list = sd.get_status('applications')
-        self.assertEqual(scc.sent, ['80f24002094f005c054f9f70c5cc00'])
+        self.assertEqual(scc.sent, ['80f24002024f0000'])
         self.assertEqual(self._aids(grd_list), ['a000000151'])
 
     def test_two_pages(self):
         """6310 -> reissue with P2 bit 1 set -> 9000, both pages in result"""
         sd, scc = self._sd([(self.ENTRY_1, '6310'), (self.ENTRY_2, '9000')])
         grd_list = sd.get_status('applications')
-        self.assertEqual(scc.sent, ['80f24002094f005c054f9f70c5cc00',
-                                    '80f24003094f005c054f9f70c5cc00'])
+        self.assertEqual(scc.sent, ['80f24002024f0000',
+                                    '80f24003024f0000'])
         self.assertEqual(self._aids(grd_list), ['a000000151', 'a000000152'])
 
     def test_three_pages_keep_p2_next_occurrence(self):
@@ -772,6 +806,44 @@ class GetStatus_Pagination_Test(unittest.TestCase):
         sd, _scc = self._sd([('', '6a88')])
         self.assertEqual(sd.get_status('applications'), [])
 
+    def test_v211_card_gets_no_tag_list(self):
+        """v2.1.1 section 9.4.2.3 has no tag list,not send a tag list"""
+        sd, scc = self._sd([(self.ENTRY_1, '9000')], card_data=CARD_DATA_V211)
+        sd.get_status('applications')
+        self.assertEqual(scc.sent, ['80f24002024f0000'])
+        self.assertNotIn('5c', scc.sent[0][8:])
+
+    def test_v22_card_gets_a_tag_list(self):
+        sd, scc = self._sd([(self.ENTRY_1, '9000')], card_data=CARD_DATA_V22)
+        sd.get_status('applications')
+        self.assertEqual(scc.sent, ['80f240020b4f005c074f9f70c5cfc4cc00'])
+
+    def test_unknown_version_gets_no_tag_list(self):
+        """If the card will not say, assume the conservative form that works everywhere."""
+        sd, scc = self._sd([(self.ENTRY_1, '9000')], card_data=None)
+        sd.get_status('applications')
+        self.assertEqual(scc.sent, ['80f24002024f0000'])
+
+    def test_v22_card_rejecting_tag_list_falls_back(self):
+        """card announcing v2.2+ that still answers 6A80 to the tag list."""
+        sd, scc = self._sd([('', '6a80'), (self.ENTRY_1, '9000')], card_data=CARD_DATA_V22)
+        grd_list = sd.get_status('applications')
+        self.assertEqual(scc.sent, ['80f240020b4f005c074f9f70c5cfc4cc00',
+                                    '80f24002024f0000'])
+        self.assertEqual(self._aids(grd_list), ['a000000151'])
+
+    def test_aid_search_qualifier(self):
+        sd, scc = self._sd([(self.ENTRY_1, '9000')])
+        sd.get_status('applications', 'a000000087')
+        self.assertEqual(scc.sent, ['80f24002074f05a00000008700'])
+
+    def test_6a80_is_reported_on_a_v211_card(self):
+        """no tag list -> 6A80 is error"""
+        sd, _scc = self._sd([('', '6a80')], card_data=CARD_DATA_V211)
+        with self.assertRaises(SwMatchError) as ctx:
+            sd.get_status('applications')
+        self.assertEqual(ctx.exception.sw_actual, '6a80')
+
     def test_unexpected_sw_is_not_silently_truncated(self):
         """partial is not complete result"""
         sd, _scc = self._sd([(self.ENTRY_1, '6310'), ('', '6982')])
@@ -779,7 +851,26 @@ class GetStatus_Pagination_Test(unittest.TestCase):
             sd.get_status('applications')
         self.assertEqual(ctx.exception.sw_actual, '6982')
 
+    def test_v22_card_answering_6a88_to_the_tag_list_falls_back(self):
+        """6A88 is the other GET STATUS error condition of table 11-39, section 11.4.2.3
+        says we may get get an error status. 6A88 to the tag-list attempt should be retried
+        without it or we get nothing"""
+        sd, scc = self._sd([('', '6a88'), (self.ENTRY_1, '9000')], card_data=CARD_DATA_V22)
+        grd_list = sd.get_status('applications')
+        self.assertEqual(scc.sent, ['80f240020b4f005c074f9f70c5cfc4cc00',
+                                    '80f24002024f0000'])
+        self.assertEqual(self._aids(grd_list), ['a000000151'])
 
+    def test_v22_card_with_a_genuinely_empty_subset(self):
+        """...and when the retry answers 6A88, the list really is empty."""
+        sd, scc = self._sd([('', '6a88'), ('', '6a88')], card_data=CARD_DATA_V22)
+        self.assertEqual(sd.get_status('applications'), [])
+        self.assertEqual(len(scc.sent), 2)
+
+    def test_6a88_after_a_page_keeps_that_page(self):
+        """6A88 is "no more matches" after we have data, we're done"""
+        sd, _scc = self._sd([(self.ENTRY_1, '6310'), ('', '6a88')], card_data=CARD_DATA_V22)
+        self.assertEqual(self._aids(sd.get_status('applications')), ['a000000151'])
 
 if __name__ == "__main__":
 	unittest.main()

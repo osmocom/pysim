@@ -37,6 +37,9 @@ from pySim.filesystem import *
 from pySim.profile import CardProfile
 from pySim.ota import SimFileAccessAndToolkitAppSpecParams
 from pySim.javacard import CapFile
+from pySim.log import PySimLogger
+
+log = PySimLogger.get(__name__)
 
 # GPCS Table 11-48 Load Parameter Tags
 class NonVolatileCodeMinMemoryReq(BER_TLV_IE, tag=0xC6):
@@ -532,6 +535,63 @@ class GpRegistryRelatedData(BER_TLV_IE, tag=0xe3, nested=[ApplicationAID, LifeCy
                                                           ExecutableModuleAID, AssociatedSecurityDomainAID]):
     pass
 
+# GP CS v2.3.1 Table 11-36/11-37 possible data objects requested/returned from GET STATUS for each registry entry.
+# Applications and Executable Load Files have _different_ sets, so a tag list requesting them has
+# to match the subset because 11.4.2.3 warns that asking for a data object an entry does not have
+# "may" be answered with an error status.
+GetStatusTagListIEs = {
+    # Table 11-36 GP Application Data
+    'isd':               [ApplicationAID, LifeCycleState, Privileges, ImplicitSelectionParameter,
+                          ExecutableLoadFileAID, AssociatedSecurityDomainAID],
+    'applications':      [ApplicationAID, LifeCycleState, Privileges, ImplicitSelectionParameter,
+                          ExecutableLoadFileAID, AssociatedSecurityDomainAID],
+    # Table 11-37 GP Executable Load File Data. 84 only for the subset that asks for the modules (Note 2)!
+    'files':             [ApplicationAID, LifeCycleState, ExecutableLoadFileVersionNumber,
+                          AssociatedSecurityDomainAID],
+    'files_and_modules': [ApplicationAID, LifeCycleState, ExecutableLoadFileVersionNumber,
+                          ExecutableModuleAID, AssociatedSecurityDomainAID],
+}
+
+def get_status_tag_list(subset: str) -> bytes:
+    """Encode the GET STATUS tag list for the given status subset"""
+    tags = b''.join([bertlv_encode_tag(ie.tag) for ie in GetStatusTagListIEs[subset]])
+    return b'\x5c' + bertlv_encode_len(len(tags)) + tags
+
+# GP CS v2.3.1 Appendix H.2 / Table H-1
+# oid prefix {iso(1) member-body(2) country-USA(840) globalPlatform(114283)} + card management type 2
+# afterwards GP version.
+OID_GP_CARD_MGMT_TYPE = h2b('2a864886fc6b02')
+
+def _find_tlv_value(decoded, key: str):
+    """depth first search for the nested decoded TLV_IE dict/list"""
+    if isinstance(decoded, dict):
+        for k, v in decoded.items():
+            if k == key:
+                return v
+            found = _find_tlv_value(v, key)
+            if found is not None:
+                return found
+    elif isinstance(decoded, list):
+        for item in decoded:
+            found = _find_tlv_value(item, key)
+            if found is not None:
+                return found
+    return None
+
+def decode_gp_version(card_data: bytes) -> Optional[Tuple[int, ...]]:
+    """GP version from Card Data returned by GET DATA, like (2, 1, 1) or (2, 2).
+    None if cm type OID is absent/unknown"""
+    cd = CardData()
+    cd.from_tlv(card_data)
+    ctv = _find_tlv_value(cd.to_dict(), 'card_management_type_and_version')
+    oid = _find_tlv_value(ctv, 'object_identifier') if ctv is not None else None
+    if oid is None:
+        return None
+    oid = h2b(oid) if isinstance(oid, str) else bytes(oid)
+    if not oid.startswith(OID_GP_CARD_MGMT_TYPE):
+        return None
+    return tuple(oid[len(OID_GP_CARD_MGMT_TYPE):])
+
 # Application Dedicated File of a Security Domain
 class ADF_SD(CardADF):
     StoreData = BitStruct('last_block'/Flag,
@@ -733,19 +793,64 @@ class ADF_SD(CardADF):
             for grd in grd_list:
                 self._cmd.poutput_json(grd.to_dict())
 
+        def gp_version(self) -> Optional[Tuple[int, ...]]:
+            """GP version the selected SD reports in its Card Recognition
+            Data, e.g. (2, 1, 1). Card Recognition Data "shall be present" v2.1.1/v2.3.1 section 7.4.1.3,
+            so this must succeed no matter the GP version. None if card did not answer GET DATA / OID unknown.
+            Cached, it cannot change during a session."""
+            if not hasattr(self, '_gp_version'):
+                self._gp_version = None
+                try:
+                    data, _sw = self._cmd.lchan.scc.get_data(cla=0x80, tag=CardData.tag)
+                    self._gp_version = decode_gp_version(h2b(data))
+                except (SwMatchError, ValueError) as e:
+                    log.warning("Could not determine GlobalPlatform version: %s", e)
+            return self._gp_version
+
         def get_status(self, subset:str, aid_search_qualifier:Hexstr = '') -> List[GpRegistryRelatedData]:
-            subset_hex = b2h(build_construct(StatusSubset, subset))
             aid = ApplicationAID(decoded=aid_search_qualifier)
-            cmd_data = aid.to_tlv() + h2b('5c054f9f70c5cc')
+            # GPC CardSpec v2.3.1 Table 11-35 says only the AID search tag is mandatory, tag list is
+            # Optional and not present in the older v2.1.1, where section 9.4.2.3 defines the data
+            # field as the search qualifier.
+            # Cards like the sja5 implementing that old GP version reject anything else with 6A80
+            # from v2.1.1 Table 9-26 so only send a tag list to a card that announces v2.2 or later.
+            #
+            # Not sending one is not a problem on older cards, the tag list only gives us data beyond
+            # what 11.4.3.1 gives us anyway, for example the associated SD AID which matters on an eUICC
+            # where entries belong to different SD.
+            version = self.gp_version()
+            log.debug("Card Recognition Data reports GlobalPlatform %s",
+                      '.'.join(str(v) for v in version) if version else 'unknown')
+            if version is not None and version >= (2, 2):
+                try:
+                    return self._get_status(subset, aid.to_tlv() + get_status_tag_list(subset))
+                except SwMatchError as e:
+                    # Retry if v2.2 or later but rejected the tag list anyway.
+                    # 6A80 and 6A88 are the error conditions GET STATUS defines in table 11-39.
+                    # Retrying beats not ending up with a list again...
+                    if e.sw_actual not in ('6a80', '6a88'):
+                        raise
+                    log.warning("Card reports GlobalPlatform %s but answered %s to the GET STATUS tag list; "
+                                "retrying with the default search",
+                                '.'.join(str(v) for v in version), e.sw_actual)
+            return self._get_status(subset, aid.to_tlv(), empty_on_6a88=True)
+
+        def _get_status(self, subset:str, cmd_data:bytes,
+                        empty_on_6a88: bool = False) -> List[GpRegistryRelatedData]:
+            subset_hex = b2h(build_construct(StatusSubset, subset))
             p2 = 0x02 # GPC v2.3.1 11.4.2.2 table 11-34, b2: response data structure per table 11-36
             grd_list = []
             while True:
                 hdr = "80F2%s%02x%02x" % (subset_hex, p2, len(cmd_data))
                 data, sw = self._cmd.lchan.scc.send_apdu(hdr + b2h(cmd_data) + "00")
                 if sw == '6a88':
-                    # "Referenced data not found": nothing (more) matches the requested subset and AID
-                    # search qualifier. That is empty, not error?
-                    return grd_list
+                    # Table 11-39 "Referenced data not found". After collecting all pages this can
+                    # only mean "nothing more matches" -> listing is complete. On the first page
+                    # it is ambiguous, empty result or bad command data field, so leave that to get_status()
+                    # which knows if a tag list was sent.
+                    if grd_list or empty_on_6a88:
+                        return grd_list
+                    raise SwMatchError(sw, ['9000', '6310'])
                 if sw not in ['9000', '6310']:
                     # Never return a silently truncated registry
                     raise SwMatchError(sw, ['9000', '6310'])
