@@ -30,6 +30,9 @@
 
 import argparse
 import logging
+import socket
+import threading
+import time
 import colorlog
 
 from twisted.protocols import basic
@@ -55,6 +58,7 @@ from pySim.exceptions import *
 from pySim.cat import ProactiveCommand, SendShortMessage, SMS_TPDU, SMSPPDownload, BearerDescription
 from pySim.cat import DeviceIdentities, Address, OtherAddress, UiccTransportLevel, BufferSize
 from pySim.cat import ChannelStatus, ChannelData, ChannelDataLength
+from pySim.cat import EventList, EventDownload, Result
 from pySim.utils import b2h, h2b
 
 logger = logging.getLogger(__name__)
@@ -106,6 +110,11 @@ class MyServer:
         smppEndpoint = endpoints.TCP6ServerEndpoint(reactor, tcp_port, interface=bind_ip)
         smppEndpoint.listen(self.factory)
         self.tp = self.scc = self.card = None
+        # Serialise card/APDU access.
+        # - SMPP handler drives the card from reactor thread
+        # - BIP relay data-available path drives it from socket reader thread.
+        # The transport is not re-entrant, both must take this lock.
+        self._card_lock = threading.Lock()
 
     def connect_to_card(self, tp: LinkBase):
         self.tp = tp
@@ -118,6 +127,21 @@ class MyServer:
         self.card.select_adf_by_aid(adf='usim')
         # FIXME: create a more realistic profile than ffffff
         self.scc.terminal_profile('ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+        # Connect the BIP relay inbound path to the card.
+        # relay socket receives data -> ME initiated ENVELOPE EVENT DOWNLOA
+        # -> triggers RECEIVE DATA proactive session.
+        # FIXME this cross-thread push to the card is exercised only with real hardware
+        # the card free tests cover socket relay + envelope construction, not delivery.
+        handler = getattr(tp, 'proactive_handler', None)
+        if isinstance(handler, Proact):
+            handler.data_available_sink = self._deliver_data_available
+
+    def _deliver_data_available(self, envelope_hex: str):
+        """push ME initiated ENVELOPE EVENT DOWNLOAD to the card"""
+        with self._card_lock:
+            logger.info("ENVELOPE(Data available): %s" % envelope_hex)
+            (data, sw) = self.scc.envelope(envelope_hex)
+            logger.info("SW %s: %s" % (sw, data))
 
     def _msgHandler(self, system_id, smpp, pdu):
         """Handler for incoming messages received via SMPP from ESME."""
@@ -152,7 +176,8 @@ class MyServer:
         # 3) send to the card
         envelope_hex = b2h(sms_dl.to_tlv())
         logger.info("ENVELOPE: %s" % envelope_hex)
-        (data, sw) = self.scc.envelope(envelope_hex)
+        with self._card_lock:
+            (data, sw) = self.scc.envelope(envelope_hex)
         logger.info("SW %s: %s" % (sw, data))
         if sw in ['9200', '9300']:
             # TODO send back RP-ERROR message with TP-FCS == 'SIM Application Toolkit Busy'
