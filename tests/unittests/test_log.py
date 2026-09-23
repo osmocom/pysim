@@ -20,10 +20,19 @@
 
 import unittest
 import logging
+import cmd2
+from packaging import version
 from pySim.log import PySimLogger
 import io
 import sys
 from inspect import currentframe, getframeinfo
+
+if version.parse(cmd2.__version__) >= version.parse("3.0.0"):
+    from cmd2 import Color # pylint: disable=no-name-in-module
+    YELLOW = Color.YELLOW
+else: # cmd2>=2.6.2
+    from cmd2 import Fg # pylint: disable=no-name-in-module
+    YELLOW = Fg.YELLOW
 
 log = PySimLogger.get(__name__)
 
@@ -127,6 +136,19 @@ class PySimLogger_Test(unittest.TestCase):
         log.error(TEST_MSG_ERROR)
         expected_message = "CRITICAL: " + TEST_MSG_CRITICAL
         log.critical(TEST_MSG_CRITICAL)
+
+    def test_05_color(self):
+        # A color is either
+        # - raw escape sequence
+        # - cmd2 color object
+        global expected_message
+        expected_message = "\033[33mWARNING: " + TEST_MSG_WARNING + "\033[0m"
+
+        PySimLogger.setup(self._test_print_callback, {logging.WARN: "\033[33m"})
+        log.warning(TEST_MSG_WARNING)
+
+        PySimLogger.setup(self._test_print_callback, {logging.WARN: YELLOW})
+        log.warning(TEST_MSG_WARNING)                   # don't leak cmd2 Color StrEnum
 
 if __name__ == '__main__':
     unittest.main()

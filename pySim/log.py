@@ -24,6 +24,7 @@
 #
 
 import logging
+import enum
 import cmd2
 from packaging import version
 
@@ -126,7 +127,7 @@ class PySimLogger:
                 formatted_message = logging.Formatter.format(PySimLogger.__formatter, record)
             color = PySimLogger.colors.get(record.levelno)
             if color:
-                if isinstance(color, str):
+                if isinstance(color, str) and not isinstance(color, enum.Enum):
                     PySimLogger.print_callback(color + formatted_message + "\033[0m")
                 else:
                     PySimLogger.print_callback(_style(formatted_message, fg = color))
