@@ -101,7 +101,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
         self.numeric_path = False
         self.conserve_write = True
         self.json_pretty_print = True
-        self.apdu_trace = False
+        self.apdu_trace = getattr(sl, 'apdu_tracer', None) is not None
         self.apdu_strict = False
 
         self.add_settable(cmd2.Settable('numeric_path', bool,
