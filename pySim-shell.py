@@ -351,7 +351,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
             self.poutput("")
             self.poutput("Card initialization (%s) failed with an exception:" % str(self.sl))
             self.poutput("---------------------8<---------------------")
-            traceback.print_exc()
+            self.poutput(traceback.format_exc().rstrip())
             self.poutput("---------------------8<---------------------")
             self.poutput("")
             return -1
@@ -465,7 +465,7 @@ Online manual available at https://downloads.osmocom.org/docs/pysim/master/html/
                 self.poutput("")
                 self.poutput("Card handling (%s) failed with an exception:" % str(self.sl))
                 self.poutput("---------------------8<---------------------")
-                traceback.print_exc()
+                self.poutput(traceback.format_exc().rstrip())
                 self.poutput("---------------------8<---------------------")
                 self.poutput("")
                 fail_count = fail_count + 1
@@ -1176,7 +1176,7 @@ if __name__ == '__main__':
         startup_errors = True
         print("Card initialization (%s) failed with an exception:" % str(sl))
         print("---------------------8<---------------------")
-        traceback.print_exc()
+        print(traceback.format_exc().rstrip())
         print("---------------------8<---------------------")
         if not opts.noprompt:
             print("(you may still try to recover from this manually by using the 'equip' command.)")

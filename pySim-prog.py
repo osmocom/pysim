@@ -816,7 +816,7 @@ if __name__ == '__main__':
             print("")
             print("Card programming failed with an exception:")
             print("---------------------8<---------------------")
-            traceback.print_exc()
+            print(traceback.format_exc().rstrip())
             print("---------------------8<---------------------")
             print("")
             rc = -1
