@@ -536,9 +536,9 @@ class Aid(COMPR_TLV_IE, tag=0xAF):
 
 # TS 102 223 Section 8.61
 class AccessTechnology(COMPR_TLV_IE, tag=0xBF):
-    SingleAccessTech = Enum(Int8ub, gsm=0, tia_eia_533=1, tia_eia_136_270=2, utran=3, tetra=4,
-                                    tia_eia_95_b=5, cdma1000_1x=6, cdma2000_hrpd=7, eutran=8,
-                                    ehrpd=9, nr=0x0a)
+    SingleAccessTech = Enum(Int8ub, gsm=0, tia_eia_553=1, tia_eia_136_270=2, utran=3, tetra=4,
+                                    tia_eia_95_b=5, cdma2000_1x=6, cdma2000_hrpd=7, eutran=8,
+                                    ehrpd=9, nr=0x0a, satellite_nr=0x0b, satellite_eutran=0x0c)
     _construct = GreedyRange(SingleAccessTech)
 
 # TS 102 223 Section 8.63
