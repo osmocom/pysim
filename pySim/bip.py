@@ -43,6 +43,35 @@ from pySim.cat import (ProactiveCommand, SendShortMessage, SMS_TPDU, SMSPPDownlo
 
 logger = logging.getLogger(__name__)
 
+
+def terminal_profile(num_channels: int = 7) -> bytes:
+    """TERMINAL PROFILE for what we implement, TS 102 223 5.2 and annex T.
+
+    Annex T table T.1 lists what a Connected Entity, a CAT client that is not the modem
+    which is pretty much what we are, may announce, and its inverse is what only a modem may announce.
+    """
+    if not 0 <= num_channels <= ProactChannels.MAX_CHANNELS:
+        raise ValueError('num_channels must be 0..%u' % ProactChannels.MAX_CHANNELS)
+    profile = bytearray(32)
+    # 1 (Download): b1 profile download, b2+b5 SMS-PP data download. Both of the latter, per the
+    # note in TS 31.111 5.2: "several bits may need to be set to 1 for the support of the same
+    # facility ... because of backward compatibility with SAT". The relay is OTA over SMS-PP.
+    profile[0] = 0x01 | 0x02 | 0x10
+    profile[1] = 0x01                    # 2 (Other): b1 command result
+    profile[2] = 0x80                    # 3: b8 REFRESH (empty result is a valid answer, 6.4.7)
+    profile[3] = 0x02                    # 4: b2 SEND SHORT MESSAGE (the OTA response path)
+    profile[4] = 0x01                    # 5: b1 SET UP EVENT LIST
+    profile[5] = 0x04 | 0x08             # 6: b3 Event Data available, b4 Event Channel status
+    # 12 (class "e"): b1..b5 OPEN CHANNEL, CLOSE CHANNEL, RECEIVE DATA, SEND DATA, GET CHANNEL
+    # STATUS.
+    profile[11] = 0x1f
+    # 13 (class "e" supported bearers): b2 GPRS, and b6..b8 the number of channels.
+    profile[12] = 0x02 | (num_channels << 5)
+    profile[13] = 0x40 | 0x20            # 14: b6 no display capability, b7 no keypad available
+    profile[16] = 0x01                   # 15: b1 TCP, UICC in client mode, remote connection
+    return bytes(profile)
+
+
 class ProactChannel:
     """One BIP channel, TS 102 223 class "e", backed by a blocking TCP socket.
 
@@ -178,13 +207,18 @@ class ProactChannels:
             thread when data arrives in an empty Rx buffer. Proact turns it into an
             ENVELOPE EVENT DOWNLOAD (data available).
     """
+
+    # TS 102 223 8.56 channel identifier in 3 bits as "1 to 7", 0 == no channel available
+    # TERMINAL PROFILE has to agree with byte 13 , "number of channels supported by terminal"
+    MAX_CHANNELS = 7
+
     def __init__(self, on_data_available=None):
         self.channels = {}
         self._on_data_available = on_data_available
 
     def channel_create(self) -> ProactChannel:
         """Create a new proactive channel, allocating its integer number."""
-        for i in range(1, 8):
+        for i in range(1, self.MAX_CHANNELS + 1):
             if not i in self.channels:
                 self.channels[i] = ProactChannel(self, i)
                 return self.channels[i]
@@ -223,8 +257,8 @@ class Proact(ProactiveHandler):
         """Answer anything this handler has no specific handler for.
 
         A card coming up will usually issue PROVIDE LOCAL INFORMATION,
-        POLL INTERVAL or TIMER MANAGEMENT before it gets anywhere near a BIP channel
-        because we claim to support every feature flag there is.
+        POLL INTERVAL or TIMER MANAGEMENT before it gets anywhere near a BIP channel,
+        whatever the TERMINAL PROFILE announces.
 
         Note that this is not the spec-correct answer. TS 102 223 6.8.7
         says a successful TERMINAL RESPONSE to PROVIDE LOCAL INFORMATION "shall" carry the

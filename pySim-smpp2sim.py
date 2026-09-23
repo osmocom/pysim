@@ -50,7 +50,7 @@ from smpp.pdu import pdu_types, operations, pdu_encoding
 
 from pySim.sms import SMS_DELIVER, SMS_SUBMIT, AddressField
 
-from pySim.bip import Proact
+from pySim.bip import Proact, terminal_profile
 from pySim.transport import LinkBase, ProactiveHandler, argparse_add_reader_args, init_reader, ApduTracer
 from pySim.commands import SimCardCommands
 from pySim.cards import UiccCardBase
@@ -126,8 +126,7 @@ class MyServer:
         self.scc.sel_ctrl = "0004"
         self.card.read_aids()
         self.card.select_adf_by_aid(adf='usim')
-        # FIXME: create a more realistic profile than ffffff
-        self.scc.terminal_profile('ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+        self.scc.terminal_profile(b2h(terminal_profile()))
         # Connect the BIP relay inbound path to the card.
         # relay socket receives data -> ME initiated ENVELOPE EVENT DOWNLOA
         # -> triggers RECEIVE DATA proactive session.

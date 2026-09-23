@@ -30,7 +30,7 @@ from pySim.cat import (ProactiveCommand, CommandDetails, DeviceIdentities,
                        OtherAddress, ChannelData, ChannelDataLength, ChannelStatus,
                        Result)
 
-from pySim.bip import Proact
+from pySim.bip import Proact, ProactChannels, terminal_profile
 
 
 class _EchoServer:
@@ -327,6 +327,44 @@ class OpenChannelRefusalTest(unittest.TestCase):
         til = self.proact.handle_OpenChannel(_open_channel(dead_port))
         self._assert_refused(til, 'channel_closed', chan_nr=1)      # 6.4.30
         self.assertEqual(self.proact.channels.channels, {})        # channel given back
+
+
+class TerminalProfileTest(unittest.TestCase):
+    """TS 102 223 5.2, one bit per CAT facility"""
+
+    def setUp(self):
+        self.profile = terminal_profile()
+
+    def byte(self, n):
+        return self.profile[n - 1]                      # 1-based, as 5.2 numbers them
+
+    def test_announced(self):
+        self.assertEqual(len(self.profile), 32)
+        self.assertEqual(self.byte(1), 0x13)            # profile download, SMS-PP download b2+b5
+        self.assertEqual(self.byte(4), 0x02)            # SEND SHORT MESSAGE
+        self.assertEqual(self.byte(5) & 0x01, 0x01)     # SET UP EVENT LIST
+        self.assertEqual(self.byte(6), 0x0c)            # events: data available, channel status
+        self.assertEqual(self.byte(12), 0x1f)           # OPEN/CLOSE CHANNEL, RECEIVE/SEND DATA, STATUS
+        self.assertEqual(self.byte(13) >> 5, ProactChannels.MAX_CHANNELS)
+        self.assertEqual(self.byte(14), 0x60)           # class ND, class NK
+        self.assertEqual(self.byte(17), 0x01)           # TCP, UICC client mode, remote
+
+    def test_not_announced(self):
+        self.assertEqual(self.byte(3) & 0x60, 0)        # POLL INTERVAL, POLLING OFF
+        self.assertEqual(self.byte(4) & 0xc0, 0)        # PROVIDE LOCAL INFORMATION, NMR
+        self.assertEqual(self.byte(12) & 0xe0, 0)       # SERVICE SEARCH/INFORMATION, DECLARE SERVICE
+        self.assertEqual(self.byte(14) & 0x1f, 0)       # no characters down the display
+        for n in (7, 9, 10, 11, 15, 16, 18):            # class "a", class "d", display, ESN/IMEISV
+            self.assertEqual(self.byte(n), 0)
+
+    def test_channel_count(self):
+        self.assertEqual(terminal_profile(3)[12] >> 5, 3)
+        with self.assertRaises(ValueError):             # 8.56: 1 to 7
+            terminal_profile(8)
+
+
+if __name__ == "__main__":
+    unittest.main()
 
 
 class BipSinkTest(unittest.TestCase):
