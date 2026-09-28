@@ -116,11 +116,23 @@ class FileTemplate:
             return self.rec_len
 
     def expand_default_value_pattern(self, length: Optional[int] = None) -> Optional[bytes]:
-        """Expand the default value pattern to the specified length."""
+        """Expand the default value pattern to the specified length.
+
+        The SAIP section 9 tables give a linear-fixed or cyclic file its default per record
+        (EF ICI: 20 records of 38 bytes, default 'FF...FF0000000001FFFF'), which is what
+        _default_value_len already assumes. A request longer than one record therefore expands
+        one record and repeats it; expanding once across the file puts the tail of the default
+        into the last record only.
+        """
         if length is None:
             length = self._default_value_len()
         if length is None:
             raise ValueError("%s does not have a default length" % self)
+        if self.file_type in ['LF', 'CY'] and self.rec_len and length > self.rec_len:
+            record = self.expand_default_value_pattern(self.rec_len)
+            if record and len(record) == self.rec_len:
+                count, rest = divmod(length, self.rec_len)
+                return record * count + record[:rest]
         if not self.default_val:
             return None
         if not '...' in self.default_val:
