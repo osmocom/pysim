@@ -332,9 +332,6 @@ class PutKey_PSK_Test(unittest.TestCase):
     """Tests for the PUT KEY command data field encoding, in particular the PSK TLS ('85') key data
     field defined by GlobalPlatform Amendment B (Remote Application Management over HTTP) Table 3-13."""
 
-    # the PUT KEY encoder we exercise
-    C = ADF_SD.AddlShellCommands
-
     # SCP80 TLS-PSK example key from the do_put_key docstring (16 bytes)
     PSK_CLEAR = h2b('303132333435363738393a3b3c3d3e3f')
     # its DEK ciphertext + Table 3-13 KCV with SCP02 session set up below
@@ -359,7 +356,7 @@ class PutKey_PSK_Test(unittest.TestCase):
         clear = self.PSK_CLEAR
         ciphered = h2b('aabbccddeeff00112233445566778899')  # arbitrary 16-byte ciphertext
         kcv = hashlib.sha1(clear).digest()[:3]
-        field = self.C.encode_key_data_psk(clear, ciphered, kcv)
+        field = ADF_SD.encode_key_data_psk(clear, ciphered, kcv)
         #                            85   L1   L2   <---------- ciphered ----------->  03  <-kcv->
         self.assertEqual(b2h(field),'85' '11' '10' 'aabbccddeeff00112233445566778899' '03' + b2h(kcv))
         self.assertEqual(b2h(field),'851110aabbccddeeff0011223344556677889903' + '06125d')
@@ -368,15 +365,15 @@ class PutKey_PSK_Test(unittest.TestCase):
         # Full PUT KEY data field (KVN 0x40 + single PSK key) enciphered with the SCP02 DEK.
         keys = [{'key_type': 'tls_psk', 'clear_key': self.PSK_CLEAR,
                  'kcv': compute_kcv('tls_psk', self.PSK_CLEAR)}]
-        data = self.C.build_put_key_data(0x40, keys, self.scp02)
+        data = ADF_SD.build_put_key_data(0x40, keys, self.scp02)
         self.assertEqual(b2h(data),
                          '40' '85' '11' '10' + b2h(self.PSK_CIPHERED) + '03' + b2h(self.PSK_KCV))
 
     def test_wrong_basic_format_differs(self):
         # regression test, the generic "Basic format" does NOT match Table 3-13 for a PSK key
         # rejected by card with with 6a88
-        wrong_basic = self.C.encode_key_data_basic('tls_psk', self.PSK_CIPHERED, b'')
-        right_psk = self.C.encode_key_data_psk(self.PSK_CLEAR, self.PSK_CIPHERED, self.PSK_KCV)
+        wrong_basic = ADF_SD.encode_key_data_basic('tls_psk', self.PSK_CIPHERED, b'')
+        right_psk = ADF_SD.encode_key_data_psk(self.PSK_CLEAR, self.PSK_CIPHERED, self.PSK_KCV)
         self.assertEqual(b2h(wrong_basic), '8510' + b2h(self.PSK_CIPHERED) + '00')
         self.assertEqual(b2h(right_psk), '8511' '10' + b2h(self.PSK_CIPHERED) + '03' + b2h(self.PSK_KCV))
         self.assertNotEqual(wrong_basic, right_psk)
@@ -386,11 +383,11 @@ class PutKey_PSK_Test(unittest.TestCase):
         for kcb_len, exp_len_field in [(127, '7f'), (128, '8180'), (129, '8181'), (256, '820100')]:
             with self.subTest(kcb_len=kcb_len):
                 kcb = bytes(kcb_len)
-                field = self.C.encode_key_data_basic('rsa_modulus_n', kcb, b'')
+                field = ADF_SD.encode_key_data_basic('rsa_modulus_n', kcb, b'')
                 self.assertEqual(b2h(field), 'a2' + exp_len_field + b2h(kcb) + '00')
                 # 85 field of Amendment B Table 3-13 uses the same coding
                 # single byte inner length (clear key < 128) == block kcb_len bytes long
-                psk = self.C.encode_key_data_psk(bytes(120), bytes(kcb_len - 1), b'')
+                psk = ADF_SD.encode_key_data_psk(bytes(120), bytes(kcb_len - 1), b'')
                 self.assertEqual(b2h(psk)[:2 + len(exp_len_field)], '85' + exp_len_field)
 
     def test_basic_format_unchanged(self):
@@ -399,8 +396,8 @@ class PutKey_PSK_Test(unittest.TestCase):
                           ('aes', h2b('000102030405060708090a0b0c0d0e0f'))]:
             ciph = self.scp02.encrypt_key(clear)
             kcv = compute_kcv(kt, clear)
-            via_construct = build_construct(self.C.KeyDataBasic, {'key_type': kt, 'kcb': b2h(ciph), 'kcv': b2h(kcv)})
-            via_helper = self.C.encode_key_data_basic(kt, ciph, kcv)
+            via_construct = build_construct(ADF_SD.KeyDataBasic, {'key_type': kt, 'kcb': b2h(ciph), 'kcv': b2h(kcv)})
+            via_helper = ADF_SD.encode_key_data_basic(kt, ciph, kcv)
             self.assertEqual(via_helper, via_construct)
 
     def test_psk_padding_no_double_length(self):
@@ -413,7 +410,7 @@ class PutKey_PSK_Test(unittest.TestCase):
             with self.subTest(keylen=keylen):
                 clear = bytes(range(keylen))
                 padded_len = keylen + (-keylen % 8)
-                field = self.C.build_put_key_data(0x40, [{'key_type': 'tls_psk', 'clear_key': clear,
+                field = ADF_SD.build_put_key_data(0x40, [{'key_type': 'tls_psk', 'clear_key': clear,
                                                           'kcv': compute_kcv('tls_psk', clear)}], self.scp02)[1:]
                 self.assertEqual(field[0], 0x85)
                 l1 = field[1]
@@ -429,7 +426,7 @@ class PutKey_PSK_Test(unittest.TestCase):
         # then stored as key material and rejected thanks to the KCV
         clear = h2b('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d')  # 30, not %8
         kcv = compute_kcv('tls_psk', clear)
-        field = self.C.build_put_key_data(0x40, [{'key_type': 'tls_psk', 'clear_key': clear,
+        field = ADF_SD.build_put_key_data(0x40, [{'key_type': 'tls_psk', 'clear_key': clear,
                                                   'kcv': kcv}], self.scp02)[1:]
         self.assertEqual(len(clear), 30)
         self.assertEqual(field[2], 30)                       # L2 == clear key length, not 32
@@ -437,7 +434,7 @@ class PutKey_PSK_Test(unittest.TestCase):
 
     def test_kcv_suppressed(self):
         # --suppress-key-check -> KCV length 00 and no KCV bytes
-        field = self.C.build_put_key_data(0x40, [{'key_type': 'tls_psk', 'clear_key': self.PSK_CLEAR,
+        field = ADF_SD.build_put_key_data(0x40, [{'key_type': 'tls_psk', 'clear_key': self.PSK_CLEAR,
                                                   'kcv': b''}], self.scp02)[1:]
         self.assertEqual(b2h(field), '8511' '10' + b2h(self.PSK_CIPHERED) + '00')
 
@@ -448,7 +445,7 @@ class PutKey_PSK_Test(unittest.TestCase):
         dek = h2b('404142434445464748494a4b4c4d4e4f')
         keys = [{'key_type': 'tls_psk', 'clear_key': self.PSK_CLEAR, 'kcv': compute_kcv('tls_psk', self.PSK_CLEAR)},
                 {'key_type': 'des', 'clear_key': dek, 'kcv': compute_kcv('des', dek)}]
-        data = self.C.build_put_key_data(0x40, keys, self.scp02)
+        data = ADF_SD.build_put_key_data(0x40, keys, self.scp02)
 
         b = data
         self.assertEqual(b[0], 0x40)            # KVN
@@ -473,7 +470,7 @@ class PutKey_PSK_Test(unittest.TestCase):
 
     def test_no_scp_leaves_key_clear(self):
         # During personalization (no SCP) the key is not enciphered, framing still follows Table 3-13.
-        field = self.C.build_put_key_data(0x40, [{'key_type': 'tls_psk', 'clear_key': self.PSK_CLEAR,
+        field = ADF_SD.build_put_key_data(0x40, [{'key_type': 'tls_psk', 'clear_key': self.PSK_CLEAR,
                                                   'kcv': self.PSK_KCV}], None)[1:]
         self.assertEqual(b2h(field), '8511' '10' + b2h(self.PSK_CLEAR) + '03' + b2h(self.PSK_KCV))
 
@@ -482,17 +479,16 @@ class PutKey_Length_Test(unittest.TestCase):
     """Tests for the length of the PUT KEY command APDU.  Lc of GP CardSpec v2.3 Table 11-64 is a
     single byte, so an oversized key data field cannot be sent."""
 
-    class PutKeyOnly(ADF_SD.AddlShellCommands):
-        """ADF_SD.AddlShellCommands with a canned scc to drive put_key()"""
+    class _FakeSccForPutKey():
+        """mock scc: replays hardcoded status word + records the APDUs sent."""
         def __init__(self, scp=None, max_cmd_len=255):
-            super().__init__()
             self.sent = []
-            self.scc = SimpleNamespace(scp=scp, max_cmd_len=max_cmd_len,
-                                       send_apdu_checksw=lambda pdu: (self.sent.append(pdu), ('', '9000'))[1])
+            self.scp = scp
+            self.max_cmd_len = max_cmd_len
 
-        @property
-        def _cmd(self):
-            return SimpleNamespace(lchan=SimpleNamespace(scc=self.scc))
+        def send_apdu_checksw(self, apdu, sw='9000'):
+            self.sent.append(apdu)
+            return ('', '9000')
 
     # KVN, key type, two byte BER length of the key component block, KCV length; KCV suppressed
     FRAMING = 1 + 1 + 2 + 1
@@ -503,9 +499,9 @@ class PutKey_Length_Test(unittest.TestCase):
 
     def test_lc_matches_data_field(self):
         # largest key component block that still fits without a secure channel
-        sd = self.PutKeyOnly()
-        sd.put_key(0, 0x40, 1, self.key(255 - self.FRAMING))
-        apdu = sd.sent[0]
+        scc = self._FakeSccForPutKey()
+        ADF_SD.put_key(scc, 0, 0x40, 1, self.key(255 - self.FRAMING))
+        apdu = scc.sent[0]
         self.assertEqual(apdu[:8], '80D80001')
         lc = int(apdu[8:10], 16)
         self.assertEqual(lc, 255)                       # Lc ...
@@ -514,20 +510,20 @@ class PutKey_Length_Test(unittest.TestCase):
     def test_oversized_key_data_raises(self):
         # real world fat example: RSA-2048 modulus does not fit, led to 3 nibble Lc 106,
         # which silently shifted and broke the whole APDU by half a byte.
-        sd = self.PutKeyOnly()
+        scc = self._FakeSccForPutKey()
         with self.assertRaises(ValueError) as ctx:
-            sd.put_key(0, 0x40, 1, self.key(256))
+            ADF_SD.put_key(scc, 0, 0x40, 1, self.key(256))
         self.assertIn('262', str(ctx.exception))
         self.assertIn('255', str(ctx.exception))
-        self.assertEqual(sd.sent, [])                   # nothing was sent to the card
+        self.assertEqual(scc.sent, [])                   # nothing was sent to the card
 
     def test_secure_channel_overhead_lowers_the_limit(self):
         # scc.max_cmd_len shrinks by the C-MAC + encryption padding of active SCP
-        sd = self.PutKeyOnly(max_cmd_len=239)
-        sd.put_key(0, 0x40, 1, self.key(239 - self.FRAMING))
-        self.assertEqual(int(sd.sent[0][8:10], 16), 239)
+        scc = self._FakeSccForPutKey(max_cmd_len=239)
+        ADF_SD.put_key(scc, 0, 0x40, 1, self.key(239 - self.FRAMING))
+        self.assertEqual(int(scc.sent[0][8:10], 16), 239)
         with self.assertRaises(ValueError):
-            sd.put_key(0, 0x40, 1, self.key(239 - self.FRAMING + 1))
+            ADF_SD.put_key(scc, 0, 0x40, 1, self.key(239 - self.FRAMING + 1))
 
 
 class Install_param_Test(unittest.TestCase):
@@ -655,13 +651,6 @@ class Load_ChunkLen_Test(unittest.TestCase):
 
     payload = b'\xaa' * 500  # actual real world case LOAD TLV: C4 + 8201f4 + 500 = 504 total
 
-    def _sd(self, scc):
-        cmd = type('_Cmd', (), {'lchan': type('_Lchan', (), {'scc': scc})(),
-                                'poutput': lambda self, *args: None})()
-        # cmd2 CommandSet has a r/o _cmd property -> shadow it
-        _SD = type('_SD', (ADF_SD.AddlShellCommands,), {'_cmd': cmd})
-        return _SD.__new__(_SD)
-
     def _blocks(self, scc):
         """Get (p1, p2, lc) from LOAD APDU"""
         for apdu in scc.sent:
@@ -671,7 +660,7 @@ class Load_ChunkLen_Test(unittest.TestCase):
     def test_default_no_scp(self):
         """Without SCP the old 240 byte block size is kept, no idea what else might rely on this number"""
         scc = _FakeSccForLoad(max_cmd_len=255)
-        self._sd(scc).load(self.payload)
+        ADF_SD.load(scc, self.payload)
         blocks = list(self._blocks(scc))
         self.assertEqual([b[2] for b in blocks], [240, 240, 24])
         self.assertEqual([b[0] for b in blocks], [0x00, 0x00, 0x80])  # P1: last block flagged
@@ -680,24 +669,24 @@ class Load_ChunkLen_Test(unittest.TestCase):
     def test_default_scp02_level3(self):
         """max_cmd_len 239 (SCP02 lvl 3) squeezes the blocks"""
         scc = _FakeSccForLoad(max_cmd_len=239)
-        self._sd(scc).load(self.payload)
+        ADF_SD.load(scc, self.payload)
         self.assertEqual([b[2] for b in list(self._blocks(scc))], [239, 239, 26])
 
     def test_explicit_chunk_len(self):
         scc = _FakeSccForLoad(max_cmd_len=255)
-        self._sd(scc).load(self.payload, chunk_len=100)
+        ADF_SD.load(scc, self.payload, chunk_len=100)
         self.assertEqual([b[2] for b in list(self._blocks(scc))], [100] * 5 + [4])
 
     def test_explicit_chunk_len_too_large(self):
         scc = _FakeSccForLoad(max_cmd_len=239)
         with self.assertRaises(ValueError):
-            self._sd(scc).load(self.payload, chunk_len=240)
+            ADF_SD.load(scc, self.payload, chunk_len=240)
         self.assertEqual(scc.sent, [])  # nothing sent!
 
     def test_explicit_chunk_len_zero(self):
         scc = _FakeSccForLoad(max_cmd_len=255)
         with self.assertRaises(ValueError):
-            self._sd(scc).load(self.payload, chunk_len=0)
+            ADF_SD.load(scc, self.payload, chunk_len=0)
 
     def test_end_to_end_scp02_level3(self):
         """original failure: 286 byte CAP + SCP02 lvl 3"""
@@ -707,7 +696,7 @@ class Load_ChunkLen_Test(unittest.TestCase):
         scp02.gen_ext_auth_apdu()
         scp02.security_level = 0x03
         scc = _FakeSccForLoad(max_cmd_len=255 - scp02.overhead, scp=scp02)
-        self._sd(scc).load(b'\x5a' * 286)
+        ADF_SD.load(scc, b'\x5a' * 286)
         self.assertEqual(len(scc.sent), 2)  # 289 byte TLV in blocks of 239
         for wrapped in scc.wrapped:
             self.assertLessEqual(wrapped[4], 255)
@@ -771,106 +760,100 @@ class GetStatus_Pagination_Test(unittest.TestCase):
     ENTRY_1 = 'e3074f05a000000151'
     ENTRY_2 = 'e3074f05a000000152'
 
-    def _sd(self, responses, card_data=CARD_DATA_V211):
-        scc = _FakeScc(responses, card_data)
-        cmd = type('_Cmd', (), {'lchan': type('_Lchan', (), {'scc': scc})()})()
-        # cmd2 strikes again, CommandSet exposes _cmd as a read only property, needs shadowing
-        _SD = type('_SD', (ADF_SD.AddlShellCommands,), {'_cmd': cmd})
-        return _SD.__new__(_SD), scc
-
     def _aids(self, grd_list):
         return [b2h(grd.to_dict()['gp_registry_related_data'][0]['application_aid']) for grd in grd_list]
 
     def test_single_page(self):
-        sd, scc = self._sd([(self.ENTRY_1, '9000')])
-        grd_list = sd.get_status('applications')
+        scc = _FakeScc([(self.ENTRY_1, '9000')])
+        grd_list = ADF_SD.get_status(scc, 'applications', version=ADF_SD.gp_version(scc))
         self.assertEqual(scc.sent, ['80f24002024f0000'])
         self.assertEqual(self._aids(grd_list), ['a000000151'])
 
     def test_two_pages(self):
         """6310 -> reissue with P2 bit 1 set -> 9000, both pages in result"""
-        sd, scc = self._sd([(self.ENTRY_1, '6310'), (self.ENTRY_2, '9000')])
-        grd_list = sd.get_status('applications')
+        scc = _FakeScc([(self.ENTRY_1, '6310'), (self.ENTRY_2, '9000')])
+        grd_list = ADF_SD.get_status(scc, 'applications', version=ADF_SD.gp_version(scc))
         self.assertEqual(scc.sent, ['80f24002024f0000',
                                     '80f24003024f0000'])
         self.assertEqual(self._aids(grd_list), ['a000000151', 'a000000152'])
 
     def test_three_pages_keep_p2_next_occurrence(self):
-        sd, scc = self._sd([(self.ENTRY_1, '6310'), (self.ENTRY_2, '6310'), (self.ENTRY_1, '9000')])
-        grd_list = sd.get_status('applications')
+        scc = _FakeScc([(self.ENTRY_1, '6310'), (self.ENTRY_2, '6310'), (self.ENTRY_1, '9000')])
+        grd_list = ADF_SD.get_status(scc, 'applications', version=ADF_SD.gp_version(scc))
         self.assertEqual([a[6:8] for a in scc.sent], ['02', '03', '03'])
         self.assertEqual(len(grd_list), 3)
 
     def test_no_match_returns_empty(self):
         """6A88 "referenced data not found" is empty result not failure."""
-        sd, _scc = self._sd([('', '6a88')])
-        self.assertEqual(sd.get_status('applications'), [])
+        scc = _FakeScc([('', '6a88')])
+        self.assertEqual(ADF_SD.get_status(scc, 'applications', version=ADF_SD.gp_version(scc)), [])
 
     def test_v211_card_gets_no_tag_list(self):
         """v2.1.1 section 9.4.2.3 has no tag list,not send a tag list"""
-        sd, scc = self._sd([(self.ENTRY_1, '9000')], card_data=CARD_DATA_V211)
-        sd.get_status('applications')
+        scc = _FakeScc([(self.ENTRY_1, '9000')], card_data=CARD_DATA_V211)
+        ADF_SD.get_status(scc, 'applications', version=ADF_SD.gp_version(scc))
         self.assertEqual(scc.sent, ['80f24002024f0000'])
         self.assertNotIn('5c', scc.sent[0][8:])
 
     def test_v22_card_gets_a_tag_list(self):
-        sd, scc = self._sd([(self.ENTRY_1, '9000')], card_data=CARD_DATA_V22)
-        sd.get_status('applications')
+        scc = _FakeScc([(self.ENTRY_1, '9000')], card_data=CARD_DATA_V22)
+        ADF_SD.get_status(scc, 'applications', version=ADF_SD.gp_version(scc))
         self.assertEqual(scc.sent, ['80f240020b4f005c074f9f70c5cfc4cc00'])
 
     def test_unknown_version_gets_no_tag_list(self):
         """If the card will not say, assume the conservative form that works everywhere."""
-        sd, scc = self._sd([(self.ENTRY_1, '9000')], card_data=None)
-        sd.get_status('applications')
+        scc = _FakeScc([(self.ENTRY_1, '9000')], card_data=None)
+        ADF_SD.get_status(scc, 'applications', version=ADF_SD.gp_version(scc))
         self.assertEqual(scc.sent, ['80f24002024f0000'])
 
     def test_v22_card_rejecting_tag_list_falls_back(self):
         """card announcing v2.2+ that still answers 6A80 to the tag list."""
-        sd, scc = self._sd([('', '6a80'), (self.ENTRY_1, '9000')], card_data=CARD_DATA_V22)
-        grd_list = sd.get_status('applications')
+        scc = _FakeScc([('', '6a80'), (self.ENTRY_1, '9000')], card_data=CARD_DATA_V22)
+        grd_list = ADF_SD.get_status(scc, 'applications', version=ADF_SD.gp_version(scc))
         self.assertEqual(scc.sent, ['80f240020b4f005c074f9f70c5cfc4cc00',
                                     '80f24002024f0000'])
         self.assertEqual(self._aids(grd_list), ['a000000151'])
 
     def test_aid_search_qualifier(self):
-        sd, scc = self._sd([(self.ENTRY_1, '9000')])
-        sd.get_status('applications', 'a000000087')
+        scc = _FakeScc([(self.ENTRY_1, '9000')])
+        ADF_SD.get_status(scc, 'applications', 'a000000087', version=ADF_SD.gp_version(scc))
         self.assertEqual(scc.sent, ['80f24002074f05a00000008700'])
 
     def test_6a80_is_reported_on_a_v211_card(self):
         """no tag list -> 6A80 is error"""
-        sd, _scc = self._sd([('', '6a80')], card_data=CARD_DATA_V211)
+        scc = _FakeScc([('', '6a80')], card_data=CARD_DATA_V211)
         with self.assertRaises(SwMatchError) as ctx:
-            sd.get_status('applications')
+            ADF_SD.get_status(scc, 'applications', version=ADF_SD.gp_version(scc))
         self.assertEqual(ctx.exception.sw_actual, '6a80')
 
     def test_unexpected_sw_is_not_silently_truncated(self):
         """partial is not complete result"""
-        sd, _scc = self._sd([(self.ENTRY_1, '6310'), ('', '6982')])
+        scc = _FakeScc([(self.ENTRY_1, '6310'), ('', '6982')])
         with self.assertRaises(SwMatchError) as ctx:
-            sd.get_status('applications')
+            ADF_SD.get_status(scc, 'applications', version=ADF_SD.gp_version(scc))
         self.assertEqual(ctx.exception.sw_actual, '6982')
 
     def test_v22_card_answering_6a88_to_the_tag_list_falls_back(self):
         """6A88 is the other GET STATUS error condition of table 11-39, section 11.4.2.3
         says we may get get an error status. 6A88 to the tag-list attempt should be retried
         without it or we get nothing"""
-        sd, scc = self._sd([('', '6a88'), (self.ENTRY_1, '9000')], card_data=CARD_DATA_V22)
-        grd_list = sd.get_status('applications')
+        scc = _FakeScc([('', '6a88'), (self.ENTRY_1, '9000')], card_data=CARD_DATA_V22)
+        grd_list = ADF_SD.get_status(scc, 'applications', version=ADF_SD.gp_version(scc))
         self.assertEqual(scc.sent, ['80f240020b4f005c074f9f70c5cfc4cc00',
                                     '80f24002024f0000'])
         self.assertEqual(self._aids(grd_list), ['a000000151'])
 
     def test_v22_card_with_a_genuinely_empty_subset(self):
         """...and when the retry answers 6A88, the list really is empty."""
-        sd, scc = self._sd([('', '6a88'), ('', '6a88')], card_data=CARD_DATA_V22)
-        self.assertEqual(sd.get_status('applications'), [])
+        scc = _FakeScc([('', '6a88'), ('', '6a88')], card_data=CARD_DATA_V22)
+        self.assertEqual(ADF_SD.get_status(scc, 'applications', version=ADF_SD.gp_version(scc)), [])
         self.assertEqual(len(scc.sent), 2)
 
     def test_6a88_after_a_page_keeps_that_page(self):
         """6A88 is "no more matches" after we have data, we're done"""
-        sd, _scc = self._sd([(self.ENTRY_1, '6310'), ('', '6a88')], card_data=CARD_DATA_V22)
-        self.assertEqual(self._aids(sd.get_status('applications')), ['a000000151'])
+        scc = _FakeScc([(self.ENTRY_1, '6310'), ('', '6a88')], card_data=CARD_DATA_V22)
+        self.assertEqual(self._aids(ADF_SD.get_status(scc, 'applications', version=ADF_SD.gp_version(scc))),
+                         ['a000000151'])
 
 if __name__ == "__main__":
 	unittest.main()

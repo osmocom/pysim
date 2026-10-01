@@ -31,7 +31,7 @@ from osmocom.tlv import *
 from osmocom.construct import *
 from pySim.utils import ResTuple
 from pySim.card_key_provider import card_key_provider_get_field
-from pySim.global_platform.scp import SCP02, SCP03
+from pySim.global_platform.scp import SCP, SCP02, SCP03
 from pySim.global_platform.install_param import gen_install_parameters
 from pySim.filesystem import *
 from pySim.profile import CardProfile
@@ -607,6 +607,241 @@ class ADF_SD(CardADF):
     def decode_select_response(self, data_hex: str) -> object:
         return decode_select_response(data_hex)
 
+    @staticmethod
+    def store_data(scc: SimCardCommands, data: bytes, structure:str = 'none', encryption:str = 'none',
+                   response_permitted: bool = False) -> bytes:
+        """
+        Perform the GlobalPlatform STORE DATA command in order to store some card-specific data.
+        See GlobalPlatform CardSpecification v2.3 Section 11.11 for details.
+        """
+        max_cmd_len =scc.max_cmd_len
+        # Table 11-89 of GP Card Specification v2.3
+        remainder = data
+        block_nr = 0
+        response = ''
+        while len(remainder):
+            chunk = remainder[:max_cmd_len]
+            remainder = remainder[max_cmd_len:]
+            p1b = build_construct(ADF_SD.StoreData,
+                                  {'last_block': len(remainder) == 0, 'encryption': encryption,
+                                   'structure': structure, 'response': response_permitted})
+            hdr = "80E2%02x%02x%02x" % (p1b[0], block_nr, len(chunk))
+            data, _sw =scc.send_apdu_checksw(hdr + b2h(chunk) + "00")
+            block_nr += 1
+            response += data
+        return h2b(response)
+
+    @staticmethod
+    def get_data(scc: SimCardCommands, tag: int) -> bytes:
+        (data, _sw) = scc.get_data(cla=0x80, tag=tag)
+        return data
+
+    # Table 11-68: Key Data Field - Format 1 (Basic Format).  The key component block length is
+    # BER-TLV coded (Section 11.8.2.3.1), the key check value length is always '00' - '7F'.
+    KeyDataBasic = Struct('key_type'/KeyType,
+                          'kcb'/Prefixed(PutKeyLength(), GreedyBytes),
+                          'kcv'/Prefixed(Int8ub, GreedyBytes))
+
+    @staticmethod
+    def encode_key_data_basic(key_type: str, kcb: bytes, kcv: bytes) -> bytes:
+        """Generic Basic key data field, GP CardSpec v2.3 Table 11-68):
+            tag || L1 || <maybe L2> KCB || <1-byte length> KCV"""
+        return ADF_SD.KeyDataBasic.build({'key_type': key_type, 'kcb': kcb, 'kcv': kcv})
+
+    @staticmethod
+    def encode_key_data_psk(clear_key: bytes, ciphered_key: bytes, kcv: bytes) -> bytes:
+        """Single PSK TLS '85' key data field per GP Amendment B 1.2, 3.9.1 / Table 3-13:
+            85 | L1 | <L2>  <ciphered PSK key> | <KCV length> | <KCV>
+        - framing is like Basic Format, but the kcb is always GP CardSpec Table 11-70
+        so always with the length of the clear text key value, even without padding!
+        - 'ciphered_key' is DEK(block-padded clear key), no additional length prefix."""
+        kcb = bertlv_encode_len(len(clear_key)) + ciphered_key
+        return ADF_SD.encode_key_data_basic('tls_psk', kcb, kcv)
+
+    @staticmethod
+    def build_put_key_data(kvn: int, keys: List[dict], scp) -> bytes:
+        """Assemble the PUT KEY data field, mixed PSK + DES DEK is supported:
+         - new KVN followed by one key data field per key.
+         - tls_psk keys per GP Amendment B
+         - other key types generic Basic format
+        Param 'keys' is a dict:
+         - 'key_type' (str)
+         - 'clear_key' (bytes)
+         - 'kcv' (bytes / empty).
+         'scp' may be None (e.g. during personalization, when the DEK may not be required)."""
+        key_data = kvn.to_bytes(1, 'big')
+        for k in keys:
+            clear = k['clear_key']
+            if k['key_type'] == 'tls_psk':
+                # len always part of the data see CardSpec Table 11-70 vs Table 11-71
+                if scp:
+                    ciphered = scp.dek_encrypt(scp.pad_to_blocksize(clear))
+                else:
+                    ciphered = clear
+                key_data += ADF_SD.encode_key_data_psk(clear, ciphered, k['kcv'])
+            else:
+                if scp:
+                    ciphered = scp.encrypt_key(clear)
+                else:
+                    # (for example) during personalization, DEK might not be required
+                    ciphered = clear
+                key_data += ADF_SD.encode_key_data_basic(k['key_type'], ciphered, k['kcv'])
+        return key_data
+
+    @staticmethod
+    def put_key(scc: SimCardCommands, old_kvn:int, kvn: int, kid: int, keys: List[dict]) -> bytes:
+        """Perform the GlobalPlatform PUT KEY command in order to store a new key on the card.
+        See GlobalPlatform CardSpecification v2.3 Section 11.8 for details."""
+        key_data = ADF_SD.build_put_key_data(kvn, keys, scc.scp)
+        # Lc of Table 11-64 is a single byte, while LOAD or STORE DATA splits we can't:
+        # 11.8.2.3.3 splits a key at component boundaries -> not helping here
+        max_cmd_len = scc.max_cmd_len
+        if len(key_data) > max_cmd_len:
+            raise ValueError('key data field of %u bytes exceeds the maximum command length of %u '
+                             '(limited by the overhead of the current secure channel); use fewer '
+                             'keys per command, a single key component that large needs STORE DATA' %
+                             (len(key_data), max_cmd_len))
+        hdr = "80D8%02x%02x%02x" % (old_kvn, kid, len(key_data))
+        data, _sw = scc.send_apdu_checksw(hdr + b2h(key_data) + "00")
+        return data
+
+    @staticmethod
+    def gp_version(scc: SimCardCommands) -> Optional[Tuple[int, ...]]:
+        """GP version the selected SD reports in its Card Recognition
+        Data, e.g. (2, 1, 1). Card Recognition Data "shall be present" v2.1.1/v2.3.1 section 7.4.1.3,
+        so this must succeed no matter the GP version. None if card did not answer GET DATA / OID unknown.
+        Cached, it cannot change during a session."""
+        version = None
+        try:
+            data, _sw = scc.get_data(cla=0x80, tag=CardData.tag)
+            version = decode_gp_version(h2b(data))
+            log.debug("Card Recognition Data reports GlobalPlatform %s",
+                      '.'.join(str(v) for v in version) if version else 'unknown')
+        except (SwMatchError, ValueError) as e:
+                log.warning("Could not determine GlobalPlatform version: %s", e)
+        return version
+
+    @staticmethod
+    def get_status(scc: SimCardCommands, subset:str, aid_search_qualifier:Hexstr = '',
+                   version:Optional[Tuple[int, ...]] = None) -> List[GpRegistryRelatedData]:
+        aid = ApplicationAID(decoded=aid_search_qualifier)
+        # GPC CardSpec v2.3.1 Table 11-35 says only the AID search tag is mandatory, tag list is
+        # Optional and not present in the older v2.1.1, where section 9.4.2.3 defines the data
+        # field as the search qualifier.
+        # Cards like the sja5 implementing that old GP version reject anything else with 6A80
+        # from v2.1.1 Table 9-26 so only send a tag list to a card that announces v2.2 or later.
+        #
+        # Not sending one is not a problem on older cards, the tag list only gives us data beyond
+        # what 11.4.3.1 gives us anyway, for example the associated SD AID which matters on an eUICC
+        # where entries belong to different SD.
+        if version is not None and version >= (2, 2):
+            try:
+                return ADF_SD._get_status(scc, subset, aid.to_tlv() + get_status_tag_list(subset))
+            except SwMatchError as e:
+                # Retry if v2.2 or later but rejected the tag list anyway.
+                # 6A80 and 6A88 are the error conditions GET STATUS defines in table 11-39.
+                # Retrying beats not ending up with a list again...
+                if e.sw_actual not in ('6a80', '6a88'):
+                   raise
+                log.warning("Card reports GlobalPlatform %s but answered %s to the GET STATUS tag list; "
+                            "retrying with the default search",
+                            '.'.join(str(v) for v in version), e.sw_actual)
+        return ADF_SD._get_status(scc, subset, aid.to_tlv(), empty_on_6a88=True)
+
+    @staticmethod
+    def _get_status(scc: SimCardCommands, subset:str, cmd_data:bytes,
+                    empty_on_6a88: bool = False) -> List[GpRegistryRelatedData]:
+        subset_hex = b2h(build_construct(StatusSubset, subset))
+        p2 = 0x02 # GPC v2.3.1 11.4.2.2 table 11-34, b2: response data structure per table 11-36
+        grd_list = []
+        while True:
+            hdr = "80F2%s%02x%02x" % (subset_hex, p2, len(cmd_data))
+            data, sw = scc.send_apdu(hdr + b2h(cmd_data) + "00")
+            if sw == '6a88':
+                # Table 11-39 "Referenced data not found". After collecting all pages this can
+                # only mean "nothing more matches" -> listing is complete. On the first page
+                # it is ambiguous, empty result or bad command data field, so leave that to get_status()
+                # which knows if a tag list was sent.
+                if grd_list or empty_on_6a88:
+                    return grd_list
+                raise SwMatchError(sw, ['9000', '6310'])
+            if sw not in ['9000', '6310']:
+                # Never return a silently truncated registry
+                raise SwMatchError(sw, ['9000', '6310'])
+            remainder = h2b(data)
+            while len(remainder):
+                # tlv sequence, each element is one GpRegistryRelatedData()
+                grd = GpRegistryRelatedData()
+                _dec, remainder = grd.from_tlv(remainder)
+                grd_list.append(grd)
+            if sw == '9000':
+                return grd_list
+            # 6310 = more data available, table 11-38: reissue as get next occurrence(s), b1 of
+            # table 11-34. Keeps b2 unchanged.
+            p2 |= 0x01
+
+    @staticmethod
+    def set_status(scc: SimCardCommands, scope:str, status:str, aid:Hexstr = ''):
+        SetStatus = Struct(Const(0x80, Byte), Const(0xF0, Byte),
+                           'scope'/SetStatusScope, 'status'/CLifeCycleState,
+                           'aid'/Prefixed(Int8ub, COptional(GreedyBytes)))
+        apdu = build_construct(SetStatus, {'scope':scope, 'status':status, 'aid':aid})
+        _data, _sw =scc.send_apdu_checksw(b2h(apdu))
+
+    @staticmethod
+    def install(scc: SimCardCommands, p1:int, p2:int, data:Hexstr) -> ResTuple:
+        cmd_hex = "80E6%02x%02x%02x%s00" % (p1, p2, len(data)//2, data)
+        return scc.send_apdu_checksw(cmd_hex)
+
+    @staticmethod
+    def delete(scc: SimCardCommands, p1:int, p2:int, data:Hexstr) -> ResTuple:
+        cmd_hex = "80E4%02x%02x%02x%s00" % (p1, p2, len(data)//2, data)
+        return scc.send_apdu_checksw(cmd_hex)
+
+    @staticmethod
+    def load(scc: SimCardCommands, contents:bytes, chunk_len:Optional[int] = None):
+        # scc.max_cmd_len knows the overhead the currently active SCP
+        # 240 is the old default, keep it for now.
+        max_chunk_len = scc.max_cmd_len
+        if chunk_len is None:
+            chunk_len = min(240, max_chunk_len)
+        elif not 1 <= chunk_len <= max_chunk_len:
+            raise ValueError('chunk_len must be in range 1..%u (limited by the overhead of the current secure channel)' %
+                             max_chunk_len)
+        # build TLV according to GPC_SPE_034 section 11.6.2.3 / Table 11-58 for unencrypted case
+        remainder = b'\xC4' + bertlv_encode_len(len(contents)) + contents
+        # transfer this in various chunks to the card
+        total_size = len(remainder)
+        block_nr = 0
+        while len(remainder):
+            block = remainder[:chunk_len]
+            remainder = remainder[chunk_len:]
+            # build LOAD command APDU according to GPC_SPE_034 section 11.6.2 / Table 11-56
+            p1 = 0x00 if len(remainder) else 0x80
+            p2 = block_nr % 256
+            block_nr += 1
+            cmd_hex = "80E8%02x%02x%02x%s00" % (p1, p2, len(block), b2h(block))
+            _rsp_hex, _sw = scc.send_apdu_checksw(cmd_hex)
+        log.info("Loaded a total of %u bytes in %u blocks. Don't forget install_for_install (and make selectable) now!",
+                 total_size, block_nr)
+
+    @staticmethod
+    def establish_scp(scc: SimCardCommands, scp: SCP, host_challenge: Optional[bytes] = None,
+                      security_level: int = 0x01):
+        # perform the common functionality shared by SCP02 and SCP03 establishment
+        init_update_apdu = scp.gen_init_update_apdu(host_challenge=host_challenge)
+        init_update_resp, _sw =scc.send_apdu_checksw(b2h(init_update_apdu))
+        scp.parse_init_update_resp(h2b(init_update_resp))
+        ext_auth_apdu = scp.gen_ext_auth_apdu(security_level)
+        _ext_auth_resp, _sw =scc.send_apdu_checksw(b2h(ext_auth_apdu))
+        log.info("Successfully established a %s secure channel", str(scp))
+        # store a reference to the SCP instance
+        scc.scp = scp
+
+    @staticmethod
+    def release_scp(scc: SimCardCommands):
+       scc.scp = None
+
     @with_default_category('Application-Specific Commands')
     class AddlShellCommands(CommandSet):
         get_data_parser = argparse.ArgumentParser()
@@ -624,7 +859,8 @@ class ADF_SD(CardADF):
                 self._cmd.poutput('Unknown data object "%s", available options: %s' % (tlv_cls_name,
                                                                                        do_names))
                 return
-            (data, _sw) = self._cmd.lchan.scc.get_data(cla=0x80, tag=tlv_cls.tag)
+
+            data = ADF_SD.get_data(self._cmd.lchan.scc, tag=tlv_cls.tag)
             ie = tlv_cls()
             ie.from_tlv(h2b(data))
             self._cmd.poutput_json(ie.to_dict())
@@ -645,27 +881,8 @@ class ADF_SD(CardADF):
             """Perform the GlobalPlatform STORE DATA command in order to store some card-specific data.
             See GlobalPlatform CardSpecification v2.3 Section 11.11 for details."""
             response_permitted = opts.response == 'may_be_returned'
-            self.store_data(h2b(opts.DATA), opts.data_structure, opts.encryption, response_permitted)
-
-        def store_data(self, data: bytes, structure:str = 'none', encryption:str = 'none', response_permitted: bool = False) -> bytes:
-            """Perform the GlobalPlatform STORE DATA command in order to store some card-specific data.
-            See GlobalPlatform CardSpecification v2.3 Section 11.11 for details."""
-            max_cmd_len = self._cmd.lchan.scc.max_cmd_len
-            # Table 11-89 of GP Card Specification v2.3
-            remainder = data
-            block_nr = 0
-            response = ''
-            while len(remainder):
-                chunk = remainder[:max_cmd_len]
-                remainder = remainder[max_cmd_len:]
-                p1b = build_construct(ADF_SD.StoreData,
-                                      {'last_block': len(remainder) == 0, 'encryption': encryption,
-                                       'structure': structure, 'response': response_permitted})
-                hdr = "80E2%02x%02x%02x" % (p1b[0], block_nr, len(chunk))
-                data, _sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(chunk) + "00")
-                block_nr += 1
-                response += data
-            return h2b(response)
+            ADF_SD.store_data(self._cmd.lchan.scc, h2b(opts.DATA), opts.data_structure, opts.encryption,
+                              response_permitted)
 
         put_key_parser = argparse.ArgumentParser()
         put_key_parser.add_argument('--old-key-version-nr', type=auto_uint8, default=0, help='Old Key Version Number')
@@ -709,75 +926,8 @@ class ADF_SD(CardADF):
             p2 = opts.key_id
             if len(opts.key_type) > 1:
                 p2 |= 0x80
-            self.put_key(opts.old_key_version_nr, opts.key_version_nr, p2, kdb)
+            ADF_SD.put_key(self._cmd.lchan.scc, opts.old_key_version_nr, opts.key_version_nr, p2, kdb)
 
-        # Table 11-68: Key Data Field - Format 1 (Basic Format).  The key component block length is
-        # BER-TLV coded (Section 11.8.2.3.1), the key check value length is always '00' - '7F'.
-        KeyDataBasic = Struct('key_type'/KeyType,
-                              'kcb'/Prefixed(PutKeyLength(), GreedyBytes),
-                              'kcv'/Prefixed(Int8ub, GreedyBytes))
-
-        @classmethod
-        def encode_key_data_basic(cls, key_type: str, kcb: bytes, kcv: bytes) -> bytes:
-            """Generic Basic key data field, GP CardSpec v2.3 Table 11-68):
-                tag || L1 || <maybe L2> KCB || <1-byte length> KCV"""
-            return cls.KeyDataBasic.build({'key_type': key_type, 'kcb': kcb, 'kcv': kcv})
-
-        @classmethod
-        def encode_key_data_psk(cls, clear_key: bytes, ciphered_key: bytes, kcv: bytes) -> bytes:
-            """Single PSK TLS '85' key data field per GP Amendment B 1.2, 3.9.1 / Table 3-13:
-                85 | L1 | <L2>  <ciphered PSK key> | <KCV length> | <KCV>
-            - framing is like Basic Format, but the kcb is always GP CardSpec Table 11-70
-            so always with the length of the clear text key value, even without padding!
-            - 'ciphered_key' is DEK(block-padded clear key), no additional length prefix."""
-            kcb = bertlv_encode_len(len(clear_key)) + ciphered_key
-            return cls.encode_key_data_basic('tls_psk', kcb, kcv)
-
-        @classmethod
-        def build_put_key_data(cls, kvn: int, keys: List[dict], scp) -> bytes:
-            """Assemble the PUT KEY data field, mixed PSK + DES DEK is supported:
-            - new KVN followed by one key data field per key.
-            - tls_psk keys per GP Amendment B
-            - other key types generic Basic format
-            Param 'keys' is a dict:
-            - 'key_type' (str)
-            - 'clear_key' (bytes)
-            - 'kcv' (bytes / empty).
-            'scp' may be None (e.g. during personalization, when the DEK may not be required)."""
-            key_data = kvn.to_bytes(1, 'big')
-            for k in keys:
-                clear = k['clear_key']
-                if k['key_type'] == 'tls_psk':
-                    # len always part of the data see CardSpec Table 11-70 vs Table 11-71
-                    if scp:
-                        ciphered = scp.dek_encrypt(scp.pad_to_blocksize(clear))
-                    else:
-                        ciphered = clear
-                    key_data += cls.encode_key_data_psk(clear, ciphered, k['kcv'])
-                else:
-                    if scp:
-                        ciphered = scp.encrypt_key(clear)
-                    else:
-                        # (for example) during personalization, DEK might not be required
-                        ciphered = clear
-                    key_data += cls.encode_key_data_basic(k['key_type'], ciphered, k['kcv'])
-            return key_data
-
-        def put_key(self, old_kvn:int, kvn: int, kid: int, keys: List[dict]) -> bytes:
-            """Perform the GlobalPlatform PUT KEY command in order to store a new key on the card.
-            See GlobalPlatform CardSpecification v2.3 Section 11.8 for details."""
-            key_data = self.build_put_key_data(kvn, keys, self._cmd.lchan.scc.scp)
-            # Lc of Table 11-64 is a single byte, while LOAD or STORE DATA splits we can't:
-            # 11.8.2.3.3 splits a key at component boundaries -> not helping here
-            max_cmd_len = self._cmd.lchan.scc.max_cmd_len
-            if len(key_data) > max_cmd_len:
-                raise ValueError('key data field of %u bytes exceeds the maximum command length of %u '
-                                 '(limited by the overhead of the current secure channel); use fewer '
-                                 'keys per command, a single key component that large needs STORE DATA' %
-                                 (len(key_data), max_cmd_len))
-            hdr = "80D8%02x%02x%02x" % (old_kvn, kid, len(key_data))
-            data, _sw = self._cmd.lchan.scc.send_apdu_checksw(hdr + b2h(key_data) + "00")
-            return data
 
         get_status_parser = argparse.ArgumentParser()
         get_status_parser.add_argument('subset', choices=list(StatusSubset.ksymapping.values()),
@@ -789,7 +939,7 @@ class ADF_SD(CardADF):
         def do_get_status(self, opts):
             """Perform GlobalPlatform GET STATUS command in order to retrieve status information
             on Issuer Security Domain, Executable Load File, Executable Module or Applications."""
-            grd_list = self.get_status(opts.subset, opts.aid)
+            grd_list = ADF_SD.get_status(self._cmd.lchan.scc, opts.subset, opts.aid, self.gp_version())
             for grd in grd_list:
                 self._cmd.poutput_json(grd.to_dict())
 
@@ -799,72 +949,8 @@ class ADF_SD(CardADF):
             so this must succeed no matter the GP version. None if card did not answer GET DATA / OID unknown.
             Cached, it cannot change during a session."""
             if not hasattr(self, '_gp_version'):
-                self._gp_version = None
-                try:
-                    data, _sw = self._cmd.lchan.scc.get_data(cla=0x80, tag=CardData.tag)
-                    self._gp_version = decode_gp_version(h2b(data))
-                except (SwMatchError, ValueError) as e:
-                    log.warning("Could not determine GlobalPlatform version: %s", e)
+                self._gp_version = ADF_SD.gp_version(self._cmd.lchan.scc)
             return self._gp_version
-
-        def get_status(self, subset:str, aid_search_qualifier:Hexstr = '') -> List[GpRegistryRelatedData]:
-            aid = ApplicationAID(decoded=aid_search_qualifier)
-            # GPC CardSpec v2.3.1 Table 11-35 says only the AID search tag is mandatory, tag list is
-            # Optional and not present in the older v2.1.1, where section 9.4.2.3 defines the data
-            # field as the search qualifier.
-            # Cards like the sja5 implementing that old GP version reject anything else with 6A80
-            # from v2.1.1 Table 9-26 so only send a tag list to a card that announces v2.2 or later.
-            #
-            # Not sending one is not a problem on older cards, the tag list only gives us data beyond
-            # what 11.4.3.1 gives us anyway, for example the associated SD AID which matters on an eUICC
-            # where entries belong to different SD.
-            version = self.gp_version()
-            log.debug("Card Recognition Data reports GlobalPlatform %s",
-                      '.'.join(str(v) for v in version) if version else 'unknown')
-            if version is not None and version >= (2, 2):
-                try:
-                    return self._get_status(subset, aid.to_tlv() + get_status_tag_list(subset))
-                except SwMatchError as e:
-                    # Retry if v2.2 or later but rejected the tag list anyway.
-                    # 6A80 and 6A88 are the error conditions GET STATUS defines in table 11-39.
-                    # Retrying beats not ending up with a list again...
-                    if e.sw_actual not in ('6a80', '6a88'):
-                        raise
-                    log.warning("Card reports GlobalPlatform %s but answered %s to the GET STATUS tag list; "
-                                "retrying with the default search",
-                                '.'.join(str(v) for v in version), e.sw_actual)
-            return self._get_status(subset, aid.to_tlv(), empty_on_6a88=True)
-
-        def _get_status(self, subset:str, cmd_data:bytes,
-                        empty_on_6a88: bool = False) -> List[GpRegistryRelatedData]:
-            subset_hex = b2h(build_construct(StatusSubset, subset))
-            p2 = 0x02 # GPC v2.3.1 11.4.2.2 table 11-34, b2: response data structure per table 11-36
-            grd_list = []
-            while True:
-                hdr = "80F2%s%02x%02x" % (subset_hex, p2, len(cmd_data))
-                data, sw = self._cmd.lchan.scc.send_apdu(hdr + b2h(cmd_data) + "00")
-                if sw == '6a88':
-                    # Table 11-39 "Referenced data not found". After collecting all pages this can
-                    # only mean "nothing more matches" -> listing is complete. On the first page
-                    # it is ambiguous, empty result or bad command data field, so leave that to get_status()
-                    # which knows if a tag list was sent.
-                    if grd_list or empty_on_6a88:
-                        return grd_list
-                    raise SwMatchError(sw, ['9000', '6310'])
-                if sw not in ['9000', '6310']:
-                    # Never return a silently truncated registry
-                    raise SwMatchError(sw, ['9000', '6310'])
-                remainder = h2b(data)
-                while len(remainder):
-                    # tlv sequence, each element is one GpRegistryRelatedData()
-                    grd = GpRegistryRelatedData()
-                    _dec, remainder = grd.from_tlv(remainder)
-                    grd_list.append(grd)
-                if sw == '9000':
-                    return grd_list
-                # 6310 = more data available, table 11-38: reissue as get next occurrence(s), b1 of
-                # table 11-34. Keeps b2 unchanged.
-                p2 |= 0x01
 
         set_status_parser = argparse.ArgumentParser()
         set_status_parser.add_argument('scope', choices=list(SetStatusScope.ksymapping.values()),
@@ -879,14 +965,7 @@ class ADF_SD(CardADF):
             """Perform GlobalPlatform SET STATUS command in order to change the life cycle state of the
             Issuer Security Domain, Supplementary Security Domain or Application.  This normally requires
             prior authentication with a Secure Channel Protocol."""
-            self.set_status(opts.scope, opts.status, opts.aid)
-
-        def set_status(self, scope:str, status:str, aid:Hexstr = ''):
-            SetStatus = Struct(Const(0x80, Byte), Const(0xF0, Byte),
-                               'scope'/SetStatusScope, 'status'/CLifeCycleState,
-                               'aid'/Prefixed(Int8ub, COptional(GreedyBytes)))
-            apdu = build_construct(SetStatus, {'scope':scope, 'status':status, 'aid':aid})
-            _data, _sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(apdu))
+            ADF_SD.set_status(self._cmd.lchan.scc, opts.scope, opts.status, opts.aid)
 
         inst_perso_parser = argparse.ArgumentParser()
         inst_perso_parser.add_argument('application_aid', type=is_hexstr, help='Application AID')
@@ -896,7 +975,8 @@ class ADF_SD(CardADF):
             """Perform GlobalPlatform INSTALL [for personalization] command in order to inform a Security
             Domain that the following STORE DATA commands are meant for a specific AID (specified here)."""
             # Section 11.5.2.3.6 / Table 11-47
-            self.install(0x20, 0x00, "0000%02x%s000000" % (len(opts.application_aid)//2, opts.application_aid))
+            ADF_SD.install(self._cmd.lchan.scc, 0x20, 0x00, "0000%02x%s000000" %
+                           (len(opts.application_aid)//2, opts.application_aid))
 
         inst_inst_parser = argparse.ArgumentParser()
         inst_inst_parser.add_argument('--load-file-aid', type=is_hexstr, default='',
@@ -931,7 +1011,7 @@ class ADF_SD(CardADF):
             # convert from list to "true-dict" as required by construct.FlagsEnum
             decoded['privileges'] = {x: True for x in decoded['privileges']}
             ifi_bytes = build_construct(InstallForInstallCD, decoded)
-            self.install(p1, 0x00, b2h(ifi_bytes))
+            ADF_SD.install(self._cmd.lchan.scc, p1, 0x00, b2h(ifi_bytes))
 
         inst_load_parser = argparse.ArgumentParser()
         inst_load_parser.add_argument('--load-file-aid', type=is_hexstr, required=True,
@@ -956,11 +1036,7 @@ class ADF_SD(CardADF):
                                       'load_parameters'/Prefixed(Int8ub, GreedyBytes),
                                       'load_token'/Prefixed(Int8ub, GreedyBytes))
             ifl_bytes = build_construct(InstallForLoadCD, vars(opts))
-            self.install(0x02, 0x00, b2h(ifl_bytes))
-
-        def install(self, p1:int, p2:int, data:Hexstr) -> ResTuple:
-            cmd_hex = "80E6%02x%02x%02x%s00" % (p1, p2, len(data)//2, data)
-            return self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
+            ADF_SD.install(self._cmd.lchan.scc, 0x02, 0x00, b2h(ifl_bytes))
 
         del_cc_parser = argparse.ArgumentParser()
         del_cc_parser.add_argument('aid', type=is_hexstr,
@@ -974,7 +1050,7 @@ class ADF_SD(CardADF):
             File, an Application or an Executable Load File and its related Applications."""
             p2 = 0x80 if opts.delete_related_objects else 0x00
             aid = ApplicationAID(decoded=opts.aid)
-            self.delete(0x00, p2, b2h(aid.to_tlv()))
+            ADF_SD.delete(self._cmd.lchan.scc, 0x00, p2, b2h(aid.to_tlv()))
 
         del_key_parser = argparse.ArgumentParser()
         del_key_parser.add_argument('--key-id', type=auto_uint7, help='Key Identifier (KID)')
@@ -995,11 +1071,7 @@ class ADF_SD(CardADF):
                 cmd += "d001%02x" % opts.key_id
             if opts.key_ver is not None:
                 cmd += "d201%02x" % opts.key_ver
-            self.delete(0x00, p2, cmd)
-
-        def delete(self, p1:int, p2:int, data:Hexstr) -> ResTuple:
-            cmd_hex = "80E4%02x%02x%02x%s00" % (p1, p2, len(data)//2, data)
-            return self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
+            ADF_SD.delete(self._cmd.lchan.scc, 0x00, p2, cmd)
 
         load_parser = argparse.ArgumentParser()
         load_parser_from_grp = load_parser.add_mutually_exclusive_group(required=True)
@@ -1014,39 +1086,14 @@ class ADF_SD(CardADF):
             """Perform a GlobalPlatform LOAD command. (We currently only support loading without DAP and
             without ciphering.)"""
             if opts.from_hex is not None:
-                self.load(h2b(opts.from_hex), opts.chunk_len)
+                ADF_SD.load(self._cmd.lchan.scc, h2b(opts.from_hex), opts.chunk_len)
             elif opts.from_file is not None:
-                self.load(opts.from_file.read(), opts.chunk_len)
+                ADF_SD.load(self._cmd.lchan.scc, opts.from_file.read(), opts.chunk_len)
             elif opts.from_cap_file is not None:
                 cap = CapFile(opts.from_cap_file)
-                self.load(cap.get_loadfile(), opts.chunk_len)
+                ADF_SD.load(self._cmd.lchan.scc, cap.get_loadfile(), opts.chunk_len)
             else:
                 raise ValueError('load source not specified!')
-
-        def load(self, contents:bytes, chunk_len:Optional[int] = None):
-            # scc.max_cmd_len knows the overhead the currently active SCP
-            # 240 is the old default, keep it for now.
-            max_chunk_len = self._cmd.lchan.scc.max_cmd_len
-            if chunk_len is None:
-                chunk_len = min(240, max_chunk_len)
-            elif not 1 <= chunk_len <= max_chunk_len:
-                raise ValueError('chunk_len must be in range 1..%u (limited by the overhead of the current secure channel)' %
-                                 max_chunk_len)
-            # build TLV according to GPC_SPE_034 section 11.6.2.3 / Table 11-58 for unencrypted case
-            remainder = b'\xC4' + bertlv_encode_len(len(contents)) + contents
-            # transfer this in various chunks to the card
-            total_size = len(remainder)
-            block_nr = 0
-            while len(remainder):
-                block = remainder[:chunk_len]
-                remainder = remainder[chunk_len:]
-                # build LOAD command APDU according to GPC_SPE_034 section 11.6.2 / Table 11-56
-                p1 = 0x00 if len(remainder) else 0x80
-                p2 = block_nr % 256
-                block_nr += 1
-                cmd_hex = "80E8%02x%02x%02x%s00" % (p1, p2, len(block), b2h(block))
-                _rsp_hex, _sw = self._cmd.lchan.scc.send_apdu_checksw(cmd_hex)
-            self._cmd.poutput("Loaded a total of %u bytes in %u blocks. Don't forget install_for_install (and make selectable) now!" % (total_size, block_nr))
 
         install_cap_parser = argparse.ArgumentParser(usage='%(prog)s FILE [--install-parameters | --install-parameters-*]')
         install_cap_parser.add_argument('cap_file', type=str, metavar='FILE',
@@ -1110,7 +1157,7 @@ class ADF_SD(CardADF):
             self._cmd.poutput("step #1: install for load...")
             self.do_install_for_load("--load-file-aid %s --security-domain-aid %s" % (load_file_aid, security_domain_aid))
             self._cmd.poutput("step #2: load...")
-            self.load(load_file, opts.chunk_len)
+            ADF_SD.load(self._cmd.lchan.scc, load_file, opts.chunk_len)
             self._cmd.poutput("step #3: install_for_install (and make selectable)...")
             self.do_install_for_install("--load-file-aid %s --module-aid %s --application-aid %s --install-parameters %s --make-selectable" %
                                         (load_file_aid, module_aid, application_aid, install_parameters))
@@ -1150,7 +1197,7 @@ class ADF_SD(CardADF):
             host_challenge = h2b(opts.host_challenge) if opts.host_challenge else get_random_bytes(8)
             kset = GpCardKeyset(opts.key_ver, h2b(opts.key_enc), h2b(opts.key_mac), h2b(opts.key_dek))
             scp02 = SCP02(card_keys=kset)
-            self._establish_scp(scp02, host_challenge, opts.security_level)
+            ADF_SD.establish_scp(self._cmd.lchan.scc, scp02, host_challenge, opts.security_level)
 
         est_scp03_parser = deepcopy(est_scp02_parser)
         est_scp03_parser.description = None
@@ -1178,27 +1225,15 @@ class ADF_SD(CardADF):
             host_challenge = h2b(opts.host_challenge) if opts.host_challenge else get_random_bytes(s_mode)
             kset = GpCardKeyset(opts.key_ver, h2b(opts.key_enc), h2b(opts.key_mac), h2b(opts.key_dek))
             scp03 = SCP03(card_keys=kset, s_mode = s_mode)
-            self._establish_scp(scp03, host_challenge, opts.security_level)
-
-        def _establish_scp(self, scp, host_challenge, security_level):
-            # perform the common functionality shared by SCP02 and SCP03 establishment
-            init_update_apdu = scp.gen_init_update_apdu(host_challenge=host_challenge)
-            init_update_resp, _sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(init_update_apdu))
-            scp.parse_init_update_resp(h2b(init_update_resp))
-            ext_auth_apdu = scp.gen_ext_auth_apdu(security_level)
-            _ext_auth_resp, _sw = self._cmd.lchan.scc.send_apdu_checksw(b2h(ext_auth_apdu))
-            self._cmd.poutput("Successfully established a %s secure channel" % str(scp))
-            # store a reference to the SCP instance
-            self._cmd.lchan.scc.scp = scp
+            ADF_SD.establish_scp(self._cmd.lchan.scc, scp03, host_challenge, opts.security_level)
             self._cmd.update_prompt()
-
 
         def do_release_scp(self, _opts):
             """Release a previously establiehed secure channel."""
             if not self._cmd.lchan.scc.scp:
                 self._cmd.poutput("Cannot release SCP as none is established")
                 return
-            self._cmd.lchan.scc.scp = None
+            ADF_SD.release_scp(self._cmd.lchan.scc)
             self._cmd.update_prompt()
 
 
