@@ -24,7 +24,7 @@ from construct import Int8ub, Int16ub, Byte, BitsInteger
 from construct import Struct, Enum, BitStruct, this
 from construct import Switch, GreedyRange, FlagsEnum, Adapter
 from osmocom.tlv import TLV_IE, COMPR_TLV_IE, BER_TLV_IE, TLV_IE_Collection
-from osmocom.construct import PlmnAdapter, BcdAdapter, GsmStringAdapter, TonNpi, GsmString, Bytes, GreedyBytes
+from osmocom.construct import PlmnAdapter, BcdAdapter, GsmOrUcs2Adapter, GsmStringAdapter, TonNpi, GsmString, Bytes, GreedyBytes
 from osmocom.utils import b2h, h2b
 from pySim.utils import dec_xplmn_w_act
 
@@ -37,8 +37,7 @@ class Address(COMPR_TLV_IE, tag=0x86):
 
 # TS 102 223 Section 8.2
 class AlphaIdentifier(COMPR_TLV_IE, tag=0x85):
-    # FIXME: like EF.ADN
-    pass
+    _construct = GsmOrUcs2Adapter(GreedyBytes)
 
 # TS 102 223 Section 8.3
 class Subaddress(COMPR_TLV_IE, tag=0x88):
