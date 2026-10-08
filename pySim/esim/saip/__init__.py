@@ -377,21 +377,6 @@ class File:
                     self.file_type = 'TR'
                 elif fdb_dec['structure'] == 'ber_tlv':
                     self.file_type = 'BT'
-                    if 'maximumFileSize' in pefi:
-                        self._file_size = self._decode_file_size(pefi['maximumFileSize'])
-                specialFileInformation = pefi.get('specialFileInformation', None)
-                if specialFileInformation:
-                    # TS 102 222 Table 5
-                    if specialFileInformation[0] & 0x80:
-                        self.high_update = True
-                    if specialFileInformation[0] & 0x40:
-                        self.read_and_update_when_deact = True
-                if 'repeatPattern' in pefi:
-                    self.fill_pattern = pefi['repeatPattern']
-                    self.fill_pattern_repeat = True
-                if 'fillPattern' in pefi:
-                    self.fill_pattern = pefi['fillPattern']
-                    self.fill_pattern_repeat = False
             elif fdb_dec['file_type'] == 'df':
                 # only set it, if an earlier call to from_template() didn't already set it, as
                 # the template can differentiate between MF, DF and ADF (unlike FDB)
@@ -402,6 +387,25 @@ class File:
                 # FIXME: this shouldn't happen? How can this be? But I see it in real profiles
                 #raise ValueError("%s: from_fileDescriptor without nested 'fileDescriptor'" % self)
                 pass
+
+        # proprietaryEFInfo applies to a working EF whether or not the Fcp repeats the
+        # fileDescriptor its template already defines (TCA SAIP v3.4.1 section 8.3.3)
+        if self.file_type in ['TR', 'LF', 'CY', 'BT']:
+            if self.file_type == 'BT' and 'maximumFileSize' in pefi:
+                self._file_size = self._decode_file_size(pefi['maximumFileSize'])
+            specialFileInformation = pefi.get('specialFileInformation', None)
+            if specialFileInformation:
+                # TS 102 222 Table 5
+                if specialFileInformation[0] & 0x80:
+                    self.high_update = True
+                if specialFileInformation[0] & 0x40:
+                    self.read_and_update_when_deact = True
+            if 'repeatPattern' in pefi:
+                self.fill_pattern = pefi['repeatPattern']
+                self.fill_pattern_repeat = True
+            if 'fillPattern' in pefi:
+                self.fill_pattern = pefi['fillPattern']
+                self.fill_pattern_repeat = False
 
         logger.debug("\t%s" % repr(self))
 
