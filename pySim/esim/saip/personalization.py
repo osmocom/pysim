@@ -233,7 +233,7 @@ class ConfigurableParameter(abc.ABC, metaclass=ClassVarMeta):
         """Same as get_values_from_pes() but expecting a single value.
            get_values_from_pes() may return values like this:
              [{ 'AlgorithmID': 'Milenage' }, { 'AlgorithmID': 'Milenage' }]
-           This ensures that all these entries are identical and would return only
+           Instead, ensure that all these entries are identical and would return only
               { 'AlgorithmID': 'Milenage' }.
 
            This is relevant for any profile element that may appear multiple times in the same PES (only a few),
