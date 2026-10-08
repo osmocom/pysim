@@ -499,19 +499,22 @@ class File:
         if not optimize:
             # simplistic approach: encode the full file, ignoring the template/default
             return [('fillFileContent', self.body)]
-        # Try to 'compress' the file body, based on the default file contents.
-        if self.template:
+        # Try to 'compress' the file body, based on the content the eUICC creates the file with:
+        # a fill/repeat pattern in the Fcp overwrites the template default (SAIP section 8.3.3)
+        if self.fill_pattern:
+            default = self.expand_fill_pattern()
+        elif self.template:
             default = self.template.expand_default_value_pattern(length=len(self.body))
-            if not default:
-                sm = SequenceMatcher(a=b'\xff'*len(self.body), b=self.body)
-            else:
-                if default == self.body:
-                    # 100% match: return an empty tuple list to make eUICC use the default
-                    return []
-                sm = SequenceMatcher(a=default, b=self.body)
         else:
-            # no template at all: we can only remove padding
+            default = None
+        if not default:
+            # no pattern and no default: we can only remove padding
             sm = SequenceMatcher(a=b'\xff'*len(self.body), b=self.body)
+        else:
+            if default == self.body:
+                # 100% match: return an empty tuple list to make eUICC use the default
+                return []
+            sm = SequenceMatcher(a=default, b=self.body)
         matching_blocks = sm.get_matching_blocks()
         # we can only make use of matches that have the same offset in 'a' and 'b'
         matching_blocks = [x for x in matching_blocks if x.size > 0 and x.a == x.b]
@@ -519,9 +522,11 @@ class File:
         ret = []
         cur = 0
         for block in non_matching_blocks:
+            # fillFileOffset moves the pointer relative to its current position, and
+            # fillFileContent leaves it after the last byte written (SAIP section 8.3.5)
             ret.append(('fillFileOffset', block.a - cur))
             ret.append(('fillFileContent', self.body[block.a:block.a+block.size]))
-            cur += block.size
+            cur = block.a + block.size
         return ret
 
     def __str__(self) -> str:
