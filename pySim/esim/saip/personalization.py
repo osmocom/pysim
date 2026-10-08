@@ -1592,3 +1592,37 @@ class EuiccMandatoryServiceProfileB(EuiccMandatoryServiceParam):
     5G-SUCI-CalcInfo-USIM."""
     name = '5G-eUICC-profile-b-p256'
     service_name = 'profile-b-p256'
+
+class Gid1(BinaryParam):
+    """Group Identifier Level 1 (3GPP TS 31.102 4.2.10), an arbitrary binary field defined by the operator."""
+    name = 'GID1'
+    gid_ef_name = 'ef-gid1'
+
+    @classmethod
+    def apply_val(cls, pes: ProfileElementSequence, val):
+        # patch OPT-USIM/EF.GIDn
+        file_replace_content(pes.get_pe_for_type('opt-usim').decoded[cls.gid_ef_name], h2b(val))
+
+    @classmethod
+    def get_values_from_pes(cls, pes: ProfileElementSequence):
+        for pe in pes.get_pes_for_type('opt-usim'):
+            gid_f = pe.files.get(cls.gid_ef_name, None)
+            if gid_f is not None:
+                yield { cls.name: b2h(gid_f.body) }
+
+class Gid2(Gid1):
+    """Group Identifier Level 2 (3GPP TS 31.102 4.2.11), an arbitrary binary field defined by the operator."""
+    name = 'GID2'
+    gid_ef_name = 'ef-gid2'
+
+class Gid1Active(EfUstServiceParam):
+    """EF-UST service nr 17: enable or disable GID1 (Group Identifier Level 1)."""
+    service_idx = 17
+    name = 'GID1-active'
+    value_map = { 'inactive': False, 'active': True }
+    example_input = 'inactive'
+
+class Gid2Active(Gid1Active):
+    """EF-UST service nr 18: enable or disable GID2 (Group Identifier Level 2)."""
+    service_idx = 18
+    name = 'GID2-active'
