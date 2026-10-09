@@ -1224,10 +1224,14 @@ class ProfileElementSD(ProfileElement):
     def _post_decode(self):
         self.usip = self.C9()
         self.usip.from_bytes(self.decoded['instance']['applicationSpecificParametersC9'])
-        self.keys = [SecurityDomainKey.from_saip_dict(x) for x in self.decoded['keyList']]
+        # keyList is OPTIONAL (SIZE (1..MAX)): an SD without keys omits it
+        self.keys = [SecurityDomainKey.from_saip_dict(x) for x in self.decoded.get('keyList', [])]
 
     def _pre_encode(self):
-        self.decoded['keyList'] = [x.to_saip_dict() for x in self.keys]
+        if self.keys:
+            self.decoded['keyList'] = [x.to_saip_dict() for x in self.keys]
+        else:
+            self.decoded.pop('keyList', None)
         self.decoded['instance']['applicationSpecificParametersC9'] = self.usip.to_bytes()
 
     def has_scp(self, scp: int) -> bool:
