@@ -411,14 +411,12 @@ class JsonHttpApiClient():
         # SGP.22, section 6.5.1)
         if response.status_code != self.api_func.expected_http_status:
             raise HttpStatusError(response)
-        resp_content_type = response.headers.get('Content-Type')
-        if response.content and not resp_content_type.startswith(req_headers['Content-Type']):
-            raise HttpHeaderError(response)
         if not response.headers.get('X-Admin-Protocol', 'gsma/rsp/v2.unknown').startswith('gsma/rsp/v2.'):
             raise HttpHeaderError(response)
 
         # Decode response and return the result back to the caller
         if response.content:
+            resp_content_type = response.headers.get('Content-Type')
             if resp_content_type.startswith('application/json'):
                 output = self.api_func.decode_client(response.json())
             elif resp_content_type.startswith('text/plain;charset=UTF-8'):
