@@ -728,6 +728,27 @@ class TestEnumParam(unittest.TestCase):
         self.assertEqual(p13n.AlgorithmID.clean_name_str('foo bar!'), 'foobar')
 
 
+class TestSmspTpScAddr(unittest.TestCase):
+    """SmspTpScAddr edits record 1 of EF.SMSP and keeps the records after it."""
+
+    def test_records_after_the_first_are_kept(self):
+        der = resources.read_binary(smdpp_data.upp, 'TS48v5_SAIP2.1A_NoBERTLV.der')
+        for nb_rec in (1, 2):
+            with self.subTest(nb_rec=nb_rec):
+                pes = ProfileElementSequence.from_der(der)
+                f_smsp = pes.get_pes_for_type('usim')[0].files['ef-smsp']
+                rec_len = f_smsp.rec_len
+                tail = bytes(range(rec_len)) * (nb_rec - 1)
+                f_smsp.body = f_smsp.body[:rec_len] + tail
+                param = p13n.SmspTpScAddr('+1234567')
+                param.validate()
+                param.apply(pes)
+                self.assertEqual(len(f_smsp.body), nb_rec * rec_len)
+                self.assertEqual(f_smsp.body[rec_len:], tail)
+                self.assertEqual(tuple(p13n.SmspTpScAddr.get_values_from_pes(pes)),
+                                 ({'SMSP-TP-SC-ADDR': '+1234567'},))
+
+
 if __name__ == "__main__":
     if '-u' in sys.argv:
         update_expected_output = True

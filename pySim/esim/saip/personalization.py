@@ -614,8 +614,10 @@ class SmspTpScAddr(ConfigurableParameter):
             #print("SMSP (orig): %s" % f_smsp.body)
             # instantiate the pySim.ts_51_011.EF_SMSP class for decode/encode
             ef_smsp = EF_SMSP()
-            # decode the existing file body
-            ef_smsp_dec = ef_smsp.decode_record_bin(f_smsp.body, 1)
+            # decode the first record; a profile may declare more than one (efFileSize), and the
+            # File body then holds all of them
+            rec_len = f_smsp.rec_len
+            ef_smsp_dec = ef_smsp.decode_record_bin(f_smsp.body[:rec_len], 1)
             # patch the actual number
             ef_smsp_dec['tp_sc_addr']['call_number'] = digits
             # patch the NPI to isdn_e164
@@ -644,8 +646,9 @@ class SmspTpScAddr(ConfigurableParameter):
             # f_smsp.rec_len = 42
             # but leave rec_len unchanged to keep the same length as was found in the eSIM template.
 
-            # re-encode into the File body.
-            f_smsp.body = ef_smsp.encode_record_bin(ef_smsp_dec, 1, total_len=f_smsp.rec_len)
+            # re-encode the first record into the File body, keeping any records after it.
+            record = ef_smsp.encode_record_bin(ef_smsp_dec, 1, total_len=rec_len)
+            f_smsp.body = record + f_smsp.body[rec_len:]
             # re-generate the pe.decoded member from the File instance
             pe.file2pe(f_smsp)
 
@@ -654,7 +657,7 @@ class SmspTpScAddr(ConfigurableParameter):
         for pe in pes.get_pes_for_type('usim'):
             f_smsp = pe.files['ef-smsp']
             ef_smsp = EF_SMSP()
-            ef_smsp_dec = ef_smsp.decode_record_bin(f_smsp.body, 1)
+            ef_smsp_dec = ef_smsp.decode_record_bin(f_smsp.body[:f_smsp.rec_len], 1)
 
             tp_sc_addr = ef_smsp_dec.get('tp_sc_addr', None)
 
