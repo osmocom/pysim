@@ -447,7 +447,7 @@ class File:
                 raise ValueError("Unknown key '%s' in tuple list" % k)
         return stream.getvalue()
 
-    def file_content_to_tuples(self, optimize:bool = False) -> List[Tuple]:
+    def file_content_to_tuples(self, optimize:bool = True) -> List[Tuple]:
         """Encode the file contents into a list of fillFileContent / fillFileOffset tuples that can be fed
         into the asn.1 encoder.  If optimize is True, it will try to encode only the differences from the
         fillFileContent of the profile template.  Otherwise, the entire file contents will be encoded
@@ -458,18 +458,24 @@ class File:
             # simplistic approach: encode the full file, ignoring the template/default
             return [('fillFileContent', self.body)]
         # Try to 'compress' the file body, based on the default file contents.
-        if self.template:
-            default = self.template.expand_default_value_pattern(length=len(self.body))
-            if not default:
-                sm = SequenceMatcher(a=b'\xff'*len(self.body), b=self.body)
+        default = None
+        if self.fill_pattern:
+            pattern = self.fill_pattern;
+            if self.fill_pattern_repeat:
+                # repeat pattern
+                default = (pattern*(len(self.body)//len(pattern)+1))[:len(self.body)]
             else:
-                if default == self.body:
-                    # 100% match: return an empty tuple list to make eUICC use the default
-                    return []
-                sm = SequenceMatcher(a=default, b=self.body)
-        else:
-            # no template at all: we can only remove padding
-            sm = SequenceMatcher(a=b'\xff'*len(self.body), b=self.body)
+                # use pattern and pad with 0xff
+                default = pattern+b'\xff'*(len(self.body)-len(pattern))
+        elif self.template:
+            # use pattern from template
+            default = self.template.expand_default_value_pattern(length=len(self.body))
+        if not default:
+            # no default? use 0xff...
+            default = '\xff'*len(self.body)
+        if default == self.body:
+            return []
+        sm = SequenceMatcher(a=default, b=self.body)
         matching_blocks = sm.get_matching_blocks()
         # we can only make use of matches that have the same offset in 'a' and 'b'
         matching_blocks = [x for x in matching_blocks if x.size > 0 and x.a == x.b]
