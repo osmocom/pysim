@@ -412,10 +412,15 @@ class File:
         """Generate a list of fileDescriptor, fillFileContent, fillFileOffset tuples into this instance."""
         return [('fileDescriptor', self.to_fileDescriptor())] + self.file_content_to_tuples()
 
-    def to_gfm(self) -> List[Tuple]:
+    def to_gfm(self, current_path) -> List[Tuple]:
         """Generate a list of filePath, createFCP, fillFileContent, fillFileOffset tuples into this instance."""
-        ret = [('filePath', self.path_to_gfm(self.path)), ('createFCP', self.to_fileDescriptor())]
-        ret += self.file_content_to_tuples()
+        ret = []
+        if self.path != current_path:
+            rel_path_bytes = self.path_to_gfm(self.path[1:])
+            ret.append(('filePath', rel_path_bytes))
+        ret.append(('createFCP', self.to_fileDescriptor()))
+        if hasattr(self, '_body') and self._body:
+            ret += self.file_content_to_tuples()
         return ret
 
     def expand_fill_pattern(self) -> bytes:
@@ -825,9 +830,14 @@ class ProfileElementGFM(ProfileElement):
 
     def files2pe(self):
         """Update the "decoded" member from the "files" member."""
-        # FIXME: implement this
-        # sort / iterate by path; issue filePath, createFCP and fillFile{Offset,Content} elements
-
+        self.decoded['fileManagementCMD'] = []
+        current_path = None
+        self.path = current_path;
+        for path_str, file in sorted(self.files.items()):
+            fmc = file.to_gfm(current_path)
+            current_path = file.path
+            if fmc:
+                self.decoded['fileManagementCMD'].append(fmc)
 
     def _post_decode(self):
         # not entirely sure about this automatism
