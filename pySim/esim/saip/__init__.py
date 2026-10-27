@@ -21,7 +21,7 @@ import io
 import os
 from typing import Tuple, List, Optional, Dict, Union
 from collections import OrderedDict
-from difflib import SequenceMatcher, Match
+from difflib import Match
 
 import asn1tools
 import zipfile
@@ -492,7 +492,7 @@ class File:
                 raise ValueError("Unknown key '%s' in tuple list" % k)
         return stream.getvalue()
 
-    def file_content_to_tuples(self, optimize:bool = False) -> List[Tuple]:
+    def file_content_to_tuples(self, optimize:bool = True) -> List[Tuple]:
         """Encode the file contents into a list of fillFileContent / fillFileOffset tuples that can be fed
         into the asn.1 encoder.  If optimize is True, it will try to encode only the differences from the
         fillFileContent of the profile template.  Otherwise, the entire file contents will be encoded
@@ -512,16 +512,33 @@ class File:
             default = None
         if not default:
             # no pattern and no default: we can only remove padding
-            sm = SequenceMatcher(a=b'\xff'*len(self.body), b=self.body)
-        else:
-            if default == self.body:
-                # 100% match: return an empty tuple list to make eUICC use the default
-                return []
-            sm = SequenceMatcher(a=default, b=self.body)
-        matching_blocks = sm.get_matching_blocks()
-        # we can only make use of matches that have the same offset in 'a' and 'b'
-        matching_blocks = [x for x in matching_blocks if x.size > 0 and x.a == x.b]
-        non_matching_blocks = NonMatch.from_matchlist(matching_blocks, self.file_size)
+            default = b'\xff'*len(self.body)
+        if default == self.body:
+            # 100% match: return an empty tuple list to make eUICC use the default
+            return []
+        non_matching_blocks = []
+        start = None
+        for i in range(len(self.body)):
+            if self.body[i] != default[i]:
+                if start is None:
+                    start = i
+            elif start is not None:
+                non_matching_blocks.append(NonMatch(start, start, i - start))
+                start = None
+        if start is not None:
+            non_matching_blocks.append(NonMatch(start, start, len(self.body) - start))
+        i = 0
+        while i < len(non_matching_blocks) - 1:
+            current_block = non_matching_blocks[i]
+            next_block = non_matching_blocks[i + 1]
+            gap = next_block.a - (current_block.a + current_block.size)
+            if gap < 6:
+              # Vorherigen Block einfach über die kleine Lücke hinweg verlängern
+                non_matching_blocks[i] = NonMatch(current_block.a, current_block.a,
+                                                  (next_block.a + next_block.size) - current_block.a)
+                del non_matching_blocks[i + 1]
+            else:
+                i += 1
         ret = []
         cur = 0
         for block in non_matching_blocks:
