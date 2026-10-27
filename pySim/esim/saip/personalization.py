@@ -24,8 +24,8 @@ from typing import List, Tuple, Generator, Optional
 
 from construct.core import StreamError
 from osmocom.tlv import camel_to_snake
-from osmocom.utils import hexstr
-from pySim.utils import enc_iccid, dec_iccid, enc_imsi, dec_imsi, h2b, b2h, rpad, sanitize_iccid
+from osmocom.utils import hexstr, rpad, h2b, b2h
+from pySim.utils import enc_iccid, dec_iccid, enc_imsi, dec_imsi, sanitize_iccid
 from pySim.ts_31_102 import EF_AD, EF_UST, EF_Routing_Indicator, EF_SUCI_Calc_Info
 from pySim.ts_51_011 import EF_SMSP
 from pySim.esim.saip import param_source
