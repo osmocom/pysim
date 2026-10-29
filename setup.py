@@ -45,6 +45,7 @@ setup(
         'pySim.esim':
             [
                 'asn1/rsp/*.asn',
+                'asn1/rsp_v3/*.asn',
                 'asn1/saip/*.asn',
             ],
     },

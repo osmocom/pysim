@@ -25,9 +25,21 @@ from cryptography import x509
 from osmocom.utils import b2h
 from osmocom.tlv import bertlv_parse_one_rawtag, bertlv_return_one_rawtlv
 
-from pySim.esim import compile_asn1_subdir
+from pySim.esim import compile_asn1_subdir, compile_asn1_paths
 
+# SGP.22 v2 RSPDefinitions, used by all RSP code in pySim
 asn1 = compile_asn1_subdir('rsp')
+
+def __getattr__(name):
+    """Module attribute 'asn1_v3' (PEP 562): the SGP.22 v3.1 RSPDefinitions module (Annex H),
+    compiled on first access instead of at import, and kept as a global from then on.
+    v3.1 renames and drops members of the v2 types, so it is kept apart from 'asn1';
+    it imports UICCCapability from the SAIP module."""
+    if name == 'asn1_v3':
+        spec = compile_asn1_paths(['rsp/PKIX1Explicit88.asn', 'rsp/PKIX1Implicit88.asn', 'saip', 'rsp_v3'])
+        globals()[name] = spec
+        return spec
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 class RspSessionState:
     """Encapsulates the state of a RSP session.  It is created during the initiateAuthentication

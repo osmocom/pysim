@@ -1,5 +1,5 @@
 import sys
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 from importlib import resources
 
 class PMO:
@@ -60,6 +60,22 @@ def compile_asn1_subdir(subdir_name:str, codec='der'):
             asn_txt += "\n"
     #else:
         #print(resources.read_text(__name__, 'asn1/rsp.asn'))
+    return asn1tools.compile_string(asn_txt, codec=codec)
+
+def compile_asn1_paths(paths: List[str], codec='der'):
+    """Compile ASN.1 syntax from the given files and subdirs (their .asn files) below asn1/."""
+    import asn1tools
+    asn1_dir = resources.files('pySim.esim').joinpath('asn1')
+    asn_txt = ''
+    for path in paths:
+        entry = asn1_dir.joinpath(path)
+        if entry.is_dir():
+            files = sorted((i for i in entry.iterdir() if i.name.endswith('.asn')), key=lambda i: i.name)
+        else:
+            files = [entry]
+        for i in files:
+            asn_txt += i.read_text(encoding='utf-8')
+            asn_txt += "\n"
     return asn1tools.compile_string(asn_txt, codec=codec)
 
 
