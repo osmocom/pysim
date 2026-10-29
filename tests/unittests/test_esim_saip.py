@@ -47,6 +47,22 @@ class SaipTest(unittest.TestCase):
                 self.assertEqual(reenc_tlv, first_tlv)
 
 
+    def test_rfu_pe(self):
+        """Test that an rfu PE (PE-Dummy, an empty SEQUENCE without header) decodes and re-encodes."""
+        rfu_der = asn1.encode('ProfileElement', ('rfu1', {}))
+        pe = ProfileElement.from_der(rfu_der)
+        self.assertEqual(pe.type, 'rfu1')
+        self.assertEqual(pe.to_der(), rfu_der)
+        # within a sequence: insert it before the trailing PE-End
+        tlvs = []
+        remainder = self.per_input
+        while len(remainder):
+            first_tlv, remainder = bertlv_first_segment(remainder)
+            tlvs.append(first_tlv)
+        der = b''.join(tlvs[:-1]) + rfu_der + tlvs[-1]
+        pes = ProfileElementSequence.from_der(der)
+        self.assertEqual(pes.to_der(), der)
+
     def test_sequence_helpers(self):
         """Verify that the convenience helpers worked as expected."""
         self.assertEqual([x.type for x in self.pes.pe_list], self.expected_pet_list)

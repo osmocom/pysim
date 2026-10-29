@@ -582,7 +582,8 @@ class ProfileElement:
             pe_sequence: back-reference to the PE-Sequence of which we're part of
         """
         self.pe_sequence = pe_sequence
-        if decoded:
+        # PE-Dummy (rfu1..rfu5) decodes to an empty dict; only a new PE gets a header
+        if decoded is not None:
             self.decoded = decoded
         else:
             self.decoded = OrderedDict()
