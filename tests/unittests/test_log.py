@@ -150,5 +150,14 @@ class PySimLogger_Test(unittest.TestCase):
         PySimLogger.setup(self._test_print_callback, {logging.WARN: YELLOW})
         log.warning(TEST_MSG_WARNING)                   # don't leak cmd2 Color StrEnum
 
+    def test_06_nested_loggers(self):
+        # the record also reaches the handlers of the parent loggers
+        printed = []
+        PySimLogger.setup(printed.append)
+        PySimLogger.get(__name__ + '.nested')
+        child = PySimLogger.get(__name__ + '.nested.child')
+        child.warning(TEST_MSG_WARNING)
+        self.assertEqual([m.strip() for m in printed], ["WARNING: " + TEST_MSG_WARNING])
+
 if __name__ == '__main__':
     unittest.main()

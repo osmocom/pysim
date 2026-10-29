@@ -41,6 +41,10 @@ class _PySimLogHandler(logging.Handler):
         self.log_callback = log_callback
 
     def emit(self, record):
+        # a record also reaches the handlers PySimLogger.get() put on its parent loggers
+        if getattr(record, '_pysim_printed', False):
+            return
+        record._pysim_printed = True
         formatted_message = self.format(record)
         self.log_callback(formatted_message, record)
 
