@@ -125,6 +125,19 @@ class SaipTest(unittest.TestCase):
                 pes.append(inst)
                 pes.to_der()
 
+class FileContentTest(unittest.TestCase):
+    def test_fill_file_offset_fits_uint16(self):
+        # fillFileOffset is a UInt16 (SAIP 8.3.2): a longer gap takes several steps
+        template = templates.FileTemplate(0x6f99, 'EF.TEST', 'TR', None, 70000, 5, None, None)
+        body = bytearray(b'\xff' * 70000)
+        body[66000] = 0x00
+        f = File('test', [('fileDescriptor', {})], template)
+        f.body = bytes(body)
+        tuples = f.file_content_to_tuples(optimize=True)
+        offsets = [v for k, v in tuples if k == 'fillFileOffset']
+        self.assertEqual(offsets, [0xffff, 66000 - 0xffff])
+        self.assertEqual(f.file_content_from_tuples(tuples), bytes(body))
+
 class OidTest(unittest.TestCase):
     def test_cmp(self):
         self.assertTrue(oid.OID('1.0') > oid.OID('0.9'))

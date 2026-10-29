@@ -524,7 +524,12 @@ class File:
         for block in non_matching_blocks:
             # fillFileOffset moves the pointer relative to its current position, and
             # fillFileContent leaves it after the last byte written (SAIP section 8.3.5)
-            ret.append(('fillFileOffset', block.a - cur))
+            offset = block.a - cur
+            # fillFileOffset is a UInt16 (SAIP section 8.3.2): a longer move takes several
+            while offset > 0xffff:
+                ret.append(('fillFileOffset', 0xffff))
+                offset -= 0xffff
+            ret.append(('fillFileOffset', offset))
             ret.append(('fillFileContent', self.body[block.a:block.a+block.size]))
             cur = block.a + block.size
         return ret
