@@ -63,6 +63,39 @@ class SaipTest(unittest.TestCase):
         pes = ProfileElementSequence.from_der(der)
         self.assertEqual(pes.to_der(), der)
 
+    def test_sd_key_access_and_counter(self):
+        """Test that keyAccess and keyCounterValue of a security domain key survive a re-encode."""
+        decoded = copy.deepcopy(self.pes.get_pe_for_type('securityDomain').decoded)
+        # KVN 0x01: SCP80 keyset, five byte counter
+        decoded['keyList'][0]['keyAccess'] = b'\x01'
+        decoded['keyList'][0]['keyCounterValue'] = h2b('0000000001')
+        der = asn1.encode('ProfileElement', ('securityDomain', decoded))
+        pe = ProfileElement.from_der(der)
+        self.assertEqual(pe.keys[0].key_access, 1)
+        self.assertEqual(pe.keys[0].key_counter_value, 1)
+        self.assertEqual(pe.to_der(), der)
+
+    def test_sd_key_counter_len(self):
+        """Test that a key counter is encoded with the length of the protocol its KVN is reserved for."""
+        key = self.pes.get_pe_for_type('securityDomain').keys[0]
+        def counter(kvn: int, value: int = 1) -> str:
+            sd_key = SecurityDomainKey(kvn, key.key_identifier, key.key_usage_qualifier, key.key_components,
+                                       key_counter_value=value)
+            return b2h(sd_key.to_saip_dict()['keyCounterValue'])
+        self.assertEqual(counter(0x01), '0000000001') # SCP80
+        self.assertEqual(counter(0x20), '0001') # SCP02
+        self.assertEqual(counter(0xff), '0001') # SCP02
+        self.assertEqual(counter(0x30), '000001') # SCP03
+        # KVN 0x70 is not reserved for SCP80, SCP02 or SCP03; 0x1000000 needs more than 3 bytes
+        for kvn, value in ((0x70, 1), (0x30, 0x1000000)):
+            with self.assertRaises(ValueError):
+                counter(kvn, value)
+        # a decoded counter of another length re-encodes with the length of its KVN
+        decoded = copy.deepcopy(self.pes.get_pe_for_type('securityDomain').decoded)
+        decoded['keyList'][3]['keyCounterValue'] = h2b('0001') # KVN 0x02: SCP80
+        pe = ProfileElement.from_der(asn1.encode('ProfileElement', ('securityDomain', decoded)))
+        self.assertEqual(pe.keys[3].to_saip_dict()['keyCounterValue'], h2b('0000000001'))
+
     def test_sequence_helpers(self):
         """Verify that the convenience helpers worked as expected."""
         self.assertEqual([x.type for x in self.pes.pe_list], self.expected_pet_list)
