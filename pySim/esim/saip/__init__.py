@@ -402,8 +402,8 @@ class File:
         else:
             if not self._template_derived:
                 # FIXME: this shouldn't happen? How can this be? But I see it in real profiles
-                #raise ValueError("%s: from_fileDescriptor without nested 'fileDescriptor'" % self)
-                pass
+                raise ValueError("%s: from_fileDescriptor without nested 'fileDescriptor'" % self)
+                #pass
 
         # proprietaryEFInfo applies to a working EF whether or not the Fcp repeats the
         # fileDescriptor its template already defines (TCA SAIP v3.4.1 section 8.3.3)
@@ -466,7 +466,9 @@ class File:
     def to_gfm(self, current_path) -> List[Tuple]:
         """Generate a list of filePath, createFCP, fillFileContent, fillFileOffset tuples into this instance."""
         ret = []
+        print(f"compare path={self.path} with cur={current_path}")
         if self.path != current_path:
+            print(f"cutted self path={self.path[1:]}")
             rel_path_bytes = self.path_to_gfm(self.path[1:])
             ret.append(('filePath', rel_path_bytes))
         ret.append(('createFCP', self.to_fileDescriptor()))
@@ -981,9 +983,11 @@ class ProfileElementGFM(ProfileElement):
         current_path = None
         self.path = current_path;
         for path_str, file in self.files.items():
+            print(f"PATH_STR={path_str}")
             if not getattr(file, 'path', None):
                 parts = path_str.split('/')
                 file.path = [int(p, 16) for p in parts[:-1]]
+            print(f"file_path={file.path}")
             fmc = file.to_gfm(current_path)
             current_path = file.path
             if fmc:
@@ -2392,12 +2396,19 @@ class ProfileElementSequence:
         TAG_AID = {'class': 1, 'constructed': False, 'tag': 15}
         TAG_LABEL = {'class': 1, 'constructed': False, 'tag': 16}
         tag, length, data, _ = bertlv_parse_one(rec)
+        print("tag=", tag)
         if tag != TAG_APP_TEMPLATE:
             return None, None
         tag, length, aid, rest = bertlv_parse_one(data)
+        print("tag=", tag)
+        print("length=", length)
+        print("aid=", aid)
         if tag != TAG_AID or not rest:
             return None, None
         tag, length, label, rest = bertlv_parse_one(rest)
+        print("tag=", tag)
+        print("length=", length)
+        print("label=", label)
         if tag != TAG_LABEL:
             return aid, None
         return aid, label
@@ -2416,6 +2427,7 @@ class ProfileElementSequence:
                 break
         if not aid:
             return
+        print("jolly", aid)
         # Get MF.
         mf = self.get_pe_for_type('mf')
         if not mf:
@@ -2428,6 +2440,8 @@ class ProfileElementSequence:
             ef_dir.nb_rec = 2
             ef_dir.body = b'\xff' * (ef_dir.rec_len * ef_dir.nb_rec)
         records = [ ef_dir.body[i : i + ef_dir.rec_len] for i in range(0, len(ef_dir.body), ef_dir.rec_len) ]
+        print("records=", records)
+        print("size=", ef_dir.file_size)
         # Search for existing and first empty record; Get existing labels.
         empty_idx = None
         existing_labels = []
@@ -2440,9 +2454,11 @@ class ProfileElementSequence:
             if existing_aid is None:
                 continue
             if existing_aid == aid:
+                print("jolly match!")
                 return
             if existing_label is not None:
                 existing_labels.append(existing_label)
+        print("jolly: no match! labels are:", existing_labels)
         # Create new record entry.
         data = b'\x4f' + bytes([len(aid)]) + aid
         base_name = None
@@ -2451,6 +2467,7 @@ class ProfileElementSequence:
                 base_name = naa.name.capitalize()
                 break
         if base_name:
+            print("Gefundener name:", base_name)
             nr = 1
             label = None
             while True:
@@ -2475,9 +2492,12 @@ class ProfileElementSequence:
             ef_dir.nb_rec += 1
         # Write to file and update pe.
         ef_dir.body = b''.join(records)
+        print("jolly: new body", ef_dir.body)
+        print("jolly: new size", ef_dir.file_size)
         mf.file2pe(mf.files['ef-dir'])
 
     def _remove_aids_from_ef_dir(self, aids: List[bytes]):
+        print("jolly: das sind unsere aids:", aids)
         # Get MF.
         mf = self.get_pe_for_type('mf')
         if not mf:
@@ -2493,9 +2513,12 @@ class ProfileElementSequence:
                 continue
             existing_aid, _ = self._parse_ef_dir(rec)
             if existing_aid in aids:
+                print("jolly: found", existing_aid)
                 records[idx] = b'\xff'*len(rec)
         # Store erased record.
         ef_dir.body = b''.join(records)
+        print("jolly: new body", ef_dir.body)
+        print("jolly: new size", ef_dir.file_size)
         mf.file2pe(mf.files['ef-dir'])
 
 

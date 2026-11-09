@@ -191,6 +191,54 @@ class SaipTest(unittest.TestCase):
                 pes.append(inst)
                 pes.to_der()
 
+    """
+    def test_file_descriptor_roundtrip(self):
+        " ""Test that to_fileDescriptor and from_fileDescriptor converting lossless and efficient."" "
+        for pe_type in ['mf', 'usim', 'telecom']:
+            pe = self.pes.get_pe_for_type(pe_type)
+            if not pe:
+                continue
+
+            for file_name, file_data in pe.decoded.items():
+                if not isinstance(file_data, list):
+                    continue
+                try:
+                    file_dict = dict(file_data)
+                except (ValueError, TypeError):
+                    continue
+                if 'fileDescriptor' not in file_dict:
+                    continue
+                raw_descriptor = file_dict['fileDescriptor']
+                print(f"gefundenes file: file_name={file_name} file_data={file_data}")
+
+                with self.subTest(pe_type=pe_type, file_name=file_name):
+                    # 1. Instanziere die pySim File-Klasse für diese Datei
+                    # (Passe den Import/Aufruf an deine genaue File-Klasse an)
+                    file_obj = File(file_name, file_data)
+                    print(f"file_obj={file_obj}")
+                    from pprint import pprint
+                    pprint(vars(file_obj))
+
+                    # 2. Teste to_fileDescriptor
+                    descriptor = file_obj.to_fileDescriptor()
+                    self.assertIsNotNone(descriptor, f"Descriptor für {file_name} durfte nicht None sein")
+                    print(f"regenerierter descriptor: descriptor={descriptor}")
+
+                    # 3. Teste from_fileDescriptor (Roundtrip-Check)
+                    # Wir erstellen ein neues, leeres File-Objekt und füttern es mit dem gerade generierten Descriptor
+                    new_file_obj = File(file_name, [])
+                    new_file_obj.from_fileDescriptor(descriptor)
+
+                    # Überprüfe, ob die wichtigsten Eigenschaften identisch rekonstruiert wurden
+                    # (Passe die Attribute an, je nachdem was deine Klasse intern speichert, z.B. file_id, size, etc.)
+                    if hasattr(file_obj, 'file_id'):
+                        self.assertEqual(new_file_obj.file_id, file_obj.file_id)
+                    if hasattr(file_obj, 'size'):
+                        self.assertEqual(new_file_obj.size, file_obj.size)
+
+            break
+    """
+
     def test_gfm_pe2files_files2pe(self):
         """Test that pe2files work and also files2pe produces the same profile element content."""
         self.maxDiff = None
@@ -201,6 +249,12 @@ class SaipTest(unittest.TestCase):
             self.assertIsNotNone(gfm)
             orig_decoded = copy.deepcopy(gfm.decoded)
             gfm.files2pe()
+            print("Original:");
+            pp(orig_decoded, indent=2, sort_dicts=False)
+            print("Reencoded:");
+            pp(gfm.decoded, indent=2, sort_dicts=False)
+
+            #self.assertEqual(orig_decoded, gfm.decoded)
             orig_cmds = orig_decoded['fileManagementCMD']
             new_cmds = gfm.decoded['fileManagementCMD']
             self.assertEqual(len(orig_cmds), len(new_cmds))
