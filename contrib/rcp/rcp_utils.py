@@ -34,6 +34,7 @@ from pathlib import Path
 from jsonschema import validate
 from pySim.log import PySimLogger
 from ssl import SSLContext
+from cryptography import x509
 
 log = PySimLogger.get(Path(__file__).stem)
 
@@ -73,7 +74,7 @@ def pytype_to_type(dict_in: dict) -> dict:
             dict_out.pop('pytype')
             dict_out['type'] = int
         else:
-            raise ValueError("invalid type in command argument specification: %s" % arg['spec']['type'])
+            raise ValueError("invalid type in command argument specification: %s" % dict_out['pytype'])
     return dict_out
 
 def load_json_schema(filename: str) -> dict:
@@ -86,11 +87,25 @@ def load_json_schema(filename: str) -> dict:
         backtrace("JSON schema load")
         sys.exit(1)
 
-def load_server_cert(what: str, filename: str) -> SSLContext:
+def load_server_cert(what: str, filename_cert: str, filename_ca_cert: str) -> SSLContext:
     """Load an SSL/TLS server certificate"""
-    log.debug("loading SSL/TLS server certificate (%s): %s", what, filename)
+    log.info("loading SSL/TLS server certificate (%s): %s", what, filename_cert)
+
+    # Perform a basic certificate check to avoid invalid CA certificate / SSL/TLS certificate configurations
+    with open(filename_ca_cert, "rb") as f:
+        ca_cert = x509.load_pem_x509_certificate(f.read())
+    with open(filename_cert, "rb") as f:
+        cert = x509.load_pem_x509_certificate(f.read())
+    try:
+        cert.verify_directly_issued_by(ca_cert)
+    except Exception as e:
+        log.error("SSL/TLS certificate invalid, check CA certificate (%s): %s", what, filename_ca_cert)
+        backtrace("SSL/TLS server certificate load")
+        sys.exit(1)
+
+    # Create the SSL context and return it
     ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    ssl_context.load_cert_chain(filename)
+    ssl_context.load_cert_chain(filename_cert)
     return ssl_context
 
 def load_ca_cert(what: str, filename: str) -> SSLContext:
@@ -187,7 +202,7 @@ class FlightRecorder(abc.ABC):
             return report
 
     @abc.abstractmethod
-    def report(self):
+    async def report(self):
         """
         To be implemented in the derived class. Shall call _gen_report and then send the report to an external
         monitoring entity.

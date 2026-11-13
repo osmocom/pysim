@@ -27,15 +27,20 @@
                                 "type": "object",
                                 "properties": {
                                     "key": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "contentEncoding": "quoted-printable",
+                                        "maxLength": 255
                                     },
                                     "value": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "contentEncoding": "quoted-printable",
+                                        "maxLength": 1024
                                     }
                                 },
                                 "required": [ "key", "value" ],
                                 "additionalProperties": false
-                            }
+                            },
+                            "maxItems": 255
                         },
                         "euicc" : {
                             "type": "array",
@@ -43,15 +48,20 @@
                                 "type": "object",
                                 "properties": {
                                     "key": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "contentEncoding": "quoted-printable",
+                                        "maxLength": 255
                                     },
                                     "value": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "contentEncoding": "quoted-printable",
+                                        "maxLength": 1024
                                     }
                                 },
                                 "required": [ "key", "value" ],
                                 "additionalProperties": false
-                            }
+                            },
+                            "maxItems": 255
                         }
                     },
                     "oneOf": [

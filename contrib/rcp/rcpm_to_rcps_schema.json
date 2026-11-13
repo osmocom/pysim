@@ -7,7 +7,9 @@
             "type": "object",
             "properties": {
                 "protocol": {
-                    "type": "string"
+                    "type": "string",
+                    "contentEncoding": "quoted-printable",
+                    "maxLength": 255
                 }
             },
             "required": [ "protocol" ],
@@ -17,7 +19,9 @@
             "type": "object",
             "properties": {
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "contentEncoding": "quoted-printable",
+                    "maxLength": 255
                 },
                 "cmd_descr": {
                     "type": "array",
@@ -25,10 +29,14 @@
                         "type": "object",
                         "properties": {
                             "name": {
-                                "type": "string"
+                                "type": "string",
+                                "contentEncoding": "quoted-printable",
+                                "maxLength": 255
                             },
                             "help": {
-                                "type": "string"
+                                "type": "string",
+                                "contentEncoding": "quoted-printable",
+                                "maxLength": 512
                             },
                             "args": {
                                 "type": "array",
@@ -36,7 +44,9 @@
                                     "type": "object",
                                     "properties": {
                                         "name": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "contentEncoding": "quoted-printable",
+                                            "maxLength": 255
                                         },
                                         "spec": {
                                             "type": "object",
@@ -45,16 +55,31 @@
                                                     "type": "boolean"
                                                 },
                                                 "help": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "contentEncoding": "quoted-printable",
+                                                        "maxLength": 255
                                                 },
                                                 "action": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "contentEncoding": "quoted-printable",
+                                                        "maxLength": 255
                                                 },
                                                 "pytype": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "contentEncoding": "quoted-printable",
+                                                        "maxLength": 255
                                                 },
-                                                "default" : {
-                                                    "type": ["string", "integer"]
+                                                "default": {
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "string",
+                                                            "contentEncoding": "quoted-printable",
+                                                                "maxLength": 255
+                                                        },
+                                                        {
+                                                            "type": "integer"
+                                                        }
+                                                    ]
                                                 }
                                             },
                                             "required": [ "help" ],
@@ -71,14 +96,20 @@
                                     "uicc" : {
                                         "type": "array",
                                         "items": {
-                                            "type": "string"
-                                        }
+                                            "type": "string",
+                                            "contentEncoding": "quoted-printable",
+                                                "maxLength": 255
+                                        },
+                                        "maxItems": 255
                                     },
                                     "euicc" : {
                                         "type": "array",
                                         "items": {
-                                            "type": "string"
-                                        }
+                                            "type": "string",
+                                            "contentEncoding": "quoted-printable",
+                                                "maxLength": 255
+                                        },
+                                        "maxItems": 255
                                     }
                                 },
                                 "oneOf": [
@@ -109,7 +140,9 @@
                     }
                 },
                 "addr": {
-                    "type": "string"
+                    "type": "string",
+                    "contentEncoding": "quoted-printable",
+                    "maxLength": 255
                 },
                 "port": {
                     "type": "integer"

@@ -231,7 +231,7 @@ class RcpmCmdSrvConnHdlr(SrvSyncConnHdlr):
     """
 
     def __init__(self, module: RcpModule, field_cryptor: CardKeyFieldCryptor, *args, **kwargs):
-        SrvSyncConnHdlr.__init__(self, *args, *kwargs)
+        SrvSyncConnHdlr.__init__(self, *args, **kwargs)
         self.module = module
         self.crypt = field_cryptor
 
@@ -376,7 +376,7 @@ def rcpm_run_module(opts: Namespace, module: RcpModule, *args, **kwargs):
     log.debug("Main process ID: %d", os.getpid())
 
     # Load SSL/TLS certificates.
-    rcpm_cmd_ssl_context = load_server_cert("RCPM Command Server", opts.rcpm_cmd_server_cert)
+    rcpm_cmd_ssl_context = load_server_cert("RCPM Command Server", opts.rcpm_cmd_server_cert, opts.rcps_ca_cert)
     ssl_context = load_ca_cert("RCPM Server Client", opts.rcps_ca_cert)
 
     # Load JSON schema for message validation between RCP Server and RCP Module (this process)
@@ -393,7 +393,7 @@ def rcpm_run_module(opts: Namespace, module: RcpModule, *args, **kwargs):
         json_validator = JsonValidator(rcps_to_rcpmcs_schema, rcpmcs_to_rcps_schema)
         transport_keys = CardKeyFieldCryptor.transport_keys_from_opts(opts)
         field_cryptor = CardKeyFieldCryptor(transport_keys)
-        hdlr = RcpmCmdSrvConnHdlr(module(*args, *kwargs), field_cryptor, websocket, RCP_SERVER_TIMEOUT, json_validator)
+        hdlr = RcpmCmdSrvConnHdlr(module(*args, **kwargs), field_cryptor, websocket, RCP_SERVER_TIMEOUT, json_validator)
         hdlr.procedure()
         hdlr.close()
 

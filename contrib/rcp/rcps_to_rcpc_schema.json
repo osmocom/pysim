@@ -7,13 +7,19 @@
             "type": "object",
             "properties": {
                 "software": {
-                    "type": "string"
+                    "type": "string",
+                    "contentEncoding": "quoted-printable",
+                           "maxLength": 255
                 },
                 "protocol": {
-                    "type": "string"
+                    "type": "string",
+                    "contentEncoding": "quoted-printable",
+                           "maxLength": 255
                 },
                 "info": {
-                    "type": "string"
+                    "type": "string",
+                    "contentEncoding": "quoted-printable",
+                           "maxLength": 255
                 }
             },
             "required": [ "software",  "protocol" ],
@@ -28,7 +34,8 @@
                         "type": "object",
                         "properties": {
                             "name": {
-                                "type": "string"
+                                "type": "string",
+                                "contentEncoding": "quoted-printable"
                             },
                             "cmd_descr": {
                                 "type": "array",
@@ -36,10 +43,12 @@
                                     "type": "object",
                                     "properties": {
                                         "name": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "contentEncoding": "quoted-printable"
                                         },
                                         "help": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "contentEncoding": "quoted-printable"
                                         },
                                         "args": {
                                             "type": "array",
@@ -47,7 +56,8 @@
                                                 "type": "object",
                                                 "properties": {
                                                     "name": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "contentEncoding": "quoted-printable"
                                                     },
                                                     "spec": {
                                                         "type": "object",
@@ -56,16 +66,27 @@
                                                                 "type": "boolean"
                                                             },
                                                             "help": {
-                                                                "type": "string"
+                                                                "type": "string",
+                                                                "contentEncoding": "quoted-printable"
                                                             },
                                                             "action": {
-                                                                "type": "string"
+                                                                "type": "string",
+                                                                "contentEncoding": "quoted-printable"
                                                             },
                                                             "pytype": {
-                                                                "type": "string"
+                                                                "type": "string",
+                                                                "contentEncoding": "quoted-printable"
                                                             },
                                                             "default" : {
-                                                                "type": ["string", "integer"]
+                                                                "anyOf": [
+                                                                    {
+                                                                        "type": "string",
+                                                                        "contentEncoding": "quoted-printable"
+                                                                    },
+                                                                    {
+                                                                        "type": "integer"
+                                                                    }
+                                                                ]
                                                             }
                                                         },
                                                         "required": [ "help" ],
@@ -94,7 +115,9 @@
             "type": "object",
             "properties": {
                 "print": {
-                    "type": "string"
+                    "type": "string",
+                    "contentEncoding": "quoted-printable",
+                           "maxLength": 255
                 },
                 "reset": {
                     "type": "null"

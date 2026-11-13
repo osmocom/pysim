@@ -7,7 +7,9 @@
             "type": "object",
             "properties": {
                 "protocol": {
-                    "type": "string"
+                    "type": "string",
+                    "contentEncoding": "quoted-printable",
+                    "maxLength": 255
                 }
             },
             "required": [ "protocol" ],

@@ -24,7 +24,7 @@ import argparse
 import asyncio
 import logging
 import time
-import requests
+import aiohttp
 import json
 import websockets
 from osmocom.utils import Hexstr
@@ -75,7 +75,7 @@ option_parser.add_argument("--rcpc-server-port", help="Local TCP port to bind RC
 option_parser.add_argument("--rcpc-server-cert", help="SSL/TLS Certificate of the RCP-Client-Server",
                            required=True)
 option_parser.add_argument("--rcpc-request-limit", help="number of RCP Client requests per minute",
-                           default=600)
+                           type=int, default=600)
 option_parser.add_argument("--rcpm-server-addr", help="Local Host/IP to bind RCP-Module-Server to",
                            required=True)
 option_parser.add_argument("--rcpm-server-port", help="Local TCP port to bind RCP-Module-Server to",
@@ -138,7 +138,7 @@ class ModuleRuntimeState:
         for descr in self.cmd_descr:
             if self.name + "_" + descr['name'] == cmd:
                 return descr
-        raise ValueError("command %s not found in command description %s" % (cmd_name, str(self.cmd_descr)))
+        raise ValueError("command %s not found in command description %s" % (cmd, str(self.cmd_descr)))
 
     def __str__(self) -> str:
         return self.name
@@ -207,17 +207,21 @@ class RuntimeState:
         return []
 
     def module_find(self, suitable_for:dict, cmd:str) -> ModuleRuntimeState:
-        modules = self.modules_find(suitable_for)
-        for m in modules:
-            module_name = m['name']
-            cmd_descr = m['cmd_descr']
-            for c in cmd_descr:
-                cmd_name = c['name']
-                if module_name + "_" + cmd_name == cmd:
-                    break
-        for module_runtime_state in self.module_runtime_states:
-            if module_runtime_state.name == module_name:
-                return module_runtime_state
+        def find_module_name():
+            modules = self.modules_find(suitable_for)
+            for m in modules:
+                module_name = m['name']
+                cmd_descr = m['cmd_descr']
+                for c in cmd_descr:
+                    cmd_name = c['name']
+                    if module_name + "_" + cmd_name == cmd:
+                        return module_name
+            return None
+        module_name = find_module_name()
+        if module_name:
+            for module_runtime_state in self.module_runtime_states:
+                if module_runtime_state.name == module_name:
+                    return module_runtime_state
         # Normally we should find the RCP module. When this method is called, we have already called modules_find
         # before because we had to return the command descriptions to the client. If we cannot find the RCP module
         # now, the module have been disconnected or the client somehow called a command that does not exist. In any
@@ -393,8 +397,12 @@ class RcpcSrvConnHdlr(SrvConnHdlr):
                 keys['euicc'] = key_value_pairs_from_dict(keys_euicc, keylabel='key', valuelabel='value')
             command['keys'] = keys
 
-        # Resetting card to ensure the card is in a defined state
-        await self._reset()
+        # Resetting card to ensure the card is in a defined state. (We also check the ATR to make sure it is the same
+        # as originally negotiated. This is just an additional sanity check, technically it is not necessary, but it
+        # is for free since we have both ATR values already in memory.)
+        atr = await self._reset()
+        if atr != self.suitable_for['atr']:
+            raise ValueError("Unexpected ATR, expecting: %s, got %s" % (atr, self.suitable_for['atr']))
 
         # Create a dedicated connection to the RCP Module and proxy the messages between RCP Client and RCP Module.
         module_uri = "wss://%s:%d" % (module.addr, module.port)
@@ -481,6 +489,10 @@ class RcpmSrvConnHdlr(SrvConnHdlr):
         runtime_state.module_remove(self.websocket)
         super().__del__()
 
+    async def close(self):
+        await super().close()
+        runtime_state.module_remove(self.websocket)
+
 class RateLimiter():
     """
     Rate limiter: A rate limiter can be used to limit the amount of requests
@@ -561,15 +573,17 @@ class OpenObserveFlightRecorder(FlightRecorder):
     """Concrete implementation of a "flight recorder" using OpenObserve as a monitoring entity."""
 
     def __init__(self, url: str, email: str, token: str):
-        self.service_auth = requests.auth.HTTPBasicAuth(email, token)
+        self.service_auth = aiohttp.encode_basic_auth(email, password=token, encoding='utf-8')
         self.url = url
         super().__init__()
 
-    def report(self):
+    async def report(self):
         report_json = json.dumps(self._gen_report())
-        rc = requests.post(self.url, auth=self.service_auth, data=report_json)
-        if rc.status_code != 200:
-            log.error("POST request to OpenObserve failed: %s", str(rc))
+        headers={"Authorization": self.service_auth}
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.post(self.url, data=report_json) as response:
+                if response.status != 200:
+                    log.error("POST request to OpenObserve failed: %s", str(response))
 
 async def rcpc_conn_hdlr(websocket: ServerConnection):
     """
@@ -585,6 +599,7 @@ async def rcpc_conn_hdlr(websocket: ServerConnection):
     # Immediately close the connection in case the rate limit has been exceeded.
     if rate_limiter.limit(websocket.remote_address[0]):
         await websocket.close(code=1008) # Policy Violation
+        return
 
     # Create flight-recorder object
     flight_recorder = None
@@ -608,7 +623,7 @@ async def rcpc_conn_hdlr(websocket: ServerConnection):
 
     # Generate report from flight-recorder
     if flight_recorder:
-        flight_recorder.report()
+        await flight_recorder.report()
 
 async def rcpm_conn_hdlr(websocket: ServerConnection):
     """
@@ -630,8 +645,8 @@ if __name__ == '__main__':
     PySimLogger.setup(print, {logging.WARN: "\033[33m", logging.DEBUG: "\033[90m"}, opts.verbose)
 
     # Load SSL/TLS certificates
-    rcpc_ssl_context = load_server_cert("RCP Client Server", opts.rcpc_server_cert)
-    rcpm_ssl_context = load_server_cert("RCP Module Server", opts.rcpm_server_cert)
+    rcpc_ssl_context = load_server_cert("RCP Client Server", opts.rcpc_server_cert, opts.rcpm_module_ca_cert)
+    rcpm_ssl_context = load_server_cert("RCP Module Server", opts.rcpm_server_cert, opts.rcpm_module_ca_cert)
     rcpm_ca_ssl_context = load_ca_cert("RCP Module Command Server Client", opts.rcpm_module_ca_cert)
 
     # Init card key provider for automatic card key retrieval

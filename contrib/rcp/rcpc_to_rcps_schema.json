@@ -7,10 +7,12 @@
             "type": "object",
             "properties": {
                 "software": {
-                    "type": "string"
+                    "type": "string",
+                    "contentEncoding": "quoted-printable"
                 },
                 "protocol": {
-                    "type": "string"
+                    "type": "string",
+                    "contentEncoding": "quoted-printable"
                 }
             },
             "required": [ "software",  "protocol" ],
@@ -27,9 +29,7 @@
                             "pattern": "^[0-9A-F]{0,66}$"
                         }
                     },
-                    "oneOf": [
-                        { "required": [ "atr" ] }
-                    ],
+                    "required": [ "atr" ],
                     "additionalProperties": false
                 }
             },

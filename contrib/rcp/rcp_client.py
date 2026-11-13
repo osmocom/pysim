@@ -148,6 +148,8 @@ async def run_rcp_session(opts, sl, ssl_context) -> int:
     log.info("Detected Card with ATR: %s" % card_atr)
 
     # Connect to RCP server
+    if not opts.uri.startswith("wss://"):
+        raise ValueError("Refusing to connect to insecure RCP Server (no SSL/TLS)")
     log.info("RCP Server URI: %s" % opts.uri)
     async with websockets.connect(opts.uri, ssl=ssl_context) as websocket:
         rcpc_to_rcps_schema = load_json_schema(os.path.join(Path(__file__).parent.resolve(), "rcpc_to_rcps_schema.json"))
