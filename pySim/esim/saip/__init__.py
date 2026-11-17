@@ -440,7 +440,9 @@ class File:
     def to_gfm(self, current_path) -> List[Tuple]:
         """Generate a list of filePath, createFCP, fillFileContent, fillFileOffset tuples into this instance."""
         ret = []
+        print(f"compare path={self.path} with cur={current_path}")
         if self.path != current_path:
+            print(f"cutted self path={self.path[1:]}")
             rel_path_bytes = self.path_to_gfm(self.path[1:])
             ret.append(('filePath', rel_path_bytes))
         ret.append(('createFCP', self.to_fileDescriptor()))
@@ -544,6 +546,7 @@ class File:
                 del non_matching_blocks[i + 1]
             else:
                 i += 1
+        print("non matching:", non_matching_blocks)
         ret = []
         cur = 0
         for block in non_matching_blocks:
@@ -894,6 +897,8 @@ class ProfileElementGFM(ProfileElement):
             else:
                 parent = self.pe_sequence.mf.lookup_by_fidpath(path[:-1])
 
+            print(f"parent.fid_path={parent.fid_path}")
+            print(f"file.fid={file.fid}")
             path_str = self.path_str(parent.fid_path + [file.fid])
         else:
             path_str = str(path)
@@ -947,6 +952,11 @@ class ProfileElementGFM(ProfileElement):
         current_path = None
         self.path = current_path;
         for path_str, file in sorted(self.files.items()):
+            print(f"PATH_STR={path_str}")
+            if not getattr(file, 'path', None):
+                parts = path_str.split('/')
+                file.path = [int(p, 16) for p in parts[:-1]]
+            print(f"file_path={file.path}")
             fmc = file.to_gfm(current_path)
             current_path = file.path
             if fmc:
