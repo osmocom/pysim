@@ -235,6 +235,9 @@ class BspInstance:
         TAG_LEN = 1
         length_len = len(bertlv_encode_len(MAX_SEGMENT_SIZE))
         self.max_payload_size = MAX_SEGMENT_SIZE - TAG_LEN - length_len - self.m_algo.l_mac
+        # SGP.22 v3.1 2.5.3 NOTE: the '80' padding takes at least one byte of the ciphertext
+        blocksize = self.c_algo.blocksize
+        self.max_encrypted_payload_size = self.max_payload_size // blocksize * blocksize - 1
 
     @classmethod
     def from_kdf(cls, shared_secret: bytes, key_type: int, key_length: int, host_id: bytes, eid: bytes):
@@ -245,7 +248,7 @@ class BspInstance:
     def encrypt_and_mac_one(self, tag: int, plaintext:bytes) -> bytes:
         """Encrypt + MAC a single plaintext TLV. Returns the protected ciphertext."""
         assert tag <= 255
-        assert len(plaintext) <= self.max_payload_size
+        assert len(plaintext) <= self.max_encrypted_payload_size
 
         # DEBUG: Show what we're processing
         logger.debug(f"BSP_DEBUG: encrypt_and_mac_one(tag=0x{tag:02x}, plaintext_len={len(plaintext)})")
@@ -268,12 +271,12 @@ class BspInstance:
         result = []
         while len(remainder):
             remaining_len = len(remainder)
-            if remaining_len < self.max_payload_size:
+            if remaining_len < self.max_encrypted_payload_size:
                 segment_len = remaining_len
                 segment = remainder
                 remainder = b''
             else:
-                segment_len = self.max_payload_size
+                segment_len = self.max_encrypted_payload_size
                 segment = remainder[0:segment_len]
                 remainder = remainder[segment_len:]
             result.append(self.encrypt_and_mac_one(tag, segment))

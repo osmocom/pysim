@@ -94,5 +94,36 @@ class TestBSPdecode(unittest.TestCase):
         self.assertEqual(plain_upp, base64.b64decode(original_upp))
 
 
+class TestBSPsegmentSize(unittest.TestCase):
+    """SGP.22 v3.1 2.5.3: a segment has at most 1020 bytes, including tag, length field and MAC."""
+
+    @staticmethod
+    def _pair():
+        keys = (h2b('00112233445566778899aabbccddeeff'), h2b('ffeeddccbbaa99887766554433221100'), bytes(16))
+        return BspInstance(*keys), BspInstance(*keys)
+
+    def test_encrypted_segments(self):
+        for length in (1, 1006, 1007, 1008, 1009, 2014, 2015, 5000):
+            tx, rx = self._pair()
+            plaintext = bytes(i % 251 for i in range(length))
+            segments = tx.encrypt_and_mac(0x86, plaintext)
+            self.assertEqual(len(segments), -(-length // 1007))
+            for segment in segments:
+                self.assertLessEqual(len(segment), MAX_SEGMENT_SIZE)
+            self.assertEqual(rx.demac_and_decrypt(segments), plaintext)
+
+    def test_full_encrypted_segment(self):
+        tx, _ = self._pair()
+        self.assertEqual(tx.max_encrypted_payload_size, 1007)
+        self.assertEqual(len(tx.encrypt_and_mac_one(0x86, bytes(1007))), MAX_SEGMENT_SIZE)
+
+    def test_mac_only_segments(self):
+        tx, rx = self._pair()
+        plaintext = bytes(i % 251 for i in range(2500))
+        segments = tx.mac_only(0x88, plaintext)
+        self.assertEqual([len(x) for x in segments], [MAX_SEGMENT_SIZE, MAX_SEGMENT_SIZE, 496])
+        self.assertEqual(rx.demac_only(segments), plaintext)
+
+
 if __name__ == "__main__":
     unittest.main()
