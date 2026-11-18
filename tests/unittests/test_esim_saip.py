@@ -22,6 +22,7 @@ from osmocom.utils import h2b, b2h
 
 from pySim.esim.saip import *
 from pySim.esim.saip import personalization
+from pySim.global_platform import KeyUsageQualifier
 from pprint import pprint as pp
 
 
@@ -153,6 +154,22 @@ class SaipTest(unittest.TestCase):
         get_val2 = tuple(cls.get_values_from_pes(pes2))
         print(f'{get_val2=} {set_val=}')
         self.assertEqual(get_val2, ({cls.name: set_val},))
+
+    def test_sd_key_personalization_creates_usage_qualifier(self):
+        """helper created key qualifier must match"""
+        pes = ProfileElementSequence()
+        pes.append(ProfileElementHeader())
+        pes.append(ProfileElementSD())
+        pes.append(ProfileElementEnd())
+
+        cls = personalization.SdKeyScp02Kvn20AesEnc
+        cls('00112233445566778899aabbccddeeff').apply(pes)
+        key = pes.get_pe_for_type('securityDomain').find_key(0x20, 0x01)
+        self.assertEqual(KeyUsageQualifier.build(key.key_usage_qualifier), b'\x18')
+
+        round_trip = ProfileElementSequence.from_der(pes.to_der())
+        key = round_trip.get_pe_for_type('securityDomain').find_key(0x20, 0x01)
+        self.assertEqual(KeyUsageQualifier.build(key.key_usage_qualifier), b'\x18')
 
     def test_constructor_encode(self):
         """Test that DER-encoding of PE created by "empty" constructor works without raising exception."""
