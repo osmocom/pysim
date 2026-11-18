@@ -17,6 +17,7 @@
 
 import zlib
 import abc
+import logging
 import struct
 from typing import Optional, Tuple, List, Union
 from construct import ConstructError, Enum, Int8ub, Int16ub, Struct, BitsInteger, BitStruct
@@ -24,9 +25,12 @@ from construct import Flag, Padding, Switch, this, PrefixedArray, GreedyRange
 from construct import Const, Prefixed, Select, Construct, SizeofError, stream_read, stream_write
 from osmocom.construct import *
 from osmocom.tlv import bertlv_encode_len, bertlv_parse_len
-from osmocom.utils import b2h
+from osmocom.utils import b2h, h2b
 
 from pySim.sms import UserDataHeader
+from pySim.utils import is_hexstr
+
+logger = logging.getLogger(__name__)
 from pySim.cat import BearerDescription, BufferSize, UiccTransportLevel, OtherAddress, ChannelData
 
 # ETS TS 102 225 gives the general command structure and the dialects for CAT_TP, TCP/IP and HTTPS
@@ -580,6 +584,50 @@ class OtaAlgoAuthAES(OtaAlgoAuth):
         ciph = cmac.digest()
         return ciph[len(ciph) - 8:]
 
+
+
+def argparse_add_ota_args(parser, sms: bool = False):
+    """SCP80 key set and SPI options of the OTA tools, --por-in-submit only with sms"""
+    g = parser.add_argument_group('OTA security, TS 102 225')
+    g.add_argument('--algo-crypt', choices=[c.enum_name for c in OtaAlgoCrypt.__subclasses__()],
+                   default='triple_des_cbc2', help='OTA crypt algorithm')
+    g.add_argument('--algo-auth', choices=[c.enum_name for c in OtaAlgoAuth.__subclasses__()],
+                   default='triple_des_cbc2', help='OTA auth algorithm')
+    g.add_argument('--kic', required=True, type=is_hexstr, help='OTA key (KIC)')
+    g.add_argument('--kic-idx', default=1, type=int, help='OTA key index (KIC)')
+    g.add_argument('--kid', required=True, type=is_hexstr, help='OTA key (KID)')
+    g.add_argument('--kid-idx', default=1, type=int, help='OTA key index (KID)')
+    g.add_argument('--cntr', default=0, type=int, help='replay protection counter')
+    g.add_argument('--tar', required=True, type=is_hexstr, help='Toolkit Application Reference')
+    g.add_argument('--cntr-req', choices=CNTR_REQ.decmapping.values(), default='no_counter',
+                   help='Counter requirement')
+    g.add_argument('--no-ciphering', action='store_true', default=False, help='Disable ciphering')
+    g.add_argument('--rc-cc-ds', choices=RC_CC_DS.decmapping.values(), default='cc',
+                   help='message check (rc=redundency check, cc=crypt. checksum, ds=digital signature)')
+    if sms:
+        g.add_argument('--por-in-submit', action='store_true', default=False,
+                       help='require PoR to be sent via SMS-SUBMIT')
+    g.add_argument('--por-no-ciphering', action='store_true', default=False, help='Disable ciphering (PoR)')
+    g.add_argument('--por-rc-cc-ds', choices=RC_CC_DS.decmapping.values(), default='cc',
+                   help='PoR check (rc=redundency check, cc=crypt. checksum, ds=digital signature)')
+    g.add_argument('--por-req', choices=POR_REQ.decmapping.values(), default='por_required',
+                   help='Proof of Receipt requirements')
+
+def ota_keyset_from_args(args) -> 'OtaKeyset':
+    if args.kic_idx != args.kid_idx:
+        logger.warning('KIC index (%s) and KID index (%s) differ, the card should reject that',
+                       args.kic_idx, args.kid_idx)
+    return OtaKeyset(algo_crypt=args.algo_crypt, kic_idx=args.kic_idx, kic=h2b(args.kic),
+                     algo_auth=args.algo_auth, kid_idx=args.kid_idx, kid=h2b(args.kid), cntr=args.cntr)
+
+def ota_spi_from_args(args) -> dict:
+    return {'counter': args.cntr_req,
+            'ciphering': not args.no_ciphering,
+            'rc_cc_ds': args.rc_cc_ds,
+            'por_in_submit': getattr(args, 'por_in_submit', False),
+            'por_shall_be_ciphered': not args.por_no_ciphering,
+            'por_rc_cc_ds': args.por_rc_cc_ds,
+            'por': args.por_req}
 
 
 class OtaDialectSms(OtaDialect):
