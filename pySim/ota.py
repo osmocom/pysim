@@ -23,7 +23,7 @@ from construct import ConstructError, Enum, Int8ub, Int16ub, Struct, BitsInteger
 from construct import Flag, Padding, Switch, this, PrefixedArray, GreedyRange
 from construct import Const, Prefixed, Select, Construct, SizeofError, stream_read, stream_write
 from osmocom.construct import *
-from osmocom.tlv import bertlv_encode_len
+from osmocom.tlv import bertlv_encode_len, bertlv_parse_len
 from osmocom.utils import b2h
 
 from pySim.sms import UserDataHeader
@@ -734,4 +734,163 @@ class OtaDialectSms(OtaDialect):
                 dec = CompactRemoteResp.parse(res['secured_data'])
         else:
             dec = None
+        return (res, dec)
+
+
+class OtaDialectCatTp(OtaDialect):
+    """TS 102 225 section 6 (CAT_TP) and 7 (TCP/IP), which are identical on the packet level:
+    CPI '01' / RPI '02', CHI and RHI absent, CPL/CHL/RPL/RHL are BER lengths, and unlike SMS
+    the CPI+CPL+CHL (RPI+RPL+RHL) are part of the RC/CC/DS. One packet per SDU."""
+    CPI = 0x01                  # TS 102 225 section 6
+    RPI = 0x02                  # TS 102 225 section 6
+    IDENTIFICATION_PI = 0x03    # TS 102 225 table 6, TCP/IP only
+
+    # field lengths in octets, TS 102 225 table 1 (command packet) and table 3 (response packet)
+    SPI_LEN = 2
+    KIC_LEN = 1
+    KID_LEN = 1
+    TAR_LEN = 3
+    CNTR_LEN = 5
+    PCNTR_LEN = 1
+    STATUS_LEN = 1
+    CMD_HDR_LEN = SPI_LEN + KIC_LEN + KID_LEN + TAR_LEN         # between CHL and CNTR
+    CNTR_PCNTR_LEN = CNTR_LEN + PCNTR_LEN
+    RESP_HDR_LEN = TAR_LEN + CNTR_LEN + PCNTR_LEN + STATUS_LEN  # between RHL and RC/CC/DS
+
+    hdr_construct = Struct('spi'/SPI, 'kic'/KIC, 'kid'/KID_CC, 'tar'/Bytes(TAR_LEN))
+    ResponseHead = Struct('tar'/Bytes(TAR_LEN), 'cntr'/Bytes(CNTR_LEN), 'pcntr'/Int8ub,
+                          'response_status'/ResponseStatus)
+
+    @staticmethod
+    def _sig(otak: OtaKeyset, rc_cc_ds: str, data: bytes) -> bytes:
+        if rc_cc_ds == 'cc':
+            return otak.auth.sign(data)
+        if rc_cc_ds == 'rc':
+            return (zlib.crc32(data) & 0xffffffff).to_bytes(4, 'big')
+        if rc_cc_ds == 'no_rc_cc_ds':
+            return b''
+        raise ValueError("Invalid rc_cc_ds: %s" % rc_cc_ds)
+
+    @staticmethod
+    def _check_sig(otak: OtaKeyset, rc_cc_ds: str, data: bytes, sig: bytes):
+        if rc_cc_ds == 'cc':
+            otak.auth.check_sig(data, sig)
+        elif rc_cc_ds == 'rc':
+            expected = (zlib.crc32(data) & 0xffffffff).to_bytes(4, 'big')
+            if sig != expected:
+                raise OtaCheckError('Received RC (%s) != Computed RC (%s)' % (b2h(sig), b2h(expected)))
+
+    def encode_cmd(self, otak: OtaKeyset, tar: bytes, spi: dict,
+                   apdu: Union[bytes, List[bytes]], remote_format: str = 'compact') -> bytes:
+        if remote_format == 'expanded':
+            apdu = encode_expanded_cmd(apdu)
+        elif remote_format != 'compact':
+            raise ValueError("Invalid remote_format: %s" % remote_format)
+        apdu = bytes(apdu)
+        len_sig = self._compute_sig_len(spi)
+        pcntr = 0
+        if spi['ciphering']:
+            # CNTR + PCNTR + RC/CC/DS + data are ciphered, TS 102 225 table 2 note 1
+            padding = otak.crypt._get_padding(self.CNTR_PCNTR_LEN + len_sig + len(apdu),
+                                              otak.crypt.blocksize)
+            pcntr = len(padding)
+            apdu += padding
+        hdr = self.hdr_construct.build({'spi': spi, 'tar': tar,
+                                        'kic': {'key': otak.kic_idx, 'algo': otak.algo_crypt},
+                                        'kid': {'key': otak.kid_idx, 'algo': otak.algo_auth}})
+        cntr_pcntr = otak.cntr.to_bytes(self.CNTR_LEN, 'big') + bytes([pcntr])
+        chl = self.CMD_HDR_LEN + self.CNTR_PCNTR_LEN + len_sig      # SPI .. RC/CC/DS
+        cpl = len(bertlv_encode_len(chl)) + chl + len(apdu)         # CHL .. end of data
+        # the CHI is a null field, TS 102 225 section 6: CHL follows CPL directly
+        head = bytes([self.CPI]) + bertlv_encode_len(cpl) + bertlv_encode_len(chl) + hdr
+        sig = self._sig(otak, spi['rc_cc_ds'], head + cntr_pcntr + apdu)
+        body = cntr_pcntr + sig + apdu
+        if spi['ciphering']:
+            body = otak.crypt.encrypt(body)
+        return head + body
+
+    def decode_cmd(self, otak: OtaKeyset, encoded: bytes) -> Tuple[bytes, dict, bytes]:
+        """Decode a command packet into (tar, spi, apdu), what the card does."""
+        if encoded[0] != self.CPI:
+            raise ValueError('Unexpected CPI 0x%02x, expected 0x%02x' % (encoded[0], self.CPI))
+        cpl, rest = bertlv_parse_len(encoded[1:])
+        if len(rest) != cpl:
+            raise ValueError('CPL %u != %u remaining octets' % (cpl, len(rest)))
+        # the CHI is a null field, TS 102 225 section 6: CHL follows CPL directly
+        chl, rest = bertlv_parse_len(rest)
+        head = encoded[:len(encoded) - len(rest) + self.CMD_HDR_LEN]    # CPI .. TAR
+        hdr = self.hdr_construct.parse(rest[:self.CMD_HDR_LEN])
+        spi = hdr['spi']
+        body = rest[self.CMD_HDR_LEN:]
+        if spi['ciphering']:
+            body = otak.crypt.decrypt(body)
+        len_sig = self._compute_sig_len(spi)
+        if chl != self.CMD_HDR_LEN + self.CNTR_PCNTR_LEN + len_sig:
+            raise ValueError('CHL %u does not match SPI' % chl)
+        cntr_pcntr = body[:self.CNTR_PCNTR_LEN]
+        sig = body[self.CNTR_PCNTR_LEN:self.CNTR_PCNTR_LEN + len_sig]
+        apdu = body[self.CNTR_PCNTR_LEN + len_sig:]
+        self._check_sig(otak, spi['rc_cc_ds'], head + cntr_pcntr + apdu, sig)
+        pcntr = cntr_pcntr[self.CNTR_LEN]
+        return hdr['tar'], spi, apdu[:len(apdu) - pcntr]
+
+    def encode_resp(self, otak: OtaKeyset, spi: dict, tar: bytes, response_status: str = 'por_ok',
+                    data: bytes = b'', cntr: Optional[int] = None) -> bytes:
+        """Response packet as the card builds it, TS 102 225 5.2, secured per the por_* SPI bits."""
+        data = bytes(data)
+        len_sig = self._compute_sig_len({'rc_cc_ds': spi['por_rc_cc_ds']})
+        pcntr = 0
+        if spi['por_shall_be_ciphered']:
+            # CNTR + PCNTR + status + RC/CC/DS + data are ciphered, TS 102 225 table 4 note 1
+            padding = otak.crypt._get_padding(self.RESP_HDR_LEN - self.TAR_LEN + len_sig + len(data),
+                                              otak.crypt.blocksize)
+            pcntr = len(padding)
+            data += padding
+        cntr = otak.cntr if cntr is None else cntr
+        hdr = self.ResponseHead.build({'tar': tar, 'cntr': cntr.to_bytes(self.CNTR_LEN, 'big'),
+                                       'pcntr': pcntr, 'response_status': response_status})
+        rhl = self.RESP_HDR_LEN + len_sig                           # TAR .. RC/CC/DS
+        rpl = len(bertlv_encode_len(rhl)) + rhl + len(data)         # RHL .. end of data
+        # the RHI is a null field, TS 102 225 section 6: RHL follows RPL directly
+        head = bytes([self.RPI]) + bertlv_encode_len(rpl) + bertlv_encode_len(rhl)
+        sig = self._sig(otak, spi['por_rc_cc_ds'], head + hdr + data)
+        body = hdr[self.TAR_LEN:] + sig + data
+        if spi['por_shall_be_ciphered']:
+            body = otak.crypt.encrypt(body)
+        return head + hdr[:self.TAR_LEN] + body
+
+    def decode_resp(self, otak: OtaKeyset, spi: dict, data: bytes,
+                    remote_format: str = 'compact') -> (object, Optional[object]):
+        if remote_format not in ('compact', 'expanded'):
+            raise ValueError("Invalid remote_format: %s ?!" % remote_format)
+        if isinstance(data, str):
+            data = h2b(data)
+        if data[0] != self.RPI:
+            raise ValueError('Unexpected RPI 0x%02x, expected 0x%02x' % (data[0], self.RPI))
+        rpl, rest = bertlv_parse_len(data[1:])
+        if len(rest) != rpl:
+            raise ValueError('RPL %u != %u remaining octets' % (rpl, len(rest)))
+        # the RHI is a null field, TS 102 225 section 6: RHL follows RPL directly
+        rhl, rest = bertlv_parse_len(rest)
+        head = data[:len(data) - len(rest)]                         # RPI .. RHL
+        tar, body = rest[:self.TAR_LEN], rest[self.TAR_LEN:]
+        if spi['por_shall_be_ciphered']:
+            body = otak.crypt.decrypt(body)
+        len_sig = rhl - self.RESP_HDR_LEN
+        hdr_rest_len = self.RESP_HDR_LEN - self.TAR_LEN             # CNTR + PCNTR + status
+        hdr = self.ResponseHead.parse(tar + body[:hdr_rest_len])
+        sig, secured = body[hdr_rest_len:hdr_rest_len + len_sig], body[hdr_rest_len + len_sig:]
+        if spi['por_rc_cc_ds'] == 'no_rc_cc_ds' and len_sig:
+            raise OtaCheckError('No RC/CC/DS requested, but len_sig=%u' % len_sig)
+        self._check_sig(otak, spi['por_rc_cc_ds'], head + tar + body[:hdr_rest_len] + secured, sig)
+        if hdr['pcntr']:
+            secured = secured[:-hdr['pcntr']]
+        res = Container(rpl=rpl, rhl=rhl, tar=hdr['tar'], cntr=hdr['cntr'], pcntr=hdr['pcntr'],
+                        response_status=hdr['response_status'], cc_rc=sig, secured_data=secured)
+        dec = None
+        if res.response_status == 'por_ok' and len(secured):
+            if remote_format == 'expanded':
+                dec = decode_expanded_resp(secured)
+            else:
+                dec = CompactRemoteResp.parse(secured)
         return (res, dec)

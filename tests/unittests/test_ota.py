@@ -589,3 +589,105 @@ class ExpandedSmsPipelineTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
 	unittest.main()
+
+
+######################################################################
+# CAT_TP / TCP dialect (ETSI TS 102 225 Section 6 + 7)
+######################################################################
+
+SPI_NONE_POR_NONE = {
+    'counter': 'no_counter', 'ciphering': False, 'rc_cc_ds': 'no_rc_cc_ds',
+    'por_in_submit': False, 'por_shall_be_ciphered': False, 'por_rc_cc_ds': 'no_rc_cc_ds',
+    'por': 'por_required'}
+
+SPI_RC_POR_RC = dict(SPI_NONE_POR_NONE, rc_cc_ds='rc', por_rc_cc_ds='rc')
+
+
+class CatTpOtaTestCase(OtaTestCase):
+    APDU = b'\x00\xa4\x00\x04\x02\x3f\x00'
+
+    def setUp(self):
+        self.dialect = OtaDialectCatTp()
+
+    def test_cmd_plain_golden(self):
+        # CPI 01, CPL 15, CHL 0d, SPI 0001 KIc 35 KID 35 TAR, CNTR, PCNTR 00, data
+        outp = self.dialect.encode_cmd(OTA_KEYSET_SJA5_SAMPLES, self.tar, SPI_NONE_POR_NONE, self.APDU)
+        self.assertEqual(b2h(outp), '01150d00013535b000110000000000' '00' '00a40004023f00')
+        tar, spi, apdu = self.dialect.decode_cmd(OTA_KEYSET_SJA5_SAMPLES, outp)
+        self.assertEqual((tar, spi, apdu), (self.tar, SPI_NONE_POR_NONE, self.APDU))
+
+    def test_cmd_roundtrip(self):
+        for kset in (OTA_KEYSET_SJA5_SAMPLES, OTA_KEYSET_SJA5_AES128):
+            for spi in (SPI_CC_POR_CIPHERED_CC, SPI_CC_POR_UNCIPHERED_CC, SPI_RC_POR_RC):
+                for fmt in ('compact', 'expanded'):
+                    with self.subTest(kset=kset.algo_crypt, spi=spi['rc_cc_ds'], fmt=fmt):
+                        apdu = [self.APDU] if fmt == 'expanded' else self.APDU
+                        outp = self.dialect.encode_cmd(kset, self.tar, spi, apdu, remote_format=fmt)
+                        self.assertEqual(outp[0], 0x01)
+                        if spi['ciphering']:
+                            self.assertEqual((len(outp) - 10) % kset.crypt.blocksize, 0)
+                        tar, dspi, dapdu = self.dialect.decode_cmd(kset, outp)
+                        self.assertEqual(tar, self.tar)
+                        self.assertEqual(dspi, spi)
+                        expected = encode_expanded_cmd(apdu) if fmt == 'expanded' else self.APDU
+                        self.assertEqual(dapdu, expected)
+
+    def test_cmd_tamper_detected(self):
+        outp = bytearray(self.dialect.encode_cmd(OTA_KEYSET_SJA5_SAMPLES, self.tar,
+                                                 SPI_CC_POR_UNCIPHERED_CC, self.APDU))
+        outp[-1] ^= 0x01
+        with self.assertRaises(OtaCheckError):
+            self.dialect.decode_cmd(OTA_KEYSET_SJA5_SAMPLES, bytes(outp))
+
+    def test_cmd_long_lengths(self):
+        # CPL > 127 goes to the 81xx BER form
+        big = bytes(range(200))
+        outp = self.dialect.encode_cmd(OTA_KEYSET_SJA5_SAMPLES, self.tar, SPI_NONE_POR_NONE, big)
+        self.assertEqual(b2h(outp[:4]), '0181d60d')
+        self.assertEqual(self.dialect.decode_cmd(OTA_KEYSET_SJA5_SAMPLES, outp)[2], big)
+
+    def test_resp_plain_golden(self):
+        # RPI 02, RPL 0e, RHL 0a, TAR, CNTR, PCNTR 00, status 00, compact response 01 9000
+        resp = self.dialect.encode_resp(OTA_KEYSET_SJA5_SAMPLES, SPI_NONE_POR_NONE, self.tar,
+                                        data=h2b('019000'))
+        self.assertEqual(b2h(resp), '020e0ab000110000000000' '00' '00' '019000')
+        res, dec = self.dialect.decode_resp(OTA_KEYSET_SJA5_SAMPLES, SPI_NONE_POR_NONE, resp)
+        self.assertEqual(res.response_status, 'por_ok')
+        self.assertEqual(dec.last_status_word, '9000')
+        self.assertEqual(dec.number_of_commands, 1)
+
+    def test_resp_roundtrip(self):
+        for kset in (OTA_KEYSET_SJA5_SAMPLES, OTA_KEYSET_SJA5_AES128):
+            for spi in (SPI_CC_POR_CIPHERED_CC, SPI_CC_POR_UNCIPHERED_CC,
+                        SPI_CC_POR_UNCIPHERED_NOCC, SPI_RC_POR_RC):
+                with self.subTest(kset=kset.algo_crypt, por_cc=spi['por_rc_cc_ds'],
+                                  ciph=spi['por_shall_be_ciphered']):
+                    resp = self.dialect.encode_resp(kset, spi, self.tar, data=h2b('01' '6132'))
+                    res, dec = self.dialect.decode_resp(kset, spi, resp)
+                    self.assertEqual(res.response_status, 'por_ok')
+                    self.assertEqual(res.tar, self.tar)
+                    self.assertEqual(dec.last_status_word, '6132')
+
+    def test_resp_error_status_has_no_decoded_part(self):
+        resp = self.dialect.encode_resp(OTA_KEYSET_SJA5_SAMPLES, SPI_CC_POR_UNCIPHERED_CC, self.tar,
+                                        response_status='cntr_low')
+        res, dec = self.dialect.decode_resp(OTA_KEYSET_SJA5_SAMPLES, SPI_CC_POR_UNCIPHERED_CC, resp)
+        self.assertEqual(res.response_status, 'cntr_low')
+        self.assertIsNone(dec)
+
+    def test_resp_expanded(self):
+        # card answers with a TS 102 226 5.2.2 response scripting template
+        expanded = h2b('ab0780010123026132')
+        resp = self.dialect.encode_resp(OTA_KEYSET_SJA5_AES128, SPI_CC_POR_CIPHERED_CC, self.tar,
+                                        data=expanded)
+        res, dec = self.dialect.decode_resp(OTA_KEYSET_SJA5_AES128, SPI_CC_POR_CIPHERED_CC, resp,
+                                            remote_format='expanded')
+        self.assertEqual(res.response_status, 'por_ok')
+        self.assertEqual(dec.last_status_word, '6132')
+
+    def test_resp_tamper_detected(self):
+        resp = bytearray(self.dialect.encode_resp(OTA_KEYSET_SJA5_SAMPLES, SPI_CC_POR_UNCIPHERED_CC,
+                                                  self.tar, data=h2b('019000')))
+        resp[-1] ^= 0x01
+        with self.assertRaises(OtaCheckError):
+            self.dialect.decode_resp(OTA_KEYSET_SJA5_SAMPLES, SPI_CC_POR_UNCIPHERED_CC, bytes(resp))
