@@ -609,6 +609,57 @@ class ADF_SD(CardADF):
 
     @with_default_category('Application-Specific Commands')
     class AddlShellCommands(CommandSet):
+        select_sd_parser = argparse.ArgumentParser()
+        select_sd_parser.add_argument('aid', type=is_hexstr,
+                                      help='AID of the Security Domain')
+        select_sd_parser.add_argument('--key-provider-identity', choices=['ICCID', 'EID'],
+                                      help='CardKeyProvider identity for this Security Domain; '
+                                           'default: retain it for a known SD, otherwise ICCID')
+
+        @cmd2.with_argparser(select_sd_parser)
+        def do_select_security_domain(self, opts):
+            """Select a Security Domain by AID, e.g. the MNO-SD of an eUICC profile, and
+            add it to the runtime card model so the GP commands and key lookup follow."""
+            # select() unregisters this CommandSet, self._cmd is gone afterwards
+            cmd_app = self._cmd
+            lchan = cmd_app.lchan
+            if lchan.scc.scp:
+                raise RuntimeError('Cannot select another Security Domain while an SCP session is active; '
+                                   'use release_scp first')
+
+            aid = opts.aid.lower()
+            if not 10 <= len(aid) <= 32:
+                raise ValueError('A Security Domain AID must be between 5 and 16 bytes')
+            mf = cmd_app.rs.mf
+            adf = mf.applications.get(aid)
+            added = False
+            if adf is None:
+                app = CardApplicationSD(aid=aid,
+                                        name='ADF.SD-' + aid.upper(),
+                                        desc='Runtime-discovered Security Domain')
+                adf = app.adf
+                adf.scp_key_identity = opts.key_provider_identity or 'ICCID'
+                mf.add_application_df(adf)
+                added = True
+            elif not isinstance(adf, ADF_SD):
+                raise ValueError('Application %s is already known, but is not modelled as a Security Domain' % aid)
+
+            try:
+                fcp_dec = lchan.select(aid, cmd_app)
+            except Exception:
+                if added:
+                    # clean up on rejected select
+                    mf.applications.pop(aid, None)
+                    adf.parent = None
+                raise
+
+            if not added and opts.key_provider_identity:
+                adf.scp_key_identity = opts.key_provider_identity
+            cmd_app.update_prompt()
+            cmd_app.poutput('CardKeyProvider identity: %s' %
+                            (adf.scp_key_identity or 'not configured'))
+            cmd_app.poutput_json(fcp_dec)
+
         get_data_parser = argparse.ArgumentParser()
         get_data_parser.add_argument('data_object_name', type=str,
             help='Name of the data object to be retrieved from the card')

@@ -1030,6 +1030,12 @@ GlobalPlatform commands
 pySim-shell has only the mots rudimentary support for GlobalPlatform at this point. Please use dedicated
 projects like GlobalPlatformPro meanwhile.
 
+select_security_domain
+~~~~~~~~~~~~~~~~~~~~~~
+.. argparse::
+   :module: pySim.global_platform
+   :func: ADF_SD.AddlShellCommands.select_sd_parser
+
 get_data
 ~~~~~~~~
 .. argparse::

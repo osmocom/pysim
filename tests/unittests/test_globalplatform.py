@@ -31,6 +31,117 @@ KID = h2b('101102030405060708090a0b0c0d0e0f') # MAC
 KIK = h2b('102102030405060708090a0b0c0d0e0f') # DEK
 ck_3des_70 = GpCardKeyset(0x20, KIC, KID, KIK)
 
+
+class SelectSecurityDomain_Test(unittest.TestCase):
+    class _FakeMf:
+        def __init__(self):
+            self.applications = {}
+
+        def add_application_df(self, adf):
+            if adf.aid in self.applications:
+                raise ValueError('duplicate AID')
+            self.applications[adf.aid] = adf
+            adf.parent = self
+
+    class _FakeLchan:
+        def __init__(self, mf, fail_select=False):
+            self.rs = SimpleNamespace(mf=mf)
+            self.scc = SimpleNamespace(scp=None)
+            self.fail_select = fail_select
+            self.select_calls = []
+            self.selected_file = None
+            self.selected_adf = None
+            self.selected_file_fcp = None
+
+        def select(self, aid, cmd):
+            self.select_calls.append((aid, cmd))
+            if self.fail_select:
+                raise RuntimeError('SELECT failed')
+            self.selected_file = self.rs.mf.applications[aid]
+            self.selected_adf = self.selected_file
+            self.selected_file_fcp = {'application_id': aid}
+            return self.selected_file_fcp
+
+    def _run(self, aid='a000000151000000', key_provider_identity=None,
+             mf=None, fail_select=False, scp=None, lose_selector_cmd=False):
+        mf = mf or self._FakeMf()
+        lchan = self._FakeLchan(mf, fail_select=fail_select)
+        lchan.scc.scp = scp
+        output = []
+        cmd = SimpleNamespace(
+            lchan=lchan,
+            rs=lchan.rs,
+            update_prompt=lambda: output.append(('prompt',)),
+            poutput=lambda value: output.append(('text', value)),
+            poutput_json=lambda value: output.append(('json', value)),
+        )
+        if lose_selector_cmd:
+            # make sure cmd survives unregistering
+            class Selector(ADF_SD.AddlShellCommands):
+                @property
+                def _cmd(self):
+                    if lchan.selected_file is not None:
+                        raise RuntimeError('CommandSet was unregistered')
+                    return cmd
+        else:
+            Selector = type('Selector', (ADF_SD.AddlShellCommands,), {'_cmd': cmd})
+        selector = Selector.__new__(Selector)
+        opts = SimpleNamespace(aid=aid, key_provider_identity=key_provider_identity)
+        # the undecorated method, set by functools.wraps in cmd2.with_argparser
+        # pylint: disable-next=no-member
+        ADF_SD.AddlShellCommands.do_select_security_domain.__wrapped__(selector, opts)
+        return mf, lchan, output
+
+    def test_new_security_domain_is_selected_and_tracked(self):
+        mf, lchan, output = self._run()
+        adf = mf.applications['a000000151000000']
+        self.assertIsInstance(adf, ADF_SD)
+        self.assertEqual(adf.scp_key_identity, 'ICCID')
+        self.assertIs(lchan.selected_file, adf)
+        self.assertIs(lchan.selected_adf, adf)
+        self.assertEqual(output[-1], ('json', {'application_id': 'a000000151000000'}))
+
+    def test_success_survives_executing_command_set_being_unregistered(self):
+        _mf, lchan, output = self._run(lose_selector_cmd=True)
+        self.assertEqual(lchan.selected_file_fcp,
+                         {'application_id': 'a000000151000000'})
+        self.assertEqual(output[-1], ('json', lchan.selected_file_fcp))
+
+    def test_explicit_key_provider_identity(self):
+        mf, _lchan, _output = self._run(key_provider_identity='EID')
+        self.assertEqual(mf.applications['a000000151000000'].scp_key_identity, 'EID')
+
+    def test_known_security_domain_retains_identity_by_default(self):
+        mf = self._FakeMf()
+        app = CardApplicationSD('a000000151000000', 'ADF.TEST-SD', 'Test SD')
+        app.adf.scp_key_identity = 'EID'
+        mf.add_application_df(app.adf)
+        self._run(mf=mf)
+        self.assertEqual(app.adf.scp_key_identity, 'EID')
+
+    def test_active_scp_is_rejected(self):
+        mf = self._FakeMf()
+        with self.assertRaisesRegex(RuntimeError, 'release_scp'):
+            self._run(mf=mf, scp=object())
+        self.assertEqual(mf.applications, {})
+
+    def test_invalid_aid_length_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'between 5 and 16 bytes'):
+            self._run(aid='01020304')
+
+    def test_failed_select_is_not_retained(self):
+        mf = self._FakeMf()
+        with self.assertRaises(RuntimeError):
+            self._run(mf=mf, fail_select=True)
+        self.assertEqual(mf.applications, {})
+
+    def test_parser_accepts_security_domain_aid(self):
+        opts = ADF_SD.AddlShellCommands.select_sd_parser.parse_args(
+            ['a000000151000000', '--key-provider-identity', 'EID'])
+        self.assertEqual(opts.aid, 'a000000151000000')
+        self.assertEqual(opts.key_provider_identity, 'EID')
+
+
 class SCP02_Auth_Test(unittest.TestCase):
     host_challenge = h2b('40A62C37FA6304F8')
     init_update_resp = h2b('00000000000000000000700200016B4524ABEE7CF32EA3838BC148F3')

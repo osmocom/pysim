@@ -44,10 +44,10 @@ SGP.02, section 2.2.4). This `MNO-SD` is comparable to the Issuer Security Domai
 `MNO-SD` is either the default AID for the Issuer Security Domain (see also GlobalPlatform, section H.1.3) or a
 different value specified by the provider of the eSIM profile.
 
-Since the AID of the `MNO-SD` is not a fixed value, it is not known by `pySim-shell`. This means there will be no
-`ADF.ISD` file shown in the file system, but we can simply select the `ADF.ISD-R` first and then select the `MNO-SD`
-using a raw APDU. In the following example we assume that the default AID (``a000000151000000``) is used  The APDU
-would look like this: ``00a4040408`` + ``a000000151000000`` + ``00``
+Since the AID of the `MNO-SD` is not a fixed value, it is not part of pySim's static card profile. Select a known
+Security Domain such as `ADF.ISD-R` first to make the GlobalPlatform commands available, then use
+``select_security_domain`` with the MNO-SD AID. Do not select it with a raw ``apdu``, that desyncs pySim's internal
+card model. In the following example we assume that the default AID (``a000000151000000``) is used.
 
 ::
 
@@ -61,14 +61,55 @@ would look like this: ``00a4040408`` + ``a000000151000000`` + ``00``
            "supported_version_number": "020300"
        }
    }
-   pySIM-shell (00:MF/ADF.ISD-R)> apdu 00a4040408a00000015100000000
-   SW: 9000, RESP: 6f108408a000000151000000a5049f6501ff
+   pySIM-shell (00:MF/ADF.ISD-R)> select_security_domain a000000151000000
+   CardKeyProvider identity: ICCID
+   {
+       "application_id": "a000000151000000",
+       "proprietary_data": {
+           "maximum_length_of_data_field_in_command_message": 255
+       }
+   }
 
-After that, the prompt will still show the `ADF.ISD-R`, but we are actually in `ADF.ISD` and the standard GlobalPlatform
-operations like `establish_scpXX`, `get_data`, and `put_key` should work. By doing this, we simply have tricked
-`pySim-shell` into making the GlobalPlatform related commands available for some other Security Domain we are not
-interested in. With the raw APDU we then have swapped out the Security Domain under the hood. The same workaround can
-be applied to any Security Domain, provided that the AID is known to the user.
+The dynamically discovered Security Domain uses the profile ICCID for CardKeyProvider lookup by default, which is
+appropriate for an MNO-SD. Use ``--key-provider-identity EID`` for an eUICC-global Security Domain instead. The command
+must be used before establishing SCP; use ``release_scp`` before switching away from a Security Domain with an active
+SCP session. If the enabled profile changes during the shell session, re-equip the card before selecting its MNO-SD;
+different profiles commonly reuse the same MNO-SD AID, while their key lookup is tied to the profile ICCID.
+
+Selecting a Supplementary Security Domain (SSD)
+------------------------------------------------
+
+``select_security_domain`` is not limited to an MNO-SD. It can also select a Supplementary Security Domain (SSD),
+provided that the SSD is in a selectable life-cycle state. An SSD frequently has no filesystem alias and need not be
+listed in ``EF.DIR``; select it using its instance AID.
+
+The SSD AID can be obtained from the profile or installation data. It can also be discovered with
+``get_status applications`` while operating through its controlling Security Domain. Look for an application registry
+entry with the ``security_domain`` privilege and a selectable life-cycle state.
+
+The following example assumes that an SSD with AID ``a000000151000042`` was created beneath the active profile's
+MNO-SD. Any SCP session with the MNO-SD must first be released. Selecting the SSD does not carry the parent's secure
+channel into the SSD: establish a new secure channel using the SSD's own keyset afterwards.
+
+::
+
+   pySIM-shell (SCP03[03]:00:MF/ADF.SD-A000000151000000)> get_status applications
+   # Locate the selectable registry entry with the security_domain privilege.
+   pySIM-shell (SCP03[03]:00:MF/ADF.SD-A000000151000000)> release_scp
+   pySIM-shell (00:MF/ADF.SD-A000000151000000)> select_security_domain a000000151000042
+   CardKeyProvider identity: ICCID
+   {
+       "application_id": "a000000151000042"
+   }
+   pySIM-shell (00:MF/ADF.SD-A000000151000042)> establish_scp03 --key-ver 1 --key-enc <SSD-ENC> --key-mac <SSD-MAC> --key-dek <SSD-DEK> --security-level 3
+
+For a newly installed SSD, ``install_for_install --privilege security_domain --make-selectable`` creates it as a
+selectable Security Domain. If SELECT-by-AID fails because the SSD is not selectable, it must first be moved to the
+appropriate life-cycle state through its controlling Security Domain. Remote administration that targets an SSD by
+AID (for example through SCP81) is a separate mechanism and does not imply that contact-interface SELECT is enabled.
+
+As with an MNO-SD, profile-scoped SSD key lookup normally uses the default ``ICCID`` identity. Use
+``--key-provider-identity EID`` only when the SSD's keys are associated with the eUICC rather than the enabled profile.
 
 
 Establishing a secure channel
@@ -135,7 +176,7 @@ We assume that the `MNO-SD` is already selected (see above). We may now establis
 
 ::
 
-   pySIM-shell (00:MF/ADF.ISD-R)> establish_scp03 --key-enc 63af517c29ad6ac6fcadfe6ac8a3c8a041d8141c7eb845ef1cba6112a325e430 --key-mac 54b9ad6713ae922f54014ed762132e7b59bdcd2a2a6beba98fb9afe6b4df27e1 --key-dek cbb933ba2389da93c86c112739cd96389139f16c6f80f7d16bf3593e407ca893 --key-ver 48 --security-level 3
+   pySIM-shell (00:MF/ADF.SD-A000000151000000)> establish_scp03 --key-enc 63af517c29ad6ac6fcadfe6ac8a3c8a041d8141c7eb845ef1cba6112a325e430 --key-mac 54b9ad6713ae922f54014ed762132e7b59bdcd2a2a6beba98fb9afe6b4df27e1 --key-dek cbb933ba2389da93c86c112739cd96389139f16c6f80f7d16bf3593e407ca893 --key-ver 48 --security-level 3
    Successfully established a SCP03[03] secure channel
 
 
