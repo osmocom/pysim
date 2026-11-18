@@ -691,3 +691,17 @@ class CatTpOtaTestCase(OtaTestCase):
         resp[-1] ^= 0x01
         with self.assertRaises(OtaCheckError):
             self.dialect.decode_resp(OTA_KEYSET_SJA5_SAMPLES, SPI_CC_POR_UNCIPHERED_CC, bytes(resp))
+
+
+class PushCommandTestCase(unittest.TestCase):
+    """TS 102 226 section 9.2"""
+
+    def test_open_channel(self):
+        apdu = encode_push_open_channel('10.0.0.1', 6001, 1024)
+        # 80 EC 01 01 Lc | b5 01 03 | b9 02 0400 | bc 03 01 1771 | be 05 21 0a000001
+        self.assertEqual(b2h(apdu), '80ec010113' 'b50103' 'b9020400' 'bc03011771' 'be05210a000001')
+
+    def test_cattp_link(self):
+        self.assertEqual(b2h(encode_push_cattp_link(6001)), '80ec010205' 'bc03001771')
+        apdu = encode_push_cattp_link(6001, max_sdu_size=512, identification=h2b('0102'))
+        self.assertEqual(b2h(apdu), '80ec01020d' 'bc03001771' 'b9020200' 'b6020102')

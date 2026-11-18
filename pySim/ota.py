@@ -27,6 +27,7 @@ from osmocom.tlv import bertlv_encode_len, bertlv_parse_len
 from osmocom.utils import b2h
 
 from pySim.sms import UserDataHeader
+from pySim.cat import BearerDescription, BufferSize, UiccTransportLevel, OtherAddress, ChannelData
 
 # ETS TS 102 225 gives the general command structure and the dialects for CAT_TP, TCP/IP and HTTPS
 # 3GPP TS 31.115 gives the dialects for SMS-PP, SMS-CB, USSD and HTTP
@@ -268,6 +269,41 @@ def decode_expanded_resp(data: bytes) -> Container:
                      bad_format=bad_format,
                      immediate_action_response=immediate_action_response,
                      script_chaining_response=script_chaining_response)
+
+######################################################################
+# PUSH command, ETSI TS 102 226 Section 9: asks the card to open a BIP channel and a CAT_TP
+# link (or TCP connection) so the OTA server has something to talk to.
+######################################################################
+
+# TS 102 226 table 9.1
+PushCmd = Struct('_cla'/Const(b'\x80'), '_ins'/Const(b'\xec'), '_p1'/Const(b'\x01'),
+                 'p2'/Enum(Int8ub, open_channel=1, cattp_link=2, tcp_connection=3, identification_packet=4),
+                 'data'/Prefixed(Int8ub, GreedyBytes))
+
+def encode_push(p2: str, ies: List) -> bytes:
+    """PUSH C-APDU (TS 102 226 table 9.1) with the given COMPREHENSION-TLV data objects as data field."""
+    return PushCmd.build({'p2': p2, 'data': b''.join(ie.to_tlv() for ie in ies)})
+
+def encode_push_open_channel(ip: str, port: int, buffer_size: int,
+                             protocol_type: str = 'udp_uicc_client_remote') -> bytes:
+    """TS 102 226 9.2.1: OPEN CHANNEL parameters for a default bearer to ipv4 ip:port."""
+    return encode_push('open_channel', [
+        BearerDescription(decoded={'bearer_type': 'default', 'bearer_parameters': b''}),
+        BufferSize(decoded=buffer_size),
+        UiccTransportLevel(decoded={'protocol_type': protocol_type, 'port_number': port}),
+        OtherAddress(decoded={'type_of_address': 'ipv4',
+                              'address': bytes(int(x) for x in ip.split('.'))})])
+
+def encode_push_cattp_link(dest_port: int, max_sdu_size: Optional[int] = None,
+                           identification: Optional[bytes] = None) -> bytes:
+    """TS 102 226 9.2.2: CAT_TP link to the server port. The card puts the identification into its
+    SYN, its ICCID if none is given. Transport protocol ignored, encoded as zero."""
+    ies = [UiccTransportLevel(decoded={'protocol_type': 0, 'port_number': dest_port})]
+    if max_sdu_size is not None:
+        ies.append(BufferSize(decoded=max_sdu_size))
+    if identification is not None:
+        ies.append(ChannelData(decoded=b2h(identification)))
+    return encode_push('cattp_link', ies)
 
 RC_CC_DS = Enum(BitsInteger(2), no_rc_cc_ds=0, rc=1, cc=2, ds=3)
 CNTR_REQ = Enum(BitsInteger(2), no_counter=0, counter_no_replay_or_seq=1, counter_must_be_higher=2, counter_must_be_lower=3)
