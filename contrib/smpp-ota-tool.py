@@ -24,7 +24,7 @@ import smpplib.gsm
 import smpplib.client
 import smpplib.consts
 import time
-from pySim.ota import OtaKeyset, OtaDialectSms, OtaAlgoCrypt, OtaAlgoAuth, OtaCheckError, CNTR_REQ, RC_CC_DS, POR_REQ
+from pySim.ota import OtaKeyset, OtaDialectSms, OtaCheckError, argparse_add_ota_args, ota_keyset_from_args, ota_spi_from_args
 from pySim.sms import ConcatenatedSmsReassembler
 from pySim.utils import b2h, h2b, is_hexstr
 from pathlib import Path
@@ -38,36 +38,7 @@ option_parser.add_argument("--port", help="TCP port of the SMPP server", default
 option_parser.add_argument("--system-id", help="System ID to use to bind to the SMPP server", default="test")
 option_parser.add_argument("--password", help="Password to use to bind to the SMPP server", default="test")
 option_parser.add_argument("--verbose", help="Enable verbose logging", action='store_true', default=False)
-algo_crypt_choices = []
-algo_crypt_classes = OtaAlgoCrypt.__subclasses__()
-for cls in algo_crypt_classes:
-    algo_crypt_choices.append(cls.enum_name)
-option_parser.add_argument("--algo-crypt", choices=algo_crypt_choices, default='triple_des_cbc2',
-                           help="OTA crypt algorithm")
-algo_auth_choices = []
-algo_auth_classes = OtaAlgoAuth.__subclasses__()
-for cls in algo_auth_classes:
-    algo_auth_choices.append(cls.enum_name)
-option_parser.add_argument("--algo-auth", choices=algo_auth_choices, default='triple_des_cbc2',
-                           help="OTA auth algorithm")
-option_parser.add_argument('--kic', required=True, type=is_hexstr, help='OTA key (KIC)')
-option_parser.add_argument('--kic-idx', default=1, type=int, help='OTA key index (KIC)')
-option_parser.add_argument('--kid', required=True, type=is_hexstr, help='OTA key (KID)')
-option_parser.add_argument('--kid-idx', default=1, type=int, help='OTA key index (KID)')
-option_parser.add_argument('--cntr', default=0, type=int, help='replay protection counter')
-option_parser.add_argument('--tar', required=True, type=is_hexstr, help='Toolkit Application Reference')
-option_parser.add_argument("--cntr-req", choices=CNTR_REQ.decmapping.values(), default='no_counter',
-                           help="Counter requirement")
-option_parser.add_argument('--no-ciphering', action='store_true', default=False, help='Disable ciphering')
-option_parser.add_argument("--rc-cc-ds", choices=RC_CC_DS.decmapping.values(), default='cc',
-                           help="message check (rc=redundency check, cc=crypt. checksum, ds=digital signature)")
-option_parser.add_argument('--por-in-submit', action='store_true', default=False,
-                           help='require PoR to be sent via SMS-SUBMIT')
-option_parser.add_argument('--por-no-ciphering', action='store_true', default=False, help='Disable ciphering (PoR)')
-option_parser.add_argument("--por-rc-cc-ds", choices=RC_CC_DS.decmapping.values(), default='cc',
-                           help="PoR check (rc=redundency check, cc=crypt. checksum, ds=digital signature)")
-option_parser.add_argument("--por-req", choices=POR_REQ.decmapping.values(), default='por_required',
-                           help="Proof of Receipt requirements")
+argparse_add_ota_args(option_parser, sms=True)
 option_parser.add_argument('--src-addr', default='12', type=str, help='SMS source address (MSISDN)')
 option_parser.add_argument('--dest-addr', default='23', type=str, help='SMS destination address (MSISDN)')
 option_parser.add_argument('--timeout', default=10, type=int, help='Maximum response waiting time')
@@ -267,24 +238,8 @@ if __name__ == '__main__':
                         format='%(asctime)s %(levelname)s %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
 
-    if opts.kic_idx != opts.kid_idx:
-        logger.warning("KIC index (%s) and KID index (%s) are different (security violation, card should reject message)",
-                       opts.kic_idx, opts.kid_idx)
-
-    ota_keyset = OtaKeyset(algo_crypt=opts.algo_crypt,
-                           kic_idx=opts.kic_idx,
-                           kic=h2b(opts.kic),
-                           algo_auth=opts.algo_auth,
-                           kid_idx=opts.kid_idx,
-                           kid=h2b(opts.kid),
-                           cntr=opts.cntr)
-    spi = {'counter' : opts.cntr_req,
-           'ciphering' : not opts.no_ciphering,
-           'rc_cc_ds': opts.rc_cc_ds,
-           'por_in_submit': opts.por_in_submit,
-           'por_shall_be_ciphered': not opts.por_no_ciphering,
-           'por_rc_cc_ds': opts.por_rc_cc_ds,
-           'por': opts.por_req}
+    ota_keyset = ota_keyset_from_args(opts)
+    spi = ota_spi_from_args(opts)
     if opts.format == 'expanded':
         # TS 102 226 5.2.1.1: wrap each apdu in its own C-APDU TLV
         apdu = [h2b(a) for a in opts.apdu]
