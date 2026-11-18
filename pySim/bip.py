@@ -27,7 +27,10 @@
 #     tp = init_reader(opts, proactive_handler=handler)
 
 
+import abc
+import collections
 import logging
+import select
 import socket
 import threading
 import time
@@ -74,16 +77,17 @@ def terminal_profile(num_channels: int = 7) -> bytes:
     # 13 (class "e" supported bearers): b2 GPRS, and b6..b8 the number of channels.
     profile[12] = 0x02 | (num_channels << 5)
     profile[13] = 0x40 | 0x20            # 14: b6 no display capability, b7 no keypad available
-    profile[16] = 0x01                   # 15: b1 TCP, UICC in client mode, remote connection
+    profile[16] = 0x01 | 0x02            # 17: b1 TCP, b2 UDP, UICC in client mode, remote connection
     return bytes(profile)
 
 
-class ProactChannel:
-    """One BIP channel, TS 102 223 class "e", backed by a blocking TCP socket.
+class ProactChannel(abc.ABC):
+    """One BIP channel, TS 102 223 class "e", backed by a blocking socket.
 
     Created by ProactChannels.channel_create(). A reader thread fills the Rx buffer from the
     socket, the Proact handlers drain it (RECEIVE DATA) and write to it (SEND DATA). Payload
-    is opaque, TLS or CAT_TP run on the card.
+    is opaque, TLS or CAT_TP run on the card. ProactTcpChannel and ProactUdpChannel supply the
+    socket, the reader loop and send().
 
     Args:
         channels: the owning ProactChannels, notified of data arrival and of close()
@@ -98,8 +102,6 @@ class ProactChannel:
     # Plain blocking sockets just work: connect() in handle_OpenChannel, send() in
     # handle_SendData, recv() feeding a buffer for handle_ReceiveData. No need to make it
     # harder than it has to be to handle the "massive" T0 bandwidth..
-    # how much we try to read off the socket per recv()
-    RECV_CHUNK = 4096
 
     def __init__(self, channels: 'ProactChannels', chan_nr: int):
         self.channels = channels
@@ -114,48 +116,25 @@ class ProactChannel:
         self.peer_closed = False
 
     def connect(self, host: str, port: int, timeout: float = 10.0):
-        """Open the blocking TCP socket and start the background Rx reader."""
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-            s.settimeout(timeout)
-            s.connect((host, port))
-            # Back to blocking mode for the reader thread.
-            # CLOSE CHANNEL unblocks the pending recv() via shutdown().
-            s.settimeout(None)
-        except OSError:
-            s.close()
-            raise
-        self.sock = s
+        """Open the socket and start the background Rx reader."""
+        self.sock = self._open_socket(host, port, timeout)
         self._reader = threading.Thread(target=self._rx_loop,
                                         name='bip-rx-%d' % self.chan_nr, daemon=True)
         self._reader.start()
 
+    @abc.abstractmethod
+    def _open_socket(self, host: str, port: int, timeout: float) -> socket.socket:
+        """Return the connected socket, raise OSError if that fails."""
+
+    @abc.abstractmethod
     def _rx_loop(self):
-        """Continuously read from the socket into rx_buf, like a real ME.
+        """Reader thread: move received data into rx_buf until the channel closes and call
+        channels.notify_data_available() when data arrives in the empty buffer."""
 
-        TS 102 223 7.5.10.1 says the event is raised 'only if the targeted channel buffer is
-        empty when new data arrives in it', so the data available hook fires on the
-        empty->non-empty transition only. That is enough: every RECEIVE DATA response tells
-        the card how many bytes remain, so it keeps fetching until the buffer is empty, and
-        the next event restarts it when more data arrives."""
-        while not self._closing:
-            try:
-                data = self.sock.recv(self.RECV_CHUNK)
-            except (OSError, ValueError):
-                break
-            if not data:
-                self.peer_closed = True
-                break
-            with self._rx_lock:
-                was_empty = len(self.rx_buf) == 0
-                self.rx_buf.extend(data)
-            if was_empty and not self._closing:
-                self.channels.notify_data_available(self)
-
-    def send(self, data: bytes):
-        """Tx, write bytes to the socket == SEND DATA"""
-        self.sock.sendall(data)
+    @abc.abstractmethod
+    def send(self, data: bytes, immediate: bool = True):
+        """SEND DATA. immediate is bit 1 of the command qualifier, "send immediately" as
+        opposed to "store in the Tx buffer" (TS 102 223 6.4.30)."""
 
     def available_rx(self) -> int:
         """Number of bytes waiting in the Rx buffer, what RECEIVE DATA can return right now."""
@@ -205,6 +184,118 @@ class ProactChannel:
             self._reader.join(timeout=1.0)
         self.channels.channel_delete(self.chan_nr)
 
+
+class ProactTcpChannel(ProactChannel):
+    """BIP channel on a TCP socket, a byte stream as used by SCP81."""
+    # how much we try to read off the socket per recv()
+    RECV_CHUNK = 4096
+
+    def _open_socket(self, host: str, port: int, timeout: float) -> socket.socket:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            s.settimeout(timeout)
+            s.connect((host, port))
+            # Back to blocking mode for the reader thread.
+            # CLOSE CHANNEL unblocks the pending recv() via shutdown().
+            s.settimeout(None)
+        except OSError:
+            s.close()
+            raise
+        return s
+
+    def _rx_loop(self):
+        """Continuously read from the socket into rx_buf, like a real ME.
+
+        TS 102 223 7.5.10.1 says the event is raised 'only if the targeted channel buffer is
+        empty when new data arrives in it', so the data available hook fires on the
+        empty->non-empty transition only. That is enough: every RECEIVE DATA response tells
+        the card how many bytes remain, so it keeps fetching until the buffer is empty, and
+        the next event restarts it when more data arrives."""
+        while not self._closing:
+            try:
+                data = self.sock.recv(self.RECV_CHUNK)
+            except (OSError, ValueError):
+                break
+            if not data:
+                self.peer_closed = True
+                break
+            with self._rx_lock:
+                was_empty = len(self.rx_buf) == 0
+                self.rx_buf.extend(data)
+            if was_empty and not self._closing:
+                self.channels.notify_data_available(self)
+
+    def send(self, data: bytes, immediate: bool = True):
+        # a stream has no SDU boundary to keep, so nothing is held back
+        self.sock.sendall(data)
+
+
+class ProactUdpChannel(ProactChannel):
+    """BIP channel on a connected UDP socket, for CAT_TP (TS 102 127 section 6).
+
+    TS 102 223 6.4.29/6.4.30: the Rx buffer holds one datagram SDU at a time, the next one is
+    inserted only once the card drained it, and the Tx buffer collects SEND DATA until "send
+    immediately", which emits it as one datagram."""
+    RECV_CHUNK = 65535
+
+    def __init__(self, channels: 'ProactChannels', chan_nr: int):
+        super().__init__(channels, chan_nr)
+        self.rx_dgrams = collections.deque()      # datagrams waiting behind the current one
+        self.tx_buf = bytearray()
+
+    def _open_socket(self, host: str, port: int, timeout: float) -> socket.socket:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect((host, port))
+        except OSError:
+            s.close()
+            raise
+        return s
+
+    def _rx_loop(self):
+        """One datagram per recv(). The data available event is raised for the datagram that
+        lands in an empty buffer, and again when the next queued one moves into the buffer."""
+        while not self._closing:
+            try:
+                readable, _, _ = select.select([self.sock], [], [], 0.02)
+            except (OSError, ValueError):
+                break
+            if readable:
+                try:
+                    data = self.sock.recv(self.RECV_CHUNK)
+                except ConnectionRefusedError:
+                    logger.warning("channel %u: ICMP port unreachable from peer", self.chan_nr)
+                    continue
+                except (OSError, ValueError):
+                    break
+                with self._rx_lock:
+                    was_empty = len(self.rx_buf) == 0
+                    if was_empty:
+                        self.rx_buf.extend(data)
+                    else:
+                        self.rx_dgrams.append(data)
+                if was_empty and not self._closing:
+                    self.channels.notify_data_available(self)
+            self._advance()
+
+    def _advance(self):
+        """Move the next datagram into the drained buffer, from the reader thread so the
+        notification never runs on the thread that is driving the card."""
+        with self._rx_lock:
+            if self.rx_buf or not self.rx_dgrams:
+                return
+            self.rx_buf.extend(self.rx_dgrams.popleft())
+        if not self._closing:
+            self.channels.notify_data_available(self)
+
+    def send(self, data: bytes, immediate: bool = True):
+        self.tx_buf.extend(data)
+        if immediate:
+            self.sock.send(bytes(self.tx_buf))
+            self.tx_buf.clear()
+
+
 class ProactChannels:
     """The open BIP channels of one terminal, keyed by channel number.
 
@@ -222,11 +313,16 @@ class ProactChannels:
         self.channels = {}
         self._on_data_available = on_data_available
 
-    def channel_create(self) -> ProactChannel:
-        """Create a new proactive channel, allocating its integer number."""
+    def channel_create(self, proto: str = 'tcp') -> ProactChannel:
+        """Create a new proactive channel, allocating its integer number.
+
+        Args:
+            proto: 'tcp' for a ProactTcpChannel, 'udp' for a ProactUdpChannel
+        """
+        cls = {'tcp': ProactTcpChannel, 'udp': ProactUdpChannel}[proto]
         for i in range(1, self.MAX_CHANNELS + 1):
             if not i in self.channels:
-                self.channels[i] = ProactChannel(self, i)
+                self.channels[i] = cls(self, i)
                 return self.channels[i]
         raise ValueError('Cannot allocate another channel: All channels active')
 
@@ -447,7 +543,8 @@ class Proact(ProactiveHandler):
 
         # UICC/terminal interface transport level is Optional, TS 102 223 6.6.27.x. Absent means
         # the CAT application runs its own network and transport layer, which we do not do.
-        if transp_lvl_ie is None or transp_lvl_ie.decoded['protocol_type'] != 'tcp_uicc_client_remote':
+        protos = {'tcp_uicc_client_remote': 'tcp', 'udp_uicc_client_remote': 'udp'}
+        if transp_lvl_ie is None or transp_lvl_ie.decoded['protocol_type'] not in protos:
             logger.warning("OpenChannel: unsupported UICC/terminal interface transport level (%s) "
                            "-> refusing", transp_lvl_ie.decoded if transp_lvl_ie else '(absent)')
             return refuse('requested_uicc_if_transp_level_not_available')
@@ -461,9 +558,10 @@ class Proact(ProactiveHandler):
                 other_addr_ie.decoded['address'], str) else other_addr_ie.decoded['address']
         ipv4_str = '%u.%u.%u.%u' % (addr_bytes[0], addr_bytes[1], addr_bytes[2], addr_bytes[3])
         port_nr = transp_lvl_ie.decoded['port_number']
-        logger.info("OpenChannel: connecting to %s:%u", ipv4_str, port_nr)
+        proto = protos[transp_lvl_ie.decoded['protocol_type']]
+        logger.info("OpenChannel: connecting to %s:%u (%s)", ipv4_str, port_nr, proto)
         try:
-            channel = self.channels.channel_create()
+            channel = self.channels.channel_create(proto)
         except ValueError:
             # TS 102 223 6.4.27.2 and 6.4.27.3: no channel left -> BIP error
             logger.warning("OpenChannel: all %u channels are in use -> refusing",
@@ -569,9 +667,8 @@ class Proact(ProactiveHandler):
         if isinstance(payload, str):
             payload = h2b(payload)
         # command_qualifier bit 1 selects 'send immediately' / Tx-buffer store and forward
-        # For TCP stream all we have is a socket and TCP takes care of segmentation,
-        # so just send.
-        chan.send(payload)
+        cd_ie = Proact._find_first_element_of_type(pcmd.children, CommandDetails)
+        chan.send(payload, immediate=bool(cd_ie.decoded['command_qualifier'] & 0x01))
         # Terminal Response example: [
         #  {'command_details': {'command_number': 1,
         #                       'type_of_command': 'send_data',

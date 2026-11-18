@@ -30,7 +30,7 @@ from pySim.cat import (ProactiveCommand, CommandDetails, DeviceIdentities,
                        OtherAddress, ChannelData, ChannelDataLength, ChannelStatus,
                        Result, LocationInformation)
 
-from pySim.bip import Proact, ProactChannels, terminal_profile
+from pySim.bip import Proact, ProactChannels, ProactTcpChannel, ProactUdpChannel, terminal_profile
 
 
 class _EchoServer:
@@ -71,6 +71,33 @@ class _EchoServer:
                 pass
 
 
+class _UdpEchoServer:
+    """echoes every datagram, and records them so datagram boundaries can be asserted"""
+    def __init__(self):
+        self._srv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._srv.bind(('127.0.0.1', 0))
+        self._srv.settimeout(0.1)
+        self.port = self._srv.getsockname()[1]
+        self.datagrams = []
+        self._stop = False
+        threading.Thread(target=self._run, daemon=True).start()
+
+    def _run(self):
+        while not self._stop:
+            try:
+                data, addr = self._srv.recvfrom(65535)
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            self.datagrams.append(data)
+            self._srv.sendto(data, addr)
+
+    def close(self):
+        self._stop = True
+        self._srv.close()
+
+
 def _pcmd(children_tlvs):
     """Assemble D0 proactive-command TLV from child IE bytes,
     decode it like transport does after a FETCH"""
@@ -79,7 +106,7 @@ def _pcmd(children_tlvs):
     return ProactiveCommand().from_tlv(pdu)
 
 
-def _open_channel(port, ip='127.0.0.1', cmd_nr=1):
+def _open_channel(port, ip='127.0.0.1', cmd_nr=1, proto='tcp_uicc_client_remote'):
     a, b, c, d = (int(x) for x in ip.split('.'))
     return _pcmd([
         CommandDetails(decoded={'command_number': cmd_nr, 'type_of_command': 'open_channel',
@@ -87,8 +114,7 @@ def _open_channel(port, ip='127.0.0.1', cmd_nr=1):
         DeviceIdentities(decoded={'source_dev_id': 'uicc', 'dest_dev_id': 'terminal'}).to_tlv(),
         BearerDescription(decoded={'bearer_type': 'default', 'bearer_parameters': b''}).to_tlv(),
         BufferSize(decoded=1024).to_tlv(),
-        UiccTransportLevel(decoded={'protocol_type': 'tcp_uicc_client_remote',
-                                    'port_number': port}).to_tlv(),
+        UiccTransportLevel(decoded={'protocol_type': proto, 'port_number': port}).to_tlv(),
         OtherAddress(decoded={'type_of_address': 'ipv4',
                               'address': bytes([a, b, c, d])}).to_tlv(),
     ])
@@ -105,10 +131,10 @@ def _open_channel_raw(extra_ies, cmd_nr=1):
     ] + extra_ies)
 
 
-def _send_data(payload, chan='channel_1', cmd_nr=1):
+def _send_data(payload, chan='channel_1', cmd_nr=1, immediate=True):
     return _pcmd([
         CommandDetails(decoded={'command_number': cmd_nr, 'type_of_command': 'send_data',
-                                'command_qualifier': 1}).to_tlv(),
+                                'command_qualifier': 1 if immediate else 0}).to_tlv(),
         DeviceIdentities(decoded={'source_dev_id': 'uicc', 'dest_dev_id': chan}).to_tlv(),
         ChannelData(decoded=b2h(payload)).to_tlv(),
     ])
@@ -266,6 +292,68 @@ class BipRelayRoundTripTest(unittest.TestCase):
         self.assertEqual(_first(til, ChannelDataLength).decoded, 0)
 
 
+class ChannelCreateTest(unittest.TestCase):
+    def test_proto_selects_the_channel_class(self):
+        channels = ProactChannels()
+        self.assertIsInstance(channels.channel_create(), ProactTcpChannel)
+        self.assertIsInstance(channels.channel_create('tcp'), ProactTcpChannel)
+        self.assertIsInstance(channels.channel_create('udp'), ProactUdpChannel)
+        self.assertEqual(sorted(channels.channels), [1, 2, 3])
+
+
+class BipUdpRelayTest(unittest.TestCase):
+    """UDP channels keep datagram boundaries, TS 102 223 6.4.29 and 6.4.30"""
+
+    def setUp(self):
+        self.echo = _UdpEchoServer()
+        self.addCleanup(self.echo.close)
+        self.events = []
+        self.proact = Proact(data_available_sink=self.events.append)
+        self.addCleanup(lambda: [c.close() for c in list(self.proact.channels.channels.values())])
+        til = self.proact.handle_OpenChannel(_open_channel(self.echo.port, proto='udp_uicc_client_remote'))
+        b''.join(x.to_tlv() for x in til)
+        self.assertEqual(_first(til, Result).decoded['general_result'], 'performed_successfully')
+        self.assertEqual(_first(til, ChannelStatus).decoded, '8100')
+        self.chan = self.proact.channels.channels[1]
+
+    def _wait_events(self, n, timeout=2.0):
+        deadline = time.monotonic() + timeout
+        while len(self.events) < n and time.monotonic() < deadline:
+            time.sleep(0.01)
+        return len(self.events)
+
+    def test_store_and_forward_is_one_datagram(self):
+        # two buffered SEND DATA and a final "send immediately" leave as a single datagram
+        self.proact.handle_SendData(_send_data(b'one', immediate=False))
+        self.proact.handle_SendData(_send_data(b'two', immediate=False))
+        self.assertEqual(self.echo.datagrams, [])
+        self.proact.handle_SendData(_send_data(b'three'))
+        self.assertGreater(self.chan.wait_rx(2.0), 0)
+        self.assertEqual(self.echo.datagrams, [b'onetwothree'])
+
+    def test_rx_one_sdu_at_a_time(self):
+        # two datagrams from the peer: RECEIVE DATA never crosses into the second one, and
+        # the second raises its own data available event once the first is drained
+        self.proact.handle_SendData(_send_data(b'first'))
+        self.proact.handle_SendData(_send_data(b'second'))
+        time.sleep(0.2)
+        self.assertEqual(self._wait_events(1), 1)
+        self.assertEqual(self.chan.available_rx(), 5)
+        til = self.proact.handle_ReceiveData(_receive_data(100))
+        self.assertEqual(h2b(_first(til, ChannelData).decoded), b'first')
+        self.assertEqual(_first(til, ChannelDataLength).decoded, 0)
+        self.assertEqual(_first(til, Result).decoded['general_result'],
+                         'performed_with_missing_information')
+        self.assertEqual(self._wait_events(2), 2)
+        self.assertEqual(h2b(self.events[1])[-1], 6)     # channel data length = len(b'second')
+        til = self.proact.handle_ReceiveData(_receive_data(3))
+        self.assertEqual(h2b(_first(til, ChannelData).decoded), b'sec')
+        self.assertEqual(_first(til, ChannelDataLength).decoded, 3)
+        til = self.proact.handle_ReceiveData(_receive_data(3))
+        self.assertEqual(h2b(_first(til, ChannelData).decoded), b'ond')
+        self.assertEqual(_first(til, ChannelDataLength).decoded, 0)
+
+
 class OpenChannelRefusalTest(unittest.TestCase):
     """Refusal is a TERMINAL RESPONSE, not an exception, raising takes the whole
     proactive session down and leaves the card wondering why"""
@@ -296,8 +384,8 @@ class OpenChannelRefusalTest(unittest.TestCase):
 
     def test_transport_level(self):
         cases = [[self.ADDR.to_tlv()]]                             # absent, 6.6.27.x Optional
-        for proto in ('udp_uicc_client_remote', 'tcp_uicc_server', 'udp_uicc_client_local',
-                      'tcp_uicc_client_local', 'direct_channel'):   # not TCP client remote
+        for proto in ('tcp_uicc_server', 'udp_uicc_client_local', 'tcp_uicc_client_local',
+                      'direct_channel'):                            # not client mode remote
             tl = UiccTransportLevel(decoded={'protocol_type': proto, 'port_number': 1234})
             cases.append([tl.to_tlv(), self.ADDR.to_tlv()])
         for extra in cases:
@@ -375,7 +463,7 @@ class TerminalProfileTest(unittest.TestCase):
         self.assertEqual(self.byte(12), 0x1f)           # OPEN/CLOSE CHANNEL, RECEIVE/SEND DATA, STATUS
         self.assertEqual(self.byte(13) >> 5, ProactChannels.MAX_CHANNELS)
         self.assertEqual(self.byte(14), 0x60)           # class ND, class NK
-        self.assertEqual(self.byte(17), 0x01)           # TCP, UICC client mode, remote
+        self.assertEqual(self.byte(17), 0x03)           # TCP + UDP, UICC client mode, remote
 
     def test_not_announced(self):
         self.assertEqual(self.byte(3) & 0x60, 0)        # POLL INTERVAL, POLLING OFF
