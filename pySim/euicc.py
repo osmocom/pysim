@@ -25,7 +25,8 @@ Related Specs: GSMA SGP.21, SGP.22, SGP.31, SGP32
 
 import argparse
 
-from construct import Array, Struct, FlagsEnum, GreedyRange
+from construct import Array, Struct, FlagsEnum, GreedyRange, Adapter, Byte, Int8ub
+from construct import Optional as COptional
 from cmd2 import cmd2, CommandSet, with_default_category
 from osmocom.utils import Hexstr
 from osmocom.tlv import *
@@ -288,11 +289,32 @@ class DeleteProfileResp(BER_TLV_IE, tag=0xbf33, nested=[DeleteResult]):
     pass
 
 # SGP.22 Section 5.7.19: EuiccMemoryReset
+class DerNamedBitString(Adapter):
+    """ASN.1 DER named BIT STRING over a FlagsEnum(Byte): the count of unused bits comes first,
+    trailing zero bits are stripped, all bits clear is the single octet 00."""
+    def __init__(self, flags: FlagsEnum):
+        super().__init__(Struct('unused'/Int8ub, 'value'/COptional(Byte)))
+        self.flags = flags
+
+    def _decode(self, obj, context, path):
+        if obj.value is None:
+            return self.flags.parse(b'\x00')
+        if obj.unused > 7 or obj.value & ((1 << obj.unused) - 1):
+            raise ValueError('invalid DER BIT STRING padding')
+        return self.flags.parse(bytes([obj.value]))
+
+    def _encode(self, obj, context, path):
+        value = self.flags.build(obj)[0]
+        if not value:
+            return {'unused': 0, 'value': None}
+        return {'unused': (value & -value).bit_length() - 1, 'value': value}
+
+ResetOptionsFlags = FlagsEnum(Byte, deleteOperationalProfiles=0x80, deleteFieldLoadedTestProfiles=0x40,
+                              resetDefaultSmdpAddress=0x20)
 class ResetOptions(BER_TLV_IE, tag=0x82):
-    _construct = FlagsEnum(Byte, deleteOperationalProfiles=0x80, deleteFieldLoadedTestProfiles=0x40,
-                           resetDefaultSmdpAddress=0x20)
+    _construct = DerNamedBitString(ResetOptionsFlags)
 class ResetResult(BER_TLV_IE, tag=0x80):
-    _construct = Enum(Int8ub, ok=0, nothingToDelete=1, undefinedError=127)
+    _construct = Enum(Int8ub, ok=0, nothingToDelete=1, catBusy=5, undefinedError=127)
 class EuiccMemoryResetReq(BER_TLV_IE, tag=0xbf34, nested=[ResetOptions]):
     pass
 class EuiccMemoryResetResp(BER_TLV_IE, tag=0xbf34, nested=[ResetResult]):
