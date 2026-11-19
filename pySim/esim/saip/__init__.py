@@ -490,6 +490,10 @@ class File:
                 stream.write(v)
             else:
                 raise ValueError("Unknown key '%s' in tuple list" % k)
+        cur_len = stream.getbuffer().nbytes
+        if self._file_size and cur_len < self._file_size:
+            stream.seek(cur_len)
+            stream.write(ERASED_STATE_BYTE * (self._file_size - cur_len))
         return stream.getvalue()
 
     def file_content_to_tuples(self, optimize:bool = False) -> List[Tuple]:
