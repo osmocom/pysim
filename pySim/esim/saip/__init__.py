@@ -2198,7 +2198,9 @@ class ProfileElementSequence:
                         to_delete_pes.append(rfm_pe)
             self.pe_list = [pe for pe in self.pe_list if pe not in to_delete_pes]
         self._process_pelist()
-        # TODO: remove any records related to the ADFs from EF.DIR
+        # Remove any records related to the ADFs from EF.DIR.
+        if len(naa_adf_names) > 0:
+            self._remove_aids_from_ef_dir(naa_adf_names)
 
     @staticmethod
     def naa_for_path(path: Path) -> Optional[Naa]:
@@ -2406,6 +2408,27 @@ class ProfileElementSequence:
             records.append(rec)
             ef_dir.nb_rec += 1
         # Write to file and update pe.
+        ef_dir.body = b''.join(records)
+        mf.file2pe(mf.files['ef-dir'])
+
+    def _remove_aids_from_ef_dir(self, aids: List[bytes]):
+        # Get MF.
+        mf = self.get_pe_for_type('mf')
+        if not mf:
+            return
+        # Get EF.DIR.
+        ef_dir = mf.files.get('ef-dir')
+        if not ef_dir:
+            return
+        # Search and remove AIDs from record.
+        records = [ ef_dir.body[i : i + ef_dir.rec_len] for i in range(0, len(ef_dir.body), ef_dir.rec_len) ]
+        for idx, rec in enumerate(records):
+            if rec.startswith(b'\xff'):
+                continue
+            existing_aid, _ = self._parse_ef_dir(rec)
+            if existing_aid in aids:
+                records[idx] = b'\xff'*len(rec)
+        # Store erased record.
         ef_dir.body = b''.join(records)
         mf.file2pe(mf.files['ef-dir'])
 
