@@ -27,7 +27,7 @@ import asn1tools
 import zipfile
 from pySim import javacard
 from osmocom.utils import b2h, h2b, Hexstr
-from osmocom.tlv import BER_TLV_IE, bertlv_parse_tag, bertlv_parse_len
+from osmocom.tlv import BER_TLV_IE, bertlv_parse_one, bertlv_parse_tag, bertlv_parse_len
 from osmocom.construct import build_construct, parse_construct, GreedyInteger, GreedyBytes, StripHeaderAdapter
 
 from pySim import ts_102_222
@@ -1886,6 +1886,7 @@ class ProfileElementSequence:
         self.pe_list.append(pe)
         self._process_pelist()
         self.renumber_identification()
+        self._add_aid_to_ef_dir(pe)
 
     def get_pes_for_type(self, tname: str) -> List[ProfileElement]:
         """Return list of profile elements present for given profile element type."""
@@ -2139,6 +2140,7 @@ class ProfileElementSequence:
         self.pe_list.insert(idx, pe)
         self._process_pelist()
         self.renumber_identification()
+        self._add_aid_to_ef_dir(pe)
 
     def insert_after_pe(self, pe_before: ProfileElement, pe_new: ProfileElement) -> None:
         """Insert a given [new] ProfileElement after a given [existing] PE in the PE Sequence."""
@@ -2316,6 +2318,96 @@ class ProfileElementSequence:
             if not isinstance(df, FsNodeDF):
                 raise ValueError("%s is not a DF, cannot change into it" % (df))
         self.cur_df = df
+
+    def _parse_ef_dir(self, rec: bytes) -> Tuple[bytes, bytes]:
+        TAG_APP_TEMPLATE = {'class': 1, 'constructed': True, 'tag': 1}
+        TAG_AID = {'class': 1, 'constructed': False, 'tag': 15}
+        TAG_LABEL = {'class': 1, 'constructed': False, 'tag': 16}
+        tag, length, data, _ = bertlv_parse_one(rec)
+        if tag != TAG_APP_TEMPLATE:
+            return None, None
+        tag, length, aid, rest = bertlv_parse_one(data)
+        if tag != TAG_AID or not rest:
+            return None, None
+        tag, length, label, rest = bertlv_parse_one(rest)
+        if tag != TAG_LABEL:
+            return aid, None
+        return aid, label
+
+    def _add_aid_to_ef_dir(self, pe: ProfileElement):
+        """If pe is an 'ADF' type, append AID to EF.DIR in MF."""
+        # Check for ADF type and get AID.
+        if not isinstance(pe, FsProfileElement):
+            return
+        aid = None
+        for f in pe.files.values():
+            if f.file_type == 'ADF':
+                aid = f.df_name
+                if not aid:
+                    raise ValueError("ADF %s does not have an AID." % (f.name))
+                break
+        if not aid:
+            return
+        # Get MF.
+        mf = self.get_pe_for_type('mf')
+        if not mf:
+            return
+        # Get EF.DIR or add default.
+        ef_dir = mf.files.get('ef-dir')
+        if not ef_dir:
+            ef_dir = mf.create_file('ef-dir')
+            ef_dir.rec_len = 38
+            ef_dir.nb_rec = 2
+            ef_dir.body = b'\xff' * (ef_dir.rec_len * ef_dir.nb_rec)
+        records = [ ef_dir.body[i : i + ef_dir.rec_len] for i in range(0, len(ef_dir.body), ef_dir.rec_len) ]
+        # Search for existing and first empty record; Get existing labels.
+        empty_idx = None
+        existing_labels = []
+        for idx, rec in enumerate(records):
+            if rec.startswith(b'\xff'):
+                if empty_idx is None:
+                    empty_idx = idx
+                continue
+            existing_aid, existing_label = self._parse_ef_dir(rec)
+            if existing_aid is None:
+                continue
+            if existing_aid == aid:
+                return
+            if existing_label is not None:
+                existing_labels.append(existing_label)
+        # Create new record entry.
+        data = b'\x4f' + bytes([len(aid)]) + aid
+        base_name = None
+        for naa in NAAs.values():
+            if naa.aid and aid.startswith(naa.aid):
+                base_name = naa.name.capitalize()
+                break
+        if base_name:
+            nr = 1
+            label = None
+            while True:
+                candidate = f"{base_name}{nr}".encode('ascii')
+                if candidate not in existing_labels:
+                    label = candidate;
+                    break
+                nr += 1
+            data += b'\x50' + bytes([len(label)]) + label
+        app_template_tlv = b'\x61' + bytes([len(data)]) + data
+        # Inflate if record length is too small.
+        if len(app_template_tlv) > ef_dir.rec_len:
+            ef_dir.rec_len = len(app_template_tlv)
+            for idx, rec in enumerate(records):
+                records[idx] = rec.ljust(ef_dir.rec_len, b'\xff')
+        # Insert or append record
+        rec = app_template_tlv.ljust(ef_dir.rec_len, b'\xff')
+        if empty_idx is not None:
+            records[empty_idx] = rec
+        else:
+            records.append(rec)
+            ef_dir.nb_rec += 1
+        # Write to file and update pe.
+        ef_dir.body = b''.join(records)
+        mf.file2pe(mf.files['ef-dir'])
 
 
 class FsNode:
