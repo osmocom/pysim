@@ -204,6 +204,44 @@ class FileContentTest(unittest.TestCase):
         self.assertEqual(offsets, [0xffff, 66000 - 0xffff])
         self.assertEqual(f.file_content_from_tuples(tuples), bytes(body))
 
+    def test_compression_decompression(self):
+        # Test compression algorithm with out default value
+        template = templates.FileTemplate(0x6f99, 'EF.TEST', 'LF', 2, 38, 5)
+        test_tuples = [
+            ('fileDescriptor', {}),
+            ('fillFileContent', b'12345678'), # overwrite default value with some pattern
+            ('fillFileOffset', 30),
+            ('fillFileContent', b'\xff' * 38), # overwrite record with 0xff
+        ]
+        expect_body = bytearray(b'12345678' + b'\xff' * (30 + 38))
+        expect_tuples = [
+            ('fillFileContent', b'12345678'), # overwrite default value with some pattern
+        ]
+        f = File('test', test_tuples, template)
+        self.assertEqual(f.body, expect_body)
+        tuples = f.file_content_to_tuples(optimize=True)
+        self.assertEqual(tuples, expect_tuples)
+
+    def test_compression_decompression_default(self):
+        # Test compression algorithm with default value
+        template = templates.FileTemplate(0x6f99, 'EF.TEST', 'LF', 3, 38, 5, default_val = 'fdfeff...', repeat = True)
+        test_tuples = [
+            ('fileDescriptor', {}),
+            ('fillFileContent', b'12345678'), # overwrite default value with some pattern
+            ('fillFileOffset', 30 + 38),    # no not overwrite default value
+            ('fillFileContent', b'\xff' * 38), # overwrite record with 0xff
+        ]
+        expect_body = bytearray(b'12345678' + b'\xff' * 30 + b'\xfd\xfe' + b'\xff' * (36 + 38))
+        expect_tuples = [
+            ('fillFileContent', b'12345678'), # overwrite default value with some pattern
+            ('fillFileOffset', 30 + 38),    # no not overwrite default value
+            ('fillFileContent', b'\xff' * 2), # overwrite only part of the record with 0xff that differs
+        ]
+        f = File('test', test_tuples, template)
+        self.assertEqual(f.body, expect_body)
+        tuples = f.file_content_to_tuples(optimize=True)
+        self.assertEqual(tuples, expect_tuples)
+
 class OidTest(unittest.TestCase):
     def test_cmp(self):
         self.assertTrue(oid.OID('1.0') > oid.OID('0.9'))
