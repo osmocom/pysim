@@ -558,7 +558,8 @@ class File:
             while offset > 0xffff:
                 ret.append(('fillFileOffset', 0xffff))
                 offset -= 0xffff
-            ret.append(('fillFileOffset', offset))
+            if offset != cur:
+                ret.append(('fillFileOffset', offset))
             ret.append(('fillFileContent', self.body[block.a:block.a+block.size]))
             cur = block.a + block.size
         return ret
