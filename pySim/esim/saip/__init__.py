@@ -171,6 +171,7 @@ class File:
         self.read_and_update_when_deact: bool = False
         self.shareable: bool = True
         self.df_name = None
+        self.spfi_default = False
         self.fill_pattern = None
         self.fill_pattern_repeat = False
         self.pstdo = None # pinStatusTemplateDO, mandatory for DF/ADF
@@ -322,7 +323,7 @@ class File:
             spfi |= 0x80 # TS 102 222 Table 5
         if self.read_and_update_when_deact:
             spfi |= 0x40 # TS 102 222 Table 5
-        if spfi != 0x00:
+        if spfi != 0x00 or self.spfi_default:
             pefi['specialFileInformation'] = spfi.to_bytes(1, 'big')
         if self.fill_pattern:
             if not self.fill_pattern_repeat:
@@ -409,6 +410,8 @@ class File:
                     self.high_update = True
                 if specialFileInformation[0] & 0x40:
                     self.read_and_update_when_deact = True
+                if specialFileInformation[0] == 0x00:
+                    self.spfi_default = True
             if 'repeatPattern' in pefi:
                 self.fill_pattern = pefi['repeatPattern']
                 self.fill_pattern_repeat = True
