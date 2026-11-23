@@ -162,6 +162,7 @@ class File:
         self.file_type = None
         self.fid: Optional[int] = None
         self.sfi: Optional[int] = None
+        self.sfi_disabled: bool = False
         self.arr = None
         self.rec_len: Optional[int] = None
         self.nb_rec: Optional[int] = None
@@ -278,6 +279,8 @@ class File:
         if self.sfi:
             if not self.template or self.sfi != self.template.sfi:
                 fileDescriptor['shortEFID'] = bytes([self.sfi])
+        elif self.sfi_disabled:
+            fileDescriptor['shortEFID'] = b''
         if self.df_name:
             fileDescriptor['dfName'] = self.df_name
         if self.arr:
@@ -344,8 +347,11 @@ class File:
         if fileID:
             self.fid = int.from_bytes(fileID, 'big')
         shortEFID = fileDescriptor.get('shortEFID', None)
-        if shortEFID:
-            self.sfi = shortEFID[0]
+        if shortEFID is not None:
+            if (len(shortEFID) == 0):
+                self.sfi_disabled = True
+            else:
+                self.sfi = shortEFID[0]
         dfName = fileDescriptor.get('dfName', None)
         if dfName:
             self.df_name = dfName
