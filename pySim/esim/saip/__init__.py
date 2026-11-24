@@ -174,6 +174,7 @@ class File:
         self.spfi_default = False
         self.fill_pattern = None
         self.fill_pattern_repeat = False
+        self.file_details: Optional[byte] = None
         self.pstdo = None # pinStatusTemplateDO, mandatory for DF/ADF
         self.lcsi = None # optional life cycle status indicator
         # apply some defaults from profile
@@ -330,6 +331,8 @@ class File:
                 pefi['fillPattern'] = self.fill_pattern
             else:
                 pefi['repeatPattern'] = self.fill_pattern
+        if self.file_details is not None:
+            pefi['fileDetails'] = self.file_details
         if len(pefi.keys()):
             # TODO: When overwriting the default "proprietaryEFInfo" for a template EF for which a
             # default fill or repeat pattern is defined; it is hence recommended to provide the
@@ -418,6 +421,8 @@ class File:
             if 'fillPattern' in pefi:
                 self.fill_pattern = pefi['fillPattern']
                 self.fill_pattern_repeat = False
+            if 'fileDetails' in pefi:
+                self.file_details = pefi['fileDetails']
 
         logger.debug("\t%s" % repr(self))
 
