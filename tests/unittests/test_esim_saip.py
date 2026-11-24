@@ -191,6 +191,26 @@ class SaipTest(unittest.TestCase):
                 pes.append(inst)
                 pes.to_der()
 
+    def test_gfm_pe2files_files2pe(self):
+        """Test that pe2files work and also files2pe produces the same profile element content."""
+        self.maxDiff = None
+        gfm_elements = [pe for pe in self.pes.pe_list if pe.type == 'genericFileManagement']
+        self.assertTrue(len(gfm_elements) > 0)
+        for gdm in gfm_elements:
+            gfm = gfm_elements[0]
+            self.assertIsNotNone(gfm)
+            orig_decoded = copy.deepcopy(gfm.decoded)
+            gfm.files2pe()
+            orig_cmds = orig_decoded['fileManagementCMD']
+            new_cmds = gfm.decoded['fileManagementCMD']
+            self.assertEqual(len(orig_cmds), len(new_cmds))
+            for b, (orig_block, new_block) in enumerate(zip(orig_cmds, new_cmds)):
+                self.assertEqual(len(orig_block), len(new_block))
+                for c, (orig_cmd, new_cmd) in enumerate(zip(orig_block, new_block)):
+                    with self.subTest(cmd_index=b, cmd=c):
+                        self.assertEqual(orig_cmd, new_cmd)
+
+
 class FileContentTest(unittest.TestCase):
     def test_fill_file_offset_fits_uint16(self):
         # fillFileOffset is a UInt16 (SAIP 8.3.2): a longer gap takes several steps
