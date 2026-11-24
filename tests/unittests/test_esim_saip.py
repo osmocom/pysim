@@ -262,6 +262,66 @@ class FileContentTest(unittest.TestCase):
         tuples = f.file_content_to_tuples(optimize=True)
         self.assertEqual(tuples, expect_tuples)
 
+class EfDirTest(unittest.TestCase):
+    def setUp(self):
+        self.pes = ProfileElementSequence()
+        hdr = ProfileElementHeader(iccid='01234567890123456789', profile_type='Osmocom Test Profile')
+        self.pes.append(hdr)
+        mf = ProfileElementMF(pe_sequence = self.pes)
+        mf.create_file('mf')
+        self.pes.append(mf)
+
+    def _add_usim(self, df_name):
+        """Helper to create USIM-PE."""
+        usim = ProfileElementUSIM(pe_sequence = self.pes)
+        adf_usim = usim.create_file('adf-usim')
+        adf_usim.fid = 0x7fd0
+        adf_usim.df_name = bytes.fromhex(df_name)
+        usim.files2pe()
+        self.pes.append(usim)
+        mf = self.pes.get_pe_for_type('mf')
+
+    def test_add_adf(self):
+        """Test if EF-DIR is created and AID is added when USIM is appended."""
+        self._add_usim('A0000000871002FFFFFFFF8907090000')
+        mf = self.pes.get_pe_for_type('mf')
+        ef_dir_tuples = mf.decoded['ef-dir']
+        fill_contents = [val for key, val in ef_dir_tuples if key == 'fillFileContent']
+        self.assertGreater(len(fill_contents), 0, "Failed to automatically add AID to EF-DIR.")
+        expected_content = bytes.fromhex('61194f10a0000000871002ffffffff890709000050055573696d31')
+        self.assertEqual(fill_contents[0], expected_content)
+
+    def test_remove_adf(self):
+        """Test if record in EF-DIR is removed whten USIM is removed."""
+        self._add_usim('A0000000871002FFFFFFFF8907090000')
+        self.pes.remove_naas_of_type(NaaUsim);
+        mf = self.pes.get_pe_for_type('mf')
+        ef_dir_tuples = mf.decoded['ef-dir']
+        fill_contents = [val for key, val in ef_dir_tuples if key == 'fillFileContent']
+        self.assertEqual(len(fill_contents), 0, "Failed to automatically remove AID from EF-DIR.")
+
+    def test_add_record(self):
+        """Test if EF-DIR record number is increased, when USIM is added, but not record is available."""
+        self._add_usim('A0000000871002FFFFFFFF8907090001')
+        self._add_usim('A0000000871002FFFFFFFF8907090002')
+        self._add_usim('A0000000871002FFFFFFFF8907090003')
+        mf = self.pes.get_pe_for_type('mf')
+        ef_dir_file = mf.files['ef-dir']
+        self.assertEqual(ef_dir_file.nb_rec, 3, "Expected number of records are not in EF-DIR.")
+
+    def test_resize_record(self):
+        """Test if EF-DIR record number is increased, when USIM is added, but not record is available."""
+        mf = self.pes.get_pe_for_type('mf')
+        mf.create_file('ef-dir')
+        ef_dir = mf.files['ef-dir']
+        ef_dir.rec_len = 16
+        ef_dir.nb_rec = 2
+        ef_dir.body = b'\xff' * ef_dir.rec_len * ef_dir.nb_rec
+        self._add_usim('A0000000871002FFFFFFFF8907090001')
+        ef_dir_file = mf.files['ef-dir']
+        self.assertGreater(ef_dir_file.rec_len, 16, "Record length of EF-DIR did not increase.")
+
+
 class OidTest(unittest.TestCase):
     def test_cmp(self):
         self.assertTrue(oid.OID('1.0') > oid.OID('0.9'))
