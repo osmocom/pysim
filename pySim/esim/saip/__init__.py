@@ -2045,6 +2045,9 @@ class ProfileElementSequence:
         @staticmethod
         def file_type_walker(node: 'FsNode', **kwargs):
             return node.file.file_type
+        @staticmethod
+        def link_path_walker(node: 'FsNode', **kwargs):
+            return node.file.file_type == 'DF' and node.file.link_path is not None
         # services that we cannot auto-determine and which must hence be manually specified
         manual_services = ['contactless', 'mbms', 'cat-tp', 'suciCalculatorApi', 'dns-resolution',
                            'scp11ac', 'scp11c-authorization-mechanism', 's16mode', 'eaka']
@@ -2095,7 +2098,10 @@ class ProfileElementSequence:
         ftype_list = self.mf.walk(file_type_walker)
         if 'BT' in ftype_list:
             svc_set.add('ber-tlv')
-        # FIXME:dfLinked files (scan all files, check for non-empty Fcp.linkPath presence of DFs)
+        # dfLink (recursively scan all files for non-empty Fcp.linkPath presence of DFs)
+        link_list = self.mf.walk(link_path_walker)
+        if True in link_list:
+            svc_set.add('dfLink')
 
         # 5G:
         # - When SUCI is:
