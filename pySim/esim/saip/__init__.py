@@ -177,6 +177,7 @@ class File:
         self.file_details: Optional[byte] = None
         self.pstdo = None # pinStatusTemplateDO, mandatory for DF/ADF
         self.lcsi = None # optional life cycle status indicator
+        self.link_path = None
         # apply some defaults from profile
         if self.template:
             self.from_template(self.template)
@@ -341,6 +342,9 @@ class File:
             fileDescriptor['proprietaryEFInfo'] = pefi
         if self.lcsi:
             fileDescriptor['lcsi'] = self.lcsi
+        if self.link_path is not None:
+            path_without_mf = self.path_to_gfm(self.link_path[1:])
+            fileDescriptor['linkPath'] = path_without_mf
         logger.debug("%s: to_fileDescriptor(%s)" % (self, fileDescriptor))
         return fileDescriptor
 
@@ -424,6 +428,10 @@ class File:
             if 'fileDetails' in pefi:
                 self.file_details = pefi['fileDetails']
 
+        linkPath = fileDescriptor.get('linkPath', None)
+        if linkPath is not None:
+            self.link_path = [0x3f00] + File.path_from_gfm(linkPath)
+
         logger.debug("\t%s" % repr(self))
 
     def from_tuples(self, l:List[Tuple]):
@@ -435,7 +443,8 @@ class File:
         if fd:
             self.from_fileDescriptor(dict(fd))
         # BODY
-        self._body = self.file_content_from_tuples(l)
+        if not self.link_path:
+            self._body = self.file_content_from_tuples(l)
 
     @staticmethod
     def path_from_gfm(bin_path: bytes):
@@ -449,7 +458,10 @@ class File:
 
     def to_tuples(self) -> List[Tuple]:
         """Generate a list of fileDescriptor, fillFileContent, fillFileOffset tuples into this instance."""
-        return [('fileDescriptor', self.to_fileDescriptor())] + self.file_content_to_tuples()
+        ret = [('fileDescriptor', self.to_fileDescriptor())]
+        if not self.link_path and self._body:
+            ret += self.file_content_to_tuples()
+        return ret
 
     def to_gfm(self, current_path) -> List[Tuple]:
         """Generate a list of filePath, createFCP, fillFileContent, fillFileOffset tuples into this instance."""
@@ -458,7 +470,7 @@ class File:
             rel_path_bytes = self.path_to_gfm(self.path[1:])
             ret.append(('filePath', rel_path_bytes))
         ret.append(('createFCP', self.to_fileDescriptor()))
-        if hasattr(self, '_body') and self._body:
+        if not self.link_path and self._body:
             ret += self.file_content_to_tuples()
         return ret
 
