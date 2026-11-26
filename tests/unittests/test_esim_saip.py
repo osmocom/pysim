@@ -322,6 +322,75 @@ class EfDirTest(unittest.TestCase):
         self.assertGreater(ef_dir_file.rec_len, 16, "Record length of EF-DIR did not increase.")
 
 
+class LinkPathTest(unittest.TestCase):
+    def _create_pes(self, use_gfm = False, link_path = None):
+        self.maxDiff = None
+        self.pes = ProfileElementSequence()
+        hdr = ProfileElementHeader(iccid='01234567890123456789', profile_type='Osmocom Test Profile')
+        self.pes.append(hdr)
+        mf = ProfileElementMF(pe_sequence = self.pes)
+        mf.create_file('mf')
+        self.pes.append(mf)
+        telecom = ProfileElementTelecom(pe_sequence = self.pes)
+        telecom.create_file('df-telecom')
+        telecom.files2pe()
+        self.pes.append(telecom)
+
+    def _add_gfm(self, link_path = None):
+        gfm_decoded = OrderedDict([
+            ('gfm-header', OrderedDict([('mandated', None), ('identification', 10)])),
+            ('fileManagementCMD', [[
+                ('filePath', b'\x7f\x10'),
+                ('createFCP', OrderedDict([
+                    ('fileDescriptor', b'\x38\x21'), # 0x38 = DF
+                    ('pinStatusTemplateDO', None),
+                    ('fileID', b'\x5f\x3a'), # 5f3a = DF.PHONEBOOK
+                    ('lcsi', b'\x05'),
+                ]))
+            ]])
+        ])
+        if link_path is not None:
+            gfm_decoded['fileManagementCMD'][0][1][1]['linkPath'] = link_path
+        self.gfm = ProfileElementGFM(decoded=gfm_decoded, pe_sequence=self.pes)
+        self.pes.append(self.gfm)
+        self.gfm.pe2files()
+        self.orig_decoded = copy.deepcopy(self.gfm.decoded)
+        self.gfm.files2pe()
+
+    def _add_optcsim(self, link_path = None):
+        optcsim_decoded = OrderedDict([
+            ('optcsim-header', OrderedDict([('mandated', None), ('identification', 16)])),
+            ('templateID', '2.23.143.1.2.11'),
+            ('ef-sms', [
+                ('fileDescriptor', OrderedDict([
+                    ('fileDescriptor', b'\x42\x21\x00\xc0'),
+                    ('securityAttributesReferenced', b'\x6f\x06\x06'),
+                    ('shortEFID', b''),
+                    ('linkPath', b'\x7f\xd0\x6f\x3c'),
+                    ('lcsi', b'\x05'),
+                ]))
+            ]),
+        ])
+        if link_path is not None:
+            optcsim_decoded['ef-sms'][0][1]['linkPath'] = link_path
+        self.optcsim = ProfileElementOptCSIM(decoded=optcsim_decoded, pe_sequence=self.pes)
+        self.pes.append(self.optcsim)
+        self.optcsim.pe2files()
+        self.orig_decoded = copy.deepcopy(self.optcsim.decoded)
+        self.optcsim.files2pe()
+
+    def test_link_path_transcoding_gfm(self):
+        """Test that pe2files and files2pe preserve linkPath in genericFileManagement."""
+        self._create_pes()
+        self._add_gfm(b'\x7f\x10\x5f\x3a') # 7f10 = DF.TELECOM / 5f3a = DF.PHONEBOOK
+        self.assertEqual(self.orig_decoded, self.gfm.decoded)
+
+    def test_link_path_transcoding_optcsim(self):
+        """Test that pe2files and files2pe preserve linkPath in genericFileManagement."""
+        self._create_pes()
+        self._add_optcsim(b'\x7f\xd0\x6f\x3c') # 7f10 = DF.TELECOM / 6f3c = EF.SMS
+        self.assertEqual(self.orig_decoded, self.optcsim.decoded)
+
 class OidTest(unittest.TestCase):
     def test_cmp(self):
         self.assertTrue(oid.OID('1.0') > oid.OID('0.9'))
