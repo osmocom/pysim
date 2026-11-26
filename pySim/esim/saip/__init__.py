@@ -687,6 +687,8 @@ class ProfileElement:
             'opt-usim': ProfileElementOptUSIM,
             'isim': ProfileElementISIM,
             'opt-isim': ProfileElementOptISIM,
+            'csim': ProfileElementCSIM,
+            'opt-csim': ProfileElementOptCSIM,
             'phonebook': ProfileElementPhonebook,
             'gsm-access': ProfileElementGsmAccess,
             # TODO: csim
@@ -1720,6 +1722,37 @@ class ProfileElementOptISIM(FsProfileElement):
             return
         # provide some reasonable defaults for a MNO-SD
         self.decoded['templateID'] = str(oid.ADF_ISIMopt_not_by_default_v2)
+
+
+class ProfileElementCSIM(FsProfileElement):
+    """Class representing the ProfileElement for ADF.CSIM Mandatory Files"""
+    type = 'csim'
+
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
+        if decoded:
+            return
+        # provide some reasonable defaults for a MNO-SD
+        self.decoded['templateID'] = str(oid.ADF_CSIM_by_default)
+        for fname in ['adf-csim', 'ef-arr', 'ef-aop', 'ef-aloc', 'ef-snregi', 'ef-accolc', 'ef-term', 'ef-acp',
+                      'ef-prl', 'ef-ruimid', 'ef-csim-st', 'ef-namlock', 'ef-ota', 'ef-sp', 'ef-usgind',
+                      'ef-max-prl', 'ef-spcs', 'ef-home-tag', 'ef-group-tag', 'ef-specific-tag', 'ef-call-prompt']:
+            self.decoded[fname] = []
+
+    @property
+    def adf_name(self) -> str:
+        return b2h(self.decoded['adf-csim'][0][1]['dfName'])
+
+class ProfileElementOptCSIM(FsProfileElement):
+    """Class representing the ProfileElement for ADF.CSIM Optional Files"""
+    type = 'opt-csim'
+
+    def __init__(self, decoded: Optional[dict] = None, **kwargs):
+        super().__init__(decoded, **kwargs)
+        if decoded:
+            return
+        # provide some reasonable defaults for a MNO-SD
+        self.decoded['templateID'] = str(oid.ADF_CSIMopt_not_by_default_v2)
 
 
 class ProfileElementAKA(ProfileElement):

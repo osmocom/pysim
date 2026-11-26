@@ -936,7 +936,135 @@ class FilesIsimOptionalv2(ProfileTemplate):
     ]
 
 
-# TODO: CSIM
+class FilesCsimMandatory(ProfileTemplate):
+    """Mandatory Files at ADF.CSIM as per Section 9.7.1"""
+    created_by_default = True
+    oid = OID.ADF_CSIM_by_default
+    files = [
+        FileTemplate(  None, 'ADF.CSIM',      'ADF', None, None,  14, None, None, False, ['aid','temporary_fid','pinStatusTemplateDO']),
+        FileTemplate(0x6f06, 'EF.ARR',         'LF', None, None,  10, 0x17, None, True, ['nb_rec','size']),
+        FileTemplate(0x6f21, 'EF.CALL_COUNT',  'CY',   10,    2,   7, None, '0000', False),
+        FileTemplate(0x6f22, 'EF.IMIT_M',      'TR', None,   10,   6, 0x04, '00...00', False),
+        FileTemplate(0x6f23, 'EF.IMSI_T',      'TR', None,   10,   6, 0x05, '00...00', False),
+        FileTemplate(0x6f24, 'EF.TMSI',        'TR', None,   16,  13, 0x06, '000000000000000000FFFFFFFF000000', False),
+        FileTemplate(0x6f25, 'EF.AH',          'TR', None,    2,   5, None, '0000', False),
+        FileTemplate(0x6f26, 'EF.AOP',         'TR', None,    1,   5, None, None, True),
+        FileTemplate(0x6f27, 'EF.ALOC',        'TR', None,    7,   5, None, None, True),
+        FileTemplate(0x6f28, 'EF.CDMAHOME',    'LF', None,    5,   5, 0x0c, '00...00', False, ['size']),
+        FileTemplate(0x6f29, 'EF.ZNREGI',      'LF', None,    8,   5, None, '00...00', False, ['size']),
+        FileTemplate(0x6f2a, 'EF.SNREGI',      'TR', None,    7,   5, 0x0c, None, True),
+        FileTemplate(0x6f2b, 'EF.DISTREGI',    'TR', None,    8,   5, None, '00...00', False),
+        FileTemplate(0x6f2c, 'EF.ACCOLC',      'TR', None,    1,   2, 0x03, None, True),
+        FileTemplate(0x6f2d, 'EF.TERM',        'TR', None,    1,   5, None, None, True),
+        FileTemplate(0x6f2f, 'EF.ACP',         'TR', None,    7,   5, None, None, True),
+        FileTemplate(0x6f30, 'EF.PRL',         'TR', None, None,   3, 0x07, None, True, ['size']),
+        FileTemplate(0x6f31, 'EF.RUIMID',      'TR', None,    5,   4, None, None, True),
+        FileTemplate(0x6f32, 'EF.CIM_ST',      'TR', None,    6,   2, 0x02, None, True),
+        FileTemplate(0x6f33, 'EF.SPC',         'TR', None,    3,   3, None, '00...00', False),
+        FileTemplate(0x6f34, 'EF.OTAPASPC',    'TR', None,    1,   5, None, '00', False),
+        FileTemplate(0x6f35, 'EF.NAMLOCK',     'TR', None,    1,   5, None, None, True),
+        FileTemplate(0x6f36, 'EF.OTA',         'TR', None,   17,   2, None, None, True),
+        FileTemplate(0x6f37, 'EF.SP',          'TR', None,    1,   5, None, None, True),
+        FileTemplate(0x6f38, 'EF.ESN_MEID_ME', 'TR', None,    8,  10, None, '00...00', False),
+        FileTemplate(0x6f3a, 'EF.LI',          'TR', None,    6,   1, 0x0a, 'FF...FF', False),
+        FileTemplate(0x6f42, 'EF.USGIND',      'TR', None,    1,   2, None, None, True),
+        FileTemplate(0x6f43, 'EF.AD',          'TR', None,    3,  10, 0x01, '00...00', False),
+        FileTemplate(0x6f45, 'EF.MAX_PRL',     'TR', None,    4,   2, None, None, True),
+        FileTemplate(0x6f46, 'EF.SPCS',        'TR', None,    1,  12, None, None, True),
+        FileTemplate(0x6f55, 'EF.MECRP',       'TR', None,    3,   5, None, '00...00', False),
+        FileTemplate(0x6f70, 'EF.HOME_TAG',    'TR', None, None,   2, None, None, True, ['size']),
+        FileTemplate(0x6f71, 'EF.GROUP_TAG',   'TR', None, None,   2, None, None, True, ['size']),
+        FileTemplate(0x6f72, 'EF.SPECIFIC_TAG','TR', None, None,   2, None, None, True, ['size']),
+        FileTemplate(0x6f73, 'EF.CALL_PROMPT', 'TR', None, None,   2, None, None, True, ['size']),
+    ]
+
+
+class FilesCsimOptional(ProfileTemplate):
+    """Optional Files at ADF.CSIM as per Section 9.7.2"""
+    created_by_default = False
+    optional = True
+    oid = OID.ADF_CSIMopt_not_by_default
+    base_path = Path('ADF.CSIM')
+    extends = FilesCsimMandatory
+    files = [
+        FileTemplate(0x6f2e, 'EF.SSCI',           'TR', None,    1,   5, None, None, True),
+        FileTemplate(0x6f3b, 'EF.FDN',            'LF',   20,   26,   8, None, 'FF...FF', False, ass_serv=[2]),
+        FileTemplate(0x6f3c, 'EF.SMS',            'LF', None, None,   5, None, '00FF...FF', False, ['nb_rec','size'], ass_serv=[6]),
+        FileTemplate(0x6f3d, 'EF.SMSP',           'LF', None, None,   5, None, 'FF...FF', False, ['nb_rec','size'], ass_serv=[7]),
+        FileTemplate(0x6f3e, 'EF.SMSS',           'TR', None, None,   5, None, 'FF...FF', False, ['size'], ass_serv=[6]),
+        FileTemplate(0x6f3f, 'EF.SSFC',           'TR', None, None,   5, 0x08, None, True, ['size']),
+        FileTemplate(0x6f41, 'EF.SPN',            'TR', None,   35,  10, None, None, True, ass_serv=[10]),
+        FileTemplate(0x6f44, 'EF.MDN',            'LF', None,   11,   5, 0x09, None, True, ['size']),
+        FileTemplate(0x6f47, 'EF.ECC',            'TR', None, None,  10, None, 'FF...FF', False, ['size']),
+        FileTemplate(0x6f48, 'EF.ME3GPDOPC',      'TR', None,    1,   5, None, '00', False, ass_serv=[14,15]),
+        FileTemplate(0x6f49, 'EF.3GPDOPM',        'TR', None,    1,   5, None, None, True, ass_serv=[14,15]),
+        FileTemplate(0x6f4a, 'EF.SIPCAP',         'TR', None,    4,   2, None, None, True, ass_serv=[14]),
+        FileTemplate(0x6f4b, 'EF.MIPCAP',         'TR', None,    5,   2, None, None, True, ass_serv=[15]),
+        FileTemplate(0x6f4c, 'EF.SIPUPP',         'TR', None, None,   2, None, None, True, ['size'], ass_serv=[14]),
+        FileTemplate(0x6f4d, 'EF.MIPUPP',         'TR', None, None,   2, None, None, True, ['size'], ass_serv=[15]),
+        FileTemplate(0x6f4e, 'EF.SIPSP',          'TR', None,    1,   5, None, None, True, ass_serv=[14]),
+        FileTemplate(0x6f4f, 'EF.MIPSP',          'TR', None,    1,   5, None, None, True, ass_serv=[15]),
+        FileTemplate(0x6f50, 'EF.SIPPAPSS',       'TR', None, None,   5, None, None, True, ['size'], ass_serv=[14]),
+        FileTemplate(0x6f53, 'EF.PUZL',           'TR', None, None,   2, None, None, True, ['size']),
+        FileTemplate(0x6f54, 'EF.MAXPUZL',        'TR', None,    5,   2, None, None, True),
+        FileTemplate(0x6f56, 'EF.HRPDCAP',        'TR', None,    3,   2, None, None, True, ass_serv=[8]),
+        FileTemplate(0x6f57, 'EF.HRPDUPP',        'TR', None, None,   2, None, None, True, ['size'], ass_serv=[8]),
+        FileTemplate(0x6f58, 'EF.CCSPR',          'TR', None,    1,   2, None, 'FF', False),
+        FileTemplate(0x6f59, 'EF.ATC',            'TR', None,    1,   2, None, None, True, ass_serv=[8]),
+        FileTemplate(0x6f5a, 'EF.EPRL',           'TR', None, None,   2, 0x0e, None, True, ['size']),
+        FileTemplate(0x6f5b, 'EF.BCSMScfg',       'TR', None,    1,   2, None, None, True, ass_serv=[9]),
+        FileTemplate(0x6f5c, 'EF.BCSMSpref',      'TR', None,    1,   5, None, 'FF', False, ass_serv=[9]),
+        FileTemplate(0x6f5d, 'EF.BCSMStable',     'LF', None, None,   2, None, '00FF...FF', False, ['nb_rec','size'], ass_serv=[9]),
+        FileTemplate(0x6f5e, 'EF.BCSMSp',         'LF', None,    2,   5, None, 'FFFF', False, ['size'], ass_serv=[9]),
+        FileTemplate(0x6f63, 'EF.BAKPARA',        'LF', None, None,   2, None, None, True, ['nb_rec','size'], ass_serv=[18]),
+        FileTemplate(0x6f64, 'EF.UpBAKPARA',      'CY', None, None,   2, None, None, True, ['nb_rec','size'], ass_serv=[18]),
+        FileTemplate(0x6f65, 'EF.MMSN',           'LF', None, None,   5, None, '000000FF...FF', False, ['nb_rec','size'], ass_serv=[19]),
+        FileTemplate(0x6f66, 'EF.EXT8',           'LF', None, None,   5, None, 'FF...FF', False, ['nb_rec','size'], ass_serv=[20]),
+        FileTemplate(0x6f67, 'EF.MMSICP',         'TR', None, None,   2, None, 'FF...FF', False, ['size'], ass_serv=[19]),
+        FileTemplate(0x6f68, 'EF.MMSUP',          'LF', None, None,   5, None, 'FF...FF', False, ['nb_rec','size'], ass_serv=[19]),
+        FileTemplate(0x6f69, 'EF.MMSUCP',         'TR', None, None,   5, None, 'FF...FF', False, ['size'], ass_serv=[19,21]),
+        FileTemplate(0x6f6a, 'EF.AUTH_CAPABILITY','LF', None,    5,   2, None, '00...00', False, ['size'], ass_serv=[22]),
+        FileTemplate(0x6f6b, 'EF.3GCIK',          'TR', None,   32,   2, 0x0b, None, True, ass_serv=[16]),
+        FileTemplate(0x6f6c, 'EF.DCK',            'TR', None,   20,   5, None, None, True, ass_serv=[25]),
+        FileTemplate(0x6f6d, 'EF.GID1',           'TR', None, None,   2, None, None, True, ['size'], ass_serv=[23]),
+        FileTemplate(0x6f6e, 'EF.GID2',           'TR', None, None,   2, None, None, True, ['size'], ass_serv=[24]),
+        FileTemplate(0x6f6f, 'EF.CDMACNL',        'TR', None, None,   2, None, None, True, ['size'], ass_serv=[26]),
+        FileTemplate(0x6f74, 'EF.SF_EUIMID',      'TR', None,    7,   4, None, None, True, ass_serv=[34]),
+        FileTemplate(0x6f75, 'EF.EST',            'TR', None, None,   8, 0x0f, None, True, ['size'], ass_serv=[2]),
+        FileTemplate(0x6f76, 'EF.HIDDEN_KEY',     'TR', None,    4,   5, None, None, True),
+        FileTemplate(0x6f77, 'EF.LCSVER',         'TR', None, None,   2, None, None, True, ['size'], ass_serv=[17]),
+        FileTemplate(0x6f78, 'EF.LCSCP',          'TR', None, None,   2, None, None, True, ['size'], ass_serv=[17]),
+        FileTemplate(0x6f79, 'EF.SDN',            'LF', None, None,   2, None, None, True, ['nb_rec','size'], ass_serv=[4]),
+        FileTemplate(0x6f7a, 'EF.EXT2',           'LF', None,   13,   8, None, None, True, ['size'], ass_serv=[3]),
+        FileTemplate(0x6f7b, 'EF.EXT3',           'LF', None,   13,   2, None, None, True, ['size'], ass_serv=[5]),
+        FileTemplate(0x6f7c, 'EF.ICI',            'CY', None, None,   5, 0x10, None, True, ['nb_rec','size'], ass_serv=[28]),
+        FileTemplate(0x6f7d, 'EF.OCI',            'CY', None, None,   5, 0x11, None, True, ['nb_rec','size'], ass_serv=[27]),
+        FileTemplate(0x6f7e, 'EF.EXT5',           'LF', None,   13,   5, None, None, True, ['size'], ass_serv=[29]),
+        FileTemplate(0x6f7f, 'EF.CCP2',           'LF', None, None,   5, 0x12, None, True, ['nb_rec','size'], ass_serv=[33]),
+        FileTemplate(0x6f80, 'EF.AppLabels',      'TR', None, None,   2, None, None, True, ['size']),
+        FileTemplate(0x6f81, 'EF.MODEL',          'TR', None,  126,   5, None, 'FF...FF', False),
+        FileTemplate(0x6f82, 'EF.RC',             'TR', None, None,  10, None, None, True, ['size'], ass_serv=[36]),
+        FileTemplate(0x6f83, 'EF.SMSCAP',         'TR', None,    4,   2, None, None, True, ass_serv=[6]),
+        FileTemplate(0x6f84, 'EF.MIPFlags',       'TR', None,    1,   2, None, None, True, ass_serv=[35]),
+        FileTemplate(0x6f85, 'EF.3GPDUPPExt',     'TR', None, None,   2, None, None, True, ['size'], ass_serv=[14]),
+        FileTemplate(0x6f87, 'EF.IPV6CAP',        'TR', None,   21,   2, None, None, True, ass_serv=[35]),
+        FileTemplate(0x6f88, 'EF.TCPConfig',      'TR', None,    2,   2, None, None, True, ass_serv=[14]),
+        FileTemplate(0x6f89, 'EF.DGC',            'TR', None,    3,   2, None, None, True, ass_serv=[14]),
+        FileTemplate(0x6f8a, 'EF.WAPBrowserCP',   'TR', None, None,   2, None, None, True, ['size'], ass_serv=[37]),
+        FileTemplate(0x6f8b, 'EF.WAPBrowserBM',   'TR', None, None,   5, None, None, True, ['size'], ass_serv=[37]),
+        FileTemplate(0x6f8c, 'EF.MMSConfig',      'TR', None,    8,   2, None, None, True, ass_serv=[19]),
+        FileTemplate(0x6f8d, 'EF.JDL',            'TR', None, None,   2, None, None, True, ['size'], ass_serv=[38]),
+    ]
+
+
+class FilesCsimMandatoryv2(FilesCsimMandatory):
+    """Mandatory Files at ADF.CSIM as per Section 9.7.1 (no change in version 2)"""
+    oid = OID.ADF_CSIM_by_default_v2
+
+
+class FilesCsimOptionalv2(FilesCsimOptional):
+    """Optional Files at ADF.CSIM as per Section 9.7.2 (no change in version 2)"""
+    oid = OID.ADF_CSIMopt_not_by_default_v2
 
 
 class FilesEap(ProfileTemplate):
