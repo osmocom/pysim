@@ -391,6 +391,24 @@ class LinkPathTest(unittest.TestCase):
         self._add_optcsim(b'\x7f\xd0\x6f\x3c') # 7f10 = DF.TELECOM / 6f3c = EF.SMS
         self.assertEqual(self.orig_decoded, self.optcsim.decoded)
 
+    def test_dflink_in_service(self):
+        """Test that an exsiting DF with linkPath will cause dfLink tag to exist in ServicesList."""
+        self._create_pes()
+        self._add_gfm(b'\x7f\x10\x5f\x3a') # 7f10 = DF.TELECOM / 5f3a = DF.PHONEBOOK
+        self.pes.rebuild_mandatory_services()
+        hdr_pe = self.pes.get_pe_for_type('header')
+        services = hdr_pe.decoded['eUICC-Mandatory-services']
+        self.assertIn('dfLink', services)
+
+    def test_dflink_not_in_service(self):
+        """Test that a non exsiting DF with linkPath will cause dfLink tag to not exist in ServicesList."""
+        self._create_pes()
+        self._add_gfm()
+        self.pes.rebuild_mandatory_services()
+        hdr_pe = self.pes.get_pe_for_type('header')
+        services = hdr_pe.decoded['eUICC-Mandatory-services']
+        self.assertNotIn('dfLink', services)
+
 class OidTest(unittest.TestCase):
     def test_cmp(self):
         self.assertTrue(oid.OID('1.0') > oid.OID('0.9'))
