@@ -701,12 +701,10 @@ class ProfileElement:
             'opt-usim': ProfileElementOptUSIM,
             'isim': ProfileElementISIM,
             'opt-isim': ProfileElementOptISIM,
-            'csim': ProfileElementCSIM,
-            'opt-csim': ProfileElementOptCSIM,
             'phonebook': ProfileElementPhonebook,
             'gsm-access': ProfileElementGsmAccess,
-            # TODO: csim
-            # TODO: opt-csim
+            'csim': ProfileElementCSIM,
+            'opt-csim': ProfileElementOptCSIM,
             'eap': ProfileElementEAP,
             'df-5gs': ProfileElementDf5GS,
             'df-saip': ProfileElementDfSAIP,
